@@ -1,0 +1,13 @@
+{
+  "defaultSeverity": "error",
+  "extends": ["tslint:recommended", "tslint-config-prettier"],
+  "jsRules": {},
+  "rules": {
+    "no-implicit-dependencies": [true, "dev"],
+    "no-shadowed-variable": false,
+    "no-console": false,
+    "one-variable-per-declaration": false,
+    "radix": false
+  },
+  "rulesDirectory": []
+}

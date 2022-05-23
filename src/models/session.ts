@@ -7,8 +7,8 @@ import User from './user';
  * Session represents a user's login session.
  */
 export default class Session extends BaseModel {
-  active: boolean;
   userId: string;
+  signature: string;
 
   static get tableName() {
     return 'sessions';
@@ -28,17 +28,6 @@ export default class Session extends BaseModel {
     };
   }
 
-  /**
-   * getById finds a user by Id
-   * @param id The user id
-   */
-  static getById(id: string): Promise<Session> {
-    return this.query()
-      .whereNotDeleted()
-      .findById(id)
-      .withGraphFetched('owner.wallets');
-  }
-
   $beforeInsert() {
     super.$beforeInsert();
     this.id = 'session_' + crand({ length: 24 });
@@ -52,15 +41,39 @@ export default class Session extends BaseModel {
   }
 
   /**
+   * getById finds a record by Id
+   * @param id The user id
+   */
+  static getById(id: string): Promise<Session> {
+    return this.query()
+      .whereNotDeleted()
+      .findById(id)
+      .withGraphFetched('owner');
+  }
+
+  /**
+   * getBySignature finds a record by signature
+   * @param signature The target signature
+   */
+  static getBySignature(signature: string): Promise<Session> {
+    return this.query()
+      .where({ signature })
+      .whereNotDeleted()
+      .withGraphFetched('owner')
+      .first();
+  }
+
+  /**
    * create a session for a user
    * @param userId The user ID
+   * @param signature The auth signature
    */
-  static create(userId: string): Promise<Session> {
+  static create(userId: string, signature: string): Promise<Session> {
     return new Promise((resolve, reject) => {
       this.query()
         .insert({
           userId,
-          active: true,
+          signature,
         })
         .then(resolve)
         .catch(reject);

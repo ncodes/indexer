@@ -9,6 +9,8 @@ import { BaseModel } from './base';
 export default class User extends BaseModel {
   // The email of the user
   email: string;
+  // The address of the user
+  address: string;
   // The user's role
   role: string;
 
@@ -62,6 +64,21 @@ export default class User extends BaseModel {
     return new Promise((resolve, reject) => {
       this.query()
         .where('email', 'ILIKE', email)
+        .whereNotDeleted()
+        .first()
+        .then(resolve)
+        .catch(reject);
+    });
+  }
+
+  /**
+   * getByAddress finds a user by their address
+   * @param address The user's address
+   */
+  static getByAddress(address: string): Promise<User> {
+    return new Promise((resolve, reject) => {
+      this.query()
+        .where('address', 'ILIKE', address)
         .whereNotDeleted()
         .first()
         .then(resolve)

@@ -1,22 +1,28 @@
 /* tslint:disable:max-classes-per-file */
-import { IsNotEmpty } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional } from 'class-validator';
 import { makeValidatorMsg } from '../../common/validations/validation';
 
 /**
- * LoginDTO represents request body for login request.
+ * AuthDTO represents request body for login request.
  */
-export class LoginDTO {
-  constructor(init?: Partial<LoginDTO>) {
+export class AuthDTO {
+  constructor(init?: Partial<AuthDTO>) {
     Object.assign(this, init);
   }
 
   @IsNotEmpty({
-    message: makeValidatorMsg('email or phone number is required', 'username'),
+    message: makeValidatorMsg('signature is required', 'sig'),
   })
-  username: string;
+  sig: string;
 
   @IsNotEmpty({
-    message: makeValidatorMsg('password is required', 'password'),
+    message: makeValidatorMsg('message is required', 'msg'),
   })
-  password: string;
+  msg: string;
+
+  @IsEmail(undefined, {
+    message: makeValidatorMsg('email is not valid', 'email'),
+  })
+  @IsOptional()
+  email: string;
 }

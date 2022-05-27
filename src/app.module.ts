@@ -17,6 +17,7 @@ import KnexConfig from './config/knex.config';
 import { AuthModule } from './controllers/auth/auth.module';
 import { DBService } from './db/DBService';
 import { JobsModule } from './jobs/jobs.module';
+import { WatcherModule } from './watcher/watcher.module';
 
 Handlebars.registerHelper('uppercase', (aString) => {
   return aString.toUpperCase();
@@ -30,7 +31,7 @@ Handlebars.registerHelper('uppercase', (aString) => {
  * @returns
  */
 function getModules() {
-  return [JobsModule, AuthModule];
+  return [JobsModule, AuthModule, WatcherModule];
 }
 
 /**

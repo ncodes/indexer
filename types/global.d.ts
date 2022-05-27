@@ -19,4 +19,15 @@ declare global {
   interface AnObject {
     [key: string]: any;
   }
+
+  interface KnownContracts {
+    p2pToken?: Contract;
+    marketCore?: Contract;
+    core?: Contract;
+    mediatorMgr?: Contract;
+    disputeMgr?: Contract;
+    p2pStaker?: Contract;
+    lpStaker?: Contract;
+    feeSharer?: Contract;
+  }
 }

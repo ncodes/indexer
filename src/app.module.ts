@@ -15,9 +15,11 @@ import AppConfig from './config/app.config';
 import AuthConfig from './config/auth.config';
 import KnexConfig from './config/knex.config';
 import { AuthModule } from './controllers/auth/auth.module';
+import { LiquidityModule } from './controllers/liquidity/liquidity.module';
+import { MarketsModule } from './controllers/markets/markets.module';
 import { DBService } from './db/DBService';
 import { JobsModule } from './jobs/jobs.module';
-import { WatcherModule } from './watcher/watcher.module';
+import { NetworkModule } from './network/network.module';
 
 Handlebars.registerHelper('uppercase', (aString) => {
   return aString.toUpperCase();
@@ -31,7 +33,13 @@ Handlebars.registerHelper('uppercase', (aString) => {
  * @returns
  */
 function getModules() {
-  return [JobsModule, AuthModule, WatcherModule];
+  return [
+    JobsModule,
+    AuthModule,
+    NetworkModule,
+    MarketsModule,
+    LiquidityModule,
+  ];
 }
 
 /**

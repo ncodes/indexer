@@ -1,9 +1,13 @@
-import { BigNumber, Event } from 'ethers';
-import { Handler } from './handler';
+import { BigNumber, Event, providers } from 'ethers';
+import { Handler } from '../handler';
 
 export class FeeSharerHandler extends Handler {
-  constructor(private contracts: KnownContracts) {
-    super();
+  constructor(
+    private provider: providers.JsonRpcProvider,
+    public network: string,
+    private contracts: KnownContracts,
+  ) {
+    super(network);
   }
 
   /**

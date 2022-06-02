@@ -9,16 +9,17 @@ import * as marketCoreABI from '../../abi/marketcore.json';
 import * as marketManagerABI from '../../abi/marketmanager.json';
 import * as p2pStakerABI from '../../abi/p2pstaker.json';
 import * as p2pTokenABI from '../../abi/p2ptoken.json';
-import { CoreHandler } from './core.handler';
-import { DisputeManagerHandler } from './dispute_manager.handler';
-import { FeeSharerHandler } from './fee_sharer.handler';
-import { LPStakerHandler } from './lp_staker.handler';
-import { MarketCoreHandler } from './market_core.handler';
-import { MediatorManagerHandler } from './mediator_manager.handler';
-import { P2PStakerHandler } from './p2p_staker.handler';
+import { SupportedNetworks } from './common';
+import { CoreHandler } from './core/core.handler';
+import { DisputeManagerHandler } from './disputemanager/dispute_manager.handler';
+import { FeeSharerHandler } from './feesharer/fee_sharer.handler';
+import { LPStakerHandler } from './lpstaker/lp_staker.handler';
+import { MarketCoreHandler } from './marketcore/market_core.handler';
+import { MediatorManagerHandler } from './mediatormanager/mediator_manager.handler';
+import { P2PStakerHandler } from './p2pstaker/p2p_staker.handler';
 
 @Injectable()
-export class WatcherService {
+export default class NetworkService {
   private contracts: {
     [key: string]: KnownContracts;
   } = {};
@@ -31,7 +32,7 @@ export class WatcherService {
    * Watch events on different on different networks
    */
   watch() {
-    this.watchNetwork('ethereumMainnet');
+    this.watchNetwork(SupportedNetworks.EthereumMainnet);
   }
 
   /**
@@ -44,6 +45,15 @@ export class WatcherService {
   }
 
   /**
+   * Get market core contract
+   * @param network The network name
+   * @returns
+   */
+  getMarketCore(network: string) {
+    return this.getContracts(network).marketCore;
+  }
+
+  /**
    * Connect and watch contracts on the Ethereum mainnet.
    * @param network The name of the network
    */
@@ -51,6 +61,7 @@ export class WatcherService {
     const provider = new providers.JsonRpcProvider(
       this.cfgSrv.get(`app.networks.${network}.rpcUrl`),
     );
+    await provider.resetEventsBlock(1);
 
     this.contracts[network] = {};
 
@@ -97,12 +108,20 @@ export class WatcherService {
     );
 
     // Listen for events
-    new MarketCoreHandler(this.contracts[network]).listen();
-    new CoreHandler(this.contracts[network]).listen();
-    new MediatorManagerHandler(this.contracts[network]).listen();
-    new DisputeManagerHandler(this.contracts[network]).listen();
-    new P2PStakerHandler(this.contracts[network]).listen();
-    new LPStakerHandler(this.contracts[network]).listen();
-    new FeeSharerHandler(this.contracts[network]).listen();
+    new MarketCoreHandler(provider, network, this.contracts[network]).listen();
+    new CoreHandler(provider, network, this.contracts[network]).listen();
+    new MediatorManagerHandler(
+      provider,
+      network,
+      this.contracts[network],
+    ).listen();
+    new DisputeManagerHandler(
+      provider,
+      network,
+      this.contracts[network],
+    ).listen();
+    new P2PStakerHandler(provider, network, this.contracts[network]).listen();
+    new LPStakerHandler(provider, network, this.contracts[network]).listen();
+    new FeeSharerHandler(provider, network, this.contracts[network]).listen();
   }
 }

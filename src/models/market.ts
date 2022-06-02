@@ -1,5 +1,5 @@
 import * as crand from 'crypto-random-string';
-import Objection from 'objection';
+import Objection, { QueryBuilderType } from 'objection';
 import { BaseModel } from './base';
 
 /**
@@ -10,14 +10,38 @@ export default class Market extends BaseModel {
   mid: string;
   // The creator of the market
   creator: string;
+  // The network it exist in
+  network: string;
   // The base asset symbol
   base: string;
+  // The base asset token address
+  baseAddress: string;
+  // Indicates whether the base asset represents an off-chain asset
+  isBaseLocal: boolean;
   // The quote asset symbol
   quote: string;
+  // The quote asset token address
+  quoteAddress: string;
+  // Indicates whether the quote asset represents an off-chain asset
+  isQuoteLocal: boolean;
+  // The base/asset pair name
+  pair: string;
   // The block number where the market it was created
   blockNumber: number;
   // The block hash where the market was created
   blockHash: string;
+
+  // *** Non-persisted fields **//
+  mediatorBond: string;
+  numOrders: number;
+  numDisputes: number;
+  permPut: boolean;
+  permSwap: boolean;
+  permMediate: boolean;
+  commission: number;
+  numMediators: number;
+  baseLogo: string;
+  quoteLogo: string;
 
   constructor(init?: Partial<Market>) {
     super();
@@ -82,6 +106,26 @@ export default class Market extends BaseModel {
         .then(resolve)
         .catch(reject);
     });
+  }
+
+  /**
+   * Builds a search query to match records across multiple fields.
+   * Expects query to contain market ID, base asset name,
+   * quote asset name, market pair, base asset address or quote
+   * asset address.
+   *
+   * @param q The query builder
+   * @param qs The query string
+   * @returns
+   */
+  static makeSearchQuery(q: QueryBuilderType<any>, qs: string) {
+    return q
+      .orWhere('mid', qs)
+      .orWhere('base', 'ILIKE', qs)
+      .orWhere('baseAddress', 'ILIKE', qs)
+      .orWhere('quote', 'ILIKE', qs)
+      .orWhere('quoteAddress', 'ILIKE', qs)
+      .orWhere('pair', 'ILIKE', qs.replaceAll(/\s|\/|\-/gi, ''));
   }
 
   /**

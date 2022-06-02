@@ -1,9 +1,19 @@
-import * as ethers from 'ethers';
-import { Handler } from './handler';
+import { Logger } from '@nestjs/common';
+import { BigNumber, Event, providers } from 'ethers';
+import { transaction } from 'objection';
+import Liquidity from '../../models/liquidity';
+import { Handler } from '../handler';
+import { ToDec } from './../../common/common';
 
 export class CoreHandler extends Handler {
-  constructor(private contracts: KnownContracts) {
-    super();
+  logger = new Logger(CoreHandler.name);
+
+  constructor(
+    private provider: providers.JsonRpcProvider,
+    public network: string,
+    private contracts: KnownContracts,
+  ) {
+    super(network);
   }
 
   /**
@@ -13,7 +23,7 @@ export class CoreHandler extends Handler {
     this.on(
       this.contracts.core,
       'SwapOrderPaid',
-      (id: string, orderId: number, paidAt: number, event: ethers.Event) => {
+      (id: string, orderId: BigNumber, paidAt: BigNumber, event: Event) => {
         this.onSwapOrderPaid(id, orderId, paidAt, event);
       },
     );
@@ -21,7 +31,7 @@ export class CoreHandler extends Handler {
     this.on(
       this.contracts.core,
       'RewardWithdrawn',
-      (claimer: string, amount: number, event: ethers.Event) => {
+      (claimer: string, amount: BigNumber, event: Event) => {
         this.onRewardWithdrawn(claimer, amount, event);
       },
     );
@@ -30,10 +40,10 @@ export class CoreHandler extends Handler {
       this.contracts.core,
       'OrderCancelled',
       (
-        orderId: number,
+        orderId: BigNumber,
         canceller: string,
         byDispute: boolean,
-        event: ethers.Event,
+        event: Event,
       ) => {
         this.onOrderCancelled(orderId, canceller, byDispute, event);
       },
@@ -42,7 +52,7 @@ export class CoreHandler extends Handler {
     this.on(
       this.contracts.core,
       'SentFeeToFeeSharer',
-      (token: string, amount: number, event: ethers.Event) => {
+      (token: string, amount: BigNumber, event: Event) => {
         this.onSentFeeToFeeSharer(token, amount, event);
       },
     );
@@ -51,10 +61,10 @@ export class CoreHandler extends Handler {
       this.contracts.core,
       'ProtocolFeeUpdated',
       (
-        instantSwapFee: number,
-        p2pSwapFee: number,
-        stableSwapFee: number,
-        event: ethers.Event,
+        instantSwapFee: BigNumber,
+        p2pSwapFee: BigNumber,
+        stableSwapFee: BigNumber,
+        event: Event,
       ) => {
         this.onProtocolFeeUpdated(
           instantSwapFee,
@@ -68,7 +78,7 @@ export class CoreHandler extends Handler {
     this.on(
       this.contracts.core,
       'UpdatedShareableAsset',
-      (assets: string[], deleted: boolean, event: ethers.Event) => {
+      (assets: string[], deleted: boolean, event: Event) => {
         this.onUpdatedShareableAsset(assets, deleted, event);
       },
     );
@@ -80,8 +90,8 @@ export class CoreHandler extends Handler {
         sender: string,
         marketId: string,
         deduction: boolean,
-        amount: number,
-        event: ethers.Event,
+        amount: BigNumber,
+        event: Event,
       ) => {
         this.onUpdatedLiquidity(sender, marketId, deduction, amount, event);
       },
@@ -90,12 +100,7 @@ export class CoreHandler extends Handler {
     this.on(
       this.contracts.core,
       'UpdatedPrice',
-      (
-        marketId: string,
-        provider: string,
-        manager: string,
-        event: ethers.Event,
-      ) => {
+      (marketId: string, provider: string, manager: string, event: Event) => {
         this.onUpdatedPrice(marketId, provider, manager, event);
       },
     );
@@ -103,12 +108,7 @@ export class CoreHandler extends Handler {
     this.on(
       this.contracts.core,
       'TogglePause',
-      (
-        marketId: string,
-        provider: string,
-        paused: boolean,
-        event: ethers.Event,
-      ) => {
+      (marketId: string, provider: string, paused: boolean, event: Event) => {
         this.onTogglePause(marketId, provider, paused, event);
       },
     );
@@ -116,12 +116,7 @@ export class CoreHandler extends Handler {
     this.on(
       this.contracts.core,
       'SetLiquidityManager',
-      (
-        marketId: string,
-        provider: string,
-        manager: string,
-        event: ethers.Event,
-      ) => {
+      (marketId: string, provider: string, manager: string, event: Event) => {
         this.onSetLiquidityManager(marketId, provider, manager, event);
       },
     );
@@ -129,12 +124,7 @@ export class CoreHandler extends Handler {
     this.on(
       this.contracts.core,
       'RemoveLiquidityManager',
-      (
-        marketId: string,
-        provider: string,
-        manager: string,
-        event: ethers.Event,
-      ) => {
+      (marketId: string, provider: string, manager: string, event: Event) => {
         this.onRemoveLiquidityManager(marketId, provider, manager, event);
       },
     );
@@ -149,9 +139,9 @@ export class CoreHandler extends Handler {
    */
   async onSwapOrderPaid(
     id: string,
-    orderId: number,
-    paidAt: number,
-    event: ethers.Event,
+    orderId: BigNumber,
+    paidAt: BigNumber,
+    event: Event,
   ) {}
 
   /**
@@ -160,11 +150,7 @@ export class CoreHandler extends Handler {
    * @param amount The amount of reward claimed
    * @param event The event object
    */
-  async onRewardWithdrawn(
-    claimer: string,
-    amount: number,
-    event: ethers.Event,
-  ) {}
+  async onRewardWithdrawn(claimer: string, amount: BigNumber, event: Event) {}
 
   /**
    * An order was cancelled
@@ -174,10 +160,10 @@ export class CoreHandler extends Handler {
    * @param event The event object
    */
   async onOrderCancelled(
-    orderId: number,
+    orderId: BigNumber,
     canceller: string,
     byDispute: boolean,
-    event: ethers.Event,
+    event: Event,
   ) {}
 
   /**
@@ -186,11 +172,7 @@ export class CoreHandler extends Handler {
    * @param amount The amount that was transferred
    * @param event The event object
    */
-  async onSentFeeToFeeSharer(
-    token: string,
-    amount: number,
-    event: ethers.Event,
-  ) {}
+  async onSentFeeToFeeSharer(token: string, amount: BigNumber, event: Event) {}
 
   /**
    * The protocol fees was updated
@@ -200,10 +182,10 @@ export class CoreHandler extends Handler {
    * @param event The event object
    */
   async onProtocolFeeUpdated(
-    instantSwapFee: number,
-    p2pSwapFee: number,
-    stableSwapFee: number,
-    event: ethers.Event,
+    instantSwapFee: BigNumber,
+    p2pSwapFee: BigNumber,
+    stableSwapFee: BigNumber,
+    event: Event,
   ) {}
 
   /**
@@ -215,7 +197,7 @@ export class CoreHandler extends Handler {
   async onUpdatedShareableAsset(
     assets: string[],
     deleted: boolean,
-    event: ethers.Event,
+    event: Event,
   ) {}
 
   /**
@@ -230,9 +212,57 @@ export class CoreHandler extends Handler {
     sender: string,
     marketId: string,
     deduction: boolean,
-    amount: number,
-    event: ethers.Event,
-  ) {}
+    amount: BigNumber,
+    event: Event,
+  ) {
+    this.logger.log(`Liquidity Updated by account:${sender}`);
+    const liq = await this.contracts.core.getLiquidity(
+      Buffer.from(marketId.substring(2), 'hex'),
+      sender,
+    );
+
+    return transaction(Liquidity, async (Liquidity) => {
+      const dbLiq = await Liquidity.getLiquidity(
+        this.network,
+        marketId,
+        sender,
+      );
+
+      if (!dbLiq) {
+        await Liquidity.create({
+          network: this.network,
+          provider: sender,
+          marketId,
+          amount: amount.toString(),
+          price: liq.price.toString(),
+          minSwap: liq.minSwap.toString(),
+          maxSwap: liq.maxSwap.toString(),
+          timeToPay: liq.timeToPay.toNumber(),
+          openOrders: liq.openOrders.toNumber(),
+          paused: liq.paused,
+          blockNumber: event.blockNumber,
+          blockHash: event.blockHash,
+        });
+      } else {
+        const update = {
+          price: liq.price.toString(),
+          minSwap: liq.minSwap.toString(),
+          maxSwap: liq.maxSwap.toString(),
+          timeToPay: liq.timeToPay.toNumber(),
+          amount: '0',
+        };
+        if (!deduction) {
+          update.amount = ToDec(dbLiq.amount).add(amount.toString()).toFixed();
+          await Liquidity.updateById(dbLiq.id, update);
+        } else {
+          update.amount = ToDec(dbLiq.amount).sub(amount.toString()).toFixed();
+          await Liquidity.updateById(dbLiq.id, update);
+        }
+      }
+
+      return Promise.resolve();
+    });
+  }
 
   /**
    * A market manager updated a liquidity's price
@@ -245,7 +275,7 @@ export class CoreHandler extends Handler {
     marketId: string,
     provider: string,
     manager: string,
-    event: ethers.Event,
+    event: Event,
   ) {}
 
   /**
@@ -259,7 +289,7 @@ export class CoreHandler extends Handler {
     marketId: string,
     provider: string,
     paused: boolean,
-    event: ethers.Event,
+    event: Event,
   ) {}
 
   /**
@@ -273,7 +303,7 @@ export class CoreHandler extends Handler {
     marketId: string,
     provider: string,
     manager: string,
-    event: ethers.Event,
+    event: Event,
   ) {}
 
   /**
@@ -287,6 +317,6 @@ export class CoreHandler extends Handler {
     marketId: string,
     provider: string,
     manager: string,
-    event: ethers.Event,
+    event: Event,
   ) {}
 }

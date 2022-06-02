@@ -30,4 +30,25 @@ declare global {
     lpStaker?: Contract;
     feeSharer?: Contract;
   }
+
+  interface ContractMarket {
+    creator: string;
+    createdAt: number;
+    baseAsset: {
+      addr: string;
+      isLocal: boolean;
+    };
+    quoteAsset: {
+      addr: string;
+      isLocal: boolean;
+    };
+    numOrders: number;
+    numDisputes: number;
+    permPut: boolean;
+    permSwap: boolean;
+    permMediate: boolean;
+    commission: number;
+    numMediators: number;
+    mediatorBond: number;
+  }
 }

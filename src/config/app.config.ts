@@ -10,6 +10,9 @@ export default () => ({
     nomics: {
       key: process.env.NOMICS_KEY,
     },
+    cmc: {
+      key: process.env.CMC_KEY,
+    },
     openexchangerate: {
       key: process.env.OPENEXRATE_KEY,
     },

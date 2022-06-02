@@ -1,12 +1,17 @@
 import { Logger } from '@nestjs/common';
-import { Event } from 'ethers';
-import Market from '../models/market';
-import { Handler } from './handler';
+import { Contract, Event, providers } from 'ethers';
+import * as erc20ABI from '../../../abi/erc20.json';
+import Market from '../../models/market';
+import { Handler } from '../handler';
 
 export class MarketCoreHandler extends Handler {
   public logger = new Logger(MarketCoreHandler.name);
-  constructor(private contracts: KnownContracts) {
-    super();
+  constructor(
+    private provider: providers.JsonRpcProvider,
+    public network: string,
+    private contracts: KnownContracts,
+  ) {
+    super(network);
   }
 
   /**
@@ -163,11 +168,26 @@ export class MarketCoreHandler extends Handler {
     event: Event,
   ) {
     this.logger.log(`New Market (${id}) by account:${owner}`);
+    const baseToken = new Contract(baseAsset, erc20ABI, this.provider);
+    const quoteToken = new Contract(quoteAsset, erc20ABI, this.provider);
+    const market = await this.contracts.marketCore.getMarket(
+      Buffer.from(id.substring(2), 'hex'),
+    );
+
+    const base = (await baseToken.symbol()).toUpperCase();
+    const quote = (await quoteToken.symbol()).toUpperCase();
+
     await Market.create({
       mid: id,
       creator: owner,
-      base: baseAsset,
-      quote: quoteAsset,
+      base,
+      baseAddress: baseAsset,
+      isBaseLocal: market.base.isLocal,
+      quote,
+      quoteAddress: quoteAsset,
+      isQuoteLocal: market.quote.isLocal,
+      pair: `${base}${quote}`,
+      network: this.network,
       blockNumber: event.blockNumber,
       blockHash: event.blockHash,
     });

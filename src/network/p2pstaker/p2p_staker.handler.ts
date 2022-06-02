@@ -1,9 +1,13 @@
-import { BigNumber, ethers, Event } from 'ethers';
-import { Handler } from './handler';
+import { BigNumber, Event, providers } from 'ethers';
+import { Handler } from '../handler';
 
 export class P2PStakerHandler extends Handler {
-  constructor(private contracts: KnownContracts) {
-    super();
+  constructor(
+    private provider: providers.JsonRpcProvider,
+    public network: string,
+    private contracts: KnownContracts,
+  ) {
+    super(network);
   }
 
   /**
@@ -57,7 +61,7 @@ export class P2PStakerHandler extends Handler {
    * @param amount The amount staked
    * @param event The event object
    */
-  async onStaked(account: string, amount: BigNumber, event: ethers.Event) {}
+  async onStaked(account: string, amount: BigNumber, event: Event) {}
 
   /**
    * An account added a vested stake
@@ -65,7 +69,7 @@ export class P2PStakerHandler extends Handler {
    * @param amount The amount staked
    * @param event The event object
    */
-  async onVestStaked(account: string, amount: BigNumber, event: ethers.Event) {}
+  async onVestStaked(account: string, amount: BigNumber, event: Event) {}
 
   /**
    * An account withdrew some stake
@@ -73,11 +77,7 @@ export class P2PStakerHandler extends Handler {
    * @param amount The amount withdrawn
    * @param event The event object
    */
-  async onStakeWithdrawn(
-    account: string,
-    amount: BigNumber,
-    event: ethers.Event,
-  ) {}
+  async onStakeWithdrawn(account: string, amount: BigNumber, event: Event) {}
 
   /**
    * An account withdrew some reward
@@ -85,11 +85,7 @@ export class P2PStakerHandler extends Handler {
    * @param amount The amount of reward withdrawn
    * @param event The event object
    */
-  async onRewardWithdrawn(
-    account: string,
-    amount: BigNumber,
-    event: ethers.Event,
-  ) {}
+  async onRewardWithdrawn(account: string, amount: BigNumber, event: Event) {}
 
   /**
    * An erroneously sent token was recovered
@@ -97,5 +93,5 @@ export class P2PStakerHandler extends Handler {
    * @param amount The amount recovered
    * @param event The event object
    */
-  async onRecovered(token: string, amount: BigNumber, event: ethers.Event) {}
+  async onRecovered(token: string, amount: BigNumber, event: Event) {}
 }

@@ -1,9 +1,13 @@
 import * as ethers from 'ethers';
-import { Handler } from './handler';
+import { Handler } from '../handler';
 
 export class MediatorManagerHandler extends Handler {
-  constructor(private contracts: KnownContracts) {
-    super();
+  constructor(
+    private provider: ethers.providers.JsonRpcProvider,
+    public network: string,
+    private contracts: KnownContracts,
+  ) {
+    super(network);
   }
 
   /**

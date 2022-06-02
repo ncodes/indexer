@@ -6,6 +6,7 @@ import { BaseModel } from './base';
  * Event represents a transaction log
  */
 export default class Event extends BaseModel {
+  network: string;
   signature: string;
   blockNumber: number;
   txIndex: number;

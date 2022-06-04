@@ -112,6 +112,18 @@
         "internalType": "address",
         "name": "quote",
         "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "isBaseLocal",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "isQuoteLocal",
+        "type": "bool"
       }
     ],
     "name": "NewMarket",

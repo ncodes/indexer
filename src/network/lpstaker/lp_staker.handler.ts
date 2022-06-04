@@ -17,40 +17,40 @@ export class LPStakerHandler extends Handler {
     this.on(
       this.contracts.lpStaker,
       'RewardWithdrawn',
-      (account: string, amount: BigNumber, event: Event) => {
-        this.onRewardWithdrawn(account, amount, event);
+      async (account: string, amount: BigNumber, event: Event) => {
+        return this.onRewardWithdrawn(account, amount, event);
       },
     );
 
     this.on(
       this.contracts.lpStaker,
       'RewardAdded',
-      (amount: BigNumber, event: Event) => {
-        this.onRewardAdded(amount, event);
+      async (amount: BigNumber, event: Event) => {
+        return this.onRewardAdded(amount, event);
       },
     );
 
     this.on(
       this.contracts.lpStaker,
       'Locked',
-      (account: string, amount: BigNumber, event: Event) => {
-        this.onLocked(account, amount, event);
+      async (account: string, amount: BigNumber, event: Event) => {
+        return this.onLocked(account, amount, event);
       },
     );
 
     this.on(
       this.contracts.lpStaker,
       'Unlocked',
-      (account: string, amount: BigNumber, event: Event) => {
-        this.onUnlocked(account, amount, event);
+      async (account: string, amount: BigNumber, event: Event) => {
+        return this.onUnlocked(account, amount, event);
       },
     );
 
     this.on(
       this.contracts.lpStaker,
       'Recovered',
-      (token: string, amount: BigNumber, event: Event) => {
-        this.onRecovered(token, amount, event);
+      async (token: string, amount: BigNumber, event: Event) => {
+        return this.onRecovered(token, amount, event);
       },
     );
   }

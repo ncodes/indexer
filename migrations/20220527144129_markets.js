@@ -13,8 +13,6 @@ exports.up = function (knex) {
       table.boolean('isQuoteLocal').defaultTo(false);
       table.string('pair');
       table.string('network');
-      table.integer('blockNumber');
-      table.string('blockHash');
       table.timestamp('createdAt');
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');

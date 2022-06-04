@@ -1,9 +1,9 @@
 import { Logger } from '@nestjs/common';
 import { BigNumber, Event, providers } from 'ethers';
-import { transaction } from 'objection';
+import { Transaction } from 'objection';
 import Liquidity from '../../models/liquidity';
+import MarketPrice from '../../models/market_price';
 import { Handler } from '../handler';
-import { ToDec } from './../../common/common';
 
 export class CoreHandler extends Handler {
   logger = new Logger(CoreHandler.name);
@@ -23,50 +23,55 @@ export class CoreHandler extends Handler {
     this.on(
       this.contracts.core,
       'SwapOrderPaid',
-      (id: string, orderId: BigNumber, paidAt: BigNumber, event: Event) => {
-        this.onSwapOrderPaid(id, orderId, paidAt, event);
+      async (
+        id: string,
+        orderId: BigNumber,
+        paidAt: BigNumber,
+        event: Event,
+      ) => {
+        return this.onSwapOrderPaid(id, orderId, paidAt, event);
       },
     );
 
     this.on(
       this.contracts.core,
       'RewardWithdrawn',
-      (claimer: string, amount: BigNumber, event: Event) => {
-        this.onRewardWithdrawn(claimer, amount, event);
+      async (claimer: string, amount: BigNumber, event: Event) => {
+        return this.onRewardWithdrawn(claimer, amount, event);
       },
     );
 
     this.on(
       this.contracts.core,
       'OrderCancelled',
-      (
+      async (
         orderId: BigNumber,
         canceller: string,
         byDispute: boolean,
         event: Event,
       ) => {
-        this.onOrderCancelled(orderId, canceller, byDispute, event);
+        return this.onOrderCancelled(orderId, canceller, byDispute, event);
       },
     );
 
     this.on(
       this.contracts.core,
       'SentFeeToFeeSharer',
-      (token: string, amount: BigNumber, event: Event) => {
-        this.onSentFeeToFeeSharer(token, amount, event);
+      async (token: string, amount: BigNumber, event: Event) => {
+        return this.onSentFeeToFeeSharer(token, amount, event);
       },
     );
 
     this.on(
       this.contracts.core,
       'ProtocolFeeUpdated',
-      (
+      async (
         instantSwapFee: BigNumber,
         p2pSwapFee: BigNumber,
         stableSwapFee: BigNumber,
         event: Event,
       ) => {
-        this.onProtocolFeeUpdated(
+        return this.onProtocolFeeUpdated(
           instantSwapFee,
           p2pSwapFee,
           stableSwapFee,
@@ -78,54 +83,104 @@ export class CoreHandler extends Handler {
     this.on(
       this.contracts.core,
       'UpdatedShareableAsset',
-      (assets: string[], deleted: boolean, event: Event) => {
-        this.onUpdatedShareableAsset(assets, deleted, event);
+      async (assets: string[], deleted: boolean, event: Event) => {
+        return this.onUpdatedShareableAsset(assets, deleted, event);
       },
     );
 
     this.on(
       this.contracts.core,
       'UpdatedLiquidity',
-      (
+      async (
         sender: string,
         marketId: string,
         deduction: boolean,
         amount: BigNumber,
+        price: BigNumber,
+        minSwap: BigNumber,
+        maxSwap: BigNumber,
+        timeToPay: BigNumber,
         event: Event,
+        txn: Transaction,
       ) => {
-        this.onUpdatedLiquidity(sender, marketId, deduction, amount, event);
+        return this.onUpdatedLiquidity(
+          sender,
+          marketId,
+          deduction,
+          amount,
+          price,
+          minSwap,
+          maxSwap,
+          timeToPay,
+          event,
+          txn,
+        );
       },
     );
 
     this.on(
       this.contracts.core,
       'UpdatedPrice',
-      (marketId: string, provider: string, manager: string, event: Event) => {
-        this.onUpdatedPrice(marketId, provider, manager, event);
+      async (
+        marketId: string,
+        provider: string,
+        manager: string,
+        price: BigNumber,
+        event: Event,
+        txn: Transaction,
+      ) => {
+        return this.onUpdatedPrice(
+          marketId,
+          provider,
+          manager,
+          price,
+          event,
+          txn,
+        );
       },
     );
 
     this.on(
       this.contracts.core,
       'TogglePause',
-      (marketId: string, provider: string, paused: boolean, event: Event) => {
-        this.onTogglePause(marketId, provider, paused, event);
+      async (
+        marketId: string,
+        provider: string,
+        paused: boolean,
+        event: Event,
+      ) => {
+        return this.onTogglePause(marketId, provider, paused, event);
       },
     );
 
     this.on(
       this.contracts.core,
       'SetLiquidityManager',
-      (marketId: string, provider: string, manager: string, event: Event) => {
-        this.onSetLiquidityManager(marketId, provider, manager, event);
+      async (
+        marketId: string,
+        provider: string,
+        manager: string,
+        event: Event,
+      ) => {
+        return this.onSetLiquidityManager(marketId, provider, manager, event);
       },
     );
 
     this.on(
       this.contracts.core,
       'RemoveLiquidityManager',
-      (marketId: string, provider: string, manager: string, event: Event) => {
-        this.onRemoveLiquidityManager(marketId, provider, manager, event);
+      async (
+        marketId: string,
+        provider: string,
+        manager: string,
+        event: Event,
+      ) => {
+        return this.onRemoveLiquidityManager(
+          marketId,
+          provider,
+          manager,
+          event,
+        );
       },
     );
   }
@@ -202,66 +257,82 @@ export class CoreHandler extends Handler {
 
   /**
    * Market liquidity was updated
-   * @param sender The liquidity owner address
+   * @param provider The liquidity owner address
    * @param marketId The market ID
    * @param deduction Indicates whether the update was a deduction or addition
    * @param amount The amount that was added or deducted
+   * @param price The latest price
+   * @param minSwap The latest minimum swap amount
+   * @param maxSwap The latest maximum swap amount
+   * @param timeToPay The number of seconds within which payment must be received
    * @param event The event object
    */
   async onUpdatedLiquidity(
-    sender: string,
+    provider: string,
     marketId: string,
     deduction: boolean,
     amount: BigNumber,
+    price: BigNumber,
+    minSwap: BigNumber,
+    maxSwap: BigNumber,
+    timeToPay: BigNumber,
     event: Event,
+    txn: Transaction,
   ) {
-    this.logger.log(`Liquidity Updated by account:${sender}`);
-    const liq = await this.contracts.core.getLiquidity(
-      Buffer.from(marketId.substring(2), 'hex'),
-      sender,
+    this.logger.log(`Liquidity Updated by account:${provider}`);
+
+    // Get existing liquidity by the provider
+    const dbLiq = await Liquidity.getLiquidity(
+      this.network,
+      marketId,
+      provider,
+      txn,
     );
 
-    return transaction(Liquidity, async (Liquidity) => {
-      const dbLiq = await Liquidity.getLiquidity(
-        this.network,
-        marketId,
-        sender,
-      );
-
-      if (!dbLiq) {
-        await Liquidity.create({
+    // Create the liquidity on database if not existing.
+    // Otherwise, update the existing liquidity.
+    if (!dbLiq) {
+      await Liquidity.create(
+        {
           network: this.network,
-          provider: sender,
+          provider,
           marketId,
           amount: amount.toString(),
-          price: liq.price.toString(),
-          minSwap: liq.minSwap.toString(),
-          maxSwap: liq.maxSwap.toString(),
-          timeToPay: liq.timeToPay.toNumber(),
-          openOrders: liq.openOrders.toNumber(),
-          paused: liq.paused,
-          blockNumber: event.blockNumber,
-          blockHash: event.blockHash,
-        });
-      } else {
-        const update = {
-          price: liq.price.toString(),
-          minSwap: liq.minSwap.toString(),
-          maxSwap: liq.maxSwap.toString(),
-          timeToPay: liq.timeToPay.toNumber(),
-          amount: '0',
-        };
-        if (!deduction) {
-          update.amount = ToDec(dbLiq.amount).add(amount.toString()).toFixed();
-          await Liquidity.updateById(dbLiq.id, update);
-        } else {
-          update.amount = ToDec(dbLiq.amount).sub(amount.toString()).toFixed();
-          await Liquidity.updateById(dbLiq.id, update);
-        }
-      }
+          price: price.toString(),
+          minSwap: minSwap.toString(),
+          maxSwap: maxSwap.toString(),
+          timeToPay: timeToPay.toNumber(),
+        },
+        txn,
+      );
+    } else {
+      await Liquidity.query()
+        .update({
+          price: price.toString(),
+          minSwap: minSwap.toString(),
+          maxSwap: maxSwap.toString(),
+          timeToPay: timeToPay.toNumber(),
+          amount: amount.toString(),
+        })
+        .where('id', dbLiq.id)
+        .catch(console.error);
+    }
 
-      return Promise.resolve();
-    });
+    // Add new market price entry
+    await MarketPrice.create(
+      {
+        network: this.network,
+        mid: marketId,
+        price: await Liquidity.getLowestPriceInMarket(
+          this.network,
+          marketId,
+          txn,
+        ),
+      },
+      txn,
+    );
+
+    return Promise.resolve();
   }
 
   /**
@@ -275,8 +346,37 @@ export class CoreHandler extends Handler {
     marketId: string,
     provider: string,
     manager: string,
+    price: BigNumber,
     event: Event,
-  ) {}
+    txn: Transaction,
+  ) {
+    // Get local liquidity
+    const dbLiq = await Liquidity.getLiquidity(
+      this.network,
+      marketId,
+      provider,
+      txn,
+    );
+    if (!dbLiq)
+      throw new Error('unexpected error: liquidity not found locally');
+
+    // Update liquidity price
+    await Liquidity.updateById(dbLiq.id, { price: price.toString() }, txn);
+
+    // Add new market price entry
+    await MarketPrice.create(
+      {
+        network: this.network,
+        mid: marketId,
+        price: await Liquidity.getLowestPriceInMarket(
+          this.network,
+          marketId,
+          txn,
+        ),
+      },
+      txn,
+    );
+  }
 
   /**
    * A liquidity pause status was updated

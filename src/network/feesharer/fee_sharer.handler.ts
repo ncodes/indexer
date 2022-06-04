@@ -17,24 +17,29 @@ export class FeeSharerHandler extends Handler {
     this.on(
       this.contracts.feeSharer,
       'RewardAdded',
-      (token: string, amount: BigNumber, event: Event) => {
-        this.onRewardAdded(token, amount, event);
+      async (token: string, amount: BigNumber, event: Event) => {
+        return this.onRewardAdded(token, amount, event);
       },
     );
 
     this.on(
       this.contracts.feeSharer,
       'RewardWithdrawn',
-      (token: string, account: string, amount: BigNumber, event: Event) => {
-        this.onRewardWithdrawn(token, account, amount, event);
+      async (
+        token: string,
+        account: string,
+        amount: BigNumber,
+        event: Event,
+      ) => {
+        return this.onRewardWithdrawn(token, account, amount, event);
       },
     );
 
     this.on(
       this.contracts.feeSharer,
       'Recovered',
-      (token: string, amount: BigNumber, event: Event) => {
-        this.onRecovered(token, amount, event);
+      async (token: string, amount: BigNumber, event: Event) => {
+        return this.onRecovered(token, amount, event);
       },
     );
   }

@@ -5,7 +5,7 @@ import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
 import { ok, throw401 } from '../../common/responses/responses';
 import { Roles } from '../../common/roles';
 import User from '../../models/user';
-import { ErrorTypes } from './../../common/responses/responses';
+import { ErrorTypes } from '../../common/responses/responses';
 import { AuthDTO } from './dto';
 import { checkSignature, makeSession } from './utils';
 

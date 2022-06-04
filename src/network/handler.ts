@@ -1,7 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { Contract, Event as Evt } from 'ethers';
 import { promise, queue } from 'fastq';
-import { transaction } from 'objection';
 import Event from '../models/events';
 
 type Task = {
@@ -16,19 +15,20 @@ type Task = {
  */
 export async function task(task: Task): Promise<void> {
   const logger = new Logger(Handler.name);
+  const txn = await Event.startTransaction();
   try {
-    await transaction(Event, async (Event) => {
-      const event: Evt = task.args[task.args.length - 1];
-      await Event.create({
-        network: this.network,
-        signature: event.eventSignature,
-        blockNumber: event.blockNumber,
-        txIndex: event.transactionIndex,
-        logIndex: event.logIndex,
-      });
-      await task.f(...task.args);
+    const event: Evt = task.args[task.args.length - 1];
+    await Event.bindTransaction(txn).create({
+      network: this.network,
+      signature: event.eventSignature,
+      blockNumber: event.blockNumber,
+      txIndex: event.transactionIndex,
+      logIndex: event.logIndex,
     });
+    await task.f(...task.args, txn);
+    await txn.commit();
   } catch (error) {
+    await txn.rollback();
     if (error.message.indexOf('duplicate key')) return Promise.resolve();
     logger.error(`Event Execution Error: ${error.message}`);
     return Promise.reject(error);
@@ -36,6 +36,7 @@ export async function task(task: Task): Promise<void> {
 }
 
 export class Handler {
+  logger = new Logger(Handler.name);
   private eventQueue: { [event: string]: queue<Task> } = {};
 
   /**
@@ -58,6 +59,7 @@ export class Handler {
 
     // Push new event to event queue
     contract.on(event, async (...args: any[]) => {
+      this.logger.debug(`Event:${event}: received and queued`);
       await this.eventQueue[event].push({ args, f });
     });
   }

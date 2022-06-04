@@ -17,53 +17,59 @@ export class DisputeManagerHandler extends Handler {
     this.on(
       this.contracts.disputeMgr,
       'DisputeCreated',
-      (
+      async (
         orderId: BigNumber,
         creator: string,
         disputeId: BigNumber,
         event: ethers.Event,
       ) => {
-        this.onDisputeCreated(orderId, creator, disputeId, event);
+        return this.onDisputeCreated(orderId, creator, disputeId, event);
       },
     );
 
     this.on(
       this.contracts.disputeMgr,
       'DraftedMediator',
-      (
+      async (
         orderId: BigNumber,
         mediator: string,
         ticketId: BigNumber,
         drafter: string,
         event: ethers.Event,
       ) => {
-        this.onDraftedMediator(orderId, mediator, ticketId, drafter, event);
+        return this.onDraftedMediator(
+          orderId,
+          mediator,
+          ticketId,
+          drafter,
+          event,
+        );
       },
     );
 
     this.on(
       this.contracts.disputeMgr,
       'Committed',
-      (
+      async (
         orderId: BigNumber,
         committer: string,
         hash: string,
         event: ethers.Event,
       ) => {
-        this.onCommitted(orderId, committer, hash, event);
+        return this.onCommitted(orderId, committer, hash, event);
       },
     );
 
     this.on(
       this.contracts.disputeMgr,
       'Revealed',
-      (
+      async (
         orderId: BigNumber,
         revealer: string,
         vote: string,
         event: ethers.Event,
       ) => {
-        this.onRevealed(orderId, revealer, vote, event);
+        return this.onRevealed(orderId, revealer, vote, event);
       },
     );
 
@@ -71,7 +77,7 @@ export class DisputeManagerHandler extends Handler {
       this.contracts.disputeMgr,
       'WithdrawnReward',
       (claimer: string, amount: BigNumber, event: ethers.Event) => {
-        this.onWithdrawnReward(claimer, amount, event);
+        return this.onWithdrawnReward(claimer, amount, event);
       },
     );
 
@@ -84,7 +90,7 @@ export class DisputeManagerHandler extends Handler {
         ticketId: BigNumber,
         event: ethers.Event,
       ) => {
-        this.onDrafted(marketId, owner, ticketId, event);
+        return this.onDrafted(marketId, owner, ticketId, event);
       },
     );
 
@@ -97,14 +103,14 @@ export class DisputeManagerHandler extends Handler {
         ticketId: BigNumber,
         event: ethers.Event,
       ) => {
-        this.onUndrafted(marketId, owner, ticketId, event);
+        return this.onUndrafted(marketId, owner, ticketId, event);
       },
     );
 
     this.on(
       this.contracts.disputeMgr,
       'DecisionExecuted',
-      (
+      async (
         orderId: BigNumber,
         executor: string,
         alreadyReleased: boolean,
@@ -112,7 +118,7 @@ export class DisputeManagerHandler extends Handler {
         execReward: BigNumber,
         event: ethers.Event,
       ) => {
-        this.onDecisionExecuted(
+        return this.onDecisionExecuted(
           orderId,
           executor,
           alreadyReleased,

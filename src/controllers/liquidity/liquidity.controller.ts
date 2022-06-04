@@ -4,22 +4,21 @@ import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import Liquidity from '../../models/liquidity';
 import { isValidNetwork } from '../../network/common';
-import NetworkService from '../../network/network.service';
-import { PriceService } from '../../services/price.service';
-import { MarketsService } from '../markets/markets.service';
+import { LiquidityService } from './liquidity.service';
 
 @Controller('v1/liquidities')
+@UseGuards(BeAuthenticatedGuard)
+@UseGuards(HasKeyGuard)
 export class LiquidityController {
-  constructor(
-    private netSrv: NetworkService,
-    private markerSrv: MarketsService,
-    private priceSrv: PriceService,
-  ) {}
+  constructor(private liqSrv: LiquidityService) {}
 
   /**
    * Get liquidity belonging to an address in a market
    * @param network The network where it exists
+   * @param mid The market ID
    * @param provider The address if the liquidity owner
+   * @param noMerge Indicates whether to merge DB liquidity info with
+   * contract liquidity info
    * @returns
    */
   @Get(':net/:mid/:provider')
@@ -27,10 +26,12 @@ export class LiquidityController {
     @Param('net') network,
     @Param('mid') mid: string,
     @Param('provider') provider: string,
+    @Query('noMerge') noMerge: boolean,
   ) {
     if (!isValidNetwork(network)) throw404('unknown network');
     const liq = await Liquidity.getLiquidity(network, mid, provider);
     if (!liq) throw404('liquidity not found');
+    await this.liqSrv.extendLiquidity(liq, noMerge);
     return ok().data(liq).build();
   }
 
@@ -39,38 +40,46 @@ export class LiquidityController {
    * @param network The network name.
    * @param mid The market ID
    * @param provider The provider address (optional)
+   * @param noMerge Indicates whether to merge DB liquidity info with
+   * contract liquidity info
    * @returns
    */
-  @UseGuards(BeAuthenticatedGuard)
-  @UseGuards(HasKeyGuard)
   @Get(':net/:mid')
   async listByMarket(
     @Param('net') network,
     @Param('mid') mid: string,
     @Query('provider') provider: string,
+    @Query('noMerge') noMerge: boolean,
   ) {
     const liquidities = await Liquidity.getMarketLiquidities(
       network,
       mid,
       provider,
     );
+    for (const liquidity of liquidities) {
+      await this.liqSrv.extendLiquidity(liquidity, noMerge);
+    }
     return ok().data(liquidities).build();
   }
 
   /**
-   * List liquidities in a network
+   * List liquidities belonging to a provider in a network
    * @param network The network name.
    * @param provider The provider address (optional)
+   * @param noMerge Indicates whether to merge DB liquidity info with
+   * contract liquidity info
    * @returns
    */
-  @UseGuards(BeAuthenticatedGuard)
-  @UseGuards(HasKeyGuard)
   @Get(':net')
   async listByProvider(
     @Param('net') network,
     @Query('provider') provider: string,
+    @Query('noMerge') noMerge: boolean,
   ) {
     const liquidities = await Liquidity.getLiquidities(network, provider);
+    for (const liquidity of liquidities) {
+      await this.liqSrv.extendLiquidity(liquidity, noMerge);
+    }
     return ok().data(liquidities).build();
   }
 }

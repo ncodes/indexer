@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { WatcherService as NetworkService } from './network.service';
+import NetworkService from './network.service';
 
 describe('NetworkService', () => {
   let service: NetworkService;

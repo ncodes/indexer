@@ -1,4 +1,5 @@
 import User from '../src/models/user';
+import { BigNumber, Contract } from 'ethers';
 
 declare global {
   namespace Express {
@@ -33,7 +34,7 @@ declare global {
 
   interface ContractMarket {
     creator: string;
-    createdAt: number;
+    createdAt: BigNumber;
     baseAsset: {
       addr: string;
       isLocal: boolean;
@@ -42,13 +43,23 @@ declare global {
       addr: string;
       isLocal: boolean;
     };
-    numOrders: number;
-    numDisputes: number;
+    numOrders: BigNumber;
+    numDisputes: BigNumber;
     permPut: boolean;
     permSwap: boolean;
     permMediate: boolean;
-    commission: number;
-    numMediators: number;
-    mediatorBond: number;
+    commission: BigNumber;
+    numMediators: BigNumber;
+    mediatorBond: BigNumber;
+  }
+
+  interface ContractLiquidity {
+    amount: BigNumber;
+    price: BigNumber;
+    minSwap: BigNumber;
+    maxSwap: BigNumber;
+    timeToPay: BigNumber;
+    openOrders: BigNumber;
+    paused: boolean;
   }
 }

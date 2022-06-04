@@ -1,5 +1,5 @@
 import * as crand from 'crypto-random-string';
-import Objection, { QueryBuilderType } from 'objection';
+import Objection, { QueryBuilderType, Transaction } from 'objection';
 import { BaseModel } from './base';
 
 /**
@@ -26,10 +26,6 @@ export default class Market extends BaseModel {
   isQuoteLocal: boolean;
   // The base/asset pair name
   pair: string;
-  // The block number where the market it was created
-  blockNumber: number;
-  // The block hash where the market was created
-  blockHash: string;
 
   // *** Non-persisted fields **//
   mediatorBond: string;
@@ -42,6 +38,10 @@ export default class Market extends BaseModel {
   numMediators: number;
   baseLogo: string;
   quoteLogo: string;
+  numLiquidityProviders: string;
+  totalLiquidity: string;
+  lowestPrice: string;
+  highestPrice: string;
 
   constructor(init?: Partial<Market>) {
     super();
@@ -68,38 +68,59 @@ export default class Market extends BaseModel {
   }
 
   /**
-   * create creates a record
+   * create a record
    * @param data The transfer info
+   * @param txn Optional transaction object
    */
-  static create(data: Partial<Market>): Promise<Market> {
+  static create(data: Partial<Market>, txn?: Transaction): Promise<Market> {
     return new Promise((resolve, reject) => {
-      return this.query().insert(data).then(resolve).catch(reject);
+      return this.query(txn).insert(data).then(resolve).catch(reject);
     });
   }
 
   /**
    * getById finds a record by Id
    * @param id The record id
+   * @param txn Optional transaction object
    */
-  static getById(id: string): Promise<Market> {
-    return this.query().whereNotDeleted().findById(id);
+  static getById(id: string, txn?: Transaction): Promise<Market> {
+    return this.query(txn).whereNotDeleted().findById(id);
   }
 
   /**
    * getByMarketId finds a market by market ID
    * @param id The record id
+   * @param txn Optional transaction object
    */
-  static getByMarketId(id: string): Promise<Market> {
-    return this.query().whereNotDeleted().where({ mid: id }).first();
+  static getByMarketId(id: string, txn?: Transaction): Promise<Market> {
+    return this.query(txn).whereNotDeleted().where({ mid: id }).first();
   }
 
   /**
-   * find finds a record
-   * @param q the query parameter
+   * getMarket finds a market associated with a network
+   * @param network The network name
+   * @param marketId The record id
+   * @param txn Optional transaction object
    */
-  static find(q: Partial<Market>): Promise<Market> {
+  static getMarket(
+    network: string,
+    marketId: string,
+    txn?: Transaction,
+  ): Promise<Market> {
+    return this.query(txn)
+      .whereNotDeleted()
+      .where({ network, mid: marketId })
+      .first();
+  }
+
+  /**
+   * find a record
+   * @param q the query parameter
+   * @param txn Optional transaction object
+   */
+  static find(q: Partial<Market>, txn?: Transaction): Promise<Market> {
     return new Promise((resolve, reject) => {
-      this.query()
+      this.query(txn)
         .where(q)
         .whereNotDeleted()
         .first()
@@ -132,19 +153,20 @@ export default class Market extends BaseModel {
    * findAll finds all records
    * @param q the query parameter
    */
-  static findAll(q: Partial<Market>): Promise<Market[]> {
+  static findAll(q: Partial<Market>, txn?: Transaction): Promise<Market[]> {
     return new Promise((resolve, reject) => {
-      this.query().where(q).whereNotDeleted().then(resolve).catch(reject);
+      this.query(txn).where(q).whereNotDeleted().then(resolve).catch(reject);
     });
   }
 
   /**
    * count returns the count of record matching q
    * @param q the query parameter
+   * @param txn Optional transaction object
    */
-  static count(q: Partial<Market>) {
+  static count(q: Partial<Market>, txn?: Transaction) {
     return new Promise<string>((resolve, reject) => {
-      this.query()
+      this.query(txn)
         .where(q)
         .count('id')
         .whereNotDeleted()
@@ -160,10 +182,15 @@ export default class Market extends BaseModel {
    * updateById updates a record by ID
    * @param id the record id
    * @param udp the fields to be updated
+   * @param txn Optional transaction object
    */
-  static updateById(id: string, udp: Partial<Market>): Promise<Market> {
+  static updateById(
+    id: string,
+    udp: Partial<Market>,
+    txn?: Transaction,
+  ): Promise<Market> {
     return new Promise((resolve, reject) => {
-      this.query()
+      this.query(txn)
         .whereNotDeleted()
         .patchAndFetchById(id, udp)
         .execute()

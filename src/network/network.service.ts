@@ -54,6 +54,15 @@ export default class NetworkService {
   }
 
   /**
+   * Get market core contract
+   * @param network The network name
+   * @returns
+   */
+  getCore(network: string) {
+    return this.getContracts(network).core;
+  }
+
+  /**
    * Connect and watch contracts on the Ethereum mainnet.
    * @param network The name of the network
    */
@@ -61,7 +70,6 @@ export default class NetworkService {
     const provider = new providers.JsonRpcProvider(
       this.cfgSrv.get(`app.networks.${network}.rpcUrl`),
     );
-    await provider.resetEventsBlock(1);
 
     this.contracts[network] = {};
 

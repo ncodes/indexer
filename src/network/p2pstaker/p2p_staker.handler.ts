@@ -17,40 +17,40 @@ export class P2PStakerHandler extends Handler {
     this.on(
       this.contracts.p2pStaker,
       'Staked',
-      (account: string, amount: BigNumber, event: Event) => {
-        this.onStaked(account, amount, event);
+      async (account: string, amount: BigNumber, event: Event) => {
+        return this.onStaked(account, amount, event);
       },
     );
 
     this.on(
       this.contracts.p2pStaker,
       'VestStaked',
-      (account: string, amount: BigNumber, event: Event) => {
-        this.onVestStaked(account, amount, event);
+      async (account: string, amount: BigNumber, event: Event) => {
+        return this.onVestStaked(account, amount, event);
       },
     );
 
     this.on(
       this.contracts.p2pStaker,
       'StakeWithdrawn',
-      (account: string, amount: BigNumber, event: Event) => {
-        this.onStakeWithdrawn(account, amount, event);
+      async (account: string, amount: BigNumber, event: Event) => {
+        return this.onStakeWithdrawn(account, amount, event);
       },
     );
 
     this.on(
       this.contracts.p2pStaker,
       'RewardWithdrawn',
-      (account: string, amount: BigNumber, event: Event) => {
-        this.onRewardWithdrawn(account, amount, event);
+      async (account: string, amount: BigNumber, event: Event) => {
+        return this.onRewardWithdrawn(account, amount, event);
       },
     );
 
     this.on(
       this.contracts.p2pStaker,
       'Recovered',
-      (token: string, amount: BigNumber, event: Event) => {
-        this.onRecovered(token, amount, event);
+      async (token: string, amount: BigNumber, event: Event) => {
+        return this.onRecovered(token, amount, event);
       },
     );
   }

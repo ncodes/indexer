@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { Contract, Event, providers } from 'ethers';
+import { Transaction } from 'objection';
 import * as erc20ABI from '../../../abi/erc20.json';
 import Market from '../../models/market';
 import { Handler } from '../handler';
@@ -26,128 +27,140 @@ export class MarketCoreHandler extends Handler {
         owner: string,
         base: string,
         quote: string,
+        isBaseLocal: boolean,
+        isQuoteLocal: boolean,
         event: Event,
+        txn: Transaction,
       ) => {
-        this.onNewMarket(id, owner, base, quote, event);
+        return this.onNewMarket(
+          id,
+          owner,
+          base,
+          quote,
+          isBaseLocal,
+          isQuoteLocal,
+          event,
+          txn,
+        );
       },
     );
 
     this.on(
       this.contracts.marketCore,
       'AllowedPut',
-      (id: string, address: string, event: Event) => {
-        this.onMarketPutAllowed(id, address, event);
+      async (id: string, address: string, event: Event) => {
+        return this.onMarketPutAllowed(id, address, event);
       },
     );
 
     this.on(
       this.contracts.marketCore,
       'RevokedPut',
-      (id: string, address: string, event: Event) => {
-        this.onMarketPutRevoked(id, address, event);
+      async (id: string, address: string, event: Event) => {
+        return this.onMarketPutRevoked(id, address, event);
       },
     );
 
     this.on(
       this.contracts.marketCore,
       'InvitedMediator',
-      (id: string, address: string, event: Event) => {
-        this.onInvitedMediator(id, address, event);
+      async (id: string, address: string, event: Event) => {
+        return this.onInvitedMediator(id, address, event);
       },
     );
 
     this.on(
       this.contracts.marketCore,
       'UnInvitedMediator',
-      (id: string, address: string, event: Event) => {
-        this.onUnInvitedMediator(id, address, event);
+      async (id: string, address: string, event: Event) => {
+        return this.onUnInvitedMediator(id, address, event);
       },
     );
 
     this.on(
       this.contracts.marketCore,
       'AcceptedMediatorInvite',
-      (id: string, address: string, event: Event) => {
-        this.onAcceptedMediatorInvite(id, address, event);
+      async (id: string, address: string, event: Event) => {
+        return this.onAcceptedMediatorInvite(id, address, event);
       },
     );
 
     this.on(
       this.contracts.marketCore,
       'RevokedMediator',
-      (id: string, address: string, event: Event) => {
-        this.onRevokedMediator(id, address, event);
+      async (id: string, address: string, event: Event) => {
+        return this.onRevokedMediator(id, address, event);
       },
     );
 
     this.on(
       this.contracts.marketCore,
       'AllowedSwap',
-      (id: string, address: string, event: Event) => {
-        this.onAllowedSwap(id, address, event);
+      async (id: string, address: string, event: Event) => {
+        return this.onAllowedSwap(id, address, event);
       },
     );
 
     this.on(
       this.contracts.marketCore,
       'RevokedSwap',
-      (id: string, address: string, event: Event) => {
-        this.onRevokedSwap(id, address, event);
+      async (id: string, address: string, event: Event) => {
+        return this.onRevokedSwap(id, address, event);
       },
     );
 
     this.on(
       this.contracts.marketCore,
       'SetPutPerm',
-      (id: string, enabled: boolean, event: Event) => {
-        this.onSetPutPerm(id, enabled, event);
+      async (id: string, enabled: boolean, event: Event) => {
+        return this.onSetPutPerm(id, enabled, event);
       },
     );
 
     this.on(
       this.contracts.marketCore,
       'SetSwapPerm',
-      (id: string, enabled: boolean, event: Event) => {
-        this.onSetSwapPerm(id, enabled, event);
+      async (id: string, enabled: boolean, event: Event) => {
+        return this.onSetSwapPerm(id, enabled, event);
       },
     );
 
     this.on(
       this.contracts.marketCore,
       'SetMediatorPerm',
-      (id: string, enabled: boolean, event: Event) => {
-        this.onSetMediatorPerm(id, enabled, event);
+      async (id: string, enabled: boolean, event: Event) => {
+        return this.onSetMediatorPerm(id, enabled, event);
       },
     );
 
     this.on(
       this.contracts.marketCore,
       'SetCommission',
-      (id: string, value: string, event: Event) => {
-        this.onSetCommission(id, value, event);
+      async (id: string, value: string, event: Event) => {
+        return this.onSetCommission(id, value, event);
       },
     );
 
     this.on(
       this.contracts.marketCore,
       'SetMinMediatorBond',
-      (id: string, value: string, event: Event) => {
-        this.onSetMinMediatorBond(id, value, event);
+      async (id: string, value: string, event: Event) => {
+        return this.onSetMinMediatorBond(id, value, event);
       },
     );
 
     this.on(
       this.contracts.marketCore,
       'SetLiquidityManager',
-      (id: string, provider: string, manager: string, event: Event) => {
-        this.onSetLiquidityManager(id, provider, manager, event);
+      async (id: string, provider: string, manager: string, event: Event) => {
+        return this.onSetLiquidityManager(id, provider, manager, event);
       },
     );
 
     this.contracts.marketCore.on(
       'RemoveLiquidityManager',
-      (id: string, provider: string, manager: string, event: Event) => {
-        this.onRemoveLiquidityManager(id, provider, manager, event);
+      async (id: string, provider: string, manager: string, event: Event) => {
+        return this.onRemoveLiquidityManager(id, provider, manager, event);
       },
     );
   }
@@ -158,6 +171,8 @@ export class MarketCoreHandler extends Handler {
    * @param owner The address of the market creator
    * @param baseAsset The base asset of the market
    * @param quoteAsset The quote asset of the market
+   * @param isBaseLocal Indicates whether the base asset is local
+   * @param isQuoteLocal Indicates whether the quote asset is local
    * @param event The event object
    */
   async onNewMarket(
@@ -165,7 +180,10 @@ export class MarketCoreHandler extends Handler {
     owner: string,
     baseAsset: string,
     quoteAsset: string,
+    isBaseLocal: boolean,
+    isQuoteLocal: boolean,
     event: Event,
+    txn: Transaction,
   ) {
     this.logger.log(`New Market (${id}) by account:${owner}`);
     const baseToken = new Contract(baseAsset, erc20ABI, this.provider);
@@ -177,20 +195,21 @@ export class MarketCoreHandler extends Handler {
     const base = (await baseToken.symbol()).toUpperCase();
     const quote = (await quoteToken.symbol()).toUpperCase();
 
-    await Market.create({
-      mid: id,
-      creator: owner,
-      base,
-      baseAddress: baseAsset,
-      isBaseLocal: market.base.isLocal,
-      quote,
-      quoteAddress: quoteAsset,
-      isQuoteLocal: market.quote.isLocal,
-      pair: `${base}${quote}`,
-      network: this.network,
-      blockNumber: event.blockNumber,
-      blockHash: event.blockHash,
-    });
+    await Market.create(
+      {
+        mid: id,
+        creator: owner,
+        base,
+        baseAddress: baseAsset,
+        isBaseLocal: market.base.isLocal,
+        quote,
+        quoteAddress: quoteAsset,
+        isQuoteLocal: market.quote.isLocal,
+        pair: `${base}${quote}`,
+        network: this.network,
+      },
+      txn,
+    );
   }
 
   /**
@@ -198,7 +217,7 @@ export class MarketCoreHandler extends Handler {
    * @param id The market ID
    * @param address The address approved
    */
-  onMarketPutAllowed(id: string, address: string, event: Event) {
+  async onMarketPutAllowed(id: string, address: string, event: Event) {
     //
   }
 
@@ -207,7 +226,7 @@ export class MarketCoreHandler extends Handler {
    * @param id The market ID
    * @param address The address approved
    */
-  onMarketPutRevoked(id: string, address: string, event: Event) {
+  async onMarketPutRevoked(id: string, address: string, event: Event) {
     //
   }
 
@@ -216,7 +235,7 @@ export class MarketCoreHandler extends Handler {
    * @param id The market ID
    * @param address The address of the invited mediator
    */
-  onInvitedMediator(id: string, address: string, event: Event) {
+  async onInvitedMediator(id: string, address: string, event: Event) {
     //
   }
 
@@ -225,7 +244,7 @@ export class MarketCoreHandler extends Handler {
    * @param id The market ID
    * @param address The address of the uninvited mediator
    */
-  onUnInvitedMediator(id: string, address: string, event: Event) {
+  async onUnInvitedMediator(id: string, address: string, event: Event) {
     //
   }
 
@@ -234,7 +253,7 @@ export class MarketCoreHandler extends Handler {
    * @param id The market ID
    * @param address The address of the uninvited mediator
    */
-  onAcceptedMediatorInvite(id: string, address: string, event: Event) {
+  async onAcceptedMediatorInvite(id: string, address: string, event: Event) {
     //
   }
 
@@ -243,7 +262,7 @@ export class MarketCoreHandler extends Handler {
    * @param id The market ID
    * @param address The address of the revoked mediator
    */
-  onRevokedMediator(id: string, address: string, event: Event) {
+  async onRevokedMediator(id: string, address: string, event: Event) {
     //
   }
 
@@ -252,7 +271,7 @@ export class MarketCoreHandler extends Handler {
    * @param id The market ID
    * @param address The address of that was approved
    */
-  onAllowedSwap(id: string, address: string, event: Event) {
+  async onAllowedSwap(id: string, address: string, event: Event) {
     //
   }
 
@@ -261,7 +280,7 @@ export class MarketCoreHandler extends Handler {
    * @param id The market ID
    * @param address The address that was revoked
    */
-  onRevokedSwap(id: string, address: string, event: Event) {
+  async onRevokedSwap(id: string, address: string, event: Event) {
     //
   }
 
@@ -270,7 +289,7 @@ export class MarketCoreHandler extends Handler {
    * @param id The market ID
    * @param enabled The new state
    */
-  onSetPutPerm(id: string, enabled: boolean, event: Event) {
+  async onSetPutPerm(id: string, enabled: boolean, event: Event) {
     //
   }
 
@@ -279,7 +298,7 @@ export class MarketCoreHandler extends Handler {
    * @param id The market ID
    * @param enabled The new state
    */
-  onSetSwapPerm(id: string, enabled: boolean, event: Event) {
+  async onSetSwapPerm(id: string, enabled: boolean, event: Event) {
     //
   }
 
@@ -288,7 +307,7 @@ export class MarketCoreHandler extends Handler {
    * @param id The market ID
    * @param enabled The new state
    */
-  onSetMediatorPerm(id: string, enabled: boolean, event: Event) {
+  async onSetMediatorPerm(id: string, enabled: boolean, event: Event) {
     //
   }
 
@@ -297,7 +316,7 @@ export class MarketCoreHandler extends Handler {
    * @param id The market ID
    * @param value The updated value
    */
-  onSetCommission(id: string, value: string, event: Event) {
+  async onSetCommission(id: string, value: string, event: Event) {
     //
   }
 
@@ -306,7 +325,7 @@ export class MarketCoreHandler extends Handler {
    * @param id The market ID
    * @param value The updated value
    */
-  onSetMinMediatorBond(id: string, value: string, event: Event) {
+  async onSetMinMediatorBond(id: string, value: string, event: Event) {
     //
   }
 
@@ -316,7 +335,7 @@ export class MarketCoreHandler extends Handler {
    * @param provider The liquidity provider's address
    * @param manager The liquidity manager's address
    */
-  onSetLiquidityManager(
+  async onSetLiquidityManager(
     id: string,
     provider: string,
     manager: string,
@@ -331,7 +350,7 @@ export class MarketCoreHandler extends Handler {
    * @param provider The liquidity provider's address
    * @param manager The liquidity manager's address
    */
-  onRemoveLiquidityManager(
+  async onRemoveLiquidityManager(
     id: string,
     provider: string,
     manager: string,

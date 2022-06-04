@@ -1,6 +1,7 @@
 import * as crand from 'crypto-random-string';
-import Objection from 'objection';
+import Objection, { raw, Transaction } from 'objection';
 import { BaseModel } from './base';
+import Market from './market';
 
 /**
  * Liquidity represents a liquidity model
@@ -22,14 +23,9 @@ export default class Liquidity extends BaseModel {
   maxSwap: string;
   // The time required for taker to make payment
   timeToPay: number;
-  // The number of open orders
-  openOrders: number;
-  // Indicates whether the liquidity has been paused
-  paused: boolean;
-  // The block number where the market it was created
-  blockNumber: number;
-  // The block hash where the market was created
-  blockHash: string;
+
+  /** Not Persisted */
+  market: Market;
 
   constructor(init?: Partial<Liquidity>) {
     super();
@@ -58,19 +54,24 @@ export default class Liquidity extends BaseModel {
   /**
    * create creates a record
    * @param data The transfer info
+   * @param txn Optional transaction object
    */
-  static create(data: Partial<Liquidity>): Promise<Liquidity> {
+  static create(
+    data: Partial<Liquidity>,
+    txn?: Transaction,
+  ): Promise<Liquidity> {
     return new Promise((resolve, reject) => {
-      return this.query().insert(data).then(resolve).catch(reject);
+      return this.query(txn).insert(data).then(resolve).catch(reject);
     });
   }
 
   /**
    * getById finds a record by Id
    * @param id The record id
+   * @param txn Optional transaction object
    */
-  static getById(id: string): Promise<Liquidity> {
-    return this.query().whereNotDeleted().findById(id);
+  static getById(id: string, txn?: Transaction): Promise<Liquidity> {
+    return this.query(txn).whereNotDeleted().findById(id);
   }
 
   /**
@@ -78,13 +79,15 @@ export default class Liquidity extends BaseModel {
    * @param network The network name
    * @param mid The market ID
    * @param provider The provider address
+   * @param txn Optional transaction object
    */
   static getLiquidity(
     network: string,
     mid: string,
-    provider: string,
+    provider?: string,
+    txn?: Transaction,
   ): Promise<Liquidity> {
-    return this.query()
+    return this.query(txn)
       .whereNotDeleted()
       .where({ network })
       .where('marketId', 'ILIKE', mid)
@@ -97,13 +100,15 @@ export default class Liquidity extends BaseModel {
    * @param network The network name
    * @param mid The market ID
    * @param provider Filter by provider address (optional)
+   * @param txn Optional transaction object
    */
   static getMarketLiquidities(
     network: string,
     mid: string,
-    provider: string,
+    provider?: string,
+    txn?: Transaction,
   ): Promise<Liquidity[]> {
-    let q = this.query()
+    let q = this.query(txn)
       .whereNotDeleted()
       .where({ network })
       .where('marketId', 'ILIKE', mid);
@@ -115,12 +120,14 @@ export default class Liquidity extends BaseModel {
    * getLiquidity finds a liquidity
    * @param network The network name
    * @param provider Filter by provider address (optional)
+   * @param txn Optional transaction object
    */
   static getLiquidities(
     network: string,
-    provider: string,
+    provider?: string,
+    txn?: Transaction,
   ): Promise<Liquidity[]> {
-    let q = this.query().whereNotDeleted().where({ network });
+    let q = this.query(txn).whereNotDeleted().where({ network });
     if (provider) q = q.where('provider', 'ILIKE', provider);
     return q;
   }
@@ -128,10 +135,11 @@ export default class Liquidity extends BaseModel {
   /**
    * find finds a record
    * @param q the query parameter
+   * @param txn Optional transaction object
    */
-  static find(q: Partial<Liquidity>): Promise<Liquidity> {
+  static find(q: Partial<Liquidity>, txn?: Transaction): Promise<Liquidity> {
     return new Promise((resolve, reject) => {
-      this.query()
+      this.query(txn)
         .where(q)
         .whereNotDeleted()
         .first()
@@ -143,20 +151,25 @@ export default class Liquidity extends BaseModel {
   /**
    * findAll finds all records
    * @param q the query parameter
+   * @param txn Optional transaction object
    */
-  static findAll(q: Partial<Liquidity>): Promise<Liquidity[]> {
+  static findAll(
+    q: Partial<Liquidity>,
+    txn?: Transaction,
+  ): Promise<Liquidity[]> {
     return new Promise((resolve, reject) => {
-      this.query().where(q).whereNotDeleted().then(resolve).catch(reject);
+      this.query(txn).where(q).whereNotDeleted().then(resolve).catch(reject);
     });
   }
 
   /**
    * count returns the count of record matching q
    * @param q the query parameter
+   * @param txn Optional transaction object
    */
-  static count(q: Partial<Liquidity>) {
+  static count(q: Partial<Liquidity>, txn?: Transaction) {
     return new Promise<string>((resolve, reject) => {
-      this.query()
+      this.query(txn)
         .where(q)
         .count('id')
         .whereNotDeleted()
@@ -172,14 +185,109 @@ export default class Liquidity extends BaseModel {
    * updateById updates a record by ID
    * @param id the record id
    * @param udp the fields to be updated
+   * @param txn Optional transaction object
    */
-  static updateById(id: string, udp: Partial<Liquidity>): Promise<Liquidity> {
+  static updateById(
+    id: string,
+    udp: Partial<Liquidity>,
+    txn?: Transaction,
+  ): Promise<Liquidity> {
     return new Promise((resolve, reject) => {
-      this.query()
+      this.query(txn)
         .whereNotDeleted()
         .patchAndFetchById(id, udp)
-        .execute()
         .then(resolve)
+        .catch(reject);
+    });
+  }
+
+  /**
+   * Count number of non-zero liquidity providers associated with a market
+   * @param net The network name
+   * @param mid The market ID
+   * @param txn Optional transaction object
+   * @returns
+   */
+  static countProvidersInMarket(net: string, mid: string, txn?: Transaction) {
+    return new Promise<string>((resolve, reject) => {
+      this.query(txn)
+        .where('marketId', 'ILIKE', mid)
+        .where('amount', '>', 0)
+        .where({ network: net })
+        .count('id')
+        .whereNotDeleted()
+        .first()
+        .then((res: any) => {
+          return resolve(res.count);
+        })
+        .catch(reject);
+    });
+  }
+
+  /**
+   * Get lowest liquidity price of all liquidity associated with a market
+   * @param net The network name
+   * @param mid The market ID
+   * @param txn Optional transaction object
+   * @returns
+   */
+  static getLowestPriceInMarket(net: string, mid: string, txn?: Transaction) {
+    return new Promise<string>((resolve, reject) => {
+      this.query(txn)
+        .where('marketId', 'ILIKE', mid)
+        .where({ network: net })
+        .where('amount', '>', 0)
+        .orderByRaw('cast(price as numeric) asc')
+        .whereNotDeleted()
+        .first()
+        .then((liq) => {
+          return resolve(liq.price);
+        })
+        .catch(reject);
+    });
+  }
+
+  /**
+   * Get highest liquidity price of all liquidity associated with a market
+   * @param net The network name
+   * @param mid The market ID
+   * @param txn Optional transaction object
+   * @returns
+   */
+  static getHighestPriceInMarket(net: string, mid: string, txn?: Transaction) {
+    return new Promise<string>((resolve, reject) => {
+      this.query(txn)
+        .where('marketId', 'ILIKE', mid)
+        .where({ network: net })
+        .where('amount', '>', 0)
+        .orderByRaw('cast(price as numeric) desc')
+        .whereNotDeleted()
+        .first()
+        .then((liq) => {
+          return resolve(liq.price);
+        })
+        .catch(reject);
+    });
+  }
+
+  /**
+   * Get the total amount of liquidity associated with a market
+   * @param net The network name
+   * @param mid The market ID
+   * @param txn Optional transaction object
+   * @returns
+   */
+  static getTotalMarketLiquidity(net: string, mid: string, txn?: Transaction) {
+    return new Promise<string>((resolve, reject) => {
+      this.query(txn)
+        .select(raw('sum(cast(?? as numeric))', 'amount').as('total'))
+        .where('marketId', 'ILIKE', mid)
+        .where('amount', '>', 0)
+        .where({ network: net })
+        .whereNotDeleted()
+        .then((res: any) => {
+          return resolve(res[0].total || '0');
+        })
         .catch(reject);
     });
   }

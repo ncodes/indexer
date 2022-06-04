@@ -1,5 +1,5 @@
 import * as crand from 'crypto-random-string';
-import Objection from 'objection';
+import Objection, { Transaction } from 'objection';
 import { BaseModel } from './base';
 
 /**
@@ -39,25 +39,31 @@ export default class Event extends BaseModel {
   /**
    * create creates a record
    * @param data The transfer info
+   * @param txn Optional transaction object
    */
-  static create(data: Partial<Event>): Promise<Event> {
+  static create(data: Partial<Event>, txn?: Transaction): Promise<Event> {
     return new Promise((resolve, reject) => {
-      return this.query().insert(data).then(resolve).catch(reject);
+      return this.query(txn).insert(data).then(resolve).catch(reject);
     });
   }
 
   /**
-   * create creates a record
-   * @param data The transfer info
+   * create a record
+   * @param signature The event signature
+   * @param blockNumber The event block number
+   * @param txIndex The transaction index o
+   * @param logIndex The log index
+   * @param txn Optional transaction object
    */
   static async exists(
     signature: string,
     blockNumber: number,
     txIndex: number,
     logIndex: number,
+    txn?: Transaction,
   ): Promise<boolean> {
     try {
-      const event = await this.query()
+      const event = await this.query(txn)
         .where({ signature, blockNumber, txIndex, logIndex })
         .whereNotDeleted()
         .first();

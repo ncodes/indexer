@@ -12,26 +12,24 @@ import { HasKeyGuard } from '../../guards/has_token.guard';
 import Market from '../../models/market';
 import { isValidNetwork } from '../../network/common';
 import NetworkService from '../../network/network.service';
-import { MetadataService } from './../../services/metadata.service';
-import { PriceService } from './../../services/price.service';
 import { MarketsService } from './markets.service';
 
 @Controller('v1/markets')
+@UseGuards(BeAuthenticatedGuard)
+@UseGuards(HasKeyGuard)
 export class MarketsController {
   private logger = new Logger(MarketsController.name);
 
   constructor(
     private netSrv: NetworkService,
     private markerSrv: MarketsService,
-    private priceSrv: PriceService,
-    private metadataSrv: MetadataService,
   ) {}
 
   /**
    * Get a market
    * @param network The network where it exists
    * @param mid The market ID
-   * @param noUnify Indicates that market from DB should not be merged with
+   * @param noMerge Indicates that market from DB should not be merged with
    * market from contract.
    * @returns
    */
@@ -39,28 +37,14 @@ export class MarketsController {
   async get(
     @Param('net') network,
     @Param('mid') mid: string,
-    @Query('noUnify') noUnify: boolean,
+    @Query('noMerge') noMerge: boolean,
   ) {
     if (!isValidNetwork(network)) throw404('unknown network');
-    const market = await Market.find({ network, mid });
+    const market = await Market.getMarket(network, mid);
     if (!market) throw404('market not found');
 
     try {
-      if (!noUnify) {
-        const _m = await this.netSrv.getMarketCore(network).markets(market.mid);
-        const marketFromContract = this.markerSrv.netMarketToJSON(_m);
-        this.markerSrv.unifyMarkets(marketFromContract, market);
-      }
-
-      market.baseLogo = await this.metadataSrv.getLogo(
-        market.base,
-        market.baseAddress,
-      );
-      market.quoteLogo = await this.metadataSrv.getLogo(
-        market.quote,
-        market.quoteAddress,
-      );
-
+      await this.markerSrv.extendMarket(market, noMerge);
       return ok().data(market).build();
     } catch (error) {
       this.logger.error(error, null, 'get()');
@@ -74,21 +58,18 @@ export class MarketsController {
 
   /**
    * List markets
-   * @param req The request object.
    * @param network The network name
    * @param creator Filter the result by creator address (optional)
-   * @param noUnify Indicates that market from DB should not be merged with
+   * @param noMerge Indicates that market from DB should not be merged with
    * market from contract.
-   * @param mid Filter the result by market ID
+   * @param queryData The query term
    * @returns
    */
-  @UseGuards(BeAuthenticatedGuard)
-  @UseGuards(HasKeyGuard)
   @Get(':net')
   async list(
     @Param('net') network,
     @Query('creator') creator,
-    @Query('noUnify') noUnify: boolean,
+    @Query('noMerge') noMerge: boolean,
     @Query('query') queryData: string,
   ) {
     let query = Market.query();
@@ -99,15 +80,7 @@ export class MarketsController {
     const markets = await query.execute();
     for (const m of markets) {
       try {
-        if (!noUnify) {
-          const _m = await this.netSrv.getMarketCore(network).markets(m.mid);
-          const marketFromContract = this.markerSrv.netMarketToJSON(_m);
-          this.markerSrv.unifyMarkets(marketFromContract, m);
-        }
-
-        // Get logo URL
-        m.baseLogo = await this.metadataSrv.getLogo(m.base, m.baseAddress);
-        m.quoteLogo = await this.metadataSrv.getLogo(m.quote, m.quoteAddress);
+        await this.markerSrv.extendMarket(m, noMerge);
       } catch (error) {
         this.logger.error(error, null, 'list()');
         if (error.message.indexOf('invalid arrayify value') !== -1)

@@ -11,11 +11,6 @@ exports.up = function (knex) {
       table.string('minSwap');
       table.string('maxSwap');
       table.integer('timeToPay');
-      table.integer('openOrders');
-      table.boolean('paused');
-
-      table.integer('blockNumber');
-      table.string('blockHash');
 
       table.timestamp('createdAt');
       table.timestamp('updatedAt');

@@ -17,77 +17,87 @@ export class MediatorManagerHandler extends Handler {
     this.on(
       this.contracts.mediatorMgr,
       'TicketPurchased',
-      (owner: string, id: number, amount: number, event: ethers.Event) => {
-        this.onTicketPurchased(owner, id, amount, event);
+      async (
+        owner: string,
+        id: number,
+        amount: number,
+        event: ethers.Event,
+      ) => {
+        return this.onTicketPurchased(owner, id, amount, event);
       },
     );
 
     this.on(
       this.contracts.mediatorMgr,
       'TicketCancelled',
-      (owner: string, id: number, event: ethers.Event) => {
-        this.onTicketCancelled(owner, id, event);
+      async (owner: string, id: number, event: ethers.Event) => {
+        return this.onTicketCancelled(owner, id, event);
       },
     );
 
     this.on(
       this.contracts.mediatorMgr,
       'TicketDrained',
-      (owner: string, id: number, amount: number, event: ethers.Event) => {
-        this.onTicketDrained(owner, id, amount, event);
+      async (
+        owner: string,
+        id: number,
+        amount: number,
+        event: ethers.Event,
+      ) => {
+        return this.onTicketDrained(owner, id, amount, event);
       },
     );
 
     this.on(
       this.contracts.mediatorMgr,
       'JoinedMarket',
-      (
+      async (
         owner: string,
         marketId: string,
         ticketId: number,
         event: ethers.Event,
       ) => {
-        this.onJoinedMarket(owner, marketId, ticketId, event);
+        return this.onJoinedMarket(owner, marketId, ticketId, event);
       },
     );
 
     this.on(
       this.contracts.mediatorMgr,
       'Drafted',
-      (
+      async (
         marketId: string,
         owner: string,
         ticketId: number,
         event: ethers.Event,
       ) => {
-        this.onDrafted(marketId, owner, ticketId, event);
+        return this.onDrafted(marketId, owner, ticketId, event);
       },
     );
 
     this.on(
       this.contracts.mediatorMgr,
       'Undrafted',
-      (
+      async (
         owner: string,
         ticketId: number,
         marketId: string,
         event: ethers.Event,
       ) => {
-        this.onUndrafted(owner, ticketId, marketId, event);
+        return this.onUndrafted(owner, ticketId, marketId, event);
       },
     );
 
     this.on(
       this.contracts.mediatorMgr,
       'TicketSlashed',
-      (
+      async (
         owner: string,
         ticketId: number,
         marketId: string,
         amount: number,
         event: ethers.Event,
       ) => {
-        this.onTicketSlashed(owner, ticketId, marketId, amount, event);
+        return this.onTicketSlashed(owner, ticketId, marketId, amount, event);
       },
     );
   }

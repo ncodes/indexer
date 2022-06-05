@@ -130,20 +130,20 @@ describe('MarketsController', () => {
     });
 
     it('should 200 and market object when market exists', async () => {
-      const market = await Market.create({ mid: '0x123', network: net });
+      const market = await Market.create({ marketId: '0x123', network: net });
 
       const mockExtendMarket = jest
         .spyOn(app.get(MarketsService), 'extendMarket')
         .mockResolvedValue(null);
 
       await request(app.getHttpServer())
-        .get(`/v1/markets/${net}/${market.mid}`)
+        .get(`/v1/markets/${net}/${market.marketId}`)
         .set('Authorization', 'bearer ' + token)
         .send({})
         .expect(200)
         .expect((res) => {
           expect(res.body.data.id).toEqual(market.id);
-          expect(res.body.data.mid).toEqual(market.mid);
+          expect(res.body.data.marketId).toEqual(market.marketId);
           expect(mockExtendMarket).toHaveBeenCalled();
         });
     });
@@ -186,7 +186,7 @@ describe('MarketsController', () => {
     });
 
     it('should 200 and list of markets when some markets exist', async () => {
-      const market = await Market.create({ mid: '0x123' });
+      const market = await Market.create({ marketId: '0x123' });
 
       jest
         .spyOn(app.get(MarketsService), 'extendMarket')
@@ -205,7 +205,7 @@ describe('MarketsController', () => {
     describe('filter by creator', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({
-          mid: '0x123',
+          marketId: '0x123',
           creator: '0xCreator',
         });
         await Market.create({});
@@ -229,7 +229,7 @@ describe('MarketsController', () => {
     describe('filter by query (creator address)', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({
-          mid: '0x123',
+          marketId: '0x123',
           creator: '0xCreator',
         });
         await Market.create({});
@@ -253,7 +253,7 @@ describe('MarketsController', () => {
     describe('filter by query (market ID)', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({
-          mid: '0x123',
+          marketId: '0x123',
         });
         await Market.create({});
 
@@ -263,7 +263,7 @@ describe('MarketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/markets/${net}`)
-          .query({ query: market.mid })
+          .query({ query: market.marketId })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {

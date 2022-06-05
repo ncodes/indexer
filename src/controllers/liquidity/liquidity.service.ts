@@ -17,7 +17,7 @@ export class LiquidityService {
    * @param cLiqSource The liquidity object from the Core contract
    * @param dbLiq The liquidity object from the database
    */
-  merge(cLiqSource: any, dbLiq: Liquidity) {
+  merge(cLiqSource: { [k: string]: any }, dbLiq: Liquidity) {
     _.extend(dbLiq, _.omit(cLiqSource, []));
   }
 
@@ -30,9 +30,9 @@ export class LiquidityService {
   async extendLiquidity(liq: Liquidity, noMerge = false) {
     try {
       if (!noMerge) {
-        const liqFromContract: ContractLiquidity = await this.netSrv
-          .getCore(liq.network)
-          .getLiquidity(liq.marketId, liq.provider);
+        const liqFromContract: ContractLiquidity = await (
+          await this.netSrv.getCore(liq.network)
+        ).getLiquidity(liq.marketId, liq.provider);
         this.merge(
           {
             openOrders: liqFromContract.openOrders.toNumber(),

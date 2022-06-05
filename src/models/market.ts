@@ -7,7 +7,7 @@ import { BaseModel } from './base';
  */
 export default class Market extends BaseModel {
   // The market ID
-  mid: string;
+  marketId: string;
   // The creator of the market
   creator: string;
   // The network it exist in
@@ -94,7 +94,7 @@ export default class Market extends BaseModel {
    * @param txn Optional transaction object
    */
   static getByMarketId(id: string, txn?: Transaction): Promise<Market> {
-    return this.query(txn).whereNotDeleted().where({ mid: id }).first();
+    return this.query(txn).whereNotDeleted().where({ marketId: id }).first();
   }
 
   /**
@@ -110,7 +110,7 @@ export default class Market extends BaseModel {
   ): Promise<Market> {
     return this.query(txn)
       .whereNotDeleted()
-      .where({ network, mid: marketId })
+      .where({ network, marketId })
       .first();
   }
 
@@ -142,7 +142,7 @@ export default class Market extends BaseModel {
    */
   static makeSearchQuery(q: QueryBuilderType<any>, qs: string) {
     return q
-      .orWhere('mid', qs)
+      .orWhere('marketId', qs)
       .orWhere('creator', qs)
       .orWhere('base', 'ILIKE', qs)
       .orWhere('baseAddress', 'ILIKE', qs)

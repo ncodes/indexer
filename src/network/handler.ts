@@ -1,7 +1,8 @@
 import { Logger } from '@nestjs/common';
-import { Contract, Event as Evt } from 'ethers';
+import { Contract, ContractInterface, Event as Evt, Signer } from 'ethers';
 import { promise, queue } from 'fastq';
 import Event from '../models/events';
+import { Provider } from '@ethersproject/abstract-provider';
 
 type Task = {
   args: any[];
@@ -44,6 +45,20 @@ export class Handler {
    * @param network The network name
    */
   constructor(public network: string) {}
+
+  /**
+   * Create an ethers.js Contract object
+   * @param addressOrName
+   * @param contractInterface
+   * @param signerOrProvider
+   */
+  newContract(
+    addressOrName: string,
+    contractInterface: ContractInterface,
+    signerOrProvider: Signer | Provider,
+  ) {
+    return new Contract(addressOrName, contractInterface, signerOrProvider);
+  }
 
   /**
    * Bind listeners to contract event

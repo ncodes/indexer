@@ -1,7 +1,9 @@
-import { NoopLogger } from '../common/loggers/noop_logger';
-import { DBService } from '../db/DBService';
-import Market from '../models/market';
 import { MarketCoreHandler } from './market_core.handler';
+import { DBService } from '../../db/DBService';
+import Market from '../../models/market';
+import { Contract, ContractInterface, Signer } from 'ethers';
+import { Provider } from '@ethersproject/abstract-provider';
+import { NoopLogger } from '../../common/loggers/noop_logger';
 
 const MarketCoreContract = jest.fn().mockImplementation(() => {
   return {};
@@ -25,24 +27,55 @@ describe('MarketCoreHandler', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    handler = new MarketCoreHandler(contracts);
-    handler.logger = new NoopLogger();
+    handler = new MarketCoreHandler(null, 'net', contracts);
+    handler.logger = new NoopLogger() as any;
     await db.truncateTables();
   });
 
   describe('.onNewMarket', () => {
     it('should create market', async () => {
+      const creator = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
+      const baseAsset = '0x076BCfCf983C9E22d5785C177e7473BF608c4eC1';
+      const quoteAsset = '0x75A3Feece9E1CE14807feff83Da432a32a1de14F';
+
+      const mockBaseContract = {
+        symbol: jest.fn().mockResolvedValue('BTC'),
+      };
+      const mockQuoteContract = {
+        symbol: jest.fn().mockResolvedValue('USDT'),
+      };
+
+      handler.newContract = (addressOrName: string): any => {
+        switch (addressOrName) {
+          case baseAsset:
+            return mockBaseContract;
+          case quoteAsset:
+            return mockQuoteContract;
+        }
+      };
+
       await expect(
-        handler.onNewMarket('mid', '0x1', 'BTC', 'ETH', {
-          blockNumber: 1,
-          blockHash: '0xHash',
-        }),
+        handler.onNewMarket(
+          '0x123',
+          creator,
+          baseAsset,
+          quoteAsset,
+          true,
+          true,
+          {} as any,
+        ),
       ).resolves.toBeUndefined();
-      const market = await Market.getByMarketId('mid');
+      const market = await Market.getByMarketId('0x123');
       expect(market).toBeDefined();
-      expect(market.creator).toEqual('0x1');
+      expect(market.network).toEqual(handler.network);
+      expect(market.creator).toEqual(creator);
       expect(market.base).toEqual('BTC');
-      expect(market.quote).toEqual('ETH');
+      expect(market.baseAddress).toEqual(baseAsset);
+      expect(market.quoteAddress).toEqual(quoteAsset);
+      expect(market.quote).toEqual('USDT');
+      expect(market.isBaseLocal).toBeTruthy();
+      expect(market.isQuoteLocal).toBeTruthy();
+      expect(market.pair).toEqual('BTCUSDT');
     });
   });
 });

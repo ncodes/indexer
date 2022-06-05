@@ -3,7 +3,7 @@ exports.up = function (knex) {
     knex.schema.createTable('markets', (table) => {
       table.increments('sn', { primaryKey: false });
       table.string('id').primary();
-      table.string('mid');
+      table.string('marketId');
       table.string('creator');
       table.string('base');
       table.string('baseAddress');
@@ -17,7 +17,7 @@ exports.up = function (knex) {
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');
 
-      table.unique(['network', 'mid']);
+      table.unique(['network', 'marketId']);
     }),
   ]);
 };

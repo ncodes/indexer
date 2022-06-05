@@ -64,7 +64,7 @@ export class MarketsService {
   async extendMarket(market: Market, noMerge = false) {
     try {
       const {
-        mid,
+        marketId,
         network: net,
         base,
         baseAddress,
@@ -75,18 +75,30 @@ export class MarketsService {
       if (!noMerge) {
         const _m = await (
           await this.netSrv.getMarketCore(net)
-        ).markets(market.mid);
+        ).markets(market.marketId);
         const marketFromContract = this.normalizeMarket(_m);
         this.merge(marketFromContract, market);
       }
 
-      market.numProviders = await Liquidity.countProvidersInMarket(net, mid);
-      market.totalLiquidity = await Liquidity.getTotalMarketLiquidity(net, mid);
-      market.lowestPrice = await Liquidity.getLowestPriceInMarket(net, mid);
-      market.highestPrice = await Liquidity.getHighestPriceInMarket(net, mid);
+      market.numProviders = await Liquidity.countProvidersInMarket(
+        net,
+        marketId,
+      );
+      market.totalLiquidity = await Liquidity.getTotalMarketLiquidity(
+        net,
+        marketId,
+      );
+      market.lowestPrice = await Liquidity.getLowestPriceInMarket(
+        net,
+        marketId,
+      );
+      market.highestPrice = await Liquidity.getHighestPriceInMarket(
+        net,
+        marketId,
+      );
       market.baseLogo = await this.metadataSrv.getLogo(base, baseAddress);
       market.quoteLogo = await this.metadataSrv.getLogo(quote, quoteAddress);
-      market.priceChange = await this.priceChange(net, mid, 24);
+      market.priceChange = await this.priceChange(net, marketId, 24);
 
       return Promise.resolve();
     } catch (error) {

@@ -144,7 +144,7 @@ describe('MarketsService', () => {
           ' market object',
         async () => {
           const market: Market = new Market({
-            mid: '0x123',
+            marketId: '0x123',
             creator: '0xUser',
             network: 'net1',
           });
@@ -162,7 +162,7 @@ describe('MarketsService', () => {
 
           await service.extendMarket(market, false);
           expect(mockGetMarketCore).toHaveBeenCalledWith('net1');
-          expect(mockMarket).toHaveBeenCalledWith(market.mid);
+          expect(mockMarket).toHaveBeenCalledWith(market.marketId);
           expect(market.permPut).toBeTruthy();
           expect(market.permSwap).toBeTruthy();
           expect(market.creator).toEqual('0x12345');
@@ -180,7 +180,7 @@ describe('MarketsService', () => {
 
     it('should not merge if noMerge=true', async () => {
       const market: Market = new Market({
-        mid: '0x123',
+        marketId: '0x123',
         creator: '0xUser',
         network: 'net1',
       });
@@ -198,7 +198,7 @@ describe('MarketsService', () => {
 
       await service.extendMarket(market, true);
       expect(mockGetMarketCore).not.toHaveBeenCalledWith('net1');
-      expect(mockMarket).not.toHaveBeenCalledWith(market.mid);
+      expect(mockMarket).not.toHaveBeenCalledWith(market.marketId);
       expect(market.permPut).toBeUndefined();
       expect(market.permSwap).toBeUndefined();
       expect(market.creator).toEqual('0xUser');
@@ -217,13 +217,13 @@ describe('MarketsService', () => {
     it('should return correct 24 hours price change', async () => {
       await MarketPrice.create({
         network: 'net1',
-        mid: '0x123',
+        marketId: '0x123',
         price: '100',
         createdAt: moment().subtract(86400, 's').toISOString(),
       });
       await MarketPrice.create({
         network: 'net1',
-        mid: '0x123',
+        marketId: '0x123',
         price: '200',
       });
       expect(await service.priceChange('net1', '0x123', 24)).toEqual(100);
@@ -231,13 +231,13 @@ describe('MarketsService', () => {
       // No price outside the last 24 hours for market=0x123
       await MarketPrice.create({
         network: 'net1',
-        mid: '0x1234',
+        marketId: '0x1234',
         price: '100',
         createdAt: moment().subtract(86400, 's').toISOString(),
       });
       await MarketPrice.create({
         network: 'net2',
-        mid: '0x123',
+        marketId: '0x123',
         price: '200',
       });
       expect(await service.priceChange('net2', '0x123', 24)).toEqual(0);

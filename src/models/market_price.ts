@@ -9,7 +9,7 @@ export default class MarketPrice extends BaseModel {
   // The network name
   network: string;
   // The market ID
-  mid: string;
+  marketId: string;
   // The market price
   price: string;
 
@@ -73,18 +73,18 @@ export default class MarketPrice extends BaseModel {
   /**
    * Find the recent price before a given date
    * @param network The target network name
-   * @param mid The target market ID
+   * @param marketId The target market ID
    * @param before The target date
    * @param txn Optional transaction object
    */
   static async findRecentBefore(
     network: string,
-    mid: string,
+    marketId: string,
     before: string,
     txn?: Transaction,
   ): Promise<MarketPrice> {
     return this.query(txn)
-      .where({ network, mid })
+      .where({ network, marketId })
       .where('createdAt', '<', before)
       .orderBy('createdAt', 'DESC')
       .first();
@@ -93,16 +93,16 @@ export default class MarketPrice extends BaseModel {
   /**
    * Find the recent price
    * @param network The target network name
-   * @param mid The target market ID
+   * @param marketId The target market ID
    * @param txn Optional transaction object
    */
   static async findRecent(
     network: string,
-    mid: string,
+    marketId: string,
     txn?: Transaction,
   ): Promise<MarketPrice> {
     return this.query(txn)
-      .where({ network, mid })
+      .where({ network, marketId })
       .orderBy('createdAt', 'DESC')
       .first();
   }

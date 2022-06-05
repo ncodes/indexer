@@ -322,7 +322,7 @@ export class CoreHandler extends Handler {
     await MarketPrice.create(
       {
         network: this.network,
-        mid: marketId,
+        marketId: marketId,
         price: await Liquidity.getLowestPriceInMarket(
           this.network,
           marketId,
@@ -367,7 +367,7 @@ export class CoreHandler extends Handler {
     await MarketPrice.create(
       {
         network: this.network,
-        mid: marketId,
+        marketId: marketId,
         price: await Liquidity.getLowestPriceInMarket(
           this.network,
           marketId,

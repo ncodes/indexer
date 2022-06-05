@@ -184,28 +184,24 @@ export class MarketCoreHandler extends Handler {
     isBaseLocal: boolean,
     isQuoteLocal: boolean,
     event: Event,
-    txn: Transaction,
+    txn?: Transaction,
   ) {
     this.logger.log(`New Market (${id}) by account:${owner}`);
-    const baseToken = new Contract(baseAsset, erc20ABI, this.provider);
-    const quoteToken = new Contract(quoteAsset, erc20ABI, this.provider);
-    const market = await this.contracts.marketCore.getMarket(
-      Buffer.from(id.substring(2), 'hex'),
-    );
-
+    const baseToken = this.newContract(baseAsset, erc20ABI, this.provider);
+    const quoteToken = this.newContract(quoteAsset, erc20ABI, this.provider);
     const base = (await baseToken.symbol()).toUpperCase();
     const quote = (await quoteToken.symbol()).toUpperCase();
 
     await Market.create(
       {
-        mid: id,
+        marketId: id,
         creator: owner,
         base,
         baseAddress: baseAsset,
-        isBaseLocal: market.base.isLocal,
+        isBaseLocal,
         quote,
         quoteAddress: quoteAsset,
-        isQuoteLocal: market.quote.isLocal,
+        isQuoteLocal,
         pair: `${base}${quote}`,
         network: this.network,
       },

@@ -6,12 +6,16 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ok, throw404, throw500 } from '../../common/responses/responses';
+import {
+  ok,
+  throw400,
+  throw404,
+  throw500,
+} from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import Market from '../../models/market';
 import { isValidNetwork } from '../../network/common';
-import NetworkService from '../../network/network.service';
 import { MarketsService } from './markets.service';
 
 @Controller('v1/markets')
@@ -20,10 +24,7 @@ import { MarketsService } from './markets.service';
 export class MarketsController {
   private logger = new Logger(MarketsController.name);
 
-  constructor(
-    private netSrv: NetworkService,
-    private markerSrv: MarketsService,
-  ) {}
+  constructor(private marketSrv: MarketsService) {}
 
   /**
    * Get a market
@@ -39,12 +40,13 @@ export class MarketsController {
     @Param('mid') mid: string,
     @Query('noMerge') noMerge: boolean,
   ) {
-    if (!isValidNetwork(network)) throw404('unknown network');
+    if (!isValidNetwork(network)) throw400('unknown network');
+
     const market = await Market.getMarket(network, mid);
     if (!market) throw404('market not found');
 
     try {
-      await this.markerSrv.extendMarket(market, noMerge);
+      await this.marketSrv.extendMarket(market, noMerge);
       return ok().data(market).build();
     } catch (error) {
       this.logger.error(error, null, 'get()');
@@ -72,6 +74,8 @@ export class MarketsController {
     @Query('noMerge') noMerge: boolean,
     @Query('query') queryData: string,
   ) {
+    if (!isValidNetwork(network)) throw400('unknown network');
+
     let query = Market.query();
     if (creator) query = query.where('creator', creator);
     if (queryData) query = Market.makeSearchQuery(query, queryData);
@@ -80,7 +84,7 @@ export class MarketsController {
     const markets = await query.execute();
     for (const m of markets) {
       try {
-        await this.markerSrv.extendMarket(m, noMerge);
+        await this.marketSrv.extendMarket(m, noMerge);
       } catch (error) {
         this.logger.error(error, null, 'list()');
         if (error.message.indexOf('invalid arrayify value') !== -1)

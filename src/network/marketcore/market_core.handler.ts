@@ -174,6 +174,7 @@ export class MarketCoreHandler extends Handler {
    * @param isBaseLocal Indicates whether the base asset is local
    * @param isQuoteLocal Indicates whether the quote asset is local
    * @param event The event object
+   * @param txn The db transaction object
    */
   async onNewMarket(
     id: string,

@@ -143,6 +143,7 @@ export default class Market extends BaseModel {
   static makeSearchQuery(q: QueryBuilderType<any>, qs: string) {
     return q
       .orWhere('mid', qs)
+      .orWhere('creator', qs)
       .orWhere('base', 'ILIKE', qs)
       .orWhere('baseAddress', 'ILIKE', qs)
       .orWhere('quote', 'ILIKE', qs)

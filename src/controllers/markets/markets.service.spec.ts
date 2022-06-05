@@ -177,6 +177,40 @@ describe('MarketsService', () => {
         },
       );
     });
+
+    it('should not merge if noMerge=true', async () => {
+      const market: Market = new Market({
+        mid: '0x123',
+        creator: '0xUser',
+        network: 'net1',
+      });
+
+      // Mocks
+      const contractMarket = {
+        permPut: true,
+        permSwap: true,
+        creator: '0x12345',
+      };
+      const mockMarket = jest.fn();
+      mockGetMarketCore.mockResolvedValue({ markets: mockMarket });
+      mockMarket.mockResolvedValue(contractMarket);
+      mockGetLogo.mockResolvedValue('https://logo.png');
+
+      await service.extendMarket(market, true);
+      expect(mockGetMarketCore).not.toHaveBeenCalledWith('net1');
+      expect(mockMarket).not.toHaveBeenCalledWith(market.mid);
+      expect(market.permPut).toBeUndefined();
+      expect(market.permSwap).toBeUndefined();
+      expect(market.creator).toEqual('0xUser');
+      expect(market.network).toEqual('net1');
+      expect(market.baseLogo).toEqual('https://logo.png');
+      expect(market.quoteLogo).toEqual('https://logo.png');
+      expect(market.numProviders).toBeDefined();
+      expect(market.totalLiquidity).toBeDefined();
+      expect(market.lowestPrice).toBeDefined();
+      expect(market.highestPrice).toBeDefined();
+      expect(market.priceChange).toBeDefined();
+    });
   });
 
   describe('.priceChange', () => {

@@ -38,7 +38,7 @@ export default class Market extends BaseModel {
   numMediators: number;
   baseLogo: string;
   quoteLogo: string;
-  numLiquidityProviders: string;
+  numProviders: string;
   totalLiquidity: string;
   lowestPrice: string;
   highestPrice: string;

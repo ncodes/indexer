@@ -1,18 +1,212 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MarketsService } from './markets.service';
+import NetworkService from '../../network/network.service';
+import { MetadataService } from '../../services/metadata.service';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { BigNumber, ethers } from 'ethers';
+import MarketPrice from '../../models/market_price';
+import * as moment from 'moment';
+import { DBService } from '../../db/DBService';
+import Market from '../../models/market';
+
+const mockCfgGet = jest.fn();
+const ConfigServiceMock = jest.fn().mockImplementation(() => {
+  return { get: mockCfgGet };
+});
+
+const mockGetMarketCore = jest.fn();
+const NetworkServiceMock = jest.fn().mockImplementation(() => {
+  return { getMarketCore: mockGetMarketCore };
+});
+
+const mockGetLogo = jest.fn();
+const MetadataServiceMock = jest.fn().mockImplementation(() => {
+  return {
+    getLogo: mockGetLogo,
+  };
+});
 
 describe('MarketsService', () => {
+  let module: TestingModule;
   let service: MarketsService;
+  const db = DBService.getForTest();
+  let cfgObj = {};
+
+  afterEach(async () => {
+    await db.truncateTables();
+  });
+
+  afterAll(async () => {
+    await db.destroy();
+  });
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [MarketsService],
-    }).compile();
+    await db.truncateTables();
+  });
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    mockCfgGet.mockReset();
+    mockGetMarketCore.mockReset();
+    mockGetLogo.mockReset();
+
+    cfgObj = {};
+    mockCfgGet.mockReset().mockImplementation((args) => {
+      return cfgObj[args];
+    });
+
+    module = await Test.createTestingModule({
+      imports: [ConfigModule.forRoot({})],
+      providers: [
+        MarketsService,
+        NetworkService,
+        MetadataService,
+        ConfigService,
+      ],
+    })
+      .overrideProvider(ConfigService)
+      .useValue(new ConfigServiceMock())
+      .overrideProvider(NetworkService)
+      .useValue(new NetworkServiceMock())
+      .overrideProvider(MetadataService)
+      .useValue(new MetadataServiceMock())
+      .compile();
 
     service = module.get<MarketsService>(MarketsService);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  describe('.normalizeMarket', () => {
+    it('return expected fields', () => {
+      const contractMarket = {
+        creator: '0xAddr',
+        createdAt: BigNumber.from('4567'),
+        base: {
+          addr: '0xBase',
+          isLocal: false,
+        },
+        quote: {
+          addr: '0xQuote',
+          isLocal: true,
+        },
+        numOrders: BigNumber.from(1),
+        numDisputes: BigNumber.from(12),
+        permPut: false,
+        permSwap: true,
+        permMediate: false,
+        commission: BigNumber.from(120),
+        numMediators: BigNumber.from(3),
+        mediatorBond: BigNumber.from(1220),
+      };
+      expect(service.normalizeMarket(contractMarket)).toEqual({
+        creator: contractMarket.creator,
+        createdAt: contractMarket.createdAt.toNumber(),
+        baseAsset: {
+          addr: contractMarket.base.addr,
+          isLocal: contractMarket.base.isLocal,
+        },
+        quoteAsset: {
+          addr: contractMarket.quote.addr,
+          isLocal: contractMarket.quote.isLocal,
+        },
+        numOrders: contractMarket.numOrders.toNumber(),
+        numDisputes: contractMarket.numDisputes.toNumber(),
+        permPut: contractMarket.permPut,
+        permSwap: contractMarket.permSwap,
+        permMediate: contractMarket.permMediate,
+        commission: contractMarket.commission.toNumber(),
+        numMediators: contractMarket.numMediators.toNumber(),
+        mediatorBond: contractMarket.mediatorBond.toString(),
+      });
+    });
+  });
+
+  describe('.merge', () => {
+    it('should merge correctly', () => {
+      const source = {
+        provider: '0x123',
+        baseAsset: {},
+        quoteAsset: {},
+        createdAt: 123,
+      };
+      const market: any = {
+        numOrders: 12,
+      };
+      service.merge(source as any, market as any);
+      expect(market.numOrders).toEqual(market.numOrders);
+      expect(market.provider).toEqual(source.provider);
+    });
+  });
+
+  describe('.extendMarket', () => {
+    describe('when noMerge=false', () => {
+      it(
+        'should attempt to merge contract market object into the given' +
+          ' market object',
+        async () => {
+          const market: Market = new Market({
+            mid: '0x123',
+            creator: '0xUser',
+            network: 'net1',
+          });
+
+          // Mocks
+          const contractMarket = {
+            permPut: true,
+            permSwap: true,
+            creator: '0x12345',
+          };
+          const mockMarket = jest.fn();
+          mockGetMarketCore.mockResolvedValue({ markets: mockMarket });
+          mockMarket.mockResolvedValue(contractMarket);
+          mockGetLogo.mockResolvedValue('https://logo.png');
+
+          await service.extendMarket(market, false);
+          expect(mockGetMarketCore).toHaveBeenCalledWith('net1');
+          expect(mockMarket).toHaveBeenCalledWith(market.mid);
+          expect(market.permPut).toBeTruthy();
+          expect(market.permSwap).toBeTruthy();
+          expect(market.creator).toEqual('0x12345');
+          expect(market.network).toEqual('net1');
+          expect(market.baseLogo).toEqual('https://logo.png');
+          expect(market.quoteLogo).toEqual('https://logo.png');
+          expect(market.numProviders).toBeDefined();
+          expect(market.totalLiquidity).toBeDefined();
+          expect(market.lowestPrice).toBeDefined();
+          expect(market.highestPrice).toBeDefined();
+          expect(market.priceChange).toBeDefined();
+        },
+      );
+    });
+  });
+
+  describe('.priceChange', () => {
+    it('should return correct 24 hours price change', async () => {
+      await MarketPrice.create({
+        network: 'net1',
+        mid: '0x123',
+        price: '100',
+        createdAt: moment().subtract(86400, 's').toISOString(),
+      });
+      await MarketPrice.create({
+        network: 'net1',
+        mid: '0x123',
+        price: '200',
+      });
+      expect(await service.priceChange('net1', '0x123', 24)).toEqual(100);
+
+      // No price outside the last 24 hours for market=0x123
+      await MarketPrice.create({
+        network: 'net1',
+        mid: '0x1234',
+        price: '100',
+        createdAt: moment().subtract(86400, 's').toISOString(),
+      });
+      await MarketPrice.create({
+        network: 'net2',
+        mid: '0x123',
+        price: '200',
+      });
+      expect(await service.priceChange('net2', '0x123', 24)).toEqual(0);
+    });
   });
 });

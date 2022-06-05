@@ -241,6 +241,7 @@ export default class Liquidity extends BaseModel {
         .whereNotDeleted()
         .first()
         .then((liq) => {
+          if (!liq) return resolve('0');
           return resolve(liq.price);
         })
         .catch(reject);
@@ -264,6 +265,7 @@ export default class Liquidity extends BaseModel {
         .whereNotDeleted()
         .first()
         .then((liq) => {
+          if (!liq) return resolve('0');
           return resolve(liq.price);
         })
         .catch(reject);

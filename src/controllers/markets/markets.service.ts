@@ -23,23 +23,23 @@ export class MarketsService {
   normalizeMarket(market: any): ContractMarket {
     return {
       creator: market.creator,
-      createdAt: market.createdAt.toNumber(),
+      createdAt: market.createdAt?.toNumber(),
       baseAsset: {
-        addr: market.base.addr,
-        isLocal: market.base.isLocal,
+        addr: market.base?.addr,
+        isLocal: market.base?.isLocal,
       },
       quoteAsset: {
-        addr: market.quote.addr,
-        isLocal: market.quote.isLocal,
+        addr: market.quote?.addr,
+        isLocal: market.quote?.isLocal,
       },
-      numOrders: market.numOrders.toNumber(),
-      numDisputes: market.numDisputes.toNumber(),
+      numOrders: market.numOrders?.toNumber(),
+      numDisputes: market.numDisputes?.toNumber(),
       permPut: market.permPut,
       permSwap: market.permSwap,
       permMediate: market.permMediate,
-      commission: market.commission.toNumber(),
-      numMediators: market.numMediators.toNumber(),
-      mediatorBond: market.mediatorBond.toString(),
+      commission: market.commission?.toNumber(),
+      numMediators: market.numMediators?.toNumber(),
+      mediatorBond: market.mediatorBond?.toString(),
     };
   }
 
@@ -56,25 +56,6 @@ export class MarketsService {
   }
 
   /**
-   * Get hourly price change for a market
-   * @param net The network name
-   * @param mid The market ID
-   * @param hours The price change period in hours
-   */
-  async priceChange(net: string, mid: string, hours: number): Promise<number> {
-    const timeAgo = moment().subtract(hours, 'h').toISOString();
-    const priceHourAgo = await MarketPrice.findRecentBefore(net, mid, timeAgo);
-    const currentPrice = await MarketPrice.findRecent(net, mid);
-    return Promise.resolve(
-      ToDec(currentPrice.price)
-        .sub(priceHourAgo.price)
-        .div(ToDec(priceHourAgo.price))
-        .mul(100)
-        .toNumber(),
-    );
-  }
-
-  /**
    * Extend a DB-sourced market with other market information
    * @param market The DB-sourced market
    * @param noMerge Indicate whether to merge in contract-sourced market.
@@ -82,24 +63,24 @@ export class MarketsService {
    */
   async extendMarket(market: Market, noMerge = false) {
     try {
+      const {
+        mid,
+        network: net,
+        base,
+        baseAddress,
+        quote,
+        quoteAddress,
+      } = market;
+
       if (!noMerge) {
-        const _m = await this.netSrv
-          .getMarketCore(market.network)
-          .markets(market.mid);
+        const _m = await (
+          await this.netSrv.getMarketCore(net)
+        ).markets(market.mid);
         const marketFromContract = this.normalizeMarket(_m);
         this.merge(marketFromContract, market);
       }
 
-      const net = market.network;
-      const mid = market.mid;
-      const { base, baseAddress } = market;
-      const { quote, quoteAddress } = market;
-
-      market.numLiquidityProviders = await Liquidity.countProvidersInMarket(
-        net,
-        mid,
-      );
-
+      market.numProviders = await Liquidity.countProvidersInMarket(net, mid);
       market.totalLiquidity = await Liquidity.getTotalMarketLiquidity(net, mid);
       market.lowestPrice = await Liquidity.getLowestPriceInMarket(net, mid);
       market.highestPrice = await Liquidity.getHighestPriceInMarket(net, mid);
@@ -111,5 +92,25 @@ export class MarketsService {
     } catch (error) {
       return Promise.reject(error);
     }
+  }
+
+  /**
+   * Get hourly price change for a market
+   * @param net The network name
+   * @param mid The market ID
+   * @param hours The price change period in hours
+   */
+  async priceChange(net: string, mid: string, hours: number): Promise<number> {
+    const timeAgo = moment().subtract(hours, 'h').toISOString();
+    const priceHourAgo = await MarketPrice.findRecentBefore(net, mid, timeAgo);
+    if (!priceHourAgo) return Promise.resolve(0);
+    const currentPrice = await MarketPrice.findRecent(net, mid);
+    return Promise.resolve(
+      ToDec(currentPrice.price)
+        .sub(priceHourAgo.price)
+        .div(ToDec(priceHourAgo.price))
+        .mul(100)
+        .toNumber(),
+    );
   }
 }

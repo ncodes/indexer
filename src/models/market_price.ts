@@ -38,7 +38,7 @@ export default class MarketPrice extends BaseModel {
   }
 
   /**
-   * create creates a record
+   * create a record
    * @param data The transfer info
    * @param txn Optional transaction object
    */
@@ -52,7 +52,7 @@ export default class MarketPrice extends BaseModel {
   }
 
   /**
-   * find finds a record
+   * find a record
    * @param q the query parameter
    * @param txn Optional transaction object
    */
@@ -68,5 +68,42 @@ export default class MarketPrice extends BaseModel {
         .then(resolve)
         .catch(reject);
     });
+  }
+
+  /**
+   * Find the recent price before a given date
+   * @param network The target network name
+   * @param mid The target market ID
+   * @param before The target date
+   * @param txn Optional transaction object
+   */
+  static async findRecentBefore(
+    network: string,
+    mid: string,
+    before: string,
+    txn?: Transaction,
+  ): Promise<MarketPrice> {
+    return this.query(txn)
+      .where({ network, mid })
+      .where('createdAt', '<', before)
+      .orderBy('createdAt', 'DESC')
+      .first();
+  }
+
+  /**
+   * Find the recent price
+   * @param network The target network name
+   * @param mid The target market ID
+   * @param txn Optional transaction object
+   */
+  static async findRecent(
+    network: string,
+    mid: string,
+    txn?: Transaction,
+  ): Promise<MarketPrice> {
+    return this.query(txn)
+      .where({ network, mid })
+      .orderBy('createdAt', 'DESC')
+      .first();
   }
 }

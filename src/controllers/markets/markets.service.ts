@@ -4,6 +4,9 @@ import Liquidity from '../../models/liquidity';
 import Market from '../../models/market';
 import NetworkService from '../../network/network.service';
 import { MetadataService } from '../../services/metadata.service';
+import * as moment from 'moment';
+import MarketPrice from '../../models/market_price';
+import { ToDec } from '../../common/common';
 
 @Injectable()
 export class MarketsService {
@@ -53,6 +56,25 @@ export class MarketsService {
   }
 
   /**
+   * Get hourly price change for a market
+   * @param net The network name
+   * @param mid The market ID
+   * @param hours The price change period in hours
+   */
+  async priceChange(net: string, mid: string, hours: number): Promise<number> {
+    const timeAgo = moment().subtract(hours, 'h').toISOString();
+    const priceHourAgo = await MarketPrice.findRecentBefore(net, mid, timeAgo);
+    const currentPrice = await MarketPrice.findRecent(net, mid);
+    return Promise.resolve(
+      ToDec(currentPrice.price)
+        .sub(priceHourAgo.price)
+        .div(ToDec(priceHourAgo.price))
+        .mul(100)
+        .toNumber(),
+    );
+  }
+
+  /**
    * Extend a DB-sourced market with other market information
    * @param market The DB-sourced market
    * @param noMerge Indicate whether to merge in contract-sourced market.
@@ -68,35 +90,22 @@ export class MarketsService {
         this.merge(marketFromContract, market);
       }
 
+      const net = market.network;
+      const mid = market.mid;
+      const { base, baseAddress } = market;
+      const { quote, quoteAddress } = market;
+
       market.numLiquidityProviders = await Liquidity.countProvidersInMarket(
-        market.network,
-        market.mid,
+        net,
+        mid,
       );
 
-      market.totalLiquidity = await Liquidity.getTotalMarketLiquidity(
-        market.network,
-        market.mid,
-      );
-
-      market.lowestPrice = await Liquidity.getLowestPriceInMarket(
-        market.network,
-        market.mid,
-      );
-
-      market.highestPrice = await Liquidity.getHighestPriceInMarket(
-        market.network,
-        market.mid,
-      );
-
-      market.baseLogo = await this.metadataSrv.getLogo(
-        market.base,
-        market.baseAddress,
-      );
-
-      market.quoteLogo = await this.metadataSrv.getLogo(
-        market.quote,
-        market.quoteAddress,
-      );
+      market.totalLiquidity = await Liquidity.getTotalMarketLiquidity(net, mid);
+      market.lowestPrice = await Liquidity.getLowestPriceInMarket(net, mid);
+      market.highestPrice = await Liquidity.getHighestPriceInMarket(net, mid);
+      market.baseLogo = await this.metadataSrv.getLogo(base, baseAddress);
+      market.quoteLogo = await this.metadataSrv.getLogo(quote, quoteAddress);
+      market.priceChange = await this.priceChange(net, mid, 24);
 
       return Promise.resolve();
     } catch (error) {

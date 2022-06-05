@@ -42,6 +42,7 @@ export default class Market extends BaseModel {
   totalLiquidity: string;
   lowestPrice: string;
   highestPrice: string;
+  priceChange: number;
 
   constructor(init?: Partial<Market>) {
     super();

@@ -7,7 +7,7 @@ export class MediatorManagerHandler extends Handler {
     public network: string,
     private contracts: KnownContracts,
   ) {
-    super(network);
+    super(network, contracts.mediatorMgr);
   }
 
   /**
@@ -15,80 +15,45 @@ export class MediatorManagerHandler extends Handler {
    */
   listen() {
     this.on(
-      this.contracts.mediatorMgr,
       'TicketPurchased',
-      async (
-        owner: string,
-        id: number,
-        amount: number,
-        event: ethers.Event,
-      ) => {
+      async (owner: string, id: number, amount: number, event: ethers.Event) => {
         return this.onTicketPurchased(owner, id, amount, event);
       },
     );
 
-    this.on(
-      this.contracts.mediatorMgr,
-      'TicketCancelled',
-      async (owner: string, id: number, event: ethers.Event) => {
-        return this.onTicketCancelled(owner, id, event);
-      },
-    );
+    this.on('TicketCancelled', async (owner: string, id: number, event: ethers.Event) => {
+      return this.onTicketCancelled(owner, id, event);
+    });
 
     this.on(
-      this.contracts.mediatorMgr,
       'TicketDrained',
-      async (
-        owner: string,
-        id: number,
-        amount: number,
-        event: ethers.Event,
-      ) => {
+      async (owner: string, id: number, amount: number, event: ethers.Event) => {
         return this.onTicketDrained(owner, id, amount, event);
       },
     );
 
     this.on(
-      this.contracts.mediatorMgr,
       'JoinedMarket',
-      async (
-        owner: string,
-        marketId: string,
-        ticketId: number,
-        event: ethers.Event,
-      ) => {
+      async (owner: string, marketId: string, ticketId: number, event: ethers.Event) => {
         return this.onJoinedMarket(owner, marketId, ticketId, event);
       },
     );
 
     this.on(
-      this.contracts.mediatorMgr,
       'Drafted',
-      async (
-        marketId: string,
-        owner: string,
-        ticketId: number,
-        event: ethers.Event,
-      ) => {
+      async (marketId: string, owner: string, ticketId: number, event: ethers.Event) => {
         return this.onDrafted(marketId, owner, ticketId, event);
       },
     );
 
     this.on(
-      this.contracts.mediatorMgr,
       'Undrafted',
-      async (
-        owner: string,
-        ticketId: number,
-        marketId: string,
-        event: ethers.Event,
-      ) => {
+      async (owner: string, ticketId: number, marketId: string, event: ethers.Event) => {
         return this.onUndrafted(owner, ticketId, marketId, event);
       },
     );
 
     this.on(
-      this.contracts.mediatorMgr,
       'TicketSlashed',
       async (
         owner: string,
@@ -109,12 +74,7 @@ export class MediatorManagerHandler extends Handler {
    * @param amount The amount locked in the ticket
    * @param event The event object
    */
-  async onTicketPurchased(
-    owner: string,
-    id: number,
-    amount: number,
-    event: ethers.Event,
-  ) {}
+  async onTicketPurchased(owner: string, id: number, amount: number, event: ethers.Event) {}
 
   /**
    * A ticket was cancelled
@@ -131,12 +91,7 @@ export class MediatorManagerHandler extends Handler {
    * @param amount The amount drained from the ticket
    * @param event The event object
    */
-  async onTicketDrained(
-    owner: string,
-    id: number,
-    amount: number,
-    event: ethers.Event,
-  ) {}
+  async onTicketDrained(owner: string, id: number, amount: number, event: ethers.Event) {}
 
   /**
    * A ticket joined a market
@@ -145,12 +100,7 @@ export class MediatorManagerHandler extends Handler {
    * @param ticketId The unique id of the ticket
    * @param event The event object
    */
-  async onJoinedMarket(
-    owner: string,
-    marketId: string,
-    ticketId: number,
-    event: ethers.Event,
-  ) {}
+  async onJoinedMarket(owner: string, marketId: string, ticketId: number, event: ethers.Event) {}
 
   /**
    * A ticket left a market
@@ -159,12 +109,7 @@ export class MediatorManagerHandler extends Handler {
    * @param ticketId The unique id of the ticket
    * @param event The event object
    */
-  async onLeftMarket(
-    owner: string,
-    marketId: string,
-    ticketId: number,
-    event: ethers.Event,
-  ) {}
+  async onLeftMarket(owner: string, marketId: string, ticketId: number, event: ethers.Event) {}
 
   /**
    * A ticket was drafted to mediate
@@ -173,12 +118,7 @@ export class MediatorManagerHandler extends Handler {
    * @param ticketId The unique id of the ticket
    * @param event The event object
    */
-  async onDrafted(
-    marketId: string,
-    owner: string,
-    ticketId: number,
-    event: ethers.Event,
-  ) {}
+  async onDrafted(marketId: string, owner: string, ticketId: number, event: ethers.Event) {}
 
   /**
    * A ticket was undrafted
@@ -187,12 +127,7 @@ export class MediatorManagerHandler extends Handler {
    * @param marketId The ID of the market the ticket joined
    * @param event The event object
    */
-  async onUndrafted(
-    owner: string,
-    ticketId: number,
-    marketId: string,
-    event: ethers.Event,
-  ) {}
+  async onUndrafted(owner: string, ticketId: number, marketId: string, event: ethers.Event) {}
 
   /**
    * A ticket was slashed

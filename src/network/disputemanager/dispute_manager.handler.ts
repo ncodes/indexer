@@ -7,7 +7,7 @@ export class DisputeManagerHandler extends Handler {
     public network: string,
     private contracts: KnownContracts,
   ) {
-    super(network);
+    super(network, contracts.disputeMgr);
   }
 
   /**
@@ -15,20 +15,13 @@ export class DisputeManagerHandler extends Handler {
    */
   listen() {
     this.on(
-      this.contracts.disputeMgr,
       'DisputeCreated',
-      async (
-        orderId: BigNumber,
-        creator: string,
-        disputeId: BigNumber,
-        event: ethers.Event,
-      ) => {
+      async (orderId: BigNumber, creator: string, disputeId: BigNumber, event: ethers.Event) => {
         return this.onDisputeCreated(orderId, creator, disputeId, event);
       },
     );
 
     this.on(
-      this.contracts.disputeMgr,
       'DraftedMediator',
       async (
         orderId: BigNumber,
@@ -37,78 +30,43 @@ export class DisputeManagerHandler extends Handler {
         drafter: string,
         event: ethers.Event,
       ) => {
-        return this.onDraftedMediator(
-          orderId,
-          mediator,
-          ticketId,
-          drafter,
-          event,
-        );
+        return this.onDraftedMediator(orderId, mediator, ticketId, drafter, event);
       },
     );
 
     this.on(
-      this.contracts.disputeMgr,
       'Committed',
-      async (
-        orderId: BigNumber,
-        committer: string,
-        hash: string,
-        event: ethers.Event,
-      ) => {
+      async (orderId: BigNumber, committer: string, hash: string, event: ethers.Event) => {
         return this.onCommitted(orderId, committer, hash, event);
       },
     );
 
     this.on(
-      this.contracts.disputeMgr,
       'Revealed',
-      async (
-        orderId: BigNumber,
-        revealer: string,
-        vote: string,
-        event: ethers.Event,
-      ) => {
+      async (orderId: BigNumber, revealer: string, vote: string, event: ethers.Event) => {
         return this.onRevealed(orderId, revealer, vote, event);
       },
     );
 
-    this.on(
-      this.contracts.disputeMgr,
-      'WithdrawnReward',
-      (claimer: string, amount: BigNumber, event: ethers.Event) => {
-        return this.onWithdrawnReward(claimer, amount, event);
-      },
-    );
+    this.on('WithdrawnReward', (claimer: string, amount: BigNumber, event: ethers.Event) => {
+      return this.onWithdrawnReward(claimer, amount, event);
+    });
 
     this.on(
-      this.contracts.disputeMgr,
       'Drafted',
-      (
-        marketId: string,
-        owner: string,
-        ticketId: BigNumber,
-        event: ethers.Event,
-      ) => {
+      (marketId: string, owner: string, ticketId: BigNumber, event: ethers.Event) => {
         return this.onDrafted(marketId, owner, ticketId, event);
       },
     );
 
     this.on(
-      this.contracts.disputeMgr,
       'Undrafted',
-      (
-        marketId: string,
-        owner: string,
-        ticketId: BigNumber,
-        event: ethers.Event,
-      ) => {
+      (marketId: string, owner: string, ticketId: BigNumber, event: ethers.Event) => {
         return this.onUndrafted(marketId, owner, ticketId, event);
       },
     );
 
     this.on(
-      this.contracts.disputeMgr,
       'DecisionExecuted',
       async (
         orderId: BigNumber,
@@ -137,12 +95,7 @@ export class DisputeManagerHandler extends Handler {
    * @param disputeId The dispute ID
    * @param event The event object
    */
-  async onDisputeCreated(
-    orderId: BigNumber,
-    creator: string,
-    disputeId: BigNumber,
-    event: Event,
-  ) {}
+  async onDisputeCreated(orderId: BigNumber, creator: string, disputeId: BigNumber, event: Event) {}
 
   /**
    * A mediator was drafted
@@ -167,12 +120,7 @@ export class DisputeManagerHandler extends Handler {
    * @param hash The hash committed
    * @param event The event object
    */
-  async onCommitted(
-    orderId: BigNumber,
-    committer: string,
-    hash: string,
-    event: Event,
-  ) {}
+  async onCommitted(orderId: BigNumber, committer: string, hash: string, event: Event) {}
 
   /**
    * A mediator revealed a committed vote
@@ -181,12 +129,7 @@ export class DisputeManagerHandler extends Handler {
    * @param vote The revealed vote
    * @param event The event object
    */
-  async onRevealed(
-    orderId: BigNumber,
-    revealer: string,
-    vote: string,
-    event: Event,
-  ) {}
+  async onRevealed(orderId: BigNumber, revealer: string, vote: string, event: Event) {}
 
   /**
    * Some reward was withdrawn
@@ -203,12 +146,7 @@ export class DisputeManagerHandler extends Handler {
    * @param ticketId The drafted ticket ID
    * @param event The event object
    */
-  async onDrafted(
-    marketId: string,
-    owner: string,
-    ticketId: BigNumber,
-    event: Event,
-  ) {}
+  async onDrafted(marketId: string, owner: string, ticketId: BigNumber, event: Event) {}
 
   /**
    * A ticket was undrafted from a dispute
@@ -217,12 +155,7 @@ export class DisputeManagerHandler extends Handler {
    * @param ticketId The drafted ticket ID
    * @param event The event object
    */
-  async onUndrafted(
-    marketId: string,
-    owner: string,
-    ticketId: BigNumber,
-    event: Event,
-  ) {}
+  async onUndrafted(marketId: string, owner: string, ticketId: BigNumber, event: Event) {}
 
   /**
    * A dispute outcome was executed

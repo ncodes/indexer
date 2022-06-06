@@ -7,52 +7,32 @@ export class LPStakerHandler extends Handler {
     public network: string,
     private contracts: KnownContracts,
   ) {
-    super(network);
+    super(network, contracts.lpStaker);
   }
 
   /**
    * Listen for events
    */
   listen() {
-    this.on(
-      this.contracts.lpStaker,
-      'RewardWithdrawn',
-      async (account: string, amount: BigNumber, event: Event) => {
-        return this.onRewardWithdrawn(account, amount, event);
-      },
-    );
+    this.on('RewardWithdrawn', async (account: string, amount: BigNumber, event: Event) => {
+      return this.onRewardWithdrawn(account, amount, event);
+    });
 
-    this.on(
-      this.contracts.lpStaker,
-      'RewardAdded',
-      async (amount: BigNumber, event: Event) => {
-        return this.onRewardAdded(amount, event);
-      },
-    );
+    this.on('RewardAdded', async (amount: BigNumber, event: Event) => {
+      return this.onRewardAdded(amount, event);
+    });
 
-    this.on(
-      this.contracts.lpStaker,
-      'Locked',
-      async (account: string, amount: BigNumber, event: Event) => {
-        return this.onLocked(account, amount, event);
-      },
-    );
+    this.on('Locked', async (account: string, amount: BigNumber, event: Event) => {
+      return this.onLocked(account, amount, event);
+    });
 
-    this.on(
-      this.contracts.lpStaker,
-      'Unlocked',
-      async (account: string, amount: BigNumber, event: Event) => {
-        return this.onUnlocked(account, amount, event);
-      },
-    );
+    this.on('Unlocked', async (account: string, amount: BigNumber, event: Event) => {
+      return this.onUnlocked(account, amount, event);
+    });
 
-    this.on(
-      this.contracts.lpStaker,
-      'Recovered',
-      async (token: string, amount: BigNumber, event: Event) => {
-        return this.onRecovered(token, amount, event);
-      },
-    );
+    this.on('Recovered', async (token: string, amount: BigNumber, event: Event) => {
+      return this.onRecovered(token, amount, event);
+    });
   }
 
   /**
@@ -61,11 +41,7 @@ export class LPStakerHandler extends Handler {
    * @param amount The amount that was withdrawn
    * @param event The event object
    */
-  async onRewardWithdrawn(
-    account: string,
-    amount: BigNumber,
-    event: ethers.Event,
-  ) {}
+  async onRewardWithdrawn(account: string, amount: BigNumber, event: ethers.Event) {}
 
   /**
    * Reward tokens were transferred to the contract

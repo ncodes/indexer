@@ -1,56 +1,31 @@
 import { Logger } from '@nestjs/common';
-import { Contract, ContractInterface, Event as Evt, Signer } from 'ethers';
-import { promise, queue } from 'fastq';
+import { Contract, ContractInterface, ethers, Signer } from 'ethers';
 import Event from '../models/events';
 import { Provider } from '@ethersproject/abstract-provider';
-
-type Task = {
-  args: any[];
-  f: (...args: any[]) => void;
-};
+import Meta from '../models/meta';
+import { EventEmitter2 } from 'eventemitter2';
 
 /**
- * Processes an event
- * @param task The task argument
- * @returns
+ * Handle handles contract events.
  */
-export async function task(task: Task): Promise<void> {
-  const logger = new Logger(Handler.name);
-  const txn = await Event.startTransaction();
-  try {
-    const event: Evt = task.args[task.args.length - 1];
-    await Event.bindTransaction(txn).create({
-      network: this.network,
-      signature: event.eventSignature,
-      blockNumber: event.blockNumber,
-      txIndex: event.transactionIndex,
-      logIndex: event.logIndex,
-    });
-    await task.f(...task.args, txn);
-    await txn.commit();
-  } catch (error) {
-    await txn.rollback();
-    if (error.message.indexOf('duplicate key')) return Promise.resolve();
-    logger.error(`Event Execution Error: ${error.message}`);
-    return Promise.reject(error);
-  }
-}
-
-export class Handler {
+export class Handler extends EventEmitter2 {
   logger = new Logger(Handler.name);
-  private eventQueue: { [event: string]: queue<Task> } = {};
 
   /**
    * Initialize the handler
    * @param network The network name
+   * @param contract The contract to be handled
    */
-  constructor(public network: string) {}
+  constructor(public network: string, private contract: Contract) {
+    super();
+    this.watch();
+  }
 
   /**
    * Create an ethers.js Contract object
-   * @param addressOrName
-   * @param contractInterface
-   * @param signerOrProvider
+   * @param addressOrName The contract address
+   * @param contractInterface The contract ABI
+   * @param signerOrProvider The provider or signer
    */
   newContract(
     addressOrName: string,
@@ -61,21 +36,78 @@ export class Handler {
   }
 
   /**
-   * Bind listeners to contract event
-   * @param contract The contract object
-   * @param event The target event
-   * @param f The listener to be called
+   * Emit an event that has not previously been emitted
+   * @param e The target event to be emitted
    */
-  on(contract: Contract, event: string, f: (...args: any[]) => void) {
-    // Create a queue for the event if not already created
-    if (!this.eventQueue[event]) {
-      this.eventQueue[event] = promise(this, task, 1);
+  async emitUnique(e: ethers.Event) {
+    this.logger.debug(`Event:${e.event}: processing an event...`);
+    const txn = await Event.startTransaction();
+    const args = [...e.args.slice(0, e.args.length), e, txn];
+    try {
+      await Event.bindTransaction(txn).create({
+        network: this.network,
+        signature: e.eventSignature,
+        blockNumber: e.blockNumber,
+        txIndex: e.transactionIndex,
+        logIndex: e.logIndex,
+      });
+      await this.emitAsync(e.event, ...args);
+      await txn.commit();
+      this.logger.debug(`Event:${e.event}: finished processing an event`);
+    } catch (error) {
+      await txn.rollback();
+      if (error.message.indexOf('duplicate key')) return Promise.resolve();
+      this.logger.error(`Event Execution Error: ${error.message}`);
+      return Promise.reject(error);
     }
+  }
 
-    // Push new event to event queue
-    contract.on(event, async (...args: any[]) => {
-      this.logger.debug(`Event:${event}: received and queued`);
-      await this.eventQueue[event].push({ args, f });
-    });
+  shortenAddr(addr: string) {
+    return `${addr.substr(0, 4)}...${addr.substr(addr.length - 4)}`;
+  }
+
+  /**
+   * Watch the blockchain for new events
+   */
+  watch() {
+    setInterval(async () => {
+      try {
+        // Get last synced block height
+        const key = `lastSyncedHeight_${this.network}`;
+        let meta = await Meta.get(key);
+        if (!meta) {
+          meta = new Meta({ value: process.env[`LAUNCH_HEIGHT_${this.network.toUpperCase()}`] });
+        }
+
+        // Ensure next sync height is not greater than current block height
+        const curBlock = await this.contract.provider.getBlockNumber();
+        if (parseInt(meta.value) + 1 > curBlock) return;
+
+        // Query events
+        let endBlock = process.env.WATCH_RANGE
+          ? parseInt(process.env.WATCH_RANGE) + parseInt(meta.value)
+          : parseInt(meta.value);
+        endBlock = endBlock > curBlock ? curBlock : endBlock;
+        const events = await this.contract.queryFilter({}, parseInt(meta.value), endBlock);
+
+        if (events.length) {
+          this.logger.debug(
+            `Contract(${this.shortenAddr(this.contract.address)}/${this.network}) Found ${
+              events.length
+            } event(s) at Block #${meta.value}`,
+          );
+
+          // Emit the events
+          for (const e of events) {
+            this.emitUnique(e).catch(console.error);
+          }
+        }
+
+        // Update the last sync height
+        await Meta.update(key, endBlock.toString());
+      } catch (e) {
+        this.logger.error('watch(): ' + e.message);
+      }
+    }, 500);
   }
 }

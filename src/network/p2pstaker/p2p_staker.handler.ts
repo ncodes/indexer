@@ -7,52 +7,32 @@ export class P2PStakerHandler extends Handler {
     public network: string,
     private contracts: KnownContracts,
   ) {
-    super(network);
+    super(network, contracts.p2pStaker);
   }
 
   /**
    * Listen for events
    */
   listen() {
-    this.on(
-      this.contracts.p2pStaker,
-      'Staked',
-      async (account: string, amount: BigNumber, event: Event) => {
-        return this.onStaked(account, amount, event);
-      },
-    );
+    this.on('Staked', async (account: string, amount: BigNumber, event: Event) => {
+      return this.onStaked(account, amount, event);
+    });
 
-    this.on(
-      this.contracts.p2pStaker,
-      'VestStaked',
-      async (account: string, amount: BigNumber, event: Event) => {
-        return this.onVestStaked(account, amount, event);
-      },
-    );
+    this.on('VestStaked', async (account: string, amount: BigNumber, event: Event) => {
+      return this.onVestStaked(account, amount, event);
+    });
 
-    this.on(
-      this.contracts.p2pStaker,
-      'StakeWithdrawn',
-      async (account: string, amount: BigNumber, event: Event) => {
-        return this.onStakeWithdrawn(account, amount, event);
-      },
-    );
+    this.on('StakeWithdrawn', async (account: string, amount: BigNumber, event: Event) => {
+      return this.onStakeWithdrawn(account, amount, event);
+    });
 
-    this.on(
-      this.contracts.p2pStaker,
-      'RewardWithdrawn',
-      async (account: string, amount: BigNumber, event: Event) => {
-        return this.onRewardWithdrawn(account, amount, event);
-      },
-    );
+    this.on('RewardWithdrawn', async (account: string, amount: BigNumber, event: Event) => {
+      return this.onRewardWithdrawn(account, amount, event);
+    });
 
-    this.on(
-      this.contracts.p2pStaker,
-      'Recovered',
-      async (token: string, amount: BigNumber, event: Event) => {
-        return this.onRecovered(token, amount, event);
-      },
-    );
+    this.on('Recovered', async (token: string, amount: BigNumber, event: Event) => {
+      return this.onRecovered(token, amount, event);
+    });
   }
 
   /**

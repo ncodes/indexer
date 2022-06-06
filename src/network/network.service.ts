@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Contract, providers } from 'ethers';
+import { Contract, ethers, providers } from 'ethers';
 import * as coreABI from '../../abi/core.json';
 import * as disputeManagerABI from '../../abi/disputemanager.json';
 import * as feeSharerABI from '../../abi/feesharer.json';
@@ -67,9 +67,7 @@ export default class NetworkService {
    * @param network The name of the network
    */
   async watchNetwork(network: string) {
-    const provider = new providers.JsonRpcProvider(
-      this.cfgSrv.get(`app.networks.${network}.rpcUrl`),
-    );
+    const prov = new providers.JsonRpcProvider(this.cfgSrv.get(`app.networks.${network}.rpcUrl`));
 
     this.contracts[network] = {};
 
@@ -77,59 +75,51 @@ export default class NetworkService {
     this.contracts[network].p2pToken = new Contract(
       this.cfgSrv.get(`app.networks.${network}.p2pTokenAddr`),
       p2pTokenABI,
-      provider,
+      prov,
     );
     this.contracts[network].marketCore = new Contract(
       this.cfgSrv.get(`app.networks.${network}.marketCoreAddr`),
       marketCoreABI,
-      provider,
+      prov,
     );
     this.contracts[network].core = new Contract(
       this.cfgSrv.get(`app.networks.${network}.coreAddr`),
       coreABI,
-      provider,
+      prov,
     );
     this.contracts[network].mediatorMgr = new Contract(
       this.cfgSrv.get(`app.networks.${network}.mediatorMgrAddr`),
       marketManagerABI,
-      provider,
+      prov,
     );
     this.contracts[network].disputeMgr = new Contract(
       this.cfgSrv.get(`app.networks.${network}.disputeMgrAddr`),
       disputeManagerABI,
-      provider,
+      prov,
     );
     this.contracts[network].p2pStaker = new Contract(
       this.cfgSrv.get(`app.networks.${network}.p2pStakerAddr`),
       p2pStakerABI,
-      provider,
+      prov,
     );
     this.contracts[network].lpStaker = new Contract(
       this.cfgSrv.get(`app.networks.${network}.lpStakerAddr`),
       lpStakerABI,
-      provider,
+      prov,
     );
     this.contracts[network].feeSharer = new Contract(
       this.cfgSrv.get(`app.networks.${network}.feeSharerAddr`),
       feeSharerABI,
-      provider,
+      prov,
     );
 
     // Listen for events
-    new MarketCoreHandler(provider, network, this.contracts[network]).listen();
-    new CoreHandler(provider, network, this.contracts[network]).listen();
-    new MediatorManagerHandler(
-      provider,
-      network,
-      this.contracts[network],
-    ).listen();
-    new DisputeManagerHandler(
-      provider,
-      network,
-      this.contracts[network],
-    ).listen();
-    new P2PStakerHandler(provider, network, this.contracts[network]).listen();
-    new LPStakerHandler(provider, network, this.contracts[network]).listen();
-    new FeeSharerHandler(provider, network, this.contracts[network]).listen();
+    new MarketCoreHandler(prov, network, this.contracts[network]).listen();
+    new CoreHandler(prov, network, this.contracts[network]).listen();
+    new MediatorManagerHandler(prov, network, this.contracts[network]).listen();
+    new DisputeManagerHandler(prov, network, this.contracts[network]).listen();
+    new P2PStakerHandler(prov, network, this.contracts[network]).listen();
+    new LPStakerHandler(prov, network, this.contracts[network]).listen();
+    new FeeSharerHandler(prov, network, this.contracts[network]).listen();
   }
 }

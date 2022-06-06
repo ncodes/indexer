@@ -7,41 +7,27 @@ export class FeeSharerHandler extends Handler {
     public network: string,
     private contracts: KnownContracts,
   ) {
-    super(network);
+    super(network, contracts.feeSharer);
   }
 
   /**
    * Listen for events
    */
   listen() {
-    this.on(
-      this.contracts.feeSharer,
-      'RewardAdded',
-      async (token: string, amount: BigNumber, event: Event) => {
-        return this.onRewardAdded(token, amount, event);
-      },
-    );
+    this.on('RewardAdded', async (token: string, amount: BigNumber, event: Event) => {
+      return this.onRewardAdded(token, amount, event);
+    });
 
     this.on(
-      this.contracts.feeSharer,
       'RewardWithdrawn',
-      async (
-        token: string,
-        account: string,
-        amount: BigNumber,
-        event: Event,
-      ) => {
+      async (token: string, account: string, amount: BigNumber, event: Event) => {
         return this.onRewardWithdrawn(token, account, amount, event);
       },
     );
 
-    this.on(
-      this.contracts.feeSharer,
-      'Recovered',
-      async (token: string, amount: BigNumber, event: Event) => {
-        return this.onRecovered(token, amount, event);
-      },
-    );
+    this.on('Recovered', async (token: string, amount: BigNumber, event: Event) => {
+      return this.onRecovered(token, amount, event);
+    });
   }
 
   /**
@@ -59,12 +45,7 @@ export class FeeSharerHandler extends Handler {
    * @param amount The amount of reward withdrawn
    * @param event The event object
    */
-  async onRewardWithdrawn(
-    token: string,
-    account: string,
-    amount: BigNumber,
-    event: Event,
-  ) {}
+  async onRewardWithdrawn(token: string, account: string, amount: BigNumber, event: Event) {}
 
   /**
    * An erroneously sent token was recovered

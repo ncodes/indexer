@@ -7,6 +7,11 @@ export default class Meta extends BaseModel {
   key: string;
   value: string;
 
+  constructor(init?: Partial<Meta>) {
+    super();
+    Object.assign(this, init);
+  }
+
   static get tableName() {
     return 'meta';
   }

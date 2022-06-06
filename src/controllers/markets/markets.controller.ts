@@ -1,17 +1,5 @@
-import {
-  Controller,
-  Get,
-  Logger,
-  Param,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
-import {
-  ok,
-  throw400,
-  throw404,
-  throw500,
-} from '../../common/responses/responses';
+import { Controller, Get, Logger, Param, Query, UseGuards } from '@nestjs/common';
+import { ok, throw400, throw404, throw500 } from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import Market from '../../models/market';
@@ -35,11 +23,7 @@ export class MarketsController {
    * @returns
    */
   @Get(':net/:mid')
-  async get(
-    @Param('net') network,
-    @Param('mid') mid: string,
-    @Query('noMerge') noMerge: boolean,
-  ) {
+  async get(@Param('net') network, @Param('mid') mid: string, @Query('noMerge') noMerge: boolean) {
     if (!isValidNetwork(network)) throw400('unknown network');
 
     const market = await Market.getMarket(network, mid);
@@ -50,8 +34,7 @@ export class MarketsController {
       return ok().data(market).build();
     } catch (error) {
       this.logger.error(error, null, 'get()');
-      if (error.message.indexOf('invalid arrayify value') !== -1)
-        throw404('market not found');
+      if (error.message.indexOf('invalid arrayify value') !== -1) throw404('market not found');
       else throw500('failed to get market');
     }
 
@@ -87,8 +70,7 @@ export class MarketsController {
         await this.marketSrv.extendMarket(m, noMerge);
       } catch (error) {
         this.logger.error(error, null, 'list()');
-        if (error.message.indexOf('invalid arrayify value') !== -1)
-          throw404('market not found');
+        if (error.message.indexOf('invalid arrayify value') !== -1) throw404('market not found');
         else throw500('failed to get market');
       }
     }

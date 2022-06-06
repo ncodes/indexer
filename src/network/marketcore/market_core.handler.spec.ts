@@ -1,8 +1,6 @@
 import { MarketCoreHandler } from './market_core.handler';
 import { DBService } from '../../db/DBService';
 import Market from '../../models/market';
-import { Contract, ContractInterface, Signer } from 'ethers';
-import { Provider } from '@ethersproject/abstract-provider';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 
 const MarketCoreContract = jest.fn().mockImplementation(() => {

@@ -103,14 +103,13 @@ export default class Market extends BaseModel {
    * @param marketId The record id
    * @param txn Optional transaction object
    */
-  static getMarket(
-    network: string,
-    marketId: string,
-    txn?: Transaction,
-  ): Promise<Market> {
+  static getMarket(network: string, marketId: string, txn?: Transaction): Promise<Market> {
     return this.query(txn)
       .whereNotDeleted()
-      .where({ network, marketId })
+      .where({
+        network,
+        marketId,
+      })
       .first();
   }
 
@@ -121,12 +120,7 @@ export default class Market extends BaseModel {
    */
   static find(q: Partial<Market>, txn?: Transaction): Promise<Market> {
     return new Promise((resolve, reject) => {
-      this.query(txn)
-        .where(q)
-        .whereNotDeleted()
-        .first()
-        .then(resolve)
-        .catch(reject);
+      this.query(txn).where(q).whereNotDeleted().first().then(resolve).catch(reject);
     });
   }
 
@@ -148,7 +142,8 @@ export default class Market extends BaseModel {
       .orWhere('baseAddress', 'ILIKE', qs)
       .orWhere('quote', 'ILIKE', qs)
       .orWhere('quoteAddress', 'ILIKE', qs)
-      .orWhere('pair', 'ILIKE', qs.replaceAll(/\s|\/|\-/gi, ''));
+      .orWhere('pair', 'ILIKE', qs.replaceAll(/\s|\/|\-/gi, ''))
+      .whereNotDeleted();
   }
 
   /**
@@ -186,11 +181,7 @@ export default class Market extends BaseModel {
    * @param udp the fields to be updated
    * @param txn Optional transaction object
    */
-  static updateById(
-    id: string,
-    udp: Partial<Market>,
-    txn?: Transaction,
-  ): Promise<Market> {
+  static updateById(id: string, udp: Partial<Market>, txn?: Transaction): Promise<Market> {
     return new Promise((resolve, reject) => {
       this.query(txn)
         .whereNotDeleted()

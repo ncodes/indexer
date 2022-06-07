@@ -21,11 +21,11 @@ export class LiquidityController {
    * contract liquidity info
    * @returns
    */
-  @Get(':net/:mid/:provider')
-  async getByMarketAndProvider(
-    @Param('net') network,
+  @Get(':mid/:provider')
+  async get(
     @Param('mid') mid: string,
     @Param('provider') provider: string,
+    @Query('net') network,
     @Query('noMerge') noMerge: boolean,
   ) {
     if (!isValidNetwork(network)) throw404('unknown network');
@@ -42,44 +42,58 @@ export class LiquidityController {
    * @param provider The provider address (optional)
    * @param noMerge Indicates whether to merge DB liquidity info with
    * contract liquidity info
+   * @param count Returns the count of matching result
    * @returns
    */
-  @Get(':net/:mid')
-  async listByMarket(
-    @Param('net') network,
+  @Get(':mid')
+  async listInMarket(
     @Param('mid') mid: string,
+    @Query('net') network,
     @Query('provider') provider: string,
     @Query('noMerge') noMerge: boolean,
+    @Query('count') count: boolean,
   ) {
-    const liquidities = await Liquidity.getMarketLiquidities(
-      network,
-      mid,
-      provider,
-    );
-    for (const liquidity of liquidities) {
-      await this.liqSrv.extendLiquidity(liquidity, noMerge);
+    if (!isValidNetwork(network)) throw404('unknown network');
+    if (!count) {
+      const liquidities = await Liquidity.getMarketLiquidities(network, mid, provider);
+      for (const liquidity of liquidities) {
+        await this.liqSrv.extendLiquidity(liquidity, noMerge);
+      }
+      return ok().data(liquidities).build();
+    } else {
+      return ok()
+        .data({ count: await Liquidity.countMarketLiquidities(network, mid, provider) })
+        .build();
     }
-    return ok().data(liquidities).build();
   }
 
   /**
-   * List liquidities belonging to a provider in a network
+   * List liquidities on a given network
    * @param network The network name.
    * @param provider The provider address (optional)
    * @param noMerge Indicates whether to merge DB liquidity info with
    * contract liquidity info
+   * @param count Returns the count of matching result
    * @returns
    */
-  @Get(':net')
-  async listByProvider(
-    @Param('net') network,
+  @Get()
+  async list(
+    @Query('net') network,
     @Query('provider') provider: string,
     @Query('noMerge') noMerge: boolean,
+    @Query('count') count: boolean,
   ) {
-    const liquidities = await Liquidity.getLiquidities(network, provider);
-    for (const liquidity of liquidities) {
-      await this.liqSrv.extendLiquidity(liquidity, noMerge);
+    if (!isValidNetwork(network)) throw404('unknown network');
+    if (!count) {
+      const liquidities = await Liquidity.getLiquidities(network, provider);
+      for (const liquidity of liquidities) {
+        await this.liqSrv.extendLiquidity(liquidity, noMerge);
+      }
+      return ok().data(liquidities).build();
+    } else {
+      return ok()
+        .data({ count: await Liquidity.countLiquidities(network, provider) })
+        .build();
     }
-    return ok().data(liquidities).build();
   }
 }

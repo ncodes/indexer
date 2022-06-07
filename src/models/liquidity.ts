@@ -56,10 +56,7 @@ export default class Liquidity extends BaseModel {
    * @param data The transfer info
    * @param txn Optional transaction object
    */
-  static create(
-    data: Partial<Liquidity>,
-    txn?: Transaction,
-  ): Promise<Liquidity> {
+  static create(data: Partial<Liquidity>, txn?: Transaction): Promise<Liquidity> {
     return new Promise((resolve, reject) => {
       return this.query(txn).insert(data).then(resolve).catch(reject);
     });
@@ -96,7 +93,7 @@ export default class Liquidity extends BaseModel {
   }
 
   /**
-   * getLiquidity finds a liquidity
+   * getMarketLiquidities returns liquidity associated with a market
    * @param network The network name
    * @param mid The market ID
    * @param provider Filter by provider address (optional)
@@ -108,16 +105,35 @@ export default class Liquidity extends BaseModel {
     provider?: string,
     txn?: Transaction,
   ): Promise<Liquidity[]> {
-    let q = this.query(txn)
-      .whereNotDeleted()
-      .where({ network })
-      .where('marketId', 'ILIKE', mid);
+    let q = this.query(txn).whereNotDeleted().where({ network }).where('marketId', 'ILIKE', mid);
     if (provider) q = q.where('provider', 'ILIKE', provider);
     return q;
   }
 
   /**
-   * getLiquidity finds a liquidity
+   * countMarketLiquidities returns count of liquidities associated with
+   * a market
+   * @param network The network name
+   * @param mid The market ID
+   * @param provider Filter by provider address (optional)
+   * @param txn Optional transaction object
+   */
+  static countMarketLiquidities(
+    network: string,
+    mid: string,
+    provider?: string,
+    txn?: Transaction,
+  ): Promise<string> {
+    let q = this.query(txn).whereNotDeleted().where({ network }).where('marketId', 'ILIKE', mid);
+    if (provider) q = q.where('provider', 'ILIKE', provider);
+    return q
+      .count('id')
+      .first()
+      .then((res: any) => res.count);
+  }
+
+  /**
+   * getLiquidities finds a liquidity by network and optional provider
    * @param network The network name
    * @param provider Filter by provider address (optional)
    * @param txn Optional transaction object
@@ -133,30 +149,41 @@ export default class Liquidity extends BaseModel {
   }
 
   /**
-   * find finds a record
+   * countLiquidities count liquidities by network and optional provider
+   * @param network The network name
+   * @param provider Filter by provider address (optional)
+   * @param txn Optional transaction object
+   */
+  static countLiquidities(
+    network: string,
+    provider?: string,
+    txn?: Transaction,
+  ): Promise<Liquidity[]> {
+    let q = this.query(txn).whereNotDeleted().where({ network });
+    if (provider) q = q.where('provider', 'ILIKE', provider);
+    return q
+      .count('id')
+      .first()
+      .then((res: any) => res.count);
+  }
+
+  /**
+   * find a record
    * @param q the query parameter
    * @param txn Optional transaction object
    */
   static find(q: Partial<Liquidity>, txn?: Transaction): Promise<Liquidity> {
     return new Promise((resolve, reject) => {
-      this.query(txn)
-        .where(q)
-        .whereNotDeleted()
-        .first()
-        .then(resolve)
-        .catch(reject);
+      this.query(txn).where(q).whereNotDeleted().first().then(resolve).catch(reject);
     });
   }
 
   /**
-   * findAll finds all records
+   * find all records
    * @param q the query parameter
    * @param txn Optional transaction object
    */
-  static findAll(
-    q: Partial<Liquidity>,
-    txn?: Transaction,
-  ): Promise<Liquidity[]> {
+  static findAll(q: Partial<Liquidity>, txn?: Transaction): Promise<Liquidity[]> {
     return new Promise((resolve, reject) => {
       this.query(txn).where(q).whereNotDeleted().then(resolve).catch(reject);
     });
@@ -187,17 +214,9 @@ export default class Liquidity extends BaseModel {
    * @param udp the fields to be updated
    * @param txn Optional transaction object
    */
-  static updateById(
-    id: string,
-    udp: Partial<Liquidity>,
-    txn?: Transaction,
-  ): Promise<Liquidity> {
+  static updateById(id: string, udp: Partial<Liquidity>, txn?: Transaction): Promise<Liquidity> {
     return new Promise((resolve, reject) => {
-      this.query(txn)
-        .whereNotDeleted()
-        .patchAndFetchById(id, udp)
-        .then(resolve)
-        .catch(reject);
+      this.query(txn).whereNotDeleted().patchAndFetchById(id, udp).then(resolve).catch(reject);
     });
   }
 

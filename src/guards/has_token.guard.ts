@@ -1,9 +1,4 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  HttpStatus,
-  Injectable,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, HttpStatus, Injectable } from '@nestjs/common';
 import * as basicAuth from 'basic-auth';
 import express from 'express';
 import { error, ErrorTypes } from '../common/responses/responses';

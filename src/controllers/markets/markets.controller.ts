@@ -1,4 +1,4 @@
-import { Controller, Get, Logger, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Head, Logger, Param, Query, UseGuards } from '@nestjs/common';
 import { ok, throw400, throw404, throw500 } from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
@@ -22,8 +22,8 @@ export class MarketsController {
    * market from contract.
    * @returns
    */
-  @Get(':net/:mid')
-  async get(@Param('net') network, @Param('mid') mid: string, @Query('noMerge') noMerge: boolean) {
+  @Get(':mid')
+  async get(@Param('mid') mid: string, @Query('net') network, @Query('noMerge') noMerge: boolean) {
     if (!isValidNetwork(network)) throw400('unknown network');
 
     const market = await Market.getMarket(network, mid);
@@ -48,14 +48,16 @@ export class MarketsController {
    * @param noMerge Indicates that market from DB should not be merged with
    * market from contract.
    * @param queryData The query term
+   * @param count Returns the count of markets only
    * @returns
    */
-  @Get(':net')
+  @Get()
   async list(
-    @Param('net') network,
+    @Query('net') network,
     @Query('creator') creator,
     @Query('noMerge') noMerge: boolean,
     @Query('query') queryData: string,
+    @Query('count') count: boolean,
   ) {
     if (!isValidNetwork(network)) throw400('unknown network');
 
@@ -63,7 +65,20 @@ export class MarketsController {
     if (creator) query = query.where('creator', creator);
     if (queryData) query = Market.makeSearchQuery(query, queryData);
 
-    // Get markets
+    // Count mode
+    if (count) {
+      return ok()
+        .data({
+          count: await query
+            .count('id')
+            .first()
+            .then((res: any) => {
+              return res.count;
+            }),
+        })
+        .build();
+    }
+
     const markets = await query.execute();
     for (const m of markets) {
       try {

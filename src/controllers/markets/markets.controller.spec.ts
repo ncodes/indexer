@@ -60,12 +60,7 @@ describe('MarketsController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [MarketsController],
-      providers: [
-        ConfigService,
-        NetworkService,
-        MarketsService,
-        MetadataService,
-      ],
+      providers: [ConfigService, NetworkService, MarketsService, MetadataService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
@@ -94,9 +89,9 @@ describe('MarketsController', () => {
   });
 
   describe('.get', () => {
-    it('should 401 when not authorized', async () => {
+    it('should return 401 when not authorized', async () => {
       await request(app.getHttpServer())
-        .get(`/v1/markets/net1/0x123`)
+        .get(`/v1/markets/0x123`)
         .send({})
         .expect(401)
         .expect({
@@ -107,10 +102,11 @@ describe('MarketsController', () => {
         });
     });
 
-    it('should 400 when network is unknown', async () => {
+    it('should return 400 when network is unknown', async () => {
       await request(app.getHttpServer())
-        .get(`/v1/markets/net1/0x123`)
+        .get(`/v1/markets/0x123`)
         .set('Authorization', 'bearer ' + token)
+        .query({ net: 'net1' })
         .send({})
         .expect(400)
         .expect({
@@ -118,10 +114,11 @@ describe('MarketsController', () => {
         });
     });
 
-    it('should 404 when market is unknown', async () => {
+    it('should return 404 when market is unknown', async () => {
       await request(app.getHttpServer())
-        .get(`/v1/markets/${net}/0x123`)
+        .get(`/v1/markets/0x123`)
         .set('Authorization', 'bearer ' + token)
+        .query({ net })
         .send({})
         .expect(404)
         .expect({
@@ -137,9 +134,10 @@ describe('MarketsController', () => {
         .mockResolvedValue(null);
 
       await request(app.getHttpServer())
-        .get(`/v1/markets/${net}/${market.marketId}`)
+        .get(`/v1/markets/${market.marketId}`)
         .set('Authorization', 'bearer ' + token)
         .send({})
+        .query({ net })
         .expect(200)
         .expect((res) => {
           expect(res.body.data.id).toEqual(market.id);
@@ -152,8 +150,9 @@ describe('MarketsController', () => {
   describe('.list', () => {
     it('should 401 when not authorized', async () => {
       await request(app.getHttpServer())
-        .get(`/v1/markets/net1`)
+        .get(`/v1/markets`)
         .send({})
+        .query({ net })
         .expect(401)
         .expect({
           error: {
@@ -165,9 +164,10 @@ describe('MarketsController', () => {
 
     it('should 400 when network is unknown', async () => {
       await request(app.getHttpServer())
-        .get(`/v1/markets/net1`)
+        .get(`/v1/markets`)
         .set('Authorization', 'bearer ' + token)
         .send({})
+        .query({ net: 'net1' })
         .expect(400)
         .expect({
           error: { type: 'invalid_request_error', message: 'unknown network' },
@@ -176,9 +176,9 @@ describe('MarketsController', () => {
 
     it('should 200 and empty list when no market was found ', async () => {
       await request(app.getHttpServer())
-        .get(`/v1/markets/${net}`)
+        .get(`/v1/markets`)
         .set('Authorization', 'bearer ' + token)
-        .send({})
+        .query({ net })
         .expect(200)
         .expect((res) => {
           expect(res.body.data).toHaveLength(0);
@@ -187,13 +187,10 @@ describe('MarketsController', () => {
 
     it('should 200 and list of markets when some markets exist', async () => {
       const market = await Market.create({ marketId: '0x123' });
-
-      jest
-        .spyOn(app.get(MarketsService), 'extendMarket')
-        .mockResolvedValue(null);
-
+      jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue(null);
       await request(app.getHttpServer())
-        .get(`/v1/markets/${net}`)
+        .get(`/v1/markets`)
+        .query({ net })
         .set('Authorization', 'bearer ' + token)
         .expect(200)
         .expect((res) => {
@@ -210,13 +207,11 @@ describe('MarketsController', () => {
         });
         await Market.create({});
 
-        jest
-          .spyOn(app.get(MarketsService), 'extendMarket')
-          .mockResolvedValue(null);
+        jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue(null);
 
         await request(app.getHttpServer())
-          .get(`/v1/markets/${net}`)
-          .query({ creator: '0xCreator' })
+          .get(`/v1/markets`)
+          .query({ creator: '0xCreator', net })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -234,13 +229,11 @@ describe('MarketsController', () => {
         });
         await Market.create({});
 
-        jest
-          .spyOn(app.get(MarketsService), 'extendMarket')
-          .mockResolvedValue(null);
+        jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue(null);
 
         await request(app.getHttpServer())
-          .get(`/v1/markets/${net}`)
-          .query({ query: market.creator })
+          .get(`/v1/markets`)
+          .query({ query: market.creator, net })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -257,13 +250,11 @@ describe('MarketsController', () => {
         });
         await Market.create({});
 
-        jest
-          .spyOn(app.get(MarketsService), 'extendMarket')
-          .mockResolvedValue(null);
+        jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue(null);
 
         await request(app.getHttpServer())
-          .get(`/v1/markets/${net}`)
-          .query({ query: market.marketId })
+          .get(`/v1/markets`)
+          .query({ query: market.marketId, net })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -280,13 +271,11 @@ describe('MarketsController', () => {
         });
         await Market.create({});
 
-        jest
-          .spyOn(app.get(MarketsService), 'extendMarket')
-          .mockResolvedValue(null);
+        jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue(null);
 
         await request(app.getHttpServer())
-          .get(`/v1/markets/${net}`)
-          .query({ query: market.base })
+          .get(`/v1/markets`)
+          .query({ net, query: market.base })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -303,13 +292,11 @@ describe('MarketsController', () => {
         });
         await Market.create({});
 
-        jest
-          .spyOn(app.get(MarketsService), 'extendMarket')
-          .mockResolvedValue(null);
+        jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue(null);
 
         await request(app.getHttpServer())
-          .get(`/v1/markets/${net}`)
-          .query({ query: market.baseAddress })
+          .get(`/v1/markets`)
+          .query({ net, query: market.baseAddress })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -326,13 +313,11 @@ describe('MarketsController', () => {
         });
         await Market.create({});
 
-        jest
-          .spyOn(app.get(MarketsService), 'extendMarket')
-          .mockResolvedValue(null);
+        jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue(null);
 
         await request(app.getHttpServer())
-          .get(`/v1/markets/${net}`)
-          .query({ query: market.quote })
+          .get(`/v1/markets`)
+          .query({ net, query: market.quote })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -349,13 +334,11 @@ describe('MarketsController', () => {
         });
         await Market.create({});
 
-        jest
-          .spyOn(app.get(MarketsService), 'extendMarket')
-          .mockResolvedValue(null);
+        jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue(null);
 
         await request(app.getHttpServer())
-          .get(`/v1/markets/${net}`)
-          .query({ query: market.quoteAddress })
+          .get(`/v1/markets`)
+          .query({ net, query: market.quoteAddress })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -372,13 +355,11 @@ describe('MarketsController', () => {
         });
         await Market.create({});
 
-        jest
-          .spyOn(app.get(MarketsService), 'extendMarket')
-          .mockResolvedValue(null);
+        jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue(null);
 
         await request(app.getHttpServer())
-          .get(`/v1/markets/${net}`)
-          .query({ query: 'BTCUSDT' })
+          .get(`/v1/markets`)
+          .query({ net, query: 'BTCUSDT' })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -387,8 +368,8 @@ describe('MarketsController', () => {
           });
 
         await request(app.getHttpServer())
-          .get(`/v1/markets/${net}`)
-          .query({ query: 'BTC/USDT' })
+          .get(`/v1/markets`)
+          .query({ net, query: 'BTC/USDT' })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -397,8 +378,8 @@ describe('MarketsController', () => {
           });
 
         await request(app.getHttpServer())
-          .get(`/v1/markets/${net}`)
-          .query({ query: 'BTC USDT' })
+          .get(`/v1/markets`)
+          .query({ net, query: 'BTC USDT' })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -407,8 +388,8 @@ describe('MarketsController', () => {
           });
 
         await request(app.getHttpServer())
-          .get(`/v1/markets/${net}`)
-          .query({ query: 'BTC-USDT' })
+          .get(`/v1/markets`)
+          .query({ net, query: 'BTC-USDT' })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {

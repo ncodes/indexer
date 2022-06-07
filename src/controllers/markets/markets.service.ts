@@ -10,10 +10,7 @@ import { ToDec } from '../../common/common';
 
 @Injectable()
 export class MarketsService {
-  constructor(
-    private netSrv: NetworkService,
-    private metadataSrv: MetadataService,
-  ) {}
+  constructor(private netSrv: NetworkService, private metadataSrv: MetadataService) {}
 
   /**
    * Returns normalized JSON equivalent of a market object sourced
@@ -49,10 +46,7 @@ export class MarketsService {
    * @param dbMarket The market from the database
    */
   merge(cMarketSource: ContractMarket, dbMarket: Market) {
-    _.extend(
-      dbMarket,
-      _.omit(cMarketSource, ['baseAsset', 'quoteAsset', 'createdAt']),
-    );
+    _.extend(dbMarket, _.omit(cMarketSource, ['baseAsset', 'quoteAsset', 'createdAt']));
   }
 
   /**
@@ -63,39 +57,18 @@ export class MarketsService {
    */
   async extendMarket(market: Market, noMerge = false) {
     try {
-      const {
-        marketId,
-        network: net,
-        base,
-        baseAddress,
-        quote,
-        quoteAddress,
-      } = market;
+      const { marketId, network: net, base, baseAddress, quote, quoteAddress } = market;
 
       if (!noMerge) {
-        const _m = await (
-          await this.netSrv.getMarketCore(net)
-        ).markets(market.marketId);
+        const _m = await (await this.netSrv.getMarketCore(net)).markets(market.marketId);
         const marketFromContract = this.normalizeMarket(_m);
         this.merge(marketFromContract, market);
       }
 
-      market.numProviders = await Liquidity.countProvidersInMarket(
-        net,
-        marketId,
-      );
-      market.totalLiquidity = await Liquidity.getTotalMarketLiquidity(
-        net,
-        marketId,
-      );
-      market.lowestPrice = await Liquidity.getLowestPriceInMarket(
-        net,
-        marketId,
-      );
-      market.highestPrice = await Liquidity.getHighestPriceInMarket(
-        net,
-        marketId,
-      );
+      market.numProviders = await Liquidity.countProvidersInMarket(net, marketId);
+      market.totalLiquidity = await Liquidity.getTotalMarketLiquidity(net, marketId);
+      market.lowestPrice = await Liquidity.getLowestPriceInMarket(net, marketId);
+      market.highestPrice = await Liquidity.getHighestPriceInMarket(net, marketId);
       market.baseLogo = await this.metadataSrv.getLogo(base, baseAddress);
       market.quoteLogo = await this.metadataSrv.getLogo(quote, quoteAddress);
       market.priceChange = await this.priceChange(net, marketId, 24);

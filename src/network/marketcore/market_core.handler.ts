@@ -4,6 +4,7 @@ import { Transaction } from 'objection';
 import * as erc20ABI from '../../../abi/erc20.json';
 import Market from '../../models/market';
 import { Handler } from '../handler';
+import MarketProvider from '../../models/market_provider';
 
 export class MarketCoreHandler extends Handler {
   public logger = new Logger(MarketCoreHandler.name);
@@ -35,12 +36,12 @@ export class MarketCoreHandler extends Handler {
       },
     );
 
-    this.on('AllowedPut', async (id: string, address: string, event: Event) => {
-      return this.onMarketPutAllowed(id, address, event);
+    this.on('AllowedPut', async (id: string, address: string, event: Event, txn: Transaction) => {
+      return this.onMarketPutAllowed(id, address, event, txn);
     });
 
-    this.on('RevokedPut', async (id: string, address: string, event: Event) => {
-      return this.onMarketPutRevoked(id, address, event);
+    this.on('RevokedPut', async (id: string, address: string, event: Event, txn: Transaction) => {
+      return this.onMarketPutRevoked(id, address, event, txn);
     });
 
     this.on('InvitedMediator', async (id: string, address: string, event: Event) => {
@@ -144,24 +145,37 @@ export class MarketCoreHandler extends Handler {
       },
       txn,
     );
+
+    return Promise.resolve(undefined);
   }
 
   /**
    * New address allowed to provide liquidity to a market
    * @param id The market ID
    * @param address The address approved
+   * @param event The event object
+   * @param txn The db transaction object
    */
-  async onMarketPutAllowed(id: string, address: string, event: Event) {
-    //
+  async onMarketPutAllowed(id: string, address: string, event: Event, txn?: Transaction) {
+    return MarketProvider.create(
+      {
+        network: this.network,
+        marketId: id,
+        address,
+      },
+      txn,
+    );
   }
 
   /**
    * New address revoked from providing liquidity to a market
    * @param id The market ID
    * @param address The address approved
+   * @param event The event object
+   * @param txn The db transaction object
    */
-  async onMarketPutRevoked(id: string, address: string, event: Event) {
-    //
+  async onMarketPutRevoked(id: string, address: string, event: Event, txn?: Transaction) {
+    return MarketProvider.remove(this.network, id, address, txn);
   }
 
   /**

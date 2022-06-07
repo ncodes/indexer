@@ -4,6 +4,7 @@ import Event from '../models/events';
 import { Provider } from '@ethersproject/abstract-provider';
 import Meta from '../models/meta';
 import { EventEmitter2 } from 'eventemitter2';
+import { isTestMode } from '../common/common';
 
 /**
  * Handle handles contract events.
@@ -18,7 +19,7 @@ export class Handler extends EventEmitter2 {
    */
   constructor(public network: string, private contract: Contract) {
     super();
-    this.watch();
+    if (!isTestMode()) this.watch();
   }
 
   /**
@@ -76,7 +77,9 @@ export class Handler extends EventEmitter2 {
         const key = `lastSyncedHeight_${this.network}`;
         let meta = await Meta.get(key);
         if (!meta) {
-          meta = new Meta({ value: process.env[`LAUNCH_HEIGHT_${this.network.toUpperCase()}`] });
+          meta = new Meta({
+            value: process.env[`LAUNCH_HEIGHT_${this.network.toUpperCase()}`] || '1',
+          });
         }
 
         // Ensure next sync height is not greater than current block height
@@ -86,9 +89,9 @@ export class Handler extends EventEmitter2 {
         // Query events
         let endBlock = process.env.WATCH_RANGE
           ? parseInt(process.env.WATCH_RANGE) + parseInt(meta.value)
-          : parseInt(meta.value);
+          : parseInt(meta.value) + 1;
         endBlock = endBlock > curBlock ? curBlock : endBlock;
-        const events = await this.contract.queryFilter({}, parseInt(meta.value), endBlock);
+        const events = await this.contract.queryFilter({}, parseInt(meta.value) + 1, endBlock);
 
         if (events.length) {
           this.logger.debug(

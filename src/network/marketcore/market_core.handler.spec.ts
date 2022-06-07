@@ -2,6 +2,7 @@ import { MarketCoreHandler } from './market_core.handler';
 import { DBService } from '../../db/DBService';
 import Market from '../../models/market';
 import { NoopLogger } from '../../common/loggers/noop_logger';
+import MarketProvider from '../../models/market_provider';
 
 const MarketCoreContract = jest.fn().mockImplementation(() => {
   return {};
@@ -9,6 +10,7 @@ const MarketCoreContract = jest.fn().mockImplementation(() => {
 
 describe('MarketCoreHandler', () => {
   const db = DBService.getForTest();
+  const net = 'net';
   let handler: MarketCoreHandler;
   const marketCoreContract = new MarketCoreContract();
   const contracts = {
@@ -25,7 +27,7 @@ describe('MarketCoreHandler', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    handler = new MarketCoreHandler(null, 'net', contracts);
+    handler = new MarketCoreHandler(null, net, contracts);
     handler.logger = new NoopLogger() as any;
     await db.truncateTables();
   });
@@ -53,15 +55,7 @@ describe('MarketCoreHandler', () => {
       };
 
       await expect(
-        handler.onNewMarket(
-          '0x123',
-          creator,
-          baseAsset,
-          quoteAsset,
-          true,
-          true,
-          {} as any,
-        ),
+        handler.onNewMarket('0x123', creator, baseAsset, quoteAsset, true, true, {} as any),
       ).resolves.toBeUndefined();
       const market = await Market.getByMarketId('0x123');
       expect(market).toBeDefined();
@@ -74,6 +68,59 @@ describe('MarketCoreHandler', () => {
       expect(market.isBaseLocal).toBeTruthy();
       expect(market.isQuoteLocal).toBeTruthy();
       expect(market.pair).toEqual('BTCUSDT');
+    });
+  });
+
+  describe('.onMarketPutAllowed', () => {
+    it('should create new MarketProvider', async () => {
+      await expect(handler.onMarketPutAllowed('0x123', '0xAddr', {} as any)).resolves.toBeDefined();
+      const provider = await MarketProvider.find({
+        network: net,
+        marketId: '0x123',
+        address: '0xAddr',
+      });
+      expect(provider).toBeDefined();
+    });
+
+    describe('when market provider already exist but soft-deleted', () => {
+      it('should create new MarketProvider', async () => {
+        const provider = await MarketProvider.create({
+          network: net,
+          marketId: '0x123',
+          address: '0xAddr',
+        });
+        await MarketProvider.remove(provider.network, provider.marketId, provider.address);
+
+        await expect(
+          handler.onMarketPutAllowed('0x123', '0xAddr', {} as any),
+        ).resolves.toBeDefined();
+        const provider2 = await MarketProvider.find({
+          network: net,
+          marketId: '0x123',
+          address: '0xAddr',
+        });
+        expect(provider2).toBeDefined();
+        expect(provider.id).toEqual(provider2.id);
+        expect(provider2.deletedAt).toBeNull();
+      });
+    });
+  });
+
+  describe('.onMarketPutRevoked', () => {
+    it('should soft delete existing matching MarketProvider', async () => {
+      const provider = await MarketProvider.create({
+        network: net,
+        marketId: '0x123',
+        address: '0xAddr',
+      });
+
+      await expect(handler.onMarketPutRevoked('0x123', '0xAddr', {} as any)).resolves.toBeDefined();
+      const provider2 = await MarketProvider.getById(provider.id);
+      expect(provider2).toBeUndefined();
+
+      const provider3 = await MarketProvider.query().where('id', provider.id).first();
+      expect(provider3).toBeDefined();
+      expect(provider3.deletedAt).toBeDefined();
     });
   });
 });

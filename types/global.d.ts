@@ -17,6 +17,10 @@ declare global {
     ok: boolean;
   }
 
+  interface CountResponse {
+    count: string;
+  }
+
   interface AnObject {
     [key: string]: any;
   }

@@ -1,10 +1,4 @@
-import {
-  Logger,
-  MiddlewareConsumer,
-  Module,
-  NestModule,
-  RequestMethod,
-} from '@nestjs/common';
+import { Logger, MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -20,6 +14,7 @@ import { MarketsModule } from './controllers/markets/markets.module';
 import { DBService } from './db/DBService';
 import { JobsModule } from './jobs/jobs.module';
 import { NetworkModule } from './network/network.module';
+import { ProvidersModule } from './controllers/providers/providers.module';
 
 Handlebars.registerHelper('uppercase', (aString) => {
   return aString.toUpperCase();
@@ -33,13 +28,7 @@ Handlebars.registerHelper('uppercase', (aString) => {
  * @returns
  */
 function getModules() {
-  return [
-    JobsModule,
-    AuthModule,
-    NetworkModule,
-    MarketsModule,
-    LiquidityModule,
-  ];
+  return [JobsModule, AuthModule, NetworkModule, MarketsModule, LiquidityModule, ProvidersModule];
 }
 
 /**

@@ -111,6 +111,6 @@ export class Handler extends EventEmitter2 {
       } catch (e) {
         this.logger.error('watch(): ' + e.message);
       }
-    }, 500);
+    }, 3000);
   }
 }

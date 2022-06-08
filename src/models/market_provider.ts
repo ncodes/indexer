@@ -25,8 +25,9 @@ export default class MarketProvider extends BaseModel {
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
-    const object = super.$formatJson(json) as MarketProvider;
+    const object = json as MarketProvider;
     object.object = 'market_provider';
+    delete object.deletedAt;
     return object;
   }
 
@@ -48,8 +49,12 @@ export default class MarketProvider extends BaseModel {
       // Find a matching soft-deleted user
       const softDeletedUser = await this.query(txn)
         .where('network', 'ILIKE', data.network)
-        .where('marketId', 'ILIKE', data.marketId)
-        .where('address', 'ILIKE', data.address)
+        .where((q) => {
+          if (data.marketId) q.where('marketId', 'ILIKE', data.marketId);
+        })
+        .where((q) => {
+          if (data.address) q.where('address', 'ILIKE', data.address);
+        })
         .whereDeleted()
         .first();
 
@@ -101,17 +106,6 @@ export default class MarketProvider extends BaseModel {
   }
 
   /**
-   * findAll finds all records
-   * @param q the query parameter
-   * @param txn Optional transaction object
-   */
-  static findAll(q: Partial<MarketProvider>, txn?: Transaction): Promise<MarketProvider[]> {
-    return new Promise((resolve, reject) => {
-      this.query(txn).where(q).whereNotDeleted().then(resolve).catch(reject);
-    });
-  }
-
-  /**
    * updateById updates a record by ID
    * @param id the record id
    * @param udp the fields to be updated
@@ -145,5 +139,40 @@ export default class MarketProvider extends BaseModel {
       .where('marketId', 'ILIKE', marketId)
       .where('address', 'ILIKE', address)
       .delete();
+  }
+
+  /**
+   * count returns the count of record matching q
+   * @param network The network name
+   * @param marketId The market ID (optional)
+   * @param txn Optional transaction object
+   */
+  static countByNetworkOrMarket(network: string, marketId: string, txn?: Transaction) {
+    return new Promise<string>((resolve, reject) => {
+      let q = this.query(txn).where('network', 'ILIKE', network);
+      if (marketId) q = q.where('marketId', 'ILIKE', marketId);
+      q.count('id')
+        .whereNotDeleted()
+        .first()
+        .then((res: any) => {
+          return resolve(res.count);
+        })
+        .catch(reject);
+    });
+  }
+
+  /**
+   * Search finds records with key-set pagination
+   * @param network The network name
+   * @param marketId The market ID
+   * @param limit The number of records to return.
+   * @param prevSerial Fetch objects with lesser serial to paginate
+   */
+  static search(network: string, marketId: string, limit: number, prevSerial: number) {
+    let q = this.query().where('network', 'ILIKE', network);
+    if (marketId) q = q.where('marketId', 'ILIKE', marketId);
+    if (prevSerial) q = q.where('sn', '<', prevSerial);
+    if (limit) q = q.limit(limit);
+    return q.whereNotDeleted().orderBy('createdAt', 'DESC');
   }
 }

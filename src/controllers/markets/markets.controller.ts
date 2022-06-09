@@ -61,7 +61,7 @@ export class MarketsController {
   ) {
     if (!isValidNetwork(network)) throw400('unknown network');
 
-    let query = Market.query();
+    let query = Market.query().withGraphFetched('invitedMediators');
     if (creator) query = query.where('creator', creator);
     if (queryData) query = Market.makeSearchQuery(query, queryData);
 

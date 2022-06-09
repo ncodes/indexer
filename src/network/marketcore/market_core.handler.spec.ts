@@ -3,6 +3,8 @@ import { DBService } from '../../db/DBService';
 import Market from '../../models/market';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import MarketProvider from '../../models/market_provider';
+import InvitedMediator from '../../models/invited_mediators';
+import * as moment from 'moment';
 
 const MarketCoreContract = jest.fn().mockImplementation(() => {
   return {};
@@ -121,6 +123,110 @@ describe('MarketCoreHandler', () => {
       const provider3 = await MarketProvider.query().where('id', provider.id).first();
       expect(provider3).toBeDefined();
       expect(provider3.deletedAt).toBeDefined();
+    });
+  });
+
+  describe('.onInvitedMediator', () => {
+    it('should create mediator', async () => {
+      await handler.onInvitedMediator('0x123', '0xProvider', {} as any);
+      const mediator = await InvitedMediator.findInvite(net, '0x123', '0xProvider');
+      expect(mediator).toBeDefined();
+      expect(mediator.network).toEqual(net);
+      expect(mediator.address).toEqual('0xProvider');
+      expect(mediator.accepted).toBeFalsy();
+    });
+
+    it('should undo soft delete and set `accepted` to false', async () => {
+      let invite = await InvitedMediator.create({
+        network: net,
+        marketId: '0x123',
+        address: '0xProvider',
+        accepted: true,
+        deletedAt: moment().toISOString(),
+      });
+      await handler.onInvitedMediator('0x123', '0xProvider', {} as any);
+      invite = await InvitedMediator.find({ id: invite.id });
+      expect(invite.accepted).toBeFalsy();
+      expect(invite.deletedAt).toBeNull();
+    });
+  });
+
+  describe('.onUnInvitedMediator', () => {
+    it('should soft delete unaccepted invitation', async () => {
+      let invite = await InvitedMediator.create({
+        network: net,
+        marketId: '0x123',
+        address: '0xProvider',
+      });
+      await handler.onUnInvitedMediator(invite.marketId, invite.address, {} as any);
+      invite = await InvitedMediator.query()
+        .where({
+          network: net,
+          marketId: '0x123',
+          address: '0xProvider',
+        })
+        .first();
+      expect(invite).toBeDefined();
+      expect(invite.deletedAt).toBeDefined();
+      expect(invite.accepted).toBeFalsy();
+    });
+
+    it('should not soft delete accepted invitation', async () => {
+      let invite = await InvitedMediator.create({
+        network: net,
+        marketId: '0x123',
+        address: '0xProvider',
+        accepted: true,
+      });
+      await handler.onUnInvitedMediator(invite.marketId, invite.address, {} as any);
+      invite = await InvitedMediator.query()
+        .where({
+          network: net,
+          marketId: '0x123',
+          address: '0xProvider',
+        })
+        .first();
+      expect(invite).toBeDefined();
+      expect(invite.deletedAt).toBeNull();
+      expect(invite.accepted).toBeTruthy();
+    });
+  });
+
+  describe('.onAcceptedMediatorInvite', () => {
+    it('should mark invitation as `accepted`', async () => {
+      let invite = await InvitedMediator.create({
+        network: net,
+        marketId: '0x123',
+        address: '0xProvider',
+      });
+      await handler.onAcceptedMediatorInvite(invite.marketId, invite.address, {} as any);
+      invite = await InvitedMediator.query()
+        .where({
+          network: net,
+          marketId: '0x123',
+          address: '0xProvider',
+        })
+        .first();
+      expect(invite.accepted).toBeTruthy();
+    });
+  });
+
+  describe('.onRevokedMediator', () => {
+    it('should soft delete invitation', async () => {
+      let invite = await InvitedMediator.create({
+        network: net,
+        marketId: '0x123',
+        address: '0xProvider',
+      });
+      await handler.onRevokedMediator(invite.marketId, invite.address, {} as any);
+      invite = await InvitedMediator.query()
+        .where({
+          network: net,
+          marketId: '0x123',
+          address: '0xProvider',
+        })
+        .first();
+      expect(invite.deletedAt).toBeDefined();
     });
   });
 });

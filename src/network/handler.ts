@@ -57,7 +57,7 @@ export class Handler extends EventEmitter2 {
       this.logger.debug(`Event:${e.event}: finished processing an event`);
     } catch (error) {
       await txn.rollback();
-      if (error.message.indexOf('duplicate key')) return Promise.resolve();
+      if (error.message.indexOf('duplicate key') !== -1) return Promise.resolve();
       this.logger.error(`Event Execution Error: ${error.message}`);
       return Promise.reject(error);
     }
@@ -74,7 +74,7 @@ export class Handler extends EventEmitter2 {
     setInterval(async () => {
       try {
         // Get last synced block height
-        const key = `lastSyncedHeight_${this.network}`;
+        const key = `lastSyncedHeight_${this.network}_${this.contract.address}`;
         let meta = await Meta.get(key);
         if (!meta) {
           meta = new Meta({
@@ -91,18 +91,19 @@ export class Handler extends EventEmitter2 {
           ? parseInt(process.env.WATCH_RANGE) + parseInt(meta.value)
           : parseInt(meta.value) + 1;
         endBlock = endBlock > curBlock ? curBlock : endBlock;
-        const events = await this.contract.queryFilter({}, parseInt(meta.value) + 1, endBlock);
+        const startBlock = parseInt(meta.value) + 1;
+        const events = await this.contract.queryFilter({}, startBlock, endBlock);
 
         if (events.length) {
           this.logger.debug(
             `Contract(${this.shortenAddr(this.contract.address)}/${this.network}) Found ${
               events.length
-            } event(s) at Block #${meta.value}`,
+            } event(s) at Block #${startBlock}`,
           );
 
           // Emit the events
           for (const e of events) {
-            this.emitUnique(e).catch(console.error);
+            await this.emitUnique(e);
           }
         }
 

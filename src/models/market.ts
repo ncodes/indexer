@@ -1,6 +1,7 @@
 import * as crand from 'crypto-random-string';
-import Objection, { QueryBuilderType, Transaction } from 'objection';
+import Objection, { Model, QueryBuilderType, Transaction } from 'objection';
 import { BaseModel } from './base';
+import InvitedMediator from './invited_mediators';
 
 /**
  * Market represents a market model
@@ -10,7 +11,7 @@ export default class Market extends BaseModel {
   marketId: string;
   // The creator of the market
   creator: string;
-  // The network it exist in
+  // The network it exists in
   network: string;
   // The base asset symbol
   base: string;
@@ -44,6 +45,9 @@ export default class Market extends BaseModel {
   highestPrice: string;
   priceChange: number;
 
+  /* Not persisted */
+  invitedMediators: InvitedMediator[];
+
   constructor(init?: Partial<Market>) {
     super();
     Object.assign(this, init);
@@ -65,7 +69,16 @@ export default class Market extends BaseModel {
   }
 
   static get relationMappings() {
-    return {};
+    return {
+      invitedMediators: {
+        relation: Model.HasManyRelation,
+        modelClass: InvitedMediator,
+        join: {
+          from: 'markets.marketId',
+          to: 'invited_mediators.marketId',
+        },
+      },
+    };
   }
 
   /**
@@ -110,6 +123,7 @@ export default class Market extends BaseModel {
         network,
         marketId,
       })
+      .withGraphFetched('invitedMediators')
       .first();
   }
 

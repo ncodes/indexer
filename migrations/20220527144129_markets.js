@@ -17,6 +17,7 @@ exports.up = function (knex) {
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');
 
+      table.index('marketId');
       table.unique(['network', 'marketId']);
     }),
   ]);

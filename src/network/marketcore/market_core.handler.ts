@@ -5,6 +5,7 @@ import * as erc20ABI from '../../../abi/erc20.json';
 import Market from '../../models/market';
 import { Handler } from '../handler';
 import MarketProvider from '../../models/market_provider';
+import InvitedMediator from '../../models/invited_mediators';
 
 export class MarketCoreHandler extends Handler {
   public logger = new Logger(MarketCoreHandler.name);
@@ -169,49 +170,67 @@ export class MarketCoreHandler extends Handler {
 
   /**
    * New address revoked from providing liquidity to a market
-   * @param id The market ID
+   * @param marketId The market ID
    * @param address The address approved
    * @param event The event object
    * @param txn The db transaction object
    */
-  async onMarketPutRevoked(id: string, address: string, event: Event, txn?: Transaction) {
-    return MarketProvider.remove(this.network, id, address, txn);
+  async onMarketPutRevoked(marketId: string, address: string, event: Event, txn?: Transaction) {
+    return MarketProvider.remove(this.network, marketId, address, txn);
   }
 
   /**
    * New mediator invited into a market
-   * @param id The market ID
+   * @param marketId The market ID
    * @param address The address of the invited mediator
+   * @param event The event object
+   * @param txn The db transaction object
    */
-  async onInvitedMediator(id: string, address: string, event: Event) {
-    //
+  async onInvitedMediator(marketId: string, address: string, event: Event, txn?: Transaction) {
+    const invite = await InvitedMediator.findInvite(this.network, marketId, address, txn);
+    if (!invite)
+      await InvitedMediator.create(
+        {
+          network: this.network,
+          marketId,
+          address,
+        },
+        txn,
+      );
   }
 
   /**
    * New mediator uninvited into a market
    * @param id The market ID
    * @param address The address of the uninvited mediator
+   * @param event The event object
+   * @param txn The db transaction object
    */
-  async onUnInvitedMediator(id: string, address: string, event: Event) {
-    //
+  async onUnInvitedMediator(id: string, address: string, event: Event, txn?: Transaction) {
+    const invite = await InvitedMediator.findInvite(this.network, id, address, txn);
+    if (!invite.accepted) await InvitedMediator.removeInvite(this.network, id, address, txn);
   }
 
   /**
-   * Invited mediator accepted an invite
+   * Invited mediator accepted an invitation
    * @param id The market ID
    * @param address The address of the uninvited mediator
+   * @param event The event object
+   * @param txn The db transaction object
    */
-  async onAcceptedMediatorInvite(id: string, address: string, event: Event) {
-    //
+  async onAcceptedMediatorInvite(id: string, address: string, event: Event, txn?: Transaction) {
+    await InvitedMediator.updateInvite(this.network, id, address, { accepted: true }, txn);
   }
 
   /**
    * Mediator invite has been revoked.
    * @param id The market ID
    * @param address The address of the revoked mediator
+   * @param event The event object
+   * @param txn The db transaction object
    */
-  async onRevokedMediator(id: string, address: string, event: Event) {
-    //
+  async onRevokedMediator(id: string, address: string, event: Event, txn?: Transaction) {
+    await InvitedMediator.removeInvite(this.network, id, address, txn);
   }
 
   /**

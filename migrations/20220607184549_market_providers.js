@@ -10,7 +10,7 @@ exports.up = function (knex) {
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');
 
-      table.unique(['marketId', 'address']);
+      table.unique(['network', 'marketId', 'address']);
       table.index(['network', 'marketId', 'address']);
     }),
   ]);

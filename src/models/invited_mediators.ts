@@ -1,5 +1,5 @@
 import * as crand from 'crypto-random-string';
-import Objection, { Transaction } from 'objection';
+import Objection, { raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 
 /**
@@ -98,7 +98,7 @@ export default class InvitedMediator extends BaseModel {
    * @param marketId The market ID
    * @param acceptedOnly When set, returns only accepted or unaccepted records
    * @param limit The result limit
-   * @param prevSerial The last serial number seen (for pagination)
+   * @param offset The offset value
    * @param txn Optional transaction object
    */
   static searchByNetworkMarketID(
@@ -106,13 +106,15 @@ export default class InvitedMediator extends BaseModel {
     marketId: string,
     acceptedOnly: boolean,
     limit: number,
-    prevSerial: number,
+    offset: number,
     txn?: Transaction,
   ) {
-    let q = this.query(txn).where('network', 'ILIKE', network);
+    let q = this.query(txn)
+      .select(raw('*, count(*) over() as "__queryCount"'))
+      .where('network', 'ILIKE', network);
     if (marketId) q = q.where('marketId', 'ILIKE', marketId);
-    if (prevSerial) q = q.where('sn', '<', prevSerial);
     if (limit) q = q.limit(limit);
+    if (offset) q = q.offset(offset);
     if (acceptedOnly !== undefined) q = q.where({ accepted: acceptedOnly });
     return q.whereNotDeleted().orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
   }

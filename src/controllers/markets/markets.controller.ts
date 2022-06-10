@@ -50,8 +50,10 @@ export class MarketsController {
    * @param creator Filter the result by creator address (optional)
    * @param noMerge Indicates that market from DB should not be merged with
    * market from contract.
-   * @param queryData The query term
+   * @param queryStr The query term
    * @param count Returns the count of markets only
+   * @param limit The number of result to return (optional)
+   * @param offset The query offset
    * @returns
    */
   @Get()
@@ -59,30 +61,26 @@ export class MarketsController {
     @Query('net') network,
     @Query('creator') creator,
     @Query('noMerge') noMerge: boolean,
-    @Query('query') queryData: string,
+    @Query('query') queryStr: string,
     @Query('count') count: boolean,
+    @Query('limit') limit: string,
+    @Query('offset') offset: string,
   ) {
     if (!isValidNetwork(network)) throw400('unknown network');
+    const result = await Market.searchByCreatorOrQueryString(
+      network,
+      creator,
+      queryStr,
+      count,
+      parseInt(limit || '25'),
+      parseInt(offset),
+    );
 
-    let query = Market.query();
-    if (creator) query = query.where('creator', creator);
-    if (queryData) query = Market.makeSearchQuery(query, queryData);
-
-    // Count mode
     if (count) {
-      return ok()
-        .data({
-          count: await query
-            .count('id')
-            .first()
-            .then((res: any) => {
-              return res.count;
-            }),
-        })
-        .build();
+      return ok().data({ count: result }).build();
     }
 
-    const markets = await query.execute();
+    const markets = result as Market[];
     for (const m of markets) {
       try {
         await this.marketSrv.extendMarket(m, noMerge);
@@ -100,25 +98,25 @@ export class MarketsController {
    * List invited mediators of a market
    * @param network The network name
    * @param mid The market ID
-   * @param limit The number of result to return (optional)
    * @param accepted Indicate to return only accepted invitations
-   * @param prevSerial The last seen serial number for pagination
+   * @param limit The number of result to return (optional)
+   * @param offset The query offset
    */
   @Get('/:mid/invited_mediators')
   async listInvitedMediators(
     @Query('net') network,
     @Param('mid') mid: string,
-    @Query('limit') limit: string,
     @Query('accepted') accepted: string,
-    @Query('prevSerial') prevSerial: string,
+    @Query('limit') limit: string,
+    @Query('offset') offset: string,
   ) {
     if (!isValidNetwork(network)) throw400('unknown network');
     const res = await InvitedMediator.searchByNetworkMarketID(
       network,
       mid,
       accepted === undefined ? undefined : accepted === 'true',
-      parseInt(limit),
-      parseInt(prevSerial),
+      parseInt(limit || '25'),
+      parseInt(offset),
     );
     return ok().data(res).build();
   }
@@ -128,21 +126,21 @@ export class MarketsController {
    * @param network The network name
    * @param mid The market ID
    * @param limit The number of result to return (optional)
-   * @param prevSerial The last seen serial number for pagination
+   * @param offset The query offset
    */
   @Get('/:mid/permitted_traders')
   async listPermittedTraders(
     @Query('net') network,
     @Param('mid') mid: string,
     @Query('limit') limit: string,
-    @Query('prevSerial') prevSerial: string,
+    @Query('offset') offset: string,
   ) {
     if (!isValidNetwork(network)) throw400('unknown network');
     const res = await PermittedTrader.searchByNetworkMarketID(
       network,
       mid,
-      parseInt(limit),
-      parseInt(prevSerial),
+      parseInt(limit || '25'),
+      parseInt(offset),
     );
     return ok().data(res).build();
   }

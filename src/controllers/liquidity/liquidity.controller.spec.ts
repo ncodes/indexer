@@ -89,194 +89,6 @@ describe('LiquidityController', () => {
     );
   });
 
-  describe('.get', () => {
-    it('should return 401 when not authorized', async () => {
-      await request(app.getHttpServer())
-        .get(`/v1/liquidities/0x123/0xProvider`)
-        .send({})
-        .expect(401)
-        .expect({
-          error: {
-            type: 'authentication_error',
-            message: 'authorization header is required',
-          },
-        });
-    });
-
-    it('should return 404 when network is unknown', async () => {
-      await request(app.getHttpServer())
-        .get(`/v1/liquidities/0x123/0xProvider`)
-        .query({ net: 'net1' })
-        .set('Authorization', 'bearer ' + token)
-        .expect(404)
-        .expect({
-          error: { message: 'unknown network' },
-        });
-    });
-
-    it('should return 404 when liquidity does not exist', async () => {
-      await request(app.getHttpServer())
-        .get(`/v1/liquidities/0x123/0xProvider`)
-        .query({ net })
-        .set('Authorization', 'bearer ' + token)
-        .expect(404)
-        .expect({
-          error: { message: 'liquidity not found' },
-        });
-    });
-
-    it('should return 404 when liquidity does not exist', async () => {
-      const liq = await Liquidity.create({
-        network: net,
-        provider: '0xProvider',
-        marketId: '0x123',
-      });
-
-      const mockExtendLiquidity = jest
-        .spyOn(app.get(LiquidityService), 'extendLiquidity')
-        .mockResolvedValue(undefined);
-
-      await request(app.getHttpServer())
-        .get(`/v1/liquidities/0x123/0xProvider`)
-        .query({ net })
-        .set('Authorization', 'bearer ' + token)
-        .expect(200)
-        .expect((res) => {
-          expect(res.body.data.id).toEqual(liq.id);
-          expect(res.body.data.marketId).toEqual('0x123');
-          expect(res.body.data.provider).toEqual('0xProvider');
-          expect(mockExtendLiquidity).toHaveBeenCalled();
-        });
-    });
-  });
-
-  describe('.listInMarket', () => {
-    it('should return 401 when not authorized', async () => {
-      await request(app.getHttpServer())
-        .get(`/v1/liquidities/0x123`)
-        .send({})
-        .expect(401)
-        .expect({
-          error: {
-            type: 'authentication_error',
-            message: 'authorization header is required',
-          },
-        });
-    });
-
-    it('should return 404 when network is unknown', async () => {
-      await request(app.getHttpServer())
-        .get(`/v1/liquidities/0x123`)
-        .query({ net: 'net1' })
-        .set('Authorization', 'bearer ' + token)
-        .expect(404)
-        .expect({
-          error: { message: 'unknown network' },
-        });
-    });
-
-    it('should return 200 and the correct liquidity records', async () => {
-      const liq = await Liquidity.create({
-        network: net,
-        provider: '0xProvider',
-        marketId: '0x123',
-      });
-
-      const mockExtendLiquidity = jest
-        .spyOn(app.get(LiquidityService), 'extendLiquidity')
-        .mockResolvedValue(undefined);
-
-      await request(app.getHttpServer())
-        .get(`/v1/liquidities/0x123`)
-        .query({ net })
-        .set('Authorization', 'bearer ' + token)
-        .expect(200)
-        .expect((res) => {
-          expect(res.body.data).toHaveLength(1);
-          expect(res.body.data[0].id).toEqual(liq.id);
-          expect(mockExtendLiquidity).toHaveBeenCalled();
-        });
-    });
-
-    describe('test provider filter', () => {
-      it('should return 200 and the correct liquidity records', async () => {
-        const liq = await Liquidity.create({
-          network: net,
-          provider: '0xProvider',
-          marketId: '0x123',
-        });
-        await Liquidity.create({
-          network: net,
-          provider: '0xProvider2',
-          marketId: '0x123',
-        });
-
-        const mockExtendLiquidity = jest
-          .spyOn(app.get(LiquidityService), 'extendLiquidity')
-          .mockResolvedValue(undefined);
-
-        await request(app.getHttpServer())
-          .get(`/v1/liquidities/0x123`)
-          .query({ net, provider: '0xProvider' })
-          .set('Authorization', 'bearer ' + token)
-          .expect(200)
-          .expect((res) => {
-            expect(res.body.data).toHaveLength(1);
-            expect(res.body.data[0].id).toEqual(liq.id);
-            expect(mockExtendLiquidity).toHaveBeenCalled();
-          });
-      });
-
-      it(
-        'should return 200 and the correct liquidity records when no' + ' provider was set',
-        async () => {
-          const liq = await Liquidity.create({
-            network: net,
-            provider: '0xProvider',
-            marketId: '0x123',
-          });
-          await Liquidity.create({
-            network: net,
-            provider: '0xProvider2',
-            marketId: '0x123',
-          });
-
-          const mockExtendLiquidity = jest
-            .spyOn(app.get(LiquidityService), 'extendLiquidity')
-            .mockResolvedValue(undefined);
-
-          await request(app.getHttpServer())
-            .get(`/v1/liquidities/0x123`)
-            .query({ net })
-            .set('Authorization', 'bearer ' + token)
-            .expect(200)
-            .expect((res) => {
-              expect(res.body.data).toHaveLength(2);
-              expect(mockExtendLiquidity).toHaveBeenCalled();
-            });
-        },
-      );
-    });
-
-    describe('count is set', () => {
-      it('should return 200 and count', async () => {
-        await Liquidity.create({
-          network: net,
-          provider: '0xProvider',
-          marketId: '0x123',
-        });
-        await request(app.getHttpServer())
-          .get(`/v1/liquidities/0x123`)
-          .query({ net, provider: '0xProvider', count: true })
-          .set('Authorization', 'bearer ' + token)
-          .expect(200)
-          .expect((res) => {
-            expect(res.body.data.count).toEqual('1');
-          });
-      });
-    });
-  });
-
   describe('.list', () => {
     it('should return 401 when not authorized', async () => {
       await request(app.getHttpServer())
@@ -302,7 +114,7 @@ describe('LiquidityController', () => {
         });
     });
 
-    describe('test provider filter', () => {
+    describe('provider is set', () => {
       it('should return 200 and the correct liquidity records', async () => {
         const liq = await Liquidity.create({
           network: net,
@@ -360,6 +172,96 @@ describe('LiquidityController', () => {
             });
         },
       );
+    });
+
+    describe('market ID is set', () => {
+      it('should return 200 and the correct liquidity records', async () => {
+        const liq = await Liquidity.create({
+          network: net,
+          provider: '0xProvider',
+          marketId: '0x123',
+        });
+        await Liquidity.create({
+          network: net,
+          provider: '0xProvider2',
+          marketId: '0x124',
+        });
+
+        const mockExtendLiquidity = jest
+          .spyOn(app.get(LiquidityService), 'extendLiquidity')
+          .mockResolvedValue(undefined);
+
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities`)
+          .query({ net, mid: '0x123' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(liq.id);
+            expect(mockExtendLiquidity).toHaveBeenCalled();
+          });
+      });
+    });
+
+    describe('limit is set', () => {
+      it('should return 200 and the correct liquidity records', async () => {
+        await Liquidity.create({
+          network: net,
+          provider: '0xProvider',
+          marketId: '0x123',
+        });
+        const liq = await Liquidity.create({
+          network: net,
+          provider: '0xProvider2',
+          marketId: '0x124',
+        });
+
+        const mockExtendLiquidity = jest
+          .spyOn(app.get(LiquidityService), 'extendLiquidity')
+          .mockResolvedValue(undefined);
+
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities`)
+          .query({ net, limit: 1 })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(liq.id);
+            expect(mockExtendLiquidity).toHaveBeenCalled();
+          });
+      });
+    });
+
+    describe('offset is set', () => {
+      it('should return 200 and the correct liquidity records', async () => {
+        const liq = await Liquidity.create({
+          network: net,
+          provider: '0xProvider',
+          marketId: '0x123',
+        });
+        await Liquidity.create({
+          network: net,
+          provider: '0xProvider2',
+          marketId: '0x124',
+        });
+
+        const mockExtendLiquidity = jest
+          .spyOn(app.get(LiquidityService), 'extendLiquidity')
+          .mockResolvedValue(undefined);
+
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities`)
+          .query({ net, limit: 1, offset: 1 })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(liq.id);
+            expect(mockExtendLiquidity).toHaveBeenCalled();
+          });
+      });
     });
 
     describe('count is set', () => {

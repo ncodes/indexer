@@ -1,7 +1,8 @@
 import * as crand from 'crypto-random-string';
-import Objection, { Model, QueryBuilderType, Transaction } from 'objection';
+import Objection, { Model, QueryBuilderType, raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 import InvitedMediator from './invited_mediators';
+import { ok } from '../common/responses/responses';
 
 /**
  * Market represents a market model
@@ -60,9 +61,9 @@ export default class Market extends BaseModel {
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
-    const market = super.$formatJson(json) as Market;
-    market.object = 'market';
-    return market;
+    const object = json as Market;
+    object.object = 'market';
+    return object;
   }
 
   static get tableName() {
@@ -159,8 +160,45 @@ export default class Market extends BaseModel {
   }
 
   /**
+   * search for markets
+   * @param network The network name (optional)
+   * @param creator The market creator address (optional)
+   * @param queryStr The query string (optional)
+   * @param countOnly Indicates whether to return count only.
+   * @param limit The number of records to return.
+   * @param offset The offset value
+   * @param txn Optional transaction object
+   */
+  static searchByCreatorOrQueryString(
+    network: string,
+    creator: string,
+    queryStr: string,
+    countOnly: boolean,
+    limit: number,
+    offset: number,
+    txn?: Transaction,
+  ): Promise<string | Market[]> {
+    let query = this.query(txn).select(raw('*, count(*) over() as "__queryCount"'));
+    if (network) query = query.where('network', network);
+    if (creator) query = query.where('creator', 'ilike', creator);
+    if (queryStr) query = this.makeSearchQuery(query, queryStr);
+    if (countOnly) {
+      return query
+        .count('id')
+        .first()
+        .then((res: any) => {
+          return res.count;
+        });
+    }
+    if (offset) query = query.offset(offset);
+    if (limit) query = query.limit(limit);
+    return query.whereNotDeleted().orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
+  }
+
+  /**
    * findAll finds all records
    * @param q the query parameter
+   * @param txn The transaction object
    */
   static findAll(q: Partial<Market>, txn?: Transaction): Promise<Market[]> {
     return new Promise((resolve, reject) => {

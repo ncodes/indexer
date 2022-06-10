@@ -38,9 +38,10 @@ export default class Liquidity extends BaseModel {
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
-    const liq = super.$formatJson(json) as Liquidity;
-    liq.object = 'liquidity';
-    return liq;
+    const object = json as Liquidity;
+    object.object = 'liquidity';
+    delete object.deletedAt;
+    return object;
   }
 
   static get tableName() {
@@ -135,31 +136,46 @@ export default class Liquidity extends BaseModel {
   /**
    * getLiquidities finds a liquidity by network and optional provider
    * @param network The network name
+   * @param marketId The market ID (optional)
    * @param provider Filter by provider address (optional)
+   * @param limit The number of records to return (optional).
+   * @param offset The query offset (optional)
    * @param txn Optional transaction object
    */
   static getLiquidities(
     network: string,
+    marketId?: string,
     provider?: string,
+    limit?: number,
+    offset?: number,
     txn?: Transaction,
   ): Promise<Liquidity[]> {
-    let q = this.query(txn).whereNotDeleted().where({ network });
+    let q = this.query(txn)
+      .select(raw('*, count(*) over() as "__queryCount"'))
+      .whereNotDeleted()
+      .where({ network });
+    if (marketId) q = q.where('marketId', 'ILIKE', marketId);
     if (provider) q = q.where('provider', 'ILIKE', provider);
-    return q;
+    if (offset) q = q.offset(offset);
+    if (limit) q = q.limit(limit);
+    return q.orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
   }
 
   /**
    * countLiquidities count liquidities by network and optional provider
    * @param network The network name
+   * @param marketId The market ID (optional)
    * @param provider Filter by provider address (optional)
    * @param txn Optional transaction object
    */
   static countLiquidities(
     network: string,
+    marketId?: string,
     provider?: string,
     txn?: Transaction,
   ): Promise<Liquidity[]> {
     let q = this.query(txn).whereNotDeleted().where({ network });
+    if (marketId) q = q.where('marketId', 'ILIKE', marketId);
     if (provider) q = q.where('provider', 'ILIKE', provider);
     return q
       .count('id')

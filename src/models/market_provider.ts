@@ -1,6 +1,5 @@
 import * as crand from 'crypto-random-string';
-import Objection, { Transaction } from 'objection';
-import { Roles } from '../common/roles';
+import Objection, { raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 
 /**
@@ -166,12 +165,14 @@ export default class MarketProvider extends BaseModel {
    * @param network The network name
    * @param marketId The market ID
    * @param limit The number of records to return.
-   * @param prevSerial Fetch objects with lesser serial to paginate
+   * @param offset The offset value
    */
-  static search(network: string, marketId: string, limit: number, prevSerial: number) {
-    let q = this.query().where('network', 'ILIKE', network);
+  static search(network: string, marketId: string, limit: number, offset: number) {
+    let q = this.query()
+      .select(raw('*, count(*) over() as "__queryCount"'))
+      .where('network', 'ILIKE', network);
     if (marketId) q = q.where('marketId', 'ILIKE', marketId);
-    if (prevSerial) q = q.where('sn', '<', prevSerial);
+    if (offset) q = q.offset(offset);
     if (limit) q = q.limit(limit);
     return q.whereNotDeleted().orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
   }

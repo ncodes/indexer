@@ -19,13 +19,6 @@ const ConfigServiceMock = jest.fn().mockImplementation(() => {
 });
 
 const mockGetMarketCore = jest.fn();
-const NetworkServiceMock = jest.fn().mockImplementation(() => {
-  return { getMarketCore: mockGetMarketCore };
-});
-
-const MetadataServiceMock = jest.fn().mockImplementation(() => {
-  return {};
-});
 
 describe('ProviderController', () => {
   let app: INestApplication;
@@ -80,64 +73,6 @@ describe('ProviderController', () => {
       '5',
       mockCfgGet('auth.jwtSecret'),
     );
-  });
-
-  describe('.count', () => {
-    it('should return 401 when not authorized', async () => {
-      await request(app.getHttpServer())
-        .get(`/v1/providers/count`)
-        .send({})
-        .expect(401)
-        .expect({
-          error: {
-            type: 'authentication_error',
-            message: 'authorization header is required',
-          },
-        });
-    });
-
-    it('should return 404 when network is unknown', async () => {
-      await request(app.getHttpServer())
-        .get(`/v1/providers/count`)
-        .query({ net: 'net1' })
-        .set('Authorization', 'bearer ' + token)
-        .expect(404)
-        .expect({
-          error: { message: 'unknown network' },
-        });
-    });
-
-    describe('with correct network', () => {
-      it('should return 200 and correct count', async () => {
-        await MarketProvider.create({ network: net });
-        await request(app.getHttpServer())
-          .get(`/v1/providers/count`)
-          .query({ net })
-          .set('Authorization', 'bearer ' + token)
-          .expect(200)
-          .expect((res) => {
-            expect(res.body.data.count).toEqual('1');
-          });
-      });
-    });
-
-    describe('with correct network and a market ID', () => {
-      it('should return 200 and correct count', async () => {
-        await MarketProvider.create({ network: net });
-        const provider = await MarketProvider.create({
-          network: net,
-          marketId: '0x123',
-        });
-        await request(app.getHttpServer())
-          .get(`/v1/providers/count`)
-          .query({ net, mid: provider.marketId })
-          .set('Authorization', 'bearer ' + token)
-          .expect(200)
-          .expect((res) => {
-            expect(res.body.data.count).toEqual('1');
-          });
-      });
-    });
   });
 
   describe('.list', () => {
@@ -221,26 +156,49 @@ describe('ProviderController', () => {
       });
     });
 
-    describe('with prevSerial specified', () => {
+    describe('with offset specified', () => {
       it('should return 200 and correct result', async () => {
         const prov = await MarketProvider.create({
           sn: 1,
           network: net,
           createdAt: moment().subtract(1, 's').toISOString(),
         });
-        const prov2 = await MarketProvider.create({
+        await MarketProvider.create({
           sn: 2,
           network: net,
           createdAt: moment().toISOString(),
         });
         await request(app.getHttpServer())
           .get(`/v1/providers`)
-          .query({ net, limit: 1, prevSerial: prov2.sn })
+          .query({ net, limit: 1, offset: 1 })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
             expect(res.body.data).toHaveLength(1);
             expect(res.body.data[0].id).toEqual(prov.id);
+          });
+      });
+    });
+
+    describe('with count specified', () => {
+      it('should return 200 and correct count', async () => {
+        await MarketProvider.create({
+          sn: 1,
+          network: net,
+          createdAt: moment().subtract(1, 's').toISOString(),
+        });
+        await MarketProvider.create({
+          sn: 2,
+          network: net,
+          createdAt: moment().toISOString(),
+        });
+        await request(app.getHttpServer())
+          .get(`/v1/providers`)
+          .query({ net, count: true })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data.count).toEqual('2');
           });
       });
     });

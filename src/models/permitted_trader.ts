@@ -1,5 +1,5 @@
 import * as crand from 'crypto-random-string';
-import Objection, { Transaction } from 'objection';
+import Objection, { raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 
 /**
@@ -108,19 +108,21 @@ export default class PermittedTrader extends BaseModel {
    * @param network The network name
    * @param marketId The market ID
    * @param limit The result limit
-   * @param prevSerial The last serial number seen (for pagination)
+   * @param offset The offset value
    * @param txn Optional transaction object
    */
   static searchByNetworkMarketID(
     network: string,
     marketId: string,
     limit: number,
-    prevSerial: number,
+    offset: number,
     txn?: Transaction,
   ) {
-    let q = this.query(txn).where('network', 'ILIKE', network);
+    let q = this.query(txn)
+      .select(raw('*, count(*) over() as "__queryCount"'))
+      .where('network', 'ILIKE', network);
     if (marketId) q = q.where('marketId', 'ILIKE', marketId);
-    if (prevSerial) q = q.where('sn', '<', prevSerial);
+    if (offset) q = q.offset(offset);
     if (limit) q = q.limit(limit);
     return q.whereNotDeleted().orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
   }

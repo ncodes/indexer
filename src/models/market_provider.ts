@@ -173,6 +173,6 @@ export default class MarketProvider extends BaseModel {
     if (marketId) q = q.where('marketId', 'ILIKE', marketId);
     if (prevSerial) q = q.where('sn', '<', prevSerial);
     if (limit) q = q.limit(limit);
-    return q.whereNotDeleted().orderBy('createdAt', 'DESC');
+    return q.whereNotDeleted().orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
   }
 }

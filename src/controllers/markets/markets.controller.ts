@@ -5,6 +5,9 @@ import { HasKeyGuard } from '../../guards/has_token.guard';
 import Market from '../../models/market';
 import { isValidNetwork } from '../../network/common';
 import { MarketsService } from './markets.service';
+import InvitedMediator from '../../models/invited_mediators';
+import * as _ from 'lodash';
+import PermittedTrader from '../../models/permitted_trader';
 
 @Controller('v1/markets')
 @UseGuards(BeAuthenticatedGuard)
@@ -61,7 +64,7 @@ export class MarketsController {
   ) {
     if (!isValidNetwork(network)) throw400('unknown network');
 
-    let query = Market.query().withGraphFetched('invitedMediators');
+    let query = Market.query();
     if (creator) query = query.where('creator', creator);
     if (queryData) query = Market.makeSearchQuery(query, queryData);
 
@@ -91,5 +94,56 @@ export class MarketsController {
     }
 
     return ok().data(markets).build();
+  }
+
+  /**
+   * List invited mediators of a market
+   * @param network The network name
+   * @param mid The market ID
+   * @param limit The number of result to return (optional)
+   * @param accepted Indicate to return only accepted invitations
+   * @param prevSerial The last seen serial number for pagination
+   */
+  @Get('/:mid/invited_mediators')
+  async listInvitedMediators(
+    @Query('net') network,
+    @Param('mid') mid: string,
+    @Query('limit') limit: string,
+    @Query('accepted') accepted: string,
+    @Query('prevSerial') prevSerial: string,
+  ) {
+    if (!isValidNetwork(network)) throw400('unknown network');
+    const res = await InvitedMediator.searchByNetworkMarketID(
+      network,
+      mid,
+      accepted === undefined ? undefined : accepted === 'true',
+      parseInt(limit),
+      parseInt(prevSerial),
+    );
+    return ok().data(res).build();
+  }
+
+  /**
+   * List permitted traders of a market
+   * @param network The network name
+   * @param mid The market ID
+   * @param limit The number of result to return (optional)
+   * @param prevSerial The last seen serial number for pagination
+   */
+  @Get('/:mid/permitted_traders')
+  async listPermittedTraders(
+    @Query('net') network,
+    @Param('mid') mid: string,
+    @Query('limit') limit: string,
+    @Query('prevSerial') prevSerial: string,
+  ) {
+    if (!isValidNetwork(network)) throw400('unknown network');
+    const res = await PermittedTrader.searchByNetworkMarketID(
+      network,
+      mid,
+      parseInt(limit),
+      parseInt(prevSerial),
+    );
+    return ok().data(res).build();
   }
 }

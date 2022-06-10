@@ -45,10 +45,7 @@ export default class Session extends BaseModel {
    * @param id The user id
    */
   static getById(id: string): Promise<Session> {
-    return this.query()
-      .whereNotDeleted()
-      .findById(id)
-      .withGraphFetched('owner');
+    return this.query().whereNotDeleted().findById(id).withGraphFetched('owner(notDeleted)');
   }
 
   /**
@@ -59,7 +56,7 @@ export default class Session extends BaseModel {
     return this.query()
       .where({ signature })
       .whereNotDeleted()
-      .withGraphFetched('owner')
+      .withGraphFetched('owner(notDeleted)')
       .first();
   }
 

@@ -26,8 +26,9 @@ export default class InvitedMediator extends BaseModel {
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
-    const object = super.$formatJson(json) as InvitedMediator;
+    const object = json as InvitedMediator;
     object.object = 'invited_mediator';
+    delete object.deletedAt;
     return object;
   }
 
@@ -71,19 +72,49 @@ export default class InvitedMediator extends BaseModel {
   }
 
   /**
-   * Find an invitation
+   * findInviteNetworkMarketIDAndAddress an invitation
    * @param network The network name
    * @param marketId The market ID
    * @param address The invited address
    * @param txn Optional transaction object
    */
-  static findInvite(network: string, marketId: string, address: string, txn?: Transaction) {
+  static findInviteByNetworkMarketIDAndAddress(
+    network: string,
+    marketId: string,
+    address: string,
+    txn?: Transaction,
+  ) {
     return this.query(txn)
       .where('network', 'ilike', network)
       .where('marketId', 'ilike', marketId)
       .where('address', 'ilike', address)
       .whereNotDeleted()
       .first();
+  }
+
+  /**
+   * searchByNetworkMarketID searches for invitations by network and market ID
+   * @param network The network name
+   * @param marketId The market ID
+   * @param acceptedOnly When set, returns only accepted or unaccepted records
+   * @param limit The result limit
+   * @param prevSerial The last serial number seen (for pagination)
+   * @param txn Optional transaction object
+   */
+  static searchByNetworkMarketID(
+    network: string,
+    marketId: string,
+    acceptedOnly: boolean,
+    limit: number,
+    prevSerial: number,
+    txn?: Transaction,
+  ) {
+    let q = this.query(txn).where('network', 'ILIKE', network);
+    if (marketId) q = q.where('marketId', 'ILIKE', marketId);
+    if (prevSerial) q = q.where('sn', '<', prevSerial);
+    if (limit) q = q.limit(limit);
+    if (acceptedOnly !== undefined) q = q.where({ accepted: acceptedOnly });
+    return q.whereNotDeleted().orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
   }
 
   /**
@@ -110,13 +141,13 @@ export default class InvitedMediator extends BaseModel {
   }
 
   /**
-   * removeInvite remove an invite
+   * remove an invitation
    * @param network The network name
    * @param marketId The market ID
    * @param address The invited address
    * @param txn Optional transaction object
    */
-  static removeInvite(network: string, marketId: string, address: string, txn?: Transaction) {
+  static remove(network: string, marketId: string, address: string, txn?: Transaction) {
     return this.query(txn)
       .where('network', 'ilike', network)
       .where('marketId', 'ilike', marketId)

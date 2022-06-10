@@ -14,6 +14,8 @@ import { MetadataService } from '../../services/metadata.service';
 import { makeSession } from '../auth/utils';
 import * as cryptoRandomString from 'crypto-random-string';
 import Market from '../../models/market';
+import InvitedMediator from '../../models/invited_mediators';
+import PermittedTrader from '../../models/permitted_trader';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -395,6 +397,236 @@ describe('MarketsController', () => {
           .expect((res) => {
             expect(res.body.data).toHaveLength(1);
             expect(res.body.data[0].id).toEqual(market.id);
+          });
+      });
+    });
+  });
+
+  describe('.listInvitedMediators', () => {
+    it('should 401 when not authorized', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/markets/0x123/invited_mediators`)
+        .send({})
+        .query({ net })
+        .expect(401)
+        .expect({
+          error: {
+            type: 'authentication_error',
+            message: 'authorization header is required',
+          },
+        });
+    });
+
+    it('should 400 when network is unknown', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/markets/0x123/invited_mediators`)
+        .set('Authorization', 'bearer ' + token)
+        .send({})
+        .query({ net: 'net1' })
+        .expect(400)
+        .expect({
+          error: { type: 'invalid_request_error', message: 'unknown network' },
+        });
+    });
+
+    describe('with no filter', () => {
+      it('should correct results', async () => {
+        const mid = '0x123';
+        await InvitedMediator.create({ network: net, marketId: mid });
+        const iv = await InvitedMediator.create({
+          network: net,
+          marketId: mid,
+        });
+        await request(app.getHttpServer())
+          .get(`/v1/markets/${mid}/invited_mediators`)
+          .set('Authorization', 'bearer ' + token)
+          .send({})
+          .query({ net })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(2);
+            expect(res.body.data[0].id).toEqual(iv.id);
+          });
+      });
+    });
+
+    describe('with limit=1', () => {
+      it('should correct results', async () => {
+        const mid = '0x123';
+        await InvitedMediator.create({ network: net, marketId: mid });
+        const iv = await InvitedMediator.create({
+          network: net,
+          marketId: mid,
+        });
+        await request(app.getHttpServer())
+          .get(`/v1/markets/${mid}/invited_mediators`)
+          .set('Authorization', 'bearer ' + token)
+          .send({})
+          .query({ net, limit: 1 })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(iv.id);
+          });
+      });
+    });
+
+    describe('with accepted=true', () => {
+      it('should correct results', async () => {
+        const mid = '0x123';
+        await InvitedMediator.create({ network: net, marketId: mid });
+        const iv = await InvitedMediator.create({
+          network: net,
+          marketId: mid,
+          accepted: true,
+        });
+        await request(app.getHttpServer())
+          .get(`/v1/markets/${mid}/invited_mediators`)
+          .set('Authorization', 'bearer ' + token)
+          .send({})
+          .query({ net, accepted: 'true' })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(iv.id);
+          });
+      });
+    });
+
+    describe('with accepted=false', () => {
+      it('should correct results', async () => {
+        const mid = '0x123';
+        await InvitedMediator.create({
+          network: net,
+          marketId: mid,
+          accepted: true,
+        });
+        const iv = await InvitedMediator.create({
+          network: net,
+          marketId: mid,
+          accepted: false,
+        });
+        await request(app.getHttpServer())
+          .get(`/v1/markets/${mid}/invited_mediators`)
+          .set('Authorization', 'bearer ' + token)
+          .send({})
+          .query({ net, accepted: 'false' })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(iv.id);
+          });
+      });
+    });
+
+    describe('with prevSerial=2', () => {
+      it('should correct results', async () => {
+        const mid = '0x123';
+        const iv = await InvitedMediator.create({
+          network: net,
+          marketId: mid,
+        });
+        await InvitedMediator.create({ network: net, marketId: mid });
+        await request(app.getHttpServer())
+          .get(`/v1/markets/${mid}/invited_mediators`)
+          .set('Authorization', 'bearer ' + token)
+          .send({})
+          .query({ net, limit: 1, prevSerial: 2 })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(iv.id);
+          });
+      });
+    });
+  });
+
+  describe('.listPermittedTraders', () => {
+    it('should 401 when not authorized', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/markets/0x123/permitted_traders`)
+        .send({})
+        .query({ net })
+        .expect(401)
+        .expect({
+          error: {
+            type: 'authentication_error',
+            message: 'authorization header is required',
+          },
+        });
+    });
+
+    it('should 400 when network is unknown', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/markets/0x123/permitted_traders`)
+        .set('Authorization', 'bearer ' + token)
+        .send({})
+        .query({ net: 'net1' })
+        .expect(400)
+        .expect({
+          error: { type: 'invalid_request_error', message: 'unknown network' },
+        });
+    });
+
+    describe('with no filter', () => {
+      it('should correct results', async () => {
+        const mid = '0x123';
+        await PermittedTrader.create({ network: net, marketId: mid });
+        const iv = await PermittedTrader.create({
+          network: net,
+          marketId: mid,
+        });
+        await request(app.getHttpServer())
+          .get(`/v1/markets/${mid}/permitted_traders`)
+          .set('Authorization', 'bearer ' + token)
+          .send({})
+          .query({ net })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(2);
+            expect(res.body.data[0].id).toEqual(iv.id);
+          });
+      });
+    });
+
+    describe('with limit=1', () => {
+      it('should correct results', async () => {
+        const mid = '0x123';
+        await PermittedTrader.create({ network: net, marketId: mid });
+        const iv = await PermittedTrader.create({
+          network: net,
+          marketId: mid,
+        });
+        await request(app.getHttpServer())
+          .get(`/v1/markets/${mid}/permitted_traders`)
+          .set('Authorization', 'bearer ' + token)
+          .send({})
+          .query({ net, limit: 1 })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(iv.id);
+          });
+      });
+    });
+
+    describe('with prevSerial=2', () => {
+      it('should correct results', async () => {
+        const mid = '0x123';
+        const iv = await PermittedTrader.create({
+          network: net,
+          marketId: mid,
+        });
+        await PermittedTrader.create({ network: net, marketId: mid });
+        await request(app.getHttpServer())
+          .get(`/v1/markets/${mid}/permitted_traders`)
+          .set('Authorization', 'bearer ' + token)
+          .send({})
+          .query({ net, limit: 1, prevSerial: 2 })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(iv.id);
           });
       });
     });

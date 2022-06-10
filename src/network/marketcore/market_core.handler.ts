@@ -6,6 +6,7 @@ import Market from '../../models/market';
 import { Handler } from '../handler';
 import MarketProvider from '../../models/market_provider';
 import InvitedMediator from '../../models/invited_mediators';
+import PermittedTrader from '../../models/permitted_trader';
 
 export class MarketCoreHandler extends Handler {
   public logger = new Logger(MarketCoreHandler.name);
@@ -151,6 +152,15 @@ export class MarketCoreHandler extends Handler {
   }
 
   /**
+   * Enabled or disabled permissioned liquidity provisioning
+   * @param id The market ID
+   * @param enabled The new state
+   */
+  async onSetPutPerm(id: string, enabled: boolean, event: Event) {
+    // no implementation yet
+  }
+
+  /**
    * New address allowed to provide liquidity to a market
    * @param id The market ID
    * @param address The address approved
@@ -180,6 +190,15 @@ export class MarketCoreHandler extends Handler {
   }
 
   /**
+   * Enabled or disabled permissioned mediation
+   * @param id The market ID
+   * @param enabled The new state
+   */
+  async onSetMediatorPerm(id: string, enabled: boolean, event: Event) {
+    // no implementation yet
+  }
+
+  /**
    * New mediator invited into a market
    * @param marketId The market ID
    * @param address The address of the invited mediator
@@ -187,7 +206,12 @@ export class MarketCoreHandler extends Handler {
    * @param txn The db transaction object
    */
   async onInvitedMediator(marketId: string, address: string, event: Event, txn?: Transaction) {
-    const invite = await InvitedMediator.findInvite(this.network, marketId, address, txn);
+    const invite = await InvitedMediator.findInviteByNetworkMarketIDAndAddress(
+      this.network,
+      marketId,
+      address,
+      txn,
+    );
     if (!invite)
       await InvitedMediator.create(
         {
@@ -207,8 +231,13 @@ export class MarketCoreHandler extends Handler {
    * @param txn The db transaction object
    */
   async onUnInvitedMediator(id: string, address: string, event: Event, txn?: Transaction) {
-    const invite = await InvitedMediator.findInvite(this.network, id, address, txn);
-    if (!invite.accepted) await InvitedMediator.removeInvite(this.network, id, address, txn);
+    const invite = await InvitedMediator.findInviteByNetworkMarketIDAndAddress(
+      this.network,
+      id,
+      address,
+      txn,
+    );
+    if (!invite.accepted) await InvitedMediator.remove(this.network, id, address, txn);
   }
 
   /**
@@ -230,34 +259,7 @@ export class MarketCoreHandler extends Handler {
    * @param txn The db transaction object
    */
   async onRevokedMediator(id: string, address: string, event: Event, txn?: Transaction) {
-    await InvitedMediator.removeInvite(this.network, id, address, txn);
-  }
-
-  /**
-   * An address was approved for swapping
-   * @param id The market ID
-   * @param address The address of that was approved
-   */
-  async onAllowedSwap(id: string, address: string, event: Event) {
-    //
-  }
-
-  /**
-   * An address was revoked from swapping.
-   * @param id The market ID
-   * @param address The address that was revoked
-   */
-  async onRevokedSwap(id: string, address: string, event: Event) {
-    //
-  }
-
-  /**
-   * Enabled or disabled permissioned liquidity provisioning
-   * @param id The market ID
-   * @param enabled The new state
-   */
-  async onSetPutPerm(id: string, enabled: boolean, event: Event) {
-    //
+    await InvitedMediator.remove(this.network, id, address, txn);
   }
 
   /**
@@ -266,16 +268,43 @@ export class MarketCoreHandler extends Handler {
    * @param enabled The new state
    */
   async onSetSwapPerm(id: string, enabled: boolean, event: Event) {
-    //
+    // no implementation yet
   }
 
   /**
-   * Enabled or disabled permissioned mediation
-   * @param id The market ID
-   * @param enabled The new state
+   * An address was approved for swapping
+   * @param marketId The market ID
+   * @param address The address of that was approved
+   * @param event The event object
+   * @param txn The db transaction object
    */
-  async onSetMediatorPerm(id: string, enabled: boolean, event: Event) {
-    //
+  async onAllowedSwap(marketId: string, address: string, event: Event, txn?: Transaction) {
+    const perm = await PermittedTrader.findByNetworkMarketIdAndAddress(
+      this.network,
+      marketId,
+      address,
+      txn,
+    );
+    if (!perm)
+      await PermittedTrader.create(
+        {
+          network: this.network,
+          marketId,
+          address,
+        },
+        txn,
+      );
+  }
+
+  /**
+   * An address was revoked from swapping.
+   * @param marketId The market ID
+   * @param address The address that was revoked
+   * @param event The event object
+   * @param txn The db transaction object
+   */
+  async onRevokedSwap(marketId: string, address: string, event: Event, txn?: Transaction) {
+    await PermittedTrader.remove(this.network, marketId, address, txn);
   }
 
   /**

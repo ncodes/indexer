@@ -5,6 +5,7 @@ import { NoopLogger } from '../../common/loggers/noop_logger';
 import MarketProvider from '../../models/market_provider';
 import InvitedMediator from '../../models/invited_mediators';
 import * as moment from 'moment';
+import PermittedTrader from '../../models/permitted_trader';
 
 const MarketCoreContract = jest.fn().mockImplementation(() => {
   return {};
@@ -129,26 +130,34 @@ describe('MarketCoreHandler', () => {
   describe('.onInvitedMediator', () => {
     it('should create mediator', async () => {
       await handler.onInvitedMediator('0x123', '0xProvider', {} as any);
-      const mediator = await InvitedMediator.findInvite(net, '0x123', '0xProvider');
+      const mediator = await InvitedMediator.findInviteByNetworkMarketIDAndAddress(
+        net,
+        '0x123',
+        '0xProvider',
+      );
       expect(mediator).toBeDefined();
       expect(mediator.network).toEqual(net);
       expect(mediator.address).toEqual('0xProvider');
       expect(mediator.accepted).toBeFalsy();
     });
 
-    it('should undo soft delete and set `accepted` to false', async () => {
-      let invite = await InvitedMediator.create({
-        network: net,
-        marketId: '0x123',
-        address: '0xProvider',
-        accepted: true,
-        deletedAt: moment().toISOString(),
-      });
-      await handler.onInvitedMediator('0x123', '0xProvider', {} as any);
-      invite = await InvitedMediator.find({ id: invite.id });
-      expect(invite.accepted).toBeFalsy();
-      expect(invite.deletedAt).toBeNull();
-    });
+    it(
+      'should undo soft delete and set `accepted` to false when existing' +
+        ' entry was previously soft-deleted',
+      async () => {
+        let invite = await InvitedMediator.create({
+          network: net,
+          marketId: '0x123',
+          address: '0xProvider',
+          accepted: true,
+          deletedAt: moment().toISOString(),
+        });
+        await handler.onInvitedMediator('0x123', '0xProvider', {} as any);
+        invite = await InvitedMediator.find({ id: invite.id });
+        expect(invite.accepted).toBeFalsy();
+        expect(invite.deletedAt).toBeNull();
+      },
+    );
   });
 
   describe('.onUnInvitedMediator', () => {
@@ -227,6 +236,51 @@ describe('MarketCoreHandler', () => {
         })
         .first();
       expect(invite.deletedAt).toBeDefined();
+    });
+  });
+
+  describe('onAllowedSwap', () => {
+    it('should create permission for address', async () => {
+      await handler.onAllowedSwap('0x123', '0xProvider', {} as any);
+      const perm = await PermittedTrader.findByNetworkMarketIdAndAddress(
+        net,
+        '0x123',
+        '0xProvider',
+      );
+      expect(perm).toBeDefined();
+      expect(perm.network).toEqual(net);
+      expect(perm.address).toEqual('0xProvider');
+    });
+
+    it('should undo soft delete when existing entry was previously soft-deleted', async () => {
+      let perm = await PermittedTrader.create({
+        network: net,
+        marketId: '0x123',
+        address: '0xProvider',
+        deletedAt: moment().toISOString(),
+      });
+      await handler.onAllowedSwap('0x123', '0xProvider', {} as any);
+      perm = await PermittedTrader.find({ id: perm.id });
+      expect(perm.deletedAt).toBeNull();
+    });
+  });
+
+  describe('.onRevokedSwap', () => {
+    it('should soft delete permission', async () => {
+      let perm = await PermittedTrader.create({
+        network: net,
+        marketId: '0x123',
+        address: '0xProvider',
+      });
+      await handler.onRevokedSwap(perm.marketId, perm.address, {} as any);
+      perm = await PermittedTrader.query()
+        .where({
+          network: net,
+          marketId: '0x123',
+          address: '0xProvider',
+        })
+        .first();
+      expect(perm.deletedAt).toBeDefined();
     });
   });
 });

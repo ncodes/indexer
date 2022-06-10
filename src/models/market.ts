@@ -47,6 +47,7 @@ export default class Market extends BaseModel {
 
   /* Not persisted */
   invitedMediators: InvitedMediator[];
+  permittedTraders: InvitedMediator[];
 
   constructor(init?: Partial<Market>) {
     super();
@@ -118,12 +119,9 @@ export default class Market extends BaseModel {
    */
   static getMarket(network: string, marketId: string, txn?: Transaction): Promise<Market> {
     return this.query(txn)
+      .where('network', 'ilike', network)
+      .where('marketId', 'ilike', marketId)
       .whereNotDeleted()
-      .where({
-        network,
-        marketId,
-      })
-      .withGraphFetched('invitedMediators')
       .first();
   }
 
@@ -204,5 +202,25 @@ export default class Market extends BaseModel {
         .then(resolve)
         .catch(reject);
     });
+  }
+
+  /**
+   * update a record by network and ID
+   * @param network The network name
+   * @param marketId The record id
+   * @param upd The update object
+   * @param txn Optional transaction object
+   */
+  static updateByNetworkAndId(
+    network: string,
+    marketId: string,
+    upd: Partial<Market>,
+    txn?: Transaction,
+  ): Promise<number> {
+    return this.query(txn)
+      .where('network', 'ilike', network)
+      .where('marketId', 'ilike', marketId)
+      .whereNotDeleted()
+      .patch(upd);
   }
 }

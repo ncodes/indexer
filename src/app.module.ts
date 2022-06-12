@@ -15,6 +15,7 @@ import { DBService } from './db/DBService';
 import { JobsModule } from './jobs/jobs.module';
 import { NetworkModule } from './network/network.module';
 import { ProvidersModule } from './controllers/providers/providers.module';
+import { MiscModule } from './controllers/misc/misc.module';
 
 Handlebars.registerHelper('uppercase', (aString) => {
   return aString.toUpperCase();
@@ -28,7 +29,15 @@ Handlebars.registerHelper('uppercase', (aString) => {
  * @returns
  */
 function getModules() {
-  return [JobsModule, AuthModule, NetworkModule, MarketsModule, LiquidityModule, ProvidersModule];
+  return [
+    JobsModule,
+    AuthModule,
+    NetworkModule,
+    MarketsModule,
+    LiquidityModule,
+    ProvidersModule,
+    MiscModule,
+  ];
 }
 
 /**
@@ -72,6 +81,7 @@ function getProviders() {
     ...getModules(),
   ],
   providers: getProviders(),
+  controllers: [],
 })
 export class AppModule implements NestModule {
   public configure(consumer: MiddlewareConsumer): MiddlewareConsumer | void {

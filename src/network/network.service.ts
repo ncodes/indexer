@@ -17,6 +17,7 @@ import { LPStakerHandler } from './lpstaker/lp_staker.handler';
 import { MarketCoreHandler } from './marketcore/market_core.handler';
 import { MediatorManagerHandler } from './mediatormanager/mediator_manager.handler';
 import { P2PStakerHandler } from './p2pstaker/p2p_staker.handler';
+import { NotifierService } from '../jobs/mailer/NotifierService';
 
 @Injectable()
 export default class NetworkService {
@@ -24,7 +25,7 @@ export default class NetworkService {
     [key: string]: KnownContracts;
   } = {};
 
-  constructor(private cfgSrv: ConfigService) {
+  constructor(private cfgSrv: ConfigService, private notifSrv: NotifierService) {
     this.watch();
   }
 
@@ -114,7 +115,7 @@ export default class NetworkService {
     );
 
     // Listen for events
-    new MarketCoreHandler(prov, network, this.contracts[network]).listen();
+    new MarketCoreHandler(this.notifSrv, prov, network, this.contracts[network]).listen();
     new CoreHandler(prov, network, this.contracts[network]).listen();
     new MediatorManagerHandler(prov, network, this.contracts[network]).listen();
     new DisputeManagerHandler(prov, network, this.contracts[network]).listen();

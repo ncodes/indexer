@@ -1,5 +1,6 @@
 import User from '../src/models/user';
 import { BigNumber, Contract } from 'ethers';
+import { NotifyType } from '../src/jobs/mailer/NotifierService';
 
 declare global {
   namespace Express {
@@ -65,5 +66,12 @@ declare global {
     timeToPay: BigNumber;
     openOrders: BigNumber;
     paused: boolean;
+  }
+
+  interface NotifyJob {
+    notifType: NotifyType;
+    network: string;
+    recipient: string;
+    data: { [key: string]: string };
   }
 }

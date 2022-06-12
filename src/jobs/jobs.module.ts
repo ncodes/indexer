@@ -3,8 +3,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ExchangeRateServiceModule } from '../services/exchange_rate.service';
-import { MailerService } from '../services/mailer.service';
 import ExchangeRateCacher from './exchange_rate_cacher/exchange_rate_cacher';
+import { NotifierModule } from './mailer/NotifierModule';
 
 const jobs = [ExchangeRateCacher];
 
@@ -18,8 +18,9 @@ const jobs = [ExchangeRateCacher];
       }),
       inject: [ConfigService],
     }),
+    NotifierModule,
     ExchangeRateServiceModule,
   ],
-  providers: [ConfigService, MailerService].concat(jobs as any),
+  providers: [ConfigService].concat(jobs as any),
 })
 export class JobsModule {}

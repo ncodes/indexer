@@ -5,6 +5,7 @@ import { Provider } from '@ethersproject/abstract-provider';
 import Meta from '../models/meta';
 import { EventEmitter2 } from 'eventemitter2';
 import { isTestMode } from '../common/common';
+import { shortenAddr } from '../common/utils/helpers';
 
 /**
  * Handle handles contract events.
@@ -63,10 +64,6 @@ export class Handler extends EventEmitter2 {
     }
   }
 
-  shortenAddr(addr: string) {
-    return `${addr.substr(0, 4)}...${addr.substr(addr.length - 4)}`;
-  }
-
   /**
    * Watch the blockchain for new events
    */
@@ -96,7 +93,7 @@ export class Handler extends EventEmitter2 {
 
         if (events.length) {
           this.logger.debug(
-            `Contract(${this.shortenAddr(this.contract.address)}/${this.network}) Found ${
+            `Contract(${shortenAddr(this.contract.address)}/${this.network}) Found ${
               events.length
             } event(s) at Block #${startBlock}`,
           );

@@ -2,14 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as temp from 'email-templates';
 import * as nodemailer from 'nodemailer';
-import { AppName } from './../common/common';
+import { AppName } from '../common/common';
 
 @Injectable()
 export class MailerService {
   trans: nodemailer.Transporter;
   constructor(private cfg: ConfigService) {
     this.trans = nodemailer.createTransport({
-      host: 'email-smtp.eu-west-2.amazonaws.com',
+      host: 'email-smtp.us-east-1.amazonaws.com',
       port: 465,
       secure: true,
       auth: {
@@ -20,7 +20,7 @@ export class MailerService {
   }
 
   /**
-   * send sends an email
+   * send an email
    * @param {string} template The email template to be used.
    * @param {string} sub The subject of the mail
    * @param {string} to The recipient email address

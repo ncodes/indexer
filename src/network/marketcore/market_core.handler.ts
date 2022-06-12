@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { Contract, ethers, Event, providers } from 'ethers';
+import { Event, providers } from 'ethers';
 import { Transaction } from 'objection';
 import * as erc20ABI from '../../../abi/erc20.json';
 import Market from '../../models/market';
@@ -7,10 +7,12 @@ import { Handler } from '../handler';
 import MarketProvider from '../../models/market_provider';
 import InvitedMediator from '../../models/invited_mediators';
 import PermittedTrader from '../../models/permitted_trader';
+import { NotifierService, NotifyType } from '../../jobs/mailer/NotifierService';
 
 export class MarketCoreHandler extends Handler {
   public logger = new Logger(MarketCoreHandler.name);
   constructor(
+    private notifSrv: NotifierService,
     private provider: providers.JsonRpcProvider,
     public network: string,
     private contracts: KnownContracts,
@@ -162,20 +164,27 @@ export class MarketCoreHandler extends Handler {
 
   /**
    * New address allowed to provide liquidity to a market
-   * @param id The market ID
+   * @param marketId The market ID
    * @param address The address approved
    * @param event The event object
    * @param txn The db transaction object
    */
-  async onMarketPutAllowed(id: string, address: string, event: Event, txn?: Transaction) {
-    return MarketProvider.create(
+  async onMarketPutAllowed(marketId: string, address: string, event: Event, txn?: Transaction) {
+    await MarketProvider.create(
       {
         network: this.network,
-        marketId: id,
+        marketId,
         address,
       },
       txn,
     );
+
+    // Notify approved user
+    await this.notifSrv.notify(NotifyType.PutApproved, this.network, address, {
+      marketId,
+    });
+
+    return Promise.resolve(undefined);
   }
 
   /**
@@ -186,7 +195,14 @@ export class MarketCoreHandler extends Handler {
    * @param txn The db transaction object
    */
   async onMarketPutRevoked(marketId: string, address: string, event: Event, txn?: Transaction) {
-    return MarketProvider.remove(this.network, marketId, address, txn);
+    await MarketProvider.remove(this.network, marketId, address, txn);
+
+    // Notify revoked user
+    await this.notifSrv.notify(NotifyType.PutRevoked, this.network, address, {
+      marketId,
+    });
+
+    return Promise.resolve(undefined);
   }
 
   /**
@@ -212,7 +228,7 @@ export class MarketCoreHandler extends Handler {
       address,
       txn,
     );
-    if (!invite)
+    if (!invite) {
       await InvitedMediator.create(
         {
           network: this.network,
@@ -221,6 +237,10 @@ export class MarketCoreHandler extends Handler {
         },
         txn,
       );
+    }
+    await this.notifSrv.notify(NotifyType.MediationInviteReceived, this.network, address, {
+      marketId,
+    });
   }
 
   /**
@@ -242,24 +262,41 @@ export class MarketCoreHandler extends Handler {
 
   /**
    * Invited mediator accepted an invitation
-   * @param id The market ID
+   * @param marketId The market ID
    * @param address The address of the uninvited mediator
    * @param event The event object
    * @param txn The db transaction object
    */
-  async onAcceptedMediatorInvite(id: string, address: string, event: Event, txn?: Transaction) {
-    await InvitedMediator.updateInvite(this.network, id, address, { accepted: true }, txn);
+  async onAcceptedMediatorInvite(
+    marketId: string,
+    address: string,
+    event: Event,
+    txn?: Transaction,
+  ) {
+    await InvitedMediator.updateInvite(this.network, marketId, address, { accepted: true }, txn);
+
+    // Notify market creator
+    const market = await Market.getByMarketId(marketId, txn);
+    await this.notifSrv.notify(NotifyType.MediatorInviteAccepted, this.network, market.creator, {
+      marketId,
+      invitee: address,
+    });
   }
 
   /**
    * Mediator invite has been revoked.
-   * @param id The market ID
+   * @param marketId The market ID
    * @param address The address of the revoked mediator
    * @param event The event object
    * @param txn The db transaction object
    */
-  async onRevokedMediator(id: string, address: string, event: Event, txn?: Transaction) {
-    await InvitedMediator.remove(this.network, id, address, txn);
+  async onRevokedMediator(marketId: string, address: string, event: Event, txn?: Transaction) {
+    await InvitedMediator.remove(this.network, marketId, address, txn);
+
+    // Notify mediator
+    await this.notifSrv.notify(NotifyType.MediatorRevoked, this.network, address, {
+      marketId,
+    });
   }
 
   /**
@@ -285,7 +322,7 @@ export class MarketCoreHandler extends Handler {
       address,
       txn,
     );
-    if (!perm)
+    if (!perm) {
       await PermittedTrader.create(
         {
           network: this.network,
@@ -294,6 +331,13 @@ export class MarketCoreHandler extends Handler {
         },
         txn,
       );
+
+      await this.notifSrv.notify(NotifyType.SwapApproved, this.network, address, {
+        marketId,
+      });
+    }
+
+    return Promise.resolve(undefined);
   }
 
   /**
@@ -305,6 +349,10 @@ export class MarketCoreHandler extends Handler {
    */
   async onRevokedSwap(marketId: string, address: string, event: Event, txn?: Transaction) {
     await PermittedTrader.remove(this.network, marketId, address, txn);
+    await this.notifSrv.notify(NotifyType.SwapRevoked, this.network, address, {
+      marketId,
+    });
+    return Promise.resolve(undefined);
   }
 
   /**

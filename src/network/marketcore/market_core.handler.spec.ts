@@ -6,9 +6,15 @@ import MarketProvider from '../../models/market_provider';
 import InvitedMediator from '../../models/invited_mediators';
 import * as moment from 'moment';
 import PermittedTrader from '../../models/permitted_trader';
+import { NotifyType } from '../../jobs/mailer/NotifierService';
 
 const MarketCoreContract = jest.fn().mockImplementation(() => {
   return {};
+});
+
+const mockNotify = jest.fn();
+const MockNotifierService = jest.fn().mockImplementation(() => {
+  return { notify: mockNotify };
 });
 
 describe('MarketCoreHandler', () => {
@@ -30,7 +36,8 @@ describe('MarketCoreHandler', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    handler = new MarketCoreHandler(null, net, contracts);
+    mockNotify.mockReset();
+    handler = new MarketCoreHandler(new MockNotifierService(), null, net, contracts);
     handler.logger = new NoopLogger() as any;
     await db.truncateTables();
   });
@@ -76,7 +83,9 @@ describe('MarketCoreHandler', () => {
 
   describe('.onMarketPutAllowed', () => {
     it('should create new MarketProvider', async () => {
-      await expect(handler.onMarketPutAllowed('0x123', '0xAddr', {} as any)).resolves.toBeDefined();
+      await expect(
+        handler.onMarketPutAllowed('0x123', '0xAddr', {} as any),
+      ).resolves.toBeUndefined();
       const provider = await MarketProvider.find({
         network: net,
         marketId: '0x123',
@@ -96,7 +105,7 @@ describe('MarketCoreHandler', () => {
 
         await expect(
           handler.onMarketPutAllowed('0x123', '0xAddr', {} as any),
-        ).resolves.toBeDefined();
+        ).resolves.toBeUndefined();
         const provider2 = await MarketProvider.find({
           network: net,
           marketId: '0x123',
@@ -105,6 +114,11 @@ describe('MarketCoreHandler', () => {
         expect(provider2).toBeDefined();
         expect(provider.id).toEqual(provider2.id);
         expect(provider2.deletedAt).toBeNull();
+
+        // expect notification to have been sent
+        expect(mockNotify).toHaveBeenCalledWith(NotifyType.PutApproved, net, provider.address, {
+          marketId: provider.marketId,
+        });
       });
     });
   });
@@ -117,28 +131,43 @@ describe('MarketCoreHandler', () => {
         address: '0xAddr',
       });
 
-      await expect(handler.onMarketPutRevoked('0x123', '0xAddr', {} as any)).resolves.toBeDefined();
+      await expect(
+        handler.onMarketPutRevoked('0x123', '0xAddr', {} as any),
+      ).resolves.toBeUndefined();
       const provider2 = await MarketProvider.getById(provider.id);
       expect(provider2).toBeUndefined();
 
       const provider3 = await MarketProvider.query().where('id', provider.id).first();
       expect(provider3).toBeDefined();
       expect(provider3.deletedAt).toBeDefined();
+
+      // expect notification to have been sent
+      expect(mockNotify).toHaveBeenCalledWith(NotifyType.PutRevoked, net, provider.address, {
+        marketId: provider.marketId,
+      });
     });
   });
 
   describe('.onInvitedMediator', () => {
-    it('should create mediator', async () => {
+    it('should create invitation', async () => {
       await handler.onInvitedMediator('0x123', '0xProvider', {} as any);
-      const mediator = await InvitedMediator.findInviteByNetworkMarketIDAndAddress(
+      const invite = await InvitedMediator.findInviteByNetworkMarketIDAndAddress(
         net,
         '0x123',
         '0xProvider',
       );
-      expect(mediator).toBeDefined();
-      expect(mediator.network).toEqual(net);
-      expect(mediator.address).toEqual('0xProvider');
-      expect(mediator.accepted).toBeFalsy();
+      expect(invite).toBeDefined();
+      expect(invite.network).toEqual(net);
+      expect(invite.address).toEqual('0xProvider');
+      expect(invite.accepted).toBeFalsy();
+
+      // expect notification to have been sent
+      expect(mockNotify).toHaveBeenCalledWith(
+        NotifyType.MediationInviteReceived,
+        net,
+        '0xProvider',
+        { marketId: invite.marketId },
+      );
     });
 
     it(
@@ -156,6 +185,14 @@ describe('MarketCoreHandler', () => {
         invite = await InvitedMediator.find({ id: invite.id });
         expect(invite.accepted).toBeFalsy();
         expect(invite.deletedAt).toBeNull();
+
+        // expect notification to have been sent
+        expect(mockNotify).toHaveBeenCalledWith(
+          NotifyType.MediationInviteReceived,
+          net,
+          '0xProvider',
+          { marketId: invite.marketId },
+        );
       },
     );
   });
@@ -203,6 +240,7 @@ describe('MarketCoreHandler', () => {
 
   describe('.onAcceptedMediatorInvite', () => {
     it('should mark invitation as `accepted`', async () => {
+      await Market.create({ creator: '0xCreator', marketId: '0x123' });
       let invite = await InvitedMediator.create({
         network: net,
         marketId: '0x123',
@@ -217,6 +255,12 @@ describe('MarketCoreHandler', () => {
         })
         .first();
       expect(invite.accepted).toBeTruthy();
+
+      // expect notification to have been sent
+      expect(mockNotify).toHaveBeenCalledWith(NotifyType.MediatorInviteAccepted, net, '0xCreator', {
+        marketId: invite.marketId,
+        invitee: '0xProvider',
+      });
     });
   });
 
@@ -236,6 +280,11 @@ describe('MarketCoreHandler', () => {
         })
         .first();
       expect(invite.deletedAt).toBeDefined();
+
+      // expect notification to have been sent
+      expect(mockNotify).toHaveBeenCalledWith(NotifyType.MediatorRevoked, net, '0xProvider', {
+        marketId: invite.marketId,
+      });
     });
   });
 
@@ -250,6 +299,11 @@ describe('MarketCoreHandler', () => {
       expect(perm).toBeDefined();
       expect(perm.network).toEqual(net);
       expect(perm.address).toEqual('0xProvider');
+
+      // expect notification to have been sent
+      expect(mockNotify).toHaveBeenCalledWith(NotifyType.SwapApproved, net, perm.address, {
+        marketId: perm.marketId,
+      });
     });
 
     it('should undo soft delete when existing entry was previously soft-deleted', async () => {
@@ -281,6 +335,11 @@ describe('MarketCoreHandler', () => {
         })
         .first();
       expect(perm.deletedAt).toBeDefined();
+
+      // expect notification to have been sent
+      expect(mockNotify).toHaveBeenCalledWith(NotifyType.SwapRevoked, net, perm.address, {
+        marketId: perm.marketId,
+      });
     });
   });
 });

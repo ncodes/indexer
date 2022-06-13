@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { isDevMode } from '../common';
+import * as _ from 'lodash';
 
 class ErrorBuilder {
   private logger = new Logger(ErrorBuilder.name);
@@ -80,7 +81,7 @@ export function error(e?: Error) {
 // tslint:disable-next-line:max-classes-per-file
 class OKBuilder {
   private _status: number;
-  private readonly _data: { [key: string]: string };
+  private readonly _data: { [key: string]: any };
 
   constructor() {
     this._data = {};
@@ -103,12 +104,31 @@ class OKBuilder {
     return this;
   }
 
+  meta(data: any) {
+    this._data.meta = data;
+    return this;
+  }
+
+  extractMeta() {
+    const data = this._data.data;
+    if (_.isArray(data)) {
+      (data as any[]).forEach((d) => {
+        const keys = _.filter(_.keys(d), (k) => {
+          return k.substr(0, 2) === '__';
+        });
+
+        if (!this._data.meta) this._data.meta = {};
+        keys.forEach((k) => {
+          this._data.meta[k.substr(2)] = d[k];
+          delete d[k];
+        });
+      });
+    }
+  }
+
   build<T>(): Promise<T> {
-    return HttpException.createBody(
-      this._data,
-      undefined,
-      this._status,
-    ) as unknown as Promise<T>;
+    this.extractMeta();
+    return HttpException.createBody(this._data, undefined, this._status) as unknown as Promise<T>;
   }
 }
 
@@ -133,12 +153,7 @@ export enum ErrorTypes {
  * @constructor
  */
 export function build404(msg: string, type?: string, param?: string) {
-  return error()
-    .status(HttpStatus.NOT_FOUND)
-    .param(param)
-    .type(type)
-    .msg(msg)
-    .build();
+  return error().status(HttpStatus.NOT_FOUND).param(param).type(type).msg(msg).build();
 }
 
 /**

@@ -14,6 +14,8 @@ export default class Notification extends BaseModel {
   title: string;
   // The body of the message
   body: string;
+  // Indicates whether it has been read
+  read: boolean;
 
   constructor(init?: Partial<Notification>) {
     super();
@@ -59,6 +61,71 @@ export default class Notification extends BaseModel {
   static find(q: Partial<Notification>, txn?: Transaction): Promise<Notification> {
     return new Promise((resolve, reject) => {
       this.query(txn).where(q).whereNotDeleted().first().then(resolve).catch(reject);
+    });
+  }
+
+  /**
+   * Get recent notifications
+   * @param network The network name
+   * @param count Indicates to return count of query
+   * @param userId The user ID linked to the notification
+   * @param read Indicated whether to filter by read or unread status
+   * @param limit The number of records to return
+   * @param offset The query offset
+   * @param txn The transaction object
+   */
+  static getRecent(
+    network: string,
+    count: boolean,
+    userId: string,
+    read: boolean,
+    limit: number,
+    offset: number,
+    txn?: Transaction,
+  ): Promise<Notification[]> {
+    if (count) {
+      const q = this.query(txn).where({ network, userId });
+      return q
+        .count('id')
+        .first()
+        .then((res: any) => {
+          return res.count;
+        });
+    }
+
+    let q = this.query(txn)
+      .select(raw('*, count(*) over() as "__queryCount"'))
+      .where({ network, userId });
+    if (read !== undefined) q = q.where({ read });
+    if (limit) q = q.limit(limit);
+    if (offset) q = q.offset(offset);
+
+    return q.whereNotDeleted().orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
+  }
+
+  /**
+   * Get a notification by its ID and user ID
+   * @param id The notification ID
+   * @param userId The user ID
+   * @param txn The transaction object
+   */
+  static getByIDAndUser(id: string, userId: string, txn?: Transaction) {
+    return this.query(txn).where({ id, userId }).first();
+  }
+
+  /**
+   * updateById updates a notification by ID
+   * @param id the notification id
+   * @param udp the fields to be updated
+   */
+  static updateById(id: string, udp: Partial<Notification>): Promise<Notification> {
+    return new Promise((resolve, reject) => {
+      this.query()
+        .whereNotDeleted()
+        .patchAndFetchById(id, udp)
+        .execute()
+        .then(resolve)
+        .catch(reject);
     });
   }
 }

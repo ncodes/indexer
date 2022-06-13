@@ -1,16 +1,23 @@
 import { DBService } from '../../db/DBService';
-import Market from '../../models/market';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { CoreHandler } from './core.handler';
 import { BigNumber } from 'ethers';
 import Liquidity from '../../models/liquidity';
+import * as net from 'net';
+import { NotifyType } from '../../jobs/mailer/NotifierService';
 
 const CoreContract = jest.fn().mockImplementation(() => {
   return {};
 });
 
+const mockNotify = jest.fn();
+const MockNotifierService = jest.fn().mockImplementation(() => {
+  return { notify: mockNotify };
+});
+
 describe('CoreHandler', () => {
   const db = DBService.getForTest();
+  const net = 'ethereumMainnet';
   let handler: CoreHandler;
   const coreContract = new CoreContract();
   const contracts = {
@@ -27,7 +34,7 @@ describe('CoreHandler', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    handler = new CoreHandler(null, 'net', contracts);
+    handler = new CoreHandler(new MockNotifierService(), null, net, contracts);
     handler.logger = new NoopLogger() as any;
     await db.truncateTables();
   });
@@ -82,6 +89,49 @@ describe('CoreHandler', () => {
           expect(liq).toBeDefined();
         },
       );
+    });
+  });
+
+  describe('.onSetLiquidityManager', () => {
+    it('should set manager address', async () => {
+      await Liquidity.create({
+        network: net,
+        provider: '0xProvider',
+        marketId: '0xMarket',
+      });
+      await expect(
+        handler.onSetLiquidityManager('0xMarket', '0xProvider', '0xManager', {} as any),
+      ).resolves.toBeUndefined();
+      const liq = await Liquidity.getLiquidity(handler.network, '0xMarket', '0xProvider');
+      expect(liq.manager).toEqual('0xManager');
+
+      // expect notification to have been sent
+      expect(mockNotify).toHaveBeenCalledWith(NotifyType.NewLiquidityManager, net, '0xManager', {
+        marketId: '0xMarket',
+        provider: '0xProvider',
+      });
+    });
+  });
+
+  describe('.onRemoveLiquidityManager', () => {
+    it('should clear manager address', async () => {
+      await Liquidity.create({
+        network: net,
+        provider: '0xProvider',
+        marketId: '0xMarket',
+        manager: '0xManager',
+      });
+      await expect(
+        handler.onRemoveLiquidityManager('0xMarket', '0xProvider', '0xManager', {} as any),
+      ).resolves.toBeUndefined();
+      const liq = await Liquidity.getLiquidity(handler.network, '0xMarket', '0xProvider');
+      expect(liq.manager).toBeNull();
+
+      // expect notification to have been sent
+      expect(mockNotify).toHaveBeenCalledWith(NotifyType.RemoveLiquidityManager, net, '0xManager', {
+        marketId: '0xMarket',
+        provider: '0xProvider',
+      });
     });
   });
 });

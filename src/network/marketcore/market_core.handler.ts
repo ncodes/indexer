@@ -8,6 +8,7 @@ import MarketProvider from '../../models/market_provider';
 import InvitedMediator from '../../models/invited_mediators';
 import PermittedTrader from '../../models/permitted_trader';
 import { NotifierService, NotifyType } from '../../jobs/mailer/NotifierService';
+import Liquidity from '../../models/liquidity';
 
 export class MarketCoreHandler extends Handler {
   public logger = new Logger(MarketCoreHandler.name);
@@ -91,20 +92,6 @@ export class MarketCoreHandler extends Handler {
     this.on('SetMinMediatorBond', async (id: string, value: string, event: Event) => {
       return this.onSetMinMediatorBond(id, value, event);
     });
-
-    this.on(
-      'SetLiquidityManager',
-      async (id: string, provider: string, manager: string, event: Event) => {
-        return this.onSetLiquidityManager(id, provider, manager, event);
-      },
-    );
-
-    this.contracts.marketCore.on(
-      'RemoveLiquidityManager',
-      async (id: string, provider: string, manager: string, event: Event) => {
-        return this.onRemoveLiquidityManager(id, provider, manager, event);
-      },
-    );
   }
 
   /**
@@ -370,26 +357,6 @@ export class MarketCoreHandler extends Handler {
    * @param value The updated value
    */
   async onSetMinMediatorBond(id: string, value: string, event: Event) {
-    //
-  }
-
-  /**
-   * A liquidity manager has been set for a specific liquidity
-   * @param id The market ID
-   * @param provider The liquidity provider's address
-   * @param manager The liquidity manager's address
-   */
-  async onSetLiquidityManager(id: string, provider: string, manager: string, event: Event) {
-    //
-  }
-
-  /**
-   * A liquidity manager has been removed for a specific liquidity
-   * @param id The market ID
-   * @param provider The liquidity provider's address
-   * @param manager The liquidity manager's address
-   */
-  async onRemoveLiquidityManager(id: string, provider: string, manager: string, event: Event) {
     //
   }
 }

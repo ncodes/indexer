@@ -10,6 +10,7 @@ exports.up = function (knex) {
       table.string('price');
       table.string('minSwap');
       table.string('maxSwap');
+      table.string('manager');
       table.integer('timeToPay');
 
       table.timestamp('createdAt');

@@ -10,6 +10,8 @@ export enum NotifyType {
   PutRevoked,
   SwapApproved,
   SwapRevoked,
+  NewLiquidityManager,
+  RemoveLiquidityManager,
 }
 
 @Injectable()

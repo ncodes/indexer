@@ -23,6 +23,8 @@ export default class Liquidity extends BaseModel {
   maxSwap: string;
   // The time required for taker to make payment
   timeToPay: number;
+  // The liquidity manager
+  manager: string;
 
   /** Not Persisted */
   market: Market;
@@ -53,7 +55,7 @@ export default class Liquidity extends BaseModel {
   }
 
   /**
-   * create creates a record
+   * create a record
    * @param data The transfer info
    * @param txn Optional transaction object
    */

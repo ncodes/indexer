@@ -35,6 +35,10 @@ export class NotifierConsumer {
         return this.notifySwapApproved(job.data);
       case NotifyType.SwapRevoked:
         return this.notifySwapRevoked(job.data);
+      case NotifyType.NewLiquidityManager:
+        return this.nofityNewLiquidityManager(job.data);
+      case NotifyType.RemoveLiquidityManager:
+        return this.notifyRemoveLiquidityManager(job.data);
     }
   }
 
@@ -250,6 +254,72 @@ export class NotifierConsumer {
     const body = `You are no longer permitted to carry out swap operations in Market#${shortenAddr(
       marketId,
     )}. Your access has been revoked.<br><br>
+<a href="https://fiatx.co/m/${marketId}">Open Market</a>.`;
+
+    await Notification.create({
+      network: job.network,
+      userId: user.id,
+      title: sub,
+      body,
+    });
+
+    // Send email
+    await this.mailer
+      .send('basic', sub, user.email, {
+        recipient: shortenAddr(job.recipient),
+        title: sub,
+        body,
+      })
+      .catch(this.logger.error);
+  }
+
+  /**
+   * Notify user about being added as a liquidity manager
+   * @param job The job data
+   */
+  async nofityNewLiquidityManager(job: NotifyJob) {
+    // Find user; do nothing if unknown or user has no configured email
+    const user = await User.getByAddress(job.recipient);
+    if (!user || !user.email) return Promise.resolve();
+
+    // Create notification
+    const { marketId, provider } = job.data;
+    const sub = 'Granted Liquidity Manager Status';
+    const m = shortenAddr(marketId);
+    const body = `You have be configured as the manager of ${provider}'s liquidity in Market#${m}. You are now able to update the price of the liquidity.<br><br>
+<a href="https://fiatx.co/m/${marketId}">Open Market</a>.`;
+
+    await Notification.create({
+      network: job.network,
+      userId: user.id,
+      title: sub,
+      body,
+    });
+
+    // Send email
+    await this.mailer
+      .send('basic', sub, user.email, {
+        recipient: shortenAddr(job.recipient),
+        title: sub,
+        body,
+      })
+      .catch(this.logger.error);
+  }
+
+  /**
+   * Notify user about being added as a liquidity manager
+   * @param job The job data
+   */
+  async notifyRemoveLiquidityManager(job: NotifyJob) {
+    // Find user; do nothing if unknown or user has no configured email
+    const user = await User.getByAddress(job.recipient);
+    if (!user || !user.email) return Promise.resolve();
+
+    // Create notification
+    const { marketId, provider } = job.data;
+    const sub = 'Revoked Liquidity Manager Status';
+    const m = shortenAddr(marketId);
+    const body = `You have be removed as the manager of ${provider}'s liquidity in Market#${m}. You can no longer update the price of the liquidity.<br><br>
 <a href="https://fiatx.co/m/${marketId}">Open Market</a>.`;
 
     await Notification.create({

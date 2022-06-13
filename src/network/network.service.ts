@@ -116,7 +116,7 @@ export default class NetworkService {
 
     // Listen for events
     new MarketCoreHandler(this.notifSrv, prov, network, this.contracts[network]).listen();
-    new CoreHandler(prov, network, this.contracts[network]).listen();
+    new CoreHandler(this.notifSrv, prov, network, this.contracts[network]).listen();
     new MediatorManagerHandler(prov, network, this.contracts[network]).listen();
     new DisputeManagerHandler(prov, network, this.contracts[network]).listen();
     new P2PStakerHandler(prov, network, this.contracts[network]).listen();

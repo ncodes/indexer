@@ -5,11 +5,13 @@ import Liquidity from '../../models/liquidity';
 import MarketPrice from '../../models/market_price';
 import { Handler } from '../handler';
 import { ToDec } from '../../common/common';
+import { NotifierService, NotifyType } from '../../jobs/mailer/NotifierService';
 
 export class CoreHandler extends Handler {
   logger = new Logger(CoreHandler.name);
 
   constructor(
+    private notifSrv: NotifierService,
     private provider: providers.JsonRpcProvider,
     public network: string,
     private contracts: KnownContracts,
@@ -342,7 +344,17 @@ export class CoreHandler extends Handler {
     manager: string,
     event: Event,
     txn?: Transaction,
-  ) {}
+  ) {
+    const liq = await Liquidity.getLiquidity(this.network, marketId, provider, txn);
+    if (liq) {
+      await Liquidity.updateById(liq.id, { manager }, txn);
+      await this.notifSrv.notify(NotifyType.NewLiquidityManager, this.network, manager, {
+        marketId,
+        provider,
+      });
+    }
+    return Promise.resolve(undefined);
+  }
 
   /**
    * Liquidity manager was updated for a liquidity
@@ -358,5 +370,15 @@ export class CoreHandler extends Handler {
     manager: string,
     event: Event,
     txn?: Transaction,
-  ) {}
+  ) {
+    const liq = await Liquidity.getLiquidity(this.network, marketId, provider, txn);
+    if (liq) {
+      await Liquidity.updateById(liq.id, { manager: null }, txn);
+      await this.notifSrv.notify(NotifyType.RemoveLiquidityManager, this.network, manager, {
+        marketId,
+        provider,
+      });
+    }
+    return Promise.resolve(undefined);
+  }
 }

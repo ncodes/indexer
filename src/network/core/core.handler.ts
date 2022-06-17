@@ -244,11 +244,16 @@ export class CoreHandler extends Handler {
     event: Event,
     txn?: Transaction,
   ) {
+    const market = await Market.getMarket(this.network, marketId, txn);
     const swap = {
       network: this.network,
       marketId,
       provider,
       taker: swapper,
+      base: market.base,
+      baseAddress: market.baseAddress,
+      quote: market.quote,
+      quoteAddress: market.quoteAddress,
       orderId: orderId.toNumber(),
       amount: amount.toString(),
       price: price.toString(),
@@ -257,7 +262,6 @@ export class CoreHandler extends Handler {
     await Swap.create({ ...swap, ...info }, txn);
 
     // Send notification
-    const market = await Market.getMarket(this.network, marketId, txn);
     const baseDecimal = await this.netSrv.getTokenDecimals(this.provider, market.baseAddress);
     const quoteDecimal = await this.netSrv.getTokenDecimals(this.provider, market.quoteAddress);
     await this.notifSrv.notify(NotifyType.NewOffChainSwap, this.network, provider, {
@@ -298,11 +302,16 @@ export class CoreHandler extends Handler {
     txn?: Transaction,
   ) {
     if (orderId.isZero()) {
+      const market = await Market.getMarket(this.network, marketId, txn);
       const swap = {
         network: this.network,
         marketId,
         provider,
         taker: swapper,
+        base: market.base,
+        baseAddress: market.baseAddress,
+        quote: market.quote,
+        quoteAddress: market.quoteAddress,
         orderId: !orderId.isZero() ? orderId.toNumber() - 1 : undefined,
         amount: amount.toString(),
         price: price.toString(),
@@ -315,7 +324,6 @@ export class CoreHandler extends Handler {
       await Swap.create({ ...swap, ...info }, txn);
 
       // Send notification
-      const market = await Market.getMarket(this.network, marketId, txn);
       const baseDecimal = await this.netSrv.getTokenDecimals(this.provider, market.baseAddress);
       const quoteDecimal = await this.netSrv.getTokenDecimals(this.provider, market.quoteAddress);
       await this.notifSrv.notify(NotifyType.NewInstantSwap, this.network, provider, {

@@ -21,19 +21,24 @@ export class MarketsController {
    * Get a market
    * @param network The network where it exists
    * @param mid The market ID
-   * @param noMerge Indicates that market from DB should not be merged with
-   * market from contract.
+   * @param noMerge Indicates prevent merging db object with contract object
+   * @param select Select extend fields to return
    * @returns
    */
   @Get(':mid')
-  async get(@Param('mid') mid: string, @Query('net') network, @Query('noMerge') noMerge: boolean) {
+  async get(
+    @Param('mid') mid: string,
+    @Query('net') network,
+    @Query('noMerge') noMerge: boolean,
+    @Query('select') select: string,
+  ) {
     if (!isValidNetwork(network)) throw400('unknown network');
 
     const market = await Market.getMarket(network, mid);
     if (!market) throw404('market not found');
 
     try {
-      await this.marketSrv.extendMarket(market, noMerge);
+      await this.marketSrv.extendMarket(market, noMerge, select ? select.split(',') : []);
       return ok().data(market).build();
     } catch (error) {
       this.logger.error(error, null, 'get()');
@@ -54,6 +59,7 @@ export class MarketsController {
    * @param count Returns the count of markets only
    * @param limit The number of result to return (optional)
    * @param offset The query offset
+   * @param select Select extend fields to return
    * @returns
    */
   @Get()
@@ -65,8 +71,10 @@ export class MarketsController {
     @Query('count') count: boolean,
     @Query('limit') limit: string,
     @Query('offset') offset: string,
+    @Query('select') select: string,
   ) {
     if (!isValidNetwork(network)) throw400('unknown network');
+    const selectedFields = select ? select.split(',') : [];
     const result = await Market.searchByCreatorOrQueryString(
       network,
       creator,
@@ -74,6 +82,7 @@ export class MarketsController {
       count,
       parseInt(limit || '25'),
       parseInt(offset),
+      selectedFields,
     );
 
     if (count) {
@@ -83,7 +92,7 @@ export class MarketsController {
     const markets = result as Market[];
     for (const m of markets) {
       try {
-        await this.marketSrv.extendMarket(m, noMerge);
+        await this.marketSrv.extendMarket(m, noMerge, selectedFields);
       } catch (error) {
         this.logger.error(error, null, 'list()');
         if (error.message.indexOf('invalid arrayify value') !== -1) throw404('market not found');

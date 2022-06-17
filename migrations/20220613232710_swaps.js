@@ -5,6 +5,10 @@ exports.up = function (knex) {
       table.string('id').primary();
       table.string('network');
       table.string('marketId');
+      table.string('base');
+      table.string('baseAddress');
+      table.string('quote');
+      table.string('quoteAddress');
       table.string('orderId');
       table.string('provider');
       table.string('taker');

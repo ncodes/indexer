@@ -8,6 +8,7 @@ import MarketPrice from '../../models/market_price';
 import * as moment from 'moment';
 import { DBService } from '../../db/DBService';
 import Market from '../../models/market';
+import Swap from '../../models/swaps';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -57,12 +58,7 @@ describe('MarketsService', () => {
 
     module = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
-      providers: [
-        MarketsService,
-        NetworkService,
-        MetadataService,
-        ConfigService,
-      ],
+      providers: [MarketsService, NetworkService, MetadataService, ConfigService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
@@ -140,8 +136,7 @@ describe('MarketsService', () => {
   describe('.extendMarket', () => {
     describe('when noMerge=false', () => {
       it(
-        'should attempt to merge contract market object into the given' +
-          ' market object',
+        'should attempt to merge contract market object into the given' + ' market object',
         async () => {
           const market: Market = new Market({
             marketId: '0x123',
@@ -160,6 +155,31 @@ describe('MarketsService', () => {
           mockMarket.mockResolvedValue(contractMarket);
           mockGetLogo.mockResolvedValue('https://logo.png');
 
+          await Swap.create({
+            network: market.network,
+            marketId: market.marketId,
+            instant: true,
+            amount: '10',
+          });
+          await Swap.create({
+            network: market.network,
+            marketId: market.marketId,
+            instant: true,
+            amount: '5',
+          });
+          await Swap.create({
+            network: market.network,
+            marketId: market.marketId,
+            instant: false,
+            amount: '1',
+          });
+          await Swap.create({
+            network: market.network,
+            marketId: market.marketId,
+            instant: false,
+            createdAt: moment().subtract(1440, 'm').toISOString(),
+          });
+
           await service.extendMarket(market, false);
           expect(mockGetMarketCore).toHaveBeenCalledWith('net1');
           expect(mockMarket).toHaveBeenCalledWith(market.marketId);
@@ -174,6 +194,12 @@ describe('MarketsService', () => {
           expect(market.lowestPrice).toBeDefined();
           expect(market.highestPrice).toBeDefined();
           expect(market.priceChange).toBeDefined();
+          expect(market.totalSwaps).toEqual('4');
+          expect(market.totalInstantSwaps).toEqual('2');
+          expect(market.totalSwaps24h).toEqual('3');
+          expect(market.totalInstantSwaps24h).toEqual('2');
+          expect(market.volume24h).toEqual('16');
+          expect(market.volumeInstant24h).toEqual('15');
         },
       );
     });

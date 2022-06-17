@@ -2,7 +2,7 @@ import * as crand from 'crypto-random-string';
 import Objection, { Model, QueryBuilderType, raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 import InvitedMediator from './invited_mediators';
-import { ok } from '../common/responses/responses';
+import * as _ from 'lodash';
 
 /**
  * Market represents a market model
@@ -46,10 +46,35 @@ export default class Market extends BaseModel {
   lowestPrice: string;
   highestPrice: string;
   priceChange: number;
+  totalSwaps: string;
+  totalInstantSwaps: string;
+  totalSwaps24h: string;
+  totalInstantSwaps24h: string;
+  volume24h: string;
+  volumeInstant24h: string;
 
-  /* Not persisted */
-  invitedMediators: InvitedMediator[];
-  permittedTraders: InvitedMediator[];
+  static nonPersistedFields = [
+    'mediatorBond',
+    'numOrders',
+    'numDisputes',
+    'permPut',
+    'permSwap',
+    'permMediate',
+    'numMediators',
+    'baseLogo',
+    'quoteLogo',
+    'numProviders',
+    'totalLiquidity',
+    'lowestPrice',
+    'highestPrice',
+    'priceChange',
+    'totalSwaps',
+    'totalInstantSwaps',
+    'totalSwaps24h',
+    'totalInstantSwaps24h',
+    'volume24h',
+    'volumeInstant24h',
+  ];
 
   constructor(init?: Partial<Market>) {
     super();
@@ -117,10 +142,25 @@ export default class Market extends BaseModel {
    * getMarket finds a market associated with a network
    * @param network The network name
    * @param marketId The record id
+   * @param select Select specific fields (optional)
    * @param txn Optional transaction object
    */
-  static getMarket(network: string, marketId: string, txn?: Transaction): Promise<Market> {
+  static getMarket(
+    network: string,
+    marketId: string,
+    select = [],
+    txn?: Transaction,
+  ): Promise<Market> {
+    select = select.filter((x) => !this.nonPersistedFields.includes(x));
+    if (select.length > 0) {
+      select.push('id', 'marketId', 'network', 'base', 'baseAddress', 'quote', 'quoteAddress');
+      select = _.uniq(select);
+    } else {
+      select.push('*');
+    }
+
     return this.query(txn)
+      .select(...select)
       .where('network', 'ilike', network)
       .where('marketId', 'ilike', marketId)
       .whereNotDeleted()
@@ -168,6 +208,7 @@ export default class Market extends BaseModel {
    * @param countOnly Indicates whether to return count only.
    * @param limit The number of records to return.
    * @param offset The offset value
+   * @param select Select specific fields (optional)
    * @param txn Optional transaction object
    */
   static searchByCreatorOrQueryString(
@@ -177,9 +218,18 @@ export default class Market extends BaseModel {
     countOnly: boolean,
     limit: number,
     offset: number,
+    select = [],
     txn?: Transaction,
   ): Promise<string | Market[]> {
-    let query = this.query(txn).select(raw('*, count(*) over() as "__queryCount"'));
+    select = select.filter((x) => !this.nonPersistedFields.includes(x));
+    if (select.length > 0) {
+      select.push('id', 'marketId', 'network', 'base', 'baseAddress', 'quote', 'quoteAddress');
+      select = _.uniq(select);
+    } else {
+      select.push('*');
+    }
+
+    let query = this.query(txn).select(...select, raw('count(*) over() as' + ' "__queryCount"'));
     if (network) query = query.where('network', network);
     if (creator) query = query.where('creator', 'ilike', creator);
     if (queryStr) query = this.makeSearchQuery(query, queryStr);
@@ -241,25 +291,5 @@ export default class Market extends BaseModel {
         .then(resolve)
         .catch(reject);
     });
-  }
-
-  /**
-   * update a record by network and ID
-   * @param network The network name
-   * @param marketId The record id
-   * @param upd The update object
-   * @param txn Optional transaction object
-   */
-  static updateByNetworkAndId(
-    network: string,
-    marketId: string,
-    upd: Partial<Market>,
-    txn?: Transaction,
-  ): Promise<number> {
-    return this.query(txn)
-      .where('network', 'ilike', network)
-      .where('marketId', 'ilike', marketId)
-      .whereNotDeleted()
-      .patch(upd);
   }
 }

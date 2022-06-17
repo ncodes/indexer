@@ -7,6 +7,7 @@ import { MetadataService } from '../../services/metadata.service';
 import * as moment from 'moment';
 import MarketPrice from '../../models/market_price';
 import { ToDec } from '../../common/common';
+import Swap from '../../models/swaps';
 
 @Injectable()
 export class MarketsService {
@@ -53,9 +54,10 @@ export class MarketsService {
    * Extend a DB-sourced market with other market information
    * @param market The DB-sourced market
    * @param noMerge Indicate whether to merge in contract-sourced market.
+   * @param select Select the extended field to be returned
    * @returns
    */
-  async extendMarket(market: Market, noMerge = false) {
+  async extendMarket(market: Market, noMerge = false, select = []) {
     try {
       const { marketId, network: net, base, baseAddress, quote, quoteAddress } = market;
 
@@ -65,13 +67,32 @@ export class MarketsService {
         this.merge(marketFromContract, market);
       }
 
-      market.numProviders = await Liquidity.countProvidersInMarket(net, marketId);
-      market.totalLiquidity = await Liquidity.getTotalMarketLiquidity(net, marketId);
-      market.lowestPrice = await Liquidity.getLowestPriceInMarket(net, marketId);
-      market.highestPrice = await Liquidity.getHighestPriceInMarket(net, marketId);
-      market.baseLogo = await this.metadataSrv.getLogo(base, baseAddress);
-      market.quoteLogo = await this.metadataSrv.getLogo(quote, quoteAddress);
-      market.priceChange = await this.priceChange(net, marketId, 24);
+      if (select.includes(`numProviders`) || !select.length)
+        market.numProviders = await Liquidity.countProvidersInMarket(net, marketId);
+      if (select.includes(`totalLiquidity`) || !select.length)
+        market.totalLiquidity = await Liquidity.getTotalMarketLiquidity(net, marketId);
+      if (select.includes(`lowestPrice`) || !select.length)
+        market.lowestPrice = await Liquidity.getLowestPriceInMarket(net, marketId);
+      if (select.includes(`highestPrice`) || !select.length)
+        market.highestPrice = await Liquidity.getHighestPriceInMarket(net, marketId);
+      if (select.includes(`totalSwaps`) || !select.length)
+        market.totalSwaps = await Swap.countByNetworkAndMarket(net, marketId);
+      if (select.includes(`totalInstantSwaps`) || !select.length)
+        market.totalInstantSwaps = await Swap.countByNetworkAndMarket(net, marketId, true);
+      if (select.includes(`totalSwaps24h`) || !select.length)
+        market.totalSwaps24h = await Swap.countByNetworkAndMarket(net, marketId, undefined, 1440);
+      if (select.includes(`totalInstantSwaps24h`) || !select.length)
+        market.totalInstantSwaps24h = await Swap.countByNetworkAndMarket(net, marketId, true, 1440);
+      if (select.includes(`volume24h`) || !select.length)
+        market.volume24h = await Swap.getMarketVolume(net, marketId, 1400);
+      if (select.includes(`volumeInstant24h`) || !select.length)
+        market.volumeInstant24h = await Swap.getMarketVolume(net, marketId, 1400, true);
+      if (select.includes(`baseLogo`) || !select.length)
+        market.baseLogo = await this.metadataSrv.getLogo(base, baseAddress);
+      if (select.includes(`quoteLogo`) || !select.length)
+        market.quoteLogo = await this.metadataSrv.getLogo(quote, quoteAddress);
+      if (select.includes(`priceChange`) || !select.length)
+        market.priceChange = await this.priceChange(net, marketId, 24);
 
       return Promise.resolve();
     } catch (error) {

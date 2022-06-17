@@ -6,7 +6,6 @@ import User from '../../models/user';
 import Notification from '../../models/notifications';
 import { Logger } from '@nestjs/common';
 import { shortenAddr } from '../../common/utils/helpers';
-import { AppName } from '../../common/common';
 
 @Processor('notifier')
 export class NotifierConsumer {
@@ -20,6 +19,10 @@ export class NotifierConsumer {
    */
   @Process()
   async notify(job: Job<NotifyJob>) {
+    const user = await User.getByAddress(job.data.recipient);
+    if (!user || !user.email) return Promise.resolve();
+    job.data.user = user;
+
     switch (job.data.notifType) {
       case NotifyType.MediationInviteReceived:
         return this.notifyMediatorInviteReceived(job.data);
@@ -36,9 +39,19 @@ export class NotifierConsumer {
       case NotifyType.SwapRevoked:
         return this.notifySwapRevoked(job.data);
       case NotifyType.NewLiquidityManager:
-        return this.nofityNewLiquidityManager(job.data);
+        return this.notifyNewLiquidityManager(job.data);
       case NotifyType.RemoveLiquidityManager:
         return this.notifyRemoveLiquidityManager(job.data);
+      case NotifyType.NewInstantSwap:
+        return this.notifyNewInstantSwap(job.data);
+      case NotifyType.NewOffChainSwap:
+        return this.notifyOffChainSwap(job.data);
+      case NotifyType.SwapOrderReleased:
+        return this.notifySwapOrderReleased(job.data);
+      case NotifyType.SwapOrderCancelled:
+        return this.notifySwapOrderCancelled(job.data);
+      case NotifyType.SwapOrderPaid:
+        return this.notifySwapOrderPaid(job.data);
     }
   }
 
@@ -47,30 +60,21 @@ export class NotifierConsumer {
    * @param job The job data
    */
   async notifyMediatorInviteReceived(job: NotifyJob) {
-    // Find user; do nothing if unknown or user has no configured email
-    const user = await User.getByAddress(job.recipient);
-    if (!user || !user.email) return Promise.resolve();
-
     // Create notification
     const sub = 'Mediation Invitation Received';
-    const body = `You have been invited to mediate in a market. If you are interested, open the ${AppName()} app to accept the invitation. <br><br>
-<a href="https://fiatx.co/m/${job.data.marketId}">Open Market</a>.`;
-
     await Notification.create({
       network: job.network,
-      userId: user.id,
+      userId: job.user.id,
       title: sub,
-      body,
+      body: `You have been invited to mediate in this <a href="https://app.fiatx.co/market/${job.data.marketId}">market</a>. Go to the invitation page on the FIATX app to accept the invitation. You may ignore invitation if you are not interested.`,
     });
 
     // Send email
-    await this.mailer
-      .send('basic', sub, user.email, {
-        recipient: shortenAddr(job.recipient),
-        title: sub,
-        body,
-      })
-      .catch(this.logger.error);
+    await this.mailer.send('mediator-invite', sub, job.user.email, {
+      ...job.data,
+      recipient: shortenAddr(job.recipient),
+      title: sub,
+    });
   }
 
   /**
@@ -78,32 +82,23 @@ export class NotifierConsumer {
    * @param job The job data
    */
   async notifyMediatorInviteAccepted(job: NotifyJob) {
-    // Find user; do nothing if unknown or user has no configured email
-    const user = await User.getByAddress(job.recipient);
-    if (!user || !user.email) return Promise.resolve();
-
     // Create notification
     const sub = 'Mediator Accepted Your Invitation';
-    const body = `The invited address (${shortenAddr(
-      job.data.invitee,
-    )}) has accepted your invitation join your market as a mediator.<br><br>
-<a href="https://fiatx.co/m/${job.data.marketId}">Open Market</a>.`;
-
+    const shortInvitee = shortenAddr(job.data.invitee);
     await Notification.create({
       network: job.network,
-      userId: user.id,
+      userId: job.user.id,
       title: sub,
-      body,
+      body: `An address (${shortInvitee}) you invited to mediate in your market has accepted your invitation.`,
     });
 
     // Send email
-    await this.mailer
-      .send('basic', sub, user.email, {
-        recipient: shortenAddr(job.recipient),
-        title: sub,
-        body,
-      })
-      .catch(this.logger.error);
+    await this.mailer.send('mediator-invite-accepted', sub, job.user.email, {
+      ...job.data,
+      invitee: shortInvitee,
+      recipient: shortenAddr(job.recipient),
+      title: sub,
+    });
   }
 
   /**
@@ -111,31 +106,21 @@ export class NotifierConsumer {
    * @param job The job data
    */
   async notifyMediatorRevoked(job: NotifyJob) {
-    // Find user; do nothing if unknown or user has no configured email
-    const user = await User.getByAddress(job.recipient);
-    if (!user || !user.email) return Promise.resolve();
-
     // Create notification
-    const { marketId } = job.data;
     const sub = 'Mediation Access Revoked';
-    const body = `Your mediation access to Market#${shortenAddr(marketId)} has been revoked.<br><br>
-<a href="https://fiatx.co/m/${marketId}">Open Market</a>.`;
-
     await Notification.create({
       network: job.network,
-      userId: user.id,
+      userId: job.user.id,
       title: sub,
-      body,
+      body: `Your mediation access to this permissioned <a href="https://app.fiatx.co/market/${job.data.marketId}">market</a> has been revoked by the market creator.`,
     });
 
     // Send email
-    await this.mailer
-      .send('basic', sub, user.email, {
-        recipient: shortenAddr(job.recipient),
-        title: sub,
-        body,
-      })
-      .catch(this.logger.error);
+    await this.mailer.send('mediator-revoked', sub, job.user.email, {
+      ...job.data,
+      recipient: shortenAddr(job.recipient),
+      title: sub,
+    });
   }
 
   /**
@@ -143,33 +128,21 @@ export class NotifierConsumer {
    * @param job The job data
    */
   async notifyPutApproved(job: NotifyJob) {
-    // Find user; do nothing if unknown or user has no configured email
-    const user = await User.getByAddress(job.recipient);
-    if (!user || !user.email) return Promise.resolve();
-
     // Create notification
-    const { marketId } = job.data;
-    const sub = 'Liquidity Provisioning Access Approved';
-    const body = `You have been granted access to provide liquidity to Market#${shortenAddr(
-      marketId,
-    )}.<br><br>
-<a href="https://fiatx.co/m/${marketId}">Open Market</a>.`;
-
+    const sub = 'Liquidity Provider Permission Granted';
     await Notification.create({
       network: job.network,
-      userId: user.id,
+      userId: job.user.id,
       title: sub,
-      body,
+      body: `You have been granted access to provide liquidity to this permissioned <a href="https://app.fiatx.co/market/${job.data.marketId}">market</a>`,
     });
 
     // Send email
-    await this.mailer
-      .send('basic', sub, user.email, {
-        recipient: shortenAddr(job.recipient),
-        title: sub,
-        body,
-      })
-      .catch(this.logger.error);
+    await this.mailer.send('put-approved', sub, job.user.email, {
+      ...job.data,
+      recipient: shortenAddr(job.recipient),
+      title: sub,
+    });
   }
 
   /**
@@ -177,32 +150,21 @@ export class NotifierConsumer {
    * @param job The job data
    */
   async notifyPutRevoked(job: NotifyJob) {
-    // Find user; do nothing if unknown or user has no configured email
-    const user = await User.getByAddress(job.recipient);
-    if (!user || !user.email) return Promise.resolve();
-
     // Create notification
-    const { marketId } = job.data;
-    const sub = 'Liquidity Provisioning Access Revoked';
-    const sm = shortenAddr(marketId);
-    const body = `You are no longer permitted to provide liquidity to Market#${sm}. Your access has been revoked.<br><br>
-<a href="https://fiatx.co/m/${marketId}">Open Market</a>.`;
-
+    const sub = 'Liquidity Provider Permission Revoked';
     await Notification.create({
       network: job.network,
-      userId: user.id,
+      userId: job.user.id,
       title: sub,
-      body,
+      body: `You are no longer permitted to provide liquidity to this permissioned <a href="https://app.fiatx.co/market/${job.data.marketId}">market</a>`,
     });
 
     // Send email
-    await this.mailer
-      .send('basic', sub, user.email, {
-        recipient: shortenAddr(job.recipient),
-        title: sub,
-        body,
-      })
-      .catch(this.logger.error);
+    await this.mailer.send('put-revoked', sub, job.user.email, {
+      ...job.data,
+      recipient: shortenAddr(job.recipient),
+      title: sub,
+    });
   }
 
   /**
@@ -210,33 +172,21 @@ export class NotifierConsumer {
    * @param job The job data
    */
   async notifySwapApproved(job: NotifyJob) {
-    // Find user; do nothing if unknown or user has no configured email
-    const user = await User.getByAddress(job.recipient);
-    if (!user || !user.email) return Promise.resolve();
-
     // Create notification
-    const { marketId } = job.data;
-    const sub = 'Swap Permission Received';
-    const body = `You have been granted permission to carry out swap operations in Market#${shortenAddr(
-      marketId,
-    )}.<br><br>
-<a href="https://fiatx.co/m/${marketId}">Open Market</a>.`;
-
+    const sub = 'Swap Permission Granted';
     await Notification.create({
       network: job.network,
-      userId: user.id,
+      userId: job.user.id,
       title: sub,
-      body,
+      body: `You have been granted permission to carry out swap operations in this permissioned <a href="https://app.fiatx.co/market/${job.data.marketId}">market</a>.`,
     });
 
     // Send email
-    await this.mailer
-      .send('basic', sub, user.email, {
-        recipient: shortenAddr(job.recipient),
-        title: sub,
-        body,
-      })
-      .catch(this.logger.error);
+    await this.mailer.send('swap-approved', sub, job.user.email, {
+      ...job.data,
+      recipient: shortenAddr(job.recipient),
+      title: sub,
+    });
   }
 
   /**
@@ -244,66 +194,44 @@ export class NotifierConsumer {
    * @param job The job data
    */
   async notifySwapRevoked(job: NotifyJob) {
-    // Find user; do nothing if unknown or user has no configured email
-    const user = await User.getByAddress(job.recipient);
-    if (!user || !user.email) return Promise.resolve();
-
     // Create notification
-    const { marketId } = job.data;
     const sub = 'Swap Permission Revoked';
-    const body = `You are no longer permitted to carry out swap operations in Market#${shortenAddr(
-      marketId,
-    )}. Your access has been revoked.<br><br>
-<a href="https://fiatx.co/m/${marketId}">Open Market</a>.`;
-
     await Notification.create({
       network: job.network,
-      userId: user.id,
+      userId: job.user.id,
       title: sub,
-      body,
+      body: `You are no longer permitted to carry out swap operations in this permissioned <a href="https://app.fiatx.co/market/${job.data.marketId}">market</a>`,
     });
 
     // Send email
-    await this.mailer
-      .send('basic', sub, user.email, {
-        recipient: shortenAddr(job.recipient),
-        title: sub,
-        body,
-      })
-      .catch(this.logger.error);
+    await this.mailer.send('swap-revoked', sub, job.user.email, {
+      ...job.data,
+      recipient: shortenAddr(job.recipient),
+      title: sub,
+    });
   }
 
   /**
    * Notify user about being added as a liquidity manager
    * @param job The job data
    */
-  async nofityNewLiquidityManager(job: NotifyJob) {
-    // Find user; do nothing if unknown or user has no configured email
-    const user = await User.getByAddress(job.recipient);
-    if (!user || !user.email) return Promise.resolve();
-
+  async notifyNewLiquidityManager(job: NotifyJob) {
     // Create notification
-    const { marketId, provider } = job.data;
     const sub = 'Granted Liquidity Manager Status';
-    const m = shortenAddr(marketId);
-    const body = `You have be configured as the manager of ${provider}'s liquidity in Market#${m}. You are now able to update the price of the liquidity.<br><br>
-<a href="https://fiatx.co/m/${marketId}">Open Market</a>.`;
-
+    const { marketId, provider } = job.data;
     await Notification.create({
       network: job.network,
-      userId: user.id,
+      userId: job.user.id,
       title: sub,
-      body,
+      body: `You have been selected as the manager of ${provider}'s <a href="https://app.fiatx.co/liquidity/${provider}">liquidity</a> in this permissioned <a href="https://app.fiatx.co/market/${marketId}">market</a>`,
     });
 
     // Send email
-    await this.mailer
-      .send('basic', sub, user.email, {
-        recipient: shortenAddr(job.recipient),
-        title: sub,
-        body,
-      })
-      .catch(this.logger.error);
+    await this.mailer.send('new-liq-mgr', sub, job.user.email, {
+      ...job.data,
+      recipient: shortenAddr(job.recipient),
+      title: sub,
+    });
   }
 
   /**
@@ -311,31 +239,153 @@ export class NotifierConsumer {
    * @param job The job data
    */
   async notifyRemoveLiquidityManager(job: NotifyJob) {
-    // Find user; do nothing if unknown or user has no configured email
-    const user = await User.getByAddress(job.recipient);
-    if (!user || !user.email) return Promise.resolve();
-
     // Create notification
-    const { marketId, provider } = job.data;
     const sub = 'Revoked Liquidity Manager Status';
-    const m = shortenAddr(marketId);
-    const body = `You have be removed as the manager of ${provider}'s liquidity in Market#${m}. You can no longer update the price of the liquidity.<br><br>
-<a href="https://fiatx.co/m/${marketId}">Open Market</a>.`;
-
+    const { marketId, provider } = job.data;
     await Notification.create({
       network: job.network,
-      userId: user.id,
+      userId: job.user.id,
       title: sub,
-      body,
+      body: `You have been removed as the manager of ${provider}'s <a href="https://app
+.fiatx.co/liquidity/${provider}">liquidity</a> in this
+permissioned <a href="https://app.fiatx.co/market/${marketId}">market</a>.`,
     });
 
     // Send email
-    await this.mailer
-      .send('basic', sub, user.email, {
-        recipient: shortenAddr(job.recipient),
-        title: sub,
-        body,
-      })
-      .catch(this.logger.error);
+    await this.mailer.send('rm-liq-mgr', sub, job.user.email, {
+      ...job.data,
+      recipient: shortenAddr(job.recipient),
+      title: sub,
+    });
+  }
+
+  /**
+   * Notify user about new swap on their liquidity
+   * @param job The job data
+   */
+  async notifyNewInstantSwap(job: NotifyJob) {
+    // Create notification
+    const { amount, base, quote, cost, provider } = job.data;
+    const sub = `New Instant Swap (${base + '/' + quote} - ${amount} ${base} for ${cost} ${quote})`;
+    await Notification.create({
+      network: job.network,
+      userId: job.user.id,
+      title: sub,
+      body: `Your <a href="https://app.fiatx.co/liquidity/${provider}">liquidity</a> was purchased in an instant swap.
+${amount} ${base} of your liquidity has been swapped for ${cost} ${quote}.`,
+    });
+
+    // Send email
+    await this.mailer.send('swap-instant', sub, job.user.email, {
+      ...job.data,
+      recipient: shortenAddr(job.recipient),
+      title: sub,
+    });
+  }
+
+  /**
+   * Notify user about new off-chain swap on their liquidity
+   * @param job The job data
+   */
+  async notifyOffChainSwap(job: NotifyJob) {
+    // Create notification
+    const { orderId, amount, base, quote, cost } = job.data;
+    const pair = `${base + '/' + quote}`;
+    const sub = `New Swap Order (ID: ${orderId}, ${pair}, ${amount} ${base} for ${cost} ${quote})`;
+    await Notification.create({
+      network: job.network,
+      userId: job.user.id,
+      title: sub,
+      body: `You liquidity has received a swap order. ${amount} ${base} of your liquidity has been ordered for ${cost} ${quote}`,
+    });
+
+    // Send email
+    await this.mailer.send('swap-off-chain', sub, job.user.email, {
+      ...job.data,
+      recipient: shortenAddr(job.recipient),
+      title: sub,
+    });
+  }
+
+  /**
+   * Notify user about swap order being released
+   * @param job The job data
+   */
+  async notifySwapOrderReleased(job: NotifyJob) {
+    // Create notification
+    const { orderId, amount, base, quote, cost, byDispute } = job.data;
+    const pair = `${base + '/' + quote}`;
+    const sub = `Swap Order Released (ID: ${orderId}, ${pair}, ${amount} ${base} for ${cost} ${quote})`;
+    const byWho = byDispute ? ' by the dispute system' : '';
+
+    await Notification.create({
+      network: job.network,
+      userId: job.user.id,
+      title: sub,
+      body: `The swap <a href="https://app.fiatx.co/swap/${orderId}">order</a> has been released${byWho}. ${amount} ${base} has been transferred to your wallet.`,
+    });
+
+    // Send email
+    await this.mailer.send('swap-released', sub, job.user.email, {
+      ...job.data,
+      recipient: shortenAddr(job.recipient),
+      title: sub,
+    });
+  }
+
+  /**
+   * Notify user about a swap order being cancelled
+   * @param job The job data
+   */
+  async notifySwapOrderCancelled(job: NotifyJob) {
+    // Create notification
+    const { orderId, amount, base, quote, cost, byDispute } = job.data;
+    const pair = `${base + '/' + quote}`;
+    const sub = `Swap Order Cancelled (ID: ${orderId}, ${pair}, ${amount} ${base} for ${cost} ${quote})`;
+    const byWho = !byDispute ? 'by the counterparty' : 'by the dispute system';
+
+    await Notification.create({
+      network: job.network,
+      userId: job.user.id,
+      title: sub,
+      body: `The swap <a href="https://app.fiatx.co/swap/${orderId}">order</a> has been cancelled ${byWho}. The ordered assets/liquidity has been returned.`,
+    });
+
+    // Send email
+    await this.mailer.send('swap-cancelled', sub, job.user.email, {
+      ...job.data,
+      recipient: shortenAddr(job.recipient),
+      title: sub,
+    });
+  }
+
+  /**
+   * Notify user that a swap order has been marked as paid
+   * @param job The job data
+   */
+  async notifySwapOrderPaid(job: NotifyJob) {
+    // Create notification
+    const { orderId, amount, base, quote, cost } = job.data;
+    const pair = `${base}/${quote}`;
+    const sub = `Swap Order Paid (ID: ${orderId}, ${pair}, ${amount} ${base} for ${cost} ${quote})`;
+
+    await Notification.create({
+      network: job.network,
+      userId: job.user.id,
+      title: sub,
+      body: `The swap order#${orderId} has been marked as <b>PAID</b>. 
+Please carefully verify payment of ${cost} ${quote} and only release the assets when payment is confirmed.`,
+    });
+
+    // Send email
+    await this.mailer.send('swap-paid', sub, job.user.email, {
+      ...job.data,
+      recipient: shortenAddr(job.recipient),
+      title: sub,
+      orderId,
+      amount,
+      cost,
+      quote,
+    });
   }
 }

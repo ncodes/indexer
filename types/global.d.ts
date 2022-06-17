@@ -72,6 +72,7 @@ declare global {
     notifType: NotifyType;
     network: string;
     recipient: string;
+    user: User;
     data: { [key: string]: string };
   }
 }

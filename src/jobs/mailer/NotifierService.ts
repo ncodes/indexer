@@ -12,6 +12,11 @@ export enum NotifyType {
   SwapRevoked,
   NewLiquidityManager,
   RemoveLiquidityManager,
+  NewInstantSwap,
+  NewOffChainSwap,
+  SwapOrderReleased,
+  SwapOrderCancelled,
+  SwapOrderPaid,
 }
 
 @Injectable()
@@ -25,12 +30,7 @@ export class NotifierService {
    * @param recipient The address of the recipient
    * @param data The context data
    */
-  notify(
-    notifType: NotifyType,
-    network: string,
-    recipient: string,
-    data: { [key: string]: string },
-  ) {
+  notify(notifType: NotifyType, network: string, recipient: string, data: { [key: string]: any }) {
     return this.queue.add(
       { notifType, recipient, network, data },
       {

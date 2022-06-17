@@ -262,7 +262,7 @@ export default class Liquidity extends BaseModel {
   }
 
   /**
-   * Get lowest liquidity price of all liquidity associated with a market
+   * Get the lowest liquidity price of all liquidity associated with a market
    * @param net The network name
    * @param mid The market ID
    * @param txn Optional transaction object

@@ -7,6 +7,7 @@ import InvitedMediator from '../../models/invited_mediators';
 import * as moment from 'moment';
 import PermittedTrader from '../../models/permitted_trader';
 import { NotifyType } from '../../jobs/mailer/NotifierService';
+import { BigNumber } from 'ethers';
 
 const MarketCoreContract = jest.fn().mockImplementation(() => {
   return {};
@@ -15,6 +16,10 @@ const MarketCoreContract = jest.fn().mockImplementation(() => {
 const mockNotify = jest.fn();
 const MockNotifierService = jest.fn().mockImplementation(() => {
   return { notify: mockNotify };
+});
+
+const MockNetworkService = jest.fn().mockImplementation(() => {
+  return {};
 });
 
 describe('MarketCoreHandler', () => {
@@ -37,7 +42,13 @@ describe('MarketCoreHandler', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     mockNotify.mockReset();
-    handler = new MarketCoreHandler(new MockNotifierService(), null, net, contracts);
+    handler = new MarketCoreHandler(
+      new MockNetworkService(),
+      new MockNotifierService(),
+      null,
+      net,
+      contracts,
+    );
     handler.logger = new NoopLogger() as any;
     await db.truncateTables();
   });
@@ -65,7 +76,16 @@ describe('MarketCoreHandler', () => {
       };
 
       await expect(
-        handler.onNewMarket('0x123', creator, baseAsset, quoteAsset, true, true, {} as any),
+        handler.onNewMarket(
+          '0x123',
+          creator,
+          baseAsset,
+          quoteAsset,
+          true,
+          true,
+          BigNumber.from(1),
+          {} as any,
+        ),
       ).resolves.toBeUndefined();
       const market = await Market.getByMarketId('0x123');
       expect(market).toBeDefined();
@@ -77,6 +97,7 @@ describe('MarketCoreHandler', () => {
       expect(market.quote).toEqual('USDT');
       expect(market.isBaseLocal).toBeTruthy();
       expect(market.isQuoteLocal).toBeTruthy();
+      expect(market.commission).toEqual(1);
       expect(market.pair).toEqual('BTCUSDT');
     });
   });

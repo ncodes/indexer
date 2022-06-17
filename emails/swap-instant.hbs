@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+Hello {{recipient}},
+<br><br>
+Your <a href="https://app.fiatx.co/liquidity/{{provider}}">liquidity</a> was
+purchased in an instant swap.
+{{amount}} {{base}} of your liquidity has been swapped for {{cost}} {{quote}}.
+<br><br>
+<ul>
+  <li><a href="https://app.fiatx.co/liquidity/{{recipient}}">View Liquidity</a>
+  </li>
+  <li><a href="https://app.fiatx.co/market/{{marketId}}">View Market</a></li>
+</ul>
+<br>
+{{app}}
+</body>
+</html>

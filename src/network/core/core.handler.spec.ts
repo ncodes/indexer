@@ -3,8 +3,11 @@ import { NoopLogger } from '../../common/loggers/noop_logger';
 import { CoreHandler } from './core.handler';
 import { BigNumber } from 'ethers';
 import Liquidity from '../../models/liquidity';
-import * as net from 'net';
 import { NotifyType } from '../../jobs/mailer/NotifierService';
+import Meta from '../../models/meta';
+import Market from '../../models/market';
+import Swap from '../../models/swaps';
+import MarketPrice from '../../models/market_price';
 
 const CoreContract = jest.fn().mockImplementation(() => {
   return {};
@@ -13,6 +16,15 @@ const CoreContract = jest.fn().mockImplementation(() => {
 const mockNotify = jest.fn();
 const MockNotifierService = jest.fn().mockImplementation(() => {
   return { notify: mockNotify };
+});
+
+const mockGetSwapFeeInfo = jest.fn();
+const mockGetTokenDecimals = jest.fn();
+const MockNetworkService = jest.fn().mockImplementation(() => {
+  return {
+    getSwapFeeInfo: mockGetSwapFeeInfo,
+    getTokenDecimals: mockGetTokenDecimals,
+  };
 });
 
 describe('CoreHandler', () => {
@@ -34,61 +46,99 @@ describe('CoreHandler', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    handler = new CoreHandler(new MockNotifierService(), null, net, contracts);
+    handler = new CoreHandler(
+      new MockNetworkService(),
+      new MockNotifierService(),
+      null,
+      net,
+      contracts,
+    );
     handler.logger = new NoopLogger() as any;
     await db.truncateTables();
   });
 
   describe('.onUpdatedLiquidity', () => {
     describe('when deduction=false', () => {
-      it(
-        'should create new liquidity entry when the provider does not have' +
-          ' existing liquidity in the market',
-        async () => {
-          await expect(
-            handler.onUpdatedLiquidity(
-              '0xProvider',
-              '0x123',
-              false,
-              BigNumber.from(1000),
-              BigNumber.from(3),
-              BigNumber.from(100),
-              BigNumber.from(300),
-              BigNumber.from(0),
-              {} as any,
-            ),
-          ).resolves.toBeUndefined();
-          const liq = await Liquidity.getLiquidity(handler.network, '0x123', '0xProvider');
-          expect(liq).toBeDefined();
-        },
-      );
+      it('should create new liquidity entry when the provider has none', async () => {
+        await expect(
+          handler.onUpdatedLiquidity(
+            '0xProvider',
+            '0x123',
+            false,
+            BigNumber.from(1000),
+            BigNumber.from(3),
+            BigNumber.from(100),
+            BigNumber.from(300),
+            BigNumber.from(0),
+            {} as any,
+          ),
+        ).resolves.toBeUndefined();
+        const liq = await Liquidity.getLiquidity(handler.network, '0x123', '0xProvider');
+        expect(liq).toBeDefined();
+      });
 
-      it(
-        'should update existing liquidity when the provider has an existing' +
-          ' liquidity in the market',
-        async () => {
-          await Liquidity.create({
-            provider: '0xProvider',
-            marketId: '0x123',
-            amount: '1000',
-          });
-          await expect(
-            handler.onUpdatedLiquidity(
-              '0xProvider',
-              '0x123',
-              false,
-              BigNumber.from(1000),
-              BigNumber.from(3),
-              BigNumber.from(100),
-              BigNumber.from(300),
-              BigNumber.from(0),
-              {} as any,
-            ),
-          ).resolves.toBeUndefined();
-          const liq = await Liquidity.getLiquidity(handler.network, '0x123', '0xProvider');
-          expect(liq).toBeDefined();
-        },
-      );
+      it('should update existing liquidity when the provider has an existing one', async () => {
+        await Liquidity.create({
+          provider: '0xProvider',
+          marketId: '0x123',
+          amount: '1000',
+        });
+        await expect(
+          handler.onUpdatedLiquidity(
+            '0xProvider',
+            '0x123',
+            false,
+            BigNumber.from(1000),
+            BigNumber.from(3),
+            BigNumber.from(100),
+            BigNumber.from(300),
+            BigNumber.from(0),
+            {} as any,
+          ),
+        ).resolves.toBeUndefined();
+        const liq = await Liquidity.getLiquidity(handler.network, '0x123', '0xProvider');
+        expect(liq).toBeDefined();
+      });
+    });
+  });
+
+  describe('.onUpdatedPrice', () => {
+    it('should return error when liquidity was not found locally', async () => {
+      await expect(
+        handler.onUpdatedPrice(
+          '0xMarket',
+          '0xProvider',
+          '0xManager',
+          BigNumber.from(100),
+          {} as any,
+        ),
+      ).rejects.toEqual(new Error('liquidity not found'));
+    });
+
+    it('should update liquidity price and add a new market price entry', async () => {
+      let liq = await Liquidity.create({
+        network: net,
+        marketId: '0xMarket',
+        provider: '0xProvider',
+        amount: '10000',
+        price: '200',
+      });
+      await expect(
+        handler.onUpdatedPrice(
+          '0xMarket',
+          '0xProvider',
+          '0xManager',
+          BigNumber.from(100),
+          {} as any,
+        ),
+      ).resolves.toBeUndefined();
+
+      liq = await Liquidity.find({ id: liq.id });
+      expect(liq.price).toEqual('100');
+
+      const marketPrice = await MarketPrice.find({ marketId: liq.marketId });
+      expect(marketPrice).toBeDefined();
+      expect(marketPrice.price).toEqual('100');
     });
   });
 
@@ -131,6 +181,302 @@ describe('CoreHandler', () => {
       expect(mockNotify).toHaveBeenCalledWith(NotifyType.RemoveLiquidityManager, net, '0xManager', {
         marketId: '0xMarket',
         provider: '0xProvider',
+      });
+    });
+  });
+
+  describe('.onProtocolFeeUpdated', () => {
+    it('should update correctly', async () => {
+      await handler.onProtocolFeeUpdated(
+        BigNumber.from(10),
+        BigNumber.from(2),
+        BigNumber.from(12),
+        {} as any,
+      );
+
+      expect((await Meta.get(Meta.makeProtocolFeeKey(net, 'instantSwapFee'))).value).toEqual('10');
+      expect((await Meta.get(Meta.makeProtocolFeeKey(net, 'p2pSwapFee'))).value).toEqual('2');
+      expect((await Meta.get(Meta.makeProtocolFeeKey(net, 'stableSwapFee'))).value).toEqual('12');
+    });
+  });
+
+  describe('.onUpdatedShareableAsset', () => {
+    it('should update correctly', async () => {
+      await handler.onUpdatedShareableAsset(['0xAsset', '0xAsset2'], false, {} as any);
+      let shareable = await Meta.get(Meta.makeSharableAssetsKey(net));
+      expect(shareable).toBeDefined();
+      expect(JSON.parse(shareable.value)).toHaveProperty('0xAsset');
+      expect(JSON.parse(shareable.value)).toHaveProperty('0xAsset2');
+
+      await handler.onUpdatedShareableAsset(['0xAsset'], true, {} as any);
+      shareable = await Meta.get(Meta.makeSharableAssetsKey(net));
+      expect(JSON.parse(shareable.value)).not.toHaveProperty('0xAsset');
+      expect(JSON.parse(shareable.value)).toHaveProperty('0xAsset2');
+    });
+  });
+
+  describe('.onRegStableAsset', () => {
+    it('should update correctly', async () => {
+      await handler.onRegStableAsset('0xAsset', {} as any);
+      const meta = await Meta.get(Meta.makeStableAssetsKey(net));
+      expect(meta).toBeDefined();
+      expect(JSON.parse(meta.value)).toHaveProperty('0xAsset');
+    });
+  });
+
+  describe('.onVerifiedAsset', () => {
+    it('should update correctly', async () => {
+      await handler.onVerifiedAsset('0xAsset', {} as any);
+      const meta = await Meta.get(Meta.makeVerifiedAssetsKey(net));
+      expect(meta).toBeDefined();
+      expect(JSON.parse(meta.value)).toHaveProperty('0xAsset');
+    });
+  });
+
+  describe('.onSwapOrder', () => {
+    it('should create swap correctly and send notification to liquidity provider', async () => {
+      const market = await Market.create({
+        network: net,
+        marketId: '0xMarket',
+        base: 'BASE',
+        quote: 'QUOTE',
+        isBaseLocal: false,
+      });
+
+      mockGetSwapFeeInfo.mockResolvedValue({ cost: '10000000000000000000' });
+      mockGetTokenDecimals.mockResolvedValue(BigNumber.from(18));
+
+      await handler.onSwapOrder(
+        '0xMarket',
+        '0xProvider',
+        '0xSwapper',
+        BigNumber.from(0),
+        BigNumber.from('10000000000000000000'),
+        BigNumber.from('1000000000000000000'),
+        {} as any,
+      );
+
+      expect(mockNotify).toHaveBeenCalledWith(NotifyType.NewOffChainSwap, net, '0xProvider', {
+        marketId: '0xMarket',
+        orderId: 0,
+        provider: '0xProvider',
+        base: market.base,
+        quote: market.quote,
+        isBaseLocal: market.isBaseLocal,
+        amount: '10.0',
+        cost: '10.0',
+      });
+
+      const swap = await Swap.getByOrderId(0);
+      expect(swap).toBeDefined();
+      expect(swap.marketId).toEqual(market.marketId);
+    });
+  });
+
+  describe('.onSwap', () => {
+    describe('when orderId is unset (instant swap)', () => {
+      it(
+        'should create instant swap correctly and send notification to' + ' liquidity provider',
+        async () => {
+          const market = await Market.create({
+            network: net,
+            marketId: '0xMarket',
+            base: 'BASE',
+            quote: 'QUOTE',
+            isBaseLocal: false,
+          });
+
+          mockGetSwapFeeInfo.mockResolvedValue({ cost: '10000000000000000000' });
+          mockGetTokenDecimals.mockResolvedValue(BigNumber.from(18));
+
+          await handler.onSwap(
+            '0xMarket',
+            BigNumber.from(0),
+            '0xProvider',
+            '0xSwapper',
+            BigNumber.from('10000000000000000000'),
+            BigNumber.from('1000000000000000000'),
+            false,
+            {} as any,
+          );
+
+          expect(mockNotify).toHaveBeenCalledWith(NotifyType.NewInstantSwap, net, '0xProvider', {
+            marketId: '0xMarket',
+            provider: '0xProvider',
+            base: market.base,
+            quote: market.quote,
+            amount: '10.0',
+            cost: '10.0',
+          });
+
+          const swap = await Swap.find({ marketId: market.marketId });
+          expect(swap).toBeDefined();
+          expect(swap.marketId).toEqual(market.marketId);
+          expect(swap.instant).toBeTruthy();
+        },
+      );
+    });
+
+    describe('when orderId is set (released)', () => {
+      it(
+        'should create swap, mark it as released and send notification to' + ' taker',
+        async () => {
+          const market = await Market.create({
+            network: net,
+            marketId: '0xMarket',
+            base: 'BASE',
+            quote: 'QUOTE',
+            isBaseLocal: false,
+          });
+
+          const orderId = BigNumber.from(1);
+          const amount = BigNumber.from('10000000000000000000');
+          const cost = BigNumber.from('10000000000000000000');
+          await Swap.create({
+            marketId: market.marketId,
+            orderId: orderId.toNumber() - 1,
+            amount: amount.toString(),
+            cost: cost.toString(),
+          });
+
+          mockGetSwapFeeInfo.mockResolvedValue({ cost: '10000000000000000000' });
+          mockGetTokenDecimals.mockResolvedValue(BigNumber.from(18));
+
+          await handler.onSwap(
+            '0xMarket',
+            orderId,
+            '0xProvider',
+            '0xSwapper',
+            amount,
+            BigNumber.from('1000000000000000000'),
+            false,
+            {} as any,
+          );
+
+          expect(mockNotify).toHaveBeenCalledWith(NotifyType.SwapOrderReleased, net, '0xProvider', {
+            marketId: '0xMarket',
+            base: market.base,
+            quote: market.quote,
+            amount: '10.0',
+            cost: '10.0',
+            orderId: 0,
+            byDispute: false,
+          });
+
+          const swap = await Swap.find({ marketId: market.marketId });
+          expect(swap).toBeDefined();
+          expect(swap.marketId).toEqual(market.marketId);
+          expect(swap.instant).toBeFalsy();
+          expect(swap.released).toBeTruthy();
+        },
+      );
+    });
+  });
+
+  describe('.onOrderCancelled', () => {
+    it('should mark order as cancelled and send notification to counterparty', async () => {
+      const market = await Market.create({
+        network: net,
+        marketId: '0xMarket',
+        base: 'BASE',
+        quote: 'QUOTE',
+        isBaseLocal: false,
+      });
+
+      const orderId = BigNumber.from(1);
+      const amount = BigNumber.from('10000000000000000000');
+      const cost = BigNumber.from('10000000000000000000');
+      await Swap.create({
+        marketId: market.marketId,
+        orderId: orderId.toNumber(),
+        amount: amount.toString(),
+        cost: cost.toString(),
+        provider: '0xProvider',
+        taker: '0xTaker',
+      });
+
+      mockGetSwapFeeInfo.mockResolvedValue({ cost: '10000000000000000000' });
+      mockGetTokenDecimals.mockResolvedValue(BigNumber.from(18));
+
+      const byDispute = false;
+      await handler.onOrderCancelled(orderId, '0xProvider', byDispute, {} as any);
+      expect(mockNotify).toHaveBeenCalledWith(NotifyType.SwapOrderCancelled, net, '0xTaker', {
+        marketId: '0xMarket',
+        orderId: orderId.toNumber(),
+        base: market.base,
+        quote: market.quote,
+        byDispute,
+        amount: '10.0',
+        cost: '10.0',
+      });
+
+      const swap = await Swap.find({ marketId: market.marketId });
+      expect(swap).toBeDefined();
+      expect(swap.cancelled).toBeTruthy();
+
+      // Should send to 0xProvider when canceller is 0xTaker
+      await handler.onOrderCancelled(orderId, '0xTaker', byDispute, {} as any);
+      expect(mockNotify).toHaveBeenCalledWith(NotifyType.SwapOrderCancelled, net, '0xProvider', {
+        marketId: '0xMarket',
+        orderId: orderId.toNumber(),
+        base: market.base,
+        quote: market.quote,
+        byDispute,
+        amount: '10.0',
+        cost: '10.0',
+      });
+    });
+  });
+
+  describe('.onSwapOrderPaid', () => {
+    it('should mark order as paid and send notification to counterparty', async () => {
+      const market = await Market.create({
+        network: net,
+        marketId: '0xMarket',
+        base: 'BASE',
+        quote: 'QUOTE',
+        isBaseLocal: false,
+      });
+
+      const orderId = BigNumber.from(1);
+      const amount = BigNumber.from('10000000000000000000');
+      const cost = BigNumber.from('10000000000000000000');
+      await Swap.create({
+        marketId: market.marketId,
+        orderId: orderId.toNumber(),
+        amount: amount.toString(),
+        cost: cost.toString(),
+        provider: '0xProvider',
+        taker: '0xTaker',
+      });
+
+      mockGetSwapFeeInfo.mockResolvedValue({ cost: '10000000000000000000' });
+      mockGetTokenDecimals.mockResolvedValue(BigNumber.from(18));
+
+      await handler.onSwapOrderPaid(market.marketId, orderId, BigNumber.from(0), {} as any);
+      expect(mockNotify).toHaveBeenCalledWith(NotifyType.SwapOrderPaid, net, '0xProvider', {
+        marketId: '0xMarket',
+        orderId: orderId.toNumber(),
+        base: market.base,
+        quote: market.quote,
+        amount: '10.0',
+        cost: '10.0',
+      });
+
+      const swap = await Swap.find({ marketId: market.marketId });
+      expect(swap).toBeDefined();
+      expect(swap.paid).toBeTruthy();
+
+      // Should send to 0xTarker when isBaseLocal=true
+      await Market.updateById(market.id, { isBaseLocal: true });
+      await handler.onSwapOrderPaid(market.marketId, orderId, BigNumber.from(0), {} as any);
+      expect(mockNotify).toHaveBeenCalledWith(NotifyType.SwapOrderPaid, net, '0xTaker', {
+        marketId: '0xMarket',
+        orderId: orderId.toNumber(),
+        base: market.base,
+        quote: market.quote,
+        amount: '10.0',
+        cost: '10.0',
       });
     });
   });

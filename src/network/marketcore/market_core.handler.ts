@@ -7,12 +7,14 @@ import { Handler } from '../handler';
 import MarketProvider from '../../models/market_provider';
 import InvitedMediator from '../../models/invited_mediators';
 import PermittedTrader from '../../models/permitted_trader';
+import { BigNumber } from 'ethers';
 import { NotifierService, NotifyType } from '../../jobs/mailer/NotifierService';
-import Liquidity from '../../models/liquidity';
+import NetworkService from '../network.service';
 
 export class MarketCoreHandler extends Handler {
   public logger = new Logger(MarketCoreHandler.name);
   constructor(
+    private netSrv: NetworkService,
     private notifSrv: NotifierService,
     private provider: providers.JsonRpcProvider,
     public network: string,
@@ -34,10 +36,21 @@ export class MarketCoreHandler extends Handler {
         quote: string,
         isBaseLocal: boolean,
         isQuoteLocal: boolean,
+        commission: BigNumber,
         event: Event,
         txn: Transaction,
       ) => {
-        return this.onNewMarket(id, owner, base, quote, isBaseLocal, isQuoteLocal, event, txn);
+        return this.onNewMarket(
+          id,
+          owner,
+          base,
+          quote,
+          isBaseLocal,
+          isQuoteLocal,
+          commission,
+          event,
+          txn,
+        );
       },
     );
 
@@ -102,6 +115,7 @@ export class MarketCoreHandler extends Handler {
    * @param quoteAsset The quote asset of the market
    * @param isBaseLocal Indicates whether the base asset is local
    * @param isQuoteLocal Indicates whether the quote asset is local
+   * @param commission
    * @param event The event object
    * @param txn The db transaction object
    */
@@ -112,6 +126,7 @@ export class MarketCoreHandler extends Handler {
     quoteAsset: string,
     isBaseLocal: boolean,
     isQuoteLocal: boolean,
+    commission: BigNumber,
     event: Event,
     txn?: Transaction,
   ) {
@@ -133,6 +148,7 @@ export class MarketCoreHandler extends Handler {
         isQuoteLocal,
         pair: `${base}${quote}`,
         network: this.network,
+        commission: commission.toNumber(),
       },
       txn,
     );

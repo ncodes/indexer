@@ -13,6 +13,7 @@ exports.up = function (knex) {
       table.boolean('isQuoteLocal').defaultTo(false);
       table.string('pair');
       table.string('network');
+      table.integer('commission').defaultTo(0);
       table.timestamp('createdAt');
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');

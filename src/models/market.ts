@@ -28,6 +28,8 @@ export default class Market extends BaseModel {
   isQuoteLocal: boolean;
   // The base/asset pair name
   pair: string;
+  // The market's commission
+  commission: number;
 
   // *** Non-persisted fields **//
   mediatorBond: string;
@@ -36,7 +38,6 @@ export default class Market extends BaseModel {
   permPut: boolean;
   permSwap: boolean;
   permMediate: boolean;
-  commission: number;
   numMediators: number;
   baseLogo: string;
   quoteLogo: string;

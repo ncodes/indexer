@@ -25,6 +25,8 @@ export default class Liquidity extends BaseModel {
   timeToPay: number;
   // The liquidity manager
   manager: string;
+  // Indicates that the liquidity has been paused
+  paused: boolean;
 
   /** Not Persisted */
   market: Market;
@@ -96,47 +98,7 @@ export default class Liquidity extends BaseModel {
   }
 
   /**
-   * getMarketLiquidities returns liquidity associated with a market
-   * @param network The network name
-   * @param mid The market ID
-   * @param provider Filter by provider address (optional)
-   * @param txn Optional transaction object
-   */
-  static getMarketLiquidities(
-    network: string,
-    mid: string,
-    provider?: string,
-    txn?: Transaction,
-  ): Promise<Liquidity[]> {
-    let q = this.query(txn).whereNotDeleted().where({ network }).where('marketId', 'ILIKE', mid);
-    if (provider) q = q.where('provider', 'ILIKE', provider);
-    return q;
-  }
-
-  /**
-   * countMarketLiquidities returns count of liquidities associated with
-   * a market
-   * @param network The network name
-   * @param mid The market ID
-   * @param provider Filter by provider address (optional)
-   * @param txn Optional transaction object
-   */
-  static countMarketLiquidities(
-    network: string,
-    mid: string,
-    provider?: string,
-    txn?: Transaction,
-  ): Promise<string> {
-    let q = this.query(txn).whereNotDeleted().where({ network }).where('marketId', 'ILIKE', mid);
-    if (provider) q = q.where('provider', 'ILIKE', provider);
-    return q
-      .count('id')
-      .first()
-      .then((res: any) => res.count);
-  }
-
-  /**
-   * getLiquidities finds a liquidity by network and optional provider
+   * getLiquidities finds liquidities
    * @param network The network name
    * @param marketId The market ID (optional)
    * @param provider Filter by provider address (optional)
@@ -144,7 +106,7 @@ export default class Liquidity extends BaseModel {
    * @param offset The query offset (optional)
    * @param txn Optional transaction object
    */
-  static getLiquidities(
+  static searchLiquidities(
     network: string,
     marketId?: string,
     provider?: string,
@@ -155,7 +117,7 @@ export default class Liquidity extends BaseModel {
     let q = this.query(txn)
       .select(raw('*, count(*) over() as "__queryCount"'))
       .whereNotDeleted()
-      .where({ network });
+      .where({ network, paused: false });
     if (marketId) q = q.where('marketId', 'ILIKE', marketId);
     if (provider) q = q.where('provider', 'ILIKE', provider);
     if (offset) q = q.offset(offset);

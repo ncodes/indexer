@@ -610,7 +610,7 @@ export class CoreHandler extends Handler {
   /**
    * A market manager updated a liquidity's price
    * @param marketId The market ID
-   * @param provider The liquidity providers's address
+   * @param provider The liquidity provider's address
    * @param manager The liquidity manager's address
    * @param price
    * @param event The event object
@@ -647,8 +647,8 @@ export class CoreHandler extends Handler {
   /**
    * A liquidity pause status was updated
    * @param marketId The market ID
-   * @param provider The liquidity providers's address
-   * @param paused Indicates whether the liquidity has been paused or unpaused
+   * @param provider The liquidity provider's address
+   * @param paused Indicates whether the liquidity has been paused or un-paused
    * @param event The event object
    * @param txn The transaction object
    */
@@ -658,12 +658,16 @@ export class CoreHandler extends Handler {
     paused: boolean,
     event: Event,
     txn?: Transaction,
-  ) {}
+  ) {
+    const liq = await Liquidity.getLiquidity(this.network, marketId, provider, txn);
+    await Liquidity.updateById(liq.id, { paused });
+    return Promise.resolve(undefined);
+  }
 
   /**
    * Liquidity manager was updated for a liquidity
    * @param marketId The market ID
-   * @param provider The liquidity providers's address
+   * @param provider The liquidity provider's address
    * @param manager The new liquidity manager's address
    * @param event The event object
    * @param txn The transaction object
@@ -676,20 +680,18 @@ export class CoreHandler extends Handler {
     txn?: Transaction,
   ) {
     const liq = await Liquidity.getLiquidity(this.network, marketId, provider, txn);
-    if (liq) {
-      await Liquidity.updateById(liq.id, { manager }, txn);
-      await this.notifSrv.notify(NotifyType.NewLiquidityManager, this.network, manager, {
-        marketId,
-        provider,
-      });
-    }
+    await Liquidity.updateById(liq.id, { manager }, txn);
+    await this.notifSrv.notify(NotifyType.NewLiquidityManager, this.network, manager, {
+      marketId,
+      provider,
+    });
     return Promise.resolve(undefined);
   }
 
   /**
    * Liquidity manager was updated for a liquidity
    * @param marketId The market ID
-   * @param provider The liquidity providers's address
+   * @param provider The liquidity provider's address
    * @param manager The new liquidity manager's address
    * @param event The event object
    * @param txn The transaction object

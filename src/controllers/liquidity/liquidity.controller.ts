@@ -36,7 +36,7 @@ export class LiquidityController {
   ) {
     if (!isValidNetwork(network)) throw404('unknown network');
     if (!count) {
-      const liquidities = await Liquidity.getLiquidities(
+      const liquidities = await Liquidity.searchLiquidities(
         network,
         marketId,
         provider,

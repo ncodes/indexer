@@ -480,4 +480,20 @@ describe('CoreHandler', () => {
       });
     });
   });
+
+  describe('.onTogglePause', () => {
+    it('should update liquidity `paused` state', async () => {
+      let liq = await Liquidity.create({
+        network: net,
+        marketId: '0xMarket',
+        provider: '0xProvider',
+        paused: false,
+      });
+      await expect(
+        handler.onTogglePause(liq.marketId, liq.provider, true, {} as any),
+      ).resolves.toBeUndefined();
+      liq = await Liquidity.getById(liq.id);
+      expect(liq.paused).toBeTruthy();
+    });
+  });
 });

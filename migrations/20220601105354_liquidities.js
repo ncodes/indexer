@@ -12,6 +12,7 @@ exports.up = function (knex) {
       table.string('maxSwap');
       table.string('manager');
       table.integer('timeToPay');
+      table.boolean('paused').defaultTo(false);
 
       table.timestamp('createdAt');
       table.timestamp('updatedAt');

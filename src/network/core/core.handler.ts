@@ -617,6 +617,7 @@ export class CoreHandler extends Handler {
       {
         network: this.network,
         marketId,
+        provider,
         price: await Liquidity.getLowestPriceInMarket(this.network, marketId, txn),
       },
       txn,
@@ -654,6 +655,7 @@ export class CoreHandler extends Handler {
       {
         network: this.network,
         marketId,
+        provider,
         price: await Liquidity.getLowestPriceInMarket(this.network, marketId, txn),
       },
       txn,

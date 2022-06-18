@@ -4,6 +4,7 @@ exports.up = function (knex) {
       table.increments('sn', { primaryKey: false });
       table.string('id').primary();
       table.string('marketId');
+      table.string('provider');
       table.string('network');
       table.string('price');
       table.timestamp('createdAt');

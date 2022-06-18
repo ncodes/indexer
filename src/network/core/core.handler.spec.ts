@@ -87,6 +87,7 @@ describe('CoreHandler', () => {
         expect(liq.baseAddress).toEqual(market.baseAddress);
         expect(liq.quote).toEqual(market.quote);
         expect(liq.quoteAddress).toEqual(market.quoteAddress);
+        expect(liq.provider).toEqual('0xProvider');
       });
 
       it('should update existing liquidity when the provider has an existing one', async () => {
@@ -118,6 +119,7 @@ describe('CoreHandler', () => {
         ).resolves.toBeUndefined();
         const liq = await Liquidity.getLiquidity(handler.network, '0x123', '0xProvider');
         expect(liq).toBeDefined();
+        expect(liq.provider).toEqual('0xProvider');
       });
     });
   });
@@ -159,6 +161,7 @@ describe('CoreHandler', () => {
       const marketPrice = await MarketPrice.find({ marketId: liq.marketId });
       expect(marketPrice).toBeDefined();
       expect(marketPrice.price).toEqual('100');
+      expect(marketPrice.provider).toEqual(liq.provider);
     });
   });
 

@@ -10,6 +10,8 @@ export default class MarketPrice extends BaseModel {
   network: string;
   // The market ID
   marketId: string;
+  // The provider address
+  provider: string;
   // The market price
   price: string;
 
@@ -42,10 +44,7 @@ export default class MarketPrice extends BaseModel {
    * @param data The transfer info
    * @param txn Optional transaction object
    */
-  static create(
-    data: Partial<MarketPrice>,
-    txn?: Transaction,
-  ): Promise<MarketPrice> {
+  static create(data: Partial<MarketPrice>, txn?: Transaction): Promise<MarketPrice> {
     return new Promise((resolve, reject) => {
       return this.query(txn).insert(data).then(resolve).catch(reject);
     });
@@ -56,17 +55,9 @@ export default class MarketPrice extends BaseModel {
    * @param q the query parameter
    * @param txn Optional transaction object
    */
-  static find(
-    q: Partial<MarketPrice>,
-    txn?: Transaction,
-  ): Promise<MarketPrice> {
+  static find(q: Partial<MarketPrice>, txn?: Transaction): Promise<MarketPrice> {
     return new Promise((resolve, reject) => {
-      this.query(txn)
-        .where(q)
-        .whereNotDeleted()
-        .first()
-        .then(resolve)
-        .catch(reject);
+      this.query(txn).where(q).whereNotDeleted().first().then(resolve).catch(reject);
     });
   }
 
@@ -102,7 +93,10 @@ export default class MarketPrice extends BaseModel {
     txn?: Transaction,
   ): Promise<MarketPrice> {
     return this.query(txn)
-      .where({ network, marketId })
+      .where({
+        network,
+        marketId,
+      })
       .orderBy('createdAt', 'DESC')
       .first();
   }

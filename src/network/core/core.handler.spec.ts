@@ -100,8 +100,9 @@ describe('CoreHandler', () => {
           quoteAddress: '0xQuote',
         });
         await Liquidity.create({
-          provider: '0xProvider',
+          network: net,
           marketId: market.marketId,
+          provider: '0xProvider',
           amount: '1000',
         });
         await expect(
@@ -120,6 +121,7 @@ describe('CoreHandler', () => {
         const liq = await Liquidity.getLiquidity(handler.network, '0x123', '0xProvider');
         expect(liq).toBeDefined();
         expect(liq.provider).toEqual('0xProvider');
+        expect(liq.amount).toEqual('2000');
       });
     });
   });
@@ -270,6 +272,7 @@ describe('CoreHandler', () => {
         network: net,
         marketId: '0xMarket',
         provider: '0xProvider',
+        amount: '1000000000000000000000',
       });
 
       mockGetSwapFeeInfo.mockResolvedValue({ cost: '10000000000000000000' });
@@ -302,6 +305,7 @@ describe('CoreHandler', () => {
 
       const liq = await Liquidity.getLiquidity(net, '0xMarket', '0xProvider');
       expect(liq.openOrders).toEqual(1);
+      expect(liq.amount).toEqual('990000000000000000000');
     });
   });
 
@@ -316,6 +320,13 @@ describe('CoreHandler', () => {
             base: 'BASE',
             quote: 'QUOTE',
             isBaseLocal: false,
+          });
+
+          let liq = await Liquidity.create({
+            network: net,
+            marketId: '0xMarket',
+            provider: '0xProvider',
+            amount: '1000000000000000000000',
           });
 
           mockGetSwapFeeInfo.mockResolvedValue({ cost: '10000000000000000000' });
@@ -345,6 +356,9 @@ describe('CoreHandler', () => {
           expect(swap).toBeDefined();
           expect(swap.marketId).toEqual(market.marketId);
           expect(swap.instant).toBeTruthy();
+
+          liq = await Liquidity.getById(liq.id);
+          expect(liq.amount).toEqual('990000000000000000000');
         },
       );
     });
@@ -432,6 +446,7 @@ describe('CoreHandler', () => {
         marketId: '0xMarket',
         provider: '0xProvider',
         openOrders: 1,
+        amount: '990000000000000000000',
       });
 
       const orderId = BigNumber.from(1);
@@ -465,9 +480,10 @@ describe('CoreHandler', () => {
       expect(swap).toBeDefined();
       expect(swap.cancelled).toBeTruthy();
 
-      // decrement open orders by 1
+      // decrement open orders by 1 and add swap amount back to liquidity amount
       let liq = await Liquidity.getLiquidity(net, '0xMarket', '0xProvider');
       expect(liq.openOrders).toEqual(0);
+      expect(liq.amount).toEqual('1000000000000000000000');
 
       // Should send to 0xProvider when canceller is 0xTaker
       await handler.onOrderCancelled(orderId, '0xTaker', byDispute, {} as any);
@@ -484,6 +500,7 @@ describe('CoreHandler', () => {
       // decrement open orders by 1
       liq = await Liquidity.getLiquidity(net, '0xMarket', '0xProvider');
       expect(liq.openOrders).toEqual(-1);
+      expect(liq.amount).toEqual('1010000000000000000000');
     });
   });
 

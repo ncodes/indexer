@@ -263,7 +263,10 @@ export class CoreHandler extends Handler {
 
     // Update liquidity open orders
     const liq = await Liquidity.getLiquidity(this.network, marketId, provider, txn);
-    await Liquidity.updateById(liq.id, { openOrders: liq.openOrders + 1 });
+    await Liquidity.updateById(liq.id, {
+      openOrders: liq.openOrders + 1,
+      amount: BigNumber.from(liq.amount).sub(amount).toString(),
+    });
 
     // Send notification
     const baseDecimal = await this.netSrv.getTokenDecimals(this.provider, market.baseAddress);
@@ -327,6 +330,12 @@ export class CoreHandler extends Handler {
       const info = await this.netSrv.getSwapFeeInfo(this.provider, swap as Swap);
       await Swap.create({ ...swap, ...info }, txn);
 
+      // Reduce open order count and amount of liquidity
+      const liq = await Liquidity.getLiquidity(this.network, swap.marketId, swap.provider, txn);
+      await Liquidity.updateById(liq.id, {
+        amount: BigNumber.from(liq.amount).sub(amount).toString(),
+      });
+
       // Send notification
       const baseDecimal = await this.netSrv.getTokenDecimals(this.provider, market.baseAddress);
       const quoteDecimal = await this.netSrv.getTokenDecimals(this.provider, market.quoteAddress);
@@ -384,9 +393,12 @@ export class CoreHandler extends Handler {
     const swap = await Swap.getByOrderId(orderId.toNumber());
     await Swap.updateById(swap.id, { cancelled: true, byDispute }, txn);
 
-    // Reduce open order count of liquidity
+    // Reduce open order count and liquidity
     const liq = await Liquidity.getLiquidity(this.network, swap.marketId, swap.provider, txn);
-    await Liquidity.updateById(liq.id, { openOrders: liq.openOrders - 1 });
+    await Liquidity.updateById(liq.id, {
+      openOrders: liq.openOrders - 1,
+      amount: BigNumber.from(liq.amount).add(swap.amount).toString(),
+    });
 
     // Send notification
     const market = await Market.getMarket(this.network, swap.marketId, undefined, txn);

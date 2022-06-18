@@ -60,6 +60,14 @@ describe('CoreHandler', () => {
   describe('.onUpdatedLiquidity', () => {
     describe('when deduction=false', () => {
       it('should create new liquidity entry when the provider has none', async () => {
+        const market = await Market.create({
+          network: net,
+          marketId: '0x123',
+          base: 'BASE',
+          baseAddress: '0xBASE',
+          quote: 'QUOTE',
+          quoteAddress: '0xQuote',
+        });
         await expect(
           handler.onUpdatedLiquidity(
             '0xProvider',
@@ -75,12 +83,24 @@ describe('CoreHandler', () => {
         ).resolves.toBeUndefined();
         const liq = await Liquidity.getLiquidity(handler.network, '0x123', '0xProvider');
         expect(liq).toBeDefined();
+        expect(liq.base).toEqual(market.base);
+        expect(liq.baseAddress).toEqual(market.baseAddress);
+        expect(liq.quote).toEqual(market.quote);
+        expect(liq.quoteAddress).toEqual(market.quoteAddress);
       });
 
       it('should update existing liquidity when the provider has an existing one', async () => {
+        const market = await Market.create({
+          network: net,
+          marketId: '0x123',
+          base: 'BASE',
+          baseAddress: '0xBASE',
+          quote: 'QUOTE',
+          quoteAddress: '0xQuote',
+        });
         await Liquidity.create({
           provider: '0xProvider',
-          marketId: '0x123',
+          marketId: market.marketId,
           amount: '1000',
         });
         await expect(
@@ -243,6 +263,12 @@ describe('CoreHandler', () => {
         isBaseLocal: false,
       });
 
+      await Liquidity.create({
+        network: net,
+        marketId: '0xMarket',
+        provider: '0xProvider',
+      });
+
       mockGetSwapFeeInfo.mockResolvedValue({ cost: '10000000000000000000' });
       mockGetTokenDecimals.mockResolvedValue(BigNumber.from(18));
 
@@ -270,6 +296,9 @@ describe('CoreHandler', () => {
       const swap = await Swap.getByOrderId(0);
       expect(swap).toBeDefined();
       expect(swap.marketId).toEqual(market.marketId);
+
+      const liq = await Liquidity.getLiquidity(net, '0xMarket', '0xProvider');
+      expect(liq.openOrders).toEqual(1);
     });
   });
 
@@ -329,6 +358,13 @@ describe('CoreHandler', () => {
             isBaseLocal: false,
           });
 
+          await Liquidity.create({
+            network: net,
+            marketId: '0xMarket',
+            provider: '0xProvider',
+            openOrders: 1,
+          });
+
           const orderId = BigNumber.from(1);
           const amount = BigNumber.from('10000000000000000000');
           const cost = BigNumber.from('10000000000000000000');
@@ -337,6 +373,7 @@ describe('CoreHandler', () => {
             orderId: orderId.toNumber() - 1,
             amount: amount.toString(),
             cost: cost.toString(),
+            provider: `0xProvider`,
           });
 
           mockGetSwapFeeInfo.mockResolvedValue({ cost: '10000000000000000000' });
@@ -368,6 +405,10 @@ describe('CoreHandler', () => {
           expect(swap.marketId).toEqual(market.marketId);
           expect(swap.instant).toBeFalsy();
           expect(swap.released).toBeTruthy();
+
+          // decrement open orders by 1
+          const liq = await Liquidity.getLiquidity(net, '0xMarket', '0xProvider');
+          expect(liq.openOrders).toEqual(0);
         },
       );
     });
@@ -381,6 +422,13 @@ describe('CoreHandler', () => {
         base: 'BASE',
         quote: 'QUOTE',
         isBaseLocal: false,
+      });
+
+      await Liquidity.create({
+        network: net,
+        marketId: '0xMarket',
+        provider: '0xProvider',
+        openOrders: 1,
       });
 
       const orderId = BigNumber.from(1);
@@ -414,6 +462,10 @@ describe('CoreHandler', () => {
       expect(swap).toBeDefined();
       expect(swap.cancelled).toBeTruthy();
 
+      // decrement open orders by 1
+      let liq = await Liquidity.getLiquidity(net, '0xMarket', '0xProvider');
+      expect(liq.openOrders).toEqual(0);
+
       // Should send to 0xProvider when canceller is 0xTaker
       await handler.onOrderCancelled(orderId, '0xTaker', byDispute, {} as any);
       expect(mockNotify).toHaveBeenCalledWith(NotifyType.SwapOrderCancelled, net, '0xProvider', {
@@ -425,6 +477,10 @@ describe('CoreHandler', () => {
         amount: '10.0',
         cost: '10.0',
       });
+
+      // decrement open orders by 1
+      liq = await Liquidity.getLiquidity(net, '0xMarket', '0xProvider');
+      expect(liq.openOrders).toEqual(-1);
     });
   });
 

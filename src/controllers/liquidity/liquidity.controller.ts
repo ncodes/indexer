@@ -22,6 +22,7 @@ export class LiquidityController {
    * @param count Returns the count of matching result
    * @param limit The number of result to return (optional)
    * @param offset The query offset (optional)
+   * @param select Select extend fields to return
    * @returns
    */
   @Get()
@@ -33,18 +34,21 @@ export class LiquidityController {
     @Query('count') count: boolean,
     @Query('limit') limit: string,
     @Query('offset') offset: string,
+    @Query('select') select: string,
   ) {
     if (!isValidNetwork(network)) throw404('unknown network');
     if (!count) {
+      const selectedFields = select ? select.split(',') : [];
       const liquidities = await Liquidity.searchLiquidities(
         network,
         marketId,
         provider,
         parseInt(limit || '25'),
         parseInt(offset),
+        selectedFields,
       );
       for (const liquidity of liquidities) {
-        await this.liqSrv.extendLiquidity(liquidity, noMerge);
+        await this.liqSrv.extendLiquidity(liquidity, noMerge, selectedFields);
       }
       return ok().data(liquidities).build();
     } else {

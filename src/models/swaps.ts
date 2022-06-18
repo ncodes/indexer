@@ -200,4 +200,39 @@ export default class Swap extends BaseModel {
         .catch(reject);
     });
   }
+
+  /**
+   * count by network, market and provider
+   * @param network The network name
+   * @param marketId The market ID
+   * @param provider The provider address
+   * @param instant Filter by instant swap
+   * @param minutesAgo Filter between now and some minutes ago
+   * @param txn Optional transaction object
+   */
+  static countByNetworkAndMarketAndProvider(
+    network: string,
+    marketId: string,
+    provider: string,
+    instant?: boolean,
+    minutesAgo?: number,
+    txn?: Transaction,
+  ) {
+    return new Promise<string>((resolve, reject) => {
+      let q = this.query(txn)
+        .where({ network })
+        .where('marketId', 'ilike', marketId)
+        .where('provider', 'ilike', provider);
+      if (instant !== undefined) q = q.where({ instant });
+      if (minutesAgo)
+        q = q.where('createdAt', '>=', moment().subtract(minutesAgo, 'minutes').toISOString());
+      q.count('id')
+        .whereNotDeleted()
+        .first()
+        .then((res: any) => {
+          return resolve(res.count);
+        })
+        .catch(reject);
+    });
+  }
 }

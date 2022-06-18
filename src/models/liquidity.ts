@@ -2,6 +2,7 @@ import * as crand from 'crypto-random-string';
 import Objection, { raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 import Market from './market';
+import * as _ from 'lodash';
 
 /**
  * Liquidity represents a liquidity model
@@ -13,6 +14,14 @@ export default class Liquidity extends BaseModel {
   provider: string;
   // The market ID
   marketId: string;
+  // The base asset symbol
+  base: string;
+  // The base asset address
+  baseAddress: string;
+  // The quote asset symbol
+  quote: string;
+  // The quote asset address
+  quoteAddress: string;
   // The liquidity amount
   amount: string;
   // The price of the liquidity
@@ -27,9 +36,23 @@ export default class Liquidity extends BaseModel {
   manager: string;
   // Indicates that the liquidity has been paused
   paused: boolean;
+  // The number of open swap orders
+  openOrders: number;
 
   /** Not Persisted */
   market: Market;
+  totalSwaps: string;
+  totalInstantSwaps: string;
+  totalSwaps24h: string;
+  totalInstantSwaps24h: string;
+
+  static nonPersistedFields = [
+    'market',
+    'totalSwaps',
+    'totalInstantSwaps',
+    'totalSwaps24h',
+    'totalInstantSwaps24h',
+  ];
 
   constructor(init?: Partial<Liquidity>) {
     super();
@@ -104,6 +127,7 @@ export default class Liquidity extends BaseModel {
    * @param provider Filter by provider address (optional)
    * @param limit The number of records to return (optional).
    * @param offset The query offset (optional)
+   * @param select Select specific fields (optional)
    * @param txn Optional transaction object
    */
   static searchLiquidities(
@@ -112,10 +136,28 @@ export default class Liquidity extends BaseModel {
     provider?: string,
     limit?: number,
     offset?: number,
+    select = [],
     txn?: Transaction,
   ): Promise<Liquidity[]> {
+    select = select.filter((x) => !this.nonPersistedFields.includes(x));
+    if (select.length > 0) {
+      select.push(
+        'id',
+        'marketId',
+        'network',
+        'provider',
+        'base',
+        'baseAddress',
+        'quote',
+        'quoteAddress',
+      );
+      select = _.uniq(select);
+    } else {
+      select.push('*');
+    }
+
     let q = this.query(txn)
-      .select(raw('*, count(*) over() as "__queryCount"'))
+      .select(...select, raw('count(*) over() as' + ' "__queryCount"'))
       .whereNotDeleted()
       .where({ network, paused: false });
     if (marketId) q = q.where('marketId', 'ILIKE', marketId);

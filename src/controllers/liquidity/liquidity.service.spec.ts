@@ -8,6 +8,8 @@ import { MarketsService } from '../markets/markets.service';
 import Liquidity from '../../models/liquidity';
 import { BigNumber } from 'ethers';
 import Market from '../../models/market';
+import Swap from '../../models/swaps';
+import * as moment from 'moment';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -30,6 +32,7 @@ describe('LiquidityService', () => {
   let module: TestingModule;
   let service: LiquidityService;
   const db = DBService.getForTest();
+  const net = 'net1';
   let cfgObj = {};
 
   afterEach(async () => {
@@ -57,13 +60,7 @@ describe('LiquidityService', () => {
 
     module = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
-      providers: [
-        LiquidityService,
-        MarketsService,
-        NetworkService,
-        MetadataService,
-        ConfigService,
-      ],
+      providers: [LiquidityService, MarketsService, NetworkService, MetadataService, ConfigService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
@@ -82,7 +79,7 @@ describe('LiquidityService', () => {
         marketId: '0x123',
       };
       const liquidity: any = {
-        network: 'net1',
+        network: net,
         provider: '0xProvider',
       };
       service.merge(source as any, liquidity as any);
@@ -95,15 +92,14 @@ describe('LiquidityService', () => {
   describe('.extendMarket', () => {
     describe('when noMerge=false', () => {
       it(
-        'should attempt to merge contract market object into the given' +
-          ' market object',
+        'should attempt to merge contract market object into the given' + ' market object',
         async () => {
           const market = await Market.create({
             marketId: '0x123',
-            network: 'net1',
+            network: net,
           });
           const liquidity: Liquidity = new Liquidity({
-            network: 'net1',
+            network: net,
             marketId: market.marketId,
             provider: '0xProvider',
           });
@@ -115,45 +111,60 @@ describe('LiquidityService', () => {
           const mockGetLiquidity = jest.fn();
           mockGetCore.mockResolvedValue({ getLiquidity: mockGetLiquidity });
           mockGetLiquidity.mockResolvedValue(contractLiquidity);
-          jest
-            .spyOn(module.get(MarketsService), 'extendMarket')
-            .mockResolvedValue();
+          jest.spyOn(module.get(MarketsService), 'extendMarket').mockResolvedValue();
+
+          await Swap.create({
+            network: net,
+            marketId: market.marketId,
+            provider: '0xProvider',
+          });
+          await Swap.create({
+            network: net,
+            marketId: market.marketId,
+            provider: '0xProvider',
+            instant: true,
+          });
+          await Swap.create({
+            network: net,
+            marketId: market.marketId,
+            provider: '0xProvider',
+            instant: true,
+            createdAt: moment().subtract(1440, 'm').toISOString(),
+          });
 
           await service.extendLiquidity(liquidity, false);
-          expect(mockGetCore).toHaveBeenCalledWith('net1');
-          expect(mockGetLiquidity).toHaveBeenCalledWith(
-            liquidity.marketId,
-            liquidity.provider,
-          );
-          expect(liquidity.network).toEqual('net1');
+          expect(mockGetCore).toHaveBeenCalledWith(net);
+          expect(mockGetLiquidity).toHaveBeenCalledWith(liquidity.marketId, liquidity.provider);
+          expect(liquidity.network).toEqual(net);
           expect(liquidity.marketId).toEqual('0x123');
           expect(liquidity.provider).toEqual('0xProvider');
           expect(liquidity.market).toBeDefined();
           expect(liquidity.market.id).toEqual(market.id);
+          expect(liquidity.totalSwaps).toEqual('3');
+          expect(liquidity.totalSwaps24h).toEqual('2');
+          expect(liquidity.totalInstantSwaps).toEqual('2');
+          expect(liquidity.totalInstantSwaps24h).toEqual('1');
         },
       );
 
       describe('when noMerge=true', () => {
         it(
-          'should attempt to merge contract market object into the given' +
-            ' market object',
+          'should attempt to merge contract market object into the given' + ' market object',
           async () => {
             const market = await Market.create({
               marketId: '0x123',
-              network: 'net1',
+              network: net,
             });
             const liquidity: Liquidity = new Liquidity({
-              network: 'net1',
+              network: net,
               marketId: market.marketId,
               provider: '0xProvider',
             });
 
-            jest
-              .spyOn(module.get(MarketsService), 'extendMarket')
-              .mockResolvedValue();
+            jest.spyOn(module.get(MarketsService), 'extendMarket').mockResolvedValue();
 
             await service.extendLiquidity(liquidity, true);
-            expect(liquidity.network).toEqual('net1');
+            expect(liquidity.network).toEqual(net);
             expect(liquidity.marketId).toEqual('0x123');
             expect(liquidity.provider).toEqual('0xProvider');
             expect(liquidity.market).toBeDefined();
@@ -164,22 +175,19 @@ describe('LiquidityService', () => {
 
       describe('liquidity market was not found', () => {
         it(
-          'should attempt to merge contract market object into the given' +
-            ' market object',
+          'should attempt to merge contract market object into the given' + ' market object',
           async () => {
             const liquidity: Liquidity = new Liquidity({
-              network: 'net1',
+              network: net,
               marketId: '0x123',
               provider: '0xProvider',
             });
 
-            jest
-              .spyOn(module.get(MarketsService), 'extendMarket')
-              .mockResolvedValue();
+            jest.spyOn(module.get(MarketsService), 'extendMarket').mockResolvedValue();
 
-            await expect(
-              service.extendLiquidity(liquidity, true),
-            ).rejects.toEqual(new Error('market not found'));
+            await expect(service.extendLiquidity(liquidity, true)).rejects.toEqual(
+              new Error('market not found'),
+            );
           },
         );
       });

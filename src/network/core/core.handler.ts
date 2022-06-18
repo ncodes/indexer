@@ -244,7 +244,7 @@ export class CoreHandler extends Handler {
     event: Event,
     txn?: Transaction,
   ) {
-    const market = await Market.getMarket(this.network, marketId, txn);
+    const market = await Market.getMarket(this.network, marketId, undefined, txn);
     const swap = {
       network: this.network,
       marketId,
@@ -260,6 +260,10 @@ export class CoreHandler extends Handler {
     };
     const info = await this.netSrv.getSwapFeeInfo(this.provider, swap as Swap);
     await Swap.create({ ...swap, ...info }, txn);
+
+    // Update liquidity open orders
+    const liq = await Liquidity.getLiquidity(this.network, marketId, provider, txn);
+    await Liquidity.updateById(liq.id, { openOrders: liq.openOrders + 1 });
 
     // Send notification
     const baseDecimal = await this.netSrv.getTokenDecimals(this.provider, market.baseAddress);
@@ -302,7 +306,7 @@ export class CoreHandler extends Handler {
     txn?: Transaction,
   ) {
     if (orderId.isZero()) {
-      const market = await Market.getMarket(this.network, marketId, txn);
+      const market = await Market.getMarket(this.network, marketId, undefined, txn);
       const swap = {
         network: this.network,
         marketId,
@@ -335,11 +339,16 @@ export class CoreHandler extends Handler {
         provider,
       });
     } else {
-      await Swap.updateByOrderId(orderId.toNumber() - 1, { released: true }, txn);
+      // Mark swap order as `released`
+      const swap = await Swap.getByOrderId(orderId.toNumber() - 1, txn);
+      await Swap.updateById(swap.id, { released: true }, txn);
+
+      // Reduce open order count of liquidity
+      const liq = await Liquidity.getLiquidity(this.network, swap.marketId, swap.provider, txn);
+      await Liquidity.updateById(liq.id, { openOrders: liq.openOrders - 1 });
 
       // Send notification
-      const swap = await Swap.getByOrderId(orderId.toNumber() - 1, txn);
-      const market = await Market.getMarket(this.network, marketId, txn);
+      const market = await Market.getMarket(this.network, marketId, undefined, txn);
       const baseDecimal = await this.netSrv.getTokenDecimals(this.provider, market.baseAddress);
       const quoteDecimal = await this.netSrv.getTokenDecimals(this.provider, market.quoteAddress);
       const taker = !market.isBaseLocal ? provider : swapper;
@@ -371,18 +380,16 @@ export class CoreHandler extends Handler {
     event: Event,
     txn?: Transaction,
   ) {
-    await Swap.updateByOrderId(
-      orderId.toNumber(),
-      {
-        cancelled: true,
-        byDispute,
-      },
-      txn,
-    );
+    // Mark swap order as `cancelled`
+    const swap = await Swap.getByOrderId(orderId.toNumber());
+    await Swap.updateById(swap.id, { cancelled: true, byDispute }, txn);
+
+    // Reduce open order count of liquidity
+    const liq = await Liquidity.getLiquidity(this.network, swap.marketId, swap.provider, txn);
+    await Liquidity.updateById(liq.id, { openOrders: liq.openOrders - 1 });
 
     // Send notification
-    const swap = await Swap.getByOrderId(orderId.toNumber(), txn);
-    const market = await Market.getMarket(this.network, swap.marketId, txn);
+    const market = await Market.getMarket(this.network, swap.marketId, undefined, txn);
     const baseDecimal = await this.netSrv.getTokenDecimals(this.provider, market.baseAddress);
     const quoteDecimal = await this.netSrv.getTokenDecimals(this.provider, market.quoteAddress);
     const recipient = swap.provider === canceller ? swap.taker : swap.provider;
@@ -418,7 +425,7 @@ export class CoreHandler extends Handler {
 
     // Send notification
     const swap = await Swap.getByOrderId(orderId.toNumber(), txn);
-    const market = await Market.getMarket(this.network, swap.marketId, txn);
+    const market = await Market.getMarket(this.network, swap.marketId, undefined, txn);
     const baseDecimal = await this.netSrv.getTokenDecimals(this.provider, market.baseAddress);
     const quoteDecimal = await this.netSrv.getTokenDecimals(this.provider, market.quoteAddress);
     const recipient = !market.isBaseLocal ? swap.provider : swap.taker;
@@ -567,19 +574,22 @@ export class CoreHandler extends Handler {
     event: Event,
     txn?: Transaction,
   ) {
-    this.logger.log(`UpdatedLiquidity: processing...`);
-
     // Get existing liquidity by the provider
     const liq = await Liquidity.getLiquidity(this.network, marketId, provider, txn);
 
     // Create the liquidity on database if not existing.
     // Otherwise, update the existing liquidity.
     if (!liq) {
+      const market = await Market.getMarket(this.network, marketId);
       await Liquidity.create(
         {
           network: this.network,
           provider,
           marketId,
+          base: market.base,
+          baseAddress: market.baseAddress,
+          quote: market.quote,
+          quoteAddress: market.quoteAddress,
           amount: amount.toString(),
           price: price.toString(),
           minSwap: minSwap.toString(),

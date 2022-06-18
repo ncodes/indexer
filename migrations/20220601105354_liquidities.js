@@ -6,6 +6,10 @@ exports.up = function (knex) {
       table.string('network');
       table.string('provider');
       table.string('marketId');
+      table.string('base');
+      table.string('baseAddress');
+      table.string('quote');
+      table.string('quoteAddress');
       table.string('amount');
       table.string('price');
       table.string('minSwap');
@@ -13,6 +17,7 @@ exports.up = function (knex) {
       table.string('manager');
       table.integer('timeToPay');
       table.boolean('paused').defaultTo(false);
+      table.integer('openOrders').defaultTo(0);
 
       table.timestamp('createdAt');
       table.timestamp('updatedAt');

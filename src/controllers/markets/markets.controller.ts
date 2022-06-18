@@ -6,7 +6,6 @@ import Market from '../../models/market';
 import { isValidNetwork } from '../../network/common';
 import { MarketsService } from './markets.service';
 import InvitedMediator from '../../models/invited_mediators';
-import * as _ from 'lodash';
 import PermittedTrader from '../../models/permitted_trader';
 
 @Controller('v1/markets')
@@ -34,11 +33,12 @@ export class MarketsController {
   ) {
     if (!isValidNetwork(network)) throw400('unknown network');
 
-    const market = await Market.getMarket(network, mid);
+    const selectedFields = select ? select.split(',') : [];
+    const market = await Market.getMarket(network, mid, selectedFields);
     if (!market) throw404('market not found');
 
     try {
-      await this.marketSrv.extendMarket(market, noMerge, select ? select.split(',') : []);
+      await this.marketSrv.extendMarket(market, noMerge, selectedFields);
       return ok().data(market).build();
     } catch (error) {
       this.logger.error(error, null, 'get()');

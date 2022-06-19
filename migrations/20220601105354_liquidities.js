@@ -11,6 +11,7 @@ exports.up = function (knex) {
       table.string('quote');
       table.string('quoteAddress');
       table.string('amount');
+      table.string('amountSwapped').defaultTo(0);
       table.string('price');
       table.string('minSwap');
       table.string('maxSwap');

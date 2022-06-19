@@ -1,3 +1,5 @@
+import { BigNumber } from 'ethers';
+
 export enum SupportedNetworks {
   EthereumMainnet = 'ethereumMainnet',
 }
@@ -19,4 +21,12 @@ export function getNetworks() {
  */
 export function isValidNetwork(network: string) {
   return getNetworks().includes(network);
+}
+
+/**
+ * Return BigNumber equivalent of v
+ * @param v
+ */
+export function toBN(v) {
+  return BigNumber.from(v);
 }

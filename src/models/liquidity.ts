@@ -24,6 +24,8 @@ export default class Liquidity extends BaseModel {
   quoteAddress: string;
   // The liquidity amount
   amount: string;
+  // The all-time amount of liquidity swapped
+  amountSwapped: string;
   // The price of the liquidity
   price: string;
   // The minimum swap amount

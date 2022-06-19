@@ -12,6 +12,7 @@ import NetworkService from '../network.service';
 import Market from '../../models/market';
 import { commify, formatUnits } from 'ethers/lib/utils';
 import * as moment from 'moment';
+import { toBN } from '../common';
 
 export class CoreHandler extends Handler {
   logger = new Logger(CoreHandler.name);
@@ -266,7 +267,7 @@ export class CoreHandler extends Handler {
     const liq = await Liquidity.getLiquidity(this.network, marketId, provider, txn);
     await Liquidity.updateById(liq.id, {
       openOrders: liq.openOrders + 1,
-      amount: BigNumber.from(liq.amount).sub(amount).toString(),
+      amount: toBN(liq.amount).sub(amount).toString(),
     });
 
     // Send notification
@@ -336,7 +337,8 @@ export class CoreHandler extends Handler {
       await Liquidity.updateById(
         liq.id,
         {
-          amount: BigNumber.from(liq.amount).sub(amount).toString(),
+          amount: toBN(liq.amount).sub(amount).toString(),
+          amountSwapped: toBN(liq.amountSwapped).add(amount).toString(),
           lastSuccessfulSwapAt: moment().toISOString(),
         },
         txn,
@@ -347,6 +349,7 @@ export class CoreHandler extends Handler {
         market.id,
         {
           lastSuccessfulSwapAt: moment().toISOString(),
+          amountSwapped: toBN(market.amountSwapped).add(amount).toString(),
         },
         txn,
       );
@@ -375,13 +378,21 @@ export class CoreHandler extends Handler {
         {
           openOrders: liq.openOrders - 1,
           lastSuccessfulSwapAt: now.toISOString(),
+          amountSwapped: toBN(liq.amountSwapped).add(amount).toString(),
         },
         txn,
       );
 
       // Update market
       const market = await Market.getMarket(this.network, marketId, undefined, txn);
-      await Market.updateById(market.id, { lastSuccessfulSwapAt: now.toISOString() }, txn);
+      await Market.updateById(
+        market.id,
+        {
+          lastSuccessfulSwapAt: now.toISOString(),
+          amountSwapped: toBN(market.amountSwapped).add(amount).toString(),
+        },
+        txn,
+      );
 
       // Send notification
       const baseDecimal = await this.netSrv.getTokenDecimals(this.provider, market.baseAddress);
@@ -423,7 +434,7 @@ export class CoreHandler extends Handler {
     const liq = await Liquidity.getLiquidity(this.network, swap.marketId, swap.provider, txn);
     await Liquidity.updateById(liq.id, {
       openOrders: liq.openOrders - 1,
-      amount: BigNumber.from(liq.amount).add(swap.amount).toString(),
+      amount: toBN(liq.amount).add(swap.amount).toString(),
     });
 
     // Send notification

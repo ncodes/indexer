@@ -320,6 +320,7 @@ describe('CoreHandler', () => {
             base: 'BASE',
             quote: 'QUOTE',
             isBaseLocal: false,
+            amountSwapped: '10',
           });
 
           let liq = await Liquidity.create({
@@ -327,6 +328,7 @@ describe('CoreHandler', () => {
             marketId: '0xMarket',
             provider: '0xProvider',
             amount: '1000000000000000000000',
+            amountSwapped: '10',
           });
 
           mockGetSwapFeeInfo.mockResolvedValue({ cost: '10000000000000000000' });
@@ -360,9 +362,11 @@ describe('CoreHandler', () => {
           liq = await Liquidity.getById(liq.id);
           expect(liq.amount).toEqual('990000000000000000000');
           expect(liq.lastSuccessfulSwapAt).toBeDefined();
+          expect(liq.amountSwapped).toEqual('10000000000000000010');
 
           market = await Market.getById(market.id);
           expect(market.lastSuccessfulSwapAt).toBeDefined();
+          expect(market.amountSwapped).toEqual('10000000000000000010');
         },
       );
     });
@@ -431,9 +435,11 @@ describe('CoreHandler', () => {
           const liq = await Liquidity.getLiquidity(net, '0xMarket', '0xProvider');
           expect(liq.openOrders).toEqual(0);
           expect(liq.lastSuccessfulSwapAt).toBeDefined();
+          expect(liq.amountSwapped).toEqual(amount.toString());
 
           market = await Market.getById(market.id);
           expect(market.lastSuccessfulSwapAt).toBeDefined();
+          expect(market.amountSwapped).toEqual(amount.toString());
         },
       );
     });

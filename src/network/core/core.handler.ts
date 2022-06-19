@@ -11,6 +11,7 @@ import Meta from '../../models/meta';
 import NetworkService from '../network.service';
 import Market from '../../models/market';
 import { commify, formatUnits } from 'ethers/lib/utils';
+import * as moment from 'moment';
 
 export class CoreHandler extends Handler {
   logger = new Logger(CoreHandler.name);
@@ -330,11 +331,25 @@ export class CoreHandler extends Handler {
       const info = await this.netSrv.getSwapFeeInfo(this.provider, swap as Swap);
       await Swap.create({ ...swap, ...info }, txn);
 
-      // Reduce open order count and amount of liquidity
+      // Update liquidity
       const liq = await Liquidity.getLiquidity(this.network, swap.marketId, swap.provider, txn);
-      await Liquidity.updateById(liq.id, {
-        amount: BigNumber.from(liq.amount).sub(amount).toString(),
-      });
+      await Liquidity.updateById(
+        liq.id,
+        {
+          amount: BigNumber.from(liq.amount).sub(amount).toString(),
+          lastSuccessfulSwapAt: moment().toISOString(),
+        },
+        txn,
+      );
+
+      // Update market
+      await Market.updateById(
+        market.id,
+        {
+          lastSuccessfulSwapAt: moment().toISOString(),
+        },
+        txn,
+      );
 
       // Send notification
       const baseDecimal = await this.netSrv.getTokenDecimals(this.provider, market.baseAddress);
@@ -352,12 +367,23 @@ export class CoreHandler extends Handler {
       const swap = await Swap.getByOrderId(orderId.toNumber() - 1, txn);
       await Swap.updateById(swap.id, { released: true }, txn);
 
-      // Reduce open order count of liquidity
+      // Update liquidity
       const liq = await Liquidity.getLiquidity(this.network, swap.marketId, swap.provider, txn);
-      await Liquidity.updateById(liq.id, { openOrders: liq.openOrders - 1 });
+      const now = moment();
+      await Liquidity.updateById(
+        liq.id,
+        {
+          openOrders: liq.openOrders - 1,
+          lastSuccessfulSwapAt: now.toISOString(),
+        },
+        txn,
+      );
+
+      // Update market
+      const market = await Market.getMarket(this.network, marketId, undefined, txn);
+      await Market.updateById(market.id, { lastSuccessfulSwapAt: now.toISOString() }, txn);
 
       // Send notification
-      const market = await Market.getMarket(this.network, marketId, undefined, txn);
       const baseDecimal = await this.netSrv.getTokenDecimals(this.provider, market.baseAddress);
       const quoteDecimal = await this.netSrv.getTokenDecimals(this.provider, market.quoteAddress);
       const taker = !market.isBaseLocal ? provider : swapper;

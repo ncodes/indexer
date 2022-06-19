@@ -30,6 +30,8 @@ export default class Market extends BaseModel {
   pair: string;
   // The market's commission
   commission: number;
+  // The last time this market had a successfully completed swap
+  lastSuccessfulSwapAt: string;
 
   // *** Non-persisted fields **//
   mediatorBond: string;

@@ -314,7 +314,7 @@ describe('CoreHandler', () => {
       it(
         'should create instant swap correctly and send notification to' + ' liquidity provider',
         async () => {
-          const market = await Market.create({
+          let market = await Market.create({
             network: net,
             marketId: '0xMarket',
             base: 'BASE',
@@ -359,6 +359,10 @@ describe('CoreHandler', () => {
 
           liq = await Liquidity.getById(liq.id);
           expect(liq.amount).toEqual('990000000000000000000');
+          expect(liq.lastSuccessfulSwapAt).toBeDefined();
+
+          market = await Market.getById(market.id);
+          expect(market.lastSuccessfulSwapAt).toBeDefined();
         },
       );
     });
@@ -367,7 +371,7 @@ describe('CoreHandler', () => {
       it(
         'should create swap, mark it as released and send notification to' + ' taker',
         async () => {
-          const market = await Market.create({
+          let market = await Market.create({
             network: net,
             marketId: '0xMarket',
             base: 'BASE',
@@ -426,6 +430,10 @@ describe('CoreHandler', () => {
           // decrement open orders by 1
           const liq = await Liquidity.getLiquidity(net, '0xMarket', '0xProvider');
           expect(liq.openOrders).toEqual(0);
+          expect(liq.lastSuccessfulSwapAt).toBeDefined();
+
+          market = await Market.getById(market.id);
+          expect(market.lastSuccessfulSwapAt).toBeDefined();
         },
       );
     });

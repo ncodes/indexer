@@ -14,6 +14,8 @@ exports.up = function (knex) {
       table.string('pair');
       table.string('network');
       table.integer('commission').defaultTo(0);
+
+      table.timestamp('lastSuccessfulSwapAt');
       table.timestamp('createdAt');
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');

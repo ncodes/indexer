@@ -38,6 +38,8 @@ export default class Liquidity extends BaseModel {
   paused: boolean;
   // The number of open swap orders
   openOrders: number;
+  // The last time this liquidity successfully completed a swap
+  lastSuccessfulSwapAt: string;
 
   /** Not Persisted */
   market: Market;

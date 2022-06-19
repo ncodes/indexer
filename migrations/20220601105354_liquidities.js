@@ -18,6 +18,7 @@ exports.up = function (knex) {
       table.integer('timeToPay');
       table.boolean('paused').defaultTo(false);
       table.integer('openOrders').defaultTo(0);
+      table.timestamp('lastSuccessfulSwapAt');
 
       table.timestamp('createdAt');
       table.timestamp('updatedAt');

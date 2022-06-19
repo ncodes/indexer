@@ -89,7 +89,7 @@ describe('LiquidityService', () => {
     });
   });
 
-  describe('.extendMarket', () => {
+  describe('.extendLiquidity', () => {
     describe('when noMerge=false', () => {
       it(
         'should attempt to merge contract market object into the given' + ' market object',
@@ -117,12 +117,14 @@ describe('LiquidityService', () => {
             network: net,
             marketId: market.marketId,
             provider: '0xProvider',
+            amount: '100',
           });
           await Swap.create({
             network: net,
             marketId: market.marketId,
             provider: '0xProvider',
             instant: true,
+            amount: '100',
           });
           await Swap.create({
             network: net,
@@ -130,6 +132,7 @@ describe('LiquidityService', () => {
             provider: '0xProvider',
             instant: true,
             createdAt: moment().subtract(1440, 'm').toISOString(),
+            amount: '100',
           });
 
           await service.extendLiquidity(liquidity, false);
@@ -144,6 +147,8 @@ describe('LiquidityService', () => {
           expect(liquidity.totalSwaps24h).toEqual('2');
           expect(liquidity.totalInstantSwaps).toEqual('2');
           expect(liquidity.totalInstantSwaps24h).toEqual('1');
+          expect(liquidity.volume24h).toEqual('200');
+          expect(liquidity.volumeInstant24h).toEqual('100');
         },
       );
 

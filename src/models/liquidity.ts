@@ -49,6 +49,8 @@ export default class Liquidity extends BaseModel {
   totalInstantSwaps: string;
   totalSwaps24h: string;
   totalInstantSwaps24h: string;
+  volume24h: string;
+  volumeInstant24h: string;
 
   static nonPersistedFields = [
     'market',
@@ -56,6 +58,8 @@ export default class Liquidity extends BaseModel {
     'totalInstantSwaps',
     'totalSwaps24h',
     'totalInstantSwaps24h',
+    'volume24h',
+    'volumeInstant24h',
   ];
 
   constructor(init?: Partial<Liquidity>) {

@@ -67,6 +67,10 @@ export class LiquidityService {
           true,
           1440,
         );
+      if (select.includes(`volume24h`) || !select.length)
+        liq.volume24h = await Swap.getVolume(net, marketId, provider, 1400);
+      if (select.includes(`volumeInstant24h`) || !select.length)
+        liq.volumeInstant24h = await Swap.getVolume(net, marketId, provider, 1400, true);
 
       // Get market, extend it and assign to liquidity
       const market = await Market.getMarket(net, marketId);

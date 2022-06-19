@@ -76,17 +76,34 @@ export class MarketsService {
       if (select.includes(`highestPrice`) || !select.length)
         market.highestPrice = await Liquidity.getHighestPriceInMarket(net, marketId);
       if (select.includes(`totalSwaps`) || !select.length)
-        market.totalSwaps = await Swap.countByNetworkAndMarket(net, marketId);
+        market.totalSwaps = await Swap.countByNetworkAndMarketAndProvider(net, marketId, undefined);
       if (select.includes(`totalInstantSwaps`) || !select.length)
-        market.totalInstantSwaps = await Swap.countByNetworkAndMarket(net, marketId, true);
+        market.totalInstantSwaps = await Swap.countByNetworkAndMarketAndProvider(
+          net,
+          marketId,
+          undefined,
+          true,
+        );
       if (select.includes(`totalSwaps24h`) || !select.length)
-        market.totalSwaps24h = await Swap.countByNetworkAndMarket(net, marketId, undefined, 1440);
+        market.totalSwaps24h = await Swap.countByNetworkAndMarketAndProvider(
+          net,
+          marketId,
+          undefined,
+          undefined,
+          1440,
+        );
       if (select.includes(`totalInstantSwaps24h`) || !select.length)
-        market.totalInstantSwaps24h = await Swap.countByNetworkAndMarket(net, marketId, true, 1440);
+        market.totalInstantSwaps24h = await Swap.countByNetworkAndMarketAndProvider(
+          net,
+          marketId,
+          undefined,
+          true,
+          1440,
+        );
       if (select.includes(`volume24h`) || !select.length)
-        market.volume24h = await Swap.getMarketVolume(net, marketId, 1400);
+        market.volume24h = await Swap.getVolume(net, marketId, undefined, 1400);
       if (select.includes(`volumeInstant24h`) || !select.length)
-        market.volumeInstant24h = await Swap.getMarketVolume(net, marketId, 1400, true);
+        market.volumeInstant24h = await Swap.getVolume(net, marketId, undefined, 1400, true);
       if (select.includes(`baseLogo`) || !select.length)
         market.baseLogo = await this.metadataSrv.getLogo(base, baseAddress);
       if (select.includes(`quoteLogo`) || !select.length)

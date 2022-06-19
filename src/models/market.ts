@@ -34,6 +34,7 @@ export default class Market extends BaseModel {
   lastSuccessfulSwapAt: string;
   // The all-time amount of liquidity swapped
   amountSwapped: string;
+
   // *** Non-persisted fields **//
   mediatorBond: string;
   numOrders: number;

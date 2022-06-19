@@ -144,71 +144,10 @@ export default class Swap extends BaseModel {
    * count by network and market
    * @param network The network name
    * @param marketId The market ID
-   * @param instant Filter by instant swap
-   * @param minutesAgo Filter between now and some minutes ago
-   * @param txn Optional transaction object
-   */
-  static countByNetworkAndMarket(
-    network: string,
-    marketId: string,
-    instant?: boolean,
-    minutesAgo?: number,
-    txn?: Transaction,
-  ) {
-    return new Promise<string>((resolve, reject) => {
-      let q = this.query(txn).where({ network }).where('marketId', 'ilike', marketId);
-      if (instant !== undefined) q = q.where({ instant });
-      if (minutesAgo)
-        q = q.where('createdAt', '>=', moment().subtract(minutesAgo, 'minutes').toISOString());
-      q.count('id')
-        .whereNotDeleted()
-        .first()
-        .then((res: any) => {
-          return resolve(res.count);
-        })
-        .catch(reject);
-    });
-  }
-
-  /**
-   * Get the trade volume of a market within now and some time ago.
-   * @param network The network name.
-   * @param marketId The base asset address
-   * @param timeAgo The number of minutes ago to use as the start time
-   * @param instant Filter by instant swap
-   * @param txn Optional transaction object
-   */
-  static getMarketVolume(
-    network: string,
-    marketId: string,
-    timeAgo: number,
-    instant?: boolean,
-    txn?: Transaction,
-  ) {
-    return new Promise<string>((resolve, reject) => {
-      this.query(txn)
-        .select(raw('sum(cast(?? as numeric))', 'amount').as('total'))
-        .where('network', network)
-        .where((q) => {
-          if (instant !== undefined) q.where('instant', instant);
-        })
-        .where('marketId', 'ilike', marketId)
-        .where('createdAt', '>=', moment().subtract(timeAgo, 'm').toISOString())
-        .then((res: any) => {
-          return resolve(res[0].total);
-        })
-        .catch(reject);
-    });
-  }
-
-  /**
-   * count by network, market and provider
-   * @param network The network name
-   * @param marketId The market ID
    * @param provider The provider address
-   * @param instant Filter by instant swap
-   * @param minutesAgo Filter between now and some minutes ago
-   * @param txn Optional transaction object
+   * @param instant? Filter by instant swap
+   * @param minutesAgo? Filter between now and some minutes ago
+   * @param txn? Optional transaction object
    */
   static countByNetworkAndMarketAndProvider(
     network: string,
@@ -216,13 +155,11 @@ export default class Swap extends BaseModel {
     provider: string,
     instant?: boolean,
     minutesAgo?: number,
-    txn?: Transaction,
+    txn?: Objection.Transaction,
   ) {
     return new Promise<string>((resolve, reject) => {
-      let q = this.query(txn)
-        .where({ network })
-        .where('marketId', 'ilike', marketId)
-        .where('provider', 'ilike', provider);
+      let q = this.query(txn).where({ network }).where('marketId', 'ilike', marketId);
+      if (provider) q = q.where('provider', 'ilike', provider);
       if (instant !== undefined) q = q.where({ instant });
       if (minutesAgo)
         q = q.where('createdAt', '>=', moment().subtract(minutesAgo, 'minutes').toISOString());
@@ -235,4 +172,75 @@ export default class Swap extends BaseModel {
         .catch(reject);
     });
   }
+
+  /**
+   * Get the trade volume of a market/provider within now and some time ago.
+   * @param network The network name.
+   * @param marketId The base asset address
+   * @param provider The provider address
+   * @param timeAgo The number of minutes ago to use as the start time
+   * @param instant? Filter by instant swap
+   * @param txn? Optional transaction object
+   */
+  static getVolume(
+    network: string,
+    marketId: string,
+    provider: string,
+    timeAgo: number,
+    instant?: boolean,
+    txn?: Objection.Transaction,
+  ) {
+    return new Promise<string>((resolve, reject) => {
+      this.query(txn)
+        .select(raw('sum(cast(?? as numeric))', 'amount').as('total'))
+        .where('network', network)
+        .where('marketId', 'ilike', marketId)
+        .where((q) => {
+          if (provider !== undefined) q.where('provider', 'ilike', provider);
+        })
+        .where((q) => {
+          if (instant !== undefined) q.where('instant', instant);
+        })
+        .where('createdAt', '>=', moment().subtract(timeAgo, 'm').toISOString())
+        .then((res: any) => {
+          return resolve(res[0].total || '0');
+        })
+        .catch(reject);
+    });
+  }
+
+  /**
+   * count by network, market and provider
+   //  * @param network The network name
+   //  * @param marketId The market ID
+   //  * @param provider The provider address
+   //  * @param instant Filter by instant swap
+   //  * @param minutesAgo Filter between now and some minutes ago
+   //  * @param txn Optional transaction object
+   //  */
+  // static countByNetworkAndMarketAndProvider(
+  //   network: string,
+  //   marketId: string,
+  //   provider: string,
+  //   instant?: boolean,
+  //   minutesAgo?: number,
+  //   txn?: Transaction,
+  // ) {
+  //   return new Promise<string>((resolve, reject) => {
+  //     let q = this.query(txn)
+  //       .where({ network })
+  //       .where('marketId', 'ilike', marketId)
+  //       .where('provider', 'ilike', provider);
+  //     if (instant !== undefined) q = q.where({ instant });
+  //     if (minutesAgo)
+  //       q = q.where('createdAt', '>=', moment().subtract(minutesAgo, 'minutes').toISOString());
+  //     q.count('id')
+  //       .whereNotDeleted()
+  //       .first()
+  //       .then((res: any) => {
+  //         return resolve(res.count);
+  //       })
+  //       .catch(reject);
+  //   });
+  // }
 }

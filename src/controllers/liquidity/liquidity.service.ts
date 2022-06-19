@@ -5,6 +5,7 @@ import Liquidity from '../../models/liquidity';
 import * as _ from 'lodash';
 import { MarketsService } from '../markets/markets.service';
 import Swap from '../../models/swaps';
+import MarketPrice from '../../models/market_price';
 
 @Injectable()
 export class LiquidityService {
@@ -71,6 +72,8 @@ export class LiquidityService {
         liq.volume24h = await Swap.getVolume(net, marketId, provider, 1400);
       if (select.includes(`volumeInstant24h`) || !select.length)
         liq.volumeInstant24h = await Swap.getVolume(net, marketId, provider, 1400, true);
+      if (select.includes(`priceChange`) || !select.length)
+        liq.priceChange = await MarketPrice.priceChange(net, marketId, provider, 24);
 
       // Get market, extend it and assign to liquidity
       const market = await Market.getMarket(net, marketId);

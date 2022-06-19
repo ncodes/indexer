@@ -238,35 +238,4 @@ describe('MarketsService', () => {
       expect(market.priceChange).toBeDefined();
     });
   });
-
-  describe('.priceChange', () => {
-    it('should return correct 24 hours price change', async () => {
-      await MarketPrice.create({
-        network: 'net1',
-        marketId: '0x123',
-        price: '100',
-        createdAt: moment().subtract(86400, 's').toISOString(),
-      });
-      await MarketPrice.create({
-        network: 'net1',
-        marketId: '0x123',
-        price: '200',
-      });
-      expect(await service.priceChange('net1', '0x123', 24)).toEqual(100);
-
-      // No price outside the last 24 hours for market=0x123
-      await MarketPrice.create({
-        network: 'net1',
-        marketId: '0x1234',
-        price: '100',
-        createdAt: moment().subtract(86400, 's').toISOString(),
-      });
-      await MarketPrice.create({
-        network: 'net2',
-        marketId: '0x123',
-        price: '200',
-      });
-      expect(await service.priceChange('net2', '0x123', 24)).toEqual(0);
-    });
-  });
 });

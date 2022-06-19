@@ -109,31 +109,11 @@ export class MarketsService {
       if (select.includes(`quoteLogo`) || !select.length)
         market.quoteLogo = await this.metadataSrv.getLogo(quote, quoteAddress);
       if (select.includes(`priceChange`) || !select.length)
-        market.priceChange = await this.priceChange(net, marketId, 24);
+        market.priceChange = await MarketPrice.priceChange(net, marketId, undefined, 24);
 
       return Promise.resolve();
     } catch (error) {
       return Promise.reject(error);
     }
-  }
-
-  /**
-   * Get hourly price change for a market
-   * @param net The network name
-   * @param mid The market ID
-   * @param hours The price change period in hours
-   */
-  async priceChange(net: string, mid: string, hours: number): Promise<number> {
-    const timeAgo = moment().subtract(hours, 'h').toISOString();
-    const priceHourAgo = await MarketPrice.findRecentBefore(net, mid, timeAgo);
-    if (!priceHourAgo) return Promise.resolve(0);
-    const currentPrice = await MarketPrice.findRecent(net, mid);
-    return Promise.resolve(
-      ToDec(currentPrice.price)
-        .sub(priceHourAgo.price)
-        .div(ToDec(priceHourAgo.price))
-        .mul(100)
-        .toNumber(),
-    );
   }
 }

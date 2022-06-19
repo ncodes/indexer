@@ -1,6 +1,8 @@
 import * as crand from 'crypto-random-string';
 import Objection, { Transaction } from 'objection';
 import { BaseModel } from './base';
+import * as moment from 'moment';
+import { ToDec } from '../common/common';
 
 /**
  * MarketPrice represents a market's historic price
@@ -65,17 +67,23 @@ export default class MarketPrice extends BaseModel {
    * Find the recent price before a given date
    * @param network The target network name
    * @param marketId The target market ID
+   * @param provider The provider address
    * @param before The target date
    * @param txn Optional transaction object
    */
   static async findRecentBefore(
     network: string,
     marketId: string,
+    provider: string,
     before: string,
     txn?: Transaction,
   ): Promise<MarketPrice> {
     return this.query(txn)
-      .where({ network, marketId })
+      .where({ network })
+      .where('marketId', 'ilike', marketId)
+      .where((q) => {
+        if (provider) q.where('provider', 'ilike', provider);
+      })
       .where('createdAt', '<', before)
       .orderBy('createdAt', 'DESC')
       .first();
@@ -85,19 +93,56 @@ export default class MarketPrice extends BaseModel {
    * Find the recent price
    * @param network The target network name
    * @param marketId The target market ID
+   * @param provider The provider address
    * @param txn Optional transaction object
    */
   static async findRecent(
     network: string,
     marketId: string,
+    provider: string,
     txn?: Transaction,
   ): Promise<MarketPrice> {
     return this.query(txn)
-      .where({
-        network,
-        marketId,
+      .where({ network })
+      .where('marketId', 'ilike', marketId)
+      .where((q) => {
+        if (provider) q.where('provider', 'ilike', provider);
       })
       .orderBy('createdAt', 'DESC')
       .first();
+  }
+
+  /**
+   * Get hourly price change for a market
+   * @param network The network name
+   * @param marketId The market ID
+   * @param provider The provider address
+   * @param hours The price change period in hours
+   * @param txn Optional transaction object
+   */
+  static async priceChange(
+    network: string,
+    marketId: string,
+    provider: string,
+    hours: number,
+    txn?: Transaction,
+  ): Promise<number> {
+    const timeAgo = moment().subtract(hours, 'h').toISOString();
+    const priceHourAgo = await MarketPrice.findRecentBefore(
+      network,
+      marketId,
+      provider,
+      timeAgo,
+      txn,
+    );
+    if (!priceHourAgo) return Promise.resolve(0);
+    const currentPrice = await MarketPrice.findRecent(network, marketId, provider, txn);
+    return Promise.resolve(
+      ToDec(currentPrice.price)
+        .sub(priceHourAgo.price)
+        .div(ToDec(priceHourAgo.price))
+        .mul(100)
+        .toNumber(),
+    );
   }
 }

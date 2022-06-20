@@ -6,7 +6,7 @@ import MarketPrice from '../../models/market_price';
 import { Handler } from '../handler';
 import { ToDec } from '../../common/common';
 import { NotifierService, NotifyType } from '../../jobs/mailer/NotifierService';
-import Swap from '../../models/swaps';
+import Swap from '../../models/swap';
 import Meta from '../../models/meta';
 import NetworkService from '../network.service';
 import Market from '../../models/market';
@@ -334,12 +334,13 @@ export class CoreHandler extends Handler {
 
       // Update liquidity
       const liq = await Liquidity.getLiquidity(this.network, swap.marketId, swap.provider, txn);
+      const now = moment().toISOString();
       await Liquidity.updateById(
         liq.id,
         {
           amount: toBN(liq.amount).sub(amount).toString(),
           amountSwapped: toBN(liq.amountSwapped).add(amount).toString(),
-          lastSuccessfulSwapAt: moment().toISOString(),
+          lastSuccessfulSwapAt: now,
         },
         txn,
       );
@@ -348,7 +349,7 @@ export class CoreHandler extends Handler {
       await Market.updateById(
         market.id,
         {
-          lastSuccessfulSwapAt: moment().toISOString(),
+          lastSuccessfulSwapAt: now,
           amountSwapped: toBN(market.amountSwapped).add(amount).toString(),
         },
         txn,
@@ -369,9 +370,10 @@ export class CoreHandler extends Handler {
       // Mark swap order as `released`
       const swap = await Swap.getByOrderId(orderId.toNumber() - 1, txn);
       await Swap.updateById(swap.id, { released: true }, txn);
+      const { marketId, provider, cost } = swap;
 
       // Update liquidity
-      const liq = await Liquidity.getLiquidity(this.network, swap.marketId, swap.provider, txn);
+      const liq = await Liquidity.getLiquidity(this.network, marketId, provider, txn);
       const now = moment();
       await Liquidity.updateById(
         liq.id,
@@ -379,6 +381,7 @@ export class CoreHandler extends Handler {
           openOrders: liq.openOrders - 1,
           lastSuccessfulSwapAt: now.toISOString(),
           amountSwapped: toBN(liq.amountSwapped).add(amount).toString(),
+          completionRate: await Swap.getCompletionRate(this.network, marketId, provider, txn),
         },
         txn,
       );
@@ -390,6 +393,7 @@ export class CoreHandler extends Handler {
         {
           lastSuccessfulSwapAt: now.toISOString(),
           amountSwapped: toBN(market.amountSwapped).add(amount).toString(),
+          completionRate: await Swap.getCompletionRate(this.network, marketId, undefined, txn),
         },
         txn,
       );
@@ -404,8 +408,8 @@ export class CoreHandler extends Handler {
         base: market.base,
         quote: market.quote,
         byDispute,
-        amount: commify(formatUnits(swap.amount, baseDecimal)),
-        cost: commify(formatUnits(swap.cost, quoteDecimal)),
+        amount: commify(formatUnits(amount, baseDecimal)),
+        cost: commify(formatUnits(cost, quoteDecimal)),
       });
     }
     return Promise.resolve();

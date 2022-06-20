@@ -8,7 +8,7 @@ import MarketPrice from '../../models/market_price';
 import * as moment from 'moment';
 import { DBService } from '../../db/DBService';
 import Market from '../../models/market';
-import Swap from '../../models/swaps';
+import Swap from '../../models/swap';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {

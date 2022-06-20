@@ -8,7 +8,7 @@ import { MarketsService } from '../markets/markets.service';
 import Liquidity from '../../models/liquidity';
 import { BigNumber } from 'ethers';
 import Market from '../../models/market';
-import Swap from '../../models/swaps';
+import Swap from '../../models/swap';
 import * as moment from 'moment';
 
 const mockCfgGet = jest.fn();

@@ -4,7 +4,7 @@ import Market from '../../models/market';
 import Liquidity from '../../models/liquidity';
 import * as _ from 'lodash';
 import { MarketsService } from '../markets/markets.service';
-import Swap from '../../models/swaps';
+import Swap from '../../models/swap';
 import MarketPrice from '../../models/market_price';
 
 @Injectable()

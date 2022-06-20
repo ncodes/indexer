@@ -15,6 +15,7 @@ exports.up = function (knex) {
       table.string('network');
       table.integer('commission').defaultTo(0);
       table.string('amountSwapped').defaultTo(0);
+      table.float('completionRate').defaultTo(0);
       table.timestamp('lastSuccessfulSwapAt');
       table.timestamp('createdAt');
       table.timestamp('updatedAt');

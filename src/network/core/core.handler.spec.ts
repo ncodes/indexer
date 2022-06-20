@@ -6,7 +6,7 @@ import Liquidity from '../../models/liquidity';
 import { NotifyType } from '../../jobs/mailer/NotifierService';
 import Meta from '../../models/meta';
 import Market from '../../models/market';
-import Swap from '../../models/swaps';
+import Swap from '../../models/swap';
 import MarketPrice from '../../models/market_price';
 
 const CoreContract = jest.fn().mockImplementation(() => {
@@ -394,6 +394,7 @@ describe('CoreHandler', () => {
           const amount = BigNumber.from('10000000000000000000');
           const cost = BigNumber.from('10000000000000000000');
           await Swap.create({
+            network: net,
             marketId: market.marketId,
             orderId: orderId.toNumber() - 1,
             amount: amount.toString(),
@@ -436,10 +437,12 @@ describe('CoreHandler', () => {
           expect(liq.openOrders).toEqual(0);
           expect(liq.lastSuccessfulSwapAt).toBeDefined();
           expect(liq.amountSwapped).toEqual(amount.toString());
+          expect(liq.completionRate).toEqual(100);
 
           market = await Market.getById(market.id);
           expect(market.lastSuccessfulSwapAt).toBeDefined();
           expect(market.amountSwapped).toEqual(amount.toString());
+          expect(market.completionRate).toEqual(100);
         },
       );
     });

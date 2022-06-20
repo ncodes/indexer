@@ -42,6 +42,8 @@ export default class Liquidity extends BaseModel {
   openOrders: number;
   // The last time this liquidity successfully completed a swap
   lastSuccessfulSwapAt: string;
+  // The swap completion rate of this liquidity
+  completionRate: number;
 
   /** Not Persisted */
   market: Market;
@@ -61,7 +63,7 @@ export default class Liquidity extends BaseModel {
     'totalInstantSwaps24h',
     'volume24h',
     'volumeInstant24h',
-    'priceChange',
+    'priceChange ',
   ];
 
   constructor(init?: Partial<Liquidity>) {

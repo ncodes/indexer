@@ -3,7 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { NotifierService } from '../jobs/mailer/NotifierService';
 import { DBService } from '../db/DBService';
 import NetworkService from './network.service';
-import Swap from '../models/swaps';
+import Swap from '../models/swap';
 import Market from '../models/market';
 import { BigNumber } from 'ethers';
 import Meta from '../models/meta';

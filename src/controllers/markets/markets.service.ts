@@ -7,7 +7,7 @@ import { MetadataService } from '../../services/metadata.service';
 import * as moment from 'moment';
 import MarketPrice from '../../models/market_price';
 import { ToDec } from '../../common/common';
-import Swap from '../../models/swaps';
+import Swap from '../../models/swap';
 
 @Injectable()
 export class MarketsService {

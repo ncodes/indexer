@@ -19,7 +19,7 @@ import { MarketCoreHandler } from './marketcore/market_core.handler';
 import { MediatorManagerHandler } from './mediatormanager/mediator_manager.handler';
 import { P2PStakerHandler } from './p2pstaker/p2p_staker.handler';
 import { NotifierService } from '../jobs/mailer/NotifierService';
-import Swap from '../models/swaps';
+import Swap from '../models/swap';
 import { Transaction } from 'objection';
 import Market from '../models/market';
 import Meta from '../models/meta';

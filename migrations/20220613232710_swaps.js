@@ -27,6 +27,7 @@ exports.up = function (knex) {
       table.integer('marketFeeBP');
       table.string('marketFee');
       table.string('totalFee');
+      table.string('txHash');
       table.timestamp('createdAt');
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');

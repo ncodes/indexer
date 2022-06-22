@@ -259,6 +259,7 @@ export class CoreHandler extends Handler {
       orderId: orderId.toNumber(),
       amount: amount.toString(),
       price: price.toString(),
+      txHash: event.transactionHash,
     };
     const info = await this.netSrv.getSwapFeeInfo(this.provider, swap as Swap);
     await Swap.create({ ...swap, ...info }, txn);
@@ -328,6 +329,7 @@ export class CoreHandler extends Handler {
         paid: orderId.isZero(),
         released: orderId.isZero(),
         cost: '',
+        txHash: event.transactionHash,
       };
       const info = await this.netSrv.getSwapFeeInfo(this.provider, swap as Swap);
       await Swap.create({ ...swap, ...info }, txn);

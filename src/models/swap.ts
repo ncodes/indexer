@@ -59,6 +59,8 @@ export default class Swap extends BaseModel {
   marketFee: string;
   // The total fee charged (market + protocol fees)
   totalFee: string;
+  // The transaction hash where the swap was created
+  txHash: string;
 
   market: Market;
   liquidity: Liquidity;

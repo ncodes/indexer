@@ -84,7 +84,7 @@ describe('MarketCoreHandler', () => {
           true,
           true,
           BigNumber.from(1),
-          {} as any,
+          { transactionHash: '0xTxHash' } as any,
         ),
       ).resolves.toBeUndefined();
       const market = await Market.getByMarketId('0x123');
@@ -99,6 +99,7 @@ describe('MarketCoreHandler', () => {
       expect(market.isQuoteLocal).toBeTruthy();
       expect(market.commission).toEqual(1);
       expect(market.pair).toEqual('BTCUSDT');
+      expect(market.txHash).toEqual('0xTxHash');
     });
   });
 

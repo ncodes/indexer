@@ -36,6 +36,8 @@ export default class Market extends BaseModel {
   amountSwapped: string;
   // The swap completion rate of this liquidity
   completionRate: number;
+  // The transaction hash
+  txHash: string;
 
   // *** Non-persisted fields **//
   mediatorBond: string;

@@ -149,6 +149,7 @@ export class MarketCoreHandler extends Handler {
         pair: `${base}${quote}`,
         network: this.network,
         commission: commission.toNumber(),
+        txHash: event.transactionHash,
       },
       txn,
     );

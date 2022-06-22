@@ -285,7 +285,7 @@ describe('CoreHandler', () => {
         BigNumber.from(0),
         BigNumber.from('10000000000000000000'),
         BigNumber.from('1000000000000000000'),
-        {} as any,
+        { transactionHash: '0xTxHash' } as any,
       );
 
       expect(mockNotify).toHaveBeenCalledWith(NotifyType.NewOffChainSwap, net, '0xProvider', {
@@ -302,6 +302,7 @@ describe('CoreHandler', () => {
       const swap = await Swap.getByOrderId(0);
       expect(swap).toBeDefined();
       expect(swap.marketId).toEqual(market.marketId);
+      expect(swap.txHash).toEqual('0xTxHash');
 
       const liq = await Liquidity.getLiquidity(net, '0xMarket', '0xProvider');
       expect(liq.openOrders).toEqual(1);
@@ -342,7 +343,7 @@ describe('CoreHandler', () => {
             BigNumber.from('10000000000000000000'),
             BigNumber.from('1000000000000000000'),
             false,
-            {} as any,
+            { transactionHash: '0xTxHash' } as any,
           );
 
           expect(mockNotify).toHaveBeenCalledWith(NotifyType.NewInstantSwap, net, '0xProvider', {
@@ -358,6 +359,7 @@ describe('CoreHandler', () => {
           expect(swap).toBeDefined();
           expect(swap.marketId).toEqual(market.marketId);
           expect(swap.instant).toBeTruthy();
+          expect(swap.txHash).toEqual('0xTxHash');
 
           liq = await Liquidity.getById(liq.id);
           expect(liq.amount).toEqual('990000000000000000000');

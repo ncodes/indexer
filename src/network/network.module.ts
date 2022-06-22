@@ -6,6 +6,6 @@ import { NotifierService } from '../jobs/mailer/NotifierService';
 @Module({
   imports: [NotifierModule],
   providers: [NetworkService],
-  exports: [NetworkService, NotifierService],
+  exports: [NetworkService],
 })
 export class NetworkModule {}

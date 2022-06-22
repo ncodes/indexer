@@ -17,6 +17,7 @@ import { NetworkModule } from './network/network.module';
 import { ProvidersModule } from './controllers/providers/providers.module';
 import { MiscModule } from './controllers/misc/misc.module';
 import { NotificationsModule } from './controllers/notifications/notifications.module';
+import { SwapsModule } from './controllers/swaps/swaps.module';
 
 Handlebars.registerHelper('uppercase', (aString) => {
   return aString.toUpperCase();
@@ -39,6 +40,7 @@ function getModules() {
     ProvidersModule,
     MiscModule,
     NotificationsModule,
+    SwapsModule,
   ];
 }
 

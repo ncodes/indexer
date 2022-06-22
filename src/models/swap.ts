@@ -2,8 +2,10 @@ import * as crand from 'crypto-random-string';
 import Objection, { raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 import * as moment from 'moment';
-import Decimal from 'decimal.js';
 import { ToDec } from '../common/common';
+import Market from './market';
+import Liquidity from './liquidity';
+import * as _ from 'lodash';
 
 /**
  * Swap represents a swap operation
@@ -57,6 +59,11 @@ export default class Swap extends BaseModel {
   marketFee: string;
   // The total fee charged (market + protocol fees)
   totalFee: string;
+
+  market: Market;
+  liquidity: Liquidity;
+
+  static nonPersistedFields = ['market', 'liquidity'];
 
   constructor(init?: Partial<Swap>) {
     super();
@@ -112,6 +119,28 @@ export default class Swap extends BaseModel {
    */
   static getByOrderId(orderId: number, txn?: Transaction): Promise<Swap> {
     return this.query(txn).where({ orderId }).whereNotDeleted().first();
+  }
+
+  /**
+   * find a record by order ID
+   * @param network The network name
+   * @param orderId The order ID
+   * @param select Select specific fields (optional)
+   * @param txn Optional transaction object
+   */
+  static get(network: string, orderId: number, select = [], txn?: Transaction): Promise<Swap> {
+    select = select.filter((x) => !this.nonPersistedFields.includes(x));
+    if (select.length > 0) {
+      select.push('id', 'marketId', 'network', 'base', 'baseAddress', 'quote', 'quoteAddress');
+      select = _.uniq(select);
+    } else {
+      select.push('*');
+    }
+    return this.query(txn)
+      .select(...select)
+      .where({ network, orderId })
+      .whereNotDeleted()
+      .first();
   }
 
   /**
@@ -270,5 +299,56 @@ export default class Swap extends BaseModel {
       txn,
     );
     return Promise.resolve(ToDec(nReleased).div(nSwaps).mul(100).toDP(2).toNumber());
+  }
+
+  /**
+   * search for swaps
+   * @param network The network name
+   * @param marketId The market ID (optional)
+   * @param providerOrTaker Filter only where address is provider or taker
+   * @param limit The number of records to return (optional).
+   * @param offset The query offset (optional)
+   * @param select Select specific fields (optional)
+   * @param txn Optional transaction object
+   */
+  static searchSwaps(
+    network: string,
+    marketId?: string,
+    providerOrTaker?: string,
+    limit?: number,
+    offset?: number,
+    select = [],
+    txn?: Transaction,
+  ): Promise<Swap[]> {
+    select = select.filter((x) => !this.nonPersistedFields.includes(x));
+    if (select.length > 0) {
+      select.push(
+        'id',
+        'marketId',
+        'network',
+        'provider',
+        'base',
+        'baseAddress',
+        'quote',
+        'quoteAddress',
+      );
+      select = _.uniq(select);
+    } else {
+      select.push('*');
+    }
+
+    let q = this.query(txn)
+      .select(...select, raw('count(*) over() as' + ' "__queryCount"'))
+      .whereNotDeleted()
+      .where({ network });
+    if (marketId) q = q.where('marketId', 'ILIKE', marketId);
+    if (providerOrTaker) {
+      q = q.where((q) => {
+        q.orWhere('provider', 'ILIKE', providerOrTaker).orWhere('taker', 'ILIKE', providerOrTaker);
+      });
+    }
+    if (offset) q = q.offset(offset);
+    if (limit) q = q.limit(limit);
+    return q.orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
   }
 }

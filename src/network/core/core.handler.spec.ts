@@ -470,6 +470,7 @@ describe('CoreHandler', () => {
       const amount = BigNumber.from('10000000000000000000');
       const cost = BigNumber.from('10000000000000000000');
       await Swap.create({
+        network: net,
         marketId: market.marketId,
         orderId: orderId.toNumber(),
         amount: amount.toString(),
@@ -535,6 +536,7 @@ describe('CoreHandler', () => {
       const amount = BigNumber.from('10000000000000000000');
       const cost = BigNumber.from('10000000000000000000');
       await Swap.create({
+        network: net,
         marketId: market.marketId,
         orderId: orderId.toNumber(),
         amount: amount.toString(),

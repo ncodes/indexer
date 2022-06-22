@@ -17,8 +17,7 @@ export class LiquidityController {
    * @param network The network name.
    * @param marketId The market ID (optional)
    * @param provider The provider address (optional)
-   * @param noMerge Indicates whether to merge DB liquidity info with
-   * contract liquidity info
+   * @param noMerge Prevent merge of contract liquidity with DB liquidity object
    * @param count Returns the count of matching result
    * @param limit The number of result to return (optional)
    * @param offset The query offset (optional)

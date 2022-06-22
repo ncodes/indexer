@@ -25,9 +25,10 @@ export class LiquidityService {
    * @param liq The db-sourced liquidity
    * @param noMerge Indicate whether to fetch and merge in contract-sourced objects info.
    * @param select Select the extended field to be returned
+   * @param noMarket No fetching of market info
    * @returns
    */
-  async extendLiquidity(liq: Liquidity, noMerge = false, select = []) {
+  async extendLiquidity(liq: Liquidity, noMerge = false, select = [], noMarket = false) {
     try {
       const { marketId, network: net, provider } = liq;
       if (!noMerge) {
@@ -76,10 +77,12 @@ export class LiquidityService {
         liq.priceChange = await MarketPrice.priceChange(net, marketId, provider, 24);
 
       // Get market, extend it and assign to liquidity
-      const market = await Market.getMarket(net, marketId);
-      if (!market) return Promise.reject(new Error('market not found'));
-      await this.marketSrv.extendMarket(market, noMerge);
-      liq.market = market;
+      if (!noMarket) {
+        const market = await Market.getMarket(net, marketId);
+        if (!market) return Promise.reject(new Error('market not found'));
+        await this.marketSrv.extendMarket(market, noMerge);
+        liq.market = market;
+      }
     } catch (e) {
       return Promise.reject(e);
     }

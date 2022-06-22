@@ -368,7 +368,7 @@ export class CoreHandler extends Handler {
       });
     } else {
       // Mark swap order as `released`
-      const swap = await Swap.getByOrderId(orderId.toNumber() - 1, txn);
+      const swap = await Swap.get(this.network, orderId.toNumber() - 1, txn);
       await Swap.updateById(swap.id, { released: true }, txn);
       const { marketId, provider, cost } = swap;
 
@@ -431,7 +431,7 @@ export class CoreHandler extends Handler {
     txn?: Transaction,
   ) {
     // Mark swap order as `cancelled`
-    const swap = await Swap.getByOrderId(orderId.toNumber());
+    const swap = await Swap.get(this.network, orderId.toNumber());
     await Swap.updateById(swap.id, { cancelled: true, byDispute }, txn);
 
     // Reduce open order count and liquidity
@@ -477,7 +477,7 @@ export class CoreHandler extends Handler {
     await Swap.updateByOrderId(orderId.toNumber(), { paid: true }, txn);
 
     // Send notification
-    const swap = await Swap.getByOrderId(orderId.toNumber(), txn);
+    const swap = await Swap.get(this.network, orderId.toNumber(), txn);
     const market = await Market.getMarket(this.network, swap.marketId, undefined, txn);
     const baseDecimal = await this.netSrv.getTokenDecimals(this.provider, market.baseAddress);
     const quoteDecimal = await this.netSrv.getTokenDecimals(this.provider, market.quoteAddress);

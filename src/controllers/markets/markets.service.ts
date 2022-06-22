@@ -3,15 +3,13 @@ import * as _ from 'lodash';
 import Liquidity from '../../models/liquidity';
 import Market from '../../models/market';
 import NetworkService from '../../network/network.service';
-import { MetadataService } from '../../services/metadata.service';
-import * as moment from 'moment';
 import MarketPrice from '../../models/market_price';
-import { ToDec } from '../../common/common';
 import Swap from '../../models/swap';
+import { getTokenLogo } from '../../common/token_list';
 
 @Injectable()
 export class MarketsService {
-  constructor(private netSrv: NetworkService, private metadataSrv: MetadataService) {}
+  constructor(private netSrv: NetworkService) {}
 
   /**
    * Returns normalized JSON equivalent of a market object sourced
@@ -59,7 +57,7 @@ export class MarketsService {
    */
   async extendMarket(market: Market, noMerge = false, select = []) {
     try {
-      const { marketId, network: net, base, baseAddress, quote, quoteAddress } = market;
+      const { marketId, network: net, baseAddress, quoteAddress } = market;
 
       if (!noMerge) {
         const _m = await (await this.netSrv.getMarketCore(net)).markets(market.marketId);
@@ -104,12 +102,12 @@ export class MarketsService {
         market.volume24h = await Swap.getVolume(net, marketId, undefined, 1400);
       if (select.includes(`volumeInstant24h`) || !select.length)
         market.volumeInstant24h = await Swap.getVolume(net, marketId, undefined, 1400, true);
-      if (select.includes(`baseLogo`) || !select.length)
-        market.baseLogo = await this.metadataSrv.getLogo(base, baseAddress);
-      if (select.includes(`quoteLogo`) || !select.length)
-        market.quoteLogo = await this.metadataSrv.getLogo(quote, quoteAddress);
       if (select.includes(`priceChange`) || !select.length)
         market.priceChange = await MarketPrice.priceChange(net, marketId, undefined, 24);
+      if (select.includes(`baseLogo`) || !select.length)
+        market.baseLogo = getTokenLogo(baseAddress);
+      if (select.includes(`quoteLogo`) || !select.length)
+        market.quoteLogo = getTokenLogo(quoteAddress);
 
       return Promise.resolve();
     } catch (error) {

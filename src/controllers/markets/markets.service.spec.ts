@@ -9,6 +9,7 @@ import * as moment from 'moment';
 import { DBService } from '../../db/DBService';
 import Market from '../../models/market';
 import Swap from '../../models/swap';
+import { TokenList } from '../../common/token_list';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -138,10 +139,15 @@ describe('MarketsService', () => {
       it(
         'should attempt to merge contract market object into the given' + ' market object',
         async () => {
+          TokenList['0xBase'] = { image: 'https://logo.png' };
+          TokenList['0xQuote'] = { image: 'https://logo2.png' };
+
           const market: Market = new Market({
             marketId: '0x123',
             creator: '0xUser',
             network: 'net1',
+            baseAddress: '0xBase',
+            quoteAddress: '0xQuote',
           });
 
           // Mocks
@@ -188,7 +194,7 @@ describe('MarketsService', () => {
           expect(market.creator).toEqual('0x12345');
           expect(market.network).toEqual('net1');
           expect(market.baseLogo).toEqual('https://logo.png');
-          expect(market.quoteLogo).toEqual('https://logo.png');
+          expect(market.quoteLogo).toEqual('https://logo2.png');
           expect(market.numProviders).toBeDefined();
           expect(market.totalLiquidity).toBeDefined();
           expect(market.lowestPrice).toBeDefined();
@@ -205,10 +211,15 @@ describe('MarketsService', () => {
     });
 
     it('should not merge if noMerge=true', async () => {
+      TokenList['0xBase'] = { image: 'https://logo.png' };
+      TokenList['0xQuote'] = { image: 'https://logo2.png' };
+
       const market: Market = new Market({
         marketId: '0x123',
         creator: '0xUser',
         network: 'net1',
+        baseAddress: '0xBase',
+        quoteAddress: '0xQuote',
       });
 
       // Mocks
@@ -230,7 +241,7 @@ describe('MarketsService', () => {
       expect(market.creator).toEqual('0xUser');
       expect(market.network).toEqual('net1');
       expect(market.baseLogo).toEqual('https://logo.png');
-      expect(market.quoteLogo).toEqual('https://logo.png');
+      expect(market.quoteLogo).toEqual('https://logo2.png');
       expect(market.numProviders).toBeDefined();
       expect(market.totalLiquidity).toBeDefined();
       expect(market.lowestPrice).toBeDefined();

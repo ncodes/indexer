@@ -9,41 +9,41 @@ import * as _ from 'lodash';
  */
 export default class Liquidity extends BaseModel {
   // The network associated with this object
-  network: string;
+  network: string = undefined;
   // The provider address
-  provider: string;
+  provider: string = undefined;
   // The market ID
-  marketId: string;
+  marketId: string = undefined;
   // The base asset symbol
-  base: string;
+  base: string = undefined;
   // The base asset address
-  baseAddress: string;
+  baseAddress: string = undefined;
   // The quote asset symbol
-  quote: string;
+  quote: string = undefined;
   // The quote asset address
-  quoteAddress: string;
+  quoteAddress: string = undefined;
   // The liquidity amount
-  amount: string;
+  amount: string = undefined;
   // The all-time amount of liquidity swapped
-  amountSwapped: string;
+  amountSwapped: string = undefined;
   // The price of the liquidity
-  price: string;
+  price: string = undefined;
   // The minimum swap amount
-  minSwap: string;
+  minSwap: string = undefined;
   // The maximum swap amount
-  maxSwap: string;
+  maxSwap: string = undefined;
   // The time required for taker to make payment
-  timeToPay: number;
+  timeToPay: number = undefined;
   // The liquidity manager
-  manager: string;
+  manager: string = undefined;
   // Indicates that the liquidity has been paused
-  paused: boolean;
+  paused: boolean = undefined;
   // The number of open swap orders
-  openOrders: number;
+  openOrders: number = undefined;
   // The last time this liquidity successfully completed a swap
-  lastSuccessfulSwapAt: string;
+  lastSuccessfulSwapAt: string = undefined;
   // The swap completion rate of this liquidity
-  completionRate: number;
+  completionRate: number = undefined;
 
   /** Not Persisted */
   market: Market;
@@ -54,17 +54,6 @@ export default class Liquidity extends BaseModel {
   volume24h: string;
   volumeInstant24h: string;
   priceChange: number;
-
-  static nonPersistedFields = [
-    'market',
-    'totalSwaps',
-    'totalInstantSwaps',
-    'totalSwaps24h',
-    'totalInstantSwaps24h',
-    'volume24h',
-    'volumeInstant24h',
-    'priceChange ',
-  ];
 
   constructor(init?: Partial<Liquidity>) {
     super();
@@ -116,20 +105,44 @@ export default class Liquidity extends BaseModel {
    * @param network The network name
    * @param mid The market ID
    * @param provider The provider address
+   * @param select Select specific fields (optional)
    * @param txn Optional transaction object
    */
   static getLiquidity(
     network: string,
     mid: string,
     provider?: string,
+    select = [],
     txn?: Transaction,
   ): Promise<Liquidity> {
+    select = this.makeSelectList(select);
     return this.query(txn)
+      .select(...select)
       .whereNotDeleted()
       .where({ network })
       .where('marketId', 'ILIKE', mid)
       .where('provider', 'ILIKE', provider)
       .first();
+  }
+
+  static makeSelectList(select = []) {
+    select = select.length ? select.concat(['id']) : select;
+    select = select.filter((x) => Object.keys(new Liquidity()).includes(x));
+    select = select.length
+      ? _.uniq(
+          select.concat([
+            'id',
+            'marketId',
+            'network',
+            'provider',
+            'base',
+            'baseAddress',
+            'quote',
+            'quoteAddress',
+          ]),
+        )
+      : ['*'];
+    return select;
   }
 
   /**
@@ -151,23 +164,7 @@ export default class Liquidity extends BaseModel {
     select = [],
     txn?: Transaction,
   ): Promise<Liquidity[]> {
-    select = select.filter((x) => !this.nonPersistedFields.includes(x));
-    if (select.length > 0) {
-      select.push(
-        'id',
-        'marketId',
-        'network',
-        'provider',
-        'base',
-        'baseAddress',
-        'quote',
-        'quoteAddress',
-      );
-      select = _.uniq(select);
-    } else {
-      select.push('*');
-    }
-
+    select = this.makeSelectList(select);
     let q = this.query(txn)
       .select(...select, raw('count(*) over() as' + ' "__queryCount"'))
       .whereNotDeleted()
@@ -302,7 +299,7 @@ export default class Liquidity extends BaseModel {
   }
 
   /**
-   * Get highest liquidity price of all liquidity associated with a market
+   * Get the highest liquidity price of all liquidity associated with a market
    * @param net The network name
    * @param mid The market ID
    * @param txn Optional transaction object

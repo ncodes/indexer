@@ -19,6 +19,7 @@ import { MiscModule } from './controllers/misc/misc.module';
 import { NotificationsModule } from './controllers/notifications/notifications.module';
 import { SwapsModule } from './controllers/swaps/swaps.module';
 import { shortenAddr } from './common/utils/helpers';
+import { TicketsModule } from './controllers/tickets/tickets.module';
 
 Handlebars.registerHelper('uppercase', (aString) => {
   return aString.toUpperCase();
@@ -54,6 +55,7 @@ function getModules() {
     MiscModule,
     NotificationsModule,
     SwapsModule,
+    TicketsModule,
   ];
 }
 

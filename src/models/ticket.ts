@@ -1,45 +1,52 @@
 import * as crand from 'crypto-random-string';
-import Objection, { Transaction } from 'objection';
+import Objection, { raw, Transaction } from 'objection';
 import { BaseModel } from './base';
+import Market from './market';
+import * as _ from 'lodash';
 
 /**
  * Ticket represents a mediation ticket
+ *
+ * @Note The fields are initialized with undefined so that Object.keys can
+ * return the fields. Removing this will cause issues in query methods calling
+ * Object.keys on the class to learn about model fields.
  */
 export default class Ticket extends BaseModel {
   // The network name
-  network: string;
+  network: string = undefined;
   // The owner of the ticket
-  owner: string;
+  owner: string = undefined;
   // The index of the ticket
-  index: number;
+  index: number = undefined;
   // The market ID joined
-  marketId: string;
+  marketId: string = undefined;
   // The amount held as bond
-  bond: string;
+  bond: string = undefined;
   // When the ticket becomes matured
-  matureAt: string;
+  matureAt: string = undefined;
   // When the ticket is expected to have joined a market or become expired
-  joinBy: string;
+  joinBy: string = undefined;
   // The transaction hash
-  txHash: string;
+  txHash: string = undefined;
   // Indicates the ticket bond has been drained (ticket becomes expired)
-  drained: boolean;
+  drained: boolean = undefined;
   // Indicate whether the ticket has been drafted
-  drafted: boolean;
+  drafted: boolean = undefined;
   // The swap order ID drafted to
-  orderId: number;
+  orderId: number = undefined;
   // Indicate whether the ticket has been slashed
-  slashed: boolean;
+  slashed: boolean = undefined;
   // The time when the ticket can leave the market
-  leaveAt: string;
+  leaveAt: string = undefined;
   // The time when the ticket is considered cancelled
-  cancelAt: string;
+  cancelAt: string = undefined;
   // The time the ticket was drained
-  drainedAt: string;
+  drainedAt: string = undefined;
   // The time the ticket was drafted
-  draftedAt: string;
+  draftedAt: string = undefined;
 
   /** Not Persisted */
+  market: Market;
 
   matured: boolean;
   expired: boolean;
@@ -108,15 +115,23 @@ export default class Ticket extends BaseModel {
    * @param network The network name
    * @param owner The owner of the ticket
    * @param index The ticket index
+   * @param select Select specific fields (optional)
    * @param txn Optional transaction object
    */
   static getByNetworkOwnerAndIndex(
     network: string,
     owner: string,
     index: number,
+    select = [],
     txn?: Transaction,
   ): Promise<Ticket> {
+    select = select.length ? select.concat(['id']) : select;
+    select = select.filter((x) => Object.keys(new Ticket()).includes(x));
+    select = select.length
+      ? _.uniq(select.concat(['id', 'marketId', 'network', 'owner', 'index', 'orderId']))
+      : ['*'];
     return this.query(txn)
+      .select(...select)
       .where({ network, index })
       .where('owner', 'ilike', owner)
       .whereNotDeleted()

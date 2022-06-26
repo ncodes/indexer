@@ -12,13 +12,13 @@ export class BaseModel extends softDelete(Model) {
   // The serial number (primary key)
   sn: number;
   // The unique public ID of the record
-  id: string;
+  id: string = undefined;
   // The date & time of creation
-  createdAt: string;
+  createdAt: string = undefined;
   // The date & time of update
-  updatedAt: string;
+  updatedAt: string = undefined;
   // The date & time of deletion
-  deletedAt: string;
+  deletedAt: string = undefined;
   // The object name of the record
   object: string;
 

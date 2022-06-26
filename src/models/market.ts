@@ -9,35 +9,35 @@ import * as _ from 'lodash';
  */
 export default class Market extends BaseModel {
   // The market ID
-  marketId: string;
+  marketId: string = undefined;
   // The creator of the market
-  creator: string;
+  creator: string = undefined;
   // The network it exists in
-  network: string;
+  network: string = undefined;
   // The base asset symbol
-  base: string;
+  base: string = undefined;
   // The base asset token address
-  baseAddress: string;
+  baseAddress: string = undefined;
   // Indicates whether the base asset represents an off-chain asset
-  isBaseLocal: boolean;
+  isBaseLocal: boolean = undefined;
   // The quote asset symbol
-  quote: string;
+  quote: string = undefined;
   // The quote asset token address
-  quoteAddress: string;
+  quoteAddress: string = undefined;
   // Indicates whether the quote asset represents an off-chain asset
-  isQuoteLocal: boolean;
+  isQuoteLocal: boolean = undefined;
   // The base/asset pair name
-  pair: string;
+  pair: string = undefined;
   // The market's commission
-  commission: number;
+  commission: number = undefined;
   // The last time this market had a successfully completed swap
-  lastSuccessfulSwapAt: string;
+  lastSuccessfulSwapAt: string = undefined;
   // The all-time amount of liquidity swapped
-  amountSwapped: string;
+  amountSwapped: string = undefined;
   // The swap completion rate of this liquidity
-  completionRate: number;
+  completionRate: number = undefined;
   // The transaction hash
-  txHash: string;
+  txHash: string = undefined;
 
   // *** Non-persisted fields **//
   mediatorBond: string;
@@ -60,29 +60,6 @@ export default class Market extends BaseModel {
   totalInstantSwaps24h: string;
   volume24h: string;
   volumeInstant24h: string;
-
-  static nonPersistedFields = [
-    'mediatorBond',
-    'numOrders',
-    'numDisputes',
-    'permPut',
-    'permSwap',
-    'permMediate',
-    'numMediators',
-    'baseLogo',
-    'quoteLogo',
-    'numProviders',
-    'totalLiquidity',
-    'lowestPrice',
-    'highestPrice',
-    'priceChange',
-    'totalSwaps',
-    'totalInstantSwaps',
-    'totalSwaps24h',
-    'totalInstantSwaps24h',
-    'volume24h',
-    'volumeInstant24h',
-  ];
 
   constructor(init?: Partial<Market>) {
     super();
@@ -159,13 +136,21 @@ export default class Market extends BaseModel {
     select = [],
     txn?: Transaction,
   ): Promise<Market> {
-    select = select.filter((x) => !this.nonPersistedFields.includes(x));
-    if (select.length > 0) {
-      select.push('id', 'marketId', 'network', 'base', 'baseAddress', 'quote', 'quoteAddress');
-      select = _.uniq(select);
-    } else {
-      select.push('*');
-    }
+    select = select.length ? select.concat(['id']) : select;
+    select = select.filter((x) => Object.keys(new Market()).includes(x));
+    select = select.length
+      ? _.uniq(
+          select.concat([
+            'id',
+            'marketId',
+            'network',
+            'base',
+            'baseAddress',
+            'quote',
+            'quoteAddress',
+          ]),
+        )
+      : ['*'];
 
     return this.query(txn)
       .select(...select)
@@ -229,13 +214,21 @@ export default class Market extends BaseModel {
     select = [],
     txn?: Transaction,
   ): Promise<string | Market[]> {
-    select = select.filter((x) => !this.nonPersistedFields.includes(x));
-    if (select.length > 0) {
-      select.push('id', 'marketId', 'network', 'base', 'baseAddress', 'quote', 'quoteAddress');
-      select = _.uniq(select);
-    } else {
-      select.push('*');
-    }
+    select = select.length ? select.concat(['id']) : select;
+    select = select.filter((x) => Object.keys(new Market()).includes(x));
+    select = select.length
+      ? _.uniq(
+          select.concat([
+            'id',
+            'marketId',
+            'network',
+            'base',
+            'baseAddress',
+            'quote',
+            'quoteAddress',
+          ]),
+        )
+      : ['*'];
 
     let query = this.query(txn).select(...select, raw('count(*) over() as' + ' "__queryCount"'));
     if (network) query = query.where('network', network);

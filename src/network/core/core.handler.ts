@@ -265,7 +265,7 @@ export class CoreHandler extends Handler {
     await Swap.create({ ...swap, ...info }, txn);
 
     // Update liquidity open orders
-    const liq = await Liquidity.getLiquidity(this.network, marketId, provider, txn);
+    const liq = await Liquidity.getLiquidity(this.network, marketId, provider, undefined, txn);
     await Liquidity.updateById(liq.id, {
       openOrders: liq.openOrders + 1,
       amount: toBN(liq.amount).sub(amount).toString(),
@@ -335,7 +335,13 @@ export class CoreHandler extends Handler {
       await Swap.create({ ...swap, ...info }, txn);
 
       // Update liquidity
-      const liq = await Liquidity.getLiquidity(this.network, swap.marketId, swap.provider, txn);
+      const liq = await Liquidity.getLiquidity(
+        this.network,
+        swap.marketId,
+        swap.provider,
+        undefined,
+        txn,
+      );
       const now = moment().toISOString();
       await Liquidity.updateById(
         liq.id,
@@ -375,7 +381,7 @@ export class CoreHandler extends Handler {
       const { marketId, provider, cost } = swap;
 
       // Update liquidity
-      const liq = await Liquidity.getLiquidity(this.network, marketId, provider, txn);
+      const liq = await Liquidity.getLiquidity(this.network, marketId, provider, undefined, txn);
       const now = moment();
       await Liquidity.updateById(
         liq.id,
@@ -437,7 +443,13 @@ export class CoreHandler extends Handler {
     await Swap.updateById(swap.id, { cancelled: true, byDispute }, txn);
 
     // Reduce open order count and liquidity
-    const liq = await Liquidity.getLiquidity(this.network, swap.marketId, swap.provider, txn);
+    const liq = await Liquidity.getLiquidity(
+      this.network,
+      swap.marketId,
+      swap.provider,
+      undefined,
+      txn,
+    );
     await Liquidity.updateById(liq.id, {
       openOrders: liq.openOrders - 1,
       amount: toBN(liq.amount).add(swap.amount).toString(),
@@ -630,7 +642,7 @@ export class CoreHandler extends Handler {
     txn?: Transaction,
   ) {
     // Get existing liquidity by the provider
-    const liq = await Liquidity.getLiquidity(this.network, marketId, provider, txn);
+    const liq = await Liquidity.getLiquidity(this.network, marketId, provider, undefined, txn);
 
     // Create the liquidity on database if not existing.
     // Otherwise, update the existing liquidity.
@@ -699,7 +711,7 @@ export class CoreHandler extends Handler {
     txn?: Transaction,
   ) {
     // Get local liquidity
-    const dbLiq = await Liquidity.getLiquidity(this.network, marketId, provider, txn);
+    const dbLiq = await Liquidity.getLiquidity(this.network, marketId, provider, undefined, txn);
     if (!dbLiq) throw new Error('liquidity not found');
 
     // Update liquidity price
@@ -734,7 +746,7 @@ export class CoreHandler extends Handler {
     event: Event,
     txn?: Transaction,
   ) {
-    const liq = await Liquidity.getLiquidity(this.network, marketId, provider, txn);
+    const liq = await Liquidity.getLiquidity(this.network, marketId, provider, undefined, txn);
     await Liquidity.updateById(liq.id, { paused });
     return Promise.resolve(undefined);
   }
@@ -754,7 +766,7 @@ export class CoreHandler extends Handler {
     event: Event,
     txn?: Transaction,
   ) {
-    const liq = await Liquidity.getLiquidity(this.network, marketId, provider, txn);
+    const liq = await Liquidity.getLiquidity(this.network, marketId, provider, undefined, txn);
     await Liquidity.updateById(liq.id, { manager }, txn);
     await this.notifSrv.notify(NotifyType.NewLiquidityManager, this.network, manager, {
       marketId,
@@ -778,7 +790,7 @@ export class CoreHandler extends Handler {
     event: Event,
     txn?: Transaction,
   ) {
-    const liq = await Liquidity.getLiquidity(this.network, marketId, provider, txn);
+    const liq = await Liquidity.getLiquidity(this.network, marketId, provider, undefined, txn);
     if (liq) {
       await Liquidity.updateById(liq.id, { manager: null }, txn);
       await this.notifSrv.notify(NotifyType.RemoveLiquidityManager, this.network, manager, {

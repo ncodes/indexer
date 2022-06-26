@@ -133,7 +133,17 @@ export default class Swap extends BaseModel {
   static get(network: string, orderId: number, select = [], txn?: Transaction): Promise<Swap> {
     select = select.filter((x) => !this.nonPersistedFields.includes(x));
     if (select.length > 0) {
-      select.push('id', 'marketId', 'network', 'base', 'baseAddress', 'quote', 'quoteAddress');
+      select.push(
+        'id',
+        'marketId',
+        'network',
+        'base',
+        'baseAddress',
+        'quote',
+        'quoteAddress',
+        'provider',
+        'orderId',
+      );
       select = _.uniq(select);
     } else {
       select.push('*');

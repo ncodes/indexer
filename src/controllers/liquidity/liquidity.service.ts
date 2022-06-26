@@ -32,16 +32,14 @@ export class LiquidityService {
     try {
       const { marketId, network: net, provider } = liq;
       if (!noMerge) {
-        const c: ContractLiquidity = await (
-          await this.netSrv.getCore(net)
-        ).getLiquidity(marketId, provider);
-        this.merge(
-          {
-            openOrders: c.openOrders.toNumber(),
-            paused: c.paused,
-          },
-          liq,
-        );
+        const contract = this.netSrv.getCore(net);
+        const cLiq: ContractLiquidity = await contract.getLiquidity(marketId, provider);
+        let cLiqPart = {
+          openOrders: cLiq.openOrders.toNumber(),
+          paused: cLiq.paused,
+        };
+        if (select.length) cLiqPart = _.pick(cLiqPart, select) as any;
+        this.merge(cLiqPart, liq);
       }
 
       if (select.includes(`totalSwaps`) || !select.length)
@@ -78,9 +76,9 @@ export class LiquidityService {
 
       // Get market, extend it and assign to liquidity
       if (!noMarket) {
-        const market = await Market.getMarket(net, marketId);
+        const market = await Market.getMarket(net, marketId, select);
         if (!market) return Promise.reject(new Error('market not found'));
-        await this.marketSrv.extendMarket(market, noMerge);
+        await this.marketSrv.extendMarket(market, noMerge, select);
         liq.market = market;
       }
     } catch (e) {

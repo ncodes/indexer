@@ -109,7 +109,7 @@ describe('LiquidityService', () => {
             openOrders: BigNumber.from(1),
           };
           const mockGetLiquidity = jest.fn();
-          mockGetCore.mockResolvedValue({ getLiquidity: mockGetLiquidity });
+          mockGetCore.mockReturnValue({ getLiquidity: mockGetLiquidity });
           mockGetLiquidity.mockResolvedValue(contractLiquidity);
           jest.spyOn(module.get(MarketsService), 'extendMarket').mockResolvedValue();
 

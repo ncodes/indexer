@@ -8,7 +8,6 @@ import User from '../../models/user';
 import { Roles } from '../../common/roles';
 import * as request from 'supertest';
 import NetworkService from '../../network/network.service';
-import { MetadataService } from '../../services/metadata.service';
 import { makeSession } from '../auth/utils';
 import * as cryptoRandomString from 'crypto-random-string';
 import { MarketsService } from '../markets/markets.service';
@@ -16,7 +15,6 @@ import { SwapsController } from './swaps.controller';
 import { LiquidityService } from '../liquidity/liquidity.service';
 import Swap from '../../models/swap';
 import Market from '../../models/market';
-import mock = jest.mock;
 import Liquidity from '../../models/liquidity';
 
 const mockCfgGet = jest.fn();
@@ -27,10 +25,6 @@ const ConfigServiceMock = jest.fn().mockImplementation(() => {
 const mockGetMarketCore = jest.fn();
 const NetworkServiceMock = jest.fn().mockImplementation(() => {
   return { getMarketCore: mockGetMarketCore };
-});
-
-const MetadataServiceMock = jest.fn().mockImplementation(() => {
-  return {};
 });
 
 describe('SwapsController', () => {

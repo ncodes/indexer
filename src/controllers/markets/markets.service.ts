@@ -61,7 +61,8 @@ export class MarketsService {
 
       if (!noMerge) {
         const _m = await (await this.netSrv.getMarketCore(net)).markets(market.marketId);
-        const marketFromContract = this.normalizeMarket(_m);
+        let marketFromContract = this.normalizeMarket(_m);
+        if (select.length) marketFromContract = _.pick(marketFromContract, select) as any;
         this.merge(marketFromContract, market);
       }
 

@@ -59,7 +59,7 @@ export class MarketsController {
    * @param count Returns the count of markets only
    * @param limit The number of result to return (optional)
    * @param offset The query offset
-   * @param select Select extend fields to return
+   * @param select Select fields to return
    * @returns
    */
   @Get()

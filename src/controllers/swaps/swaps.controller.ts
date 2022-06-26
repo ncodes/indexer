@@ -20,29 +20,37 @@ export class SwapsController {
    * @param network The network name.
    * @param orderId The order ID
    * @param noMerge Prevent merge of contract liquidity with DB liquidity object
+   * @param select Select fields to return
    */
   @Get(':orderId')
   async get(
     @Query('net') network,
     @Param('orderId') orderId: string,
     @Query('noMerge') noMerge: boolean,
+    @Query('select') select: string,
   ) {
     if (!isValidNetwork(network)) throw404('unknown network');
+    const selectedFields = select ? select.split(',') : [];
 
     // Get swap
-    const swap = await Swap.get(network, parseInt(orderId));
+    const swap = await Swap.get(network, parseInt(orderId), selectedFields);
     if (!swap) throw404('swap not found');
 
     // Get market
-    const market = await Market.getMarket(network, swap.marketId);
+    const market = await Market.getMarket(network, swap.marketId, selectedFields);
     if (!market) return throw404('market not found');
     await this.marketSrv.extendMarket(market, noMerge);
     swap.market = market;
 
     // Get liquidity
-    const liquidity = await Liquidity.getLiquidity(network, swap.marketId, swap.provider);
+    const liquidity = await Liquidity.getLiquidity(
+      network,
+      swap.marketId,
+      swap.provider,
+      selectedFields,
+    );
     if (!liquidity) return throw404('liquidity not found');
-    await this.liqSrv.extendLiquidity(liquidity, noMerge, undefined, true);
+    await this.liqSrv.extendLiquidity(liquidity, noMerge, selectedFields, true);
     swap.liquidity = liquidity;
 
     return ok().data(swap).build<Swap>();
@@ -56,6 +64,7 @@ export class SwapsController {
    * @param noMerge Prevent merge of contract liquidity with DB liquidity object
    * @param limit The number of result to return (optional)
    * @param offset The query offset (optional)
+   * @param select Select fields to return
    * @returns
    */
   @Get('')
@@ -66,25 +75,33 @@ export class SwapsController {
     @Query('noMerge') noMerge: boolean,
     @Query('limit') limit: string,
     @Query('offset') offset: string,
+    @Query('select') select: string,
   ) {
     if (!isValidNetwork(network)) throw404('unknown network');
+    const selectedFields = select ? select.split(',') : [];
     const swaps = await Swap.searchSwaps(
       network,
       marketId,
       address,
       parseInt(limit || '25'),
       parseInt(offset),
+      selectedFields,
     );
 
     for (const swap of swaps) {
-      const market = await Market.getMarket(network, swap.marketId);
+      const market = await Market.getMarket(network, swap.marketId, selectedFields);
       if (!market) return throw404('market not found');
-      await this.marketSrv.extendMarket(market, noMerge);
+      await this.marketSrv.extendMarket(market, noMerge, selectedFields);
       swap.market = market;
 
-      const liquidity = await Liquidity.getLiquidity(network, swap.marketId, swap.provider);
+      const liquidity = await Liquidity.getLiquidity(
+        network,
+        swap.marketId,
+        swap.provider,
+        selectedFields,
+      );
       if (!liquidity) return throw404('liquidity not found');
-      await this.liqSrv.extendLiquidity(liquidity, noMerge, undefined, true);
+      await this.liqSrv.extendLiquidity(liquidity, noMerge, selectedFields, true);
       swap.liquidity = liquidity;
     }
 

@@ -10,7 +10,7 @@ import * as request from 'supertest';
 import { makeSession } from '../auth/utils';
 import * as cryptoRandomString from 'crypto-random-string';
 import { NotificationsController } from './notifications.controller';
-import Notification from '../../models/notifications';
+import Notification from '../../models/notification';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {

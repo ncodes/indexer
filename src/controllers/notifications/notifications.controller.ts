@@ -4,7 +4,7 @@ import { HasKeyGuard } from '../../guards/has_token.guard';
 import { Request } from 'express';
 import { isValidNetwork } from '../../network/common';
 import { ok, throw404 } from '../../common/responses/responses';
-import Notification from '../../models/notifications';
+import Notification from '../../models/notification';
 
 @Controller('v1/notifications')
 @UseGuards(BeAuthenticatedGuard)

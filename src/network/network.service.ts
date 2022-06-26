@@ -7,7 +7,7 @@ import * as feeSharerABI from '../../abi/feesharer.json';
 import * as lpStakerABI from '../../abi/lpstaker.json';
 import * as marketCoreABI from '../../abi/marketcore.json';
 import * as erc20ABI from '../../abi/erc20.json';
-import * as marketManagerABI from '../../abi/marketmanager.json';
+import * as mediatorManagerABI from '../../abi/mediatormanager.json';
 import * as p2pStakerABI from '../../abi/p2pstaker.json';
 import * as p2pTokenABI from '../../abi/p2ptoken.json';
 import { SupportedNetworks } from './common';
@@ -100,7 +100,7 @@ export default class NetworkService {
     );
     this.contracts[network].mediatorMgr = new Contract(
       this.cfgSrv.get(`app.networks.${network}.mediatorMgrAddr`),
-      marketManagerABI,
+      mediatorManagerABI,
       prov,
     );
     this.contracts[network].disputeMgr = new Contract(
@@ -127,7 +127,13 @@ export default class NetworkService {
     // Listen for events
     new MarketCoreHandler(this, this.notifSrv, prov, network, this.contracts[network]).listen();
     new CoreHandler(this, this.notifSrv, prov, network, this.contracts[network]).listen();
-    new MediatorManagerHandler(prov, network, this.contracts[network]).listen();
+    new MediatorManagerHandler(
+      this,
+      this.notifSrv,
+      prov,
+      network,
+      this.contracts[network],
+    ).listen();
     new DisputeManagerHandler(prov, network, this.contracts[network]).listen();
     new P2PStakerHandler(prov, network, this.contracts[network]).listen();
     new LPStakerHandler(prov, network, this.contracts[network]).listen();

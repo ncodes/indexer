@@ -635,7 +635,7 @@ export class CoreHandler extends Handler {
     // Create the liquidity on database if not existing.
     // Otherwise, update the existing liquidity.
     if (!liq) {
-      const market = await Market.getMarket(this.network, marketId);
+      const market = await Market.getMarket(this.network, marketId, undefined);
       await Liquidity.create(
         {
           network: this.network,

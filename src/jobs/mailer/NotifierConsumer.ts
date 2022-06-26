@@ -3,7 +3,7 @@ import { Job } from 'bull';
 import { NotifyType } from './NotifierService';
 import { MailerService } from '../../services/mailer.service';
 import User from '../../models/user';
-import Notification from '../../models/notifications';
+import Notification from '../../models/notification';
 import { Logger } from '@nestjs/common';
 import { shortenAddr } from '../../common/utils/helpers';
 
@@ -52,6 +52,14 @@ export class NotifierConsumer {
         return this.notifySwapOrderCancelled(job.data);
       case NotifyType.SwapOrderPaid:
         return this.notifySwapOrderPaid(job.data);
+      case NotifyType.JoinedMarket:
+        return this.notifyMarketCreatorOnJoinedTicket(job.data);
+      case NotifyType.LeftMarket:
+        return this.notifyMarketCreatorOnLeftTicket(job.data);
+      case NotifyType.TicketSlashed:
+        return this.notifyTicketOwnerOnTicketSlash(job.data);
+      case NotifyType.TicketDrafted:
+        return this.notifyTicketOwnerOnDraft(job.data);
     }
   }
 
@@ -66,7 +74,7 @@ export class NotifierConsumer {
       network: job.network,
       userId: job.user.id,
       title: sub,
-      body: `You have been invited to mediate in this <a href="https://app.fiatx.co/market/${job.data.marketId}">market</a>. Go to the invitation page on the FIATX app to accept the invitation. You may ignore invitation if you are not interested.`,
+      body: `You have been invited to mediate for this <a href="https://app.fiatx.co/market/${job.data.marketId}">market</a>. Go to the invitation page on the FIATX app to accept the invitation. You may ignore invitation if you are not interested.`,
     });
 
     // Send email
@@ -89,7 +97,7 @@ export class NotifierConsumer {
       network: job.network,
       userId: job.user.id,
       title: sub,
-      body: `An address (${shortInvitee}) you invited to mediate in your market has accepted your invitation.`,
+      body: `An address (${shortInvitee}) you invited to mediate for your market has accepted your invitation.`,
     });
 
     // Send email
@@ -386,6 +394,107 @@ Please carefully verify payment of ${cost} ${quote} and only release the assets 
       amount,
       cost,
       quote,
+    });
+  }
+
+  /**
+   * Notify user of a new ticket that joined their market
+   * @param job The job data
+   */
+  async notifyMarketCreatorOnJoinedTicket(job: NotifyJob) {
+    // Create notification
+    const sub = `New Market Mediator`;
+    const { marketId, owner } = job.data;
+    await Notification.create({
+      network: job.network,
+      userId: job.user.id,
+      title: sub,
+      body: `A mediator@${shortenAddr(
+        owner,
+      )} has joined your <a href="https://app.fiatx.co/market/${marketId}">market</a>`,
+    });
+
+    // Send email
+    await this.mailer.send('new-mediator-joined', sub, job.user.email, {
+      ...job.data,
+      recipient: shortenAddr(job.recipient),
+      mediator: shortenAddr(owner),
+      title: sub,
+    });
+  }
+
+  /**
+   * Notify user of a new ticket that left their market
+   * @param job The job data
+   */
+  async notifyMarketCreatorOnLeftTicket(job: NotifyJob) {
+    // Create notification
+    const sub = `Market Mediator Left`;
+    const { marketId, owner } = job.data;
+    await Notification.create({
+      network: job.network,
+      userId: job.user.id,
+      title: sub,
+      body: `A mediator@${shortenAddr(
+        owner,
+      )} has joined your <a href="https://app.fiatx.co/market/${marketId}">market</a>`,
+    });
+
+    // Send email
+    await this.mailer.send('new-mediator-left', sub, job.user.email, {
+      ...job.data,
+      recipient: shortenAddr(job.recipient),
+      mediator: shortenAddr(owner),
+      title: sub,
+    });
+  }
+
+  /**
+   * Notify ticket owner of a ticket slash event
+   * @param job The job data
+   */
+  async notifyTicketOwnerOnTicketSlash(job: NotifyJob) {
+    // Create notification
+    const sub = `Mediation Ticket Slashed`;
+    const { ticketId, amount, asset, reason, orderId } = job.data;
+    await Notification.create({
+      network: job.network,
+      userId: job.user.id,
+      title: sub,
+      body: `Your ticket#${ticketId} that was drafted to swap order#${orderId} was slashed of ${amount} ${asset} because it
+<b>${reason}</b> in a dispute.`,
+    });
+
+    // Send email
+    await this.mailer.send('ticket-slashed', sub, job.user.email, {
+      ...job.data,
+      recipient: shortenAddr(job.recipient),
+      title: sub,
+    });
+  }
+
+  /**
+   * Notify ticket owner of a ticket on new draft event
+   * @param job The job data
+   */
+  async notifyTicketOwnerOnDraft(job: NotifyJob) {
+    // Create notification
+    const sub = `Mediation Ticket Drafted`;
+    const { ticketId, orderId, marketId } = job.data;
+    await Notification.create({
+      network: job.network,
+      userId: job.user.id,
+      title: sub,
+      body: `Your ticket#${ticketId} has been drafted to mediate in a new dispute on swap
+<a href="https://app.fiatx.co/swap/${orderId}">order#${orderId}</a>
+of <a href="https://app.fiatx.co/market/${marketId}">market#${shortenAddr(marketId)}</a>.`,
+    });
+
+    // Send email
+    await this.mailer.send('ticket-drafted', sub, job.user.email, {
+      ...job.data,
+      recipient: shortenAddr(job.recipient),
+      title: sub,
     });
   }
 }

@@ -18,9 +18,22 @@ import { ProvidersModule } from './controllers/providers/providers.module';
 import { MiscModule } from './controllers/misc/misc.module';
 import { NotificationsModule } from './controllers/notifications/notifications.module';
 import { SwapsModule } from './controllers/swaps/swaps.module';
+import { shortenAddr } from './common/utils/helpers';
 
 Handlebars.registerHelper('uppercase', (aString) => {
   return aString.toUpperCase();
+});
+
+Handlebars.registerHelper('shorten', (aString) => {
+  return shortenAddr(aString);
+});
+
+Handlebars.registerHelper('gt', function (v1, v2, options) {
+  'use strict';
+  if (v1 > v2) {
+    return options.fn(this);
+  }
+  return options.inverse(this);
 });
 
 /**

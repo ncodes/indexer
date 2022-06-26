@@ -75,6 +75,12 @@
         "internalType": "uint256",
         "name": "ticketID",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "orderID",
+        "type": "uint256"
       }
     ],
     "name": "Drafted",
@@ -213,6 +219,18 @@
         "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "matureAt",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "joinBy",
+        "type": "uint256"
       }
     ],
     "name": "TicketPurchased",
@@ -244,6 +262,18 @@
         "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "voted",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "winSide",
+        "type": "bool"
       }
     ],
     "name": "TicketSlashed",
@@ -252,6 +282,12 @@
   {
     "anonymous": false,
     "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "marketID",
+        "type": "bytes32"
+      },
       {
         "indexed": true,
         "internalType": "address",
@@ -263,12 +299,6 @@
         "internalType": "uint256",
         "name": "ticketID",
         "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "marketID",
-        "type": "bytes32"
       }
     ],
     "name": "Undrafted",
@@ -306,6 +336,11 @@
         "internalType": "bytes32",
         "name": "marketID",
         "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "orderID",
+        "type": "uint256"
       }
     ],
     "name": "draft",
@@ -734,6 +769,19 @@
       }
     ],
     "name": "setNoVoteSlashBP",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "provider",
+        "type": "address"
+      }
+    ],
+    "name": "setRandomnessProvider",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

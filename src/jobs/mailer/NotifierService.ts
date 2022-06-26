@@ -17,6 +17,10 @@ export enum NotifyType {
   SwapOrderReleased,
   SwapOrderCancelled,
   SwapOrderPaid,
+  JoinedMarket,
+  LeftMarket,
+  TicketSlashed,
+  TicketDrafted,
 }
 
 @Injectable()

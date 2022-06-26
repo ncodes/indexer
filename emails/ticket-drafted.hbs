@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+Hello {{recipient}},
+<br><br>
+Your ticket#{{ticketId}} has been drafted to mediate in a new dispute on swap
+<a href="https://app.fiatx.co/swap/{{orderId}}">order#{{orderId}}</a>
+of <a href="https://app.fiatx.co/market/{{marketId}}">market#{{shorten
+  marketId}}</a>. <br> <br>
+Once all mediators are drafted, the evidence submission phase will
+immediately begin.
+In this phase, the counterparties will share evidence for your review.
+Although, we will try to notify you when this phase begins, we advise that
+your keep track of the dispute progress, review the evidence and vote.
+<br><br>
+After the evidence submission phase, you will be required to submit your
+decision in a voting phase.
+<br>
+Follow our <a href="https://app.fiatx.co/swap/{{orderId}}">step-by-step
+  guide</a> to learn about mediation.
+<br><br>
+
+<ul>
+  <li><a href="https://app.fiatx.co/swap/{{orderId}}">View Swap Order</a></li>
+  <li><a href="https://app.fiatx.co/market/{{marketId}}">View Market</a></li>
+</ul>
+<br>
+<b>WARNING</b>
+<ul style="color: indianred">
+  <li>Failure to vote will lead to your ticket bond getting slashed.</li>
+  <li>Losing a vote or voting with the minority will lead to your ticket bond
+    getting slashed.
+  </li>
+</ul>
+<br>
+{{app}}
+</body>
+</html>

@@ -31,6 +31,7 @@ describe('MarketsService', () => {
   let module: TestingModule;
   let service: MarketsService;
   const db = DBService.getForTest();
+  const net = 'ethereum';
   let cfgObj = {};
 
   afterEach(async () => {
@@ -138,13 +139,19 @@ describe('MarketsService', () => {
       it(
         'should attempt to merge contract market object into the given' + ' market object',
         async () => {
-          TokenList['0xBase'] = { image: 'https://logo.png' };
-          TokenList['0xQuote'] = { image: 'https://logo2.png' };
+          TokenList[net].tokens.push({
+            address: '0xBase',
+            logoURI: 'https://logo.png',
+          } as any);
+          TokenList[net].tokens.push({
+            address: '0xQuote',
+            logoURI: 'https://logo2.png',
+          } as any);
 
           const market: Market = new Market({
             marketId: '0x123',
             creator: '0xUser',
-            network: 'net1',
+            network: net,
             baseAddress: '0xBase',
             quoteAddress: '0xQuote',
           });
@@ -186,12 +193,12 @@ describe('MarketsService', () => {
           });
 
           await service.extendMarket(market, false);
-          expect(mockGetMarketCore).toHaveBeenCalledWith('net1');
+          expect(mockGetMarketCore).toHaveBeenCalledWith(net);
           expect(mockMarket).toHaveBeenCalledWith(market.marketId);
           expect(market.permPut).toBeTruthy();
           expect(market.permSwap).toBeTruthy();
           expect(market.creator).toEqual('0x12345');
-          expect(market.network).toEqual('net1');
+          expect(market.network).toEqual(net);
           expect(market.baseLogo).toEqual('https://logo.png');
           expect(market.quoteLogo).toEqual('https://logo2.png');
           expect(market.numProviders).toBeDefined();
@@ -216,7 +223,7 @@ describe('MarketsService', () => {
       const market: Market = new Market({
         marketId: '0x123',
         creator: '0xUser',
-        network: 'net1',
+        network: net,
         baseAddress: '0xBase',
         quoteAddress: '0xQuote',
       });
@@ -233,12 +240,12 @@ describe('MarketsService', () => {
       mockGetLogo.mockResolvedValue('https://logo.png');
 
       await service.extendMarket(market, true);
-      expect(mockGetMarketCore).not.toHaveBeenCalledWith('net1');
+      expect(mockGetMarketCore).not.toHaveBeenCalledWith(net);
       expect(mockMarket).not.toHaveBeenCalledWith(market.marketId);
       expect(market.permPut).toBeUndefined();
       expect(market.permSwap).toBeUndefined();
       expect(market.creator).toEqual('0xUser');
-      expect(market.network).toEqual('net1');
+      expect(market.network).toEqual(net);
       expect(market.baseLogo).toEqual('https://logo.png');
       expect(market.quoteLogo).toEqual('https://logo2.png');
       expect(market.numProviders).toBeDefined();

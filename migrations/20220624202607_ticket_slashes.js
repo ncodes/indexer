@@ -9,6 +9,7 @@ exports.up = function (knex) {
       table.string('marketId');
       table.string('ticketId');
       table.integer('orderId');
+      table.integer('disputeId');
       table.string('amount');
       table.boolean('voted').defaultTo(false);
       table.boolean('winSide').defaultTo(false);

@@ -75,7 +75,7 @@ export class LiquidityService {
         liq.priceChange = await MarketPrice.priceChange(net, marketId, provider, 24);
 
       // Get market, extend it and assign to liquidity
-      if (!noMarket) {
+      if (!noMarket && marketId) {
         const market = await Market.getMarket(net, marketId, select);
         if (!market) return Promise.reject(new Error('market not found'));
         await this.marketSrv.extendMarket(market, noMerge, select);

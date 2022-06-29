@@ -25,7 +25,7 @@ const MockERC20Contract = jest.fn().mockImplementation(() => {
 
 describe('NetworkService', () => {
   let module: TestingModule;
-  const net = 'ethereumMainnet';
+  const net = 'ethereum';
   let service: NetworkService;
   const db = DBService.getForTest();
   let cfgObj = {};

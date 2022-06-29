@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MarketsService } from './markets.service';
 import NetworkService from '../../network/network.service';
-import { MetadataService } from '../../services/metadata.service';
+import { MetadataService } from '../../services/metadata/metadata.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BigNumber } from 'ethers';
 import * as moment from 'moment';

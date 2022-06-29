@@ -20,6 +20,10 @@ export default class Ticket extends BaseModel {
   index: number = undefined;
   // The market ID joined
   marketId: string = undefined;
+  // The swap order ID drafted to
+  orderId: number = undefined;
+  // The dispute ID
+  disputeId: number = undefined;
   // The amount held as bond
   bond: string = undefined;
   // When the ticket becomes matured
@@ -32,8 +36,6 @@ export default class Ticket extends BaseModel {
   drained: boolean = undefined;
   // Indicate whether the ticket has been drafted
   drafted: boolean = undefined;
-  // The swap order ID drafted to
-  orderId: number = undefined;
   // Indicate whether the ticket has been slashed
   slashed: boolean = undefined;
   // The time when the ticket can leave the market
@@ -125,11 +127,7 @@ export default class Ticket extends BaseModel {
     select = [],
     txn?: Transaction,
   ): Promise<Ticket> {
-    select = select.length ? select.concat(['id']) : select;
-    select = select.filter((x) => Object.keys(new Ticket()).includes(x));
-    select = select.length
-      ? _.uniq(select.concat(['id', 'marketId', 'network', 'owner', 'index', 'orderId']))
-      : ['*'];
+    select = this.makeSelectList(select);
     return this.query(txn)
       .select(...select)
       .where({ network, index })
@@ -174,5 +172,142 @@ export default class Ticket extends BaseModel {
         })
         .catch(reject);
     });
+  }
+
+  static makeSelectList(select = []) {
+    select = select.filter((x) => Object.keys(new Ticket()).includes(x));
+    select = select.length
+      ? _.uniq(select.concat(['id', 'marketId', 'network', 'owner', 'index', 'orderId']))
+      : ['*'];
+    return select;
+  }
+
+  /**
+   * searchTickets finds tickets
+   * @param network The network name
+   * @param marketId The market ID (optional)
+   * @param owner Indicate to return ticket with matching owner
+   * @param orderId The order ID
+   * @param disputeId The dispute ID
+   * @param joined Indicate to return tickets (un)joined  to a market
+   * @param matured Indicate to return matured tickets
+   * @param drafted Indicate to return draft or undrafted tickets
+   * @param expired Indicate to return only expired tickets
+   * @param cancelled Indicate to return only cancelled tickets
+   * @param slashed Indicate to return only slashed tickets
+   * @param limit The number of records to return (optional).
+   * @param offset The query offset (optional)
+   * @param select Select specific fields (optional)
+   * @param txn Optional transaction object
+   */
+  static searchTickets(
+    network: string,
+    marketId?: string,
+    owner?: string,
+    orderId?: number,
+    disputeId?: number,
+    joined?: boolean,
+    matured?: boolean,
+    drafted?: boolean,
+    expired?: boolean,
+    cancelled?: boolean,
+    slashed?: boolean,
+    limit?: number,
+    offset?: number,
+    select = [],
+    txn?: Transaction,
+  ): Promise<Ticket[]> {
+    select = this.makeSelectList(select);
+    let q = this.query(txn)
+      .select(...select, raw('count(*) over() as' + ' "__queryCount"'))
+      .whereNotDeleted()
+      .where({ network });
+    if (marketId) q = q.where('marketId', 'ILIKE', marketId);
+    if (owner) q = q.where('owner', 'ILIKE', owner);
+    if (orderId) q = q.where('orderId', orderId);
+    if (disputeId) q = q.where('disputeId', disputeId);
+    if (joined !== undefined) {
+      q = q.where((q) => {
+        if (joined) q.orWhere('marketId', 'is not', null);
+        else q.orWhere('marketId', 'is', null);
+      });
+    }
+    if (drafted !== undefined) q = q.where('drafted', drafted);
+    if (expired) {
+      q = q.where((q) => {
+        q.where('marketId', 'is', null)
+          .where('joinBy', 'is not', null)
+          .where('joinBy', '<', 'now()')
+          .orWhere('drained', true);
+      });
+    }
+    if (cancelled) q = q.where('cancelAt', 'is not', null).where('cancelAt', '<', 'now()');
+    if (matured !== undefined) {
+      q = q.where('matureAt', 'is not', null).where('matureAt', matured ? '<' : '>', 'now()');
+    }
+    if (slashed) q = q.where('slashed', slashed);
+    if (offset) q = q.offset(offset);
+    if (limit) q = q.limit(limit);
+    return q.orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
+  }
+
+  /**
+   * countTickets count liquidities by network and optional provider
+   * @param network The network name
+   * @param marketId The market ID (optional)
+   * @param owner Indicate to return ticket with matching owner
+   * @param orderId The order ID
+   * @param disputeId The dispute ID
+   * @param joined Indicate to return tickets (un)joined  to a market
+   * @param matured Indicate to return matured tickets
+   * @param drafted Indicate to return draft or undrafted tickets
+   * @param expired Indicate to return only expired tickets
+   * @param cancelled Indicate to return only cancelled tickets
+   * @param slashed Indicate to return only slashed tickets
+   * @param txn Optional transaction object
+   */
+  static countTickets(
+    network: string,
+    marketId?: string,
+    owner?: string,
+    orderId?: number,
+    disputeId?: number,
+    joined?: boolean,
+    matured?: boolean,
+    drafted?: boolean,
+    expired?: boolean,
+    cancelled?: boolean,
+    slashed?: boolean,
+    txn?: Transaction,
+  ): Promise<Ticket[]> {
+    let q = this.query(txn).whereNotDeleted().where({ network });
+    if (marketId) q = q.where('marketId', 'ILIKE', marketId);
+    if (owner) q = q.where('owner', 'ILIKE', owner);
+    if (orderId) q = q.where('orderId', orderId);
+    if (disputeId) q = q.where('disputeId', disputeId);
+    if (joined !== undefined) {
+      q = q.where((q) => {
+        if (joined) q.orWhere('marketId', 'is not', null);
+        else q.orWhere('marketId', 'is', null);
+      });
+    }
+    if (drafted !== undefined) q = q.where('drafted', drafted);
+    if (expired) {
+      q = q.where((q) => {
+        q.where('marketId', null)
+          .where('joinBy', 'is not', null)
+          .where('joinBy', '<', 'now()')
+          .orWhere('drained', true);
+      });
+    }
+    if (cancelled) q = q.where('cancelAt', 'is not', null).where('cancelAt', '<', 'now()');
+    if (matured !== undefined) {
+      q = q.where('matureAt', 'is not', null).where('matureAt', matured ? '<' : '>', 'now()');
+    }
+    if (slashed) q = q.where('slashed', slashed);
+    return q
+      .count('id')
+      .first()
+      .then((res: any) => res.count);
   }
 }

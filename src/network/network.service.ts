@@ -33,6 +33,9 @@ export default class NetworkService {
   private contracts: {
     [key: string]: KnownContracts;
   } = {};
+  private providers: {
+    [key: string]: providers.JsonRpcProvider;
+  } = {};
 
   constructor(private cfgSrv: ConfigService, private notifSrv: NotifierService) {
     if (isTestMode()) return;
@@ -42,8 +45,8 @@ export default class NetworkService {
   /**
    * Watch events on different networks
    */
-  watch() {
-    this.watchNetwork(SupportedNetworks.EthereumMainnet);
+  async watch() {
+    await this.watchNetwork(SupportedNetworks.Ethereum);
   }
 
   /**
@@ -74,6 +77,15 @@ export default class NetworkService {
   }
 
   /**
+   * Get a network's provider
+   * @param network The network name
+   * @returns
+   */
+  getProvider(network: string): providers.JsonRpcProvider {
+    return this.providers[network];
+  }
+
+  /**
    * Connect and watch contracts on the Ethereum mainnet.
    * @param network The name of the network
    */
@@ -81,6 +93,7 @@ export default class NetworkService {
     const prov = new providers.JsonRpcProvider(this.cfgSrv.get(`app.networks.${network}.rpcUrl`));
 
     this.contracts[network] = {};
+    this.providers[network] = prov;
 
     // Initialize contracts
     this.contracts[network].p2pToken = new Contract(
@@ -162,7 +175,7 @@ export default class NetworkService {
   public async getTokenDecimals(
     provider: providers.JsonRpcProvider,
     token: string,
-  ): Promise<BigNumber> {
+  ): Promise<number> {
     const base = this.newContract(token, erc20ABI, provider);
     return base.decimals();
   }

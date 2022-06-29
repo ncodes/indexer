@@ -18,6 +18,8 @@ export default class Draft extends BaseModel {
   ticketId: string;
   // The swap order ID
   orderId: number;
+  // The dispute ID
+  disputeId: number;
 
   constructor(init?: Partial<Draft>) {
     super();

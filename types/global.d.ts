@@ -75,4 +75,11 @@ declare global {
     user: User;
     data: { [key: string]: string };
   }
+
+  interface TokenInfo {
+    logoURI: string;
+    network: string;
+    name: string;
+    decimals: number;
+  }
 }

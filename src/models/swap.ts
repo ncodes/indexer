@@ -12,55 +12,55 @@ import * as _ from 'lodash';
  */
 export default class Swap extends BaseModel {
   // The network name
-  network?: string;
+  network?: string = undefined;
   // The market ID
-  marketId?: string;
+  marketId?: string = undefined;
   // The base asset symbol
-  base: string;
+  base: string = undefined;
   // The base asset address
-  baseAddress: string;
+  baseAddress: string = undefined;
   // The quote asset symbol
-  quote: string;
+  quote: string = undefined;
   // The quote asset address
-  quoteAddress: string;
+  quoteAddress: string = undefined;
   // The order ID (if swap created an order)
-  orderId?: number;
+  orderId?: number = undefined;
   // The liquidity provider's address
-  provider?: string;
+  provider?: string = undefined;
   // The swap initiator's address
-  taker?: string;
+  taker?: string = undefined;
   // The output amount of the swap
-  amount?: string;
+  amount?: string = undefined;
   // The price of 1 unit of output asset
-  price?: string;
+  price?: string = undefined;
   // Indicates whether the order is an instance swap
-  instant?: boolean;
+  instant?: boolean = undefined;
   // Indicates whether the swap was marked as paid.
-  paid?: boolean;
+  paid?: boolean = undefined;
   // Indicates whether the swap was cancelled
-  cancelled?: boolean;
+  cancelled?: boolean = undefined;
   // Indicates whether the swap was released
-  released?: boolean;
+  released?: boolean = undefined;
   // Indicates whether the swap was released/paid via dispute resolution
-  byDispute?: boolean;
+  byDispute?: boolean = undefined;
   // The cost of the swapping amount
-  cost?: string;
+  cost?: string = undefined;
   // The amount from which fee was charged
-  chargedAmount: string;
+  chargedAmount: string = undefined;
   // Indicates whether the charged amount is the swap cost or swap amount
-  costCharged: boolean;
+  costCharged: boolean = undefined;
   // The protocol fee base point
-  protocolFeeBP: number;
+  protocolFeeBP: number = undefined;
   // The protocol fee charged
-  protocolFee: string;
+  protocolFee: string = undefined;
   // The market fee base point
-  marketFeeBP: number;
+  marketFeeBP: number = undefined;
   // The market fee charged
-  marketFee: string;
+  marketFee: string = undefined;
   // The total fee charged (market + protocol fees)
-  totalFee: string;
+  totalFee: string = undefined;
   // The transaction hash where the swap was created
-  txHash: string;
+  txHash: string = undefined;
 
   market: Market;
   liquidity: Liquidity;
@@ -123,6 +123,26 @@ export default class Swap extends BaseModel {
     return this.query(txn).where({ orderId }).whereNotDeleted().first();
   }
 
+  static makeSelectList(select = []) {
+    select = select.filter((x) => Object.keys(new Swap()).includes(x));
+    select = select.length
+      ? _.uniq(
+          select.concat([
+            'id',
+            'marketId',
+            'network',
+            'base',
+            'baseAddress',
+            'quote',
+            'quoteAddress',
+            'provider',
+            'orderId',
+          ]),
+        )
+      : ['*'];
+    return select;
+  }
+
   /**
    * find a record by order ID
    * @param network The network name
@@ -131,23 +151,7 @@ export default class Swap extends BaseModel {
    * @param txn Optional transaction object
    */
   static get(network: string, orderId: number, select = [], txn?: Transaction): Promise<Swap> {
-    select = select.filter((x) => !this.nonPersistedFields.includes(x));
-    if (select.length > 0) {
-      select.push(
-        'id',
-        'marketId',
-        'network',
-        'base',
-        'baseAddress',
-        'quote',
-        'quoteAddress',
-        'provider',
-        'orderId',
-      );
-      select = _.uniq(select);
-    } else {
-      select.push('*');
-    }
+    select = this.makeSelectList(select);
     return this.query(txn)
       .select(...select)
       .where({ network, orderId })

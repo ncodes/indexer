@@ -12,6 +12,7 @@ import { shortenAddr } from '../common/utils/helpers';
  */
 export class Handler extends EventEmitter2 {
   logger = new Logger(Handler.name);
+  private watchInterval: NodeJS.Timeout;
 
   /**
    * Initialize the handler
@@ -20,7 +21,7 @@ export class Handler extends EventEmitter2 {
    */
   constructor(public network: string, private contract: Contract) {
     super();
-    if (!isTestMode()) this.watch();
+    if (!isTestMode()) this.sync();
   }
 
   /**
@@ -65,10 +66,38 @@ export class Handler extends EventEmitter2 {
   }
 
   /**
-   * Watch the blockchain for new events
+   * Watch for event on new block
    */
-  watch() {
-    setInterval(async () => {
+  watchBlock() {
+    this.contract.provider.on('block', async (curBlock: number) => {
+      // Query events
+      const events = await this.contract.queryFilter({}, curBlock);
+      if (events.length) {
+        const shortAddr = shortenAddr(this.contract.address);
+        this.logger.debug(
+          `Contract(${shortAddr}/${this.network}) Found ${events.length} event(s) at Block #${curBlock}`,
+        );
+
+        // Emit the events
+        for (const e of events) {
+          await this.emitUnique(e);
+        }
+      }
+
+      // Update the last sync height
+      const key = `lastSyncedHeight_${this.network}_${this.contract.address}`;
+      await Meta.update(key, curBlock.toString());
+    });
+  }
+
+  /**
+   * Process events from the last time the contract
+   * was last synchronized to the current block.
+   * If the contract is fully synchronized, switch to block
+   * watching to process real-time events
+   */
+  sync() {
+    this.watchInterval = setInterval(async () => {
       try {
         // Get last synced block height
         const key = `lastSyncedHeight_${this.network}_${this.contract.address}`;
@@ -79,9 +108,14 @@ export class Handler extends EventEmitter2 {
           });
         }
 
-        // Ensure next sync height is not greater than current block height
+        // Ensure we are not fully synchronized yet.
+        // If we are, stop watching on interval. Instead, watch on new block.
         const curBlock = await this.contract.provider.getBlockNumber();
-        if (parseInt(meta.value) + 1 > curBlock) return;
+        if (parseInt(meta.value) + 1 > curBlock) {
+          clearInterval(this.watchInterval);
+          this.watchBlock();
+          return;
+        }
 
         // Query events
         let endBlock = process.env.WATCH_RANGE
@@ -92,10 +126,9 @@ export class Handler extends EventEmitter2 {
         const events = await this.contract.queryFilter({}, startBlock, endBlock);
 
         if (events.length) {
+          const shortAddr = shortenAddr(this.contract.address);
           this.logger.debug(
-            `Contract(${shortenAddr(this.contract.address)}/${this.network}) Found ${
-              events.length
-            } event(s) at Block #${startBlock}`,
+            `Contract(${shortAddr}/${this.network}) Found ${events.length} event(s) at Block #${startBlock}`,
           );
 
           // Emit the events

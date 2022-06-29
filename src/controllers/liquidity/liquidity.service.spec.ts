@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import NetworkService from '../../network/network.service';
-import { MetadataService } from '../../services/metadata.service';
+import { MetadataService } from '../../services/metadata/metadata.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DBService } from '../../db/DBService';
 import { LiquidityService } from './liquidity.service';

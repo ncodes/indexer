@@ -8,10 +8,7 @@ export const DecTen = new Decimal(10);
 export const AppName = () => process.env.APP_NAME;
 export const ToDec = (val: string | number) => new Decimal(val);
 export function isDevMode(nodeEnvOnly = false) {
-  return (
-    process.env.NODE_ENV === 'development' ||
-    (!nodeEnvOnly && process.env.DEV_MODE)
-  );
+  return process.env.NODE_ENV === 'development' || (!nodeEnvOnly && process.env.DEV_MODE);
 }
 export function isLocal() {
   return process.env.LOCAL === 'true';

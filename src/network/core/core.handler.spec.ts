@@ -29,7 +29,7 @@ const MockNetworkService = jest.fn().mockImplementation(() => {
 
 describe('CoreHandler', () => {
   const db = DBService.getForTest();
-  const net = 'ethereumMainnet';
+  const net = 'ethereum';
   let handler: CoreHandler;
   const coreContract = new CoreContract();
   const contracts = {

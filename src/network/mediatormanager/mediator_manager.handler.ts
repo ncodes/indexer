@@ -95,10 +95,11 @@ export class MediatorManagerHandler extends Handler {
         owner: string,
         ticketId: BigNumber,
         orderId: BigNumber,
+        disputeId: BigNumber,
         event: ethers.Event,
         txn?: Transaction,
       ) => {
-        return this.onDrafted(marketId, owner, ticketId, orderId, event, txn);
+        return this.onDrafted(marketId, owner, ticketId, orderId, disputeId, event, txn);
       },
     );
 
@@ -108,10 +109,11 @@ export class MediatorManagerHandler extends Handler {
         marketId: string,
         owner: string,
         ticketId: BigNumber,
+        slashed: boolean,
         event: ethers.Event,
         txn?: Transaction,
       ) => {
-        return this.onUndrafted(marketId, owner, ticketId, event, txn);
+        return this.onUndrafted(marketId, owner, ticketId, slashed, event, txn);
       },
     );
 
@@ -298,6 +300,7 @@ export class MediatorManagerHandler extends Handler {
    * @param owner The ticket owner
    * @param ticketId The unique id of the ticket
    * @param orderId The ID of the order ticket was drafted to
+   * @param disputeId The dispute ID
    * @param event The event object
    * @param txn The database transaction handle
    */
@@ -306,6 +309,7 @@ export class MediatorManagerHandler extends Handler {
     owner: string,
     ticketId: BigNumber,
     orderId: BigNumber,
+    disputeId: BigNumber,
     event: ethers.Event,
     txn?: Transaction,
   ) {
@@ -321,6 +325,7 @@ export class MediatorManagerHandler extends Handler {
         orderId: orderId.toNumber(),
         drafted: true,
         draftedAt: moment().toISOString(),
+        disputeId: disputeId.toNumber(),
       },
       txn,
     );
@@ -332,6 +337,7 @@ export class MediatorManagerHandler extends Handler {
         marketId,
         ticketId: ticket.id,
         orderId: orderId.toNumber(),
+        disputeId: disputeId.toNumber(),
       },
       txn,
     );
@@ -352,6 +358,7 @@ export class MediatorManagerHandler extends Handler {
    * @param owner The ticket owner
    * @param ticketId The unique id of the ticket
    * @param marketId The ID of the market the ticket joined
+   * @param slashed Indicates whether the ticket was slashed
    * @param event The event object
    * @param txn The database transaction handle
    */
@@ -359,6 +366,7 @@ export class MediatorManagerHandler extends Handler {
     marketId: string,
     owner: string,
     ticketId: BigNumber,
+    slashed: boolean,
     event: ethers.Event,
     txn?: Transaction,
   ) {
@@ -371,6 +379,8 @@ export class MediatorManagerHandler extends Handler {
     await Ticket.updateById(
       ticket.id,
       {
+        orderId: slashed ? ticket.orderId : null,
+        disputeId: slashed ? ticket.disputeId : null,
         drafted: false,
         draftedAt: null,
       },
@@ -413,6 +423,7 @@ export class MediatorManagerHandler extends Handler {
       ticket.id,
       {
         orderId: null,
+        disputeId: null,
         slashed: true,
         bond: toBN(ticket.bond).sub(amount).toString(),
         joinBy: moment.unix(joinBy).toISOString(),
@@ -429,6 +440,7 @@ export class MediatorManagerHandler extends Handler {
         marketId: ticket.marketId,
         ticketId: ticket.id,
         orderId: ticket.orderId,
+        disputeId: ticket.disputeId,
         amount: amount.toString(),
         voted,
         winSide,

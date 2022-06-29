@@ -9,6 +9,7 @@ exports.up = function (knex) {
       table.string('marketId');
       table.string('ticketId');
       table.integer('orderId');
+      table.integer('disputeId');
       table.timestamp('createdAt');
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');

@@ -126,7 +126,6 @@ export default class Liquidity extends BaseModel {
   }
 
   static makeSelectList(select = []) {
-    select = select.length ? select.concat(['id']) : select;
     select = select.filter((x) => Object.keys(new Liquidity()).includes(x));
     select = select.length
       ? _.uniq(

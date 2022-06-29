@@ -1,7 +1,18 @@
 import { BigNumber } from 'ethers';
+import { EnumValues } from 'enum-values';
 
 export enum SupportedNetworks {
-  EthereumMainnet = 'ethereumMainnet',
+  Ethereum = 'ethereum',
+  Polygon = 'polygon',
+  Optimism = 'optimism',
+  Binance = 'binance',
+}
+
+export enum ChainIDs {
+  Ethereum = 1,
+  Polygon = 137,
+  Optimism = 10,
+  Binance = 56,
 }
 
 /**
@@ -12,6 +23,16 @@ export function getNetworks() {
   return Object.keys(SupportedNetworks).map((s) => {
     return SupportedNetworks[s];
   });
+}
+
+/**
+ * Get chain ID of a network
+ * @param network
+ */
+export function getChainID(network: string): number {
+  if (!isValidNetwork(network)) return;
+  const key = EnumValues.getNameFromValue(SupportedNetworks, network);
+  return ChainIDs[key];
 }
 
 /**

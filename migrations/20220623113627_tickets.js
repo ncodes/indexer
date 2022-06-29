@@ -7,9 +7,10 @@ exports.up = function (knex) {
       table.string('owner');
       table.integer('index');
       table.string('marketId');
+      table.integer('orderId');
+      table.integer('disputeId');
       table.string('bond');
       table.string('txHash');
-      table.integer('orderId');
       table.boolean('drained').defaultTo(false);
       table.boolean('drafted').defaultTo(false);
       table.boolean('slashed').defaultTo(false);

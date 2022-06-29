@@ -81,6 +81,12 @@
         "internalType": "uint256",
         "name": "orderID",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "disputeID",
+        "type": "uint256"
       }
     ],
     "name": "Drafted",
@@ -299,6 +305,12 @@
         "internalType": "uint256",
         "name": "ticketID",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "slashed",
+        "type": "bool"
       }
     ],
     "name": "Undrafted",
@@ -340,6 +352,11 @@
       {
         "internalType": "uint256",
         "name": "orderID",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "disputeID",
         "type": "uint256"
       }
     ],

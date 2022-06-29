@@ -64,7 +64,7 @@ describe('ProviderController', () => {
 
   let u: User;
   let token: string;
-  const net = 'ethereumMainnet';
+  const net = 'ethereum';
   beforeEach(async () => {
     u = await User.create({ role: Roles.User });
     token = await makeSession(

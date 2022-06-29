@@ -123,20 +123,7 @@ export default class Market extends BaseModel {
     return this.query(txn).whereNotDeleted().where({ marketId: id }).first();
   }
 
-  /**
-   * getMarket finds a market associated with a network
-   * @param network The network name
-   * @param marketId The record id
-   * @param select Select specific fields (optional)
-   * @param txn Optional transaction object
-   */
-  static getMarket(
-    network: string,
-    marketId: string,
-    select = [],
-    txn?: Transaction,
-  ): Promise<Market> {
-    select = select.length ? select.concat(['id']) : select;
+  static makeSelectList(select = []) {
     select = select.filter((x) => Object.keys(new Market()).includes(x));
     select = select.length
       ? _.uniq(
@@ -151,7 +138,23 @@ export default class Market extends BaseModel {
           ]),
         )
       : ['*'];
+    return select;
+  }
 
+  /**
+   * getMarket finds a market associated with a network
+   * @param network The network name
+   * @param marketId The record id
+   * @param select Select specific fields (optional)
+   * @param txn Optional transaction object
+   */
+  static getMarket(
+    network: string,
+    marketId: string,
+    select = [],
+    txn?: Transaction,
+  ): Promise<Market> {
+    select = this.makeSelectList(select);
     return this.query(txn)
       .select(...select)
       .where('network', 'ilike', network)
@@ -214,22 +217,7 @@ export default class Market extends BaseModel {
     select = [],
     txn?: Transaction,
   ): Promise<string | Market[]> {
-    select = select.length ? select.concat(['id']) : select;
-    select = select.filter((x) => Object.keys(new Market()).includes(x));
-    select = select.length
-      ? _.uniq(
-          select.concat([
-            'id',
-            'marketId',
-            'network',
-            'base',
-            'baseAddress',
-            'quote',
-            'quoteAddress',
-          ]),
-        )
-      : ['*'];
-
+    select = this.makeSelectList(select);
     let query = this.query(txn).select(...select, raw('count(*) over() as' + ' "__queryCount"'));
     if (network) query = query.where('network', network);
     if (creator) query = query.where('creator', 'ilike', creator);

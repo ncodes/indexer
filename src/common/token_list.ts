@@ -1,20 +1,33 @@
+import * as ethereum from './tokenlist/ethereum.json';
+import * as polygon from './tokenlist/polygon.json';
+import * as binance from './tokenlist/binance.json';
+import * as optimism from './tokenlist/optimism.json';
+import * as _ from 'lodash';
+
 export const TokenList = {
-  0x0b306bf915c4d645ff596e518faf3f9669b97016: {
-    name: 'BASE',
-    image: 'https://logoA.com',
-  },
-  '0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1': {
-    name: 'QUOTE',
-    image: 'https://logoB.com',
-  },
+  ethereum,
+  polygon,
+  binance,
+  optimism,
 };
 
 /**
  * Get token logo
- * @param address The address
+ * @param network The network name
+ * @param address The token address
  */
-export function getTokenLogo(address: string) {
-  const info = TokenList[address];
-  if (!info) return null;
-  return info.image;
+export function getTokenLogo(network: string, address: string) {
+  const netList = TokenList[network];
+  const token = _.find(netList.tokens, (x) => x.address === address);
+  return !token ? null : token.logoURI;
+}
+
+/**
+ * Get token info
+ * @param network The network name
+ * @param address The token address
+ */
+export function getTokenInfo(network: string, address: string) {
+  const netList = TokenList[network];
+  return _.find(netList.tokens, (x) => x.address === address);
 }

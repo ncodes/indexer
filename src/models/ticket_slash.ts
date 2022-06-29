@@ -18,6 +18,8 @@ export default class TicketSlash extends BaseModel {
   ticketId: string;
   // The order ID
   orderId: number;
+  // The dispute ID
+  disputeId: number;
   // The amount slashed
   amount: string;
   // Indicate whether the ticket voted

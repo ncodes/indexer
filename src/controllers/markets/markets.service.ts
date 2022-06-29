@@ -106,9 +106,9 @@ export class MarketsService {
       if (select.includes(`priceChange`) || !select.length)
         market.priceChange = await MarketPrice.priceChange(net, marketId, undefined, 24);
       if (select.includes(`baseLogo`) || !select.length)
-        market.baseLogo = getTokenLogo(baseAddress);
+        market.baseLogo = getTokenLogo(net, baseAddress);
       if (select.includes(`quoteLogo`) || !select.length)
-        market.quoteLogo = getTokenLogo(quoteAddress);
+        market.quoteLogo = getTokenLogo(net, quoteAddress);
 
       return Promise.resolve();
     } catch (error) {

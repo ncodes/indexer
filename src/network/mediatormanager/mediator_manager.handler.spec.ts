@@ -188,14 +188,16 @@ describe('MediatorManagerHandler', () => {
         owner: '0xOwner',
       });
       await expect(
-        handler.onDrafted('0xMarket', '0xOwner', toBN(1), toBN(23), {} as any),
+        handler.onDrafted('0xMarket', '0xOwner', toBN(1), toBN(23), toBN(2), {} as any),
       ).resolves.toBeUndefined();
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.drafted).toBeTruthy();
       expect(ticket.orderId).toEqual(23);
       expect(ticket.draftedAt).toBeDefined();
+      expect(ticket.disputeId).toEqual(2);
 
       const draft = await Draft.find({ ticketId: ticket.id });
+      expect(draft.disputeId).toEqual(2);
       expect(draft).toBeDefined();
 
       // expect notification to have been sent
@@ -215,14 +217,26 @@ describe('MediatorManagerHandler', () => {
         index: 1,
         owner: '0xOwner',
         orderId: 23,
+        disputeId: 1,
       });
       await expect(
-        handler.onUndrafted('0xMarket', '0xOwner', toBN(1), {} as any),
+        handler.onUndrafted('0xMarket', '0xOwner', toBN(1), true, {} as any),
       ).resolves.toBeUndefined();
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.drafted).toBeFalsy();
       expect(ticket.draftedAt).toBeNull();
       expect(ticket.orderId).toEqual(23);
+      expect(ticket.disputeId).toEqual(1);
+
+      // not slashed
+      await expect(
+        handler.onUndrafted('0xMarket', '0xOwner', toBN(1), false, {} as any),
+      ).resolves.toBeUndefined();
+      ticket = await Ticket.getById(ticket.id);
+      expect(ticket.drafted).toBeFalsy();
+      expect(ticket.draftedAt).toBeNull();
+      expect(ticket.orderId).toBeNull();
+      expect(ticket.disputeId).toBeNull();
     });
   });
 

@@ -10,7 +10,7 @@ import { Roles } from '../../common/roles';
 import * as request from 'supertest';
 import NetworkService from '../../network/network.service';
 import { MarketsService } from './markets.service';
-import { MetadataService } from '../../services/metadata.service';
+import { MetadataService } from '../../services/metadata/metadata.service';
 import { makeSession } from '../auth/utils';
 import * as cryptoRandomString from 'crypto-random-string';
 import Market from '../../models/market';
@@ -79,7 +79,7 @@ describe('MarketsController', () => {
 
   let u: User;
   let token: string;
-  const net = 'ethereumMainnet';
+  const net = 'ethereum';
   beforeEach(async () => {
     u = await User.create({ role: Roles.User });
     token = await makeSession(

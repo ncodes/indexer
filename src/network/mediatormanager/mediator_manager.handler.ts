@@ -176,7 +176,13 @@ export class MediatorManagerHandler extends Handler {
    * @param txn The database transaction handle
    */
   async onTicketCancelled(owner: string, id: BigNumber, event: ethers.Event, txn?: Transaction) {
-    const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, id.toNumber(), txn);
+    const ticket = await Ticket.getByNetworkOwnerAndIndex(
+      this.network,
+      owner,
+      id.toNumber(),
+      undefined,
+      txn,
+    );
     const block = await event.getBlock();
     const cancelAt = block.timestamp + parseInt(process.env.MM_TICKET_CANCEL_DUR);
     await Ticket.updateById(ticket.id, { cancelAt: moment.unix(cancelAt).toISOString() }, txn);
@@ -198,7 +204,13 @@ export class MediatorManagerHandler extends Handler {
     event: ethers.Event,
     txn?: Transaction,
   ) {
-    const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, id.toNumber(), txn);
+    const ticket = await Ticket.getByNetworkOwnerAndIndex(
+      this.network,
+      owner,
+      id.toNumber(),
+      undefined,
+      txn,
+    );
     await Ticket.updateById(
       ticket.id,
       { bond: '0', drained: true, drainedAt: moment().toISOString() },
@@ -226,6 +238,7 @@ export class MediatorManagerHandler extends Handler {
       this.network,
       owner,
       ticketId.toNumber(),
+      undefined,
       txn,
     );
     const block = await event.getBlock();
@@ -267,6 +280,7 @@ export class MediatorManagerHandler extends Handler {
       this.network,
       owner,
       ticketId.toNumber(),
+      undefined,
       txn,
     );
 
@@ -317,6 +331,7 @@ export class MediatorManagerHandler extends Handler {
       this.network,
       owner,
       ticketId.toNumber(),
+      undefined,
       txn,
     );
     await Ticket.updateById(
@@ -374,6 +389,7 @@ export class MediatorManagerHandler extends Handler {
       this.network,
       owner,
       ticketId.toNumber(),
+      undefined,
       txn,
     );
     await Ticket.updateById(
@@ -414,6 +430,7 @@ export class MediatorManagerHandler extends Handler {
       this.network,
       owner,
       ticketId.toNumber(),
+      undefined,
       txn,
     );
 

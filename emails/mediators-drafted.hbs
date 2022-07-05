@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+Hello {{recipient}},
+<br><br>
+All mediators have been drafted to the dispute#{{disputeId}}. This means the
+dispute has entered the <b>evidence collection phase</b>. In this phase, you are
+expected to submit evidence to back your preferred outcome or defend your
+position.
+<br><br>
+If you want the swap released, provide evidences indicating you
+have made payment. If you want the swap cancelled, provide a reason and
+evidences for while the swap should be cancelled.
+<br><br>
+After the evidence collection phase, the mediators will begin the mediation
+process. The mediators will use the evidences you and the counterparty provide
+to decide the dispute outcome. <b style="color: indianred;">Failure to provide
+  evidence may lead to undesirable outcome against you</b>
+<br><br>
+Evidence Phase Ends In: <b style="font-size:
+22px; color: darkolivegreen;">{{evidencePhaseHoursLeft}}</b>
+<br><br>
+<ul>
+  <li><a href="https://app.fiatx.co/swap/{{orderId}}">View Swap Order</a></li>
+  <li><a href="https://app.fiatx.co/swap/{{orderId}}">How Disputes Work</a></li>
+</ul>
+<br>
+{{app}}
+</body>
+</html>

@@ -37,6 +37,7 @@ export class MarketCoreHandler extends Handler {
         isBaseLocal: boolean,
         isQuoteLocal: boolean,
         commission: BigNumber,
+        numMediators: BigNumber,
         event: Event,
         txn: Transaction,
       ) => {
@@ -48,6 +49,7 @@ export class MarketCoreHandler extends Handler {
           isBaseLocal,
           isQuoteLocal,
           commission,
+          numMediators,
           event,
           txn,
         );
@@ -115,7 +117,8 @@ export class MarketCoreHandler extends Handler {
    * @param quoteAsset The quote asset of the market
    * @param isBaseLocal Indicates whether the base asset is local
    * @param isQuoteLocal Indicates whether the quote asset is local
-   * @param commission
+   * @param commission The market creator commission base point
+   * @param numMediators The number of mediators
    * @param event The event object
    * @param txn The db transaction object
    */
@@ -127,6 +130,7 @@ export class MarketCoreHandler extends Handler {
     isBaseLocal: boolean,
     isQuoteLocal: boolean,
     commission: BigNumber,
+    numMediators: BigNumber,
     event: Event,
     txn?: Transaction,
   ) {
@@ -150,6 +154,7 @@ export class MarketCoreHandler extends Handler {
         network: this.network,
         commission: commission.toNumber(),
         txHash: event.transactionHash,
+        numMediators: numMediators.toNumber(),
       },
       txn,
     );

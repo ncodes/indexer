@@ -60,6 +60,12 @@ export class NotifierConsumer {
         return this.notifyTicketOwnerOnTicketSlash(job.data);
       case NotifyType.TicketDrafted:
         return this.notifyTicketOwnerOnDraft(job.data);
+      case NotifyType.DisputeCreated:
+        return this.notifyOnDisputeCreation(job.data);
+      case NotifyType.FullyDrafted:
+        return this.notifyOnFullyDrafted(job.data);
+      case NotifyType.EvidencePhaseStarted:
+        return this.notifyOnEvidencePhaseStart(job.data);
     }
   }
 
@@ -68,7 +74,6 @@ export class NotifierConsumer {
    * @param job The job data
    */
   async notifyMediatorInviteReceived(job: NotifyJob) {
-    // Create notification
     const sub = 'Mediation Invitation Received';
     await Notification.create({
       network: job.network,
@@ -90,7 +95,6 @@ export class NotifierConsumer {
    * @param job The job data
    */
   async notifyMediatorInviteAccepted(job: NotifyJob) {
-    // Create notification
     const sub = 'Mediator Accepted Your Invitation';
     const shortInvitee = shortenAddr(job.data.invitee);
     await Notification.create({
@@ -114,7 +118,6 @@ export class NotifierConsumer {
    * @param job The job data
    */
   async notifyMediatorRevoked(job: NotifyJob) {
-    // Create notification
     const sub = 'Mediation Access Revoked';
     await Notification.create({
       network: job.network,
@@ -136,7 +139,6 @@ export class NotifierConsumer {
    * @param job The job data
    */
   async notifyPutApproved(job: NotifyJob) {
-    // Create notification
     const sub = 'Liquidity Provider Permission Granted';
     await Notification.create({
       network: job.network,
@@ -158,7 +160,6 @@ export class NotifierConsumer {
    * @param job The job data
    */
   async notifyPutRevoked(job: NotifyJob) {
-    // Create notification
     const sub = 'Liquidity Provider Permission Revoked';
     await Notification.create({
       network: job.network,
@@ -180,7 +181,6 @@ export class NotifierConsumer {
    * @param job The job data
    */
   async notifySwapApproved(job: NotifyJob) {
-    // Create notification
     const sub = 'Swap Permission Granted';
     await Notification.create({
       network: job.network,
@@ -202,7 +202,6 @@ export class NotifierConsumer {
    * @param job The job data
    */
   async notifySwapRevoked(job: NotifyJob) {
-    // Create notification
     const sub = 'Swap Permission Revoked';
     await Notification.create({
       network: job.network,
@@ -224,7 +223,6 @@ export class NotifierConsumer {
    * @param job The job data
    */
   async notifyNewLiquidityManager(job: NotifyJob) {
-    // Create notification
     const sub = 'Granted Liquidity Manager Status';
     const { marketId, provider } = job.data;
     await Notification.create({
@@ -247,7 +245,6 @@ export class NotifierConsumer {
    * @param job The job data
    */
   async notifyRemoveLiquidityManager(job: NotifyJob) {
-    // Create notification
     const sub = 'Revoked Liquidity Manager Status';
     const { marketId, provider } = job.data;
     await Notification.create({
@@ -272,7 +269,6 @@ permissioned <a href="https://app.fiatx.co/market/${marketId}">market</a>.`,
    * @param job The job data
    */
   async notifyNewInstantSwap(job: NotifyJob) {
-    // Create notification
     const { amount, base, quote, cost, provider } = job.data;
     const sub = `New Instant Swap (${base + '/' + quote} - ${amount} ${base} for ${cost} ${quote})`;
     await Notification.create({
@@ -296,15 +292,14 @@ ${amount} ${base} of your liquidity has been swapped for ${cost} ${quote}.`,
    * @param job The job data
    */
   async notifyOffChainSwap(job: NotifyJob) {
-    // Create notification
     const { orderId, amount, base, quote, cost } = job.data;
     const pair = `${base + '/' + quote}`;
-    const sub = `New Swap Order (ID: ${orderId}, ${pair}, ${amount} ${base} for ${cost} ${quote})`;
+    const sub = `New Swap (ID: ${orderId}, ${pair}, ${amount} ${base} for ${cost} ${quote})`;
     await Notification.create({
       network: job.network,
       userId: job.user.id,
       title: sub,
-      body: `You liquidity has received a swap order. ${amount} ${base} of your liquidity has been ordered for ${cost} ${quote}`,
+      body: `Your liquidity has received a swap request. ${amount} ${base} of your liquidity has been ordered for ${cost} ${quote}`,
     });
 
     // Send email
@@ -320,10 +315,9 @@ ${amount} ${base} of your liquidity has been swapped for ${cost} ${quote}.`,
    * @param job The job data
    */
   async notifySwapOrderReleased(job: NotifyJob) {
-    // Create notification
     const { orderId, amount, base, quote, cost, byDispute } = job.data;
     const pair = `${base + '/' + quote}`;
-    const sub = `Swap Order Released (ID: ${orderId}, ${pair}, ${amount} ${base} for ${cost} ${quote})`;
+    const sub = `Swap Released (ID: ${orderId}, ${pair}, ${amount} ${base} for ${cost} ${quote})`;
     const byWho = byDispute ? ' by the dispute system' : '';
 
     await Notification.create({
@@ -346,10 +340,9 @@ ${amount} ${base} of your liquidity has been swapped for ${cost} ${quote}.`,
    * @param job The job data
    */
   async notifySwapOrderCancelled(job: NotifyJob) {
-    // Create notification
     const { orderId, amount, base, quote, cost, byDispute } = job.data;
     const pair = `${base + '/' + quote}`;
-    const sub = `Swap Order Cancelled (ID: ${orderId}, ${pair}, ${amount} ${base} for ${cost} ${quote})`;
+    const sub = `Swap Cancelled (ID: ${orderId}, ${pair}, ${amount} ${base} for ${cost} ${quote})`;
     const byWho = !byDispute ? 'by the counterparty' : 'by the dispute system';
 
     await Notification.create({
@@ -372,16 +365,15 @@ ${amount} ${base} of your liquidity has been swapped for ${cost} ${quote}.`,
    * @param job The job data
    */
   async notifySwapOrderPaid(job: NotifyJob) {
-    // Create notification
     const { orderId, amount, base, quote, cost } = job.data;
     const pair = `${base}/${quote}`;
-    const sub = `Swap Order Paid (ID: ${orderId}, ${pair}, ${amount} ${base} for ${cost} ${quote})`;
+    const sub = `Swap Marked As Paid (ID: ${orderId}, ${pair}, ${amount} ${base} for ${cost} ${quote})`;
 
     await Notification.create({
       network: job.network,
       userId: job.user.id,
       title: sub,
-      body: `The swap order#${orderId} has been marked as <b>PAID</b>. 
+      body: `The swap#${orderId} has been marked as <b>PAID</b>. 
 Please carefully verify payment of ${cost} ${quote} and only release the assets when payment is confirmed.`,
     });
 
@@ -402,7 +394,6 @@ Please carefully verify payment of ${cost} ${quote} and only release the assets 
    * @param job The job data
    */
   async notifyMarketCreatorOnJoinedTicket(job: NotifyJob) {
-    // Create notification
     const sub = `New Market Mediator`;
     const { marketId, owner } = job.data;
     await Notification.create({
@@ -428,7 +419,6 @@ Please carefully verify payment of ${cost} ${quote} and only release the assets 
    * @param job The job data
    */
   async notifyMarketCreatorOnLeftTicket(job: NotifyJob) {
-    // Create notification
     const sub = `Market Mediator Left`;
     const { marketId, owner } = job.data;
     await Notification.create({
@@ -454,14 +444,13 @@ Please carefully verify payment of ${cost} ${quote} and only release the assets 
    * @param job The job data
    */
   async notifyTicketOwnerOnTicketSlash(job: NotifyJob) {
-    // Create notification
     const sub = `Mediation Ticket Slashed`;
     const { ticketId, amount, asset, reason, orderId } = job.data;
     await Notification.create({
       network: job.network,
       userId: job.user.id,
       title: sub,
-      body: `Your ticket#${ticketId} that was drafted to swap order#${orderId} was slashed of ${amount} ${asset} because it
+      body: `Your ticket#${ticketId} that was drafted to swap#${orderId} was slashed of ${amount} ${asset} because it
 <b>${reason}</b> in a dispute.`,
     });
 
@@ -478,7 +467,6 @@ Please carefully verify payment of ${cost} ${quote} and only release the assets 
    * @param job The job data
    */
   async notifyTicketOwnerOnDraft(job: NotifyJob) {
-    // Create notification
     const sub = `Mediation Ticket Drafted`;
     const { ticketId, orderId, marketId } = job.data;
     await Notification.create({
@@ -490,8 +478,73 @@ Please carefully verify payment of ${cost} ${quote} and only release the assets 
 of <a href="https://app.fiatx.co/market/${marketId}">market#${shortenAddr(marketId)}</a>.`,
     });
 
-    // Send email
     await this.mailer.send('ticket-drafted', sub, job.user.email, {
+      ...job.data,
+      recipient: shortenAddr(job.recipient),
+      title: sub,
+    });
+  }
+
+  async notifyOnDisputeCreation(job: NotifyJob) {
+    const { orderId, appeal, pair } = job.data;
+    const sub =
+      (!appeal ? `Swap Disputed` : 'Dispute Outcome Appealed') + ` (ID:${orderId}, Market:${pair})`;
+
+    const notif = {
+      network: job.network,
+      userId: job.user.id,
+      title: sub,
+      body: ``,
+    };
+    let template: string;
+
+    if (!appeal) {
+      notif.body = `Your swap#${orderId} has been disputed by the counterparty.`;
+      template = 'swap-disputed';
+    } else {
+      notif.body = `The last dispute outcome of your swap#${orderId} has been appealed by the counterparty.`;
+      template = 'swap-dispute-appealed';
+    }
+
+    await Notification.create(notif);
+    await this.mailer.send(template, sub, job.user.email, {
+      ...job.data,
+      recipient: shortenAddr(job.recipient),
+      title: sub,
+    });
+  }
+
+  async notifyOnFullyDrafted(job: NotifyJob) {
+    const { disputeId, pair } = job.data;
+    const sub = `Evidence Phase Begins (Dispute ID:${disputeId}, Market:${pair})`;
+    const notif = {
+      network: job.network,
+      userId: job.user.id,
+      title: sub,
+      body: `All mediators have been drafted to the dispute#${disputeId}. This means the dispute has entered the <b>evidence collection phase</b>. In this phase, you are
+expected to submit evidence to back your preferred outcome or defend your position.`,
+    };
+    const template = 'mediators-drafted';
+    await Notification.create(notif);
+    await this.mailer.send(template, sub, job.user.email, {
+      ...job.data,
+      recipient: shortenAddr(job.recipient),
+      title: sub,
+    });
+  }
+
+  async notifyOnEvidencePhaseStart(job: NotifyJob) {
+    const { disputeId, pair } = job.data;
+    const sub = `Review or Request For Evidence (Dispute ID:${disputeId}, Market:${pair})`;
+    const notif = {
+      network: job.network,
+      userId: job.user.id,
+      title: sub,
+      body: `A dispute#`,
+    };
+    const template = 'draft-evidence-phase';
+    await Notification.create(notif);
+    await this.mailer.send(template, sub, job.user.email, {
       ...job.data,
       recipient: shortenAddr(job.recipient),
       title: sub,

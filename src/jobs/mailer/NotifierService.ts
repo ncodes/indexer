@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { BullModule, InjectQueue } from '@nestjs/bull';
+import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 
 export enum NotifyType {
@@ -21,6 +21,9 @@ export enum NotifyType {
   LeftMarket,
   TicketSlashed,
   TicketDrafted,
+  DisputeCreated,
+  FullyDrafted,
+  EvidencePhaseStarted,
 }
 
 @Injectable()

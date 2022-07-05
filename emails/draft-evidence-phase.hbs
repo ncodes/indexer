@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+Hello {{recipient}},
+<br><br>
+As a drafted mediator of <a
+  href="https://app.fiatx.co/swap/{{orderId}}">swap#{{orderId}}'s</a>
+dispute#{{disputeId}},
+we are letting you know that the dispute has entered <b>evidence submission
+  phase</b>. During this phase, the
+swap participants are expected to submit evidence to support or
+reject the dispute creator's preferred outcome.
+<br><br>
+You are expected to carefully review the evidences and use our messaging
+system to request for more evidences if required.
+<br><br>
+Evidence Phase Ends In: <b style="font-size:
+22px; color: darkolivegreen;">{{evidencePhaseHoursLeft}}</b>
+<br><br>
+<h3 style="color: indianred">WARNING</h3>
+<ul style="color: indianred">
+  <li>Carefully review the evidences as voting the minority outcome will lead to
+    your ticket getting slashed.
+  </li>
+</ul>
+<br>
+<ul>
+  <li><a href="https://app.fiatx.co/swap/{{orderId}}">View Swap Order</a></li>
+  <li><a href="https://app.fiatx.co/swap/{{orderId}}">How Disputes Work</a></li>
+</ul>
+<br>
+{{app}}
+</body>
+</html>

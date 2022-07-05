@@ -147,7 +147,7 @@ export default class NetworkService {
       network,
       this.contracts[network],
     ).listen();
-    new DisputeManagerHandler(prov, network, this.contracts[network]).listen();
+    new DisputeManagerHandler(this, this.notifSrv, prov, network, this.contracts[network]).listen();
     new P2PStakerHandler(prov, network, this.contracts[network]).listen();
     new LPStakerHandler(prov, network, this.contracts[network]).listen();
     new FeeSharerHandler(prov, network, this.contracts[network]).listen();

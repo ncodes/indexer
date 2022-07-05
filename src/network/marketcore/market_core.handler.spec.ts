@@ -84,6 +84,7 @@ describe('MarketCoreHandler', () => {
           true,
           true,
           BigNumber.from(1),
+          BigNumber.from(10),
           { transactionHash: '0xTxHash' } as any,
         ),
       ).resolves.toBeUndefined();
@@ -100,6 +101,7 @@ describe('MarketCoreHandler', () => {
       expect(market.commission).toEqual(1);
       expect(market.pair).toEqual('BTCUSDT');
       expect(market.txHash).toEqual('0xTxHash');
+      expect(market.numMediators).toEqual(10);
     });
   });
 

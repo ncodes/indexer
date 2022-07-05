@@ -38,6 +38,8 @@ export default class Market extends BaseModel {
   completionRate: number = undefined;
   // The transaction hash
   txHash: string = undefined;
+  // The minimum number of mediators
+  numMediators: number;
 
   // *** Non-persisted fields **//
   mediatorBond: string;
@@ -46,7 +48,6 @@ export default class Market extends BaseModel {
   permPut: boolean;
   permSwap: boolean;
   permMediate: boolean;
-  numMediators: number;
   baseLogo: string;
   quoteLogo: string;
   numProviders: string;

@@ -1,8 +1,20 @@
 import { BigNumber, ethers, Event, providers } from 'ethers';
 import { Handler } from '../handler';
+import Swap from '../../models/swap';
+import { Transaction } from 'objection';
+import Dispute from '../../models/dispute';
+import { toBN } from '../common';
+import Market from '../../models/market';
+import Ticket from '../../models/ticket';
+import Commit from '../../models/commit';
+import Reveal from '../../models/reveal';
+import { NotifierService, NotifyType } from '../../jobs/mailer/NotifierService';
+import NetworkService from '../network.service';
 
 export class DisputeManagerHandler extends Handler {
   constructor(
+    private netSrv: NetworkService,
+    private notifSrv: NotifierService,
     private provider: providers.JsonRpcProvider,
     public network: string,
     private contracts: KnownContracts,
@@ -16,70 +28,96 @@ export class DisputeManagerHandler extends Handler {
   listen() {
     this.on(
       'DisputeCreated',
-      async (orderId: BigNumber, creator: string, disputeId: BigNumber, event: ethers.Event) => {
-        return this.onDisputeCreated(orderId, creator, disputeId, event);
+      async (
+        orderId: BigNumber,
+        creator: string,
+        disputeId: BigNumber,
+        wantRelease,
+        event: ethers.Event,
+        txn?: Transaction,
+      ) => {
+        return this.onDisputeCreated(orderId, creator, disputeId, wantRelease, event, txn);
       },
     );
 
     this.on(
       'DraftedMediator',
       async (
+        marketId: string,
         orderId: BigNumber,
-        mediator: string,
+        ticketOwner: string,
         ticketId: BigNumber,
         drafter: string,
         event: ethers.Event,
+        txn?: Transaction,
       ) => {
-        return this.onDraftedMediator(orderId, mediator, ticketId, drafter, event);
+        return this.onDraftedMediator(
+          marketId,
+          orderId,
+          ticketOwner,
+          ticketId,
+          drafter,
+          event,
+          txn,
+        );
       },
     );
 
     this.on(
       'Committed',
-      async (orderId: BigNumber, committer: string, hash: string, event: ethers.Event) => {
-        return this.onCommitted(orderId, committer, hash, event);
+      async (
+        marketId: string,
+        orderId: BigNumber,
+        disputeId: BigNumber,
+        committer: string,
+        hash: string,
+        event: ethers.Event,
+        txn?: Transaction,
+      ) => {
+        return this.onCommitted(marketId, orderId, disputeId, committer, hash, event, txn);
       },
     );
 
     this.on(
       'Revealed',
-      async (orderId: BigNumber, revealer: string, vote: string, event: ethers.Event) => {
-        return this.onRevealed(orderId, revealer, vote, event);
-      },
-    );
-
-    this.on('WithdrawnReward', (claimer: string, amount: BigNumber, event: ethers.Event) => {
-      return this.onWithdrawnReward(claimer, amount, event);
-    });
-
-    this.on(
-      'Drafted',
-      (marketId: string, owner: string, ticketId: BigNumber, event: ethers.Event) => {
-        return this.onDrafted(marketId, owner, ticketId, event);
+      async (
+        marketId: string,
+        orderId: BigNumber,
+        disputeId: BigNumber,
+        revealer: string,
+        vote: string,
+        event: ethers.Event,
+        txn?: Transaction,
+      ) => {
+        return this.onRevealed(marketId, orderId, disputeId, revealer, vote, event, txn);
       },
     );
 
     this.on(
-      'Undrafted',
-      (marketId: string, owner: string, ticketId: BigNumber, event: ethers.Event) => {
-        return this.onUndrafted(marketId, owner, ticketId, event);
+      'WithdrawnReward',
+      (claimer: string, amount: BigNumber, event: ethers.Event, txn?: Transaction) => {
+        return this.onWithdrawnReward(claimer, amount, event, txn);
       },
     );
 
     this.on(
       'DecisionExecuted',
       async (
+        marketId: string,
         orderId: BigNumber,
+        disputeId: BigNumber,
         executor: string,
-        alreadyReleased: boolean,
+        abandoned: boolean,
         winningVote: string,
         execReward: BigNumber,
         event: ethers.Event,
       ) => {
         return this.onDecisionExecuted(
+          marketId,
           orderId,
+          disputeId,
           executor,
-          alreadyReleased,
+          abandoned,
           winningVote,
           execReward,
           event,
@@ -93,85 +131,193 @@ export class DisputeManagerHandler extends Handler {
    * @param orderId The order ID
    * @param creator The address of the dispute creator
    * @param disputeId The dispute ID
+   * @param wantRelease Indicate the creator wants dispute released
    * @param event The event object
+   * @param txn The transaction object
    */
-  async onDisputeCreated(orderId: BigNumber, creator: string, disputeId: BigNumber, event: Event) {}
+  async onDisputeCreated(
+    orderId: BigNumber,
+    creator: string,
+    disputeId: BigNumber,
+    wantRelease: boolean,
+    event: Event,
+    txn?: Transaction,
+  ) {
+    const swap = await Swap.get(this.network, orderId.toNumber(), undefined, txn);
+    const numDisp = await Dispute.countByNetworkAndMarketIdAndOrderId(
+      swap.network,
+      swap.marketId,
+      swap.orderId,
+      txn,
+    );
+
+    // Calculate number of mediators required
+    const market = await Market.getByMarketId(swap.marketId, txn);
+    const numMediators = Math.min(
+      market.numMediators * (parseInt(numDisp) + 1),
+      Math.min(parseInt(process.env.DM_MAX_MEDIATOR_PER_DISPUTE)),
+    );
+
+    const dispute = await Dispute.create(
+      {
+        network: this.network,
+        creator,
+        defendant: swap.provider === creator ? swap.taker : swap.provider,
+        marketId: swap.marketId,
+        orderId: swap.orderId,
+        disputeId: disputeId.toNumber(),
+        wantRelease,
+        appeal: parseInt(numDisp) > 0,
+        deposit: toBN(process.env.DM_DISPUTE_COST).mul(numDisp).toString(),
+        numMediators,
+      },
+      txn,
+    );
+
+    // Send notification
+    const locals = {
+      orderId: orderId.toNumber(),
+      wantRelease,
+      creator,
+      appeal: dispute.appeal,
+      pair: `${swap.base}/${swap.quote}`.toUpperCase(),
+    };
+    const recipient = swap.provider === creator ? swap.taker : swap.provider;
+    await this.notifSrv.notify(NotifyType.DisputeCreated, this.network, recipient, locals);
+
+    return Promise.resolve();
+  }
 
   /**
    * A mediator was drafted
+   * @param marketId The market ID
    * @param orderId The order ID
-   * @param mediator The drafted mediator's address
+   * @param ticketOwner The drafted mediator's address
    * @param ticketId The ticket ID
    * @param drafter The address of the drafter
    * @param event The event object
+   * @param txn The transaction object
    */
   async onDraftedMediator(
+    marketId: string,
     orderId: BigNumber,
-    mediator: string,
+    ticketOwner: string,
     ticketId: BigNumber,
     drafter: string,
     event: Event,
+    txn?: Transaction,
   ) {}
 
   /**
    * A mediator committed a hash for a vote
+   * @param marketId The market ID
    * @param orderId The order ID
+   * @param disputeId The dispute ID
    * @param committer The address of the mediator
    * @param hash The hash committed
    * @param event The event object
+   * @param txn The transaction object
    */
-  async onCommitted(orderId: BigNumber, committer: string, hash: string, event: Event) {}
+  async onCommitted(
+    marketId: string,
+    orderId: BigNumber,
+    disputeId: BigNumber,
+    committer: string,
+    hash: string,
+    event: Event,
+    txn?: Transaction,
+  ) {
+    await Commit.create(
+      {
+        network: this.network,
+        marketId,
+        committer,
+        hash,
+        orderId: orderId.toNumber(),
+        disputeId: disputeId.toNumber(),
+      },
+      txn,
+    );
+    return Promise.resolve();
+  }
 
   /**
    * A mediator revealed a committed vote
+   * @param marketId The market ID
    * @param orderId The order ID
+   * @param disputeId The dispute ID
    * @param revealer The address of the mediator
    * @param vote The revealed vote
    * @param event The event object
+   * @param txn The transaction object
    */
-  async onRevealed(orderId: BigNumber, revealer: string, vote: string, event: Event) {}
+  async onRevealed(
+    marketId: string,
+    orderId: BigNumber,
+    disputeId: BigNumber,
+    revealer: string,
+    vote: string,
+    event: Event,
+    txn?: Transaction,
+  ) {
+    await Reveal.create(
+      {
+        network: this.network,
+        marketId,
+        revealer,
+        vote,
+        orderId: orderId.toNumber(),
+        disputeId: disputeId.toNumber(),
+      },
+      txn,
+    );
+    return Promise.resolve();
+  }
 
   /**
    * Some reward was withdrawn
    * @param claimer The address of the withdrawer
    * @param amount The amount withdrawn
    * @param event The event object
+   * @param txn The transaction object
    */
-  async onWithdrawnReward(claimer: string, amount: BigNumber, event: Event) {}
-
-  /**
-   * A ticket was drafted to a dispute
-   * @param marketId The market ID
-   * @param owner The address of the owner of the drafted ticket
-   * @param ticketId The drafted ticket ID
-   * @param event The event object
-   */
-  async onDrafted(marketId: string, owner: string, ticketId: BigNumber, event: Event) {}
-
-  /**
-   * A ticket was undrafted from a dispute
-   * @param marketId The market ID
-   * @param owner The address of the owner of the drafted ticket
-   * @param ticketId The drafted ticket ID
-   * @param event The event object
-   */
-  async onUndrafted(marketId: string, owner: string, ticketId: BigNumber, event: Event) {}
+  async onWithdrawnReward(claimer: string, amount: BigNumber, event: Event, txn?: Transaction) {}
 
   /**
    * A dispute outcome was executed
+   * @param marketId The market ID
    * @param orderId The order ID
+   * @param disputeId The dispute ID
    * @param executor The address dispute outcome executed
-   * @param alreadyReleased Indicate the order was already released prior to execution.
+   * @param abandoned Indicate the dispute was abandoned
    * @param winningVote The vote that was predicted by the majority.
    * @param execReward The reward paid to the executor.
    * @param event The event object
+   * @param txn The transaction object
    */
   async onDecisionExecuted(
+    marketId: string,
     orderId: BigNumber,
+    disputeId: BigNumber,
     executor: string,
-    alreadyReleased: boolean,
+    abandoned: boolean,
     winningVote: string,
     execReward: BigNumber,
     event: Event,
-  ) {}
+    txn?: Transaction,
+  ) {
+    const dispute = await Dispute.get(
+      this.network,
+      marketId,
+      orderId.toNumber(),
+      disputeId.toNumber(),
+      txn,
+    );
+    await Dispute.updateById(dispute.id, {
+      executed: true,
+      released: winningVote === '0x31',
+      abandoned,
+    });
+    return Promise.resolve();
+  }
 }

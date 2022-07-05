@@ -70,6 +70,19 @@ export class Handler extends EventEmitter2 {
    */
   watchBlock() {
     this.contract.provider.on('block', async (curBlock: number) => {
+      // Get last synced block height
+      const key = `lastSyncedHeight_${this.network}_${this.contract.address}`;
+      let meta = await Meta.get(key);
+      if (!meta) {
+        meta = new Meta({
+          value: process.env[`LAUNCH_HEIGHT_${this.network.toUpperCase()}`] || '1',
+        });
+      }
+
+      if (parseInt(meta.value) + 1 > curBlock) {
+        return;
+      }
+
       // Query events
       const events = await this.contract.queryFilter({}, curBlock);
       if (events.length) {
@@ -85,7 +98,6 @@ export class Handler extends EventEmitter2 {
       }
 
       // Update the last sync height
-      const key = `lastSyncedHeight_${this.network}_${this.contract.address}`;
       await Meta.update(key, curBlock.toString());
     });
   }

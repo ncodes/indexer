@@ -70,8 +70,20 @@
     "inputs": [
       {
         "indexed": true,
+        "internalType": "bytes32",
+        "name": "marketID",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
         "internalType": "uint256",
         "name": "orderID",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "disputeId",
         "type": "uint256"
       },
       {
@@ -95,8 +107,20 @@
     "inputs": [
       {
         "indexed": true,
+        "internalType": "bytes32",
+        "name": "marketID",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
         "internalType": "uint256",
         "name": "orderID",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "disputeID",
         "type": "uint256"
       },
       {
@@ -108,7 +132,7 @@
       {
         "indexed": false,
         "internalType": "bool",
-        "name": "alreadyReleased",
+        "name": "abandoned",
         "type": "bool"
       },
       {
@@ -147,6 +171,12 @@
         "internalType": "uint256",
         "name": "index",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "wantRelease",
+        "type": "bool"
       }
     ],
     "name": "DisputeCreated",
@@ -182,6 +212,12 @@
     "inputs": [
       {
         "indexed": true,
+        "internalType": "bytes32",
+        "name": "marketID",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
         "internalType": "uint256",
         "name": "orderID",
         "type": "uint256"
@@ -199,7 +235,7 @@
         "type": "uint256"
       },
       {
-        "indexed": true,
+        "indexed": false,
         "internalType": "address",
         "name": "drafter",
         "type": "address"
@@ -232,8 +268,20 @@
     "inputs": [
       {
         "indexed": true,
+        "internalType": "bytes32",
+        "name": "marketID",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
         "internalType": "uint256",
         "name": "orderID",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "disputeId",
         "type": "uint256"
       },
       {

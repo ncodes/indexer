@@ -130,6 +130,12 @@
         "internalType": "uint256",
         "name": "commission",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "numMediators",
+        "type": "uint256"
       }
     ],
     "name": "NewMarket",

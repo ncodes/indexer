@@ -49,5 +49,5 @@ export function isValidNetwork(network: string) {
  * @param v
  */
 export function toBN(v) {
-  return BigNumber.from(v);
+  return BigNumber.from(v || 0);
 }

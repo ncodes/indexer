@@ -13,6 +13,7 @@ exports.up = function (knex) {
       table.boolean('isQuoteLocal').defaultTo(false);
       table.string('pair');
       table.string('network');
+      table.integer('numMediators').defaultTo(0);
       table.integer('commission').defaultTo(0);
       table.string('amountSwapped').defaultTo(0);
       table.float('completionRate').defaultTo(0);

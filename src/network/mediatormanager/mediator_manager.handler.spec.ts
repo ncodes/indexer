@@ -8,6 +8,8 @@ import TicketSlash from '../../models/ticket_slash';
 import Draft from '../../models/draft';
 import Market from '../../models/market';
 import { NotifyType } from '../../jobs/mailer/NotifierService';
+import Dispute from '../../models/dispute';
+import Swap from '../../models/swap';
 
 const MarketCoreContract = jest.fn().mockImplementation(() => {
   return {};
@@ -187,26 +189,138 @@ describe('MediatorManagerHandler', () => {
         index: 1,
         owner: '0xOwner',
       });
+
+      const marketId = '0xMarket';
+      const ticketId = toBN(1);
+      const orderId = toBN(23);
+      const disputeId = toBN(2);
+
+      const swap = await Swap.create({
+        network: net,
+        marketId,
+        orderId: orderId.toNumber(),
+        base: 'BASE',
+        quote: 'QUOTE',
+        provider: '0xProvider',
+        taker: '0xTaker',
+      });
+
+      let dispute = await Dispute.create({
+        network: net,
+        marketId,
+        orderId: orderId.toNumber(),
+        disputeId: disputeId.toNumber(),
+        numMediators: 1,
+        numMediatorsDrafted: 0,
+      });
+
+      await Draft.create({
+        network: net,
+        marketId,
+        disputeId: disputeId.toNumber(),
+        orderId: orderId.toNumber(),
+        owner: '0xDraftOwner1',
+      });
+      await Draft.create({
+        network: net,
+        marketId,
+        disputeId: disputeId.toNumber(),
+        orderId: orderId.toNumber(),
+        owner: '0xDraftOwner2',
+      });
+
+      const now = moment().unix();
+      process.env.DM_EVIDENCE_DUR = '2';
+      process.env.DM_PREDICT_DUR = '2';
+      process.env.DM_APPEAL_DUR = '2';
+
+      const getBlock = jest.fn().mockResolvedValue({ timestamp: now });
       await expect(
-        handler.onDrafted('0xMarket', '0xOwner', toBN(1), toBN(23), toBN(2), {} as any),
+        handler.onDrafted(marketId, '0xOwner', ticketId, orderId, disputeId, { getBlock } as any),
       ).resolves.toBeUndefined();
+
+      // Ticket should be updated correctly
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.drafted).toBeTruthy();
       expect(ticket.orderId).toEqual(23);
       expect(ticket.draftedAt).toBeDefined();
       expect(ticket.disputeId).toEqual(2);
 
+      // Draft record should be created
       const draft = await Draft.find({ ticketId: ticket.id });
       expect(draft.disputeId).toEqual(2);
       expect(draft).toBeDefined();
 
-      // expect notification to have been sent
-      expect(mockNotify).toHaveBeenCalledWith(NotifyType.TicketDrafted, net, '0xOwner', {
+      // Dispute should be updated correctly
+      const { DM_PREDICT_DUR, DM_APPEAL_DUR } = process.env;
+      const unix = moment.unix;
+      dispute = await Dispute.getById(dispute.id);
+      expect(dispute.numMediatorsDrafted).toEqual(1);
+      const evidEndAt = now + parseInt(process.env.DM_EVIDENCE_DUR);
+      expect(unix(evidEndAt).isSame(dispute.evidenceEndAt)).toBeTruthy();
+      const expectedCommitEndAt = evidEndAt + parseInt(DM_PREDICT_DUR) / 2;
+      expect(unix(expectedCommitEndAt).isSame(dispute.commitEndAt)).toBeTruthy();
+      expect(unix(evidEndAt + parseInt(DM_PREDICT_DUR)).isSame(dispute.predictEndAt)).toBeTruthy();
+      const expectedAppealEndAt = evidEndAt + parseInt(DM_PREDICT_DUR) + parseInt(DM_APPEAL_DUR);
+      expect(unix(expectedAppealEndAt).isSame(dispute.appealEndAt)).toBeTruthy();
+
+      expect(mockNotify).toBeCalledTimes(6);
+
+      // expect notification to be sent to drafted ticket owner
+      expect(mockNotify).toHaveBeenNthCalledWith(1, NotifyType.TicketDrafted, net, '0xOwner', {
         marketId: '0xMarket',
         owner: '0xOwner',
-        ticketId: '1',
-        orderId: '23',
+        ticketId: 1,
+        orderId: 23,
       });
+
+      // expect FullyDrafted notification to be sent to swap participants
+      const fullyDraftedLocal = {
+        marketId,
+        orderId: orderId.toNumber(),
+        numDrafted: 1,
+        disputeId: disputeId.toNumber(),
+        pair: `${swap.base}/${swap.quote}`.toUpperCase(),
+        evidencePhaseHoursLeft: moment(dispute.evidenceEndAt).fromNow(true),
+      };
+      expect(mockNotify).toHaveBeenNthCalledWith(
+        2,
+        NotifyType.FullyDrafted,
+        net,
+        swap.provider,
+        fullyDraftedLocal,
+      );
+      expect(mockNotify).toHaveBeenNthCalledWith(
+        3,
+        NotifyType.FullyDrafted,
+        net,
+        swap.taker,
+        fullyDraftedLocal,
+      );
+
+      // expect EvidencePhaseStarted notification to be sent to drafted
+      // ticket owners
+      expect(mockNotify).toHaveBeenNthCalledWith(
+        4,
+        NotifyType.EvidencePhaseStarted,
+        net,
+        '0xDraftOwner1',
+        fullyDraftedLocal,
+      );
+      expect(mockNotify).toHaveBeenNthCalledWith(
+        5,
+        NotifyType.EvidencePhaseStarted,
+        net,
+        '0xDraftOwner2',
+        fullyDraftedLocal,
+      );
+      expect(mockNotify).toHaveBeenNthCalledWith(
+        6,
+        NotifyType.EvidencePhaseStarted,
+        net,
+        '0xOwner',
+        fullyDraftedLocal,
+      );
     });
   });
 

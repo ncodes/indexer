@@ -93,4 +93,25 @@ export default class Draft extends BaseModel {
         .catch(reject);
     });
   }
+
+  /**
+   * Get by dispute ID
+   * @param network The network name
+   * @param marketId The market ID
+   * @param orderId The order ID
+   * @param disputeId The dispute ID
+   * @param txn Optional transaction object
+   */
+  static getAll(
+    network: string,
+    marketId: string,
+    orderId: number,
+    disputeId: number,
+    txn?: Transaction,
+  ): Promise<Draft[]> {
+    return this.query(txn)
+      .whereNotDeleted()
+      .where('marketId', 'ilike', marketId)
+      .where({ disputeId, orderId });
+  }
 }

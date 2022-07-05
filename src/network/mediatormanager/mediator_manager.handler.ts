@@ -11,6 +11,8 @@ import { NotifierService, NotifyType } from '../../jobs/mailer/NotifierService';
 import { commify, formatUnits } from 'ethers/lib/utils';
 import Market from '../../models/market';
 import Draft from '../../models/draft';
+import Dispute from '../../models/dispute';
+import Swap from '../../models/swap';
 
 export class MediatorManagerHandler extends Handler {
   constructor(
@@ -327,6 +329,7 @@ export class MediatorManagerHandler extends Handler {
     event: ethers.Event,
     txn?: Transaction,
   ) {
+    // Update ticket status
     const ticket = await Ticket.getByNetworkOwnerAndIndex(
       this.network,
       owner,
@@ -344,6 +347,8 @@ export class MediatorManagerHandler extends Handler {
       },
       txn,
     );
+
+    // Create new draft
     await Draft.create(
       {
         network: this.network,
@@ -357,13 +362,81 @@ export class MediatorManagerHandler extends Handler {
       txn,
     );
 
+    let dispute = await Dispute.get(
+      this.network,
+      marketId,
+      orderId.toNumber(),
+      disputeId.toNumber(),
+      txn,
+    );
+
+    // Compute dispute phases end time  when dispute is fully drafted
+    const numDrafted = dispute.numMediatorsDrafted + 1;
+    const fullyDrafted = numDrafted >= dispute.numMediators;
+    const block = await event.getBlock();
+    const now = block.timestamp;
+    const evidEndAt = fullyDrafted ? now + parseInt(process.env.DM_EVIDENCE_DUR) : undefined;
+    const commitEndAt = fullyDrafted
+      ? evidEndAt + parseInt(process.env.DM_PREDICT_DUR) / 2
+      : undefined;
+    const predictEndAt = fullyDrafted
+      ? evidEndAt + parseInt(process.env.DM_PREDICT_DUR)
+      : undefined;
+    const appealEndAt = fullyDrafted
+      ? predictEndAt + parseInt(process.env.DM_APPEAL_DUR)
+      : undefined;
+    dispute = await Dispute.updateById(
+      dispute.id,
+      {
+        numMediatorsDrafted: numDrafted,
+        evidenceEndAt: evidEndAt ? moment.unix(evidEndAt).toISOString() : undefined,
+        commitEndAt: commitEndAt ? moment.unix(commitEndAt).toISOString() : undefined,
+        predictEndAt: predictEndAt ? moment.unix(predictEndAt).toISOString() : undefined,
+        revealEndAt: predictEndAt ? moment.unix(predictEndAt).toISOString() : undefined,
+        appealEndAt: appealEndAt ? moment.unix(appealEndAt).toISOString() : undefined,
+      },
+      txn,
+    );
+
     // Send notification
     await this.notifSrv.notify(NotifyType.TicketDrafted, this.network, owner, {
       marketId,
       owner,
-      ticketId: ticketId.toString(),
-      orderId: orderId.toString(),
+      ticketId: ticketId.toNumber(),
+      orderId: orderId.toNumber(),
     });
+
+    // Send notification to provider and taker when fully drafted
+    if (fullyDrafted) {
+      const swap = await Swap.get(this.network, orderId.toNumber(), undefined, txn);
+      const locals = {
+        marketId,
+        orderId: orderId.toNumber(),
+        numDrafted,
+        disputeId: disputeId.toNumber(),
+        pair: `${swap.base}/${swap.quote}`.toUpperCase(),
+        evidencePhaseHoursLeft: moment(dispute.evidenceEndAt).fromNow(true),
+      };
+      await this.notifSrv.notify(NotifyType.FullyDrafted, this.network, swap.provider, locals);
+      await this.notifSrv.notify(NotifyType.FullyDrafted, this.network, swap.taker, locals);
+
+      // Send notification to drafted mediators
+      const drafted = await Draft.getAll(
+        this.network,
+        marketId,
+        orderId.toNumber(),
+        disputeId.toNumber(),
+        txn,
+      );
+      for (const draft of drafted) {
+        await this.notifSrv.notify(
+          NotifyType.EvidencePhaseStarted,
+          this.network,
+          draft.owner,
+          locals,
+        );
+      }
+    }
 
     return Promise.resolve();
   }

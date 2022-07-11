@@ -16,9 +16,9 @@ export default class Dispute extends BaseModel {
   deposit: string;
   // The market ID joined
   marketId: string;
-  // The order ID
+  // The order index
   orderId: number;
-  // The dispute ID
+  // The dispute index
   disputeId: number;
   // The number of mediators required
   numMediators: number;
@@ -44,6 +44,16 @@ export default class Dispute extends BaseModel {
   released: boolean;
   // Indicates the dispute was abandoned
   abandoned: boolean;
+  // Indicates the order was released before dispute execution
+  orderReleased: boolean;
+  // Notification marker for `evidenceEndAt`
+  notifiedOnEvidenceEndAt: boolean;
+  // Notification marker for `commitEndAt
+  notifiedOnCommitEndAt: boolean;
+  // Notification marker for `revealEndAt`
+  notifiedOnRevealEndAt: boolean;
+  // Notification marker for `appealEndAt`
+  notifiedOnAppealEndAt: boolean;
 
   /*** Not Persisted **/
   drafted: boolean;
@@ -168,5 +178,110 @@ export default class Dispute extends BaseModel {
       .where('marketId', 'ilike', marketId)
       .whereNotDeleted()
       .first();
+  }
+
+  /**
+   * Get a recently created dispute of an order
+   * @param network The network name
+   * @param marketId The marker ID
+   * @param orderId The order ID
+   * @param txn Optional transaction object
+   */
+  static getRecentOfOrder(
+    network: string,
+    marketId: string,
+    orderId: number,
+    txn?: Transaction,
+  ): Promise<Dispute> {
+    return this.query(txn)
+      .where({ network, orderId })
+      .where('marketId', 'ilike', marketId)
+      .orderBy('disputeId', 'DESC')
+      .whereNotDeleted()
+      .first();
+  }
+
+  /**
+   * Get disputes that have passed their evidenceEndAt date but have not
+   * had notifications sent.
+   * @param limit The number of disputes to return
+   * @param txn Optional transaction object
+   */
+  static getByAfterEvidenceEndAt(limit = 100, txn?: Transaction): Promise<Dispute[]> {
+    return this.query(txn)
+      .whereNotDeleted()
+      .where('evidenceEndAt', 'is not', null)
+      .where('evidenceEndAt', '<=', 'now()')
+      .where({
+        notifiedOnEvidenceEndAt: false,
+        orderReleased: false,
+        executed: false,
+        released: false,
+        abandoned: false,
+      })
+      .limit(limit);
+  }
+
+  /**
+   * Get disputes that have passed their commitEndAt date but have not had
+   * notifications sent.
+   * @param limit The number of disputes to return
+   * @param txn Optional transaction object
+   */
+  static getByAfterCommitEndAt(limit = 100, txn?: Transaction): Promise<Dispute[]> {
+    return this.query(txn)
+      .whereNotDeleted()
+      .where('commitEndAt', 'is not', null)
+      .where('commitEndAt', '<=', 'now()')
+      .where({
+        notifiedOnCommitEndAt: false,
+        orderReleased: false,
+        executed: false,
+        released: false,
+        abandoned: false,
+      })
+      .limit(limit);
+  }
+
+  /**
+   * Get disputes that have passed their revealEndAt date but have not had
+   * notifications sent.
+   * @param limit The number of disputes to return
+   * @param txn Optional transaction object
+   */
+  static getByAfterRevealEndAt(limit = 100, txn?: Transaction): Promise<Dispute[]> {
+    return this.query(txn)
+      .whereNotDeleted()
+      .where('revealEndAt', 'is not', null)
+      .where('revealEndAt', '<=', 'now()')
+      .where({
+        notifiedOnRevealEndAt: false,
+        orderReleased: false,
+        executed: false,
+        released: false,
+        abandoned: false,
+      })
+      .limit(limit);
+  }
+
+  /**
+   * Get disputes that have passed their appealEndAt date but have not had
+   * notifications sent.
+   * @param limit The number of disputes to return
+   * @param txn Optional transaction object
+   */
+  static getByAfterAppealEndAt(limit = 100, txn?: Transaction): Promise<Dispute[]> {
+    return this.query(txn)
+      .whereNotDeleted()
+      .where('appealEndAt', 'is not', null)
+      .where('appealEndAt', '<=', 'now()')
+      .where({
+        notifiedOnAppealEndAt: false,
+        orderReleased: false,
+        executed: false,
+        released: false,
+        abandoned: false,
+      })
+      .limit(limit);
   }
 }

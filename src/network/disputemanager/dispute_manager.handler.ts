@@ -5,11 +5,13 @@ import { Transaction } from 'objection';
 import Dispute from '../../models/dispute';
 import { toBN } from '../common';
 import Market from '../../models/market';
-import Ticket from '../../models/ticket';
 import Commit from '../../models/commit';
 import Reveal from '../../models/reveal';
 import { NotifierService, NotifyType } from '../../jobs/mailer/NotifierService';
 import NetworkService from '../network.service';
+import Draft from '../../models/draft';
+import * as _ from 'lodash';
+import * as moment from 'moment';
 
 export class DisputeManagerHandler extends Handler {
   constructor(
@@ -306,18 +308,59 @@ export class DisputeManagerHandler extends Handler {
     event: Event,
     txn?: Transaction,
   ) {
-    const dispute = await Dispute.get(
+    let dispute = await Dispute.get(
       this.network,
       marketId,
       orderId.toNumber(),
       disputeId.toNumber(),
       txn,
     );
-    await Dispute.updateById(dispute.id, {
-      executed: true,
-      released: winningVote === '0x31',
-      abandoned,
-    });
+
+    // Update dispute
+    const stalled = !['0x30', '0x31'].includes(winningVote);
+    dispute = await Dispute.updateById(
+      dispute.id,
+      {
+        executed: true,
+        released: !stalled ? winningVote === '0x31' : null,
+        abandoned,
+      },
+      txn,
+    );
+
+    const recipients: { address: string; drafted?: boolean }[] = [];
+
+    // Get the swap order
+    const swap = await Swap.get(dispute.network, dispute.orderId, txn);
+    recipients.push({ address: swap.provider }, { address: swap.taker });
+
+    // Get the drafted tickets
+    const drafted = await Draft.getAll(
+      swap.network,
+      swap.marketId,
+      swap.orderId,
+      dispute.disputeId,
+    );
+    recipients.push(
+      ..._.map(drafted, (v) => {
+        return { address: v.owner, drafted: true };
+      }),
+    );
+
+    // Send notification
+    const { released } = dispute;
+    for (const recipient of recipients) {
+      await this.notifSrv.notify(NotifyType.DisputeExecuted, swap.network, recipient.address, {
+        marketId: swap.marketId,
+        network: swap.network,
+        orderId: swap.orderId,
+        disputeId: dispute.disputeId,
+        drafted: recipient.drafted,
+        pair: swap.getPair(),
+        outcome: released === null ? 'Stalled' : released ? 'Release' : 'Cancel',
+      });
+    }
+
     return Promise.resolve();
   }
 }

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+Hello {{recipient}},
+<br><br>
+Dispute #{{disputeId}} of swap <a
+  href="https://app.fiatx.co/swap/{{orderId}}">#{{orderId}}</a> has passed the
+vote reveal phase.
+This means mediators can no longer reveal their vote. It is now time for
+the <b>appeal phase</b>. <br><br> In this phase, swap participants
+(liquidity provider or taker) can appeal the ruling of the dispute before
+execution by miners.
+<br><br>
+Ruling: <b style="font-size:22px; color: orange;">{{outcome}}</b> <br>
+Appeal Phase Ends In: <b style="font-size:
+22px; color: darkolivegreen;">{{appealPhaseHoursLeft}}</b>
+<br><br>
+{{#if participant}}
+  <h3 style="color: indianred">WARNING</h3>
+  <ul style="color: indianred">
+    <li>Appeal requires a bond that is doubled for every new appeal.
+      It is calculated as <i>baseCost x numberOfAppeals</i> where
+      <i>baseCost</i> =
+      <i>{{cost}}</i> P2P.
+    </li>
+    <li>Just like the appeal bond, mediators are doubled for every new appeal.
+    </li>
+    <li>You will not be able to appeal the ruling after the appeal phased
+      elapses.
+    </li>
+  </ul>
+{{/if}}
+<br>
+<ul>
+  <li><a href="https://app.fiatx.co/swap/{{orderId}}">View Swap Order</a></li>
+  <li><a href="https://app.fiatx.co/swap/{{orderId}}">How Disputes Work</a></li>
+</ul>
+<br>
+{{app}}
+</body>
+</html>

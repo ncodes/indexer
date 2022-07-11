@@ -13,6 +13,7 @@ import Market from '../../models/market';
 import { commify, formatUnits } from 'ethers/lib/utils';
 import * as moment from 'moment';
 import { toBN } from '../common';
+import Dispute from '../../models/dispute';
 
 export class CoreHandler extends Handler {
   logger = new Logger(CoreHandler.name);
@@ -379,6 +380,17 @@ export class CoreHandler extends Handler {
       const swap = await Swap.get(this.network, orderId.toNumber() - 1, undefined, txn);
       await Swap.updateById(swap.id, { released: true }, txn);
       const { marketId, provider, cost } = swap;
+
+      // Mark the last dispute as `orderReleased` if there is any
+      const dispute = await Dispute.getRecentOfOrder(
+        this.network,
+        marketId,
+        orderId.toNumber() - 1,
+        txn,
+      );
+      if (dispute) {
+        await Dispute.updateById(dispute.id, { orderReleased: true }, txn);
+      }
 
       // Update liquidity
       const liq = await Liquidity.getLiquidity(this.network, marketId, provider, undefined, txn);

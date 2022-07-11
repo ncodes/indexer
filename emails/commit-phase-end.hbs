@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+Hello {{recipient}},
+<br><br>
+Dispute #{{disputeId}} of swap <a href="https://app.fiatx
+.co/swap/{{orderId}}">#{{orderId}}</a> has passed the vote commit phase.
+This means new votes will not be accepted. It is now time for
+the <b>vote reveal phase</b>. <br><br> In this phase, drafted mediators
+who committed their vote in the previous phase must reveal their vote.
+<br><br>
+Vote Reveal Phase Ends In: <b style="font-size:
+22px; color: darkolivegreen;">{{revealPhaseHoursLeft}}</b>
+<br>
+{{#if drafted}}
+  <h3 style="color: indianred">WARNING</h3>
+  <ul style="color: indianred">
+    <li>Failure to reveal your vote will get your ticket slashed.</li>
+  </ul>
+{{/if}}
+<br>
+<ul>
+  <li><a href="https://app.fiatx.co/swap/{{orderId}}">View Swap Order</a></li>
+  <li><a href="https://app.fiatx.co/swap/{{orderId}}">How Disputes Work</a></li>
+</ul>
+<br>
+{{app}}
+</body>
+</html>

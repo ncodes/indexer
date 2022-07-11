@@ -27,6 +27,7 @@ import { isTestMode } from '../common/common';
 import { Signer } from '@ethersproject/abstract-signer';
 import { Provider } from '@ethersproject/abstract-provider';
 import { ContractInterface } from '@ethersproject/contracts/src.ts';
+import { Watcher } from './watcher';
 
 @Injectable()
 export default class NetworkService {
@@ -137,20 +138,18 @@ export default class NetworkService {
       prov,
     );
 
-    // Listen for events
-    new MarketCoreHandler(this, this.notifSrv, prov, network, this.contracts[network]).listen();
-    new CoreHandler(this, this.notifSrv, prov, network, this.contracts[network]).listen();
-    new MediatorManagerHandler(
-      this,
-      this.notifSrv,
-      prov,
-      network,
-      this.contracts[network],
-    ).listen();
-    new DisputeManagerHandler(this, this.notifSrv, prov, network, this.contracts[network]).listen();
-    new P2PStakerHandler(prov, network, this.contracts[network]).listen();
-    new LPStakerHandler(prov, network, this.contracts[network]).listen();
-    new FeeSharerHandler(prov, network, this.contracts[network]).listen();
+    const watcher = new Watcher(network, prov);
+
+    // Add handlers to watcher
+    await watcher.add(
+      new MarketCoreHandler(this, this.notifSrv, prov, network, this.contracts[network]),
+      new CoreHandler(this, this.notifSrv, prov, network, this.contracts[network]),
+      new MediatorManagerHandler(this, this.notifSrv, prov, network, this.contracts[network]),
+      new DisputeManagerHandler(this, this.notifSrv, prov, network, this.contracts[network]),
+      new P2PStakerHandler(prov, network, this.contracts[network]),
+      new LPStakerHandler(prov, network, this.contracts[network]),
+      new FeeSharerHandler(prov, network, this.contracts[network]),
+    );
   }
 
   /**

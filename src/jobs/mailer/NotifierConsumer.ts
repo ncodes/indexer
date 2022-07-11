@@ -66,6 +66,16 @@ export class NotifierConsumer {
         return this.notifyOnFullyDrafted(job.data);
       case NotifyType.EvidencePhaseStarted:
         return this.notifyOnEvidencePhaseStart(job.data);
+      case NotifyType.EvidencePhaseEnded:
+        return this.notifyOnEvidencePhaseEnd(job.data);
+      case NotifyType.CommitPhaseEnded:
+        return this.notifyOnCommitPhaseEnd(job.data);
+      case NotifyType.RevealPhaseEnded:
+        return this.notifyOnRevealPhaseEnd(job.data);
+      case NotifyType.AppealPhaseEnded:
+        return this.notifyOnAppealPhaseEnd(job.data);
+      case NotifyType.DisputeExecuted:
+        return this.notifyOnDisputedExecuted(job.data);
     }
   }
 
@@ -373,7 +383,7 @@ ${amount} ${base} of your liquidity has been swapped for ${cost} ${quote}.`,
       network: job.network,
       userId: job.user.id,
       title: sub,
-      body: `The swap#${orderId} has been marked as <b>PAID</b>. 
+      body: `The swap #${orderId} has been marked as <b>PAID</b>. 
 Please carefully verify payment of ${cost} ${quote} and only release the assets when payment is confirmed.`,
     });
 
@@ -450,7 +460,7 @@ Please carefully verify payment of ${cost} ${quote} and only release the assets 
       network: job.network,
       userId: job.user.id,
       title: sub,
-      body: `Your ticket#${ticketId} that was drafted to swap#${orderId} was slashed of ${amount} ${asset} because it
+      body: `Your ticket #${ticketId} that was drafted to swap #${orderId} was slashed of ${amount} ${asset} because it
 <b>${reason}</b> in a dispute.`,
     });
 
@@ -488,7 +498,8 @@ of <a href="https://app.fiatx.co/market/${marketId}">market#${shortenAddr(market
   async notifyOnDisputeCreation(job: NotifyJob) {
     const { orderId, appeal, pair } = job.data;
     const sub =
-      (!appeal ? `Swap Disputed` : 'Dispute Outcome Appealed') + ` (ID:${orderId}, Market:${pair})`;
+      (!appeal ? `[Dispute] Swap Disputed` : '[Dispute] Dispute Outcome' + ' Appealed') +
+      ` (ID:${orderId}, Market:${pair})`;
 
     const notif = {
       network: job.network,
@@ -499,10 +510,10 @@ of <a href="https://app.fiatx.co/market/${marketId}">market#${shortenAddr(market
     let template: string;
 
     if (!appeal) {
-      notif.body = `Your swap#${orderId} has been disputed by the counterparty.`;
+      notif.body = `Your swap #${orderId} has been disputed by the counterparty.`;
       template = 'swap-disputed';
     } else {
-      notif.body = `The last dispute outcome of your swap#${orderId} has been appealed by the counterparty.`;
+      notif.body = `The last dispute outcome of your swap #${orderId} has been appealed by the counterparty.`;
       template = 'swap-dispute-appealed';
     }
 
@@ -516,12 +527,12 @@ of <a href="https://app.fiatx.co/market/${marketId}">market#${shortenAddr(market
 
   async notifyOnFullyDrafted(job: NotifyJob) {
     const { disputeId, pair } = job.data;
-    const sub = `Evidence Phase Begins (Dispute ID:${disputeId}, Market:${pair})`;
+    const sub = `[Dispute] Evidence Phase Begins (Dispute ID:${disputeId}, Market:${pair})`;
     const notif = {
       network: job.network,
       userId: job.user.id,
       title: sub,
-      body: `All mediators have been drafted to the dispute#${disputeId}. This means the dispute has entered the <b>evidence collection phase</b>. In this phase, you are
+      body: `All mediators have been drafted to the dispute #${disputeId}. This means the dispute has entered the <b>evidence collection phase</b>. In this phase, you are
 expected to submit evidence to back your preferred outcome or defend your position.`,
     };
     const template = 'mediators-drafted';
@@ -534,15 +545,106 @@ expected to submit evidence to back your preferred outcome or defend your positi
   }
 
   async notifyOnEvidencePhaseStart(job: NotifyJob) {
-    const { disputeId, pair } = job.data;
-    const sub = `Review or Request For Evidence (Dispute ID:${disputeId}, Market:${pair})`;
+    const { disputeId, pair, orderId } = job.data;
+    const sub = `[Dispute] Evidence Phase Begins (Dispute ID:${disputeId}, Market:${pair}, Swap ID: ${orderId})`;
     const notif = {
       network: job.network,
       userId: job.user.id,
       title: sub,
-      body: `A dispute#`,
+      body: `As a drafted mediator of swap <a href="https://app.fiatx.co/swap/${orderId}">#${orderId}'s</a>
+dispute #${disputeId}, we are letting you know that the dispute has entered evidence submission phase`,
     };
     const template = 'draft-evidence-phase';
+    await Notification.create(notif);
+    await this.mailer.send(template, sub, job.user.email, {
+      ...job.data,
+      recipient: shortenAddr(job.recipient),
+      title: sub,
+    });
+  }
+
+  async notifyOnEvidencePhaseEnd(job: NotifyJob) {
+    const { disputeId, pair, orderId } = job.data;
+    const sub = `[Dispute] Vote Commit Phase Begins (Dispute ID:${disputeId}, Market:${pair}, Swap ID: ${orderId})`;
+    const notif = {
+      network: job.network,
+      userId: job.user.id,
+      title: sub,
+      body: `Dispute ${disputeId} of swap <a href="https://app.fiatx.co/swap/${orderId}">${orderId}</a> has entered the vote commit phase.`,
+    };
+    const template = 'evidence-phase-end';
+    await Notification.create(notif);
+    await this.mailer.send(template, sub, job.user.email, {
+      ...job.data,
+      recipient: shortenAddr(job.recipient),
+      title: sub,
+    });
+  }
+
+  async notifyOnCommitPhaseEnd(job: NotifyJob) {
+    const { disputeId, pair, orderId } = job.data;
+    const sub = `[Dispute] Vote Reveal Phase Begins (Dispute ID:${disputeId}, Market:${pair}, Swap ID: ${orderId})`;
+    const notif = {
+      network: job.network,
+      userId: job.user.id,
+      title: sub,
+      body: `Dispute ${disputeId} of swap <a href="https://app.fiatx.co/swap/${orderId}">${orderId}</a> has entered the vote reveal phase.`,
+    };
+    const template = 'commit-phase-end';
+    await Notification.create(notif);
+    await this.mailer.send(template, sub, job.user.email, {
+      ...job.data,
+      recipient: shortenAddr(job.recipient),
+      title: sub,
+    });
+  }
+
+  async notifyOnRevealPhaseEnd(job: NotifyJob) {
+    const { disputeId, pair, orderId } = job.data;
+    const sub = `[Dispute] Appeal Phase Begins (Dispute ID:${disputeId}, Market:${pair}, Swap ID: ${orderId})`;
+    const notif = {
+      network: job.network,
+      userId: job.user.id,
+      title: sub,
+      body: `Dispute ${disputeId} of swap <a href="https://app.fiatx.co/swap/${orderId}">${orderId}</a> has entered the appeal phase.`,
+    };
+    const template = 'reveal-phase-end';
+    await Notification.create(notif);
+    await this.mailer.send(template, sub, job.user.email, {
+      ...job.data,
+      recipient: shortenAddr(job.recipient),
+      title: sub,
+    });
+  }
+
+  async notifyOnAppealPhaseEnd(job: NotifyJob) {
+    const { disputeId, pair, orderId } = job.data;
+    const sub = `[Dispute] Execution Phase (Dispute ID:${disputeId}, Market:${pair}, Swap ID: ${orderId})`;
+    const notif = {
+      network: job.network,
+      userId: job.user.id,
+      title: sub,
+      body: `Dispute ${disputeId} of swap <a href="https://app.fiatx.co/swap/${orderId}">${orderId}</a> has entered the ruling execution phase.`,
+    };
+    const template = 'appeal-phase-end';
+    await Notification.create(notif);
+    await this.mailer.send(template, sub, job.user.email, {
+      ...job.data,
+      recipient: shortenAddr(job.recipient),
+      title: sub,
+    });
+  }
+
+  async notifyOnDisputedExecuted(job: NotifyJob) {
+    const { disputeId, pair, orderId, outcome } = job.data;
+    const sub = `[Dispute] Dispute Executed <${outcome}> (Dispute ID:${disputeId}, Market:${pair}, Swap ID: ${orderId})`;
+    const notif = {
+      network: job.network,
+      userId: job.user.id,
+      title: sub,
+      body: `Dispute ${disputeId} of swap <a href="https://app.fiatx.co/swap/${orderId}">${orderId}</a> has been executed. Ruling: ${outcome}.`,
+    };
+    const template = 'dispute-executed';
     await Notification.create(notif);
     await this.mailer.send(template, sub, job.user.email, {
       ...job.data,

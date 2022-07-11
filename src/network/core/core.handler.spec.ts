@@ -8,6 +8,7 @@ import Meta from '../../models/meta';
 import Market from '../../models/market';
 import Swap from '../../models/swap';
 import MarketPrice from '../../models/market_price';
+import Dispute from '../../models/dispute';
 
 const CoreContract = jest.fn().mockImplementation(() => {
   return {};
@@ -404,6 +405,19 @@ describe('CoreHandler', () => {
             provider: `0xProvider`,
           });
 
+          await Dispute.create({
+            network: net,
+            marketId: market.marketId,
+            orderId: orderId.toNumber() - 1,
+            disputeId: 0
+          }); // prettier-ignore
+          let dispute = await Dispute.create({
+            network: net,
+            marketId: market.marketId,
+            orderId: orderId.toNumber() - 1,
+            disputeId: 1
+          }); // prettier-ignore
+
           mockGetSwapFeeInfo.mockResolvedValue({ cost: '10000000000000000000' });
           mockGetTokenDecimals.mockResolvedValue(BigNumber.from(18));
 
@@ -445,6 +459,9 @@ describe('CoreHandler', () => {
           expect(market.lastSuccessfulSwapAt).toBeDefined();
           expect(market.amountSwapped).toEqual(amount.toString());
           expect(market.completionRate).toEqual(100);
+
+          dispute = await Dispute.getById(dispute.id);
+          expect(dispute.orderReleased).toBeTruthy();
         },
       );
     });

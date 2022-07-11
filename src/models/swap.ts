@@ -84,6 +84,10 @@ export default class Swap extends BaseModel {
     return object;
   }
 
+  getPair() {
+    return `${this.base}/${this.quote}`.toUpperCase();
+  }
+
   static get tableName() {
     return 'swaps';
   }

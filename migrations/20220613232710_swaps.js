@@ -9,7 +9,7 @@ exports.up = function (knex) {
       table.string('baseAddress');
       table.string('quote');
       table.string('quoteAddress');
-      table.string('orderId');
+      table.integer('orderId');
       table.string('provider');
       table.string('taker');
       table.string('amount');

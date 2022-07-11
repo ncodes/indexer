@@ -8,6 +8,7 @@ import Dispute from '../../models/dispute';
 import { NotifyType } from '../../jobs/mailer/NotifierService';
 import Commit from '../../models/commit';
 import Reveal from '../../models/reveal';
+import Draft from '../../models/draft';
 
 const MarketCoreContract = jest.fn().mockImplementation(() => {
   return {};
@@ -195,11 +196,12 @@ describe('DisputeManagerHandler', () => {
   });
 
   describe('.onDecisionExecuted', () => {
-    it('should create a commit', async () => {
-      const orderId = toBN(1);
-      const marketId = '0xMarket';
-      const disputeId = toBN(1);
+    const orderId = toBN(1);
+    const marketId = '0xMarket';
+    const disputeId = toBN(1);
+    let swap: Swap;
 
+    beforeEach(async () => {
       await Dispute.create({
         network: net,
         marketId,
@@ -207,22 +209,155 @@ describe('DisputeManagerHandler', () => {
         disputeId: disputeId.toNumber(),
       });
 
-      await expect(
-        handler.onDecisionExecuted(
-          marketId,
-          orderId,
-          disputeId,
-          '0xExecutor',
-          true,
-          '0x31',
-          toBN(100),
-          {} as any,
-        ),
-      ).resolves.toBeUndefined();
+      swap = await Swap.create({
+        network: net,
+        marketId,
+        orderId: orderId.toNumber(),
+        provider: '0xProvider',
+        taker: '0xTaker',
+        base: 'BASE',
+        quote: 'QUOTE',
+      });
 
-      const dispute = await Dispute.get(net, marketId, orderId.toNumber(), disputeId.toNumber());
-      expect(dispute.executed).toBeTruthy();
-      expect(dispute.released).toBeTruthy();
+      await Draft.create({
+        network: net,
+        marketId,
+        orderId: orderId.toNumber(),
+        disputeId: disputeId.toNumber(),
+        owner: '0xDrafted',
+      });
+    });
+
+    describe('when winningVote=0x31', () => {
+      it('should consider dispute as released', async () => {
+        await expect(
+          handler.onDecisionExecuted(
+            marketId,
+            orderId,
+            disputeId,
+            '0xExecutor',
+            true,
+            '0x31',
+            toBN(100),
+            {} as any,
+          ),
+        ).resolves.toBeUndefined();
+
+        const dispute = await Dispute.get(net, marketId, orderId.toNumber(), disputeId.toNumber());
+        expect(dispute.executed).toBeTruthy();
+        expect(dispute.released).toBeTruthy();
+
+        // expect notification to have been sent
+        const payload = {
+          marketId,
+          orderId: orderId.toNumber(),
+          network: net,
+          disputeId: disputeId.toNumber(),
+          drafted: undefined,
+          pair: swap.getPair(),
+          outcome: 'Release',
+        };
+        expect(mockNotify).toHaveBeenNthCalledWith(
+          1,
+          NotifyType.DisputeExecuted,
+          net,
+          '0xProvider',
+          payload,
+        );
+        expect(mockNotify).toHaveBeenNthCalledWith(
+          2,
+          NotifyType.DisputeExecuted,
+          net,
+          '0xTaker',
+          payload,
+        );
+        payload.drafted = true;
+        expect(mockNotify).toHaveBeenNthCalledWith(
+          3,
+          NotifyType.DisputeExecuted,
+          net,
+          '0xDrafted',
+          payload,
+        );
+      });
+    });
+
+    describe('when winningVote=0x30', () => {
+      it('should consider dispute as cancelled', async () => {
+        await expect(
+          handler.onDecisionExecuted(
+            marketId,
+            orderId,
+            disputeId,
+            '0xExecutor',
+            true,
+            '0x30',
+            toBN(100),
+            {} as any,
+          ),
+        ).resolves.toBeUndefined();
+
+        const dispute = await Dispute.get(net, marketId, orderId.toNumber(), disputeId.toNumber());
+        expect(dispute.executed).toBeTruthy();
+        expect(dispute.released).toBeFalsy();
+
+        // expect notification to have been sent
+        const payload = {
+          marketId,
+          orderId: orderId.toNumber(),
+          network: net,
+          disputeId: disputeId.toNumber(),
+          drafted: undefined,
+          pair: swap.getPair(),
+          outcome: 'Cancel',
+        };
+        expect(mockNotify).toHaveBeenNthCalledWith(
+          1,
+          NotifyType.DisputeExecuted,
+          net,
+          '0xProvider',
+          payload,
+        );
+      });
+    });
+
+    describe('when winningVote=0x00 (or anything not 0x30 or 0x31)', () => {
+      it('should consider dispute as stalled', async () => {
+        await expect(
+          handler.onDecisionExecuted(
+            marketId,
+            orderId,
+            disputeId,
+            '0xExecutor',
+            true,
+            '0x00',
+            toBN(100),
+            {} as any,
+          ),
+        ).resolves.toBeUndefined();
+
+        const dispute = await Dispute.get(net, marketId, orderId.toNumber(), disputeId.toNumber());
+        expect(dispute.executed).toBeTruthy();
+        expect(dispute.released).toBeNull();
+
+        // expect notification to have been sent
+        const payload = {
+          marketId,
+          orderId: orderId.toNumber(),
+          network: net,
+          disputeId: disputeId.toNumber(),
+          drafted: undefined,
+          pair: swap.getPair(),
+          outcome: 'Stalled',
+        };
+        expect(mockNotify).toHaveBeenNthCalledWith(
+          1,
+          NotifyType.DisputeExecuted,
+          net,
+          '0xProvider',
+          payload,
+        );
+      });
     });
   });
 });

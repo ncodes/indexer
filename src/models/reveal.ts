@@ -94,4 +94,26 @@ export default class Reveal extends BaseModel {
         .catch(reject);
     });
   }
+
+  /**
+   * Find reveals associated with a dispute
+   * @param network The network name
+   * @param orderId The order ID
+   * @param disputeId The dispute ID
+   * @param txn Optional transaction object
+   */
+  static findByDispute(
+    network: string,
+    orderId: number,
+    disputeId: number,
+    txn?: Transaction,
+  ): Promise<Reveal[]> {
+    return new Promise((resolve, reject) => {
+      this.query(txn)
+        .where({ network, orderId, disputeId })
+        .whereNotDeleted()
+        .then(resolve)
+        .catch(reject);
+    });
+  }
 }

@@ -32,9 +32,14 @@ Handlebars.registerHelper('shorten', (aString) => {
 Handlebars.registerHelper('gt', function (v1, v2, options) {
   'use strict';
   if (v1 > v2) {
+    ``;
     return options.fn(this);
   }
   return options.inverse(this);
+});
+
+Handlebars.registerHelper('ifEquals', function (arg1, arg2, options) {
+  return arg1 === arg2 ? options.fn(this) : options.inverse(this);
 });
 
 /**

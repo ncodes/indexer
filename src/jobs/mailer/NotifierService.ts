@@ -24,6 +24,11 @@ export enum NotifyType {
   DisputeCreated,
   FullyDrafted,
   EvidencePhaseStarted,
+  EvidencePhaseEnded,
+  CommitPhaseEnded,
+  RevealPhaseEnded,
+  AppealPhaseEnded,
+  DisputeExecuted,
 }
 
 @Injectable()

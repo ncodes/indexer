@@ -3,7 +3,16 @@
   "testEnvironment": "node",
   "globals": {
     "ts-jest": {
-      "isolatedModules": true
+      "isolatedModules": true,
+      "tsconfig": {
+        "allowJs": true
+      }
     }
-  }
+  },
+  "transform": {
+    "^.+\\.[tj]s$": "ts-jest"
+  },
+  "transformIgnorePatterns": [
+    "<rootDir>/node_modules/(?!defer-promise)"
+  ]
 }

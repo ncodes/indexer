@@ -1,10 +1,12 @@
-import { Controller, Get, Param, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Put, Query, Req, UseGuards, ValidationPipe } from '@nestjs/common';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import { Request } from 'express';
 import { isValidNetwork } from '../../network/common';
 import { ok, throw404 } from '../../common/responses/responses';
 import Notification from '../../models/notification';
+import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
+import { ListQueryDTO } from './query.dto';
 
 @Controller('v1/notifications')
 @UseGuards(BeAuthenticatedGuard)
@@ -12,32 +14,25 @@ import Notification from '../../models/notification';
 export class NotificationsController {
   /**
    * @param req The request object
-   * @param network The network name.
-   * @param read Whether to return read or unread notification
-   * @param count Indicates whether to return count information only
-   * @param limit The number of result to return (optional)
-   * @param offset The query offset (optional)
+   * @param q The query object
+   *  - [network] The network name.
+   *  - [read] Whether to return read or unread notification
+   *  - [count] Indicates whether to return count information only
+   *  - [limit] The number of result to return (optional)
+   *  - [offset] The query offset (optional)
    */
-  @Get('')
-  async list(
-    @Req() req: Request,
-    @Query('net') network: string,
-    @Query('read') read: string,
-    @Query('count') count: boolean,
-    @Query('limit') limit: string,
-    @Query('offset') offset: string,
-  ) {
-    if (!isValidNetwork(network)) throw404('unknown network');
+  @Get()
+  async list(@Req() req: Request, @Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
     const res = await Notification.getRecent(
-      network,
-      count,
+      q.net,
+      q.count,
       req.user.id,
-      read === undefined ? undefined : read === 'true',
-      parseInt(limit),
-      parseInt(offset),
+      q.read,
+      q.limit,
+      q.offset,
     );
 
-    if (count) {
+    if (q.count) {
       return ok().data({ count: res }).build<CountResponse>();
     }
 

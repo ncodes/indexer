@@ -1,11 +1,12 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards, ValidationPipe } from '@nestjs/common';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import { isValidNetwork } from '../../network/common';
 import { ok, throw404 } from '../../common/responses/responses';
 import Ticket from '../../models/ticket';
 import { TicketsService } from './tickets.service';
-import * as s from 'underscore.string';
+import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
+import { GetQueryDTO, ListQueryDTO } from './query.dto';
 
 @UseGuards(BeAuthenticatedGuard)
 @UseGuards(HasKeyGuard)
@@ -15,109 +16,75 @@ export class TicketsController {
 
   /**
    * Get a ticket
-   * @param network The network name.
-   * @param owner The owner of the ticket
-   * @param index The ticket ID
-   * @param noMerge Prevent merge of contract ticket with DB ticket object
-   * @param select Select what fields to return
+   * @param q The query object
+   *  - @param [network] The network name.
+   *  - @param [owner] The owner of the ticket
+   *  - @param [index] The ticket ID
+   *  - @param [noMerge] Prevent merge of contract ticket with DB ticket object
+   *  - @param [select] Select what fields to return
    */
   @Get(':owner/:index')
-  async get(
-    @Query('net') network,
-    @Param('owner') owner,
-    @Param('index') index,
-    @Query('noMerge') noMerge: boolean,
-    @Query('select') select: string,
-  ) {
-    if (!isValidNetwork(network)) throw404('unknown network');
-    const selectedFields = select ? select.split(',') : [];
-    const ticket = await Ticket.getByNetworkOwnerAndIndex(
-      network,
-      owner,
-      parseInt(index),
-      selectedFields,
-    );
+  async get(@Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO) {
+    const ticket = await Ticket.getByNetworkOwnerAndIndex(q.net, q.owner, q.index, q.select);
     if (!ticket) throw404('ticket not found');
-    await this.tickSrv.extendTicket(ticket, noMerge, selectedFields);
+    await this.tickSrv.extendTicket(ticket, q.noMerge, q.select);
     return ok().data(ticket).build();
   }
 
   /**
    * List tickets
-   * @param network The network name
-   * @param marketId The market ID
-   * @param owner Filter by ticket owner address
-   * @param orderId Filter by the ID of the order the ticket was drafted to.
-   * @param disputeId Filter by the dispute the ticket was drafted to
-   * @param joined Filter by joined status of the ticket
-   * @param matured Filter by maturity status
-   * @param drafted Filter by drafted status of the ticket
-   * @param expired Filter by expired status
-   * @param cancelled Filter by cancelled status
-   * @param count Return count information only
-   * @param slashed Filter by slashed status
-   * @param noMerge Prevent merge of contract ticket with DB ticket object
-   * @param limit Limit the number of records returned
-   * @param offset Set query offset (for pagination)
-   * @param select Select specific fields from the query
+   * @param q The query object
+   *  - [disputeId] Filter by the dispute the ticket was drafted to
+   *  - [joined] Filter by joined status of the ticket
+   *  - [matured] Filter by maturity status
+   *  - [drafted] Filter by drafted status of the ticket
+   *  - [expired] Filter by expired status
+   *  - [cancelled] Filter by cancelled status
+   *  - [count] Return count information only
+   *  - [slashed] Filter by slashed status
+   *  - [noMerge] Prevent merge of contract ticket with DB ticket object
+   *  - [limit] Limit the number of records returned
+   *  - [offset] Set query offset (for pagination)
+   *  - [select] Select specific fields from the query
    */
-  @Get('')
-  async list(
-    @Query('net') network,
-    @Query('mid') marketId: string,
-    @Query('owner') owner: string,
-    @Query('orderId') orderId: string,
-    @Query('disputeId') disputeId: string,
-    @Query('joined') joined: string,
-    @Query('matured') matured: string,
-    @Query('drafted') drafted: string,
-    @Query('expired') expired: string,
-    @Query('cancelled') cancelled: string,
-    @Query('count') count: boolean,
-    @Query('slashed') slashed: string,
-    @Query('noMerge') noMerge: boolean,
-    @Query('limit') limit: string,
-    @Query('offset') offset: string,
-    @Query('select') select: string,
-  ) {
-    if (!isValidNetwork(network)) throw404('unknown network');
-    if (!count) {
-      const selectedFields = select ? select.split(',') : [];
-      const liquidities = await Ticket.searchTickets(
-        network,
-        marketId,
-        owner,
-        parseInt(orderId),
-        parseInt(disputeId),
-        joined && s.toBoolean(joined),
-        matured && s.toBoolean(matured),
-        drafted && s.toBoolean(drafted),
-        expired && s.toBoolean(expired),
-        cancelled && s.toBoolean(cancelled),
-        slashed && s.toBoolean(slashed),
-        parseInt(limit || '25'),
-        parseInt(offset),
-        selectedFields,
+  @Get()
+  async list(@Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
+    if (!q.count) {
+      const result = await Ticket.searchTickets(
+        q.net,
+        q.marketId,
+        q.owner,
+        q.orderId,
+        q.disputeId,
+        q.joined,
+        q.matured,
+        q.drafted,
+        q.expired,
+        q.cancelled,
+        q.slashed,
+        q.limit || 25,
+        q.offset,
+        q.select,
       );
-      for (const ticket of liquidities) {
-        await this.tickSrv.extendTicket(ticket, noMerge, selectedFields);
+      for (const ticket of result) {
+        await this.tickSrv.extendTicket(ticket, q.noMerge, q.select);
       }
-      return ok().data(liquidities).build();
+      return ok().data(result).build();
     } else {
       return ok()
         .data({
           count: await Ticket.countTickets(
-            network,
-            owner,
-            marketId,
-            parseInt(orderId),
-            parseInt(disputeId),
-            joined && s.toBoolean(joined),
-            matured && s.toBoolean(matured),
-            drafted && s.toBoolean(drafted),
-            expired && s.toBoolean(expired),
-            cancelled && s.toBoolean(cancelled),
-            slashed && s.toBoolean(slashed),
+            q.net,
+            q.marketId,
+            q.owner,
+            q.orderId,
+            q.disputeId,
+            q.joined,
+            q.matured,
+            q.drafted,
+            q.expired,
+            q.cancelled,
+            q.slashed,
           ),
         })
         .build();

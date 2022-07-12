@@ -1,4 +1,13 @@
-import { Controller, Get, Head, Logger, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Head,
+  Logger,
+  Param,
+  Query,
+  UseGuards,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ok, throw400, throw404, throw500 } from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
@@ -7,6 +16,8 @@ import { isValidNetwork } from '../../network/common';
 import { MarketsService } from './markets.service';
 import InvitedMediator from '../../models/invited_mediators';
 import PermittedTrader from '../../models/permitted_trader';
+import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
+import { GetQueryDTO, ListInvitedMediatorsQueryDTO, ListQueryDTO } from './query.dto';
 
 @Controller('v1/markets')
 @UseGuards(BeAuthenticatedGuard)
@@ -18,27 +29,21 @@ export class MarketsController {
 
   /**
    * Get a market
-   * @param network The network where it exists
-   * @param mid The market ID
-   * @param noMerge Indicates prevent merging db object with contract object
-   * @param select Select extend fields to return
+   * @param marketId The market ID
+   * @param q The query object
+   *  - mid The market ID
+   *  - [net] The network where it exists
+   *  - [noMerge] Indicates prevent merging db object with contract object
+   *  - [select] Select extend fields to return
    * @returns
    */
   @Get(':mid')
-  async get(
-    @Param('mid') mid: string,
-    @Query('net') network,
-    @Query('noMerge') noMerge: boolean,
-    @Query('select') select: string,
-  ) {
-    if (!isValidNetwork(network)) throw400('unknown network');
-
-    const selectedFields = select ? select.split(',') : [];
-    const market = await Market.getMarket(network, mid, selectedFields);
+  async get(@Param('mid') marketId: string, @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO) {
+    const market = await Market.getMarket(q.net, marketId, q.select);
     if (!market) throw404('market not found');
 
     try {
-      await this.marketSrv.extendMarket(market, noMerge, selectedFields);
+      await this.marketSrv.extendMarket(market, q.noMerge, q.select);
       return ok().data(market).build();
     } catch (error) {
       this.logger.error(error, null, 'get()');
@@ -51,48 +56,37 @@ export class MarketsController {
 
   /**
    * List markets
-   * @param network The network name
-   * @param creator Filter the result by creator address (optional)
-   * @param noMerge Indicates that market from DB should not be merged with
-   * market from contract.
-   * @param queryStr The query term
-   * @param count Returns the count of markets only
-   * @param limit The number of result to return (optional)
-   * @param offset The query offset
-   * @param select Select fields to return
+   * @param q The query object
+   *  - [network] The network name
+   *  - [creator] Filter the result by creator address (optional)
+   *  - [noMerge] Indicates to prevent merging contract object with DB object
+   *  - [query] The query string
+   *  - [count] Returns the count of markets only
+   *  - [limit] The number of result to return (optional)
+   *  - [offset] The query offset
+   *  - [select] Select fields to return
    * @returns
    */
   @Get()
-  async list(
-    @Query('net') network,
-    @Query('creator') creator,
-    @Query('noMerge') noMerge: boolean,
-    @Query('query') queryStr: string,
-    @Query('count') count: boolean,
-    @Query('limit') limit: string,
-    @Query('offset') offset: string,
-    @Query('select') select: string,
-  ) {
-    if (!isValidNetwork(network)) throw400('unknown network');
-    const selectedFields = select ? select.split(',') : [];
+  async list(@Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
     const result = await Market.searchByCreatorOrQueryString(
-      network,
-      creator,
-      queryStr,
-      count,
-      parseInt(limit || '25'),
-      parseInt(offset),
-      selectedFields,
+      q.net,
+      q.creator,
+      q.query,
+      q.count,
+      q.limit || 25,
+      q.offset,
+      q.select,
     );
 
-    if (count) {
+    if (q.count) {
       return ok().data({ count: result }).build();
     }
 
     const markets = result as Market[];
     for (const m of markets) {
       try {
-        await this.marketSrv.extendMarket(m, noMerge, selectedFields);
+        await this.marketSrv.extendMarket(m, q.noMerge, q.select);
       } catch (error) {
         this.logger.error(error, null, 'list()');
         if (error.message.indexOf('invalid arrayify value') !== -1) throw404('market not found');
@@ -105,52 +99,41 @@ export class MarketsController {
 
   /**
    * List invited mediators of a market
-   * @param network The network name
-   * @param mid The market ID
-   * @param accepted Indicate to return only accepted invitations
-   * @param limit The number of result to return (optional)
-   * @param offset The query offset
+   * @param marketId The market ID
+   * @param q The query object
+   *  - [network] The network name
+   *  - [mid] The market ID
+   *  - [accepted] Indicate to return only accepted invitations
+   *  - [limit] The number of result to return (optional)
+   *  - [offset] The query offset
    */
   @Get('/:mid/invited_mediators')
   async listInvitedMediators(
-    @Query('net') network,
-    @Param('mid') mid: string,
-    @Query('accepted') accepted: string,
-    @Query('limit') limit: string,
-    @Query('offset') offset: string,
+    @Param('mid') marketId: string,
+    @Query(new ValidationPipe(ValPipeOpt)) q: ListInvitedMediatorsQueryDTO,
   ) {
-    if (!isValidNetwork(network)) throw400('unknown network');
     const res = await InvitedMediator.searchByNetworkMarketID(
-      network,
-      mid,
-      accepted === undefined ? undefined : accepted === 'true',
-      parseInt(limit || '25'),
-      parseInt(offset),
+      q.net,
+      q.marketId,
+      q.accepted,
+      q.limit,
+      q.offset,
     );
     return ok().data(res).build();
   }
 
   /**
    * List permitted traders of a market
-   * @param network The network name
-   * @param mid The market ID
-   * @param limit The number of result to return (optional)
-   * @param offset The query offset
+   * @param marketId The market ID
+   * @param q The query object
    */
   @Get('/:mid/permitted_traders')
   async listPermittedTraders(
-    @Query('net') network,
-    @Param('mid') mid: string,
-    @Query('limit') limit: string,
-    @Query('offset') offset: string,
+    @Param('mid') marketId: string,
+    @Query(new ValidationPipe(ValPipeOpt)) q: ListInvitedMediatorsQueryDTO,
   ) {
-    if (!isValidNetwork(network)) throw400('unknown network');
-    const res = await PermittedTrader.searchByNetworkMarketID(
-      network,
-      mid,
-      parseInt(limit || '25'),
-      parseInt(offset),
-    );
+    if (!isValidNetwork(q.net)) throw400('unknown network');
+    const res = await PermittedTrader.searchByNetworkMarketID(q.net, marketId, q.limit, q.offset);
     return ok().data(res).build();
   }
 }

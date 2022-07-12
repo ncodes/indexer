@@ -17,8 +17,7 @@ import validator from 'validator';
 export const CommonValidationPipeOpt: ValidationPipeOptions = {
   transform: true,
   exceptionFactory: (errors) => {
-    const firstMsg =
-      errors[0].constraints[Object.keys(errors[0].constraints)[0]];
+    const firstMsg = errors[0].constraints[Object.keys(errors[0].constraints)[0]];
 
     if (validator.isJSON(firstMsg)) {
       const err = JSON.parse(firstMsg);

@@ -1,10 +1,12 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards, ValidationPipe } from '@nestjs/common';
 import { ok, throw404 } from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import Liquidity from '../../models/liquidity';
 import { isValidNetwork } from '../../network/common';
 import { LiquidityService } from './liquidity.service';
+import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
+import { ListQueryDTO } from './query.dto';
 
 @Controller('v1/liquidities')
 @UseGuards(BeAuthenticatedGuard)
@@ -14,45 +16,35 @@ export class LiquidityController {
 
   /**
    * List liquidities on a network
-   * @param network The network name.
-   * @param marketId The market ID (optional)
-   * @param provider The provider address (optional)
-   * @param noMerge Prevent merge of contract liquidity with DB liquidity object
-   * @param count Returns the count of matching result
-   * @param limit The number of result to return (optional)
-   * @param offset The query offset (optional)
-   * @param select Select extend fields to return
+   * @param q The query object
+   *  - [network] The network name.
+   *  - [marketId] The market ID (optional)
+   *  - [provider] The provider address (optional)
+   *  - [noMerge] Prevent merge of contract liquidity with DB liquidity object
+   *  - [count] Returns the count of matching result
+   *  - [limit] The number of result to return (optional)
+   *  - [offset] The query offset (optional)
+   *  - [select] Select extend fields to return
    * @returns
    */
   @Get()
-  async list(
-    @Query('net') network,
-    @Query('mid') marketId: string,
-    @Query('provider') provider: string,
-    @Query('noMerge') noMerge: boolean,
-    @Query('count') count: boolean,
-    @Query('limit') limit: string,
-    @Query('offset') offset: string,
-    @Query('select') select: string,
-  ) {
-    if (!isValidNetwork(network)) throw404('unknown network');
-    if (!count) {
-      const selectedFields = select ? select.split(',') : [];
+  async list(@Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
+    if (!q.count) {
       const liquidities = await Liquidity.searchLiquidities(
-        network,
-        marketId,
-        provider,
-        parseInt(limit || '25'),
-        parseInt(offset),
-        selectedFields,
+        q.net,
+        q.marketId,
+        q.provider,
+        q.limit || 25,
+        q.offset,
+        q.select,
       );
       for (const liquidity of liquidities) {
-        await this.liqSrv.extendLiquidity(liquidity, noMerge, selectedFields);
+        await this.liqSrv.extendLiquidity(liquidity, q.noMerge, q.select);
       }
       return ok().data(liquidities).build();
     } else {
       return ok()
-        .data({ count: await Liquidity.countLiquidities(network, marketId, provider) })
+        .data({ count: await Liquidity.countLiquidities(q.net, q.marketId, q.provider) })
         .build();
     }
   }

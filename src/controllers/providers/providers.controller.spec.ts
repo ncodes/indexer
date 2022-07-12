@@ -89,14 +89,18 @@ describe('ProviderController', () => {
         });
     });
 
-    it('should return 404 when network is unknown', async () => {
+    it('should return 400 when network is unknown', async () => {
       await request(app.getHttpServer())
         .get(`/v1/providers`)
         .query({ net: 'net1' })
         .set('Authorization', 'bearer ' + token)
-        .expect(404)
+        .expect(400)
         .expect({
-          error: { message: 'unknown network' },
+          error: {
+            message: 'network is unknown',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
         });
     });
 
@@ -124,7 +128,7 @@ describe('ProviderController', () => {
         });
         await request(app.getHttpServer())
           .get(`/v1/providers`)
-          .query({ net, mid: prov.marketId })
+          .query({ net, marketId: prov.marketId })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {

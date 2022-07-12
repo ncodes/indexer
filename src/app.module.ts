@@ -20,6 +20,7 @@ import { NotificationsModule } from './controllers/notifications/notifications.m
 import { SwapsModule } from './controllers/swaps/swaps.module';
 import { shortenAddr } from './common/utils/helpers';
 import { TicketsModule } from './controllers/tickets/tickets.module';
+import { DisputesModule } from './controllers/disputes/disputes.module';
 
 Handlebars.registerHelper('uppercase', (aString) => {
   return aString.toUpperCase();
@@ -32,7 +33,6 @@ Handlebars.registerHelper('shorten', (aString) => {
 Handlebars.registerHelper('gt', function (v1, v2, options) {
   'use strict';
   if (v1 > v2) {
-    ``;
     return options.fn(this);
   }
   return options.inverse(this);
@@ -61,6 +61,7 @@ function getModules() {
     NotificationsModule,
     SwapsModule,
     TicketsModule,
+    DisputesModule,
   ];
 }
 

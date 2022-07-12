@@ -98,14 +98,18 @@ describe('TicketsController', () => {
         });
     });
 
-    it('should return 404 when network is unknown', async () => {
+    it('should return 400 when network is unknown', async () => {
       await request(app.getHttpServer())
         .get(`/v1/tickets/0xOwner/0`)
         .set('Authorization', 'bearer ' + token)
         .send({})
-        .expect(404)
+        .expect(400)
         .expect({
-          error: { message: 'unknown network' },
+          error: {
+            message: 'network is required',
+            param: 'network',
+            type: 'invalid_request_error',
+          },
         });
     });
 
@@ -153,14 +157,18 @@ describe('TicketsController', () => {
         });
     });
 
-    it('should return 404 when network is unknown', async () => {
+    it('should return 400 when network is unknown', async () => {
       await request(app.getHttpServer())
         .get(`/v1/tickets`)
         .set('Authorization', 'bearer ' + token)
         .send({})
-        .expect(404)
+        .expect(400)
         .expect({
-          error: { message: 'unknown network' },
+          error: {
+            message: 'network is required',
+            param: 'network',
+            type: 'invalid_request_error',
+          },
         });
     });
 
@@ -199,7 +207,7 @@ describe('TicketsController', () => {
         await request(app.getHttpServer())
           .get(`/v1/tickets`)
           .set('Authorization', 'bearer ' + token)
-          .query({ net, mid: '0xMarket2' })
+          .query({ net, marketId: '0xMarket2' })
           .send({})
           .expect(200)
           .expect((res) => {

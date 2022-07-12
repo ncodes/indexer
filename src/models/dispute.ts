@@ -1,62 +1,60 @@
 import * as crand from 'crypto-random-string';
-import Objection, { Transaction } from 'objection';
+import Objection, { raw, Transaction } from 'objection';
 import { BaseModel } from './base';
+import * as _ from 'lodash';
 
 /**
  * Dispute represents a swap dispute
  */
 export default class Dispute extends BaseModel {
   // The network name
-  network: string;
+  network: string = undefined;
   // The creator of the dispute
-  creator: string;
+  creator: string = undefined;
   // The defendant of the dispute
-  defendant: string;
+  defendant: string = undefined;
   // The amount paid as deposit
-  deposit: string;
+  deposit: string = undefined;
   // The market ID joined
-  marketId: string;
+  marketId: string = undefined;
   // The order index
-  orderId: number;
+  orderId: number = undefined;
   // The dispute index
-  disputeId: number;
+  disputeId: number = undefined;
   // The number of mediators required
-  numMediators: number;
+  numMediators: number = undefined;
   // The number of mediators drafted
-  numMediatorsDrafted: number;
+  numMediatorsDrafted: number = undefined;
   // Indicates the creator's preferred outcome
-  wantRelease: boolean;
+  wantRelease: boolean = undefined;
   // Indicates whether this dispute is an appeal
-  appeal: boolean;
+  appeal: boolean = undefined;
   // The evidence submission expiry time
-  evidenceEndAt: string;
+  evidenceEndAt: string = undefined;
   // The vote commit end time
-  commitEndAt: string;
+  commitEndAt: string = undefined;
   // The vote reveal end time
-  revealEndAt: string;
+  revealEndAt: string = undefined;
   // The voting end time
-  predictEndAt: string;
+  predictEndAt: string = undefined;
   // The time after which appeal is no longer possible
-  appealEndAt: string;
+  appealEndAt: string = undefined;
   // Indicates whether the dispute has been executed
-  executed: boolean;
+  executed: boolean = undefined;
   // Indicates whether the dispute outcome was release or cancelled
-  released: boolean;
+  released: boolean = undefined;
   // Indicates the dispute was abandoned
-  abandoned: boolean;
+  abandoned: boolean = undefined;
   // Indicates the order was released before dispute execution
-  orderReleased: boolean;
+  orderReleased: boolean = undefined;
   // Notification marker for `evidenceEndAt`
-  notifiedOnEvidenceEndAt: boolean;
+  notifiedOnEvidenceEndAt: boolean = undefined;
   // Notification marker for `commitEndAt
-  notifiedOnCommitEndAt: boolean;
+  notifiedOnCommitEndAt: boolean = undefined;
   // Notification marker for `revealEndAt`
-  notifiedOnRevealEndAt: boolean;
+  notifiedOnRevealEndAt: boolean = undefined;
   // Notification marker for `appealEndAt`
-  notifiedOnAppealEndAt: boolean;
-
-  /*** Not Persisted **/
-  drafted: boolean;
+  notifiedOnAppealEndAt: boolean = undefined;
 
   constructor(init?: Partial<Dispute>) {
     super();
@@ -283,5 +281,124 @@ export default class Dispute extends BaseModel {
         abandoned: false,
       })
       .limit(limit);
+  }
+
+  static makeSelectList(select = []) {
+    select = select.filter((x) => Object.keys(new Dispute()).includes(x));
+    select = select.length
+      ? _.uniq(
+          select.concat([
+            'id',
+            'marketId',
+            'network',
+            'creator',
+            'disputeId',
+            'orderId',
+            'defendant',
+          ]),
+        )
+      : ['*'];
+    return select;
+  }
+
+  /**
+   * searchDisputes finds disputes
+   * @param network The network name
+   * @param marketId The market ID (optional)
+   * @param creator Indicate to return dispute by the given dispute creator
+   * @param defendant Indicate to return dispute by the given defendant
+   * @param orderId The order ID
+   * @param disputeId The dispute ID
+   * @param appeal Indicate to filter only appeals
+   * @param executed Indicate to filter by executed disputes
+   * @param released Indicate to filter by released disputes
+   * @param abandon Indicate to filter by abandoned disputes
+   * @param orderReleased Indicate to filter by dispute with released swap order
+   * @param limit The number of records to return (optional).
+   * @param offset The query offset (optional)
+   * @param select Select specific fields (optional)
+   * @param txn Optional transaction object
+   */
+  static searchDisputes(
+    network: string,
+    marketId?: string,
+    creator?: string,
+    defendant?: string,
+    orderId?: number,
+    disputeId?: number,
+    appeal?: boolean,
+    executed?: boolean,
+    released?: boolean,
+    abandoned?: boolean,
+    orderReleased?: boolean,
+    limit?: number,
+    offset?: number,
+    select = [],
+    txn?: Transaction,
+  ): Promise<Dispute[]> {
+    select = this.makeSelectList(select);
+    let q = this.query(txn)
+      .select(...select, raw('count(*) over() as' + ' "__queryCount"'))
+      .whereNotDeleted()
+      .where({ network });
+    if (marketId) q = q.where('marketId', 'ILIKE', marketId);
+    if (creator) q = q.where('creator', 'ILIKE', creator);
+    if (defendant) q = q.where('defendant', 'ILIKE', defendant);
+    if (orderId) q = q.where('orderId', orderId);
+    if (disputeId) q = q.where('disputeId', disputeId);
+    if (appeal !== undefined) q = q.where('appeal', appeal);
+    if (executed !== undefined) q = q.where('executed', executed);
+    if (released !== undefined) q = q.where('released', released);
+    if (abandoned !== undefined) q = q.where('abandoned', abandoned);
+    if (orderReleased !== undefined) q = q.where('orderReleased', orderReleased);
+    if (offset) q = q.offset(offset);
+    if (limit) q = q.limit(limit);
+    return q.orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
+  }
+
+  /**
+   * countTickets count disputes
+   * @param network The network name
+   * @param marketId The market ID (optional)
+   * @param creator Indicate to return dispute by the given dispute creator
+   * @param defendant Indicate to return dispute by the given defendant
+   * @param orderId The order ID
+   * @param disputeId The dispute ID
+   * @param appeal Indicate to filter only appeals
+   * @param executed Indicate to filter by executed disputes
+   * @param released Indicate to filter by released disputes
+   * @param abandoned Indicate to filter by abandoned disputes
+   * @param orderReleased Indicate to filter by dispute with released swap order
+   * @param txn Optional transaction object
+   */
+  static countDisputes(
+    network: string,
+    marketId?: string,
+    creator?: string,
+    defendant?: string,
+    orderId?: number,
+    disputeId?: number,
+    appeal?: boolean,
+    executed?: boolean,
+    released?: boolean,
+    abandoned?: boolean,
+    orderReleased?: boolean,
+    txn?: Transaction,
+  ): Promise<Dispute[]> {
+    let q = this.query(txn).whereNotDeleted().where({ network });
+    if (marketId) q = q.where('marketId', 'ILIKE', marketId);
+    if (creator) q = q.where('creator', 'ILIKE', creator);
+    if (defendant) q = q.where('defendant', 'ILIKE', defendant);
+    if (orderId) q = q.where('orderId', orderId);
+    if (disputeId) q = q.where('disputeId', disputeId);
+    if (appeal !== undefined) q = q.where('appeal', appeal);
+    if (executed !== undefined) q = q.where('executed', executed);
+    if (released !== undefined) q = q.where('released', released);
+    if (abandoned !== undefined) q = q.where('abandoned', abandoned);
+    if (orderReleased !== undefined) q = q.where('orderReleased', orderReleased);
+    return q
+      .count('id')
+      .first()
+      .then((res: any) => res.count);
   }
 }

@@ -112,7 +112,11 @@ describe('MarketsController', () => {
         .send({})
         .expect(400)
         .expect({
-          error: { type: 'invalid_request_error', message: 'unknown network' },
+          error: {
+            message: 'network is unknown',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
         });
     });
 
@@ -172,7 +176,11 @@ describe('MarketsController', () => {
         .query({ net: 'net1' })
         .expect(400)
         .expect({
-          error: { type: 'invalid_request_error', message: 'unknown network' },
+          error: {
+            message: 'network is unknown',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
         });
     });
 
@@ -477,7 +485,11 @@ describe('MarketsController', () => {
         .query({ net: 'net1' })
         .expect(400)
         .expect({
-          error: { type: 'invalid_request_error', message: 'unknown network' },
+          error: {
+            message: 'network is unknown',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
         });
     });
 
@@ -616,7 +628,11 @@ describe('MarketsController', () => {
         .query({ net: 'net1' })
         .expect(400)
         .expect({
-          error: { type: 'invalid_request_error', message: 'unknown network' },
+          error: {
+            message: 'network is unknown',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
         });
     });
 

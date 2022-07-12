@@ -128,12 +128,13 @@ export default class Ticket extends BaseModel {
     txn?: Transaction,
   ): Promise<Ticket> {
     select = this.makeSelectList(select);
-    return this.query(txn)
+    let q = this.query(txn)
       .select(...select)
-      .where({ network, index })
-      .where('owner', 'ilike', owner)
-      .whereNotDeleted()
-      .first();
+      .whereNotDeleted();
+    if (index) q = q.where({ index });
+    if (network) q = q.where({ network });
+    if (owner) q = q.where('owner', 'ilike', owner);
+    return q.first();
   }
 
   /**
@@ -252,7 +253,7 @@ export default class Ticket extends BaseModel {
   }
 
   /**
-   * countTickets count liquidities by network and optional provider
+   * countTickets count tickets
    * @param network The network name
    * @param marketId The market ID (optional)
    * @param owner Indicate to return ticket with matching owner

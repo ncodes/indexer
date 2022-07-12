@@ -1,44 +1,31 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, ValidationPipe } from '@nestjs/common';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
-import { isValidNetwork } from '../../network/common';
-import { ok, throw404 } from '../../common/responses/responses';
+import { ok } from '../../common/responses/responses';
 import MarketProvider from '../../models/market_provider';
+import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
+import { ListQueryDTO } from './query.dto';
 
 @Controller('v1/providers')
 @UseGuards(BeAuthenticatedGuard)
 @UseGuards(HasKeyGuard)
 export class ProvidersController {
   /**
-   * List providers in a network or market
-   * @param network The network name
-   * @param mid The market ID (optional)
-   * @param limit Limit the result (optional)
-   * @param count If set, only count is returned
-   * @param offset The query offset
+   * List providers
+   * @param q The query object
+   *  - [network] The network name
+   *  - [mid] The market ID (optional)
+   *  - [limit] Limit the result (optional)
+   *  - [count] If set, only count is returned
+   *  - [offset] The query offset
    */
-  @Get('')
-  async list(
-    @Query('net') network,
-    @Query('mid') mid: string,
-    @Query('limit') limit: string,
-    @Query('count') count: boolean,
-    @Query('offset') offset: string,
-  ) {
-    if (!isValidNetwork(network)) throw404('unknown network');
-
-    if (count) {
-      const count = await MarketProvider.countByNetworkOrMarket(network, mid);
+  @Get()
+  async list(@Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
+    if (q.count) {
+      const count = await MarketProvider.countByNetworkOrMarket(q.net, q.marketId);
       return ok().data({ count }).build<CountResponse>();
     }
-
-    const res = await MarketProvider.search(
-      network,
-      mid,
-      parseInt(limit || '25'),
-      parseInt(offset) || 0,
-    );
-
+    const res = await MarketProvider.search(q.net, q.marketId, q.limit || 25, q.offset || 0);
     return ok().data(res).build<MarketProvider[]>();
   }
 }

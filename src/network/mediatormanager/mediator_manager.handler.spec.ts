@@ -118,15 +118,18 @@ describe('MediatorManagerHandler', () => {
 
   describe('.onJoinedMarket', () => {
     it('should set leave date and market ID', async () => {
-      await Market.create({
+      let market = await Market.create({
         network: net,
         creator: '0xCreator',
         marketId: '0xMarket',
+        totalJoinedMediatorsBond: '100',
+        numMediatorsJoined: 1,
       });
       let ticket = await Ticket.create({
         network: net,
         index: 1,
         owner: '0xOwner',
+        bond: '100',
       });
       const now = moment().unix();
       await expect(
@@ -134,11 +137,16 @@ describe('MediatorManagerHandler', () => {
           getBlock: jest.fn().mockResolvedValue({ timestamp: now }),
         } as any),
       ).resolves.toBeUndefined();
+
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.marketId).toEqual('0xMarket');
       expect(ticket.leaveAt).toBeDefined();
       const expectedLeaveAt = moment.unix(now + parseInt(process.env.MM_MIN_TICKET_TENURE_DUR));
       expect(moment(ticket.leaveAt).unix()).toEqual(expectedLeaveAt.unix());
+
+      market = await Market.getById(market.id);
+      expect(market.totalJoinedMediatorsBond).toEqual('200');
+      expect(market.numMediatorsJoined).toEqual(2);
 
       // expect notification to have been sent
       expect(mockNotify).toHaveBeenCalledWith(NotifyType.JoinedMarket, net, '0xCreator', {
@@ -151,27 +159,37 @@ describe('MediatorManagerHandler', () => {
 
   describe('.onLeftMarket', () => {
     it('should unset leave date and market ID', async () => {
-      await Market.create({
+      let market = await Market.create({
         network: net,
         creator: '0xCreator',
         marketId: '0xMarket',
+        numMediatorsJoined: 2,
+        totalJoinedMediatorsBond: '200',
       });
+
       let ticket = await Ticket.create({
         network: net,
         index: 1,
         owner: '0xOwner',
+        bond: '100',
       });
+
       const now = moment().unix();
       await expect(
         handler.onLeftMarket('0xOwner', '0xMarket', toBN(1), {
           getBlock: jest.fn().mockResolvedValue({ timestamp: now }),
         } as any),
       ).resolves.toBeUndefined();
+
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.marketId).toBeNull();
       expect(ticket.leaveAt).toBeNull();
       const expectedLeaveAt = moment.unix(now + parseInt(process.env.MM_TICKET_EXPIRE_DUR));
       expect(moment(ticket.joinBy).unix()).toEqual(expectedLeaveAt.unix());
+
+      market = await Market.getById(market.id);
+      expect(market.numMediatorsJoined).toEqual(1);
+      expect(market.totalJoinedMediatorsBond).toEqual('100');
 
       // expect notification to have been sent
       expect(mockNotify).toHaveBeenCalledWith(NotifyType.LeftMarket, net, '0xCreator', {

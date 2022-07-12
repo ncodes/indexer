@@ -14,7 +14,6 @@ import { MarketsModule } from './controllers/markets/markets.module';
 import { DBService } from './db/DBService';
 import { JobsModule } from './jobs/jobs.module';
 import { NetworkModule } from './network/network.module';
-import { ProvidersModule } from './controllers/providers/providers.module';
 import { MiscModule } from './controllers/misc/misc.module';
 import { NotificationsModule } from './controllers/notifications/notifications.module';
 import { SwapsModule } from './controllers/swaps/swaps.module';
@@ -56,7 +55,6 @@ function getModules() {
     NetworkModule,
     MarketsModule,
     LiquidityModule,
-    ProvidersModule,
     MiscModule,
     NotificationsModule,
     SwapsModule,

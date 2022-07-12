@@ -14,6 +14,8 @@ exports.up = function (knex) {
       table.string('pair');
       table.string('network');
       table.integer('numMediators').defaultTo(0);
+      table.integer('numMediatorsJoined').defaultTo(0);
+      table.string('totalJoinedMediatorsBond').defaultTo(0);
       table.integer('commission').defaultTo(0);
       table.string('amountSwapped').defaultTo(0);
       table.float('completionRate').defaultTo(0);

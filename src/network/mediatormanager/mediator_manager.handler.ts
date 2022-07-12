@@ -251,9 +251,15 @@ export class MediatorManagerHandler extends Handler {
       txn,
     );
 
+    // Update market
+    const market = await Market.getMarket(this.network, marketId, undefined, txn);
+    await Market.updateById(market.id, {
+      totalJoinedMediatorsBond: toBN(market.totalJoinedMediatorsBond).add(ticket.bond).toString(),
+      numMediatorsJoined: market.numMediatorsJoined + 1,
+    });
+
     // Send notification
     const numTickets = await Ticket.countByNetworkAndMarket(this.network, marketId, txn);
-    const market = await Market.getMarket(this.network, marketId, undefined, txn);
     await this.notifSrv.notify(NotifyType.JoinedMarket, this.network, market.creator, {
       marketId,
       owner,
@@ -298,9 +304,15 @@ export class MediatorManagerHandler extends Handler {
       txn,
     );
 
+    // Update market
+    const market = await Market.getMarket(this.network, marketId, undefined, txn);
+    await Market.updateById(market.id, {
+      totalJoinedMediatorsBond: toBN(market.totalJoinedMediatorsBond).sub(ticket.bond).toString(),
+      numMediatorsJoined: market.numMediatorsJoined - 1,
+    });
+
     // Send notification
     const numTickets = await Ticket.countByNetworkAndMarket(this.network, marketId, txn);
-    const market = await Market.getMarket(this.network, marketId, undefined, txn);
     await this.notifSrv.notify(NotifyType.LeftMarket, this.network, market.creator, {
       marketId,
       owner,

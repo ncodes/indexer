@@ -16,6 +16,8 @@ import * as cryptoRandomString from 'crypto-random-string';
 import Market from '../../models/market';
 import InvitedMediator from '../../models/invited_mediators';
 import PermittedTrader from '../../models/permitted_trader';
+import MarketProvider from '../../models/market_provider';
+import * as moment from 'moment';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -695,6 +697,148 @@ describe('MarketsController', () => {
           .expect((res) => {
             expect(res.body.data).toHaveLength(1);
             expect(res.body.data[0].id).toEqual(iv.id);
+          });
+      });
+    });
+  });
+
+  describe('.listPermittedProviders', () => {
+    it('should return 401 when not authorized', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/markets/0x123/permitted_providers`)
+        .send({})
+        .expect(401)
+        .expect({
+          error: {
+            type: 'authentication_error',
+            message: 'authorization header is required',
+          },
+        });
+    });
+
+    it('should return 400 when network is unknown', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/markets/0x123/permitted_providers`)
+        .query({ net: 'net1' })
+        .set('Authorization', 'bearer ' + token)
+        .expect(400)
+        .expect({
+          error: {
+            message: 'network is unknown',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    describe('with correct network', () => {
+      it('should return 200 and correct result', async () => {
+        const prov = await MarketProvider.create({
+          network: net,
+          marketId: '0x123',
+        });
+        await request(app.getHttpServer())
+          .get(`/v1/markets/0x123/permitted_providers`)
+          .query({ net })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(prov.id);
+          });
+      });
+    });
+
+    describe('with correct network and market ID', () => {
+      it('should return 200 and correct result', async () => {
+        await MarketProvider.create({ network: net, marketId: '0x000' });
+        const prov = await MarketProvider.create({
+          network: net,
+          marketId: '0x123',
+        });
+        await request(app.getHttpServer())
+          .get(`/v1/markets/0x123/permitted_providers`)
+          .query({ net })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(prov.id);
+          });
+      });
+    });
+
+    describe('with limit specified', () => {
+      it('should return 200 and correct result', async () => {
+        await MarketProvider.create({
+          network: net,
+          marketId: '0x123',
+          createdAt: moment().subtract(1, 's').toISOString(),
+        });
+        const prov = await MarketProvider.create({
+          network: net,
+          marketId: '0x123',
+          createdAt: moment().toISOString(),
+        });
+        await request(app.getHttpServer())
+          .get(`/v1/markets/0x123/permitted_providers`)
+          .query({ net, limit: 1 })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(prov.id);
+          });
+      });
+    });
+
+    describe('with offset specified', () => {
+      it('should return 200 and correct result', async () => {
+        const prov = await MarketProvider.create({
+          sn: 1,
+          network: net,
+          marketId: '0x123',
+          createdAt: moment().subtract(1, 's').toISOString(),
+        });
+        await MarketProvider.create({
+          sn: 2,
+          network: net,
+          marketId: '0x123',
+          createdAt: moment().toISOString(),
+        });
+        await request(app.getHttpServer())
+          .get(`/v1/markets/0x123/permitted_providers`)
+          .query({ net, limit: 1, offset: 1 })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(prov.id);
+          });
+      });
+    });
+
+    describe('with count specified', () => {
+      it('should return 200 and correct count', async () => {
+        await MarketProvider.create({
+          sn: 1,
+          network: net,
+          marketId: '0x123',
+          createdAt: moment().subtract(1, 's').toISOString(),
+        });
+        await MarketProvider.create({
+          sn: 2,
+          network: net,
+          marketId: '0x123',
+          createdAt: moment().toISOString(),
+        });
+        await request(app.getHttpServer())
+          .get(`/v1/markets/0x123/permitted_providers`)
+          .query({ net, count: true })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data.count).toEqual('2');
           });
       });
     });

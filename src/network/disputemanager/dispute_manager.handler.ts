@@ -12,6 +12,8 @@ import NetworkService from '../network.service';
 import Draft from '../../models/draft';
 import * as _ from 'lodash';
 import * as moment from 'moment';
+import { ToDec } from '../../common/common';
+import Liquidity from '../../models/liquidity';
 
 export class DisputeManagerHandler extends Handler {
   constructor(
@@ -154,12 +156,14 @@ export class DisputeManagerHandler extends Handler {
     );
 
     // Calculate number of mediators required
-    const market = await Market.getByMarketId(swap.marketId, txn);
+    const market = await Market.getMarket(this.network, swap.marketId, undefined, txn);
     const numMediators = Math.min(
       market.numMediators * (parseInt(numDisp) + 1),
       Math.min(parseInt(process.env.DM_MAX_MEDIATOR_PER_DISPUTE)),
     );
 
+    // Create dispute
+    const appeal = parseInt(numDisp) > 0;
     const dispute = await Dispute.create(
       {
         network: this.network,
@@ -169,9 +173,44 @@ export class DisputeManagerHandler extends Handler {
         orderId: swap.orderId,
         disputeId: disputeId.toNumber(),
         wantRelease,
-        appeal: parseInt(numDisp) > 0,
+        appeal,
         deposit: toBN(process.env.DM_DISPUTE_COST).mul(numDisp).toString(),
         numMediators,
+      },
+      txn,
+    );
+
+    // Update market
+    let totalDisputes = !appeal ? market.totalDisputes + 1 : market.totalDisputes;
+    await Market.updateById(
+      market.id,
+      {
+        numActiveDisputes: !appeal ? market.numActiveDisputes + 1 : market.numActiveDisputes,
+        totalDisputes,
+        disputeRate: !appeal
+          ? ToDec(totalDisputes).div(market.totalSwaps).mul(100).toNumber()
+          : market.disputeRate,
+      },
+      txn,
+    );
+
+    // Update liquidity
+    const liquidity = await Liquidity.getLiquidity(
+      swap.network,
+      swap.marketId,
+      swap.provider,
+      undefined,
+      txn,
+    );
+    totalDisputes = !appeal ? liquidity.totalDisputes + 1 : liquidity.totalDisputes;
+    await Liquidity.updateById(
+      liquidity.id,
+      {
+        numActiveDisputes: !appeal ? liquidity.numActiveDisputes + 1 : liquidity.numActiveDisputes,
+        totalDisputes,
+        disputeRate: !appeal
+          ? ToDec(totalDisputes).div(liquidity.totalSwaps).mul(100).toNumber()
+          : liquidity.disputeRate,
       },
       txn,
     );
@@ -328,10 +367,33 @@ export class DisputeManagerHandler extends Handler {
       txn,
     );
 
-    const recipients: { address: string; drafted?: boolean }[] = [];
+    // Update market
+    const market = await Market.getMarket(this.network, marketId, undefined, txn);
+    await Market.updateById(
+      market.id,
+      { numActiveDisputes: !stalled ? market.numActiveDisputes - 1 : market.numActiveDisputes },
+      txn,
+    );
 
-    // Get the swap order
+    // Update liquidity
     const swap = await Swap.get(dispute.network, dispute.orderId, txn);
+    const liquidity = await Liquidity.getLiquidity(
+      swap.network,
+      swap.marketId,
+      swap.provider,
+      undefined,
+      txn,
+    );
+    await Liquidity.updateById(
+      liquidity.id,
+      {
+        numActiveDisputes: !stalled ? liquidity.numActiveDisputes - 1 : liquidity.numActiveDisputes,
+      },
+      txn,
+    );
+
+    // Collate notification recipients
+    const recipients: { address: string; drafted?: boolean }[] = [];
     recipients.push({ address: swap.provider }, { address: swap.taker });
 
     // Get the drafted tickets

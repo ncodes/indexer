@@ -323,6 +323,7 @@ describe('CoreHandler', () => {
             quote: 'QUOTE',
             isBaseLocal: false,
             amountSwapped: '10',
+            totalSwaps: 1,
           });
 
           let liq = await Liquidity.create({
@@ -366,10 +367,12 @@ describe('CoreHandler', () => {
           expect(liq.amount).toEqual('990000000000000000000');
           expect(liq.lastSuccessfulSwapAt).toBeDefined();
           expect(liq.amountSwapped).toEqual('10000000000000000010');
+          expect(liq.totalSwaps).toEqual(1);
 
           market = await Market.getById(market.id);
           expect(market.lastSuccessfulSwapAt).toBeDefined();
           expect(market.amountSwapped).toEqual('10000000000000000010');
+          expect(market.totalSwaps).toEqual(2);
         },
       );
     });
@@ -384,6 +387,7 @@ describe('CoreHandler', () => {
             base: 'BASE',
             quote: 'QUOTE',
             isBaseLocal: false,
+            totalSwaps: 1,
           });
 
           await Liquidity.create({
@@ -391,6 +395,7 @@ describe('CoreHandler', () => {
             marketId: '0xMarket',
             provider: '0xProvider',
             openOrders: 1,
+            totalSwaps: 1,
           });
 
           const orderId = BigNumber.from(1);
@@ -409,14 +414,14 @@ describe('CoreHandler', () => {
             network: net,
             marketId: market.marketId,
             orderId: orderId.toNumber() - 1,
-            disputeId: 0
-          }); // prettier-ignore
+            disputeId: 0,
+          });
           let dispute = await Dispute.create({
             network: net,
             marketId: market.marketId,
             orderId: orderId.toNumber() - 1,
-            disputeId: 1
-          }); // prettier-ignore
+            disputeId: 1,
+          });
 
           mockGetSwapFeeInfo.mockResolvedValue({ cost: '10000000000000000000' });
           mockGetTokenDecimals.mockResolvedValue(BigNumber.from(18));
@@ -454,11 +459,13 @@ describe('CoreHandler', () => {
           expect(liq.lastSuccessfulSwapAt).toBeDefined();
           expect(liq.amountSwapped).toEqual(amount.toString());
           expect(liq.completionRate).toEqual(100);
+          expect(liq.totalSwaps).toEqual(2);
 
           market = await Market.getById(market.id);
           expect(market.lastSuccessfulSwapAt).toBeDefined();
           expect(market.amountSwapped).toEqual(amount.toString());
           expect(market.completionRate).toEqual(100);
+          expect(market.totalSwaps).toEqual(2);
 
           dispute = await Dispute.getById(dispute.id);
           expect(dispute.orderReleased).toBeTruthy();

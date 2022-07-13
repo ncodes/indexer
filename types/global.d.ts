@@ -48,7 +48,6 @@ declare global {
       addr: string;
       isLocal: boolean;
     };
-    numOrders: BigNumber;
     numDisputes: BigNumber;
     permPut: boolean;
     permSwap: boolean;

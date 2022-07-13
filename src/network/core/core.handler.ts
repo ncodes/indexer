@@ -267,10 +267,14 @@ export class CoreHandler extends Handler {
 
     // Update liquidity open orders
     const liq = await Liquidity.getLiquidity(this.network, marketId, provider, undefined, txn);
-    await Liquidity.updateById(liq.id, {
-      openOrders: liq.openOrders + 1,
-      amount: toBN(liq.amount).sub(amount).toString(),
-    });
+    await Liquidity.updateById(
+      liq.id,
+      {
+        openOrders: liq.openOrders + 1,
+        amount: toBN(liq.amount).sub(amount).toString(),
+      },
+      txn,
+    );
 
     // Send notification
     const baseDecimal = await this.netSrv.getTokenDecimals(this.provider, market.baseAddress);
@@ -350,6 +354,7 @@ export class CoreHandler extends Handler {
           amount: toBN(liq.amount).sub(amount).toString(),
           amountSwapped: toBN(liq.amountSwapped).add(amount).toString(),
           lastSuccessfulSwapAt: now,
+          totalSwaps: liq.totalSwaps + 1,
         },
         txn,
       );
@@ -360,6 +365,7 @@ export class CoreHandler extends Handler {
         {
           lastSuccessfulSwapAt: now,
           amountSwapped: toBN(market.amountSwapped).add(amount).toString(),
+          totalSwaps: market.totalSwaps + 1,
         },
         txn,
       );
@@ -402,6 +408,7 @@ export class CoreHandler extends Handler {
           lastSuccessfulSwapAt: now.toISOString(),
           amountSwapped: toBN(liq.amountSwapped).add(amount).toString(),
           completionRate: await Swap.getCompletionRate(this.network, marketId, provider, txn),
+          totalSwaps: liq.totalSwaps + 1,
         },
         txn,
       );
@@ -414,6 +421,7 @@ export class CoreHandler extends Handler {
           lastSuccessfulSwapAt: now.toISOString(),
           amountSwapped: toBN(market.amountSwapped).add(amount).toString(),
           completionRate: await Swap.getCompletionRate(this.network, marketId, undefined, txn),
+          totalSwaps: market.totalSwaps + 1,
         },
         txn,
       );

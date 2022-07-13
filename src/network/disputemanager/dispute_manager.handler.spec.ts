@@ -9,6 +9,7 @@ import { NotifyType } from '../../jobs/mailer/NotifierService';
 import Commit from '../../models/commit';
 import Reveal from '../../models/reveal';
 import Draft from '../../models/draft';
+import Liquidity from '../../models/liquidity';
 
 const MarketCoreContract = jest.fn().mockImplementation(() => {
   return {};
@@ -61,10 +62,18 @@ describe('DisputeManagerHandler', () => {
         const marketId = '0xMarket';
         const disputeId = toBN(1);
 
-        await Market.create({
+        let market = await Market.create({
           network: net,
           marketId,
           numMediators: 3,
+          totalSwaps: 2,
+        });
+
+        let liquidity = await Liquidity.create({
+          network: net,
+          marketId: market.marketId,
+          provider: '0xProvider',
+          totalSwaps: 2,
         });
 
         await Swap.create({
@@ -101,6 +110,18 @@ describe('DisputeManagerHandler', () => {
           appeal: false,
           pair: `BASE/QUOTE`,
         });
+
+        // expect market to be updated correctly
+        market = await Market.getById(market.id);
+        expect(market.numActiveDisputes).toEqual(1);
+        expect(market.totalDisputes).toEqual(1);
+        expect(market.disputeRate).toEqual(50);
+
+        // expect liquidity to be updated correctly
+        liquidity = await Liquidity.getById(liquidity.id);
+        expect(liquidity.numActiveDisputes).toEqual(1);
+        expect(liquidity.totalDisputes).toEqual(1);
+        expect(liquidity.disputeRate).toEqual(50);
       });
     });
 
@@ -110,10 +131,20 @@ describe('DisputeManagerHandler', () => {
         const marketId = '0xMarket';
         const disputeId = toBN(1);
 
-        await Market.create({
+        let market = await Market.create({
           network: net,
           marketId,
           numMediators: 3,
+          numActiveDisputes: 1,
+          totalDisputes: 1,
+        });
+
+        let liquidity = await Liquidity.create({
+          network: net,
+          marketId: market.marketId,
+          provider: '0xProvider',
+          numActiveDisputes: 1,
+          totalDisputes: 1,
         });
 
         await Dispute.create({
@@ -156,6 +187,16 @@ describe('DisputeManagerHandler', () => {
           appeal: true,
           pair: `BASE/QUOTE`,
         });
+
+        // expect market to be updated correctly
+        market = await Market.getById(market.id);
+        expect(market.numActiveDisputes).toEqual(1);
+        expect(market.totalDisputes).toEqual(1);
+
+        // expect liquidity to be updated correctly
+        liquidity = await Liquidity.getById(liquidity.id);
+        expect(liquidity.numActiveDisputes).toEqual(1);
+        expect(liquidity.totalDisputes).toEqual(1);
       });
     });
   });
@@ -199,9 +240,26 @@ describe('DisputeManagerHandler', () => {
     const orderId = toBN(1);
     const marketId = '0xMarket';
     const disputeId = toBN(1);
+    let market: Market;
     let swap: Swap;
+    let liquidity: Liquidity;
 
     beforeEach(async () => {
+      market = await Market.create({
+        network: net,
+        marketId,
+        numMediators: 3,
+        numActiveDisputes: 1,
+        totalDisputes: 1,
+      });
+
+      liquidity = await Liquidity.create({
+        network: net,
+        marketId: market.marketId,
+        provider: '0xProvider',
+        numActiveDisputes: 1,
+      });
+
       await Dispute.create({
         network: net,
         marketId,
@@ -279,6 +337,15 @@ describe('DisputeManagerHandler', () => {
           '0xDrafted',
           payload,
         );
+
+        // expect market to be updated correctly
+        market = await Market.getById(market.id);
+        expect(market.numActiveDisputes).toEqual(0);
+        expect(market.totalDisputes).toEqual(1);
+
+        // expect liquidity to be updated correctly
+        liquidity = await Liquidity.getById(liquidity.id);
+        expect(liquidity.numActiveDisputes).toEqual(0);
       });
     });
 
@@ -318,6 +385,15 @@ describe('DisputeManagerHandler', () => {
           '0xProvider',
           payload,
         );
+
+        // expect market to be updated correctly
+        market = await Market.getById(market.id);
+        expect(market.numActiveDisputes).toEqual(0);
+        expect(market.totalDisputes).toEqual(1);
+
+        // expect liquidity to be updated correctly
+        liquidity = await Liquidity.getById(liquidity.id);
+        expect(liquidity.numActiveDisputes).toEqual(0);
       });
     });
 
@@ -357,6 +433,15 @@ describe('DisputeManagerHandler', () => {
           '0xProvider',
           payload,
         );
+
+        // expect market to be updated correctly
+        market = await Market.getById(market.id);
+        expect(market.numActiveDisputes).toEqual(1);
+        expect(market.totalDisputes).toEqual(1);
+
+        // expect liquidity to be updated correctly
+        liquidity = await Liquidity.getById(liquidity.id);
+        expect(liquidity.numActiveDisputes).toEqual(1);
       });
     });
   });

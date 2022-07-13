@@ -28,7 +28,6 @@ export class MarketsService {
         addr: market.quote?.addr,
         isLocal: market.quote?.isLocal,
       },
-      numOrders: market.numOrders?.toNumber(),
       numDisputes: market.numDisputes?.toNumber(),
       permPut: market.permPut,
       permSwap: market.permSwap,
@@ -74,35 +73,16 @@ export class MarketsService {
         market.lowestPrice = await Liquidity.getLowestPriceInMarket(net, marketId);
       if (select.includes(`highestPrice`) || !select.length)
         market.highestPrice = await Liquidity.getHighestPriceInMarket(net, marketId);
-      if (select.includes(`totalSwaps`) || !select.length)
-        market.totalSwaps = await Swap.countByNetworkAndMarketAndProvider(net, marketId, undefined);
-      if (select.includes(`totalInstantSwaps`) || !select.length)
-        market.totalInstantSwaps = await Swap.countByNetworkAndMarketAndProvider(
-          net,
-          marketId,
-          undefined,
-          true,
-        );
       if (select.includes(`totalSwaps24h`) || !select.length)
         market.totalSwaps24h = await Swap.countByNetworkAndMarketAndProvider(
           net,
           marketId,
           undefined,
-          undefined,
-          1440,
-        );
-      if (select.includes(`totalInstantSwaps24h`) || !select.length)
-        market.totalInstantSwaps24h = await Swap.countByNetworkAndMarketAndProvider(
-          net,
-          marketId,
-          undefined,
-          true,
+          market.isInstant(),
           1440,
         );
       if (select.includes(`volume24h`) || !select.length)
-        market.volume24h = await Swap.getVolume(net, marketId, undefined, 1400);
-      if (select.includes(`volumeInstant24h`) || !select.length)
-        market.volumeInstant24h = await Swap.getVolume(net, marketId, undefined, 1400, true);
+        market.volume24h = await Swap.getVolume(net, marketId, undefined, 1400, market.isInstant());
       if (select.includes(`priceChange`) || !select.length)
         market.priceChange = await MarketPrice.priceChange(net, marketId, undefined, 24);
       if (select.includes(`baseLogo`) || !select.length)

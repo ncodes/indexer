@@ -105,7 +105,6 @@ describe('MarketsService', () => {
           addr: contractMarket.quote.addr,
           isLocal: contractMarket.quote.isLocal,
         },
-        numOrders: contractMarket.numOrders.toNumber(),
         numDisputes: contractMarket.numDisputes.toNumber(),
         permPut: contractMarket.permPut,
         permSwap: contractMarket.permSwap,
@@ -148,12 +147,14 @@ describe('MarketsService', () => {
             logoURI: 'https://logo2.png',
           } as any);
 
-          const market: Market = new Market({
+          let market: Market = await Market.create({
             marketId: '0x123',
             creator: '0xUser',
             network: net,
             baseAddress: '0xBase',
             quoteAddress: '0xQuote',
+            isBaseLocal: false,
+            isQuoteLocal: false,
           });
 
           // Mocks
@@ -206,12 +207,17 @@ describe('MarketsService', () => {
           expect(market.lowestPrice).toBeDefined();
           expect(market.highestPrice).toBeDefined();
           expect(market.priceChange).toBeDefined();
-          expect(market.totalSwaps).toEqual('4');
-          expect(market.totalInstantSwaps).toEqual('2');
-          expect(market.totalSwaps24h).toEqual('3');
-          expect(market.totalInstantSwaps24h).toEqual('2');
-          expect(market.volume24h).toEqual('16');
-          expect(market.volumeInstant24h).toEqual('15');
+          expect(market.totalSwaps24h).toEqual('2');
+          expect(market.volume24h).toEqual('15');
+
+          // When market base and quote asset are not all on-chain
+          market = await Market.updateById(market.id, {
+            isBaseLocal: false,
+            isQuoteLocal: true,
+          });
+          await service.extendMarket(market, false);
+          expect(market.totalSwaps24h).toEqual('1');
+          expect(market.volume24h).toEqual('1');
         },
       );
     });

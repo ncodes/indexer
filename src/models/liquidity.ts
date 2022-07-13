@@ -44,15 +44,19 @@ export default class Liquidity extends BaseModel {
   lastSuccessfulSwapAt: string = undefined;
   // The swap completion rate of this liquidity
   completionRate: number = undefined;
+  // The number of active disputes
+  numActiveDisputes: number = undefined;
+  // The number of disputes ever created (excluding appeals)
+  totalDisputes: number = undefined;
+  // The number of swaps
+  totalSwaps: number = undefined;
+  // The dispute rate of this market
+  disputeRate: number = undefined;
 
   /** Not Persisted */
   market: Market;
-  totalSwaps: string;
-  totalInstantSwaps: string;
   totalSwaps24h: string;
-  totalInstantSwaps24h: string;
   volume24h: string;
-  volumeInstant24h: string;
   priceChange: number;
 
   constructor(init?: Partial<Liquidity>) {

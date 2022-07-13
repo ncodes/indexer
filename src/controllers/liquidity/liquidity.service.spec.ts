@@ -91,9 +91,80 @@ describe('LiquidityService', () => {
 
   describe('.extendLiquidity', () => {
     describe('when noMerge=false', () => {
-      it(
-        'should attempt to merge contract market object into the given' + ' market object',
-        async () => {
+      it('should attempt to merge contract market object with db object', async () => {
+        const market = await Market.create({
+          marketId: '0x123',
+          network: net,
+          isBaseLocal: false,
+          isQuoteLocal: false,
+        });
+        const liquidity: Liquidity = new Liquidity({
+          network: net,
+          marketId: market.marketId,
+          provider: '0xProvider',
+          totalSwaps: 3,
+        });
+
+        const contractLiquidity = {
+          paused: true,
+          openOrders: BigNumber.from(1),
+        };
+        const mockGetLiquidity = jest.fn();
+        mockGetCore.mockReturnValue({ getLiquidity: mockGetLiquidity });
+        mockGetLiquidity.mockResolvedValue(contractLiquidity);
+        jest.spyOn(module.get(MarketsService), 'extendMarket').mockResolvedValue();
+
+        await Swap.create({
+          network: net,
+          marketId: market.marketId,
+          provider: '0xProvider',
+          amount: '100',
+        });
+        await Swap.create({
+          network: net,
+          marketId: market.marketId,
+          provider: '0xProvider',
+          amount: '150',
+        });
+        await Swap.create({
+          network: net,
+          marketId: market.marketId,
+          provider: '0xProvider',
+          instant: true,
+          amount: '100',
+        });
+        await Swap.create({
+          network: net,
+          marketId: market.marketId,
+          provider: '0xProvider',
+          instant: true,
+          createdAt: moment().subtract(1440, 'm').toISOString(),
+          amount: '100',
+        });
+
+        await service.extendLiquidity(liquidity, false);
+        expect(mockGetCore).toHaveBeenCalledWith(net);
+        expect(mockGetLiquidity).toHaveBeenCalledWith(liquidity.marketId, liquidity.provider);
+        expect(liquidity.network).toEqual(net);
+        expect(liquidity.marketId).toEqual('0x123');
+        expect(liquidity.provider).toEqual('0xProvider');
+        expect(liquidity.market).toBeDefined();
+        expect(liquidity.market.id).toEqual(market.id);
+        expect(liquidity.totalSwaps24h).toEqual('1');
+        expect(liquidity.volume24h).toEqual('100');
+
+        // When market base and quote asset are not all on-chain
+        await Market.updateById(market.id, {
+          isBaseLocal: false,
+          isQuoteLocal: true,
+        });
+        await service.extendLiquidity(liquidity, false);
+        expect(liquidity.totalSwaps24h).toEqual('2');
+        expect(liquidity.volume24h).toEqual('250');
+      });
+
+      describe('when noMerge=true', () => {
+        it('should not attempt to merge contract market object with db object', async () => {
           const market = await Market.create({
             marketId: '0x123',
             network: net,
@@ -104,78 +175,15 @@ describe('LiquidityService', () => {
             provider: '0xProvider',
           });
 
-          const contractLiquidity = {
-            paused: true,
-            openOrders: BigNumber.from(1),
-          };
-          const mockGetLiquidity = jest.fn();
-          mockGetCore.mockReturnValue({ getLiquidity: mockGetLiquidity });
-          mockGetLiquidity.mockResolvedValue(contractLiquidity);
           jest.spyOn(module.get(MarketsService), 'extendMarket').mockResolvedValue();
 
-          await Swap.create({
-            network: net,
-            marketId: market.marketId,
-            provider: '0xProvider',
-            amount: '100',
-          });
-          await Swap.create({
-            network: net,
-            marketId: market.marketId,
-            provider: '0xProvider',
-            instant: true,
-            amount: '100',
-          });
-          await Swap.create({
-            network: net,
-            marketId: market.marketId,
-            provider: '0xProvider',
-            instant: true,
-            createdAt: moment().subtract(1440, 'm').toISOString(),
-            amount: '100',
-          });
-
-          await service.extendLiquidity(liquidity, false);
-          expect(mockGetCore).toHaveBeenCalledWith(net);
-          expect(mockGetLiquidity).toHaveBeenCalledWith(liquidity.marketId, liquidity.provider);
+          await service.extendLiquidity(liquidity, true);
           expect(liquidity.network).toEqual(net);
           expect(liquidity.marketId).toEqual('0x123');
           expect(liquidity.provider).toEqual('0xProvider');
           expect(liquidity.market).toBeDefined();
           expect(liquidity.market.id).toEqual(market.id);
-          expect(liquidity.totalSwaps).toEqual('3');
-          expect(liquidity.totalSwaps24h).toEqual('2');
-          expect(liquidity.totalInstantSwaps).toEqual('2');
-          expect(liquidity.totalInstantSwaps24h).toEqual('1');
-          expect(liquidity.volume24h).toEqual('200');
-          expect(liquidity.volumeInstant24h).toEqual('100');
-        },
-      );
-
-      describe('when noMerge=true', () => {
-        it(
-          'should attempt to merge contract market object into the given' + ' market object',
-          async () => {
-            const market = await Market.create({
-              marketId: '0x123',
-              network: net,
-            });
-            const liquidity: Liquidity = new Liquidity({
-              network: net,
-              marketId: market.marketId,
-              provider: '0xProvider',
-            });
-
-            jest.spyOn(module.get(MarketsService), 'extendMarket').mockResolvedValue();
-
-            await service.extendLiquidity(liquidity, true);
-            expect(liquidity.network).toEqual(net);
-            expect(liquidity.marketId).toEqual('0x123');
-            expect(liquidity.provider).toEqual('0xProvider');
-            expect(liquidity.market).toBeDefined();
-            expect(liquidity.market.id).toEqual(market.id);
-          },
-        );
+        });
       });
 
       describe('liquidity market was not found', () => {

@@ -42,42 +42,24 @@ export class LiquidityService {
         this.merge(cLiqPart, liq);
       }
 
-      if (select.includes(`totalSwaps`) || !select.length)
-        liq.totalSwaps = await Swap.countByNetworkAndMarketAndProvider(net, marketId, provider);
-      if (select.includes(`totalInstantSwaps`) || !select.length)
-        liq.totalInstantSwaps = await Swap.countByNetworkAndMarketAndProvider(
-          net,
-          marketId,
-          provider,
-          true,
-        );
+      const market = await Market.getMarket(net, marketId, select);
+      if (!market) return Promise.reject(new Error('market not found'));
+
       if (select.includes(`totalSwaps24h`) || !select.length)
         liq.totalSwaps24h = await Swap.countByNetworkAndMarketAndProvider(
           net,
           marketId,
           provider,
-          undefined,
-          1440,
-        );
-      if (select.includes(`totalInstantSwaps24h`) || !select.length)
-        liq.totalInstantSwaps24h = await Swap.countByNetworkAndMarketAndProvider(
-          net,
-          marketId,
-          provider,
-          true,
+          market.isInstant(),
           1440,
         );
       if (select.includes(`volume24h`) || !select.length)
-        liq.volume24h = await Swap.getVolume(net, marketId, provider, 1400);
-      if (select.includes(`volumeInstant24h`) || !select.length)
-        liq.volumeInstant24h = await Swap.getVolume(net, marketId, provider, 1400, true);
+        liq.volume24h = await Swap.getVolume(net, marketId, provider, 1400, market.isInstant());
       if (select.includes(`priceChange`) || !select.length)
         liq.priceChange = await MarketPrice.priceChange(net, marketId, provider, 24);
 
       // Get market, extend it and assign to liquidity
-      if (!noMarket && marketId) {
-        const market = await Market.getMarket(net, marketId, select);
-        if (!market) return Promise.reject(new Error('market not found'));
+      if (!noMarket) {
         await this.marketSrv.extendMarket(market, noMerge, select);
         liq.market = market;
       }

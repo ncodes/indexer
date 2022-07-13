@@ -34,7 +34,7 @@ export default class Market extends BaseModel {
   lastSuccessfulSwapAt: string = undefined;
   // The all-time amount of liquidity swapped
   amountSwapped: string = undefined;
-  // The swap completion rate of this liquidity
+  // The swap completion/release rate of this market
   completionRate: number = undefined;
   // The transaction hash
   txHash: string = undefined;
@@ -44,11 +44,18 @@ export default class Market extends BaseModel {
   numMediatorsJoined: number = undefined;
   // The total bond of joined mediators
   totalJoinedMediatorsBond: string = undefined;
+  // The number of active disputes
+  numActiveDisputes: number = undefined;
+  // The number of disputes ever created (excluding appeals)
+  totalDisputes: number = undefined;
+  // The number of swaps
+  totalSwaps: number = undefined;
+  // The dispute rate of this market
+  disputeRate: number = undefined;
 
   // *** Non-persisted fields **//
   mediatorBond: string;
-  numOrders: number;
-  numDisputes: number;
+  numDisputes: number; // (include appeals)
   permPut: boolean;
   permSwap: boolean;
   permMediate: boolean;
@@ -59,12 +66,8 @@ export default class Market extends BaseModel {
   lowestPrice: string;
   highestPrice: string;
   priceChange: number;
-  totalSwaps: string;
-  totalInstantSwaps: string;
   totalSwaps24h: string;
-  totalInstantSwaps24h: string;
   volume24h: string;
-  volumeInstant24h: string;
 
   constructor(init?: Partial<Market>) {
     super();
@@ -97,6 +100,13 @@ export default class Market extends BaseModel {
         },
       },
     };
+  }
+
+  /**
+   * Checks if the market is an instant swap market
+   */
+  isInstant() {
+    return !this.isBaseLocal && !this.isQuoteLocal;
   }
 
   /**

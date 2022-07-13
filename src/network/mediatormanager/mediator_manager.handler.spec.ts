@@ -235,14 +235,14 @@ describe('MediatorManagerHandler', () => {
       await Draft.create({
         network: net,
         marketId,
-        disputeId: disputeId.toNumber(),
+        disputeIndex: disputeId.toNumber(),
         orderId: orderId.toNumber(),
         owner: '0xDraftOwner1',
       });
       await Draft.create({
         network: net,
         marketId,
-        disputeId: disputeId.toNumber(),
+        disputeIndex: disputeId.toNumber(),
         orderId: orderId.toNumber(),
         owner: '0xDraftOwner2',
       });
@@ -266,8 +266,9 @@ describe('MediatorManagerHandler', () => {
 
       // Draft record should be created
       const draft = await Draft.find({ ticketId: ticket.id });
-      expect(draft.disputeId).toEqual(2);
       expect(draft).toBeDefined();
+      expect(draft.disputeIndex).toEqual(2);
+      expect(draft.disputeId).toEqual(dispute.id);
 
       // Dispute should be updated correctly
       const { DM_PREDICT_DUR, DM_APPEAL_DUR } = process.env;

@@ -98,7 +98,7 @@ describe('OnRevealPeriodEnd', () => {
           network: net,
           marketId,
           orderId,
-          disputeId,
+          disputeIndex: disputeId,
           owner: '0xDraftee',
         });
       });
@@ -187,7 +187,7 @@ describe('OnRevealPeriodEnd', () => {
           network: net,
           marketId,
           orderId,
-          disputeId,
+          disputeIndex: disputeId,
           owner: '0xDraftee',
         });
         await Reveal.create({ network: net, orderId, disputeId, vote: '0x30' });
@@ -257,7 +257,7 @@ describe('OnRevealPeriodEnd', () => {
           network: net,
           marketId,
           orderId,
-          disputeId,
+          disputeIndex: disputeId,
           owner: '0xDraftee',
         });
         await Reveal.create({ network: net, orderId, disputeId, vote: '0x31' });

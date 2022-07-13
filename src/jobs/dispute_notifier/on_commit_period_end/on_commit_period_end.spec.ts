@@ -93,7 +93,7 @@ describe('OnCommitPeriodEnd', () => {
           network: net,
           marketId,
           orderId,
-          disputeId,
+          disputeIndex: disputeId,
           owner: '0xDraftee',
         });
       });

@@ -93,7 +93,7 @@ describe('OnEvidencePeriodEnd', () => {
           network: net,
           marketId,
           orderId,
-          disputeId,
+          disputeIndex: disputeId,
           owner: '0xDraftee',
         });
       });

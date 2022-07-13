@@ -1,7 +1,8 @@
 import * as crand from 'crypto-random-string';
-import Objection, { raw, Transaction } from 'objection';
+import Objection, { Model, raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 import * as _ from 'lodash';
+import Draft from './draft';
 
 /**
  * Dispute represents a swap dispute
@@ -56,6 +57,10 @@ export default class Dispute extends BaseModel {
   // Notification marker for `appealEndAt`
   notifiedOnAppealEndAt: boolean = undefined;
 
+  /** Not persisted */
+
+  draftees: Draft[];
+
   constructor(init?: Partial<Dispute>) {
     super();
     Object.assign(this, init);
@@ -78,7 +83,16 @@ export default class Dispute extends BaseModel {
   }
 
   static get relationMappings() {
-    return {};
+    return {
+      draftees: {
+        relation: Model.HasManyRelation,
+        modelClass: Draft,
+        join: {
+          to: 'disputes.id',
+          from: 'drafts.disputeId',
+        },
+      },
+    };
   }
 
   /**
@@ -312,7 +326,7 @@ export default class Dispute extends BaseModel {
    * @param appeal Indicate to filter only appeals
    * @param executed Indicate to filter by executed disputes
    * @param released Indicate to filter by released disputes
-   * @param abandon Indicate to filter by abandoned disputes
+   * @param abandoned Indicate to filter by abandoned disputes
    * @param orderReleased Indicate to filter by dispute with released swap order
    * @param limit The number of records to return (optional).
    * @param offset The query offset (optional)
@@ -339,6 +353,7 @@ export default class Dispute extends BaseModel {
     select = this.makeSelectList(select);
     let q = this.query(txn)
       .select(...select, raw('count(*) over() as' + ' "__queryCount"'))
+      .withGraphFetched('draftees')
       .whereNotDeleted()
       .where({ network });
     if (marketId) q = q.where('marketId', 'ILIKE', marketId);

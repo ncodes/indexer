@@ -281,7 +281,7 @@ describe('DisputeManagerHandler', () => {
         network: net,
         marketId,
         orderId: orderId.toNumber(),
-        disputeId: disputeId.toNumber(),
+        disputeIndex: disputeId.toNumber(),
         owner: '0xDrafted',
       });
     });

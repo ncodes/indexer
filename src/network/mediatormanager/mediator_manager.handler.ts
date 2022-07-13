@@ -360,6 +360,15 @@ export class MediatorManagerHandler extends Handler {
       txn,
     );
 
+    // Get the dispute
+    let dispute = await Dispute.get(
+      this.network,
+      marketId,
+      orderId.toNumber(),
+      disputeId.toNumber(),
+      txn,
+    );
+
     // Create new draft
     await Draft.create(
       {
@@ -369,16 +378,9 @@ export class MediatorManagerHandler extends Handler {
         marketId,
         ticketId: ticket.id,
         orderId: orderId.toNumber(),
-        disputeId: disputeId.toNumber(),
+        disputeIndex: disputeId.toNumber(),
+        disputeId: dispute.id,
       },
-      txn,
-    );
-
-    let dispute = await Dispute.get(
-      this.network,
-      marketId,
-      orderId.toNumber(),
-      disputeId.toNumber(),
       txn,
     );
 

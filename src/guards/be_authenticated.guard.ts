@@ -4,7 +4,7 @@ import * as jwt from 'jsonwebtoken';
 import { error, ErrorTypes } from '../common/responses/responses';
 import Session from '../models/session';
 
-const notPermitted = error()
+export const notPermitted = error()
   .type(ErrorTypes.Auth)
   .status(HttpStatus.UNAUTHORIZED)
   .msg('not permitted to perform this action');

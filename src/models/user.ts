@@ -11,6 +11,8 @@ export default class User extends BaseModel {
   email: string;
   // The address of the user
   address: string;
+  // The messenger public key
+  messengerPublicKey: string;
   // The user's role
   role: string;
 
@@ -72,6 +74,21 @@ export default class User extends BaseModel {
   }
 
   /**
+   * getByMsgPubKey finds a user by their messenger public key
+   * @param msgPubKey The user's messenger public key
+   */
+  static getByMsgPubKey(msgPubKey: string): Promise<User> {
+    return new Promise((resolve, reject) => {
+      this.query()
+        .where('messengerPublicKey', 'ILIKE', msgPubKey)
+        .whereNotDeleted()
+        .first()
+        .then(resolve)
+        .catch(reject);
+    });
+  }
+
+  /**
    * getByAddress finds a user by their address
    * @param address The user's address
    */
@@ -92,12 +109,7 @@ export default class User extends BaseModel {
    */
   static find(q: Partial<User>): Promise<User> {
     return new Promise((resolve, reject) => {
-      this.query()
-        .where(q)
-        .whereNotDeleted()
-        .first()
-        .then(resolve)
-        .catch(reject);
+      this.query().where(q).whereNotDeleted().first().then(resolve).catch(reject);
     });
   }
 

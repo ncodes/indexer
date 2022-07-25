@@ -96,6 +96,7 @@ export default class Dispute extends BaseModel {
   }
 
   /**
+   *
    * create a record
    * @param data The record info
    * @param txn Optional transaction object

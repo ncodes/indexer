@@ -81,4 +81,15 @@ declare global {
     name: string;
     decimals: number;
   }
+
+  interface SignatureInfo {
+    address: string;
+    email: string;
+    messengerPublicKey: string;
+  }
+
+  interface EncryptedMessage {
+    message: string;
+    recipient: string;
+  }
 }

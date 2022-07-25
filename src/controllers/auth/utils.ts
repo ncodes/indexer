@@ -3,6 +3,7 @@ import * as jwt from 'jsonwebtoken';
 import * as moment from 'moment';
 import Session from '../../models/session';
 import User from '../../models/user';
+import { isEmail } from 'class-validator';
 
 /**
  * makeSession creates a session and generates a session token
@@ -20,8 +21,7 @@ export async function makeSession(
   try {
     // Ensure the signature has not been used before
     const existingSig = await Session.getBySignature(signature);
-    if (existingSig)
-      return Promise.reject(new Error('signature is invalid or expired'));
+    if (existingSig) return Promise.reject(new Error('signature is invalid or expired'));
 
     // Create session
     const session = await Session.create(user.id, signature);
@@ -40,7 +40,7 @@ export async function makeSession(
  * @param sig The signature to be verified
  * @returns
  */
-export function checkSignature(msg: string, sig: string) {
+export function checkSignature(msg: string, sig: string): SignatureInfo {
   const rawMsg = Buffer.from(msg, 'hex');
   const hashMsg = utils.hashMessage(rawMsg.toString('utf-8'));
   const digest = utils.arrayify(hashMsg);
@@ -48,14 +48,23 @@ export function checkSignature(msg: string, sig: string) {
 
   // Extract address from the message and compare with the recovered address
   const lines = rawMsg.toString('utf-8').split('\n');
-  const addressInMsg = lines[lines.length - 4];
+  const addressInMsg = lines[lines.length - 10];
   if (addressInMsg.toLowerCase() !== recoveredAddress.toLowerCase())
     throw new Error('address mismatch');
 
+  // Extract email
+  const email = lines[lines.length - 7];
+
+  // Extract messenger public key
+  const messengerPublicKey = lines[lines.length - 4];
+
   // Verify signature timestamp; make sure it has not expired
   const ts = moment(lines[lines.length - 1]);
-  if (moment().diff(ts, 'minute').valueOf() >= 5)
-    throw new Error('expired signature');
+  if (moment().diff(ts, 'minute').valueOf() >= 5) throw new Error('expired signature');
 
-  return recoveredAddress.toLowerCase();
+  return {
+    address: recoveredAddress.toLowerCase(),
+    email,
+    messengerPublicKey,
+  };
 }

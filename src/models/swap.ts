@@ -65,8 +65,6 @@ export default class Swap extends BaseModel {
   market: Market;
   liquidity: Liquidity;
 
-  static nonPersistedFields = ['market', 'liquidity'];
-
   constructor(init?: Partial<Swap>) {
     super();
     Object.assign(this, init);
@@ -125,6 +123,15 @@ export default class Swap extends BaseModel {
    */
   static getByOrderId(orderId: number, txn?: Transaction): Promise<Swap> {
     return this.query(txn).where({ orderId }).whereNotDeleted().first();
+  }
+
+  /**
+   * find a record by swap ID
+   * @param id the swap ID
+   * @param txn Optional transaction object
+   */
+  static getById(id: string, txn?: Transaction): Promise<Swap> {
+    return this.query(txn).where({ id }).whereNotDeleted().first();
   }
 
   static makeSelectList(select = []) {
@@ -340,23 +347,7 @@ export default class Swap extends BaseModel {
     select = [],
     txn?: Transaction,
   ): Promise<Swap[]> {
-    select = select.filter((x) => !this.nonPersistedFields.includes(x));
-    if (select.length > 0) {
-      select.push(
-        'id',
-        'marketId',
-        'network',
-        'provider',
-        'base',
-        'baseAddress',
-        'quote',
-        'quoteAddress',
-      );
-      select = _.uniq(select);
-    } else {
-      select.push('*');
-    }
-
+    select = this.makeSelectList(select);
     let q = this.query(txn)
       .select(...select, raw('count(*) over() as' + ' "__queryCount"'))
       .whereNotDeleted()

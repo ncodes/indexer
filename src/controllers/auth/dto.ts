@@ -19,10 +19,4 @@ export class AuthDTO {
     message: makeValidatorMsg('message is required', 'msg'),
   })
   msg: string;
-
-  @IsEmail(undefined, {
-    message: makeValidatorMsg('email is not valid', 'email'),
-  })
-  @IsOptional()
-  email: string;
 }

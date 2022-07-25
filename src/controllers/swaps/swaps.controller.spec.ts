@@ -16,6 +16,7 @@ import { LiquidityService } from '../liquidity/liquidity.service';
 import Swap from '../../models/swap';
 import Market from '../../models/market';
 import Liquidity from '../../models/liquidity';
+import SwapsService from './swaps.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -58,7 +59,7 @@ describe('SwapsController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [SwapsController],
-      providers: [ConfigService, NetworkService, MarketsService, LiquidityService],
+      providers: [ConfigService, NetworkService, MarketsService, LiquidityService, SwapsService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())

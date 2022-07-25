@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { isDevMode } from '../common';
 import * as _ from 'lodash';
 
-class ErrorBuilder {
+export class ErrorBuilder {
   private logger = new Logger(ErrorBuilder.name);
   private _status: number;
   private readonly _data: any;
@@ -122,6 +122,8 @@ class OKBuilder {
           this._data.meta[k.substr(2)] = d[k];
           delete d[k];
         });
+
+        if (Object.keys(this._data.meta).length === 0) delete this._data.meta;
       });
     }
   }

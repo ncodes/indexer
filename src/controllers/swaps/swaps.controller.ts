@@ -10,7 +10,7 @@ import {
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import Swap from '../../models/swap';
-import { ok, throw404 } from '../../common/responses/responses';
+import { ErrorTypes, ok, throw404 } from '../../common/responses/responses';
 import Market from '../../models/market';
 import { MarketsService } from '../markets/markets.service';
 import { isValidNetwork } from '../../network/common';
@@ -18,12 +18,17 @@ import Liquidity from '../../models/liquidity';
 import { LiquidityService } from '../liquidity/liquidity.service';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { GetQueryDTO, ListQueryDTO } from './query.dto';
+import SwapsService from './swaps.service';
 
 @UseGuards(BeAuthenticatedGuard)
 @UseGuards(HasKeyGuard)
 @Controller('v1/swaps')
 export class SwapsController {
-  constructor(private marketSrv: MarketsService, private liqSrv: LiquidityService) {}
+  constructor(
+    private marketSrv: MarketsService,
+    private liqSrv: LiquidityService,
+    private swapSrv: SwapsService,
+  ) {}
 
   /**
    * Get a swap
@@ -94,5 +99,22 @@ export class SwapsController {
     }
 
     return ok().data(swaps).build();
+  }
+
+  /**
+   * List participants of a swap
+   * @param id The swap ID
+   * @param addAppealedDisputeDraftees If true, appealed disputes draftees
+   * are added as participants.
+   */
+  @Get(':id/participants')
+  async listParticipants(
+    @Param('id') id: string,
+    @Query('addAppealedDisputeDraftees') addAppealedDisputeDraftees: boolean,
+  ) {
+    const swap = await Swap.getById(id);
+    if (!swap) throw404('swap not found', ErrorTypes.InvalidRequest, 'id');
+    const participant = await this.swapSrv.getParticipants(swap, addAppealedDisputeDraftees);
+    return ok().data(participant).build<Swap>();
   }
 }

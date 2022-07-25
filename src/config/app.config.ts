@@ -4,6 +4,8 @@ export default () => ({
     url: process.env.URL,
     throttle_ttl: process.env.THROTTLE_TTL,
     throttle_limit: process.env.THROTTLE_LIMIT,
+    rootAdminUser: process.env.ROOT_ADMIN_USER,
+    rootAdminPass: process.env.ROOT_ADMIN_PASS,
     redis: {
       url: process.env.REDIS_URL,
     },
@@ -19,6 +21,11 @@ export default () => ({
     aws: {
       smtpUsername: process.env.AWS_SMTP_USERNAME,
       smtpPassword: process.env.AWS_SMTP_PASSWORD,
+    },
+    telegram: {
+      apiId: process.env.TG_API_ID,
+      apiHash: process.env.TG_API_HASH,
+      phoneNumber: process.env.TG_PHONE_NUMBER,
     },
     networks: {
       ethereum: {

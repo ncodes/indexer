@@ -21,6 +21,7 @@ import { shortenAddr } from './common/utils/helpers';
 import { TicketsModule } from './controllers/tickets/tickets.module';
 import { DisputesModule } from './controllers/disputes/disputes.module';
 import { MessagesModule } from './controllers/messages/messages.module';
+import { UsersModule } from './controllers/users/users.module';
 
 Handlebars.registerHelper('uppercase', (aString) => {
   return aString.toUpperCase();
@@ -41,29 +42,6 @@ Handlebars.registerHelper('gt', function (v1, v2, options) {
 Handlebars.registerHelper('ifEquals', function (arg1, arg2, options) {
   return arg1 === arg2 ? options.fn(this) : options.inverse(this);
 });
-
-/**
- * A list of modules to attach.
- * We use this method instead of directly specifying the module so
- * that we can apply custom logic here to determine which
- * modules to load.
- * @returns
- */
-function getModules() {
-  return [
-    JobsModule,
-    AuthModule,
-    NetworkModule,
-    MarketsModule,
-    LiquidityModule,
-    MiscModule,
-    NotificationsModule,
-    SwapsModule,
-    TicketsModule,
-    DisputesModule,
-    MessagesModule,
-  ];
-}
 
 /**
  * Returns the configurations to be loaded.
@@ -103,7 +81,18 @@ function getProviders() {
         storage: new ThrottlerStorageRedisService(cfgSrv.get('app.redis.url')),
       }),
     }),
-    ...getModules(),
+    JobsModule,
+    AuthModule,
+    NetworkModule,
+    MarketsModule,
+    LiquidityModule,
+    MiscModule,
+    NotificationsModule,
+    SwapsModule,
+    TicketsModule,
+    DisputesModule,
+    MessagesModule,
+    UsersModule,
   ],
   providers: getProviders(),
   controllers: [],

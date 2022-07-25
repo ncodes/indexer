@@ -14,6 +14,7 @@ async function bootstrap() {
     logger: appLogger,
     bodyParser: false,
   });
+  app.enableCors();
   app.useGlobalFilters(new AllExceptionsFilter());
   const port = process.env.PORT || 3000;
   appLogger.log(`Starting server @ :${port}`);

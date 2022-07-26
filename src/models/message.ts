@@ -23,8 +23,6 @@ export default class Message extends BaseModel {
   recipientsId?: string[] = undefined;
   // The message public key of the recipients
   recipientsMsgPubKey?: string[] = undefined;
-  // Indicates whether the message has been read.
-  recipientsReadStatus?: boolean[] = undefined;
 
   constructor(init?: Partial<Message>) {
     super();
@@ -33,11 +31,10 @@ export default class Message extends BaseModel {
 
   $beforeInsert() {
     super.$beforeInsert();
-    this.id = 'msg_' + crand({ length: 24 });
+    if (!this.id) this.id = Message.genID();
     this.recipientsId = JSON.stringify(this.recipientsId) as any;
     this.messages = JSON.stringify(this.messages) as any;
     this.recipientsMsgPubKey = JSON.stringify(this.recipientsMsgPubKey) as any;
-    this.recipientsReadStatus = JSON.stringify(this.recipientsReadStatus) as any;
   }
 
   $beforeUpdate() {
@@ -46,8 +43,6 @@ export default class Message extends BaseModel {
     if (this.messages) this.messages = JSON.stringify(this.messages) as any;
     if (this.recipientsMsgPubKey)
       this.recipientsMsgPubKey = JSON.stringify(this.recipientsMsgPubKey) as any;
-    if (this.recipientsReadStatus)
-      this.recipientsReadStatus = JSON.stringify(this.recipientsReadStatus) as any;
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
@@ -57,10 +52,12 @@ export default class Message extends BaseModel {
     if (isString(object.messages)) object.messages = JSON.parse(this.messages as any);
     if (isString(object.recipientsMsgPubKey))
       object.recipientsMsgPubKey = JSON.parse(this.recipientsMsgPubKey as any);
-    if (isString(object.recipientsReadStatus))
-      object.recipientsReadStatus = JSON.parse(this.recipientsReadStatus as any);
     delete object.deletedAt;
     return object;
+  }
+
+  static genID() {
+    return 'msg_' + crand({ length: 24 });
   }
 
   static get tableName() {

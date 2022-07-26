@@ -15,6 +15,7 @@ import SwapsService from '../swaps/swaps.service';
 import { MessagesController } from './messages.controller';
 import Swap from '../../models/swap';
 import Message from '../../models/message';
+import MessageReadStatus from '../../models/message_read_status';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -263,10 +264,16 @@ describe('MessagesController', () => {
           expect(res.body.data.messages).toEqual(['abc']);
           expect(res.body.data.recipientsId).toEqual([recipient.id]);
           expect(res.body.data.recipientsMsgPubKey).toEqual([recipient.messengerPublicKey]);
-          expect(res.body.data.recipientsReadStatus).toEqual([false]);
           msgId = res.body.data.id;
         });
       expect(mockWSEmit).toBeCalledWith(`msg:new:${swap.id}`, msgId);
+
+      const msgReadStatus = await MessageReadStatus.find({
+        msgId,
+        userId: recipient.id,
+      });
+      expect(msgReadStatus).toBeDefined();
+      expect(msgReadStatus.read).toBeFalsy();
     });
   });
 
@@ -542,14 +549,49 @@ describe('MessagesController', () => {
     it('should return 200 and update read status correctly', async () => {
       const msg = await Message.create({
         recipientsId: [null, u.id],
-        recipientsReadStatus: [false, false],
+      });
+      let msgReadStatus = await MessageReadStatus.create({
+        userId: u.id,
+        msgId: msg.id,
+        read: false,
       });
       await request(app.getHttpServer())
         .put(`/v1/messages/${msg.id}/mark-read`)
         .set('Authorization', 'bearer ' + token)
         .expect(200)
-        .expect((res) => {
-          expect(res.body.data.recipientsReadStatus).toEqual([false, true]);
+        .expect({ data: { ok: true } });
+
+      msgReadStatus = await MessageReadStatus.getById(msgReadStatus.id);
+      expect(msgReadStatus.read).toBeTruthy();
+    });
+  });
+
+  describe('.countUnread', () => {
+    it('should return 401 when not authorized', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/messages`)
+        .send({})
+        .expect(401)
+        .expect({
+          error: {
+            type: 'authentication_error',
+            message: 'authorization header is required',
+          },
+        });
+    });
+
+    it('should return 400 when swap ID was not provided', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/messages`)
+        .set('Authorization', 'bearer ' + token)
+        .send({})
+        .expect(400)
+        .expect({
+          error: {
+            message: 'swap ID is required',
+            param: 'swapId',
+            type: 'invalid_request_error',
+          },
         });
     });
   });

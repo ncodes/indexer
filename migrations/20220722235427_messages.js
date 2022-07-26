@@ -11,7 +11,6 @@ exports.up = function (knex) {
       table.jsonb('messages').defaultTo([]);
       table.jsonb('recipientsId').defaultTo([]);
       table.jsonb('recipientsMsgPubKey').defaultTo([]);
-      table.jsonb('recipientsReadStatus').defaultTo([]);
       table.timestamp('createdAt');
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');

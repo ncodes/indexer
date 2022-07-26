@@ -24,6 +24,7 @@ import Message from '../../models/message';
 import { transaction } from 'objection';
 import { WebSocketService } from './webSocketService';
 import SwapsService from '../swaps/swaps.service';
+import MessageReadStatus from '../../models/message_read_status';
 
 /**
  * MessagesController handles messaging requests
@@ -71,19 +72,24 @@ export class MessagesController {
     // Create message
     let i = 0;
     let message;
-    await transaction(Message, async (Message) => {
+    await transaction(Message, MessageReadStatus, async (Message, MessageReadStatus) => {
       const recipientsMsgs = [];
       const recipientsId = [];
       const recipientsMsgPubKey = [];
-      const recipientsReadStatus = [];
+      const msgId = Message.genID();
       for (const msg of body.messages) {
         recipientsMsgs.push(msg.message);
         recipientsId.push(recipients[i]);
         recipientsMsgPubKey.push(msg.recipient);
-        recipientsReadStatus.push(false);
+        await MessageReadStatus.create({
+          msgId,
+          userId: recipients[i],
+          read: false,
+        });
         i++;
       }
       message = await Message.create({
+        id: msgId,
         network: swap.network,
         marketId: swap.marketId,
         swapId: swap.id,
@@ -92,7 +98,6 @@ export class MessagesController {
         fromId: req.user.id,
         recipientsId,
         recipientsMsgPubKey,
-        recipientsReadStatus,
       });
     });
 
@@ -100,6 +105,16 @@ export class MessagesController {
     this.ws.emit(`msg:new:${swap.id}`, message.id);
 
     return ok().data(message.toJSON()).build<Message>();
+  }
+
+  /**
+   * Count number of unread messages sent to the authenticated user.
+   * @param req The request object
+   */
+  @Get('/count-unread')
+  async countUnread(@Req() req: Request) {
+    const count = await MessageReadStatus.countByUserId(req.user.id);
+    return ok().data({ count }).build<CountResponse>();
   }
 
   /**
@@ -149,7 +164,7 @@ export class MessagesController {
    */
   @Put('/:msgId/mark-read')
   async markAsRead(@Req() req: Request, @Param('msgId') msgId: string) {
-    let msg = await Message.getById(msgId);
+    const msg = await Message.getById(msgId);
     if (!msg) throw404('message not found', ErrorTypes.InvalidRequest, 'msgId');
 
     // Make sure authenticated user is one of the recipients
@@ -157,9 +172,8 @@ export class MessagesController {
     if (recipientIndex === -1) throw401('not permitted to perform action', ErrorTypes.Auth);
 
     // Mark as read
-    msg.recipientsReadStatus[recipientIndex] = true;
-    msg = await Message.updateById(msg.id, { recipientsReadStatus: msg.recipientsReadStatus });
+    await MessageReadStatus.markRead(msg.id, req.user.id);
 
-    return ok().data(msg).build<Message>();
+    return ok().data({ ok: true }).build<OKResponse>();
   }
 }

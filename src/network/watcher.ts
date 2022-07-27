@@ -79,39 +79,46 @@ export class Watcher {
    * Watch for event on new block
    */
   watchBlock(contract: Contract) {
-    this.provider.on('block', async (curBlock: number) => {
-      const key = `lastSyncedHeight_${this.network}_${contract.address}`;
-      let meta = await Meta.get(key);
-      if (!meta) {
-        meta = new Meta({
-          value: process.env[`LAUNCH_HEIGHT_${this.network.toUpperCase()}`] || '1',
-        });
-      }
-
-      if (parseInt(meta.value) >= curBlock) return;
-
-      // Query and execute events
-      const events = await contract.queryFilter({}, parseInt(meta.value), curBlock);
-      if (events.length) {
-        const promises = [];
-        for (const e of events) {
-          const deferred = defer();
-          promises.push(deferred.promise);
-          this.pushEvent({
-            event: e,
-            block: e.blockNumber,
-            txIndex: e.transactionIndex,
-            eventIndex: e.logIndex,
-            contract: contract.address,
-            promise: deferred,
+    const listener = async (curBlock: number) => {
+      try {
+        const key = `lastSyncedHeight_${this.network}_${contract.address}`;
+        let meta = await Meta.get(key);
+        if (!meta) {
+          meta = new Meta({
+            value: process.env[`LAUNCH_HEIGHT_${this.network.toUpperCase()}`] || '1',
           });
         }
-        await Promise.all(promises);
-      }
 
-      // Update the last sync height
-      await Meta.update(key, curBlock.toString());
-    });
+        if (parseInt(meta.value) >= curBlock) return;
+
+        // Query and execute events
+        const events = await contract.queryFilter({}, parseInt(meta.value), curBlock);
+        if (events.length) {
+          const promises = [];
+          for (const e of events) {
+            const deferred = defer();
+            promises.push(deferred.promise);
+            this.pushEvent({
+              event: e,
+              block: e.blockNumber,
+              txIndex: e.transactionIndex,
+              eventIndex: e.logIndex,
+              contract: contract.address,
+              promise: deferred,
+            });
+          }
+          await Promise.all(promises);
+        }
+
+        // Update the last sync height
+        await Meta.update(key, curBlock.toString());
+      } catch (e) {
+        this.logger.error('WatchBlock(): ', e);
+        this.provider.off('block', listener);
+        this.sync(contract);
+      }
+    };
+    this.provider.on('block', listener);
   }
 
   /**

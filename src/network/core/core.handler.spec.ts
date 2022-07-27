@@ -267,6 +267,7 @@ describe('CoreHandler', () => {
         base: 'BASE',
         quote: 'QUOTE',
         isBaseLocal: false,
+        totalSwaps: 1,
       });
 
       await Liquidity.create({
@@ -274,6 +275,7 @@ describe('CoreHandler', () => {
         marketId: '0xMarket',
         provider: '0xProvider',
         amount: '1000000000000000000000',
+        totalSwaps: 1,
       });
 
       mockGetSwapFeeInfo.mockResolvedValue({ cost: '10000000000000000000' });
@@ -308,6 +310,10 @@ describe('CoreHandler', () => {
       const liq = await Liquidity.getLiquidity(net, '0xMarket', '0xProvider');
       expect(liq.openOrders).toEqual(1);
       expect(liq.amount).toEqual('990000000000000000000');
+      expect(liq.totalSwaps).toEqual(2);
+
+      const mar = await Market.getById(market.id);
+      expect(mar.totalSwaps).toEqual(2);
     });
   });
 
@@ -459,13 +465,13 @@ describe('CoreHandler', () => {
           expect(liq.lastSuccessfulSwapAt).toBeDefined();
           expect(liq.amountSwapped).toEqual(amount.toString());
           expect(liq.completionRate).toEqual(100);
-          expect(liq.totalSwaps).toEqual(2);
+          expect(liq.totalSwaps).toEqual(1);
 
           market = await Market.getById(market.id);
           expect(market.lastSuccessfulSwapAt).toBeDefined();
           expect(market.amountSwapped).toEqual(amount.toString());
           expect(market.completionRate).toEqual(100);
-          expect(market.totalSwaps).toEqual(2);
+          expect(market.totalSwaps).toEqual(1);
 
           dispute = await Dispute.getById(dispute.id);
           expect(dispute.orderReleased).toBeTruthy();

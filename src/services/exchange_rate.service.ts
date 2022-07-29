@@ -38,7 +38,9 @@ export class ExchangeRateService {
    */
   async get(symbol: string): Promise<Decimal> {
     if (!this.rates) await this.updateCache();
-    return Promise.resolve(ToDec(this.rates[symbol.toUpperCase()]));
+    const rate = this.rates[symbol.toUpperCase()];
+    if (!rate) return Promise.resolve(undefined);
+    return Promise.resolve(ToDec(rate));
   }
 }
 

@@ -1,12 +1,17 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { getTokenInfo, TokenList } from '../../common/token_list';
-import { ok } from '../../common/responses/responses';
+import { ok, throw400 } from '../../common/responses/responses';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import NetworkService from '../../network/network.service';
+import { ExchangeRateService } from '../../services/exchange_rate.service';
 
 @Controller('v1/misc')
 export class MiscController {
-  constructor(private metadataSrv: MetadataService, private netSrv: NetworkService) {}
+  constructor(
+    private metadataSrv: MetadataService,
+    private netSrv: NetworkService,
+    private exRateSvr: ExchangeRateService,
+  ) {}
 
   /**
    * Get token list
@@ -28,5 +33,16 @@ export class MiscController {
     let info = getTokenInfo(network, address);
     if (!info) info = await this.metadataSrv.getTokenInfo(network, address);
     return ok().data(info).build();
+  }
+
+  /**
+   * Get fiat currency rate to 1 USD
+   * @param symbol The currency symbol (e.g USD, NGN)
+   */
+  @Get('fiat-rate/:symbol')
+  async getFiatRate(@Param('symbol') symbol: string) {
+    const rate = await this.exRateSvr.get(symbol);
+    if (!rate) throw400('symbol not supported');
+    return ok().data({ rate }).build();
   }
 }

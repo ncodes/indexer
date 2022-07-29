@@ -15,7 +15,7 @@ export default class ExchangeRateCacher extends Base {
     this.schedule();
   }
 
-  @Cron('*/60 * * * * *')
+  @Cron('*/120 * * * * *')
   schedule() {
     this.process().catch((e) => {
       //

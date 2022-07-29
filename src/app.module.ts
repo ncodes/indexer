@@ -22,6 +22,7 @@ import { TicketsModule } from './controllers/tickets/tickets.module';
 import { DisputesModule } from './controllers/disputes/disputes.module';
 import { MessagesModule } from './controllers/messages/messages.module';
 import { UsersModule } from './controllers/users/users.module';
+import { ReviewsModule } from './controllers/reviews/reviews.module';
 
 Handlebars.registerHelper('uppercase', (aString) => {
   return aString.toUpperCase();
@@ -93,6 +94,7 @@ function getProviders() {
     DisputesModule,
     MessagesModule,
     UsersModule,
+    ReviewsModule,
   ],
   providers: getProviders(),
   controllers: [],

@@ -52,6 +52,8 @@ export default class Liquidity extends BaseModel {
   totalSwaps: number = undefined;
   // The dispute rate of this market
   disputeRate: number = undefined;
+  // The satisfactory rate from reviews
+  satisfactoryRate: number = undefined;
 
   /** Not Persisted */
   market: Market;
@@ -114,7 +116,7 @@ export default class Liquidity extends BaseModel {
    */
   static getLiquidity(
     network: string,
-    mid: string,
+    mid?: string,
     provider?: string,
     select = [],
     txn?: Transaction,
@@ -124,9 +126,31 @@ export default class Liquidity extends BaseModel {
       .select(...select)
       .whereNotDeleted()
       .where({ network })
-      .where('marketId', 'ILIKE', mid)
+      .where((q) => {
+        if (mid) q.where('marketId', 'ILIKE', mid);
+      })
       .where('provider', 'ILIKE', provider)
       .first();
+  }
+
+  /**
+   * Update all liquidities belonging to a provider in a given network
+   * @param network The network name
+   * @param provider The provider address
+   * @param upd The update object
+   * @param txn Optional transaction object
+   */
+  static updateProviderLiquidities(
+    network: string,
+    provider: string,
+    upd: Partial<Liquidity>,
+    txn?: Transaction,
+  ): Promise<number> {
+    return this.query(txn)
+      .whereNotDeleted()
+      .where({ network })
+      .where('provider', 'ILIKE', provider)
+      .patch(upd);
   }
 
   static makeSelectList(select = []) {
@@ -192,7 +216,7 @@ export default class Liquidity extends BaseModel {
     provider?: string,
     txn?: Transaction,
   ): Promise<Liquidity[]> {
-    let q = this.query(txn).whereNotDeleted().where({ network });
+    let q = this.query(txn).whereNotDeleted().where({ network, paused: false });
     if (marketId) q = q.where('marketId', 'ILIKE', marketId);
     if (provider) q = q.where('provider', 'ILIKE', provider);
     return q

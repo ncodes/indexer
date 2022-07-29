@@ -14,9 +14,7 @@ export class MiscController {
    */
   @Get('token-list/:network')
   async getTokenList(@Param('network') network: string) {
-    let token = TokenList;
-    if (network) token = token[network];
-    return ok().data(token).build();
+    return ok().data(TokenList[network]).build();
   }
 
   /**

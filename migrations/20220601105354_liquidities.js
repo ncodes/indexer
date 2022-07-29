@@ -24,6 +24,7 @@ exports.up = function (knex) {
       table.integer('totalSwaps').defaultTo(0);
       table.float('completionRate').defaultTo(0);
       table.float('disputeRate').defaultTo(0);
+      table.float('satisfactoryRate').defaultTo(0);
       table.timestamp('lastSuccessfulSwapAt');
       table.timestamp('createdAt');
       table.timestamp('updatedAt');

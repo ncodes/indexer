@@ -4,6 +4,7 @@ import { ok, throw400 } from '../../common/responses/responses';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import NetworkService from '../../network/network.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
+import { PriceService } from '../../services/price.service';
 
 @Controller('v1/misc')
 export class MiscController {
@@ -11,6 +12,7 @@ export class MiscController {
     private metadataSrv: MetadataService,
     private netSrv: NetworkService,
     private exRateSvr: ExchangeRateService,
+    private priceSvr: PriceService,
   ) {}
 
   /**
@@ -44,5 +46,15 @@ export class MiscController {
     const rate = await this.exRateSvr.get(symbol);
     if (!rate) throw400('symbol not supported');
     return ok().data({ rate }).build();
+  }
+
+  /**
+   * Get crypto asset rate to 1 USD
+   * @param symbols A comma separated list of crypto symbols (e.g BTC,ETH)
+   */
+  @Get('crypto-rate/:symbols')
+  async getCryptoRate(@Param('symbols') symbols: string) {
+    const rate = await this.priceSvr.getAssets(symbols.split(','));
+    return ok().data(rate.prices).build();
   }
 }

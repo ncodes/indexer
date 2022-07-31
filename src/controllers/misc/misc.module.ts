@@ -7,9 +7,10 @@ import {
   ExchangeRateService,
   ExchangeRateServiceModule,
 } from '../../services/exchange_rate.service';
+import { PriceServiceModule } from '../../services/price.service';
 
 @Module({
-  imports: [NotifierModule, NetworkModule, ExchangeRateServiceModule],
+  imports: [NotifierModule, NetworkModule, ExchangeRateServiceModule, PriceServiceModule],
   providers: [MetadataService],
   controllers: [MiscController],
 })

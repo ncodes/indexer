@@ -1,9 +1,11 @@
 /* tslint:disable:max-classes-per-file */
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, Module, OnModuleInit } from '@nestjs/common';
 import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
 import { ConfigService } from '@nestjs/config';
 import Nomics from 'nomics';
 import { ToDec } from '../common/common';
+import * as moment from 'moment';
+import { Moment } from 'moment';
 
 export interface AssetPrice {
   // unique id to represent symbol and conversion currency combination
@@ -31,7 +33,7 @@ export class PriceService implements OnModuleInit {
   onModuleInit() {
     if (process.env.NODE_ENV === 'test') return;
     try {
-      this.client = new NomicsSource(this.cfg.get('app.nomics.key'));
+      this.client = new NomicsSource(this.cfg.get('app.nomics.key'), 60);
     } catch (e) {
       this.logger.error(e.message);
     }
@@ -83,22 +85,42 @@ export class AssetPrices {
  */
 class NomicsSource implements PriceSource {
   client: Nomics;
+  cache: { [key: string]: { value: AssetPrice; lastFetched: Moment } } = {};
 
-  constructor(key: string) {
+  /**
+   * Initialize the source
+   * @param key The source provider API key
+   * @param expireTime The number of seconds before an asset's cached price
+   * expires
+   */
+  constructor(key: string, private expireTime: number) {
     this.client = new Nomics({ apiKey: key });
   }
 
   get(ids: string[], convert: string): Promise<AssetPrice[]> {
+    const rates = [];
+
+    // Filter out and collect non-expired rates
+    ids = ids.filter((id) => {
+      const cached = this.cache[id.toUpperCase()];
+      if (!cached) return true;
+      const expired = moment().diff(cached.lastFetched, 's').valueOf() >= this.expireTime;
+      if (!expired) rates.push(cached.value);
+      return expired;
+    });
+
     return new Promise(async (resolve, reject) => {
       try {
+        if (!ids.length) return resolve(rates);
         const res = await this.client.currenciesTicker({
           convert,
           ids,
           interval: ['1d'],
         });
-        const rates = res.map((r) => {
+
+        res.forEach((r) => {
           const sym = r.symbol.toUpperCase();
-          return {
+          const assetPrice = {
             price: r.price,
             symbol: sym,
             convert,
@@ -107,7 +129,10 @@ class NomicsSource implements PriceSource {
               .toFixed(),
             id: `${sym}_${convert}`.toUpperCase(),
           };
+          this.cache[sym] = { lastFetched: moment(), value: assetPrice };
+          rates.push(assetPrice);
         });
+
         return resolve(rates);
       } catch (e) {
         return reject(e);
@@ -119,3 +144,10 @@ class NomicsSource implements PriceSource {
 abstract class PriceSource {
   abstract get(ids: string[], convert: string): Promise<AssetPrice[]>;
 }
+
+// tslint:disable-next-line:max-classes-per-file
+@Module({
+  providers: [PriceService, ConfigService],
+  exports: [PriceService, ConfigService],
+})
+export class PriceServiceModule {}

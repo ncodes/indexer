@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
 import { NetworkModule } from '../../network/network.module';
 import { MetadataService } from '../../services/metadata/metadata.service';
-import { PriceService } from './../../services/price.service';
 import { MarketsController } from './markets.controller';
 import { MarketsService } from './markets.service';
+import { PriceServiceModule } from '../../services/price.service';
 
 @Module({
-  imports: [NetworkModule],
+  imports: [NetworkModule, PriceServiceModule],
   controllers: [MarketsController],
-  providers: [MarketsService, PriceService, MetadataService],
+  providers: [MarketsService, MetadataService],
 })
 export class MarketsModule {}

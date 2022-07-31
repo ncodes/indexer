@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { getTokenInfo, TokenList } from '../../common/token_list';
 import { ok, throw400 } from '../../common/responses/responses';
 import { MetadataService } from '../../services/metadata/metadata.service';

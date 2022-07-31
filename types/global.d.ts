@@ -92,4 +92,14 @@ declare global {
     message: string;
     recipient: string;
   }
+
+  interface AssetStat {
+    symbol?: string;
+    address?: string;
+    volume24h?: string;
+    price24h?: number;
+    lowestPrice24h?: string;
+    highestPrice24h?: string;
+    network?: string;
+  }
 }

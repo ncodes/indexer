@@ -420,7 +420,7 @@ describe('MediatorManagerHandler', () => {
         ticketId: '1',
         orderId: '23',
         amount: '0.00000000000000001',
-        asset: 'P2P',
+        symbol: 'P2P',
         reason: 'VOTED WITH MINORITY',
       });
     });

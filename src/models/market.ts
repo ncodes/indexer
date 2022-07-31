@@ -63,8 +63,8 @@ export default class Market extends BaseModel {
   quoteLogo: string;
   numProviders: string;
   totalLiquidity: string;
-  lowestPrice: string;
-  highestPrice: string;
+  lowestPrice24h: string;
+  highestPrice24h: string;
   priceChange: number;
   totalSwaps24h: string;
   volume24h: string;

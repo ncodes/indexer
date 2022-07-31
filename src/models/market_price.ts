@@ -10,6 +10,14 @@ import { ToDec } from '../common/common';
 export default class MarketPrice extends BaseModel {
   // The network name
   network: string;
+  // The base asset symbol
+  base: string = undefined;
+  // The base asset address
+  baseAddress: string = undefined;
+  // The quote asset symbol
+  quote: string = undefined;
+  // The quote asset address
+  quoteAddress: string = undefined;
   // The market ID
   marketId: string;
   // The provider address
@@ -67,6 +75,7 @@ export default class MarketPrice extends BaseModel {
    * Find the recent price before a given date
    * @param network The target network name
    * @param marketId The target market ID
+   * @param baseAddress The base address of a target asset
    * @param provider The provider address
    * @param before The target date
    * @param txn Optional transaction object
@@ -74,13 +83,21 @@ export default class MarketPrice extends BaseModel {
   static async findRecentBefore(
     network: string,
     marketId: string,
+    baseAddress: string,
     provider: string,
     before: string,
     txn?: Transaction,
   ): Promise<MarketPrice> {
     return this.query(txn)
-      .where({ network })
-      .where('marketId', 'ilike', marketId)
+      .where((q) => {
+        if (network) q.where({ network });
+      })
+      .where((q) => {
+        if (marketId) q.where('marketId', 'ilike', marketId);
+      })
+      .where((q) => {
+        if (baseAddress) q.where('baseAddress', 'ilike', baseAddress);
+      })
       .where((q) => {
         if (provider) q.where('provider', 'ilike', provider);
       })
@@ -93,18 +110,27 @@ export default class MarketPrice extends BaseModel {
    * Find the recent price
    * @param network The target network name
    * @param marketId The target market ID
+   * @param baseAddress The base address of a target asset
    * @param provider The provider address
    * @param txn Optional transaction object
    */
   static async findRecent(
-    network: string,
-    marketId: string,
-    provider: string,
+    network?: string,
+    marketId?: string,
+    baseAddress?: string,
+    provider?: string,
     txn?: Transaction,
   ): Promise<MarketPrice> {
     return this.query(txn)
-      .where({ network })
-      .where('marketId', 'ilike', marketId)
+      .where((q) => {
+        if (network) q.where({ network });
+      })
+      .where((q) => {
+        if (marketId) q.where('marketId', 'ilike', marketId);
+      })
+      .where((q) => {
+        if (baseAddress) q.where('baseAddress', 'ilike', baseAddress);
+      })
       .where((q) => {
         if (provider) q.where('provider', 'ilike', provider);
       })
@@ -131,12 +157,52 @@ export default class MarketPrice extends BaseModel {
     const priceHourAgo = await MarketPrice.findRecentBefore(
       network,
       marketId,
+      undefined,
       provider,
       timeAgo,
       txn,
     );
     if (!priceHourAgo) return Promise.resolve(0);
-    const currentPrice = await MarketPrice.findRecent(network, marketId, provider, txn);
+    const currentPrice = await MarketPrice.findRecent(network, marketId, undefined, provider, txn);
+    return Promise.resolve(
+      ToDec(currentPrice.price)
+        .sub(priceHourAgo.price)
+        .div(ToDec(priceHourAgo.price))
+        .mul(100)
+        .toNumber(),
+    );
+  }
+
+  /**
+   * Get price change by base address
+   * @param network The network name
+   * @param baseAddress
+   * @param hours The price change period in hours
+   * @param txn Optional transaction object
+   */
+  static async priceChangeByBaseAddress(
+    network: string,
+    baseAddress: string,
+    hours: number,
+    txn?: Transaction,
+  ): Promise<number> {
+    const timeAgo = moment().subtract(hours, 'h').toISOString();
+    const priceHourAgo = await MarketPrice.findRecentBefore(
+      network,
+      undefined,
+      baseAddress,
+      undefined,
+      timeAgo,
+      txn,
+    );
+    if (!priceHourAgo) return Promise.resolve(0);
+    const currentPrice = await MarketPrice.findRecent(
+      network,
+      undefined,
+      baseAddress,
+      undefined,
+      txn,
+    );
     return Promise.resolve(
       ToDec(currentPrice.price)
         .sub(priceHourAgo.price)

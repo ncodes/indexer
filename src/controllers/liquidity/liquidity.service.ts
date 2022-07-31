@@ -54,7 +54,14 @@ export class LiquidityService {
           1440,
         );
       if (select.includes(`volume24h`) || !select.length)
-        liq.volume24h = await Swap.getVolume(net, marketId, provider, 1400, market.isInstant());
+        liq.volume24h = await Swap.getVolume(
+          net,
+          marketId,
+          undefined,
+          provider,
+          1400,
+          market.isInstant(),
+        );
       if (select.includes(`priceChange`) || !select.length)
         liq.priceChange = await MarketPrice.priceChange(net, marketId, provider, 24);
 

@@ -3,6 +3,7 @@ import Objection, { raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 import Market from './market';
 import * as _ from 'lodash';
+import * as moment from 'moment';
 
 /**
  * Liquidity represents a liquidity model
@@ -104,6 +105,15 @@ export default class Liquidity extends BaseModel {
    */
   static getById(id: string, txn?: Transaction): Promise<Liquidity> {
     return this.query(txn).whereNotDeleted().findById(id);
+  }
+
+  /**
+   * getByBaseAddress finds a record by base address
+   * @param address The base address
+   * @param txn Optional transaction object
+   */
+  static getByBaseAddress(address: string, txn?: Transaction): Promise<Liquidity> {
+    return this.query(txn).where({ baseAddress: address }).whereNotDeleted().first();
   }
 
   /**
@@ -302,18 +312,37 @@ export default class Liquidity extends BaseModel {
   }
 
   /**
-   * Get the lowest liquidity price of all liquidity associated with a market
+   * Get the lowest liquidity price
    * @param net The network name
    * @param mid The market ID
+   * @param baseAddress The base address
+   * @param withinHours Limit query with now() - n hours
    * @param txn Optional transaction object
    * @returns
    */
-  static getLowestPriceInMarket(net: string, mid: string, txn?: Transaction) {
+  static getLowestPrice(
+    net?: string,
+    mid?: string,
+    baseAddress?: string,
+    withinHours?: number,
+    txn?: Transaction,
+  ) {
     return new Promise<string>((resolve, reject) => {
+      const timeAgo = moment().subtract(withinHours, 'h').toISOString();
       this.query(txn)
-        .where('marketId', 'ILIKE', mid)
-        .where({ network: net })
+        .where((q) => {
+          if (net) q.where({ network: net });
+        })
+        .where((q) => {
+          if (mid) q.where('marketId', 'ILIKE', mid);
+        })
+        .where((q) => {
+          if (baseAddress) q.where('baseAddress', 'ILIKE', baseAddress);
+        })
         .where('amount', '>', 0)
+        .where((q) => {
+          if (withinHours) q.where('createdAt', '>', timeAgo);
+        })
         .orderByRaw('cast(price as numeric) asc')
         .whereNotDeleted()
         .first()
@@ -326,18 +355,37 @@ export default class Liquidity extends BaseModel {
   }
 
   /**
-   * Get the highest liquidity price of all liquidity associated with a market
+   * Get the highest liquidity price
    * @param net The network name
    * @param mid The market ID
+   * @param baseAddress The base address
+   * @param withinHours Limit query with now() - n hours
    * @param txn Optional transaction object
    * @returns
    */
-  static getHighestPriceInMarket(net: string, mid: string, txn?: Transaction) {
+  static getHighestPrice(
+    net: string,
+    mid: string,
+    baseAddress?: string,
+    withinHours?: number,
+    txn?: Transaction,
+  ) {
     return new Promise<string>((resolve, reject) => {
+      const timeAgo = moment().subtract(withinHours, 'h').toISOString();
       this.query(txn)
-        .where('marketId', 'ILIKE', mid)
-        .where({ network: net })
+        .where((q) => {
+          if (net) q.where({ network: net });
+        })
+        .where((q) => {
+          if (mid) q.where('marketId', 'ILIKE', mid);
+        })
+        .where((q) => {
+          if (baseAddress) q.where('baseAddress', 'ILIKE', baseAddress);
+        })
         .where('amount', '>', 0)
+        .where((q) => {
+          if (withinHours) q.where('createdAt', '>', timeAgo);
+        })
         .orderByRaw('cast(price as numeric) desc')
         .whereNotDeleted()
         .first()

@@ -668,8 +668,8 @@ export class CoreHandler extends Handler {
 
     // Create the liquidity on database if not existing.
     // Otherwise, update the existing liquidity.
+    const market = await Market.getMarket(this.network, marketId, undefined);
     if (!liq) {
-      const market = await Market.getMarket(this.network, marketId, undefined);
       await Liquidity.create(
         {
           network: this.network,
@@ -705,9 +705,13 @@ export class CoreHandler extends Handler {
     await MarketPrice.create(
       {
         network: this.network,
+        base: market.base,
+        baseAddress: market.baseAddress,
+        quote: market.quote,
+        quoteAddress: market.quoteAddress,
         marketId,
         provider,
-        price: await Liquidity.getLowestPriceInMarket(this.network, marketId, txn),
+        price: await Liquidity.getLowestPrice(this.network, marketId, undefined, undefined, txn),
       },
       txn,
     );
@@ -733,19 +737,23 @@ export class CoreHandler extends Handler {
     txn?: Transaction,
   ) {
     // Get local liquidity
-    const dbLiq = await Liquidity.getLiquidity(this.network, marketId, provider, undefined, txn);
-    if (!dbLiq) throw new Error('liquidity not found');
+    const liq = await Liquidity.getLiquidity(this.network, marketId, provider, undefined, txn);
+    if (!liq) throw new Error('liquidity not found');
 
     // Update liquidity price
-    await Liquidity.updateById(dbLiq.id, { price: price.toString() }, txn);
+    await Liquidity.updateById(liq.id, { price: price.toString() }, txn);
 
     // Add new market price entry
     await MarketPrice.create(
       {
         network: this.network,
+        base: liq.base,
+        baseAddress: liq.baseAddress,
+        quote: liq.quote,
+        quoteAddress: liq.quoteAddress,
         marketId,
         provider,
-        price: await Liquidity.getLowestPriceInMarket(this.network, marketId, txn),
+        price: await Liquidity.getLowestPrice(this.network, marketId, undefined, undefined, txn),
       },
       txn,
     );

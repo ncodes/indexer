@@ -69,10 +69,10 @@ export class MarketsService {
         market.numProviders = await Liquidity.countProvidersInMarket(net, marketId);
       if (select.includes(`totalLiquidity`) || !select.length)
         market.totalLiquidity = await Liquidity.getTotalMarketLiquidity(net, marketId);
-      if (select.includes(`lowestPrice`) || !select.length)
-        market.lowestPrice = await Liquidity.getLowestPriceInMarket(net, marketId);
-      if (select.includes(`highestPrice`) || !select.length)
-        market.highestPrice = await Liquidity.getHighestPriceInMarket(net, marketId);
+      if (select.includes(`lowestPrice24h`) || !select.length)
+        market.lowestPrice24h = await Liquidity.getLowestPrice(net, marketId, undefined, 24);
+      if (select.includes(`highestPrice24h`) || !select.length)
+        market.highestPrice24h = await Liquidity.getHighestPrice(net, marketId, undefined, 24);
       if (select.includes(`totalSwaps24h`) || !select.length)
         market.totalSwaps24h = await Swap.countByNetworkAndMarketAndProvider(
           net,
@@ -82,7 +82,14 @@ export class MarketsService {
           1440,
         );
       if (select.includes(`volume24h`) || !select.length)
-        market.volume24h = await Swap.getVolume(net, marketId, undefined, 1400, market.isInstant());
+        market.volume24h = await Swap.getVolume(
+          net,
+          marketId,
+          undefined,
+          undefined,
+          1400,
+          market.isInstant(),
+        );
       if (select.includes(`priceChange`) || !select.length)
         market.priceChange = await MarketPrice.priceChange(net, marketId, undefined, 24);
       if (select.includes(`baseLogo`) || !select.length)

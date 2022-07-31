@@ -227,6 +227,7 @@ export default class Swap extends BaseModel {
    * Get the trade volume of a market/provider within now and some time ago.
    * @param network The network name.
    * @param marketId The base asset address
+   * @param baseAddress The base address
    * @param provider The provider address
    * @param timeAgo The number of minutes ago to use as the start time
    * @param instant? Filter by instant swap
@@ -235,6 +236,7 @@ export default class Swap extends BaseModel {
   static getVolume(
     network: string,
     marketId: string,
+    baseAddress: string,
     provider: string,
     timeAgo: number,
     instant?: boolean,
@@ -243,8 +245,15 @@ export default class Swap extends BaseModel {
     return new Promise<string>((resolve, reject) => {
       this.query(txn)
         .select(raw('sum(cast(?? as numeric))', 'amount').as('total'))
-        .where('network', network)
-        .where('marketId', 'ilike', marketId)
+        .where((q) => {
+          if (network) q.where('network', network);
+        })
+        .where((q) => {
+          if (marketId) q.where('marketId', 'ilike', marketId);
+        })
+        .where((q) => {
+          if (baseAddress) q.where('baseAddress', 'ilike', baseAddress);
+        })
         .where((q) => {
           if (provider !== undefined) q.where('provider', 'ilike', provider);
         })

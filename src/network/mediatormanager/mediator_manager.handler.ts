@@ -1,6 +1,6 @@
 import * as ethers from 'ethers';
-import { Handler } from '../handler';
 import { BigNumber } from 'ethers';
+import { Handler } from '../handler';
 import { Transaction } from 'objection';
 import Ticket from '../../models/ticket';
 import * as moment from 'moment';
@@ -13,6 +13,7 @@ import Market from '../../models/market';
 import Draft from '../../models/draft';
 import Dispute from '../../models/dispute';
 import Swap from '../../models/swap';
+import MineTask, { MineTaskType } from '../../models/mine_task';
 
 export class MediatorManagerHandler extends Handler {
   constructor(
@@ -384,7 +385,7 @@ export class MediatorManagerHandler extends Handler {
       txn,
     );
 
-    // Compute dispute phases end time  when dispute is fully drafted
+    // Compute dispute phases times when dispute is fully drafted
     const numDrafted = dispute.numMediatorsDrafted + 1;
     const fullyDrafted = numDrafted >= dispute.numMediators;
     const block = await event.getBlock();
@@ -411,6 +412,30 @@ export class MediatorManagerHandler extends Handler {
       },
       txn,
     );
+
+    // Complete a draft mining task
+    await MineTask.completeOneDraftTask(
+      ticket.network,
+      marketId,
+      orderId.toNumber(),
+      disputeId.toNumber(),
+      txn,
+    );
+
+    // Create execution task when fully drafted
+    if (fullyDrafted) {
+      await MineTask.create(
+        {
+          type: MineTaskType.Execute,
+          network: dispute.network,
+          marketId,
+          orderId: orderId.toNumber(),
+          disputeId: disputeId.toNumber(),
+          mineAt: dispute.appealEndAt,
+        },
+        txn,
+      );
+    }
 
     // Send notification
     await this.notifSrv.notify(NotifyType.TicketDrafted, this.network, owner, {
@@ -479,6 +504,20 @@ export class MediatorManagerHandler extends Handler {
       undefined,
       txn,
     );
+
+    // Complete an undraft mining task
+    await MineTask.completeOneUndraftTask(
+      this.network,
+      marketId,
+      ticket.orderId,
+      ticket.disputeId,
+      txn,
+    );
+
+    // Note: You might think it is appropriate to set `orderId` and
+    // `disputeId` to null, but do not. The next event (TicketSlashed)
+    // after this will need the values and will be responsible for
+    // resetting it
     await Ticket.updateById(
       ticket.id,
       {
@@ -489,6 +528,7 @@ export class MediatorManagerHandler extends Handler {
       },
       txn,
     );
+
     return Promise.resolve();
   }
 

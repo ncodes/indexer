@@ -10,6 +10,7 @@ import Market from '../../models/market';
 import { NotifyType } from '../../jobs/mailer/NotifierService';
 import Dispute from '../../models/dispute';
 import Swap from '../../models/swap';
+import MineTask, { MineTaskType } from '../../models/mine_task';
 
 const MarketCoreContract = jest.fn().mockImplementation(() => {
   return {};
@@ -247,6 +248,14 @@ describe('MediatorManagerHandler', () => {
         owner: '0xDraftOwner2',
       });
 
+      let draftTask = await MineTask.create({
+        type: MineTaskType.Draft,
+        network: net,
+        marketId,
+        orderId: orderId.toNumber(),
+        disputeId: disputeId.toNumber(),
+      });
+
       const now = moment().unix();
       process.env.DM_EVIDENCE_DUR = '2';
       process.env.DM_PREDICT_DUR = '2';
@@ -340,6 +349,126 @@ describe('MediatorManagerHandler', () => {
         '0xOwner',
         fullyDraftedLocal,
       );
+
+      // expect a draft task to be marked `completed`
+      draftTask = await MineTask.getById(draftTask.id);
+      expect(draftTask.completed).toBeTruthy();
+
+      // expect an `execute` dispute mining task to be created since
+      // dispute is fully drafted (1 mediator)
+      const execTask = await MineTask.find({
+        marketId,
+        orderId: orderId.toNumber(),
+        disputeId: disputeId.toNumber(),
+        type: MineTaskType.Execute,
+      });
+      expect(execTask).toBeDefined();
+    });
+
+    describe('when not fully drafted', () => {
+      it('should mark ticket as drafted', async () => {
+        let ticket = await Ticket.create({
+          network: net,
+          index: 1,
+          owner: '0xOwner',
+        });
+
+        const marketId = '0xMarket';
+        const ticketId = toBN(1);
+        const orderId = toBN(23);
+        const disputeId = toBN(2);
+
+        const swap = await Swap.create({
+          network: net,
+          marketId,
+          orderId: orderId.toNumber(),
+          base: 'BASE',
+          quote: 'QUOTE',
+          provider: '0xProvider',
+          taker: '0xTaker',
+        });
+
+        let dispute = await Dispute.create({
+          network: net,
+          marketId,
+          orderId: orderId.toNumber(),
+          disputeId: disputeId.toNumber(),
+          numMediators: 2,
+          numMediatorsDrafted: 0,
+        });
+
+        await Draft.create({
+          network: net,
+          marketId,
+          disputeIndex: disputeId.toNumber(),
+          orderId: orderId.toNumber(),
+          owner: '0xDraftOwner1',
+        });
+        await Draft.create({
+          network: net,
+          marketId,
+          disputeIndex: disputeId.toNumber(),
+          orderId: orderId.toNumber(),
+          owner: '0xDraftOwner2',
+        });
+
+        let draftTask = await MineTask.create({
+          type: MineTaskType.Draft,
+          network: net,
+          marketId,
+          orderId: orderId.toNumber(),
+          disputeId: disputeId.toNumber(),
+        });
+
+        const now = moment().unix();
+        process.env.DM_EVIDENCE_DUR = '2';
+        process.env.DM_PREDICT_DUR = '2';
+        process.env.DM_APPEAL_DUR = '2';
+
+        const getBlock = jest.fn().mockResolvedValue({ timestamp: now });
+        await expect(
+          handler.onDrafted(marketId, '0xOwner', ticketId, orderId, disputeId, { getBlock } as any),
+        ).resolves.toBeUndefined();
+
+        // Ticket should be updated correctly
+        ticket = await Ticket.getById(ticket.id);
+        expect(ticket.drafted).toBeTruthy();
+        expect(ticket.orderId).toEqual(23);
+        expect(ticket.draftedAt).toBeDefined();
+        expect(ticket.disputeId).toEqual(2);
+
+        // Draft record should be created
+        const draft = await Draft.find({ ticketId: ticket.id });
+        expect(draft).toBeDefined();
+        expect(draft.disputeIndex).toEqual(2);
+        expect(draft.disputeId).toEqual(dispute.id);
+
+        // Dispute should be updated correctly
+        dispute = await Dispute.getById(dispute.id);
+        expect(dispute.numMediatorsDrafted).toEqual(1);
+        expect(dispute.evidenceEndAt).toBeNull();
+        expect(dispute.commitEndAt).toBeNull();
+        expect(dispute.predictEndAt).toBeNull();
+        expect(dispute.appealEndAt).toBeNull();
+
+        expect(mockNotify).toBeCalledTimes(1);
+
+        // expect notification to be sent to drafted ticket owner
+        expect(mockNotify).toHaveBeenNthCalledWith(1, NotifyType.TicketDrafted, net, '0xOwner', {
+          marketId: '0xMarket',
+          owner: '0xOwner',
+          ticketId: 1,
+          orderId: 23,
+        });
+
+        // expect a draft task to be marked `completed`
+        draftTask = await MineTask.getById(draftTask.id);
+        expect(draftTask.completed).toBeTruthy();
+
+        // don't expect an `execute` dispute mining task to be created
+        const execTask = await MineTask.find({ type: MineTaskType.Execute });
+        expect(execTask).toBeUndefined();
+      });
     });
   });
 
@@ -347,11 +476,29 @@ describe('MediatorManagerHandler', () => {
     it('should un-mark ticket as drafted', async () => {
       let ticket = await Ticket.create({
         network: net,
+        marketId: '0xMarket',
         index: 1,
         owner: '0xOwner',
         orderId: 23,
         disputeId: 1,
       });
+
+      const undraftTask1 = await MineTask.create({
+        type: MineTaskType.Undraft,
+        network: net,
+        marketId: ticket.marketId,
+        orderId: ticket.orderId,
+        disputeId: ticket.disputeId,
+      });
+
+      const undraftTask2 = await MineTask.create({
+        type: MineTaskType.Undraft,
+        network: net,
+        marketId: ticket.marketId,
+        orderId: ticket.orderId,
+        disputeId: ticket.disputeId,
+      });
+
       await expect(
         handler.onUndrafted('0xMarket', '0xOwner', toBN(1), true, {} as any),
       ).resolves.toBeUndefined();
@@ -360,6 +507,13 @@ describe('MediatorManagerHandler', () => {
       expect(ticket.draftedAt).toBeNull();
       expect(ticket.orderId).toEqual(23);
       expect(ticket.disputeId).toEqual(1);
+
+      // expect an undraft mining task to be marked as `completed`
+      let numCompleted = await MineTask.count({
+        type: MineTaskType.Undraft,
+        completed: true,
+      });
+      expect(numCompleted).toEqual(1);
 
       // not slashed
       await expect(
@@ -370,6 +524,13 @@ describe('MediatorManagerHandler', () => {
       expect(ticket.draftedAt).toBeNull();
       expect(ticket.orderId).toBeNull();
       expect(ticket.disputeId).toBeNull();
+
+      // expect another undraft mining task to be marked as `completed`
+      numCompleted = await MineTask.count({
+        type: MineTaskType.Undraft,
+        completed: true,
+      });
+      expect(numCompleted).toEqual(2);
     });
   });
 
@@ -420,7 +581,7 @@ describe('MediatorManagerHandler', () => {
         ticketId: '1',
         orderId: '23',
         amount: '0.00000000000000001',
-        symbol: 'P2P',
+        asset: 'P2P',
         reason: 'VOTED WITH MINORITY',
       });
     });

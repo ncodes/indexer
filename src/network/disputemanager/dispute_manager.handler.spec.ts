@@ -10,6 +10,7 @@ import Commit from '../../models/commit';
 import Reveal from '../../models/reveal';
 import Draft from '../../models/draft';
 import Liquidity from '../../models/liquidity';
+import MineTask, { MineTaskType } from '../../models/mine_task';
 
 const MarketCoreContract = jest.fn().mockImplementation(() => {
   return {};
@@ -122,6 +123,16 @@ describe('DisputeManagerHandler', () => {
         expect(liquidity.numActiveDisputes).toEqual(1);
         expect(liquidity.totalDisputes).toEqual(1);
         expect(liquidity.disputeRate).toEqual(50);
+
+        // Expect draft mining task
+        const q = {
+          type: MineTaskType.Draft,
+          network: net,
+          marketId: market.marketId,
+          orderId: orderId.toNumber(),
+          disputeId: disputeId.toNumber(),
+        };
+        expect(await MineTask.count(q)).toEqual(3);
       });
     });
 
@@ -197,6 +208,16 @@ describe('DisputeManagerHandler', () => {
         liquidity = await Liquidity.getById(liquidity.id);
         expect(liquidity.numActiveDisputes).toEqual(1);
         expect(liquidity.totalDisputes).toEqual(1);
+
+        // Expect draft mining task
+        const q = {
+          type: MineTaskType.Draft,
+          network: net,
+          marketId: market.marketId,
+          orderId: orderId.toNumber(),
+          disputeId: disputeId.toNumber(),
+        };
+        expect(await MineTask.count(q)).toEqual(6);
       });
     });
   });
@@ -243,12 +264,14 @@ describe('DisputeManagerHandler', () => {
     let market: Market;
     let swap: Swap;
     let liquidity: Liquidity;
+    const numMediators = 3;
+    let executeTask: MineTask;
 
     beforeEach(async () => {
       market = await Market.create({
         network: net,
         marketId,
-        numMediators: 3,
+        numMediators,
         numActiveDisputes: 1,
         totalDisputes: 1,
       });
@@ -265,6 +288,7 @@ describe('DisputeManagerHandler', () => {
         marketId,
         orderId: orderId.toNumber(),
         disputeId: disputeId.toNumber(),
+        numMediators,
       });
 
       swap = await Swap.create({
@@ -283,6 +307,14 @@ describe('DisputeManagerHandler', () => {
         orderId: orderId.toNumber(),
         disputeIndex: disputeId.toNumber(),
         owner: '0xDrafted',
+      });
+
+      executeTask = await MineTask.create({
+        network: net,
+        marketId,
+        orderId: orderId.toNumber(),
+        disputeId: disputeId.toNumber(),
+        type: MineTaskType.Execute,
       });
     });
 
@@ -346,6 +378,20 @@ describe('DisputeManagerHandler', () => {
         // expect liquidity to be updated correctly
         liquidity = await Liquidity.getById(liquidity.id);
         expect(liquidity.numActiveDisputes).toEqual(0);
+
+        // expect undraft mining task
+        const q = {
+          type: MineTaskType.Undraft,
+          network: net,
+          marketId: market.marketId,
+          orderId: orderId.toNumber(),
+          disputeId: disputeId.toNumber(),
+        };
+        expect(await MineTask.count(q)).toEqual(numMediators);
+
+        // expect execute task to be marked complete
+        const task = await MineTask.getById(executeTask.id);
+        expect(task.completed).toBeTruthy();
       });
     });
 

@@ -11,9 +11,9 @@ import { NotifierService, NotifyType } from '../../jobs/mailer/NotifierService';
 import NetworkService from '../network.service';
 import Draft from '../../models/draft';
 import * as _ from 'lodash';
-import * as moment from 'moment';
 import { ToDec } from '../../common/common';
 import Liquidity from '../../models/liquidity';
+import MineTask, { MineTaskType } from '../../models/mine_task';
 
 export class DisputeManagerHandler extends Handler {
   constructor(
@@ -179,6 +179,22 @@ export class DisputeManagerHandler extends Handler {
       },
       txn,
     );
+
+    // Create mediator draft task(s)
+    Array(numMediators)
+      .fill(0)
+      .map(async () => {
+        await MineTask.create(
+          {
+            type: MineTaskType.Draft,
+            network: swap.network,
+            marketId: swap.marketId,
+            orderId: swap.orderId,
+            disputeId: disputeId.toNumber(),
+          },
+          txn,
+        );
+      });
 
     // Update market
     let totalDisputes = !appeal ? market.totalDisputes + 1 : market.totalDisputes;
@@ -389,6 +405,31 @@ export class DisputeManagerHandler extends Handler {
       {
         numActiveDisputes: !stalled ? liquidity.numActiveDisputes - 1 : liquidity.numActiveDisputes,
       },
+      txn,
+    );
+
+    // Create mediator undraft task(s)
+    Array(dispute.numMediators)
+      .fill(0)
+      .map(async () => {
+        await MineTask.create(
+          {
+            type: MineTaskType.Undraft,
+            network: dispute.network,
+            marketId: dispute.marketId,
+            orderId: dispute.orderId,
+            disputeId: dispute.disputeId,
+          },
+          txn,
+        );
+      });
+
+    // Complete a dispute execution mining task
+    await MineTask.completeOneExecutionTask(
+      this.network,
+      marketId,
+      dispute.orderId,
+      dispute.disputeId,
       txn,
     );
 

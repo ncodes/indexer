@@ -5,10 +5,12 @@ import { MetadataService } from '../../services/metadata/metadata.service';
 import NetworkService from '../../network/network.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { PriceService } from '../../services/price.service';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('v1/misc')
 export class MiscController {
   constructor(
+    private cfgSrv: ConfigService,
     private metadataSrv: MetadataService,
     private netSrv: NetworkService,
     private exRateSvr: ExchangeRateService,
@@ -56,5 +58,21 @@ export class MiscController {
   async getCryptoRate(@Param('symbols') symbols: string) {
     const rate = await this.priceSvr.getAssets(symbols.split(','));
     return ok().data(rate.prices).build();
+  }
+
+  /**
+   * Get all contract addresses
+   */
+  @Get('contracts-address')
+  async getContractAddresses() {
+    return ok().data(this.cfgSrv.get('app.networks')).build();
+  }
+
+  /**
+   * Get all contract addresses
+   */
+  @Get('contracts-params')
+  async getContractsParams() {
+    return ok().data(this.cfgSrv.get('app.contractsParams')).build();
   }
 }

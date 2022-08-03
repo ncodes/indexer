@@ -3,7 +3,7 @@ import { Injectable, Logger, Module, OnModuleInit } from '@nestjs/common';
 import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
 import { ConfigService } from '@nestjs/config';
 import Nomics from 'nomics';
-import { ToDec } from '../common/common';
+import { isTestMode, ToDec } from '../common/common';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 
@@ -31,7 +31,7 @@ export class PriceService implements OnModuleInit {
   }
 
   onModuleInit() {
-    if (process.env.NODE_ENV === 'test') return;
+    if (isTestMode()) return;
     try {
       this.client = new NomicsSource(this.cfg.get('app.nomics.key'), 60);
     } catch (e) {

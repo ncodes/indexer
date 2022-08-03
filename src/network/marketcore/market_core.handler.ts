@@ -20,7 +20,7 @@ export class MarketCoreHandler extends Handler {
     public network: string,
     private contracts: KnownContracts,
   ) {
-    super(network, contracts.marketCore);
+    super(netSrv.cfgSrv, network, contracts.marketCore);
   }
 
   /**

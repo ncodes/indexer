@@ -23,6 +23,10 @@ describe('OnRevealPeriodEnd', () => {
   let srv: OnRevealPeriodEnd;
   const net = 'net';
 
+  const disputeCost = '100';
+  const cfg = {};
+  cfg[`app.contractsParams.${net}.disputeCost`] = disputeCost;
+
   afterEach(async () => {
     await db.truncateTables();
   });
@@ -37,8 +41,6 @@ describe('OnRevealPeriodEnd', () => {
     mockNotify.mockReset();
     await db.truncateTables();
 
-    process.env.DM_DISPUTE_COST = '100';
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [ConfigService, OnRevealPeriodEnd, NotifierService],
     })
@@ -50,6 +52,10 @@ describe('OnRevealPeriodEnd', () => {
     app.useLogger(new NoopLogger());
     srv = app.get<OnRevealPeriodEnd>(OnRevealPeriodEnd);
     await app.init();
+
+    jest.spyOn(app.get(ConfigService), 'get').mockImplementation((param) => {
+      return cfg[param];
+    });
   });
 
   describe('.process', () => {
@@ -119,7 +125,7 @@ describe('OnRevealPeriodEnd', () => {
           participant: true,
           pair: swap.getPair(),
           outcome: 'Stalled',
-          cost: commify(formatUnits(process.env.DM_DISPUTE_COST, 18)),
+          cost: commify(formatUnits(disputeCost, 18)),
           appealPhaseHoursLeft: moment(dispute.appealEndAt).fromNow(false),
         };
         expect(mockNotify).toHaveBeenNthCalledWith(
@@ -204,7 +210,7 @@ describe('OnRevealPeriodEnd', () => {
           participant: true,
           pair: swap.getPair(),
           outcome: 'Cancel',
-          cost: commify(formatUnits(process.env.DM_DISPUTE_COST, 18)),
+          cost: commify(formatUnits(disputeCost, 18)),
           appealPhaseHoursLeft: moment(dispute.appealEndAt).fromNow(false),
         };
         expect(mockNotify).toHaveBeenNthCalledWith(
@@ -274,7 +280,7 @@ describe('OnRevealPeriodEnd', () => {
           participant: true,
           pair: swap.getPair(),
           outcome: 'Release',
-          cost: commify(formatUnits(process.env.DM_DISPUTE_COST, 18)),
+          cost: commify(formatUnits(disputeCost, 18)),
           appealPhaseHoursLeft: moment(dispute.appealEndAt).fromNow(false),
         };
         expect(mockNotify).toHaveBeenNthCalledWith(

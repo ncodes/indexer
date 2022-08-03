@@ -9,6 +9,7 @@ import { NotifierService, NotifyType } from '../../mailer/NotifierService';
 import * as moment from 'moment';
 import { commify, formatUnits } from 'ethers/lib/utils';
 import Reveal from '../../../models/reveal';
+import { ConfigService } from '@nestjs/config';
 
 /**
  * OnRevealPeriodEnd finds disputes whose reveal period has ended
@@ -17,7 +18,7 @@ import Reveal from '../../../models/reveal';
 export default class OnRevealPeriodEnd extends Base {
   private logger = new Logger(OnRevealPeriodEnd.name);
 
-  constructor(private notifier: NotifierService) {
+  constructor(private cfgSrv: ConfigService, private notifier: NotifierService) {
     super();
     this.schedule();
   }
@@ -91,7 +92,9 @@ export default class OnRevealPeriodEnd extends Base {
         participant: recipient.participant,
         pair: swap.getPair(),
         outcome,
-        cost: commify(formatUnits(process.env.DM_DISPUTE_COST, 18)),
+        cost: commify(
+          formatUnits(this.cfgSrv.get(`app.contractsParams.${swap.network}.disputeCost`), 18),
+        ),
         appealPhaseHoursLeft: moment(dispute.appealEndAt).fromNow(false),
       });
     }

@@ -33,6 +33,10 @@ describe('DisputeManagerHandler', () => {
   const contracts = {
     marketCore: marketCoreContract,
   };
+  const cfg = {
+    disputeCost: '100',
+    maxMediatorPerDispute: '3',
+  };
 
   afterEach(async () => {
     await db.truncateTables();
@@ -52,6 +56,9 @@ describe('DisputeManagerHandler', () => {
       net,
       contracts,
     );
+    handler.getParam = (param) => {
+      return cfg[param];
+    };
     handler.logger = new NoopLogger() as any;
     await db.truncateTables();
   });
@@ -86,9 +93,6 @@ describe('DisputeManagerHandler', () => {
           base: 'BASE',
           quote: 'QUOTE',
         });
-
-        process.env.DM_MAX_MEDIATOR_PER_DISPUTE = '3';
-        process.env.DM_DISPUTE_COST = '100';
 
         await expect(
           handler.onDisputeCreated(orderId, '0xProvider', disputeId, true, {} as any),
@@ -174,8 +178,7 @@ describe('DisputeManagerHandler', () => {
           quote: 'QUOTE',
         });
 
-        process.env.DM_MAX_MEDIATOR_PER_DISPUTE = '20';
-        process.env.DM_DISPUTE_COST = '100';
+        cfg.maxMediatorPerDispute = '20';
 
         await expect(
           handler.onDisputeCreated(orderId, '0xTaker', disputeId, true, {} as any),

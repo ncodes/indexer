@@ -7,7 +7,7 @@ export class FeeSharerHandler extends Handler {
     public network: string,
     private contracts: KnownContracts,
   ) {
-    super(network, contracts.feeSharer);
+    super(null, network, contracts.feeSharer);
   }
 
   /**

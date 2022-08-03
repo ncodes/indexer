@@ -23,7 +23,7 @@ export class MediatorManagerHandler extends Handler {
     public network: string,
     private contracts: KnownContracts,
   ) {
-    super(network, contracts.mediatorMgr);
+    super(netSrv.cfgSrv, network, contracts.mediatorMgr);
   }
 
   /**
@@ -187,7 +187,7 @@ export class MediatorManagerHandler extends Handler {
       txn,
     );
     const block = await event.getBlock();
-    const cancelAt = block.timestamp + parseInt(process.env.MM_TICKET_CANCEL_DUR);
+    const cancelAt = block.timestamp + parseInt(this.getParam('ticketCancelDur'));
     await Ticket.updateById(ticket.id, { cancelAt: moment.unix(cancelAt).toISOString() }, txn);
     return Promise.resolve();
   }
@@ -245,7 +245,7 @@ export class MediatorManagerHandler extends Handler {
       txn,
     );
     const block = await event.getBlock();
-    const leaveAt = block.timestamp + parseInt(process.env.MM_MIN_TICKET_TENURE_DUR);
+    const leaveAt = block.timestamp + parseInt(this.getParam('minTicketTenureDur'));
     await Ticket.updateById(
       ticket.id,
       { marketId, leaveAt: moment.unix(leaveAt).toISOString() },
@@ -294,7 +294,7 @@ export class MediatorManagerHandler extends Handler {
     );
 
     const block = await event.getBlock();
-    const joinBy = block.timestamp + parseInt(process.env.MM_TICKET_EXPIRE_DUR);
+    const joinBy = block.timestamp + parseInt(this.getParam('ticketExpireDur'));
     await Ticket.updateById(
       ticket.id,
       {
@@ -390,15 +390,15 @@ export class MediatorManagerHandler extends Handler {
     const fullyDrafted = numDrafted >= dispute.numMediators;
     const block = await event.getBlock();
     const now = block.timestamp;
-    const evidEndAt = fullyDrafted ? now + parseInt(process.env.DM_EVIDENCE_DUR) : undefined;
+    const evidEndAt = fullyDrafted ? now + parseInt(this.getParam('evidenceDur')) : undefined;
     const commitEndAt = fullyDrafted
-      ? evidEndAt + parseInt(process.env.DM_PREDICT_DUR) / 2
+      ? evidEndAt + parseInt(this.getParam('predictDur')) / 2
       : undefined;
     const predictEndAt = fullyDrafted
-      ? evidEndAt + parseInt(process.env.DM_PREDICT_DUR)
+      ? evidEndAt + parseInt(this.getParam('predictDur'))
       : undefined;
     const appealEndAt = fullyDrafted
-      ? predictEndAt + parseInt(process.env.DM_APPEAL_DUR)
+      ? predictEndAt + parseInt(this.getParam('appealDur'))
       : undefined;
     dispute = await Dispute.updateById(
       dispute.id,
@@ -562,7 +562,7 @@ export class MediatorManagerHandler extends Handler {
     );
 
     const block = await event.getBlock();
-    const joinBy = block.timestamp + parseInt(process.env.MM_TICKET_EXPIRE_DUR);
+    const joinBy = block.timestamp + parseInt(this.getParam('ticketExpireDur'));
     await Ticket.updateById(
       ticket.id,
       {

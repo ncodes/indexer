@@ -23,7 +23,7 @@ export class DisputeManagerHandler extends Handler {
     public network: string,
     private contracts: KnownContracts,
   ) {
-    super(network, contracts.disputeMgr);
+    super(netSrv.cfgSrv, network, contracts.disputeMgr);
   }
 
   /**
@@ -159,7 +159,7 @@ export class DisputeManagerHandler extends Handler {
     const market = await Market.getMarket(this.network, swap.marketId, undefined, txn);
     const numMediators = Math.min(
       market.numMediators * (parseInt(numDisp) + 1),
-      Math.min(parseInt(process.env.DM_MAX_MEDIATOR_PER_DISPUTE)),
+      Math.min(parseInt(this.getParam('maxMediatorPerDispute'))),
     );
 
     // Create dispute
@@ -174,7 +174,7 @@ export class DisputeManagerHandler extends Handler {
         disputeId: disputeId.toNumber(),
         wantRelease,
         appeal,
-        deposit: toBN(process.env.DM_DISPUTE_COST).mul(numDisp).toString(),
+        deposit: toBN(this.getParam('disputeCost')).mul(numDisp).toString(),
         numMediators,
       },
       txn,

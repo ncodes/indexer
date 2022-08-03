@@ -39,6 +39,7 @@ describe('CoreHandler', () => {
   const contracts = {
     core: coreContract,
   };
+  const cfg = { transferToFeeSharerInterval: '86400' };
 
   afterEach(async () => {
     await db.truncateTables();
@@ -58,6 +59,9 @@ describe('CoreHandler', () => {
       contracts,
     );
     handler.logger = new NoopLogger() as any;
+    handler.getParam = (param) => {
+      return cfg[param];
+    };
     await db.truncateTables();
   });
 

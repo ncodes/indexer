@@ -7,7 +7,7 @@ export class LPStakerHandler extends Handler {
     public network: string,
     private contracts: KnownContracts,
   ) {
-    super(network, contracts.lpStaker);
+    super(null, network, contracts.lpStaker);
   }
 
   /**

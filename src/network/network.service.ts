@@ -38,7 +38,7 @@ export default class NetworkService {
     [key: string]: providers.JsonRpcProvider;
   } = {};
 
-  constructor(private cfgSrv: ConfigService, private notifSrv: NotifierService) {
+  constructor(public cfgSrv: ConfigService, private notifSrv: NotifierService) {
     if (isTestMode()) return;
     this.watch();
   }

@@ -26,7 +26,7 @@ export class CoreHandler extends Handler {
     public network: string,
     private contracts: KnownContracts,
   ) {
-    super(network, contracts.core);
+    super(netSrv.cfgSrv, network, contracts.core);
   }
 
   /**
@@ -554,7 +554,7 @@ export class CoreHandler extends Handler {
     txn?: Transaction,
   ) {
     const block = await event.getBlock();
-    const mineAt = block.timestamp + parseInt(process.env.OC_TRANSFER_TO_FEE_SHARER_INTERVAL);
+    const mineAt = block.timestamp + parseInt(this.getParam('transferToFeeSharerInterval'));
     await MineTask.create(
       {
         type: MineTaskType.FeeTransfer,

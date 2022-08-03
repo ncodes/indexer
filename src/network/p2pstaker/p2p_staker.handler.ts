@@ -7,7 +7,7 @@ export class P2PStakerHandler extends Handler {
     public network: string,
     private contracts: KnownContracts,
   ) {
-    super(network, contracts.p2pStaker);
+    super(null, network, contracts.p2pStaker);
   }
 
   /**

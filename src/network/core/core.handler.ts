@@ -14,6 +14,7 @@ import { commify, formatUnits } from 'ethers/lib/utils';
 import * as moment from 'moment';
 import { toBN } from '../common';
 import Dispute from '../../models/dispute';
+import MineTask, { MineTaskType } from '../../models/mine_task';
 
 export class CoreHandler extends Handler {
   logger = new Logger(CoreHandler.name);
@@ -109,9 +110,9 @@ export class CoreHandler extends Handler {
     );
 
     this.on(
-      'SentFeeToFeeSharer',
+      'TransferredToFeeSharer',
       async (token: string, amount: BigNumber, event: Event, txn?: Transaction) => {
-        return this.onSentFeeToFeeSharer(token, amount, event, txn);
+        return this.onTransferredToFeeSharer(token, amount, event, txn);
       },
     );
 
@@ -546,7 +547,26 @@ export class CoreHandler extends Handler {
    * @param event The event object
    * @param txn The transaction object
    */
-  async onSentFeeToFeeSharer(token: string, amount: BigNumber, event: Event, txn?: Transaction) {}
+  async onTransferredToFeeSharer(
+    token: string,
+    amount: BigNumber,
+    event: Event,
+    txn?: Transaction,
+  ) {
+    const block = await event.getBlock();
+    const mineAt = block.timestamp + parseInt(process.env.OC_TRANSFER_TO_FEE_SHARER_INTERVAL);
+    await MineTask.create(
+      {
+        type: MineTaskType.FeeTransfer,
+        network: this.network,
+        transferredToken: token,
+        transferredAmount: amount.toString(),
+        mineAt: moment.unix(mineAt).toISOString(),
+      },
+      txn,
+    );
+    return Promise.resolve();
+  }
 
   /**
    * The protocol fees was updated

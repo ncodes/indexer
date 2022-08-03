@@ -9,6 +9,8 @@ exports.up = function (knex) {
       table.integer('orderId');
       table.integer('disputeId');
       table.boolean('completed').defaultTo(false);
+      table.string('transferredToken');
+      table.string('transferredAmount');
       table.timestamp('mineAt');
       table.timestamp('createdAt');
       table.timestamp('updatedAt');

@@ -9,6 +9,9 @@ import Market from '../../models/market';
 import Swap from '../../models/swap';
 import MarketPrice from '../../models/market_price';
 import Dispute from '../../models/dispute';
+import { toBN } from '../common';
+import * as moment from 'moment';
+import MineTask, { MineTaskType } from '../../models/mine_task';
 
 const CoreContract = jest.fn().mockImplementation(() => {
   return {};
@@ -621,6 +624,28 @@ describe('CoreHandler', () => {
       ).resolves.toBeUndefined();
       liq = await Liquidity.getById(liq.id);
       expect(liq.paused).toBeTruthy();
+    });
+  });
+
+  describe('.onTransferredToFeeSharer', () => {
+    it('should create mine task', async () => {
+      const token = '0xToken';
+      const amount = toBN(10);
+      const now = moment().unix();
+      await expect(
+        handler.onTransferredToFeeSharer(token, amount, {
+          getBlock: jest.fn().mockResolvedValue({ timestamp: now }),
+        } as any),
+      ).resolves.toBeUndefined();
+
+      const mineTasks = await MineTask.findAll({
+        type: MineTaskType.FeeTransfer,
+        transferredToken: token,
+      });
+      expect(mineTasks).toHaveLength(1);
+      expect(moment(mineTasks[0].mineAt).isAfter(moment.unix(now))).toBeTruthy();
+      expect(mineTasks[0].transferredToken).toEqual(token);
+      expect(mineTasks[0].transferredAmount).toEqual(amount.toString());
     });
   });
 });

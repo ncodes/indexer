@@ -4,6 +4,13 @@ import * as binance from './tokenlist/binance.json';
 import * as optimism from './tokenlist/optimism.json';
 import * as _ from 'lodash';
 
+/**
+ * TokenList contains a network categorized list
+ * of tokens whose information we cache and support
+ * without having to source them externally. It
+ * would typically include tokens that are popular
+ * and with sufficient daily trade volume.
+ */
 export const TokenList = {
   ethereum,
   polygon,

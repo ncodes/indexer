@@ -6,6 +6,7 @@ export enum MineTaskType {
   Draft = 'draft',
   Undraft = 'undraft',
   Execute = 'execute',
+  FeeTransfer = 'fee_transfer',
 }
 
 /**
@@ -23,7 +24,11 @@ export default class MineTask extends BaseModel {
   // The dispute index
   disputeId: number = undefined;
   // Indicate the task has been completed
-  completed: boolean;
+  completed: boolean = undefined;
+  // Address of token transferred (for type=fee_transfer)
+  transferredToken: string = undefined;
+  // Amount of token transferred (for type=fee_transfer)
+  transferredAmount: string = undefined;
   // The time in the future this task can be mined
   mineAt: string = undefined;
 

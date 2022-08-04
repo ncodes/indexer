@@ -1,4 +1,4 @@
-import { IsBoolean, IsIn, IsNotEmpty, IsNumber, IsNumberString, IsOptional } from 'class-validator';
+import { IsBoolean, IsIn, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { makeValidatorMsg } from '../../common/validations/validation';
 import { getNetworks } from '../../network/common';
 import { Transform } from 'class-transformer';

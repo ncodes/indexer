@@ -1,6 +1,8 @@
 import * as crand from 'crypto-random-string';
-import Objection, { Transaction } from 'objection';
+import Objection, { raw, Transaction } from 'objection';
 import { BaseModel } from './base';
+import * as moment from 'moment';
+import * as _ from 'lodash';
 
 export enum MineTaskType {
   Draft = 'draft',
@@ -40,13 +42,14 @@ export default class MineTask extends BaseModel {
   $beforeInsert() {
     super.$beforeInsert();
     this.id = 'mine_task_' + crand({ length: 24 });
+    if (!this.mineAt) this.mineAt = moment().toISOString();
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
     const object = json as MineTask;
     object.object = 'mine_task';
     delete object.deletedAt;
-    return object;
+    return _.pickBy(object, _.identity);
   }
 
   static get tableName() {
@@ -78,57 +81,47 @@ export default class MineTask extends BaseModel {
   }
 
   /**
-   * getLiquidities finds liquidities
+   * searchTasks finds tasks
    * @param network The network name
-   * @param marketId The market ID (optional)
-   * @param provider Filter by provider address (optional)
+   * @param type The task type
    * @param limit The number of records to return (optional).
    * @param offset The query offset (optional)
-   * @param select Select specific fields (optional)
    * @param txn Optional transaction object
    */
-  // static searchLiquidities(
-  //   network: string,
-  //   marketId?: string,
-  //   provider?: string,
-  //   limit?: number,
-  //   offset?: number,
-  //   select = [],
-  //   txn?: Transaction,
-  // ): Promise<MineTask[]> {
-  //   select = this.makeSelectList(select);
-  //   let q = this.query(txn)
-  //     .select(...select, raw('count(*) over() as' + ' "__queryCount"'))
-  //     .whereNotDeleted()
-  //     .where({ network, paused: false });
-  //   if (marketId) q = q.where('marketId', 'ILIKE', marketId);
-  //   if (provider) q = q.where('provider', 'ILIKE', provider);
-  //   if (offset) q = q.offset(offset);
-  //   if (limit) q = q.limit(limit);
-  //   return q.orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
-  // }
-  //
-  // /**
-  //  * countLiquidities count liquidities by network and optional provider
-  //  * @param network The network name
-  //  * @param marketId The market ID (optional)
-  //  * @param provider Filter by provider address (optional)
-  //  * @param txn Optional transaction object
-  //  */
-  // static countLiquidities(
-  //   network: string,
-  //   marketId?: string,
-  //   provider?: string,
-  //   txn?: Transaction,
-  // ): Promise<MineTask[]> {
-  //   let q = this.query(txn).whereNotDeleted().where({ network, paused: false });
-  //   if (marketId) q = q.where('marketId', 'ILIKE', marketId);
-  //   if (provider) q = q.where('provider', 'ILIKE', provider);
-  //   return q
-  //     .count('id')
-  //     .first()
-  //     .then((res: any) => res.count);
-  // }
+  static searchTasks(
+    network: string,
+    type?: MineTaskType,
+    limit?: number,
+    offset?: number,
+    txn?: Transaction,
+  ): Promise<MineTask[]> {
+    let q = this.query(txn)
+      .select('*', raw('count(*) over() as' + ' "__queryCount"'))
+      .whereNotDeleted()
+      .where({ network, completed: false });
+    if (type) q = q.where({ type });
+    if (offset) q = q.offset(offset);
+    if (limit) q = q.limit(limit);
+    return q.orderBy('mineAt', 'ASC');
+  }
+
+  /**
+   * countTasks counts tasks
+   * @param network The network name
+   * @param type The task type
+   * @param txn Optional transaction object
+   */
+  static countTasks(network: string, type?: MineTaskType, txn?: Transaction): Promise<MineTask[]> {
+    let q = this.query(txn).whereNotDeleted().where({
+      network,
+      completed: false,
+    });
+    if (type) q = q.where({ type });
+    return q
+      .count('id')
+      .first()
+      .then((res: any) => res.count);
+  }
 
   /**
    * find a record

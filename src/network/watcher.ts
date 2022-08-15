@@ -174,7 +174,7 @@ export class Watcher {
         // Update the last sync height
         await Meta.update(key, endBlock.toString());
       } catch (e) {
-        this.logger.error('watch(): ' + e.message);
+        this.logger.error(`watch(${shortenAddr(contract.address)}): ` + e.message);
       }
     }, 1000);
   }
@@ -214,7 +214,9 @@ export class Watcher {
     } catch (error) {
       await txn.rollback();
       if (error.message.indexOf('duplicate key') !== -1) return Promise.resolve();
-      this.logger.error(`Event Execution Error: ${error.message}`);
+      this.logger.error(
+        `Error (Event: ${e.event.event}, Contract: ${shortenAddr(e.contract)}): ${error.message}`,
+      );
       return Promise.reject(error);
     }
   }
@@ -228,6 +230,7 @@ export class Watcher {
       if (this.events.length === 0) return;
       const evt = this.events.splice(0, 1)[0];
       try {
+        // evt.event.event
         await this.emit(evt);
         evt.promise.resolve();
       } catch (e) {

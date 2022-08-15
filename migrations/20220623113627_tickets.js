@@ -11,6 +11,8 @@ exports.up = function (knex) {
       table.integer('disputeId');
       table.string('bond');
       table.string('txHash');
+      table.string('delegate');
+      table.boolean('delegated').defaultTo(false);
       table.boolean('drained').defaultTo(false);
       table.boolean('drafted').defaultTo(false);
       table.boolean('slashed').defaultTo(false);

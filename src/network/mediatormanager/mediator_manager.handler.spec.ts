@@ -592,4 +592,53 @@ describe('MediatorManagerHandler', () => {
       });
     });
   });
+
+  describe('.onDelegatedAccount', () => {
+    it('should create a delegate ticket', async () => {
+      await Ticket.create({
+        network: net,
+        index: 1,
+        marketId: '0xMarket',
+        owner: '0xOwner',
+        bond: toBN(20).toString(),
+        orderId: 23,
+      });
+
+      await expect(
+        handler.onDelegatedAccount('0xOwner', toBN(1), '0xDelegate', {} as any),
+      ).resolves.toBeUndefined();
+
+      const delegateTicket = await Ticket.find({
+        delegated: true,
+        delegate: '0xDelegate',
+      });
+      expect(delegateTicket).toBeDefined();
+      expect(delegateTicket.owner).toEqual('0xOwner');
+    });
+  });
+
+  describe('.onUndelegatedAccount', () => {
+    it('should delete delegate ticket', async () => {
+      await Ticket.create({
+        network: net,
+        index: 1,
+        marketId: '0xMarket',
+        owner: '0xOwner',
+        bond: toBN(20).toString(),
+        orderId: 23,
+        delegated: true,
+        delegate: '0xDelegate',
+      });
+
+      await expect(
+        handler.onUndelegatedAccount('0xOwner', toBN(1), '0xDelegate', {} as any),
+      ).resolves.toBeUndefined();
+
+      const delegateTicket = await Ticket.find({
+        delegated: true,
+        delegate: '0xDelegate',
+      });
+      expect(delegateTicket).not.toBeDefined();
+    });
+  });
 });

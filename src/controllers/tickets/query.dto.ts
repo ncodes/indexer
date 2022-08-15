@@ -40,6 +40,9 @@ export class ListQueryDTO {
   @IsOptional()
   public owner?: string;
 
+  @IsOptional()
+  public delegate?: string;
+
   @Transform(({ value }) => toNumber(value))
   @IsNumber(undefined, { message: makeValidatorMsg('must be a number', 'orderId') })
   @IsOptional()

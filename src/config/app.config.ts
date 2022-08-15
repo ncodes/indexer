@@ -52,7 +52,6 @@ export default () => ({
         noVoteSlashBP: process.env.MM_NO_VOTE_SLASH_BP,
         loseVoteSlashBP: process.env.MM_LOSE_VOTE_SLASH_BP,
         draftReward: process.env.DM_DRAFT_REWARD,
-        rewardK: process.env.DM_REWARD_K,
         predictDur: process.env.DM_PREDICT_DUR,
         appealDur: process.env.DM_APPEAL_DUR,
         evidenceDur: process.env.DM_EVIDENCE_DUR,

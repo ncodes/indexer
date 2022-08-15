@@ -80,6 +80,25 @@
       {
         "indexed": false,
         "internalType": "uint256",
+        "name": "inventor",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "sharing",
+        "type": "uint256"
+      }
+    ],
+    "name": "ProtocolFeeSplitUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
         "name": "instantSwapFee",
         "type": "uint256"
       },
@@ -143,7 +162,7 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "claimer",
+        "name": "addr",
         "type": "address"
       },
       {
@@ -154,25 +173,6 @@
       }
     ],
     "name": "RewardWithdrawn",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "TransferredToFeeSharer",
     "type": "event"
   },
   {
@@ -340,6 +340,44 @@
       }
     ],
     "name": "TogglePause",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "claimer",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "TradeRewardWithdrawn",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "TransferredToFeeSharer",
     "type": "event"
   },
   {
@@ -982,6 +1020,82 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "asset",
+        "type": "address"
+      }
+    ],
+    "name": "inventorBalanceOf",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "addr",
+        "type": "address"
+      }
+    ],
+    "name": "isShareable",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "addr",
+        "type": "address"
+      }
+    ],
+    "name": "isStable",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "addr",
+        "type": "address"
+      }
+    ],
+    "name": "isVerified",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint256",
         "name": "id",
         "type": "uint256"
@@ -1052,25 +1166,6 @@
         "internalType": "address",
         "name": "",
         "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "asset",
-        "type": "address"
-      }
-    ],
-    "name": "protoFeeBalanceOf",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -1163,6 +1258,37 @@
       }
     ],
     "name": "setFeeSharer",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "reward",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "interval",
+        "type": "uint256"
+      }
+    ],
+    "name": "setFeeSharerConfig",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "val",
+        "type": "address"
+      }
+    ],
+    "name": "setInventor",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1298,12 +1424,12 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "val",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "inventorBP",
+        "type": "uint256"
       }
     ],
-    "name": "setProtocolFeeRecipient",
+    "name": "setProtocolFeeSplit",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1384,8 +1510,18 @@
       },
       {
         "internalType": "address",
-        "name": "protocolFeeRecipient",
+        "name": "inventor",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "inventorSplitBP",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "sharingSplitBP",
+        "type": "uint256"
       },
       {
         "internalType": "uint256",
@@ -1400,6 +1536,16 @@
       {
         "internalType": "uint256",
         "name": "numOrders",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "rewardPerFeeSharerTx",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "feeSharerTxInterval",
         "type": "uint256"
       }
     ],
@@ -1474,13 +1620,19 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_token",
+        "name": "addr",
         "type": "address"
       }
     ],
-    "name": "transferFeeToFeeSharer",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "name": "tradeRewardBalanceOf",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -1492,6 +1644,32 @@
       }
     ],
     "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token",
+        "type": "address"
+      }
+    ],
+    "name": "transferToFeeSharer",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "addr",
+        "type": "address"
+      }
+    ],
+    "name": "unmarkAsVerified",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1563,7 +1741,7 @@
         "type": "address"
       }
     ],
-    "name": "withdrawProtoFeeBalance",
+    "name": "withdrawInventorBalance",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1571,6 +1749,13 @@
   {
     "inputs": [],
     "name": "withdrawReward",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "withdrawTradeReward",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

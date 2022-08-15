@@ -101,5 +101,6 @@ declare global {
     lowestPrice24h?: string;
     highestPrice24h?: string;
     network?: string;
+    dominantColor?: string;
   }
 }

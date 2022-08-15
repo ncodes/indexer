@@ -24,6 +24,10 @@ export default class Ticket extends BaseModel {
   orderId: number = undefined;
   // The dispute ID
   disputeId: number = undefined;
+  // The address of the delegate
+  delegate: string = undefined;
+  // Indicates whether the ticket is a delegate ticket
+  delegated: boolean = undefined;
   // The amount held as bond
   bond: string = undefined;
   // When the ticket becomes matured
@@ -188,6 +192,7 @@ export default class Ticket extends BaseModel {
    * @param network The network name
    * @param marketId The market ID (optional)
    * @param owner Indicate to return ticket with matching owner
+   * @param delegate Indicate to return ticket with matching delegate
    * @param orderId The order ID
    * @param disputeId The dispute ID
    * @param joined Indicate to return tickets (un)joined  to a market
@@ -205,6 +210,7 @@ export default class Ticket extends BaseModel {
     network: string,
     marketId?: string,
     owner?: string,
+    delegate?: string,
     orderId?: number,
     disputeId?: number,
     joined?: boolean,
@@ -224,9 +230,14 @@ export default class Ticket extends BaseModel {
       .whereNotDeleted()
       .where({ network });
     if (marketId) q = q.where('marketId', 'ILIKE', marketId);
-    if (owner) q = q.where('owner', 'ILIKE', owner);
-    if (orderId) q = q.where('orderId', orderId);
-    if (disputeId) q = q.where('disputeId', disputeId);
+    q = q.where((q) => {
+      if (owner && !delegate) q = q.where('owner', 'ILIKE', owner);
+      if (delegate && !owner) q = q.where('delegate', 'ILIKE', delegate);
+      if (owner && delegate)
+        q.where('owner', 'ILIKE', owner).orWhere('delegate', 'ILIKE', delegate);
+    });
+    if (orderId !== undefined) q = q.where('orderId', orderId);
+    if (disputeId !== undefined) q = q.where('disputeId', disputeId);
     if (joined !== undefined) {
       q = q.where((q) => {
         if (joined) q.orWhere('marketId', 'is not', null);
@@ -257,6 +268,7 @@ export default class Ticket extends BaseModel {
    * @param network The network name
    * @param marketId The market ID (optional)
    * @param owner Indicate to return ticket with matching owner
+   * @param delegate Indicate to return ticket with matching delegate
    * @param orderId The order ID
    * @param disputeId The dispute ID
    * @param joined Indicate to return tickets (un)joined  to a market
@@ -271,6 +283,7 @@ export default class Ticket extends BaseModel {
     network: string,
     marketId?: string,
     owner?: string,
+    delegate?: string,
     orderId?: number,
     disputeId?: number,
     joined?: boolean,
@@ -283,9 +296,14 @@ export default class Ticket extends BaseModel {
   ): Promise<Ticket[]> {
     let q = this.query(txn).whereNotDeleted().where({ network });
     if (marketId) q = q.where('marketId', 'ILIKE', marketId);
-    if (owner) q = q.where('owner', 'ILIKE', owner);
-    if (orderId) q = q.where('orderId', orderId);
-    if (disputeId) q = q.where('disputeId', disputeId);
+    q = q.where((q) => {
+      if (owner && !delegate) q = q.where('owner', 'ILIKE', owner);
+      if (delegate && !owner) q = q.where('delegate', 'ILIKE', delegate);
+      if (owner && delegate)
+        q.where('owner', 'ILIKE', owner).orWhere('delegate', 'ILIKE', delegate);
+    });
+    if (orderId !== undefined) q = q.where('orderId', orderId);
+    if (disputeId !== undefined) q = q.where('disputeId', disputeId);
     if (joined !== undefined) {
       q = q.where((q) => {
         if (joined) q.orWhere('marketId', 'is not', null);
@@ -310,5 +328,28 @@ export default class Ticket extends BaseModel {
       .count('id')
       .first()
       .then((res: any) => res.count);
+  }
+
+  /**
+   * Remove a delegate ticket
+   * @param network The network name
+   * @param owner The ticket owner address
+   * @param ticketIdx The ticket index
+   * @param delegate The invited address
+   * @param txn Optional transaction object
+   */
+  static removeDelegate(
+    network: string,
+    owner: string,
+    ticketIdx: number,
+    delegate: string,
+    txn?: Transaction,
+  ) {
+    return this.query(txn)
+      .where('network', network)
+      .where('owner', 'ilike', owner)
+      .where('index', ticketIdx)
+      .where('delegate', 'ilike', delegate)
+      .delete();
   }
 }

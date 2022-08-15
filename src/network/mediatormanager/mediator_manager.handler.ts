@@ -135,6 +135,32 @@ export class MediatorManagerHandler extends Handler {
         return this.onTicketSlashed(owner, ticketId, marketId, amount, voted, winSide, event, txn);
       },
     );
+
+    this.on(
+      'DelegatedAccount',
+      async (
+        owner: string,
+        ticketId: BigNumber,
+        delegate: string,
+        event: ethers.Event,
+        txn?: Transaction,
+      ) => {
+        return this.onDelegatedAccount(owner, ticketId, delegate, event, txn);
+      },
+    );
+
+    this.on(
+      'UndelegatedAccount',
+      async (
+        owner: string,
+        ticketId: BigNumber,
+        delegate: string,
+        event: ethers.Event,
+        txn?: Transaction,
+      ) => {
+        return this.onUndelegatedAccount(owner, ticketId, delegate, event, txn);
+      },
+    );
   }
 
   /**
@@ -604,6 +630,64 @@ export class MediatorManagerHandler extends Handler {
       reason: !voted ? 'DID NOT VOTE' : 'VOTED WITH MINORITY',
     });
 
+    return Promise.resolve();
+  }
+
+  /**
+   * A ticket was delegated to another account
+   * @param owner The ticket owner
+   * @param ticketId The unique id of the ticket
+   * @param delegate The address of the new delegate
+   * @param event The event object
+   * @param txn The database transaction handle
+   */
+  async onDelegatedAccount(
+    owner: string,
+    ticketId: BigNumber,
+    delegate: string,
+    event: ethers.Event,
+    txn?: Transaction,
+  ) {
+    const ticket = await Ticket.getByNetworkOwnerAndIndex(
+      this.network,
+      owner,
+      ticketId.toNumber(),
+      undefined,
+      txn,
+    );
+    await Ticket.create(
+      {
+        network: this.network,
+        owner,
+        index: ticket.index,
+        bond: ticket.bond,
+        matureAt: ticket.matureAt,
+        joinBy: ticket.joinBy,
+        delegated: true,
+        delegate,
+        txHash: event.transactionHash,
+      },
+      txn,
+    );
+    return Promise.resolve();
+  }
+
+  /**
+   * A delegate was un-delegated from a ticket
+   * @param owner The ticket owner
+   * @param ticketId The unique id of the ticket
+   * @param delegate The address of the delegate
+   * @param event The event object
+   * @param txn The database transaction handle
+   */
+  async onUndelegatedAccount(
+    owner: string,
+    ticketId: BigNumber,
+    delegate: string,
+    event: ethers.Event,
+    txn?: Transaction,
+  ) {
+    await Ticket.removeDelegate(this.network, owner, ticketId.toNumber(), delegate, txn);
     return Promise.resolve();
   }
 }

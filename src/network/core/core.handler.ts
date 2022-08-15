@@ -553,6 +553,7 @@ export class CoreHandler extends Handler {
     event: Event,
     txn?: Transaction,
   ) {
+    // Add a task for the future
     const block = await event.getBlock();
     const mineAt = block.timestamp + parseInt(this.getParam('transferToFeeSharerInterval'));
     await MineTask.create(

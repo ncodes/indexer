@@ -1,7 +1,6 @@
 import { Controller, Get, Param, Query, UseGuards, ValidationPipe } from '@nestjs/common';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
-import { isValidNetwork } from '../../network/common';
 import { ok, throw404 } from '../../common/responses/responses';
 import Ticket from '../../models/ticket';
 import { TicketsService } from './tickets.service';
@@ -34,7 +33,11 @@ export class TicketsController {
   /**
    * List tickets
    * @param q The query object
+   *  - [marketId] Filter by the market the ticket joined
    *  - [disputeId] Filter by the dispute the ticket was drafted to
+   *  - [orderId] Filter by the order the ticket's current dispute belongs to
+   *  - [owner] Filter by owner address
+   *  - [delegate] Filter by delegate address
    *  - [joined] Filter by joined status of the ticket
    *  - [matured] Filter by maturity status
    *  - [drafted] Filter by drafted status of the ticket
@@ -54,6 +57,7 @@ export class TicketsController {
         q.net,
         q.marketId,
         q.owner,
+        q.delegate,
         q.orderId,
         q.disputeId,
         q.joined,
@@ -77,6 +81,7 @@ export class TicketsController {
             q.net,
             q.marketId,
             q.owner,
+            q.delegate,
             q.orderId,
             q.disputeId,
             q.joined,

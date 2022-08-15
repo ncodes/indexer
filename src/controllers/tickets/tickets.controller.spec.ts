@@ -238,6 +238,56 @@ describe('TicketsController', () => {
       });
     });
 
+    describe('query: delegate=0xDelegate', () => {
+      it('should return correct ticket list', async () => {
+        const mockTicket = jest.spyOn(app.get(TicketsService), 'extendTicket');
+
+        const ticket = await Ticket.create({
+          network: net,
+          delegate: '0xDelegate',
+        });
+        await Ticket.create({ network: net, marketId: '0xMarket2' });
+        await request(app.getHttpServer())
+          .get(`/v1/tickets`)
+          .set('Authorization', 'bearer ' + token)
+          .query({ net, delegate: '0xDelegate' })
+          .send({})
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(ticket.id);
+            expect(mockTicket).toBeCalled();
+          });
+      });
+    });
+
+    describe('query: owner=0xOwner, delegate=0xDelegate', () => {
+      it('should return correct ticket list', async () => {
+        const mockTicket = jest.spyOn(app.get(TicketsService), 'extendTicket');
+
+        const ticket = await Ticket.create({
+          network: net,
+          delegate: '0xAccount',
+        });
+        const ticket2 = await Ticket.create({
+          network: net,
+          owner: '0xAccount',
+        });
+        await request(app.getHttpServer())
+          .get(`/v1/tickets`)
+          .set('Authorization', 'bearer ' + token)
+          .query({ net, owner: '0xAccount', delegate: '0xAccount' })
+          .send({})
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(2);
+            expect(res.body.data[0].id).toEqual(ticket2.id);
+            expect(res.body.data[1].id).toEqual(ticket.id);
+            expect(mockTicket).toBeCalled();
+          });
+      });
+    });
+
     describe('query: orderId=1', () => {
       it('should return correct ticket list', async () => {
         const mockTicket = jest.spyOn(app.get(TicketsService), 'extendTicket');

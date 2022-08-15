@@ -3,6 +3,7 @@ import { SupportedNetworks } from '../network/common';
 export let FeaturedAssets = [
   {
     symbol: 'BTC',
+    dominantColor: '#000000',
     contracts: [
       {
         net: SupportedNetworks.Ethereum,

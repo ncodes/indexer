@@ -44,6 +44,7 @@ export default () => ({
       ethereum: {
         transferToFeeSharerReward: process.env.OC_TRANSFER_TO_FEE_SHARER_REWARD,
         transferToFeeSharerInterval: process.env.OC_TRANSFER_TO_FEE_SHARER_INTERVAL,
+        maxOpenDisputes: process.env.OC_MAX_OPEN_DISPUTES,
         ticketMatureDur: process.env.MM_TICKET_MATURE_DUR,
         ticketCancelDur: process.env.MM_TICKET_CANCEL_DUR,
         minTicketTenureDur: process.env.MM_MIN_TICKET_TENURE_DUR,

@@ -201,7 +201,7 @@ export class DisputeManagerHandler extends Handler {
     await Market.updateById(
       market.id,
       {
-        numActiveDisputes: !appeal ? market.numActiveDisputes + 1 : market.numActiveDisputes,
+        openDisputes: !appeal ? market.openDisputes + 1 : market.openDisputes,
         totalDisputes,
         disputeRate: !appeal
           ? ToDec(totalDisputes).div(market.totalSwaps).mul(100).toNumber()
@@ -222,7 +222,7 @@ export class DisputeManagerHandler extends Handler {
     await Liquidity.updateById(
       liquidity.id,
       {
-        numActiveDisputes: !appeal ? liquidity.numActiveDisputes + 1 : liquidity.numActiveDisputes,
+        openDisputes: !appeal ? liquidity.openDisputes + 1 : liquidity.openDisputes,
         totalDisputes,
         disputeRate: !appeal
           ? ToDec(totalDisputes).div(liquidity.totalSwaps).mul(100).toNumber()
@@ -387,7 +387,7 @@ export class DisputeManagerHandler extends Handler {
     const market = await Market.getMarket(this.network, marketId, undefined, txn);
     await Market.updateById(
       market.id,
-      { numActiveDisputes: !stalled ? market.numActiveDisputes - 1 : market.numActiveDisputes },
+      { openDisputes: !stalled ? market.openDisputes - 1 : market.openDisputes },
       txn,
     );
 
@@ -403,7 +403,7 @@ export class DisputeManagerHandler extends Handler {
     await Liquidity.updateById(
       liquidity.id,
       {
-        numActiveDisputes: !stalled ? liquidity.numActiveDisputes - 1 : liquidity.numActiveDisputes,
+        openDisputes: !stalled ? liquidity.openDisputes - 1 : liquidity.openDisputes,
       },
       txn,
     );

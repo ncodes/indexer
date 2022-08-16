@@ -46,7 +46,7 @@ export default class Liquidity extends BaseModel {
   // The swap completion rate of this liquidity
   completionRate: number = undefined;
   // The number of active disputes
-  numActiveDisputes: number = undefined;
+  openDisputes: number = undefined;
   // The number of disputes ever created (excluding appeals)
   totalDisputes: number = undefined;
   // The number of swaps
@@ -187,6 +187,7 @@ export default class Liquidity extends BaseModel {
    * @param network The network name
    * @param marketId The market ID (optional)
    * @param provider Filter by provider address (optional)
+   * @param maxOpenDisputes Allow only records with lower open disputes
    * @param limit The number of records to return (optional).
    * @param offset The query offset (optional)
    * @param select Select specific fields (optional)
@@ -196,6 +197,7 @@ export default class Liquidity extends BaseModel {
     network: string,
     marketId?: string,
     provider?: string,
+    maxOpenDisputes?: number,
     limit?: number,
     offset?: number,
     select = [],
@@ -208,6 +210,7 @@ export default class Liquidity extends BaseModel {
       .where({ network, paused: false });
     if (marketId) q = q.where('marketId', 'ILIKE', marketId);
     if (provider) q = q.where('provider', 'ILIKE', provider);
+    if (maxOpenDisputes) q = q.where('openDisputes', '<', maxOpenDisputes);
     if (offset) q = q.offset(offset);
     if (limit) q = q.limit(limit);
     return q.orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
@@ -218,17 +221,20 @@ export default class Liquidity extends BaseModel {
    * @param network The network name
    * @param marketId The market ID (optional)
    * @param provider Filter by provider address (optional)
+   * @param maxOpenDisputes Allow only records with lower open disputes
    * @param txn Optional transaction object
    */
   static countLiquidities(
     network: string,
     marketId?: string,
     provider?: string,
+    maxOpenDisputes?: number,
     txn?: Transaction,
   ): Promise<Liquidity[]> {
     let q = this.query(txn).whereNotDeleted().where({ network, paused: false });
     if (marketId) q = q.where('marketId', 'ILIKE', marketId);
     if (provider) q = q.where('provider', 'ILIKE', provider);
+    if (maxOpenDisputes) q = q.where('openDisputes', '<', maxOpenDisputes);
     return q
       .count('id')
       .first()

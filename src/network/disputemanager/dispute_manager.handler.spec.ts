@@ -118,13 +118,13 @@ describe('DisputeManagerHandler', () => {
 
         // expect market to be updated correctly
         market = await Market.getById(market.id);
-        expect(market.numActiveDisputes).toEqual(1);
+        expect(market.openDisputes).toEqual(1);
         expect(market.totalDisputes).toEqual(1);
         expect(market.disputeRate).toEqual(50);
 
         // expect liquidity to be updated correctly
         liquidity = await Liquidity.getById(liquidity.id);
-        expect(liquidity.numActiveDisputes).toEqual(1);
+        expect(liquidity.openDisputes).toEqual(1);
         expect(liquidity.totalDisputes).toEqual(1);
         expect(liquidity.disputeRate).toEqual(50);
 
@@ -150,7 +150,7 @@ describe('DisputeManagerHandler', () => {
           network: net,
           marketId,
           numMediators: 3,
-          numActiveDisputes: 1,
+          openDisputes: 1,
           totalDisputes: 1,
         });
 
@@ -158,7 +158,7 @@ describe('DisputeManagerHandler', () => {
           network: net,
           marketId: market.marketId,
           provider: '0xProvider',
-          numActiveDisputes: 1,
+          openDisputes: 1,
           totalDisputes: 1,
         });
 
@@ -204,12 +204,12 @@ describe('DisputeManagerHandler', () => {
 
         // expect market to be updated correctly
         market = await Market.getById(market.id);
-        expect(market.numActiveDisputes).toEqual(1);
+        expect(market.openDisputes).toEqual(1);
         expect(market.totalDisputes).toEqual(1);
 
         // expect liquidity to be updated correctly
         liquidity = await Liquidity.getById(liquidity.id);
-        expect(liquidity.numActiveDisputes).toEqual(1);
+        expect(liquidity.openDisputes).toEqual(1);
         expect(liquidity.totalDisputes).toEqual(1);
 
         // Expect draft mining task
@@ -275,7 +275,7 @@ describe('DisputeManagerHandler', () => {
         network: net,
         marketId,
         numMediators,
-        numActiveDisputes: 1,
+        openDisputes: 1,
         totalDisputes: 1,
       });
 
@@ -283,7 +283,7 @@ describe('DisputeManagerHandler', () => {
         network: net,
         marketId: market.marketId,
         provider: '0xProvider',
-        numActiveDisputes: 1,
+        openDisputes: 1,
       });
 
       await Dispute.create({
@@ -375,12 +375,12 @@ describe('DisputeManagerHandler', () => {
 
         // expect market to be updated correctly
         market = await Market.getById(market.id);
-        expect(market.numActiveDisputes).toEqual(0);
+        expect(market.openDisputes).toEqual(0);
         expect(market.totalDisputes).toEqual(1);
 
         // expect liquidity to be updated correctly
         liquidity = await Liquidity.getById(liquidity.id);
-        expect(liquidity.numActiveDisputes).toEqual(0);
+        expect(liquidity.openDisputes).toEqual(0);
 
         // expect undraft mining task
         const q = {
@@ -437,12 +437,12 @@ describe('DisputeManagerHandler', () => {
 
         // expect market to be updated correctly
         market = await Market.getById(market.id);
-        expect(market.numActiveDisputes).toEqual(0);
+        expect(market.openDisputes).toEqual(0);
         expect(market.totalDisputes).toEqual(1);
 
         // expect liquidity to be updated correctly
         liquidity = await Liquidity.getById(liquidity.id);
-        expect(liquidity.numActiveDisputes).toEqual(0);
+        expect(liquidity.openDisputes).toEqual(0);
       });
     });
 
@@ -485,12 +485,12 @@ describe('DisputeManagerHandler', () => {
 
         // expect market to be updated correctly
         market = await Market.getById(market.id);
-        expect(market.numActiveDisputes).toEqual(1);
+        expect(market.openDisputes).toEqual(1);
         expect(market.totalDisputes).toEqual(1);
 
         // expect liquidity to be updated correctly
         liquidity = await Liquidity.getById(liquidity.id);
-        expect(liquidity.numActiveDisputes).toEqual(1);
+        expect(liquidity.openDisputes).toEqual(1);
       });
     });
   });

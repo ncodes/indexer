@@ -19,7 +19,7 @@ exports.up = function (knex) {
       table.integer('timeToPay');
       table.boolean('paused').defaultTo(false);
       table.integer('openOrders').defaultTo(0);
-      table.integer('numActiveDisputes').defaultTo(0);
+      table.integer('openDisputes').defaultTo(0);
       table.integer('totalDisputes').defaultTo(0);
       table.integer('totalSwaps').defaultTo(0);
       table.float('completionRate').defaultTo(0);

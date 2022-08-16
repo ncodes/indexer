@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { DBService } from '../../db/DBService';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import User from '../../models/user';
@@ -15,10 +15,12 @@ import { LiquidityController } from './liquidity.controller';
 import { LiquidityService } from './liquidity.service';
 import { MarketsService } from '../markets/markets.service';
 import Liquidity from '../../models/liquidity';
+import { ConfigService } from '../config.service';
 
 const mockCfgGet = jest.fn();
+const mockGetContractParam = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
-  return { get: mockCfgGet };
+  return { get: mockCfgGet, getContractParam: mockGetContractParam };
 });
 
 const mockGetMarketCore = jest.fn();
@@ -33,6 +35,7 @@ const MetadataServiceMock = jest.fn().mockImplementation(() => {
 describe('LiquidityController', () => {
   let app: INestApplication;
   const db = DBService.getForTest();
+  const net = 'ethereum';
   let cfgObj = {};
 
   afterEach(async () => {
@@ -51,6 +54,7 @@ describe('LiquidityController', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     mockCfgGet.mockReset();
+    mockGetContractParam.mockReset();
     mockGetMarketCore.mockReset();
 
     cfgObj = { 'auth.jwtSecret': 'secret_secret' };
@@ -78,7 +82,6 @@ describe('LiquidityController', () => {
 
   let u: User;
   let token: string;
-  const net = 'ethereum';
   beforeEach(async () => {
     u = await User.create({ role: Roles.User });
     token = await makeSession(
@@ -189,6 +192,42 @@ describe('LiquidityController', () => {
           network: net,
           provider: '0xProvider2',
           marketId: '0x124',
+        });
+
+        const mockExtendLiquidity = jest
+          .spyOn(app.get(LiquidityService), 'extendLiquidity')
+          .mockResolvedValue(undefined);
+
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities`)
+          .query({ net, marketId: '0x123' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(liq.id);
+            expect(mockExtendLiquidity).toHaveBeenCalled();
+          });
+      });
+    });
+
+    describe('maxOpenDispute = 3', () => {
+      it('should return 200 and the correct liquidity records', async () => {
+        mockGetContractParam.mockImplementation((args) => {
+          return '3';
+        });
+
+        const liq = await Liquidity.create({
+          network: net,
+          provider: '0xProvider',
+          marketId: '0x123',
+          openDisputes: 2,
+        });
+        await Liquidity.create({
+          network: net,
+          provider: '0xProvider2',
+          marketId: '0x124',
+          openDisputes: 3,
         });
 
         const mockExtendLiquidity = jest

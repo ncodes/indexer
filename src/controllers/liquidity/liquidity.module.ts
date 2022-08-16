@@ -5,10 +5,11 @@ import { PriceServiceModule } from '../../services/price.service';
 import { MarketsService } from '../markets/markets.service';
 import { LiquidityController } from './liquidity.controller';
 import { LiquidityService } from './liquidity.service';
+import { ConfigService } from '../config.service';
 
 @Module({
   imports: [NetworkModule, PriceServiceModule],
   controllers: [LiquidityController],
-  providers: [LiquidityService, MarketsService, MetadataService],
+  providers: [LiquidityService, MarketsService, MetadataService, ConfigService],
 })
 export class LiquidityModule {}

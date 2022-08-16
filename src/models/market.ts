@@ -45,7 +45,7 @@ export default class Market extends BaseModel {
   // The total bond of joined mediators
   totalJoinedMediatorsBond: string = undefined;
   // The number of active disputes
-  numActiveDisputes: number = undefined;
+  openDisputes: number = undefined;
   // The number of disputes ever created (excluding appeals)
   totalDisputes: number = undefined;
   // The number of swaps

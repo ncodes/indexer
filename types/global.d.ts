@@ -32,9 +32,9 @@ declare global {
     core?: Contract;
     mediatorMgr?: Contract;
     disputeMgr?: Contract;
-    p2pStaker?: Contract;
-    lpStaker?: Contract;
-    feeSharer?: Contract;
+    tokenPool?: Contract;
+    lpPool?: Contract;
+    feePool?: Contract;
   }
 
   interface ContractMarket {

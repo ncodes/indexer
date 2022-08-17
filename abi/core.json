@@ -377,7 +377,7 @@
         "type": "uint256"
       }
     ],
-    "name": "TransferredToFeeSharer",
+    "name": "TransferredToFeePool",
     "type": "event"
   },
   {
@@ -600,7 +600,7 @@
   },
   {
     "inputs": [],
-    "name": "feeSharer",
+    "name": "feePool",
     "outputs": [
       {
         "internalType": "address",
@@ -1257,7 +1257,7 @@
         "type": "address"
       }
     ],
-    "name": "setFeeSharer",
+    "name": "setFeePool",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1275,7 +1275,7 @@
         "type": "uint256"
       }
     ],
-    "name": "setFeeSharerConfig",
+    "name": "setFeePoolConfig",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1540,12 +1540,12 @@
       },
       {
         "internalType": "uint256",
-        "name": "rewardPerFeeSharerTx",
+        "name": "rewardPerFeePoolTx",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "feeSharerTxInterval",
+        "name": "feePoolTxInterval",
         "type": "uint256"
       }
     ],
@@ -1656,7 +1656,7 @@
         "type": "address"
       }
     ],
-    "name": "transferToFeeSharer",
+    "name": "transferToFeePool",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

@@ -202,10 +202,10 @@
   },
   {
     "inputs": [],
-    "name": "feeSharer",
+    "name": "feePool",
     "outputs": [
       {
-        "internalType": "contract IFeeSharer",
+        "internalType": "contract IFeePool",
         "name": "",
         "type": "address"
       }

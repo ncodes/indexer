@@ -3,21 +3,21 @@ import { ConfigService } from '@nestjs/config';
 import { BigNumber, Contract, providers } from 'ethers';
 import * as coreABI from '../../abi/core.json';
 import * as disputeManagerABI from '../../abi/disputemanager.json';
-import * as feeSharerABI from '../../abi/feesharer.json';
-import * as lpStakerABI from '../../abi/lpstaker.json';
+import * as feePoolABI from '../../abi/feesharer.json';
+import * as lpPoolABI from '../../abi/lpstaker.json';
 import * as marketCoreABI from '../../abi/marketcore.json';
 import * as erc20ABI from '../../abi/erc20.json';
 import * as mediatorManagerABI from '../../abi/mediatormanager.json';
-import * as p2pStakerABI from '../../abi/p2pstaker.json';
+import * as tokenPoolABI from '../../abi/p2pstaker.json';
 import * as p2pTokenABI from '../../abi/p2ptoken.json';
 import { SupportedNetworks } from './common';
 import { CoreHandler } from './core/core.handler';
 import { DisputeManagerHandler } from './disputemanager/dispute_manager.handler';
-import { FeeSharerHandler } from './feesharer/fee_sharer.handler';
-import { LPStakerHandler } from './lpstaker/lp_staker.handler';
+import { FeePoolHandler } from './feepool/fee_pool.handler';
+import { LPPoolHandler } from './lppool/lp_pool.handler';
 import { MarketCoreHandler } from './marketcore/market_core.handler';
 import { MediatorManagerHandler } from './mediatormanager/mediator_manager.handler';
-import { P2PStakerHandler } from './p2pstaker/p2p_staker.handler';
+import { TokenPoolHandler } from './tokenpool/token_pool.handler';
 import { NotifierService } from '../jobs/mailer/NotifierService';
 import Swap from '../models/swap';
 import { Transaction } from 'objection';
@@ -122,19 +122,19 @@ export default class NetworkService {
       disputeManagerABI,
       prov,
     );
-    this.contracts[network].p2pStaker = new Contract(
-      this.cfgSrv.get(`app.networks.${network}.p2pStakerAddr`),
-      p2pStakerABI,
+    this.contracts[network].tokenPool = new Contract(
+      this.cfgSrv.get(`app.networks.${network}.tokenPoolAddr`),
+      tokenPoolABI,
       prov,
     );
-    this.contracts[network].lpStaker = new Contract(
-      this.cfgSrv.get(`app.networks.${network}.lpStakerAddr`),
-      lpStakerABI,
+    this.contracts[network].lpPool = new Contract(
+      this.cfgSrv.get(`app.networks.${network}.lpPoolAddr`),
+      lpPoolABI,
       prov,
     );
-    this.contracts[network].feeSharer = new Contract(
-      this.cfgSrv.get(`app.networks.${network}.feeSharerAddr`),
-      feeSharerABI,
+    this.contracts[network].feePool = new Contract(
+      this.cfgSrv.get(`app.networks.${network}.feePoolAddr`),
+      feePoolABI,
       prov,
     );
 
@@ -146,9 +146,9 @@ export default class NetworkService {
       new CoreHandler(this, this.notifSrv, prov, network, this.contracts[network]),
       new MediatorManagerHandler(this, this.notifSrv, prov, network, this.contracts[network]),
       new DisputeManagerHandler(this, this.notifSrv, prov, network, this.contracts[network]),
-      new P2PStakerHandler(prov, network, this.contracts[network]),
-      new LPStakerHandler(prov, network, this.contracts[network]),
-      new FeeSharerHandler(prov, network, this.contracts[network]),
+      new TokenPoolHandler(prov, network, this.contracts[network]),
+      new LPPoolHandler(prov, network, this.contracts[network]),
+      new FeePoolHandler(prov, network, this.contracts[network]),
     );
   }
 

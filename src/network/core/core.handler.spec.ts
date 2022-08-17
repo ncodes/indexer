@@ -39,7 +39,7 @@ describe('CoreHandler', () => {
   const contracts = {
     core: coreContract,
   };
-  const cfg = { transferToFeeSharerInterval: '86400' };
+  const cfg = { transferToFeePoolInterval: '86400' };
 
   afterEach(async () => {
     await db.truncateTables();
@@ -631,13 +631,13 @@ describe('CoreHandler', () => {
     });
   });
 
-  describe('.onTransferredToFeeSharer', () => {
+  describe('.onTransferredToFeePool', () => {
     it('should create mine task', async () => {
       const token = '0xToken';
       const amount = toBN(10);
       const now = moment().unix();
       await expect(
-        handler.onTransferredToFeeSharer(token, amount, {
+        handler.onTransferredToFeePool(token, amount, {
           getBlock: jest.fn().mockResolvedValue({ timestamp: now }),
         } as any),
       ).resolves.toBeUndefined();

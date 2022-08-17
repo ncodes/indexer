@@ -30,20 +30,20 @@ export default () => ({
     networks: {
       ethereum: {
         rpcUrl: process.env.ETHEREUM_RPC_URL,
-        p2pTokenAddr: process.env.ETHEREUM_P2P_TOKEN,
+        p2pTokenAddr: process.env.ETHEREUM_TOKEN_ADDRESS,
         marketCoreAddr: process.env.ETHEREUM_MARKETCORE_ADDRESS,
         coreAddr: process.env.ETHEREUM_CORE_ADDRESS,
         mediatorMgrAddr: process.env.ETHEREUM_MEDIATOR_MGR_ADDRESS,
         disputeMgrAddr: process.env.ETHEREUM_DISPUTE_MGR_ADDRESS,
-        p2pStakerAddr: process.env.ETHEREUM_P2P_STAKER_ADDRESS,
-        lpStakerAddr: process.env.ETHEREUM_LP_STAKER_ADDRESS,
-        feeSharerAddr: process.env.ETHEREUM_FEE_SHARER_ADDRESS,
+        tokenPoolAddr: process.env.ETHEREUM_TOKEN_POOL_ADDRESS,
+        lpPoolAddr: process.env.ETHEREUM_LP_POOL_ADDRESS,
+        feePoolAddr: process.env.ETHEREUM_FEE_POOL_ADDRESS,
       },
     },
     contractsParams: {
       ethereum: {
-        transferToFeeSharerReward: process.env.OC_TRANSFER_TO_FEE_SHARER_REWARD,
-        transferToFeeSharerInterval: process.env.OC_TRANSFER_TO_FEE_SHARER_INTERVAL,
+        transferToFeePoolReward: process.env.OC_TRANSFER_TO_FEE_SHARER_REWARD,
+        transferToFeePoolInterval: process.env.OC_TRANSFER_TO_FEE_SHARER_INTERVAL,
         maxOpenDisputes: process.env.OC_MAX_OPEN_DISPUTES,
         ticketMatureDur: process.env.MM_TICKET_MATURE_DUR,
         ticketCancelDur: process.env.MM_TICKET_CANCEL_DUR,

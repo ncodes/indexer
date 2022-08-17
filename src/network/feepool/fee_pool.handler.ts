@@ -1,13 +1,13 @@
 import { BigNumber, Event, providers } from 'ethers';
 import { Handler } from '../handler';
 
-export class FeeSharerHandler extends Handler {
+export class FeePoolHandler extends Handler {
   constructor(
     private provider: providers.JsonRpcProvider,
     public network: string,
     private contracts: KnownContracts,
   ) {
-    super(null, network, contracts.feeSharer);
+    super(null, network, contracts.feePool);
   }
 
   /**

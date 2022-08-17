@@ -110,9 +110,9 @@ export class CoreHandler extends Handler {
     );
 
     this.on(
-      'TransferredToFeeSharer',
+      'TransferredToFeePool',
       async (token: string, amount: BigNumber, event: Event, txn?: Transaction) => {
-        return this.onTransferredToFeeSharer(token, amount, event, txn);
+        return this.onTransferredToFeePool(token, amount, event, txn);
       },
     );
 
@@ -547,15 +547,10 @@ export class CoreHandler extends Handler {
    * @param event The event object
    * @param txn The transaction object
    */
-  async onTransferredToFeeSharer(
-    token: string,
-    amount: BigNumber,
-    event: Event,
-    txn?: Transaction,
-  ) {
+  async onTransferredToFeePool(token: string, amount: BigNumber, event: Event, txn?: Transaction) {
     // Add a task for the future
     const block = await event.getBlock();
-    const mineAt = block.timestamp + parseInt(this.getParam('transferToFeeSharerInterval'));
+    const mineAt = block.timestamp + parseInt(this.getParam('transferToFeePoolInterval'));
     await MineTask.create(
       {
         type: MineTaskType.FeeTransfer,

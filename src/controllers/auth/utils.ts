@@ -1,9 +1,10 @@
+/* tslint:disable:no-string-literal */
 import { utils } from 'ethers';
 import * as jwt from 'jsonwebtoken';
 import * as moment from 'moment';
 import Session from '../../models/session';
 import User from '../../models/user';
-import { isEmail } from 'class-validator';
+import * as yaml from 'js-yaml';
 
 /**
  * makeSession creates a session and generates a session token
@@ -38,28 +39,45 @@ export async function makeSession(
  * Verify a signature and returned the recovered address
  * @param msg The message that was signed
  * @param sig The signature to be verified
+ * @param ignoreEmail Indicate to ignore email in the message
+ * @param ignoreMsgPubKey Indicates to ignore message public key in message
  * @returns
  */
-export function checkSignature(msg: string, sig: string): SignatureInfo {
+export function parseSignature(
+  msg: string,
+  sig: string,
+  ignoreEmail = false,
+  ignoreMsgPubKey = false,
+): SignatureInfo {
   const rawMsg = Buffer.from(msg, 'hex');
   const hashMsg = utils.hashMessage(rawMsg.toString('utf-8'));
   const digest = utils.arrayify(hashMsg);
   const recoveredAddress = utils.recoverAddress(digest, sig);
 
-  // Extract address from the message and compare with the recovered address
-  const lines = rawMsg.toString('utf-8').split('\n');
-  const addressInMsg = lines[lines.length - 10];
-  if (addressInMsg.toLowerCase() !== recoveredAddress.toLowerCase())
+  const lines = rawMsg.toString('utf-8').split('--');
+  if (lines.length < 2) throw new Error('malformed message');
+
+  let parsed;
+  try {
+    parsed = yaml.load(lines[1]) as { [k: string]: string };
+  } catch (e) {
+    throw new Error('malformed message');
+  }
+  const addressInMsg = parsed['Address'];
+  if (!addressInMsg || addressInMsg.toLowerCase() !== recoveredAddress.toLowerCase())
     throw new Error('address mismatch');
 
-  // Extract email
-  const email = lines[lines.length - 7];
+  let email;
+  if (!ignoreEmail) {
+    email = parsed['Email'];
+  }
 
-  // Extract messenger public key
-  const messengerPublicKey = lines[lines.length - 4];
+  let messengerPublicKey;
+  if (!ignoreMsgPubKey) {
+    messengerPublicKey = parsed['Messenger Public Key'];
+  }
 
-  // Verify signature timestamp; make sure it has not expired
-  const ts = moment(lines[lines.length - 1]);
+  const ts = moment(parsed['Timestamp']);
   if (moment().diff(ts, 'minute').valueOf() >= 5) throw new Error('expired signature');
 
   return {

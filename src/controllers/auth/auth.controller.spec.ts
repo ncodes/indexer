@@ -18,20 +18,14 @@ const ConfigServiceMock = jest.fn().mockImplementation(() => {
   return { get: mockCfgGet };
 });
 
-function makeMsg(address: string, email: string, msgPubKey: string, timestamp: string) {
+export function makeMsg(address: string, email: string, msgPubKey: string, timestamp: string) {
   return `Welcome to FiatX!
 
-Address:
-${address}
-
-Email:
-${email}
-
-Messenger Public Key:
-${msgPubKey}      
-      
-Timestamp:
-${timestamp}`;
+--
+Address: "${address}"
+Email: ${email}
+Messenger Public Key: "${msgPubKey}"
+Timestamp: ${timestamp}`;
 }
 
 describe('AuthController', () => {
@@ -308,6 +302,93 @@ describe('AuthController', () => {
         });
       expect(existing.id).toEqual(user.id);
       expect(user.email).toEqual('person@gmail.com');
+    });
+  });
+
+  describe('.getAuthorizer', () => {
+    it('should return error and status=400 when signature was not provided', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/auth/user`)
+        .query({})
+        .expect(400)
+        .expect({
+          error: {
+            message: 'signature is required',
+            param: 'sig',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return error and status=400 when message was not provided', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/auth/user`)
+        .query({ sig: 'sign' })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'message is required',
+            param: 'msg',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return error and status=401 when signature failed verification', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/auth/user`)
+        .query({ sig: 'signature', msg: 'message' })
+        .expect(401)
+        .expect({
+          error: {
+            param: 'sig',
+            type: 'authentication_error',
+            message: 'signature is invalid or expired',
+          },
+        });
+    });
+
+    it('should return error when no user is associated with the signatory', async () => {
+      const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
+      const wallet = new ethers.Wallet(privateKey);
+      const msg = Buffer.from(
+        makeMsg(
+          wallet.address,
+          'person@gmail.com',
+          new PrivateKey().publicKey.toHex(),
+          moment().toISOString(),
+        ),
+      );
+      const sig = await wallet.signMessage(msg.toString());
+      await request(app.getHttpServer())
+        .get(`/v1/auth/user`)
+        .query({ sig, msg: msg.toString('hex') })
+        .expect(404)
+        .expect({
+          error: { message: 'user not found' },
+        });
+    });
+
+    it('should return error when no user is associated with the signatory', async () => {
+      const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
+      const wallet = new ethers.Wallet(privateKey);
+      const msg = Buffer.from(
+        makeMsg(
+          wallet.address,
+          'person@gmail.com',
+          new PrivateKey().publicKey.toHex(),
+          moment().toISOString(),
+        ),
+      );
+      const sig = await wallet.signMessage(msg.toString());
+      const user = await User.create({ address: wallet.address });
+      await request(app.getHttpServer())
+        .get(`/v1/auth/user`)
+        .query({ sig, msg: msg.toString('hex') })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data.id).toEqual(user.id);
+        });
     });
   });
 });

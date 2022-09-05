@@ -1,13 +1,13 @@
-import { Body, Controller, Post, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { transaction } from 'objection';
 import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
-import { ok, throw400, throw401 } from '../../common/responses/responses';
+import { ok, throw400, throw401, throw404 } from '../../common/responses/responses';
 import { Roles } from '../../common/roles';
 import User from '../../models/user';
 import { ErrorTypes } from '../../common/responses/responses';
-import { AuthDTO } from './dto';
-import { checkSignature, makeSession } from './utils';
+import { AuthDTO, GetAuthorizerDTO } from './dto';
+import { parseSignature, makeSession } from './utils';
 import { isEmail, isEmpty } from 'class-validator';
 import { PublicKey } from 'eciesjs';
 
@@ -20,18 +20,18 @@ export class AuthController {
 
   /**
    * Authenticate signature and generate session token
-   * @param body
+   * @param body The response body
    * @returns
    */
   @Post()
   async auth(
     @Body(new ValidationPipe(CommonValidationPipeOpt))
     body: AuthDTO,
-  ): Promise<string> {
+  ) {
     let sigInfo: SignatureInfo;
 
     try {
-      sigInfo = checkSignature(body.msg, body.sig);
+      sigInfo = parseSignature(body.msg, body.sig);
     } catch (error) {
       throw401('signature is invalid or expired', ErrorTypes.Auth, 'sig');
     }
@@ -89,5 +89,29 @@ export class AuthController {
     });
 
     return ok().data({ token, user }).build();
+  }
+
+  /**
+   * Get the user that signed a signature
+   * @param body The response body
+   * @returns
+   */
+  @Get('/user')
+  async getAuthorizer(
+    @Query(new ValidationPipe(CommonValidationPipeOpt))
+    body: GetAuthorizerDTO,
+  ) {
+    let sigInfo: SignatureInfo;
+
+    try {
+      sigInfo = parseSignature(body.msg, body.sig, true, true);
+    } catch (error) {
+      throw401('signature is invalid or expired', ErrorTypes.Auth, 'sig');
+    }
+
+    const user = await User.getByAddress(sigInfo.address);
+    if (!user) throw404('user not found');
+
+    return ok().data(user).build<User>();
   }
 }

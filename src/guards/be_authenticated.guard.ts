@@ -1,13 +1,13 @@
 import { CanActivate, ExecutionContext, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as jwt from 'jsonwebtoken';
-import { error, ErrorTypes } from '../common/responses/responses';
+import { error, ErrorMessages, ErrorTypes } from '../common/responses/responses';
 import Session from '../models/session';
 
 export const notPermitted = error()
   .type(ErrorTypes.Auth)
   .status(HttpStatus.UNAUTHORIZED)
-  .msg('not permitted to perform this action');
+  .msg(ErrorMessages.NoAuthPermission);
 
 /**
  * BeAuthenticatedGuard checks if `req.token` is valid and populates

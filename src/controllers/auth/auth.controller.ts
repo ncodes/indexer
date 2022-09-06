@@ -2,7 +2,7 @@ import { Body, Controller, Get, Post, Query, ValidationPipe } from '@nestjs/comm
 import { ConfigService } from '@nestjs/config';
 import { transaction } from 'objection';
 import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
-import { ok, throw400, throw401, throw404 } from '../../common/responses/responses';
+import { ErrorMessages, ok, throw400, throw401, throw404 } from '../../common/responses/responses';
 import { Roles } from '../../common/roles';
 import User from '../../models/user';
 import { ErrorTypes } from '../../common/responses/responses';
@@ -110,7 +110,7 @@ export class AuthController {
     }
 
     const user = await User.getByAddress(sigInfo.address);
-    if (!user) throw404('user not found');
+    if (!user) throw404(ErrorMessages.UserNotFound);
 
     return ok().data(user).build<User>();
   }

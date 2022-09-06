@@ -32,6 +32,12 @@ export default class User extends BaseModel {
     return user;
   }
 
+  desensitize() {
+    delete this.email;
+    delete this.role;
+    return this;
+  }
+
   static get tableName() {
     return 'users';
   }

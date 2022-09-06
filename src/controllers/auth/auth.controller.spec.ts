@@ -12,6 +12,7 @@ import Session from '../../models/session';
 import User from '../../models/user';
 import { AuthController } from './auth.controller';
 import { PrivateKey } from 'eciesjs';
+import { ErrorMessages } from '../../common/responses/responses';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -365,7 +366,7 @@ describe('AuthController', () => {
         .query({ sig, msg: msg.toString('hex') })
         .expect(404)
         .expect({
-          error: { message: 'user not found' },
+          error: { message: ErrorMessages.UserNotFound },
         });
     });
 

@@ -69,29 +69,65 @@ describe('UsersController', () => {
     );
   });
 
-  describe('.me', () => {
-    it('should return 401 when not authorized', async () => {
+  describe('.get', () => {
+    it('should return 404 when user with matching address was not found', async () => {
       await request(app.getHttpServer())
-        .get(`/v1/users/me`)
+        .get(`/v1/users/0xAddress`)
         .send({})
+        .expect(404)
+        .expect({
+          error: { message: 'user not found' },
+        });
+    });
+
+    it('should return 401 when provided address is not match auth token user address', async () => {
+      await User.updateById(u.id, {
+        address: '0xAddress',
+        email: '0x@email.com',
+      });
+      await request(app.getHttpServer())
+        .get(`/v1/users/0xAddress2`)
+        .send({})
+        .set('Authorization', 'bearer ' + token)
         .expect(401)
         .expect({
           error: {
             type: 'authentication_error',
-            message: 'authorization header is required',
+            message: 'not permitted to perform this action',
           },
         });
     });
 
-    it('should return 200 and authenticated user when token was provided', async () => {
+    it('should return 200 and de-sensitized user data when token was not provided', async () => {
+      await User.updateById(u.id, {
+        address: '0xAddress',
+        email: '0x@email.com',
+      });
       await request(app.getHttpServer())
-        .get(`/v1/users/me`)
+        .get(`/v1/users/0xAddress`)
+        .send({})
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data.object).toEqual('user');
+          expect(res.body.data.id).toEqual(u.id);
+          expect(res.body.data.email).toBeUndefined();
+        });
+    });
+
+    it('should return 200 and full user data when token was provided', async () => {
+      await User.updateById(u.id, {
+        address: '0xAddress',
+        email: '0x@email.com',
+      });
+      await request(app.getHttpServer())
+        .get(`/v1/users/0xAddress`)
         .set('Authorization', 'bearer ' + token)
         .send({})
         .expect(200)
         .expect((res) => {
           expect(res.body.data.object).toEqual('user');
           expect(res.body.data.id).toEqual(u.id);
+          expect(res.body.data.email).toEqual('0x@email.com');
         });
     });
   });

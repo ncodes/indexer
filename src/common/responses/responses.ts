@@ -148,6 +148,14 @@ export enum ErrorTypes {
 }
 
 /**
+ * Common error messages
+ */
+export enum ErrorMessages {
+  NoAuthPermission = 'not permitted to perform this action',
+  UserNotFound = 'user not found',
+}
+
+/**
  * Build 404 HTTPException
  * @param msg The error message
  * @param type The type of error

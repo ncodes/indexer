@@ -142,34 +142,6 @@ describe('AuthController', () => {
         });
     });
 
-    it(
-      'should return error and status=400 when messengerPublicKey was not' + ' provided',
-      async () => {
-        const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
-        const wallet = new ethers.Wallet(privateKey);
-        const msg = Buffer.from(
-          makeMsg(
-            '0x14791697260E4c9A71f18484C9f997B308e59325',
-            'person@gmail.com',
-            '',
-            moment().toISOString(),
-          ),
-        );
-        const sig = await wallet.signMessage(msg.toString());
-        await request(app.getHttpServer())
-          .post(`/v1/auth`)
-          .send({ sig, msg: msg.toString('hex'), messengerPublicKey: 'pubKey' })
-          .expect(400)
-          .expect({
-            error: {
-              param: 'messengerPublicKey',
-              type: 'invalid_request_error',
-              message: 'messenger public key is required',
-            },
-          });
-      },
-    );
-
     it('should return error and status=400 when messengerPublicKey was invalid', async () => {
       const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
       const wallet = new ethers.Wallet(privateKey);

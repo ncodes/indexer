@@ -41,11 +41,8 @@ export class AuthController {
       throw400('email is not valid', ErrorTypes.InvalidRequest, 'email');
     }
 
-    // Ensure messenger public key was provided
-    if (isEmpty(sigInfo.messengerPublicKey?.trim())) {
-      throw400('messenger public key is required', ErrorTypes.InvalidRequest, 'messengerPublicKey');
-    } else {
-      // Ensure messenger public key is valid
+    // Ensure messenger public key if valid if provided
+    if (sigInfo.messengerPublicKey) {
       try {
         PublicKey.fromHex(sigInfo.messengerPublicKey);
       } catch (e) {

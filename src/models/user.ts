@@ -13,6 +13,8 @@ export default class User extends BaseModel {
   address: string;
   // The messenger public key
   messengerPublicKey: string;
+  // The encrypted message key data
+  encMsgKey: string;
   // The user's role
   role: string;
 

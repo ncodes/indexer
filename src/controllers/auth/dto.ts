@@ -19,6 +19,8 @@ export class AuthDTO {
     message: makeValidatorMsg('message is required', 'msg'),
   })
   msg: string;
+
+  encMsgKey: string;
 }
 
 /**

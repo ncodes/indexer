@@ -62,13 +62,15 @@ export class AuthController {
       if (!user) {
         user = await User.create({
           address: sigInfo.address,
-          messengerPublicKey: sigInfo.messengerPublicKey,
           email: sigInfo.email,
+          messengerPublicKey: sigInfo.messengerPublicKey,
+          encMsgKey: body.encMsgKey,
           role: Roles.User,
         });
       } else {
         user = await User.updateById(user.id, {
           email: user.email !== sigInfo.email ? sigInfo.email : user.email,
+          encMsgKey: body.encMsgKey ? body.encMsgKey : user.encMsgKey,
           messengerPublicKey:
             user.messengerPublicKey !== sigInfo.messengerPublicKey
               ? sigInfo.messengerPublicKey

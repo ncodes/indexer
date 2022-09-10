@@ -236,11 +236,13 @@ describe('AuthController', () => {
           sig,
           msg: msg.toString('hex'),
           messengerPublicKey: '029c48686c0b93232fb2706b6e6f3fe17157bffa9c000941f341075e4d73e67a3e',
+          encMsgKey: 'enc_msg_key',
         })
         .expect(201)
         .expect((res) => {
           expect(res.body.data.token).toBeDefined();
           expect(res.body.data.user).toBeDefined();
+          expect(res.body.data.user.encMsgKey).toEqual('enc_msg_key');
           expect(res.body.data.user.address.toLowerCase()).toEqual(wallet.address.toLowerCase());
           expect(res.body.data.user.messengerPublicKey).toBeDefined();
         });
@@ -261,15 +263,24 @@ describe('AuthController', () => {
         ),
       );
       const sig = await wallet.signMessage(msg.toString());
-      const existing = await User.create({ address: wallet.address });
+      const existing = await User.create({
+        address: wallet.address,
+        encMsgKey: 'enc_msg_key',
+      });
       let user: User;
       await request(app.getHttpServer())
         .post(`/v1/auth`)
-        .send({ sig, msg: msg.toString('hex'), email: 'person@gmail.com' })
+        .send({
+          sig,
+          msg: msg.toString('hex'),
+          email: 'person@gmail.com',
+          encMsgKey: 'enc_msg_key2',
+        })
         .expect(201)
         .expect((res) => {
           expect(res.body.data.token).toBeDefined();
           expect(res.body.data.user).toBeDefined();
+          expect(res.body.data.user.encMsgKey).toEqual('enc_msg_key2');
           expect(res.body.data.user.address.toLowerCase()).toEqual(wallet.address.toLowerCase());
           user = res.body.data.user;
         });

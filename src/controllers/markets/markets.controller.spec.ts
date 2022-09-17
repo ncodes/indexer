@@ -93,19 +93,6 @@ describe('MarketsController', () => {
   });
 
   describe('.get', () => {
-    it('should return 401 when not authorized', async () => {
-      await request(app.getHttpServer())
-        .get(`/v1/markets/0x123`)
-        .send({})
-        .expect(401)
-        .expect({
-          error: {
-            type: 'authentication_error',
-            message: 'authorization header is required',
-          },
-        });
-    });
-
     it('should return 400 when network is unknown', async () => {
       await request(app.getHttpServer())
         .get(`/v1/markets/0x123`)
@@ -156,20 +143,6 @@ describe('MarketsController', () => {
   });
 
   describe('.list', () => {
-    it('should 401 when not authorized', async () => {
-      await request(app.getHttpServer())
-        .get(`/v1/markets`)
-        .send({})
-        .query({ net })
-        .expect(401)
-        .expect({
-          error: {
-            type: 'authentication_error',
-            message: 'authorization header is required',
-          },
-        });
-    });
-
     it('should 400 when network is unknown', async () => {
       await request(app.getHttpServer())
         .get(`/v1/markets`)
@@ -465,20 +438,6 @@ describe('MarketsController', () => {
   });
 
   describe('.listInvitedMediators', () => {
-    it('should 401 when not authorized', async () => {
-      await request(app.getHttpServer())
-        .get(`/v1/markets/0x123/invited_mediators`)
-        .send({})
-        .query({ net })
-        .expect(401)
-        .expect({
-          error: {
-            type: 'authentication_error',
-            message: 'authorization header is required',
-          },
-        });
-    });
-
     it('should 400 when network is unknown', async () => {
       await request(app.getHttpServer())
         .get(`/v1/markets/0x123/invited_mediators`)
@@ -608,20 +567,6 @@ describe('MarketsController', () => {
   });
 
   describe('.listPermittedTraders', () => {
-    it('should 401 when not authorized', async () => {
-      await request(app.getHttpServer())
-        .get(`/v1/markets/0x123/permitted_traders`)
-        .send({})
-        .query({ net })
-        .expect(401)
-        .expect({
-          error: {
-            type: 'authentication_error',
-            message: 'authorization header is required',
-          },
-        });
-    });
-
     it('should 400 when network is unknown', async () => {
       await request(app.getHttpServer())
         .get(`/v1/markets/0x123/permitted_traders`)
@@ -703,19 +648,6 @@ describe('MarketsController', () => {
   });
 
   describe('.listPermittedProviders', () => {
-    it('should return 401 when not authorized', async () => {
-      await request(app.getHttpServer())
-        .get(`/v1/markets/0x123/permitted_providers`)
-        .send({})
-        .expect(401)
-        .expect({
-          error: {
-            type: 'authentication_error',
-            message: 'authorization header is required',
-          },
-        });
-    });
-
     it('should return 400 when network is unknown', async () => {
       await request(app.getHttpServer())
         .get(`/v1/markets/0x123/permitted_providers`)

@@ -27,8 +27,6 @@ import {
 import MarketProvider from '../../models/market_provider';
 
 @Controller('v1/markets')
-@UseGuards(BeAuthenticatedGuard)
-@UseGuards(HasKeyGuard)
 export class MarketsController {
   private logger = new Logger(MarketsController.name);
 

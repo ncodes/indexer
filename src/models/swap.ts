@@ -292,7 +292,7 @@ export default class Swap extends BaseModel {
       if (provider) q = q.where('provider', 'ilike', provider);
       if (released !== undefined) q = q.where({ released });
       if (cancelled !== undefined) q = q.where({ cancelled });
-      if (disputed !== undefined) q = q.where({ byDisputed: disputed });
+      if (disputed !== undefined) q = q.where({ byDispute: disputed });
       q.count('id')
         .whereNotDeleted()
         .first()
@@ -322,7 +322,7 @@ export default class Swap extends BaseModel {
       provider,
       true,
       undefined,
-      undefined,
+      false,
       txn,
     );
     const nSwaps = await Swap.countByState(

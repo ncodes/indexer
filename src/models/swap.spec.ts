@@ -29,6 +29,13 @@ describe('MarketPrice', () => {
         network: net,
         marketId: '0xMarket',
         provider: '0xProvider',
+        released: true,
+        byDispute: true,
+      });
+      await Swap.create({
+        network: net,
+        marketId: '0xMarket',
+        provider: '0xProvider',
       });
       await Swap.create({
         network: net,
@@ -36,8 +43,8 @@ describe('MarketPrice', () => {
         provider: '0xProvider2',
         released: true,
       });
-      expect(await Swap.getCompletionRate(net, '0xMarket', '0xProvider')).toEqual(50);
-      expect(await Swap.getCompletionRate(net, '0xMarket', undefined)).toEqual(66.67);
+      expect(await Swap.getCompletionRate(net, '0xMarket', '0xProvider')).toEqual(33.33);
+      expect(await Swap.getCompletionRate(net, '0xMarket', undefined)).toEqual(50);
     });
   });
 });

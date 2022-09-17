@@ -222,7 +222,7 @@ export default class Market extends BaseModel {
    * @param select Select specific fields (optional)
    * @param txn Optional transaction object
    */
-  static searchByCreatorOrQueryString(
+  static search(
     network: string,
     creator: string,
     queryStr: string,
@@ -247,7 +247,13 @@ export default class Market extends BaseModel {
     }
     if (offset) query = query.offset(offset);
     if (limit) query = query.limit(limit);
-    return query.whereNotDeleted().orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
+    return query
+      .whereNotDeleted()
+      .orderBy('totalSwaps', 'DESC') // prefer high swap transactions
+      .orderBy('amountSwapped', 'DESC') // prefer high volume
+      .orderBy('completionRate', 'DESC') // prefer high release rate (without dispute)
+      .orderBy('totalJoinedMediatorsBond', 'DESC') // prefer high mediator bond
+      .orderBy('numMediatorsJoined', 'DESC'); // prefer high number of mediators
   }
 
   /**

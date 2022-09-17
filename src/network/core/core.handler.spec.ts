@@ -419,6 +419,7 @@ describe('CoreHandler', () => {
           amount: amount.toString(),
           cost: cost.toString(),
           provider: `0xProvider`,
+          byDispute: true,
         });
 
         await Dispute.create({

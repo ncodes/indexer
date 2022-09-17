@@ -74,7 +74,7 @@ export class MarketsController {
    */
   @Get()
   async list(@Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
-    const result = await Market.searchByCreatorOrQueryString(
+    const result = await Market.search(
       q.net,
       q.creator,
       q.query,

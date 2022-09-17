@@ -412,7 +412,9 @@ export class CoreHandler extends Handler {
           openOrders: liq.openOrders - 1,
           lastSuccessfulSwapAt: now.toISOString(),
           amountSwapped: toBN(liq.amountSwapped).add(amount).toString(),
-          completionRate: await Swap.getCompletionRate(this.network, marketId, provider, txn),
+          completionRate: dispute
+            ? liq.completionRate
+            : await Swap.getCompletionRate(this.network, marketId, provider, txn),
         },
         txn,
       );
@@ -424,7 +426,9 @@ export class CoreHandler extends Handler {
         {
           lastSuccessfulSwapAt: now.toISOString(),
           amountSwapped: toBN(market.amountSwapped).add(amount).toString(),
-          completionRate: await Swap.getCompletionRate(this.network, marketId, undefined, txn),
+          completionRate: dispute
+            ? market.completionRate
+            : await Swap.getCompletionRate(this.network, marketId, undefined, txn),
         },
         txn,
       );

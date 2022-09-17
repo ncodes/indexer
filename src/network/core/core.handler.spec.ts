@@ -391,9 +391,103 @@ describe('CoreHandler', () => {
     });
 
     describe('when orderId is set (released)', () => {
-      it(
-        'should create swap, mark it as released and send notification to' + ' taker',
-        async () => {
+      it('should create swap, mark it as released and send notification to taker', async () => {
+        let market = await Market.create({
+          network: net,
+          marketId: '0xMarket',
+          base: 'BASE',
+          quote: 'QUOTE',
+          isBaseLocal: false,
+          totalSwaps: 1,
+        });
+
+        await Liquidity.create({
+          network: net,
+          marketId: '0xMarket',
+          provider: '0xProvider',
+          openOrders: 1,
+          totalSwaps: 1,
+        });
+
+        const orderId = BigNumber.from(1);
+        const amount = BigNumber.from('10000000000000000000');
+        const cost = BigNumber.from('10000000000000000000');
+        await Swap.create({
+          network: net,
+          marketId: market.marketId,
+          orderId: orderId.toNumber() - 1,
+          amount: amount.toString(),
+          cost: cost.toString(),
+          provider: `0xProvider`,
+        });
+
+        await Dispute.create({
+          network: net,
+          marketId: market.marketId,
+          orderId: orderId.toNumber() - 1,
+          disputeId: 0,
+        });
+        let dispute = await Dispute.create({
+          network: net,
+          marketId: market.marketId,
+          orderId: orderId.toNumber() - 1,
+          disputeId: 1,
+        });
+
+        mockGetSwapFeeInfo.mockResolvedValue({ cost: '10000000000000000000' });
+        mockGetTokenDecimals.mockResolvedValue(BigNumber.from(18));
+
+        await handler.onSwap(
+          '0xMarket',
+          orderId,
+          '0xProvider',
+          '0xSwapper',
+          amount,
+          BigNumber.from('1000000000000000000'),
+          false,
+          {} as any,
+        );
+
+        expect(mockNotify).toHaveBeenCalledWith(NotifyType.SwapOrderReleased, net, '0xProvider', {
+          marketId: '0xMarket',
+          base: market.base,
+          quote: market.quote,
+          amount: '10.0',
+          cost: '10.0',
+          orderId: 0,
+          byDispute: false,
+        });
+
+        const swap = await Swap.find({ marketId: market.marketId });
+        expect(swap).toBeDefined();
+        expect(swap.marketId).toEqual(market.marketId);
+        expect(swap.instant).toBeFalsy();
+        expect(swap.released).toBeTruthy();
+
+        // decrement open orders by 1
+        const liq = await Liquidity.getLiquidity(net, '0xMarket', '0xProvider');
+        expect(liq.openOrders).toEqual(0);
+        expect(liq.lastSuccessfulSwapAt).toBeDefined();
+        expect(liq.amountSwapped).toEqual(amount.toString());
+        expect(liq.totalSwaps).toEqual(1);
+
+        // should not update completion rate since swap was disputed
+        expect(liq.completionRate).toEqual(0);
+
+        market = await Market.getById(market.id);
+        expect(market.lastSuccessfulSwapAt).toBeDefined();
+        expect(market.amountSwapped).toEqual(amount.toString());
+        expect(market.totalSwaps).toEqual(1);
+
+        // should not update completion rate since swap was disputed
+        expect(market.completionRate).toEqual(0);
+
+        dispute = await Dispute.getById(dispute.id);
+        expect(dispute.orderReleased).toBeTruthy();
+      });
+
+      describe('when not disputed', () => {
+        it('should create swap, mark it as released and send notification to taker', async () => {
           let market = await Market.create({
             network: net,
             marketId: '0xMarket',
@@ -421,19 +515,6 @@ describe('CoreHandler', () => {
             amount: amount.toString(),
             cost: cost.toString(),
             provider: `0xProvider`,
-          });
-
-          await Dispute.create({
-            network: net,
-            marketId: market.marketId,
-            orderId: orderId.toNumber() - 1,
-            disputeId: 0,
-          });
-          let dispute = await Dispute.create({
-            network: net,
-            marketId: market.marketId,
-            orderId: orderId.toNumber() - 1,
-            disputeId: 1,
           });
 
           mockGetSwapFeeInfo.mockResolvedValue({ cost: '10000000000000000000' });
@@ -471,19 +552,20 @@ describe('CoreHandler', () => {
           expect(liq.openOrders).toEqual(0);
           expect(liq.lastSuccessfulSwapAt).toBeDefined();
           expect(liq.amountSwapped).toEqual(amount.toString());
-          expect(liq.completionRate).toEqual(100);
           expect(liq.totalSwaps).toEqual(1);
+
+          // should update completion rate since swap was not disputed
+          expect(liq.completionRate).toEqual(100);
 
           market = await Market.getById(market.id);
           expect(market.lastSuccessfulSwapAt).toBeDefined();
           expect(market.amountSwapped).toEqual(amount.toString());
-          expect(market.completionRate).toEqual(100);
           expect(market.totalSwaps).toEqual(1);
 
-          dispute = await Dispute.getById(dispute.id);
-          expect(dispute.orderReleased).toBeTruthy();
-        },
-      );
+          // should update completion rate since swap was not disputed
+          expect(market.completionRate).toEqual(100);
+        });
+      });
     });
   });
 

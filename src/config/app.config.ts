@@ -9,6 +9,9 @@ export default () => ({
     redis: {
       url: process.env.REDIS_URL,
     },
+    cmc: {
+      key: process.env.CMC_KEY,
+    },
     openexchangerate: {
       key: process.env.OPENEXRATE_KEY,
     },

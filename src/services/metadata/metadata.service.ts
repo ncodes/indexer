@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { CoinGeckoMetadata } from './CoinGeckoMetadata';
 import NetworkService from '../../network/network.service';
 import { isValidNetwork } from '../../network/common';
+import { CoinMarketCapMetadata } from './CoinMarketCapMetadata';
 
 // tslint:disable-next-line:max-classes-per-file
 abstract class MetadataSource {
@@ -14,7 +15,8 @@ export class MetadataService {
   private source: MetadataSource;
 
   constructor(private cfg: ConfigService, private netSrv: NetworkService) {
-    this.source = new CoinGeckoMetadata();
+    this.source = new CoinMarketCapMetadata(cfg.get('app.cmc.key'));
+    // this.source = new CoinGeckoMetadata();
   }
 
   /**

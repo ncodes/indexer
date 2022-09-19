@@ -394,11 +394,11 @@ describe('MarketsController', () => {
 
     describe('limit=1', () => {
       it('should 200 and correct market', async () => {
-        await Market.create({
+        const market = await Market.create({
           network: net,
           quoteAddress: '0xQuoteAddress',
         });
-        const market = await Market.create({ network: net });
+        await Market.create({ network: net });
 
         jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue(null);
 
@@ -416,11 +416,11 @@ describe('MarketsController', () => {
 
     describe('offset is set', () => {
       it('should 200 and correct market', async () => {
-        const market = await Market.create({
+        await Market.create({
           network: net,
           quoteAddress: '0xQuoteAddress',
         });
-        await Market.create({ network: net });
+        const market = await Market.create({ network: net });
 
         jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue(null);
 

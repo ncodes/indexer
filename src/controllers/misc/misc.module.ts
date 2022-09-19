@@ -4,17 +4,10 @@ import { NotifierModule } from '../../jobs/mailer/NotifierModule';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { NetworkModule } from '../../network/network.module';
 import { ExchangeRateServiceModule } from '../../services/exchange_rate.service';
-import { PriceServiceModule } from '../../services/price.service';
 import { ConfigService } from '@nestjs/config';
 
 @Module({
-  imports: [
-    NotifierModule,
-    ConfigService,
-    NetworkModule,
-    ExchangeRateServiceModule,
-    PriceServiceModule,
-  ],
+  imports: [NotifierModule, ConfigService, NetworkModule, ExchangeRateServiceModule],
   providers: [MetadataService],
   controllers: [MiscController],
 })

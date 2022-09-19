@@ -4,7 +4,6 @@ import { ok, throw400 } from '../../common/responses/responses';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import NetworkService from '../../network/network.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
-import { PriceService } from '../../services/price.service';
 import { ConfigService } from '@nestjs/config';
 import { ShareableTokens } from '../../common/shareables_list';
 
@@ -15,7 +14,6 @@ export class MiscController {
     private metadataSrv: MetadataService,
     private netSrv: NetworkService,
     private exRateSvr: ExchangeRateService,
-    private priceSvr: PriceService,
   ) {}
 
   /**
@@ -53,12 +51,13 @@ export class MiscController {
 
   /**
    * Get crypto asset rate to 1 USD
-   * @param symbols A comma separated list of crypto symbols (e.g BTC,ETH)
+   * @param network The network name
+   * @param token The token address
    */
-  @Get('crypto-rate/:symbols')
-  async getCryptoRate(@Param('symbols') symbols: string) {
-    const rate = await this.priceSvr.getAssets(symbols.split(','));
-    return ok().data(rate.prices).build();
+  @Get('crypto-rate/:network/:token')
+  async getCryptoRate(@Param('network') network: string, @Param('token') token: string) {
+    const info = await this.metadataSrv.getTokenInfo(network, token);
+    return ok().data({ price: info.price }).build();
   }
 
   /**

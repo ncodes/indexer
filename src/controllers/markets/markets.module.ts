@@ -3,10 +3,9 @@ import { NetworkModule } from '../../network/network.module';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { MarketsController } from './markets.controller';
 import { MarketsService } from './markets.service';
-import { PriceServiceModule } from '../../services/price.service';
 
 @Module({
-  imports: [NetworkModule, PriceServiceModule],
+  imports: [NetworkModule],
   controllers: [MarketsController],
   providers: [MarketsService, MetadataService],
 })

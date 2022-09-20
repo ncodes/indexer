@@ -30,7 +30,7 @@ export class LiquidityController {
   @Get()
   async list(@Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
     if (!q.count) {
-      const liquidities = await Liquidity.searchLiquidities(
+      const liquidities = await Liquidity.search(
         q.net,
         q.marketId,
         q.provider,

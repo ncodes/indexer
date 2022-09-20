@@ -193,7 +193,7 @@ export default class Liquidity extends BaseModel {
    * @param select Select specific fields (optional)
    * @param txn Optional transaction object
    */
-  static searchLiquidities(
+  static search(
     network: string,
     marketId?: string,
     provider?: string,

@@ -33,7 +33,9 @@ export class MiscController {
    */
   @Get('token-info/:network/:address')
   async getTokenInfo(@Param('network') network: string, @Param('address') address: string) {
-    let info = getTokenInfo(network, address);
+    let info: TokenInfo;
+    network = network !== '-' ? network : undefined;
+    if (network) info = getTokenInfo(network, address);
     if (!info) info = await this.metadataSrv.getTokenInfo(network, address);
     return ok().data(info).build();
   }

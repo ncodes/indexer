@@ -17,7 +17,7 @@ export class CoinMarketCapMetadata {
     const info = _.values(resp.data.data)[0];
     const price = await this.getPrice(info.id);
     return Promise.resolve({
-      network,
+      network: network ? network : info.platform.slug,
       name: info.name,
       logoURI: info.logo,
       price,

@@ -4,6 +4,7 @@ import { CoinGeckoMetadata } from './CoinGeckoMetadata';
 import NetworkService from '../../network/network.service';
 import { isValidNetwork } from '../../network/common';
 import { CoinMarketCapMetadata } from './CoinMarketCapMetadata';
+import { isProdMode } from '../../common/common';
 
 // tslint:disable-next-line:max-classes-per-file
 abstract class MetadataSource {
@@ -40,7 +41,7 @@ export class MetadataService {
     if (!info) return Promise.reject(new Error('token not found'));
     const { network } = info;
     if (!isValidNetwork(network)) return Promise.reject('network not' + ' supported');
-    if (!info.decimals)
+    if (isProdMode() && !info.decimals)
       info.decimals = await this.netSrv.getTokenDecimals(
         this.netSrv.getProvider(network),
         contract,

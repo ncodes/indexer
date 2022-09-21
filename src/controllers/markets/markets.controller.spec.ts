@@ -207,6 +207,52 @@ describe('MarketsController', () => {
       });
     });
 
+    describe('filter by base address', () => {
+      it('should 200 and correct market', async () => {
+        const market = await Market.create({
+          network: net,
+          marketId: '0x123',
+          baseAddress: '0xBaseAddr',
+        });
+        await Market.create({});
+
+        jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue(null);
+
+        await request(app.getHttpServer())
+          .get(`/v1/markets`)
+          .query({ base: '0xBaseAddr', net })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(market.id);
+          });
+      });
+    });
+
+    describe('filter by quote address', () => {
+      it('should 200 and correct market', async () => {
+        const market = await Market.create({
+          network: net,
+          marketId: '0x123',
+          quoteAddress: '0xQuoteAddr',
+        });
+        await Market.create({});
+
+        jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue(null);
+
+        await request(app.getHttpServer())
+          .get(`/v1/markets`)
+          .query({ quote: '0xQuoteAddr', net })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(market.id);
+          });
+      });
+    });
+
     describe('filter by query (creator address)', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({

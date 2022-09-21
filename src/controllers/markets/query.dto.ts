@@ -30,6 +30,12 @@ export class ListQueryDTO {
   public creator?: string;
 
   @IsOptional()
+  public base?: string;
+
+  @IsOptional()
+  public quote?: string;
+
+  @IsOptional()
   public query?: string;
 
   @Transform(({ value }) => toBoolean(value))

@@ -207,7 +207,7 @@ export default class Market extends BaseModel {
       .orWhere('baseAddress', 'ILIKE', qs)
       .orWhere('quote', 'ILIKE', qs)
       .orWhere('quoteAddress', 'ILIKE', qs)
-      .orWhere('pair', 'ILIKE', qs.replaceAll(/\s|\/|\-/gi, ''))
+      .orWhere('pair', 'ILIKE', qs.replaceAll(/\s|\/|-/gi, ''))
       .whereNotDeleted();
   }
 
@@ -215,27 +215,33 @@ export default class Market extends BaseModel {
    * search for markets
    * @param network The network name (optional)
    * @param creator The market creator address (optional)
+   * @param baseAsset The base asset address (optional)
+   * @param quoteAsset The quote asset address (optional)
    * @param queryStr The query string (optional)
    * @param countOnly Indicates whether to return count only.
    * @param limit The number of records to return.
    * @param offset The offset value
    * @param select Select specific fields (optional)
-   * @param txn Optional transaction object
+   * @param txn?? Optional transaction object
    */
   static search(
     network: string,
     creator: string,
+    baseAsset: string,
+    quoteAsset: string,
     queryStr: string,
     countOnly: boolean,
     limit: number,
     offset: number,
     select = [],
-    txn?: Transaction,
+    txn?: Objection.Transaction,
   ): Promise<string | Market[]> {
     select = this.makeSelectList(select);
     let query = this.query(txn).select(...select, raw('count(*) over() as' + ' "__queryCount"'));
-    if (network) query = query.where('network', network);
+    if (network) query = query.where('network', 'ilike', network);
     if (creator) query = query.where('creator', 'ilike', creator);
+    if (baseAsset) query = query.where('baseAddress', 'ilike', baseAsset);
+    if (quoteAsset) query = query.where('quoteAddress', 'ilike', quoteAsset);
     if (queryStr) query = this.makeSearchQuery(query, queryStr);
     if (countOnly) {
       return query

@@ -1,16 +1,5 @@
-import {
-  Controller,
-  Get,
-  Head,
-  Logger,
-  Param,
-  Query,
-  UseGuards,
-  ValidationPipe,
-} from '@nestjs/common';
+import { Controller, Get, Logger, Param, Query, ValidationPipe } from '@nestjs/common';
 import { ok, throw400, throw404, throw500 } from '../../common/responses/responses';
-import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
-import { HasKeyGuard } from '../../guards/has_token.guard';
 import Market from '../../models/market';
 import { isValidNetwork } from '../../network/common';
 import { MarketsService } from './markets.service';
@@ -64,6 +53,8 @@ export class MarketsController {
    * @param q The query object
    *  - [network] The network name
    *  - [creator] Filter the result by creator address (optional)
+   *  - [base] The base asset address (optional)
+   *  - [quote] The base asset address (optional)
    *  - [noMerge] Indicates to prevent merging contract object with DB object
    *  - [query] The query string
    *  - [count] Returns the count of markets only
@@ -77,6 +68,8 @@ export class MarketsController {
     const result = await Market.search(
       q.net,
       q.creator,
+      q.base,
+      q.quote,
       q.query,
       q.count,
       q.limit || 25,

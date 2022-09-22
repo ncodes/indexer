@@ -77,7 +77,6 @@ export class MarketsController {
       q.select,
     );
 
-    console.log(result);
     if (q.count) {
       return ok().data({ count: result }).build();
     }

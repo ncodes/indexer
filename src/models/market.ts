@@ -202,12 +202,12 @@ export default class Market extends BaseModel {
   static makeSearchQuery(q: QueryBuilderType<any>, qs: string) {
     return q
       .orWhere('marketId', qs)
-      .orWhere('creator', qs)
-      .orWhere('base', 'ILIKE', qs)
+      .orWhere('creator', `%${qs}%`)
+      .orWhere('base', 'ILIKE', `%${qs}%`)
       .orWhere('baseAddress', 'ILIKE', qs)
-      .orWhere('quote', 'ILIKE', qs)
-      .orWhere('quoteAddress', 'ILIKE', qs)
-      .orWhere('pair', 'ILIKE', qs.replaceAll(/\s|\/|-/gi, ''))
+      .orWhere('quote', 'ILIKE', `%${qs}%`)
+      .orWhere('quoteAddress', 'ILIKE', `%${qs}%`)
+      .orWhere('pair', 'ILIKE', `%${qs.replaceAll(/\s|\/|-/gi, '')}%`)
       .whereNotDeleted();
   }
 

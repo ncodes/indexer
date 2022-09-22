@@ -52,13 +52,16 @@ export default class Market extends BaseModel {
   totalSwaps: number = undefined;
   // The dispute rate of this market
   disputeRate: number = undefined;
+  // Indicates the liquidity providers are permissioned
+  permPut: boolean = undefined;
+  // Indicates the swap operation is permissioned
+  permSwap: boolean = undefined;
+  // Indicates the mediation operation is permissioned
+  permMediate: boolean = undefined;
 
   // *** Non-persisted fields **//
   mediatorBond: string;
   numDisputes: number; // (include appeals)
-  permPut: boolean;
-  permSwap: boolean;
-  permMediate: boolean;
   baseLogo: string;
   quoteLogo: string;
   numProviders: string;
@@ -219,11 +222,12 @@ export default class Market extends BaseModel {
    * @param baseAsset The base asset address (optional)
    * @param quoteAsset The quote asset address (optional)
    * @param queryStr The query string (optional)
+   * @param noPermSwap Indicate to ignore market with permissioned swap enabled (optional)
    * @param countOnly Indicates whether to return count only.
    * @param limit The number of records to return.
    * @param offset The offset value
    * @param select Select specific fields (optional)
-   * @param txn?? Optional transaction object
+   * @param txn??? Optional transaction object
    */
   static search(
     network: string,
@@ -231,6 +235,7 @@ export default class Market extends BaseModel {
     baseAsset: string,
     quoteAsset: string,
     queryStr: string,
+    noPermSwap: boolean = false,
     countOnly: boolean,
     limit: number,
     offset: number,
@@ -243,6 +248,7 @@ export default class Market extends BaseModel {
     if (creator) query = query.where('creator', 'ilike', creator);
     if (baseAsset) query = query.where('baseAddress', 'ilike', baseAsset);
     if (quoteAsset) query = query.where('quoteAddress', 'ilike', quoteAsset);
+    if (noPermSwap) query = query.where('permSwap', false);
     if (queryStr)
       query = query.where((q) => {
         this.makeSearchQuery(q, queryStr);

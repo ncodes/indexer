@@ -38,6 +38,9 @@ export class ListQueryDTO {
   @IsOptional()
   public query?: string;
 
+  @IsOptional()
+  public noPermSwap?: boolean;
+
   @Transform(({ value }) => toBoolean(value))
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'noMerge') })
   @IsOptional()

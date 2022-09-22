@@ -18,8 +18,11 @@ const MockNotifierService = jest.fn().mockImplementation(() => {
   return { notify: mockNotify };
 });
 
+const mockGetMarketCore = jest.fn();
 const MockNetworkService = jest.fn().mockImplementation(() => {
-  return {};
+  return {
+    getMarketCore: mockGetMarketCore,
+  };
 });
 
 describe('MarketCoreHandler', () => {
@@ -30,6 +33,7 @@ describe('MarketCoreHandler', () => {
   const contracts = {
     marketCore: marketCoreContract,
   };
+  const netSrv = new MockNetworkService();
 
   afterEach(async () => {
     await db.truncateTables();
@@ -42,13 +46,7 @@ describe('MarketCoreHandler', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     mockNotify.mockReset();
-    handler = new MarketCoreHandler(
-      new MockNetworkService(),
-      new MockNotifierService(),
-      null,
-      net,
-      contracts,
-    );
+    handler = new MarketCoreHandler(netSrv, new MockNotifierService(), null, net, contracts);
     handler.logger = new NoopLogger() as any;
     await db.truncateTables();
   });
@@ -74,6 +72,12 @@ describe('MarketCoreHandler', () => {
             return mockQuoteContract;
         }
       };
+
+      mockGetMarketCore.mockReturnValue({
+        getMarket: jest
+          .fn()
+          .mockResolvedValue({ permPut: true, permSwap: true, permMediate: true }),
+      });
 
       await expect(
         handler.onNewMarket(
@@ -102,6 +106,9 @@ describe('MarketCoreHandler', () => {
       expect(market.pair).toEqual('BTCUSDT');
       expect(market.txHash).toEqual('0xTxHash');
       expect(market.numMediators).toEqual(10);
+      expect(market.permPut).toEqual(true);
+      expect(market.permSwap).toEqual(true);
+      expect(market.permMediate).toEqual(true);
     });
   });
 

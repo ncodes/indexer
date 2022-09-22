@@ -55,6 +55,7 @@ export class MarketsController {
    *  - [creator] Filter the result by creator address (optional)
    *  - [base] The base asset address (optional)
    *  - [quote] The base asset address (optional)
+   *  - [noPermSwap] Indicate to ignore market with permissioned swap enabled (optional)
    *  - [noMerge] Indicates to prevent merging contract object with DB object
    *  - [query] The query string
    *  - [count] Returns the count of markets only
@@ -71,6 +72,7 @@ export class MarketsController {
       q.base,
       q.quote,
       q.query,
+      q.noPermSwap,
       q.count,
       q.limit || 25,
       q.offset,

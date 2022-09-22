@@ -139,7 +139,8 @@ export class MarketCoreHandler extends Handler {
     const quoteToken = this.newContract(quoteAsset, erc20ABI, this.provider);
     const base = (await baseToken.symbol()).toUpperCase();
     const quote = (await quoteToken.symbol()).toUpperCase();
-
+    const mc = this.netSrv.getMarketCore(this.network);
+    const market = await mc.getMarket(id);
     await Market.create(
       {
         marketId: id,
@@ -155,6 +156,9 @@ export class MarketCoreHandler extends Handler {
         commission: commission.toNumber(),
         txHash: event.transactionHash,
         numMediators: numMediators.toNumber(),
+        permPut: market.permPut,
+        permSwap: market.permSwap,
+        permMediate: market.permMediate,
       },
       txn,
     );
@@ -166,6 +170,7 @@ export class MarketCoreHandler extends Handler {
    * Enabled or disabled permissioned liquidity provisioning
    * @param id The market ID
    * @param enabled The new state
+   * @param event
    */
   async onSetPutPerm(id: string, enabled: boolean, event: Event) {
     // no implementation yet
@@ -218,6 +223,7 @@ export class MarketCoreHandler extends Handler {
    * Enabled or disabled permissioned mediation
    * @param id The market ID
    * @param enabled The new state
+   * @param event
    */
   async onSetMediatorPerm(id: string, enabled: boolean, event: Event) {
     // no implementation yet
@@ -312,6 +318,7 @@ export class MarketCoreHandler extends Handler {
    * Enabled or disabled permissioned swapping
    * @param id The market ID
    * @param enabled The new state
+   * @param event
    */
   async onSetSwapPerm(id: string, enabled: boolean, event: Event) {
     // no implementation yet
@@ -368,6 +375,7 @@ export class MarketCoreHandler extends Handler {
    * A market's commission has been set
    * @param id The market ID
    * @param value The updated value
+   * @param event
    */
   async onSetCommission(id: string, value: string, event: Event) {
     //
@@ -377,6 +385,7 @@ export class MarketCoreHandler extends Handler {
    * The minimum market mediator bond was updated
    * @param id The market ID
    * @param value The updated value
+   * @param event
    */
   async onSetMinMediatorBond(id: string, value: string, event: Event) {
     //

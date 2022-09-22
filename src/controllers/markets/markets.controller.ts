@@ -56,6 +56,7 @@ export class MarketsController {
    *  - [base] The base asset address (optional)
    *  - [quote] The base asset address (optional)
    *  - [noPermSwap] Indicate to ignore market with permissioned swap enabled (optional)
+   *  - [onlyPermMediate] Indicate to only return market that enabled permissioned mediation (optional)
    *  - [noMerge] Indicates to prevent merging contract object with DB object
    *  - [query] The query string
    *  - [count] Returns the count of markets only
@@ -73,6 +74,7 @@ export class MarketsController {
       q.quote,
       q.query,
       q.noPermSwap,
+      q.onlyPermMediate,
       q.count,
       q.limit || 25,
       q.offset,

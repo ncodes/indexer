@@ -41,6 +41,9 @@ export class ListQueryDTO {
   @IsOptional()
   public noPermSwap?: boolean;
 
+  @IsOptional()
+  public onlyPermMediate?: boolean;
+
   @Transform(({ value }) => toBoolean(value))
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'noMerge') })
   @IsOptional()

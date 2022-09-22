@@ -63,6 +63,7 @@ export default class Market extends BaseModel {
   quoteLogo: string;
   numProviders: string;
   totalLiquidity: string;
+  lowestPrice: string;
   lowestPrice24h: string;
   highestPrice24h: string;
   priceChange: number;
@@ -202,7 +203,7 @@ export default class Market extends BaseModel {
   static makeSearchQuery(q: QueryBuilderType<any>, qs: string) {
     return q
       .orWhere('marketId', qs)
-      .orWhere('creator', `%${qs}%`)
+      .orWhere('creator', 'ILIKE', `%${qs}%`)
       .orWhere('base', 'ILIKE', `%${qs}%`)
       .orWhere('baseAddress', 'ILIKE', qs)
       .orWhere('quote', 'ILIKE', `%${qs}%`)

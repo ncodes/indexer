@@ -345,10 +345,10 @@ export default class Liquidity extends BaseModel {
         .where((q) => {
           if (baseAddress) q.where('baseAddress', 'ILIKE', baseAddress);
         })
-        .where('amount', '>', 0)
         .where((q) => {
           if (withinHours) q.where('createdAt', '>', timeAgo);
         })
+        .where('amount', '>', 0)
         .orderByRaw('cast(price as numeric) asc')
         .whereNotDeleted()
         .first()

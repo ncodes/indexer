@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { CoinGeckoMetadata } from './CoinGeckoMetadata';
 import NetworkService from '../../network/network.service';
 import { isValidNetwork } from '../../network/common';
 import { CoinMarketCapMetadata } from './CoinMarketCapMetadata';
-import { isProdMode } from '../../common/common';
+import { isDevMode, isProdMode } from '../../common/common';
 
 // tslint:disable-next-line:max-classes-per-file
 abstract class MetadataSource {
@@ -46,6 +45,7 @@ export class MetadataService {
         this.netSrv.getProvider(network),
         contract,
       );
+    if (isDevMode() && !info.decimals) info.decimals = 18;
     return Promise.resolve(info);
   }
 }

@@ -206,6 +206,7 @@ describe('MarketsService', () => {
           expect(market.totalLiquidity).toBeDefined();
           expect(market.lowestPrice24h).toBeDefined();
           expect(market.highestPrice24h).toBeDefined();
+          expect(market.lowestPrice).toBeDefined();
           expect(market.priceChange).toBeDefined();
           expect(market.totalSwaps24h).toEqual('2');
           expect(market.volume24h).toEqual('15');

@@ -242,7 +242,10 @@ export default class Market extends BaseModel {
     if (creator) query = query.where('creator', 'ilike', creator);
     if (baseAsset) query = query.where('baseAddress', 'ilike', baseAsset);
     if (quoteAsset) query = query.where('quoteAddress', 'ilike', quoteAsset);
-    if (queryStr) query = this.makeSearchQuery(query, queryStr);
+    if (queryStr)
+      query = query.where((q) => {
+        this.makeSearchQuery(q, queryStr);
+      });
     if (countOnly) {
       return query
         .count('id')

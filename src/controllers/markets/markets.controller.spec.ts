@@ -346,6 +346,54 @@ describe('MarketsController', () => {
       });
     });
 
+    describe('filter by minMediatorBond', () => {
+      it('should 200 and correct market', async () => {
+        await Market.create({
+          network: net,
+        });
+        const m1 = await Market.create({
+          network: net,
+          mediatorBond: '3000',
+        });
+        const m2 = await Market.create({
+          network: net,
+          mediatorBond: '2000',
+        });
+
+        jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue(null);
+
+        await request(app.getHttpServer())
+          .get(`/v1/markets`)
+          .query({ net, minMediatorBond: '2000' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(2);
+            expect(res.body.data[0].id).toEqual(m1.id);
+            expect(res.body.data[1].id).toEqual(m2.id);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/markets`)
+          .query({ net, minMediatorBond: '3000' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(m1.id);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/markets`)
+          .query({ net, minMediatorBond: '4000' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(0);
+          });
+      });
+    });
+
     describe('filter by base address', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({

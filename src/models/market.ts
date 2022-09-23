@@ -271,7 +271,8 @@ export default class Market extends BaseModel {
         });
       }
     }
-    if (minMediatorBond) query = query.where('mediatorBond', '>=', minMediatorBond);
+    if (minMediatorBond)
+      query = query.where(raw(`cast(?? as numeric)`, 'mediatorBond'), '>=', minMediatorBond);
     if (minJoinedMediators) query = query.where('numMediatorsJoined', '>=', minJoinedMediators);
     if (queryStr)
       query = query.where((q) => {

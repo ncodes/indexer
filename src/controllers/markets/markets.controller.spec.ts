@@ -317,6 +317,35 @@ describe('MarketsController', () => {
       });
     });
 
+    describe('filter by minJoinedMediators', () => {
+      it('should 200 and correct market', async () => {
+        await Market.create({
+          network: net,
+        });
+        const m1 = await Market.create({
+          network: net,
+          numMediatorsJoined: 3,
+        });
+        const m2 = await Market.create({
+          network: net,
+          numMediatorsJoined: 2,
+        });
+
+        jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue(null);
+
+        await request(app.getHttpServer())
+          .get(`/v1/markets`)
+          .query({ net, minJoinedMediators: 2 })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(2);
+            expect(res.body.data[0].id).toEqual(m1.id);
+            expect(res.body.data[1].id).toEqual(m2.id);
+          });
+      });
+    });
+
     describe('filter by base address', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({

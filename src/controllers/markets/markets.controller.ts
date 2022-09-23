@@ -59,6 +59,7 @@ export class MarketsController {
    *  - [onlyPermMediate] Indicate to only return market that enabled permissioned mediation (optional)
    *  - [onlyInstant] Indicate to only return market where base and quote asset are on-chain (instant swap) (optional)
    *  - [minMediatorBond] Indicate to only return market with a specific minimum mediator bond (optional)
+   *  - [minJoinedMediators] Indicate to only return market with a specific minimum number of joined mediators (optional)
    *  - [noMerge] Indicates to prevent merging contract object with DB object
    *  - [query] The query string
    *  - [count] Returns the count of markets only
@@ -79,6 +80,7 @@ export class MarketsController {
       q.onlyPermMediate,
       q.onlyInstant,
       q.minMediatorBond,
+      q.minJoinedMediators,
       q.count,
       q.limit || 25,
       q.offset,

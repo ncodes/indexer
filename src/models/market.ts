@@ -227,11 +227,12 @@ export default class Market extends BaseModel {
    * @param onlyPermMediate Indicate to include only market with permissioned mediation enabled (optional)
    * @param onlyInstant Indicate to include only market where base and quote asset are on-chain.
    * @param minMediatorBond Indicate to only return market with a specific minimum mediator bond (optional)
+   * @param minJoinedMediators Indicate to only return market with a specific minimum number of joined mediators (optional)
    * @param countOnly Indicates whether to return count only.
    * @param limit The number of records to return.
    * @param offset The offset value
    * @param select Select specific fields (optional)
-   * @param txn?????? Optional transaction object
+   * @param txn??????? Optional transaction object
    */
   static search(
     network: string,
@@ -243,6 +244,7 @@ export default class Market extends BaseModel {
     onlyPermMediate: boolean = false,
     onlyInstant: boolean = undefined,
     minMediatorBond: string = undefined,
+    minJoinedMediators: number = undefined,
     countOnly: boolean,
     limit: number,
     offset: number,
@@ -270,6 +272,7 @@ export default class Market extends BaseModel {
       }
     }
     if (minMediatorBond) query = query.where('mediatorBond', '>=', minMediatorBond);
+    if (minJoinedMediators) query = query.where('numMediatorsJoined', '>=', minJoinedMediators);
     if (queryStr)
       query = query.where((q) => {
         this.makeSearchQuery(q, queryStr);

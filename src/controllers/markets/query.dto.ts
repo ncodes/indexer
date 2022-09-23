@@ -38,6 +38,11 @@ export class ListQueryDTO {
   @IsOptional()
   public query?: string;
 
+  @Transform(({ value }) => toNumber(value))
+  @IsNumber(undefined, { message: makeValidatorMsg('must be a number', 'minJoinedMediators') })
+  @IsOptional()
+  public minJoinedMediators?: number;
+
   @IsNumberString(
     { no_symbols: true },
     { message: makeValidatorMsg('must be number', 'minMediatorBond') },

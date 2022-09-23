@@ -265,6 +265,58 @@ describe('MarketsController', () => {
       });
     });
 
+    describe('filter by onlyInstant', () => {
+      it('should 200 and correct market', async () => {
+        const m1 = await Market.create({
+          network: net,
+          isBaseLocal: true,
+          isQuoteLocal: true,
+        });
+        const m2 = await Market.create({
+          network: net,
+          isBaseLocal: true,
+          isQuoteLocal: true,
+        });
+        const m3 = await Market.create({
+          network: net,
+          isBaseLocal: false,
+          isQuoteLocal: true,
+        });
+
+        jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue(null);
+
+        await request(app.getHttpServer())
+          .get(`/v1/markets`)
+          .query({ net, onlyInstant: true })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(2);
+            expect(res.body.data[0].id).toEqual(m1.id);
+            expect(res.body.data[1].id).toEqual(m2.id);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/markets`)
+          .query({ net, onlyInstant: false })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(m3.id);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/markets`)
+          .query({ net })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(3);
+          });
+      });
+    });
+
     describe('filter by base address', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({

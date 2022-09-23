@@ -224,11 +224,12 @@ export default class Market extends BaseModel {
    * @param queryStr The query string (optional)
    * @param noPermSwap Indicate to ignore market with permissioned swap enabled (optional)
    * @param onlyPermMediate Indicate to include only market with permissioned mediation enabled (optional)
+   * @param onlyInstant Indicate to include only market where base and quote asset are on-chain.
    * @param countOnly Indicates whether to return count only.
    * @param limit The number of records to return.
    * @param offset The offset value
    * @param select Select specific fields (optional)
-   * @param txn???? Optional transaction object
+   * @param txn????? Optional transaction object
    */
   static search(
     network: string,
@@ -238,6 +239,7 @@ export default class Market extends BaseModel {
     queryStr: string,
     noPermSwap: boolean = false,
     onlyPermMediate: boolean = false,
+    onlyInstant: boolean = undefined,
     countOnly: boolean,
     limit: number,
     offset: number,
@@ -252,6 +254,18 @@ export default class Market extends BaseModel {
     if (quoteAsset) query = query.where('quoteAddress', 'ilike', quoteAsset);
     if (noPermSwap) query = query.where('permSwap', false);
     if (onlyPermMediate) query = query.where('permMediate', true);
+    if (onlyInstant !== undefined) {
+      if (onlyInstant) {
+        query = query.where('isBaseLocal', true).andWhere('isQuoteLocal', true);
+      } else {
+        query = query.where((q) => {
+          q.orWhere('isBaseLocal', true)
+            .andWhere('isQuoteLocal', false)
+            .orWhere('isBaseLocal', false)
+            .andWhere('isQuoteLocal', true);
+        });
+      }
+    }
     if (queryStr)
       query = query.where((q) => {
         this.makeSearchQuery(q, queryStr);

@@ -1659,12 +1659,12 @@ declare global {
       isLocal: boolean;
     };
     numDisputes: BigNumber;
-    permPut: boolean;
-    permSwap: boolean;
-    permMediate: boolean;
+    permPut?: boolean;
+    permSwap?: boolean;
+    permMediate?: boolean;
     commission: BigNumber;
-    numMediators: BigNumber;
-    mediatorBond: BigNumber;
+    numMediators?: BigNumber;
+    mediatorBond?: BigNumber;
   }
 
   interface ContractLiquidity {

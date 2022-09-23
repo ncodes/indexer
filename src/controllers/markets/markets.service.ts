@@ -29,12 +29,8 @@ export class MarketsService {
         isLocal: market.quote?.isLocal,
       },
       numDisputes: market.numDisputes?.toNumber(),
-      permPut: market.permPut,
-      permSwap: market.permSwap,
-      permMediate: market.permMediate,
       commission: market.commission?.toNumber(),
       numMediators: market.numMediators?.toNumber(),
-      mediatorBond: market.mediatorBond?.toString(),
     };
   }
 

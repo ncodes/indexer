@@ -159,6 +159,7 @@ export class MarketCoreHandler extends Handler {
         permPut: market.permPut,
         permSwap: market.permSwap,
         permMediate: market.permMediate,
+        mediatorBond: market.mediatorBond.toString(),
       },
       txn,
     );

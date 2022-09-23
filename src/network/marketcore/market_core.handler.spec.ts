@@ -74,9 +74,12 @@ describe('MarketCoreHandler', () => {
       };
 
       mockGetMarketCore.mockReturnValue({
-        getMarket: jest
-          .fn()
-          .mockResolvedValue({ permPut: true, permSwap: true, permMediate: true }),
+        getMarket: jest.fn().mockResolvedValue({
+          permPut: true,
+          permSwap: true,
+          permMediate: true,
+          mediatorBond: BigNumber.from('1000'),
+        }),
       });
 
       await expect(
@@ -109,6 +112,7 @@ describe('MarketCoreHandler', () => {
       expect(market.permPut).toEqual(true);
       expect(market.permSwap).toEqual(true);
       expect(market.permMediate).toEqual(true);
+      expect(market.mediatorBond).toEqual('1000');
     });
   });
 

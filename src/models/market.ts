@@ -58,9 +58,10 @@ export default class Market extends BaseModel {
   permSwap: boolean = undefined;
   // Indicates the mediation operation is permissioned
   permMediate: boolean = undefined;
+  // The minimum mediator bond
+  mediatorBond: string = undefined;
 
   // *** Non-persisted fields **//
-  mediatorBond: string;
   numDisputes: number; // (include appeals)
   baseLogo: string;
   quoteLogo: string;
@@ -225,11 +226,12 @@ export default class Market extends BaseModel {
    * @param noPermSwap Indicate to ignore market with permissioned swap enabled (optional)
    * @param onlyPermMediate Indicate to include only market with permissioned mediation enabled (optional)
    * @param onlyInstant Indicate to include only market where base and quote asset are on-chain.
+   * @param minMediatorBond Indicate to only return market with a specific minimum mediator bond (optional)
    * @param countOnly Indicates whether to return count only.
    * @param limit The number of records to return.
    * @param offset The offset value
    * @param select Select specific fields (optional)
-   * @param txn????? Optional transaction object
+   * @param txn?????? Optional transaction object
    */
   static search(
     network: string,
@@ -240,6 +242,7 @@ export default class Market extends BaseModel {
     noPermSwap: boolean = false,
     onlyPermMediate: boolean = false,
     onlyInstant: boolean = undefined,
+    minMediatorBond: string = undefined,
     countOnly: boolean,
     limit: number,
     offset: number,
@@ -266,6 +269,7 @@ export default class Market extends BaseModel {
         });
       }
     }
+    if (minMediatorBond) query = query.where('mediatorBond', '>=', minMediatorBond);
     if (queryStr)
       query = query.where((q) => {
         this.makeSearchQuery(q, queryStr);

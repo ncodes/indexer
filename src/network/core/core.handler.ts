@@ -358,7 +358,7 @@ export class CoreHandler extends Handler {
         {
           amount: toBN(liq.amount).sub(amount).toString(),
           amountSwapped: toBN(liq.amountSwapped).add(amount).toString(),
-          lastSuccessfulSwapAt: now,
+          lastSwapAt: now,
           totalSwaps: liq.totalSwaps + 1,
         },
         txn,
@@ -368,7 +368,7 @@ export class CoreHandler extends Handler {
       await Market.updateById(
         market.id,
         {
-          lastSuccessfulSwapAt: now,
+          lastSwapAt: now,
           amountSwapped: toBN(market.amountSwapped).add(amount).toString(),
           totalSwaps: market.totalSwaps + 1,
         },
@@ -410,7 +410,7 @@ export class CoreHandler extends Handler {
         liq.id,
         {
           openOrders: liq.openOrders - 1,
-          lastSuccessfulSwapAt: now.toISOString(),
+          lastSwapAt: now.toISOString(),
           amountSwapped: toBN(liq.amountSwapped).add(amount).toString(),
           completionRate: dispute
             ? liq.completionRate
@@ -424,7 +424,7 @@ export class CoreHandler extends Handler {
       await Market.updateById(
         market.id,
         {
-          lastSuccessfulSwapAt: now.toISOString(),
+          lastSwapAt: now.toISOString(),
           amountSwapped: toBN(market.amountSwapped).add(amount).toString(),
           completionRate: dispute
             ? market.completionRate

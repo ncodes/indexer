@@ -42,7 +42,7 @@ export default class Liquidity extends BaseModel {
   // The number of open swap orders
   openOrders: number = undefined;
   // The last time this liquidity successfully completed a swap
-  lastSuccessfulSwapAt: string = undefined;
+  lastSwapAt: string = undefined;
   // The swap completion rate of this liquidity
   completionRate: number = undefined;
   // The number of active disputes

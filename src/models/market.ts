@@ -31,7 +31,7 @@ export default class Market extends BaseModel {
   // The market's commission
   commission: number = undefined;
   // The last time this market had a successfully completed swap
-  lastSuccessfulSwapAt: string = undefined;
+  lastSwapAt: string = undefined;
   // The all-time amount of liquidity swapped
   amountSwapped: string = undefined;
   // The swap completion/release rate of this market

@@ -28,7 +28,7 @@ exports.up = function (knex) {
       table.boolean('permSwap').defaultTo(false);
       table.boolean('permMediate').defaultTo(false);
       table.string('txHash');
-      table.timestamp('lastSuccessfulSwapAt');
+      table.timestamp('lastSwapAt');
       table.timestamp('createdAt');
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');

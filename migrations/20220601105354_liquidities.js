@@ -16,7 +16,7 @@ exports.up = function (knex) {
       table.string('minSwap');
       table.string('maxSwap');
       table.string('manager');
-      table.integer('timeToPay');
+      table.integer('timeToPay').defaultTo(0);
       table.boolean('paused').defaultTo(false);
       table.integer('openOrders').defaultTo(0);
       table.integer('openDisputes').defaultTo(0);
@@ -25,7 +25,7 @@ exports.up = function (knex) {
       table.float('completionRate').defaultTo(0);
       table.float('disputeRate').defaultTo(0);
       table.float('satisfactoryRate').defaultTo(0);
-      table.timestamp('lastSuccessfulSwapAt');
+      table.timestamp('lastSwapAt');
       table.timestamp('createdAt');
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');

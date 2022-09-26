@@ -378,12 +378,12 @@ describe('CoreHandler', () => {
 
           liq = await Liquidity.getById(liq.id);
           expect(liq.amount).toEqual('990000000000000000000');
-          expect(liq.lastSuccessfulSwapAt).toBeDefined();
+          expect(liq.lastSwapAt).toBeDefined();
           expect(liq.amountSwapped).toEqual('10000000000000000010');
           expect(liq.totalSwaps).toEqual(1);
 
           market = await Market.getById(market.id);
-          expect(market.lastSuccessfulSwapAt).toBeDefined();
+          expect(market.lastSwapAt).toBeDefined();
           expect(market.amountSwapped).toEqual('10000000000000000010');
           expect(market.totalSwaps).toEqual(2);
         },
@@ -468,7 +468,7 @@ describe('CoreHandler', () => {
         // decrement open orders by 1
         const liq = await Liquidity.getLiquidity(net, '0xMarket', '0xProvider');
         expect(liq.openOrders).toEqual(0);
-        expect(liq.lastSuccessfulSwapAt).toBeDefined();
+        expect(liq.lastSwapAt).toBeDefined();
         expect(liq.amountSwapped).toEqual(amount.toString());
         expect(liq.totalSwaps).toEqual(1);
 
@@ -476,7 +476,7 @@ describe('CoreHandler', () => {
         expect(liq.completionRate).toEqual(0);
 
         market = await Market.getById(market.id);
-        expect(market.lastSuccessfulSwapAt).toBeDefined();
+        expect(market.lastSwapAt).toBeDefined();
         expect(market.amountSwapped).toEqual(amount.toString());
         expect(market.totalSwaps).toEqual(1);
 
@@ -551,7 +551,7 @@ describe('CoreHandler', () => {
           // decrement open orders by 1
           const liq = await Liquidity.getLiquidity(net, '0xMarket', '0xProvider');
           expect(liq.openOrders).toEqual(0);
-          expect(liq.lastSuccessfulSwapAt).toBeDefined();
+          expect(liq.lastSwapAt).toBeDefined();
           expect(liq.amountSwapped).toEqual(amount.toString());
           expect(liq.totalSwaps).toEqual(1);
 
@@ -559,7 +559,7 @@ describe('CoreHandler', () => {
           expect(liq.completionRate).toEqual(100);
 
           market = await Market.getById(market.id);
-          expect(market.lastSuccessfulSwapAt).toBeDefined();
+          expect(market.lastSwapAt).toBeDefined();
           expect(market.amountSwapped).toEqual(amount.toString());
           expect(market.totalSwaps).toEqual(1);
 

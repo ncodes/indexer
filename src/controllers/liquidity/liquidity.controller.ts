@@ -1,7 +1,5 @@
-import { Controller, Get, Query, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Query, ValidationPipe } from '@nestjs/common';
 import { ok } from '../../common/responses/responses';
-import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
-import { HasKeyGuard } from '../../guards/has_token.guard';
 import Liquidity from '../../models/liquidity';
 import { LiquidityService } from './liquidity.service';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
@@ -9,8 +7,6 @@ import { ListQueryDTO } from './query.dto';
 import { ConfigService } from '../config.service';
 
 @Controller('v1/liquidities')
-@UseGuards(BeAuthenticatedGuard)
-@UseGuards(HasKeyGuard)
 export class LiquidityController {
   constructor(private liqSrv: LiquidityService, private cfgSrv: ConfigService) {}
 

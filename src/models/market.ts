@@ -290,8 +290,8 @@ export default class Market extends BaseModel {
     if (limit) query = query.limit(limit);
     return query
       .whereNotDeleted()
-      .orderBy('totalSwaps', 'DESC') // prefer high swap transactions
       .orderBy('amountSwapped', 'DESC') // prefer high volume
+      .orderBy('totalSwaps', 'DESC') // prefer high swap transactions
       .orderBy('completionRate', 'DESC') // prefer high release rate (without dispute)
       .orderBy('totalJoinedMediatorsBond', 'DESC') // prefer high mediator bond
       .orderBy('numMediatorsJoined', 'DESC'); // prefer high number of mediators

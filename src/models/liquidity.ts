@@ -213,7 +213,11 @@ export default class Liquidity extends BaseModel {
     if (maxOpenDisputes) q = q.where('openDisputes', '<', maxOpenDisputes);
     if (offset) q = q.offset(offset);
     if (limit) q = q.limit(limit);
-    return q.orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
+    return q
+      .orderBy('amountSwapped', 'DESC')
+      .orderBy('totalSwaps', 'DESC')
+      .orderBy('completionRate', 'DESC')
+      .orderBy('satisfactoryRate', 'DESC');
   }
 
   /**

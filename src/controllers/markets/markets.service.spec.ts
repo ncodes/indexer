@@ -106,12 +106,8 @@ describe('MarketsService', () => {
           isLocal: contractMarket.quote.isLocal,
         },
         numDisputes: contractMarket.numDisputes.toNumber(),
-        permPut: contractMarket.permPut,
-        permSwap: contractMarket.permSwap,
-        permMediate: contractMarket.permMediate,
         commission: contractMarket.commission.toNumber(),
         numMediators: contractMarket.numMediators.toNumber(),
-        mediatorBond: contractMarket.mediatorBond.toString(),
       });
     });
   });
@@ -196,8 +192,6 @@ describe('MarketsService', () => {
           await service.extendMarket(market, false);
           expect(mockGetMarketCore).toHaveBeenCalledWith(net);
           expect(mockMarket).toHaveBeenCalledWith(market.marketId);
-          expect(market.permPut).toBeTruthy();
-          expect(market.permSwap).toBeTruthy();
           expect(market.creator).toEqual('0x12345');
           expect(market.network).toEqual(net);
           expect(market.baseLogo).toEqual('https://logo.png');

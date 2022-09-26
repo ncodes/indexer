@@ -93,19 +93,6 @@ describe('LiquidityController', () => {
   });
 
   describe('.list', () => {
-    it('should return 401 when not authorized', async () => {
-      await request(app.getHttpServer())
-        .get(`/v1/liquidities`)
-        .send({})
-        .expect(401)
-        .expect({
-          error: {
-            type: 'authentication_error',
-            message: 'authorization header is required',
-          },
-        });
-    });
-
     it('should return 400 when network is unknown', async () => {
       await request(app.getHttpServer())
         .get(`/v1/liquidities`)
@@ -153,7 +140,7 @@ describe('LiquidityController', () => {
       it(
         'should return 200 and the correct liquidity records when no' + ' provider was set',
         async () => {
-          const liq = await Liquidity.create({
+          await Liquidity.create({
             network: net,
             provider: '0xProvider',
             marketId: '0x123',
@@ -213,7 +200,7 @@ describe('LiquidityController', () => {
 
     describe('maxOpenDispute = 3', () => {
       it('should return 200 and the correct liquidity records', async () => {
-        mockGetContractParam.mockImplementation((args) => {
+        mockGetContractParam.mockImplementation(() => {
           return '3';
         });
 
@@ -249,12 +236,12 @@ describe('LiquidityController', () => {
 
     describe('limit is set', () => {
       it('should return 200 and the correct liquidity records', async () => {
-        await Liquidity.create({
+        const liq = await Liquidity.create({
           network: net,
           provider: '0xProvider',
           marketId: '0x123',
         });
-        const liq = await Liquidity.create({
+        await Liquidity.create({
           network: net,
           provider: '0xProvider2',
           marketId: '0x124',
@@ -279,12 +266,12 @@ describe('LiquidityController', () => {
 
     describe('offset is set', () => {
       it('should return 200 and the correct liquidity records', async () => {
-        const liq = await Liquidity.create({
+        await Liquidity.create({
           network: net,
           provider: '0xProvider',
           marketId: '0x123',
         });
-        await Liquidity.create({
+        const liq = await Liquidity.create({
           network: net,
           provider: '0xProvider2',
           marketId: '0x124',

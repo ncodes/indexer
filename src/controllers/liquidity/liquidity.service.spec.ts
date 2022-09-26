@@ -6,10 +6,7 @@ import { DBService } from '../../db/DBService';
 import { LiquidityService } from './liquidity.service';
 import { MarketsService } from '../markets/markets.service';
 import Liquidity from '../../models/liquidity';
-import { BigNumber } from 'ethers';
 import Market from '../../models/market';
-import Swap from '../../models/swap';
-import * as moment from 'moment';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -73,96 +70,8 @@ describe('LiquidityService', () => {
     service = module.get<LiquidityService>(LiquidityService);
   });
 
-  describe('.merge', () => {
-    it('should merge correctly', () => {
-      const source = {
-        marketId: '0x123',
-      };
-      const liquidity: any = {
-        network: net,
-        provider: '0xProvider',
-      };
-      service.merge(source as any, liquidity as any);
-      expect(liquidity.network).toEqual(liquidity.network);
-      expect(liquidity.provider).toEqual(liquidity.provider);
-      expect(liquidity.marketId).toEqual(source.marketId);
-    });
-  });
-
   describe('.extendLiquidity', () => {
     describe('when noMerge=false', () => {
-      it('should attempt to merge contract market object with db object', async () => {
-        const market = await Market.create({
-          marketId: '0x123',
-          network: net,
-          isBaseLocal: false,
-          isQuoteLocal: false,
-        });
-        const liquidity: Liquidity = new Liquidity({
-          network: net,
-          marketId: market.marketId,
-          provider: '0xProvider',
-          totalSwaps: 3,
-        });
-
-        const contractLiquidity = {
-          paused: true,
-          openOrders: BigNumber.from(1),
-        };
-        const mockGetLiquidity = jest.fn();
-        mockGetCore.mockReturnValue({ getLiquidity: mockGetLiquidity });
-        mockGetLiquidity.mockResolvedValue(contractLiquidity);
-        jest.spyOn(module.get(MarketsService), 'extendMarket').mockResolvedValue();
-
-        await Swap.create({
-          network: net,
-          marketId: market.marketId,
-          provider: '0xProvider',
-          amount: '100',
-        });
-        await Swap.create({
-          network: net,
-          marketId: market.marketId,
-          provider: '0xProvider',
-          amount: '150',
-        });
-        await Swap.create({
-          network: net,
-          marketId: market.marketId,
-          provider: '0xProvider',
-          instant: true,
-          amount: '100',
-        });
-        await Swap.create({
-          network: net,
-          marketId: market.marketId,
-          provider: '0xProvider',
-          instant: true,
-          createdAt: moment().subtract(1440, 'm').toISOString(),
-          amount: '100',
-        });
-
-        await service.extendLiquidity(liquidity, false);
-        expect(mockGetCore).toHaveBeenCalledWith(net);
-        expect(mockGetLiquidity).toHaveBeenCalledWith(liquidity.marketId, liquidity.provider);
-        expect(liquidity.network).toEqual(net);
-        expect(liquidity.marketId).toEqual('0x123');
-        expect(liquidity.provider).toEqual('0xProvider');
-        expect(liquidity.market).toBeDefined();
-        expect(liquidity.market.id).toEqual(market.id);
-        expect(liquidity.totalSwaps24h).toEqual('1');
-        expect(liquidity.volume24h).toEqual('100');
-
-        // When market base and quote asset are not all on-chain
-        await Market.updateById(market.id, {
-          isBaseLocal: false,
-          isQuoteLocal: true,
-        });
-        await service.extendLiquidity(liquidity, false);
-        expect(liquidity.totalSwaps24h).toEqual('2');
-        expect(liquidity.volume24h).toEqual('250');
-      });
-
       describe('when noMerge=true', () => {
         it('should not attempt to merge contract market object with db object', async () => {
           const market = await Market.create({

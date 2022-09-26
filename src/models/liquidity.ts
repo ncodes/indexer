@@ -207,7 +207,8 @@ export default class Liquidity extends BaseModel {
     let q = this.query(txn)
       .select(...select, raw('count(*) over() as' + ' "__queryCount"'))
       .whereNotDeleted()
-      .where({ network, paused: false });
+      .where({ network, paused: false })
+      .where('amount', '>', '0');
     if (marketId) q = q.where('marketId', 'ILIKE', marketId);
     if (provider) q = q.where('provider', 'ILIKE', provider);
     if (maxOpenDisputes) q = q.where('openDisputes', '<', maxOpenDisputes);

@@ -185,23 +185,25 @@ export default class Liquidity extends BaseModel {
   /**
    * getLiquidities finds liquidities
    * @param network The network name
-   * @param marketId The market ID (optional)
-   * @param provider Filter by provider address (optional)
-   * @param maxOpenDisputes Allow only records with lower open disputes
-   * @param limit The number of records to return (optional).
-   * @param offset The query offset (optional)
+   * @param marketId?? The market ID (optional)
+   * @param provider?? Filter by provider address (optional)
+   * @param maxOpenDisputes?? Allow only records with lower open disputes
+   * @param amount Filter by swap amount within min and max swap amount
+   * @param limit?? The number of records to return (optional).
+   * @param offset?? The query offset (optional)
    * @param select Select specific fields (optional)
-   * @param txn Optional transaction object
+   * @param txn?? Optional transaction object
    */
   static search(
     network: string,
     marketId?: string,
     provider?: string,
     maxOpenDisputes?: number,
+    amount: string = undefined,
     limit?: number,
     offset?: number,
     select = [],
-    txn?: Transaction,
+    txn?: Objection.Transaction,
   ): Promise<Liquidity[]> {
     select = this.makeSelectList(select);
     let q = this.query(txn)
@@ -212,6 +214,10 @@ export default class Liquidity extends BaseModel {
     if (marketId) q = q.where('marketId', 'ILIKE', marketId);
     if (provider) q = q.where('provider', 'ILIKE', provider);
     if (maxOpenDisputes) q = q.where('openDisputes', '<', maxOpenDisputes);
+    if (amount)
+      q = q
+        .where(raw(`cast(?? as numeric)`, 'minSwap'), '<=', amount)
+        .where(raw(`cast(?? as numeric)`, 'maxSwap'), '>=', amount);
     if (offset) q = q.offset(offset);
     if (limit) q = q.limit(limit);
     return q

@@ -114,11 +114,13 @@ describe('LiquidityController', () => {
           network: net,
           provider: '0xProvider',
           marketId: '0x123',
+          amount: '10',
         });
         await Liquidity.create({
           network: net,
           provider: '0xProvider2',
           marketId: '0x123',
+          amount: '10',
         });
 
         const mockExtendLiquidity = jest
@@ -143,11 +145,13 @@ describe('LiquidityController', () => {
           await Liquidity.create({
             network: net,
             provider: '0xProvider',
+            amount: '10',
             marketId: '0x123',
           });
           await Liquidity.create({
             network: net,
             provider: '0xProvider2',
+            amount: '10',
             marketId: '0x123',
           });
 
@@ -173,11 +177,13 @@ describe('LiquidityController', () => {
         const liq = await Liquidity.create({
           network: net,
           provider: '0xProvider',
+          amount: '10',
           marketId: '0x123',
         });
         await Liquidity.create({
           network: net,
           provider: '0xProvider2',
+          amount: '10',
           marketId: '0x124',
         });
 
@@ -208,12 +214,14 @@ describe('LiquidityController', () => {
           network: net,
           provider: '0xProvider',
           marketId: '0x123',
+          amount: '10',
           openDisputes: 2,
         });
         await Liquidity.create({
           network: net,
           provider: '0xProvider2',
           marketId: '0x124',
+          amount: '10',
           openDisputes: 3,
         });
 
@@ -234,16 +242,83 @@ describe('LiquidityController', () => {
       });
     });
 
+    describe('filter by amount', () => {
+      it('should return 200 and the correct liquidity records', async () => {
+        mockGetContractParam.mockImplementation(() => {
+          return '3';
+        });
+
+        await Liquidity.create({
+          network: net,
+          provider: '0xProvider',
+          marketId: '0x123',
+          amount: '10',
+          minSwap: '3',
+          maxSwap: '5',
+        });
+        const liq2 = await Liquidity.create({
+          network: net,
+          provider: '0xProvider2',
+          marketId: '0x124',
+          amount: '10',
+          minSwap: '2',
+          maxSwap: '6',
+        });
+
+        jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(undefined);
+
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities`)
+          .query({ net, amount: '1' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(0);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities`)
+          .query({ net, amount: '2' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(liq2.id);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities`)
+          .query({ net, amount: '3' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(2);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities`)
+          .query({ net, amount: '6' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(liq2.id);
+          });
+      });
+    });
+
     describe('limit is set', () => {
       it('should return 200 and the correct liquidity records', async () => {
         const liq = await Liquidity.create({
           network: net,
           provider: '0xProvider',
+          amount: '10',
           marketId: '0x123',
         });
         await Liquidity.create({
           network: net,
           provider: '0xProvider2',
+          amount: '10',
           marketId: '0x124',
         });
 
@@ -269,11 +344,13 @@ describe('LiquidityController', () => {
         await Liquidity.create({
           network: net,
           provider: '0xProvider',
+          amount: '10',
           marketId: '0x123',
         });
         const liq = await Liquidity.create({
           network: net,
           provider: '0xProvider2',
+          amount: '10',
           marketId: '0x124',
         });
 
@@ -299,6 +376,7 @@ describe('LiquidityController', () => {
         await Liquidity.create({
           network: net,
           provider: '0xProvider',
+          amount: '10',
           marketId: '0x123',
         });
         await request(app.getHttpServer())

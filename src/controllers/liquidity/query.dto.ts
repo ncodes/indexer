@@ -1,4 +1,4 @@
-import { IsBoolean, IsIn, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
+import { IsBoolean, IsIn, IsNotEmpty, IsNumber, IsNumberString, IsOptional } from 'class-validator';
 import { makeValidatorMsg } from '../../common/validations/validation';
 import { getNetworks } from '../../network/common';
 import { Transform } from 'class-transformer';
@@ -15,6 +15,10 @@ export class ListQueryDTO {
 
   @IsOptional()
   public provider?: string;
+
+  @IsNumberString({ no_symbols: true }, { message: makeValidatorMsg('must be numeric', 'amount') })
+  @IsOptional()
+  public amount?: string;
 
   @Transform(({ value }) => toBoolean(value))
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'noMerge') })

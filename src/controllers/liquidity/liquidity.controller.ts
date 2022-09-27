@@ -15,6 +15,7 @@ export class LiquidityController {
    * @param q The query object
    *  - [network] The network name.
    *  - [marketId] The market ID (optional)
+   *  - [amount] Limit result to liquidity where amount is between their swap amount limit
    *  - [provider] The provider address (optional)
    *  - [noMerge] Prevent merge of contract liquidity with DB liquidity object
    *  - [count] Returns the count of matching result
@@ -31,9 +32,11 @@ export class LiquidityController {
         q.marketId,
         q.provider,
         parseInt(this.cfgSrv.getContractParam(q.net, 'maxOpenDisputes')),
+        q.amount,
         q.limit || 25,
         q.offset,
         q.select,
+        undefined,
       );
       for (const liquidity of liquidities) {
         await this.liqSrv.extendLiquidity(liquidity, q.noMerge, q.select);

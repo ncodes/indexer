@@ -10,6 +10,7 @@ import * as request from 'supertest';
 import { makeSession } from '../auth/utils';
 import * as cryptoRandomString from 'crypto-random-string';
 import { UsersController } from './users.controller';
+import { getNameList } from 'country-list';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -129,6 +130,108 @@ describe('UsersController', () => {
           expect(res.body.data.id).toEqual(u.id);
           expect(res.body.data.email).toEqual('0x@email.com');
         });
+    });
+  });
+
+  describe('.updatePaymentMethod', function () {
+    it('should return 401 no access token was provided', async () => {
+      await request(app.getHttpServer())
+        .put(`/v1/users/payment-method`)
+        .send({})
+        .expect(401)
+        .expect({
+          error: {
+            type: 'authentication_error',
+            message: 'authorization header is required',
+          },
+        });
+    });
+
+    it('should return 400 method was not provided', async () => {
+      await request(app.getHttpServer())
+        .put(`/v1/users/payment-method`)
+        .set('Authorization', 'bearer ' + token)
+        .send({})
+        .expect(400)
+        .expect({
+          error: { message: 'method is required', type: 'invalid_request_error' },
+        });
+    });
+
+    it('should return 400 method provided was invalid', async () => {
+      await request(app.getHttpServer())
+        .put(`/v1/users/payment-method`)
+        .set('Authorization', 'bearer ' + token)
+        .send({ method: 'invalid' })
+        .expect(400)
+        .expect({
+          error: {
+            type: 'invalid_request_error',
+            message: 'payment method is invalid',
+          },
+        });
+    });
+
+    it('should return 200 when method provided was valid', async () => {
+      await request(app.getHttpServer())
+        .put(`/v1/users/payment-method`)
+        .set('Authorization', 'bearer ' + token)
+        .send({ method: 'bank_transfer' })
+        .expect(200)
+        .expect({ data: { ok: true } });
+      const user = await User.getById(u.id);
+      expect(user.paymentMethod).toEqual('bank_transfer');
+    });
+  });
+
+  describe('.updateCountry', function () {
+    it('should return 401 no access token was provided', async () => {
+      await request(app.getHttpServer())
+        .put(`/v1/users/country`)
+        .send({})
+        .expect(401)
+        .expect({
+          error: {
+            type: 'authentication_error',
+            message: 'authorization header is required',
+          },
+        });
+    });
+
+    it('should return 400 country was not provided', async () => {
+      await request(app.getHttpServer())
+        .put(`/v1/users/country`)
+        .set('Authorization', 'bearer ' + token)
+        .send({})
+        .expect(400)
+        .expect({
+          error: { message: 'country is required', type: 'invalid_request_error' },
+        });
+    });
+
+    it('should return 400 the country provided was invalid', async () => {
+      await request(app.getHttpServer())
+        .put(`/v1/users/country`)
+        .set('Authorization', 'bearer ' + token)
+        .send({ country: 'invalid' })
+        .expect(400)
+        .expect({
+          error: {
+            type: 'invalid_request_error',
+            message: 'country is invalid',
+          },
+        });
+    });
+
+    it('should return 200 when the country provided was valid', async () => {
+      await request(app.getHttpServer())
+        .put(`/v1/users/country`)
+        .set('Authorization', 'bearer ' + token)
+        .send({ country: 'spain' })
+        .expect(200)
+        .expect({ data: { ok: true } });
+      const user = await User.getById(u.id);
+      expect(user.country).toEqual(getNameList()['spain']);
     });
   });
 });

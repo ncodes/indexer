@@ -1,12 +1,17 @@
-import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
-import express from 'express';
-import { ErrorMessages, ok, throw401, throw404 } from '../../common/responses/responses';
+import { Body, Controller, Get, Param, Put, Req, UseGuards, ValidationPipe } from '@nestjs/common';
+import express, { Request } from 'express';
+import { ErrorMessages, ok, throw400, throw401, throw404 } from '../../common/responses/responses';
 import User from '../../models/user';
 import { MayHaveKeyGuard } from '../../guards/may_have_token.guard';
 import { MayBeAuthenticatedGuard } from '../../guards/maybe_authenticated.guard';
+import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
+import { HasKeyGuard } from '../../guards/has_token.guard';
+import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
+import { UpdateCountryDTO, UpdateMethodDTO } from './dto';
+import { isValidPaymentMethod } from '../../common/payment_methods';
+import { getNameList } from 'country-list';
+import { transaction } from 'objection';
 
-@UseGuards(MayBeAuthenticatedGuard)
-@UseGuards(MayHaveKeyGuard)
 @Controller('v1/users')
 export class UsersController {
   /**
@@ -15,6 +20,8 @@ export class UsersController {
    * @param req The request object
    * @param address The target user address
    */
+  @UseGuards(MayBeAuthenticatedGuard)
+  @UseGuards(MayHaveKeyGuard)
   @Get('/:address')
   async get(@Req() req: express.Request, @Param('address') address: string) {
     if (req.user && req.user.address.toLowerCase() !== address.toLowerCase()) {
@@ -29,5 +36,47 @@ export class UsersController {
     }
 
     return ok().data(user).build<User>();
+  }
+
+  /**
+   * Update payment method
+   * @param req - The request object
+   * @param body - The request body
+   */
+  @UseGuards(BeAuthenticatedGuard)
+  @UseGuards(HasKeyGuard)
+  @Put('/payment-method')
+  async updatePaymentMethod(
+    @Req() req: Request,
+    @Body(new ValidationPipe(CommonValidationPipeOpt))
+    body: UpdateMethodDTO,
+  ) {
+    if (!isValidPaymentMethod(body.method)) throw400('payment method is invalid');
+    await transaction(User, async (User) => {
+      await User.updateById(req.user.id, { paymentMethod: body.method });
+    });
+    return ok().data({ ok: true }).build<OKResponse>();
+  }
+
+  /**
+   * Update user country
+   * @param req - The request object
+   * @param body - The request body
+   */
+  @UseGuards(BeAuthenticatedGuard)
+  @UseGuards(HasKeyGuard)
+  @Put('/country')
+  async updateCountry(
+    @Req() req: Request,
+    @Body(new ValidationPipe(CommonValidationPipeOpt))
+    body: UpdateCountryDTO,
+  ) {
+    body.country = body.country.toLowerCase();
+    if (getNameList()[body.country] === undefined) throw400('country is invalid');
+    const code = getNameList()[body.country];
+    await transaction(User, async () => {
+      await User.updateById(req.user.id, { country: code });
+    });
+    return ok().data({ ok: true }).build<OKResponse>();
   }
 }

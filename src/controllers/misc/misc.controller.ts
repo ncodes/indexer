@@ -6,6 +6,8 @@ import NetworkService from '../../network/network.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { ConfigService } from '@nestjs/config';
 import { ShareableTokens } from '../../common/shareables_list';
+import { PaymentMethods } from '../../common/payment_methods';
+import { getCodeList, getName } from 'country-list';
 
 @Controller('v1/misc')
 export class MiscController {
@@ -84,5 +86,23 @@ export class MiscController {
   @Get('shareable-tokens')
   async getShareableTokens() {
     return ok().data(ShareableTokens).build();
+  }
+
+  /**
+   * Get payment methods
+   */
+  @Get('/payment-methods')
+  getPaymentMethods() {
+    return ok().data(PaymentMethods).build();
+  }
+
+  /**
+   * Get supported countries
+   */
+  @Get('/supported-countries')
+  getSupportedCountries() {
+    return ok()
+      .data(Object.keys(getCodeList()).map((code) => getName(code)))
+      .build();
   }
 }

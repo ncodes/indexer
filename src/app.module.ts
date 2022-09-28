@@ -25,6 +25,7 @@ import { UsersModule } from './controllers/users/users.module';
 import { ReviewsModule } from './controllers/reviews/reviews.module';
 import { AssetsModule } from './controllers/assets/assets.module';
 import { TasksModule } from './controllers/tasks/tasks.module';
+import { PaymentsModule } from './controllers/payments/payments.module';
 
 Handlebars.registerHelper('uppercase', (aString) => {
   return aString.toUpperCase();
@@ -99,6 +100,7 @@ function getProviders() {
     ReviewsModule,
     AssetsModule,
     TasksModule,
+    PaymentsModule,
   ],
   providers: getProviders(),
   controllers: [],

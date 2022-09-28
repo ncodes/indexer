@@ -15,6 +15,10 @@ export default class User extends BaseModel {
   messengerPublicKey: string;
   // The encrypted message key data
   encMsgKey: string;
+  // The user's preferred payment method
+  paymentMethod: string;
+  // The user's preferred trade country
+  country: string;
   // The user's role
   role: string;
 
@@ -37,6 +41,8 @@ export default class User extends BaseModel {
   desensitize() {
     delete this.email;
     delete this.role;
+    delete this.paymentMethod;
+    delete this.country;
     return this;
   }
 

@@ -7,6 +7,8 @@ exports.up = function (knex) {
       table.string('address');
       table.text('encMsgKey');
       table.string('messengerPublicKey');
+      table.string('paymentMethod');
+      table.string('country');
       table.string('role');
       table.timestamp('createdAt');
       table.timestamp('updatedAt');

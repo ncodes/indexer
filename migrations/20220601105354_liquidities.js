@@ -13,6 +13,8 @@ exports.up = function (knex) {
       table.string('amount');
       table.string('amountSwapped').defaultTo(0);
       table.string('price');
+      table.string('country');
+      table.string('paymentMethod');
       table.string('minSwap');
       table.string('maxSwap');
       table.string('manager');

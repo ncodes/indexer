@@ -11,6 +11,7 @@ import { UpdateCountryDTO, UpdateMethodDTO } from './dto';
 import { isValidPaymentMethod } from '../../common/payment_methods';
 import { getNameList } from 'country-list';
 import { transaction } from 'objection';
+import Liquidity from '../../models/liquidity';
 
 @Controller('v1/users')
 export class UsersController {
@@ -52,8 +53,9 @@ export class UsersController {
     body: UpdateMethodDTO,
   ) {
     if (!isValidPaymentMethod(body.method)) throw400('payment method is invalid');
-    await transaction(User, async (User) => {
+    await transaction(User, Liquidity, async (User, Liquidity) => {
       await User.updateById(req.user.id, { paymentMethod: body.method });
+      await Liquidity.updateByProvider(req.user.address, { paymentMethod: body.method });
     });
     return ok().data({ ok: true }).build<OKResponse>();
   }
@@ -74,8 +76,9 @@ export class UsersController {
     body.country = body.country.toLowerCase();
     if (getNameList()[body.country] === undefined) throw400('country is invalid');
     const code = getNameList()[body.country];
-    await transaction(User, async () => {
+    await transaction(User, Liquidity, async (User, Liquidity) => {
       await User.updateById(req.user.id, { country: code });
+      await Liquidity.updateByProvider(req.user.address, { country: code });
     });
     return ok().data({ ok: true }).build<OKResponse>();
   }

@@ -11,6 +11,7 @@ import { makeSession } from '../auth/utils';
 import * as cryptoRandomString from 'crypto-random-string';
 import { UsersController } from './users.controller';
 import { getNameList } from 'country-list';
+import Liquidity from '../../models/liquidity';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -61,7 +62,7 @@ describe('UsersController', () => {
   let u: User;
   let token: string;
   beforeEach(async () => {
-    u = await User.create({ role: Roles.User });
+    u = await User.create({ role: Roles.User, address: '0xAddress' });
     token = await makeSession(
       u,
       cryptoRandomString({ length: 10 }),
@@ -73,7 +74,7 @@ describe('UsersController', () => {
   describe('.get', () => {
     it('should return 404 when user with matching address was not found', async () => {
       await request(app.getHttpServer())
-        .get(`/v1/users/0xAddress`)
+        .get(`/v1/users/0xAddress2`)
         .send({})
         .expect(404)
         .expect({
@@ -173,6 +174,8 @@ describe('UsersController', () => {
     });
 
     it('should return 200 when method provided was valid', async () => {
+      const liq = await Liquidity.create({ provider: u.address });
+      const liq2 = await Liquidity.create({ provider: u.address });
       await request(app.getHttpServer())
         .put(`/v1/users/payment-method`)
         .set('Authorization', 'bearer ' + token)
@@ -181,6 +184,10 @@ describe('UsersController', () => {
         .expect({ data: { ok: true } });
       const user = await User.getById(u.id);
       expect(user.paymentMethod).toEqual('bank_transfer');
+      const updLiq = await Liquidity.getById(liq.id);
+      expect(updLiq.paymentMethod).toEqual('bank_transfer');
+      const updLiq2 = await Liquidity.getById(liq2.id);
+      expect(updLiq2.paymentMethod).toEqual('bank_transfer');
     });
   });
 
@@ -224,6 +231,8 @@ describe('UsersController', () => {
     });
 
     it('should return 200 when the country provided was valid', async () => {
+      const liq = await Liquidity.create({ provider: u.address });
+      const liq2 = await Liquidity.create({ provider: u.address });
       await request(app.getHttpServer())
         .put(`/v1/users/country`)
         .set('Authorization', 'bearer ' + token)
@@ -232,6 +241,10 @@ describe('UsersController', () => {
         .expect({ data: { ok: true } });
       const user = await User.getById(u.id);
       expect(user.country).toEqual(getNameList()['spain']);
+      const updLiq = await Liquidity.getById(liq.id);
+      expect(updLiq.country).toEqual('ES');
+      const updLiq2 = await Liquidity.getById(liq2.id);
+      expect(updLiq2.country).toEqual('ES');
     });
   });
 });

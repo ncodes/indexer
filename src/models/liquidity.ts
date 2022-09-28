@@ -9,6 +9,10 @@ import * as moment from 'moment';
  * Liquidity represents a liquidity model
  */
 export default class Liquidity extends BaseModel {
+  // The liquidity provider's preferred country
+  country: string = undefined;
+  // The liquidity provider's payment method
+  paymentMethod: string = undefined;
   // The network associated with this object
   network: string = undefined;
   // The provider address
@@ -432,6 +436,27 @@ export default class Liquidity extends BaseModel {
         .then((res: any) => {
           return resolve(res[0].total || '0');
         })
+        .catch(reject);
+    });
+  }
+
+  /**
+   * Update records by provider address
+   * @param provider The provider address
+   * @param udp The update to be applied
+   * @param txn Optional transaction object
+   */
+  static updateByProvider(
+    provider: string,
+    udp: Partial<Liquidity>,
+    txn?: Transaction,
+  ): Promise<number> {
+    return new Promise((resolve, reject) => {
+      this.query(txn)
+        .whereNotDeleted()
+        .where('provider', 'ilike', provider)
+        .patch(udp)
+        .then(resolve)
         .catch(reject);
     });
   }

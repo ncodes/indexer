@@ -15,6 +15,7 @@ import * as moment from 'moment';
 import { toBN } from '../common';
 import Dispute from '../../models/dispute';
 import MineTask, { MineTaskType } from '../../models/mine_task';
+import User from '../../models/user';
 
 export class CoreHandler extends Handler {
   logger = new Logger(CoreHandler.name);
@@ -686,6 +687,9 @@ export class CoreHandler extends Handler {
     // Get existing liquidity by the provider
     const liq = await Liquidity.getLiquidity(this.network, marketId, provider, undefined, txn);
 
+    // Find the provider
+    const user = await User.getByAddress(provider);
+
     // Create the liquidity on database if not existing.
     // Otherwise, update the existing liquidity.
     const market = await Market.getMarket(this.network, marketId, undefined);
@@ -704,6 +708,8 @@ export class CoreHandler extends Handler {
           minSwap: minSwap.toString(),
           maxSwap: maxSwap.toString(),
           timeToPay: timeToPay.toNumber(),
+          country: user ? user.country : undefined,
+          paymentMethod: user ? user.paymentMethod : undefined,
         },
         txn,
       );

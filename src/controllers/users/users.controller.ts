@@ -52,8 +52,10 @@ export class UsersController {
     @Body(new ValidationPipe(CommonValidationPipeOpt))
     body: UpdateMethodDTO,
   ) {
-    if (!isValidPaymentMethod(body.method)) throw400('payment method is invalid');
+    if (body.method !== 'None' && !isValidPaymentMethod(body.method))
+      throw400('payment method is invalid');
     await transaction(User, Liquidity, async (User, Liquidity) => {
+      body.method = body.method === 'None' ? null : body.method;
       await User.updateById(req.user.id, { paymentMethod: body.method });
       await Liquidity.updateByProvider(req.user.address, { paymentMethod: body.method });
     });
@@ -74,9 +76,11 @@ export class UsersController {
     body: UpdateCountryDTO,
   ) {
     body.country = body.country.toLowerCase();
-    if (getNameList()[body.country] === undefined) throw400('country is invalid');
-    const code = getNameList()[body.country];
+    if (body.country !== 'none' && getNameList()[body.country] === undefined)
+      throw400('country is invalid');
+    let code = getNameList()[body.country];
     await transaction(User, Liquidity, async (User, Liquidity) => {
+      code = body.country === 'none' ? null : code;
       await User.updateById(req.user.id, { country: code });
       await Liquidity.updateByProvider(req.user.address, { country: code });
     });

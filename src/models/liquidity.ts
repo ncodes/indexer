@@ -189,14 +189,16 @@ export default class Liquidity extends BaseModel {
   /**
    * getLiquidities finds liquidities
    * @param network The network name
-   * @param marketId?? The market ID (optional)
-   * @param provider?? Filter by provider address (optional)
-   * @param maxOpenDisputes?? Allow only records with lower open disputes
+   * @param marketId??? The market ID (optional)
+   * @param provider??? Filter by provider address (optional)
+   * @param maxOpenDisputes??? Allow only records with lower open disputes
    * @param amount Filter by swap amount within min and max swap amount
-   * @param limit?? The number of records to return (optional).
-   * @param offset?? The query offset (optional)
+   * @param country Filter by country
+   * @param paymentMethod Filter payment method
+   * @param limit??? The number of records to return (optional).
+   * @param offset??? The query offset (optional)
    * @param select Select specific fields (optional)
-   * @param txn?? Optional transaction object
+   * @param txn??? Optional transaction object
    */
   static search(
     network: string,
@@ -204,6 +206,8 @@ export default class Liquidity extends BaseModel {
     provider?: string,
     maxOpenDisputes?: number,
     amount: string = undefined,
+    country: string = undefined,
+    paymentMethod: string = undefined,
     limit?: number,
     offset?: number,
     select = [],
@@ -222,6 +226,8 @@ export default class Liquidity extends BaseModel {
       q = q
         .where(raw(`cast(?? as numeric)`, 'minSwap'), '<=', amount)
         .where(raw(`cast(?? as numeric)`, 'maxSwap'), '>=', amount);
+    if (country) q = q.where('country', 'ilike', country);
+    if (paymentMethod) q = q.where('paymentMethod', 'ilike', paymentMethod);
     if (offset) q = q.offset(offset);
     if (limit) q = q.limit(limit);
     return q

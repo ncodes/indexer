@@ -189,6 +189,25 @@ describe('UsersController', () => {
       const updLiq2 = await Liquidity.getById(liq2.id);
       expect(updLiq2.paymentMethod).toEqual('bank_transfer');
     });
+
+    describe('method=None', () => {
+      it('should return 200 and set payment method to null', async () => {
+        const liq = await Liquidity.create({ provider: u.address, paymentMethod: 'pm' });
+        const liq2 = await Liquidity.create({ provider: u.address, paymentMethod: 'pm' });
+        await request(app.getHttpServer())
+          .put(`/v1/users/payment-method`)
+          .set('Authorization', 'bearer ' + token)
+          .send({ method: 'None' })
+          .expect(200)
+          .expect({ data: { ok: true } });
+        const user = await User.getById(u.id);
+        expect(user.paymentMethod).toBeNull();
+        const updLiq = await Liquidity.getById(liq.id);
+        expect(updLiq.paymentMethod).toBeNull();
+        const updLiq2 = await Liquidity.getById(liq2.id);
+        expect(updLiq2.paymentMethod).toBeNull();
+      });
+    });
   });
 
   describe('.updateCountry', function () {
@@ -245,6 +264,25 @@ describe('UsersController', () => {
       expect(updLiq.country).toEqual('ES');
       const updLiq2 = await Liquidity.getById(liq2.id);
       expect(updLiq2.country).toEqual('ES');
+    });
+
+    describe('country=None', () => {
+      it('should return 200 and set country to null', async () => {
+        const liq = await Liquidity.create({ provider: u.address, country: 'ES' });
+        const liq2 = await Liquidity.create({ provider: u.address, country: 'ES' });
+        await request(app.getHttpServer())
+          .put(`/v1/users/country`)
+          .set('Authorization', 'bearer ' + token)
+          .send({ country: 'None' })
+          .expect(200)
+          .expect({ data: { ok: true } });
+        const user = await User.getById(u.id);
+        expect(user.country).toBeNull();
+        const updLiq = await Liquidity.getById(liq.id);
+        expect(updLiq.country).toBeNull();
+        const updLiq2 = await Liquidity.getById(liq2.id);
+        expect(updLiq2.country).toBeNull();
+      });
     });
   });
 });

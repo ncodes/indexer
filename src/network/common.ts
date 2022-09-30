@@ -6,6 +6,7 @@ export enum SupportedNetworks {
   Polygon = 'polygon',
   Optimism = 'optimism',
   Binance = 'binance',
+  Localhost = 'localhost',
 }
 
 export enum ChainIDs {

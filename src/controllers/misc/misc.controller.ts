@@ -1,5 +1,5 @@
 import { Controller, Get, Param } from '@nestjs/common';
-import { getTokenInfo, TokenList } from '../../common/token_list';
+import { findInLocalhost, getTokenInfo, TokenList } from '../../common/token_list';
 import { ok, throw400 } from '../../common/responses/responses';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import NetworkService from '../../network/network.service';
@@ -37,7 +37,14 @@ export class MiscController {
   async getTokenInfo(@Param('network') network: string, @Param('address') address: string) {
     let info: TokenInfo;
     network = network !== '-' ? network : undefined;
-    if (network) info = getTokenInfo(network, address);
+
+    // check if address exist in localhost network.
+    // If yes, return it with a mock USD price of $1
+    // Useful for testing
+    const assetInfo = findInLocalhost(address);
+    if (assetInfo) info = { network, price: 1, ...assetInfo };
+
+    if (!info && network) info = getTokenInfo(network, address);
     if (!info) info = await this.metadataSrv.getTokenInfo(network, address);
     return ok().data(info).build();
   }

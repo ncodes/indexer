@@ -140,7 +140,7 @@ export class MarketCoreHandler extends Handler {
     const base = (await baseToken.symbol()).toUpperCase();
     const quote = (await quoteToken.symbol()).toUpperCase();
     const mc = this.netSrv.getMarketCore(this.network);
-    const market = await mc.getMarket(id);
+    const market = await mc.getMarket(id, { blockTag: event.blockNumber });
     await Market.create(
       {
         marketId: id,

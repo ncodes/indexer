@@ -1,0 +1,39 @@
+{
+  "name": "Trust Wallet: Localhost",
+  "logoURI": "https://trustwallet.com/assets/images/favicon.png",
+  "timestamp": "2021-10-07T08:50:36.056Z",
+  "tokens": [
+    {
+      "asset": "",
+      "type": "LOCALHOST",
+      "address": "0x4A679253410272dd5232B3Ff7cF5dbB88f295319",
+      "name": "Wrapped Ether",
+      "symbol": "WETH",
+      "decimals": 18,
+      "logoURI": "https://assets-cdn.trustwallet.com/blockchains/polygon/assets/0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619/logo.png"
+    },
+    {
+      "asset": "",
+      "type": "LOCALHOST",
+      "address": "0x7a2088a1bFc9d81c55368AE168C2C02570cB814F",
+      "name": "UNISWAP",
+      "symbol": "UNI",
+      "decimals": 18,
+      "logoURI": "https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984/logo.png"
+    },
+    {
+      "asset": "",
+      "type": "LOCALHOST",
+      "address": "0x09635F643e140090A9A8Dcd712eD6285858ceBef",
+      "name": "NAIRA",
+      "symbol": "NGN",
+      "decimals": 18,
+      "logoURI": "https://storage.googleapis.com/joint-images/naira.svg"
+    }
+  ],
+  "version": {
+    "major": 6,
+    "minor": 0,
+    "patch": 0
+  }
+}

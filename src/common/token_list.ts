@@ -2,6 +2,7 @@ import * as ethereum from './tokenlist/ethereum.json';
 import * as polygon from './tokenlist/polygon.json';
 import * as binance from './tokenlist/binance.json';
 import * as optimism from './tokenlist/optimism.json';
+import * as localhost from './tokenlist/localhost.json';
 import * as _ from 'lodash';
 
 /**
@@ -16,6 +17,7 @@ export const TokenList = {
   polygon,
   binance,
   optimism,
+  localhost,
 };
 
 /**
@@ -37,4 +39,14 @@ export function getTokenLogo(network: string, address: string) {
 export function getTokenInfo(network: string, address: string) {
   const netList = TokenList[network];
   return _.find(netList.tokens, (x) => x.address === address);
+}
+
+/**
+ * Find a given asset in the localhost token list
+ * @param address The target address
+ */
+export function findInLocalhost(address: string) {
+  return localhost.tokens.find((token) => {
+    return token.address.toLowerCase() === address.toLowerCase();
+  });
 }

@@ -93,6 +93,16 @@ export default class Meta extends BaseModel {
   }
 
   /**
+   * Get stable assets
+   * @param network The target network
+   */
+  static async getStableAssets(network: string): Promise<string[]> {
+    const meta = await this.get(this.makeStableAssetsKey(network));
+    if (!meta) return Promise.resolve([]);
+    return Promise.resolve(Object.keys(JSON.parse(meta.value)));
+  }
+
+  /**
    * Make stable assets key
    * @param network The name of the network
    */

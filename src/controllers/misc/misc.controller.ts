@@ -97,6 +97,15 @@ export class MiscController {
   }
 
   /**
+   * Get all stable tokens
+   */
+  @Get('/:network/stable-tokens')
+  async getStableTokens(@Param('network') network: string) {
+    const addresses = await Meta.getStableAssets(network);
+    return ok().data(addresses).build();
+  }
+
+  /**
    * Get payment methods
    */
   @Get('/payment-methods')

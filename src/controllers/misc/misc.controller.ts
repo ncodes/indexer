@@ -5,9 +5,9 @@ import { MetadataService } from '../../services/metadata/metadata.service';
 import NetworkService from '../../network/network.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { ConfigService } from '@nestjs/config';
-import { ShareableTokens } from '../../common/shareables_list';
 import { PaymentMethods } from '../../common/payment_methods';
 import { getCodeList, getName } from 'country-list';
+import Meta from '../../models/meta';
 
 @Controller('v1/misc')
 export class MiscController {
@@ -90,9 +90,10 @@ export class MiscController {
   /**
    * Get all shareable tokens
    */
-  @Get('shareable-tokens')
-  async getShareableTokens() {
-    return ok().data(ShareableTokens).build();
+  @Get('/:network/shareable-tokens')
+  async getShareableTokens(@Param('network') network: string) {
+    const addresses = await Meta.getShareableAssets(network);
+    return ok().data(addresses).build();
   }
 
   /**

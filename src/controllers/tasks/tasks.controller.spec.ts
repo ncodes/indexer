@@ -9,7 +9,7 @@ import { TasksController } from './tasks.controller';
 import { SupportedNetworks } from '../../network/common';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 import * as moment from 'moment';
-import { ShareableTokens } from '../../common/shareables_list';
+import Meta from '../../models/meta';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -116,18 +116,22 @@ describe('LiquidityController', () => {
         });
     });
 
-    describe('when there are not tasks for FeeTransfer type', () => {
+    describe('when there are no tasks for FeeTransfer type', () => {
       it('should return 200 and shareable assets', async () => {
+        await Meta.update(
+          Meta.makeSharableAssetsKey(net),
+          JSON.stringify({ '0xToken': 1, '0xToken2': 1 }),
+        );
         await request(app.getHttpServer())
           .get(`/v1/tasks`)
           .query({ net, type: MineTaskType.FeeTransfer })
           .expect(200)
           .expect((res) => {
-            expect(res.body.data).toHaveLength(ShareableTokens.length);
+            expect(res.body.data).toHaveLength(2);
             expect(res.body.data[0].network).toEqual(net);
-            expect(res.body.data[0].transferredToken).toEqual(ShareableTokens[0].address);
+            expect(res.body.data[0].transferredToken).toEqual('0xToken');
             expect(res.body.data[1].network).toEqual(net);
-            expect(res.body.data[1].transferredToken).toEqual(ShareableTokens[1].address);
+            expect(res.body.data[1].transferredToken).toEqual('0xToken2');
           });
       });
     });

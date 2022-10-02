@@ -3,8 +3,8 @@ import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common
 import { ListQueryDTO } from './query.dto';
 import { ok } from '../../common/responses/responses';
 import MineTask, { MineTaskType } from '../../models/mine_task';
-import { ShareableTokens } from '../../common/shareables_list';
 import * as moment from 'moment';
+import Meta from '../../models/meta';
 
 @Controller('v1/tasks')
 export class TasksController {
@@ -27,16 +27,19 @@ export class TasksController {
       // shareable asset. This type of task can be executed immediately
       // for assets newly registered as shareable
       if (q.type === MineTaskType.FeeTransfer && !tasks.length) {
-        ShareableTokens.forEach((token) => {
-          tasks.push(
-            new MineTask({
-              type: MineTaskType.FeeTransfer,
-              network: q.net,
-              transferredToken: token.address,
-              mineAt: moment().toISOString(),
-            }),
-          );
-        });
+        const sharables = await Meta.getShareableAssets(q.net);
+        if (sharables && sharables.length) {
+          sharables.forEach((address) => {
+            tasks.push(
+              new MineTask({
+                type: MineTaskType.FeeTransfer,
+                network: q.net,
+                transferredToken: address,
+                mineAt: moment().toISOString(),
+              }),
+            );
+          });
+        }
       }
 
       return ok().data(tasks).build();

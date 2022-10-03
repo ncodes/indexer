@@ -22,7 +22,7 @@ import { NotifierService } from '../jobs/mailer/NotifierService';
 import Swap from '../models/swap';
 import { Transaction } from 'objection';
 import Market from '../models/market';
-import Meta from '../models/meta';
+import Meta, { FeeName } from '../models/meta';
 import { isTestMode } from '../common/common';
 import { Signer } from '@ethersproject/abstract-signer';
 import { Provider } from '@ethersproject/abstract-provider';
@@ -211,11 +211,11 @@ export default class NetworkService {
     const commission = chargeable.mul(market.commission).div(10000);
 
     // Determine what protocol fee base point
-    let feeName = 'p2pSwapFee';
+    let feeName: FeeName = FeeName.P2PSwapFee;
     if (swap.instant) {
       const baseStable = await Meta.isStableAsset(swap.network, market.baseAddress, txn);
       const quoteStable = await Meta.isStableAsset(swap.network, market.quoteAddress, txn);
-      feeName = baseStable && quoteStable ? 'stableSwapFee' : 'instantSwapFee';
+      feeName = baseStable && quoteStable ? FeeName.StableSwapFee : FeeName.InstantSwapFee;
     }
 
     // Calculate protocol and market fees

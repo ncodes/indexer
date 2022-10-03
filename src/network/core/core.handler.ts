@@ -7,7 +7,7 @@ import { Handler } from '../handler';
 import { ToDec } from '../../common/common';
 import { NotifierService, NotifyType } from '../../jobs/mailer/NotifierService';
 import Swap from '../../models/swap';
-import Meta from '../../models/meta';
+import Meta, { FeeName } from '../../models/meta';
 import NetworkService from '../network.service';
 import Market from '../../models/market';
 import { commify, formatUnits } from 'ethers/lib/utils';
@@ -585,17 +585,17 @@ export class CoreHandler extends Handler {
     txn?: Transaction,
   ) {
     await Meta.update(
-      Meta.makeProtocolFeeKey(this.network, 'instantSwapFee'),
+      Meta.makeProtocolFeeKey(this.network, FeeName.InstantSwapFee),
       instantSwapFee.toString(),
       txn,
     );
     await Meta.update(
-      Meta.makeProtocolFeeKey(this.network, 'p2pSwapFee'),
+      Meta.makeProtocolFeeKey(this.network, FeeName.P2PSwapFee),
       p2pSwapFee.toString(),
       txn,
     );
     await Meta.update(
-      Meta.makeProtocolFeeKey(this.network, 'stableSwapFee'),
+      Meta.makeProtocolFeeKey(this.network, FeeName.StableSwapFee),
       stableSwapFee.toString(),
       txn,
     );

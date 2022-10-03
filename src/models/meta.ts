@@ -1,6 +1,12 @@
 import { BaseModel } from './base';
 import { Transaction } from 'objection';
 
+export enum FeeName {
+  InstantSwapFee = 'instantSwapFee',
+  P2PSwapFee = 'p2pSwapFee',
+  StableSwapFee = 'stableSwapFee',
+}
+
 /**
  * Meta represents key and value pair.
  */
@@ -124,7 +130,7 @@ export default class Meta extends BaseModel {
    * @param feeName The name of the fee type
    * @param txn The transaction object
    */
-  static getProtocolFee(network: string, feeName, txn?: Transaction): Promise<Meta> {
+  static getProtocolFee(network: string, feeName: FeeName, txn?: Transaction): Promise<Meta> {
     const key = this.makeProtocolFeeKey(network, feeName);
     return this.query(txn).where('key', key).first();
   }

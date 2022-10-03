@@ -7,7 +7,7 @@ import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { ConfigService } from '@nestjs/config';
 import { PaymentMethods } from '../../common/payment_methods';
 import { getCodeList, getName } from 'country-list';
-import Meta from '../../models/meta';
+import Meta, { FeeName } from '../../models/meta';
 
 @Controller('v1/misc')
 export class MiscController {
@@ -89,20 +89,50 @@ export class MiscController {
 
   /**
    * Get all shareable tokens
+   * @param network - The network name
    */
   @Get('/:network/shareable-tokens')
   async getShareableTokens(@Param('network') network: string) {
     const addresses = await Meta.getShareableAssets(network);
-    return ok().data(addresses).build();
+    return ok()
+      .data(addresses.map((addr) => addr.toLowerCase()))
+      .build();
   }
 
   /**
    * Get all stable tokens
+   * @param network - The network name
    */
   @Get('/:network/stable-tokens')
   async getStableTokens(@Param('network') network: string) {
     const addresses = await Meta.getStableAssets(network);
-    return ok().data(addresses).build();
+    return ok()
+      .data(addresses.map((addr) => addr.toLowerCase()))
+      .build();
+  }
+
+  /**
+   * Get all stable tokens
+   * @param network - The network name
+   */
+  @Get('/:network/protocol-fees')
+  async getProtocolFees(@Param('network') network: string) {
+    const res: { [key in FeeName]: number } = {
+      [FeeName.InstantSwapFee]: 0,
+      [FeeName.P2PSwapFee]: 0,
+      [FeeName.StableSwapFee]: 0,
+    };
+
+    const p2p = await Meta.getProtocolFee(network, FeeName.P2PSwapFee);
+    if (p2p) res[FeeName.P2PSwapFee] = parseFloat(p2p.value);
+
+    const instant = await Meta.getProtocolFee(network, FeeName.InstantSwapFee);
+    if (instant) res[FeeName.InstantSwapFee] = parseFloat(instant.value);
+
+    const stable = await Meta.getProtocolFee(network, FeeName.StableSwapFee);
+    if (stable) res[FeeName.StableSwapFee] = parseFloat(stable.value);
+
+    return ok().data(res).build();
   }
 
   /**

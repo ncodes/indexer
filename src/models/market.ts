@@ -261,7 +261,7 @@ export default class Market extends BaseModel {
     if (onlyPermMediate) query = query.where('permMediate', true);
     if (onlyInstant !== undefined) {
       if (onlyInstant) {
-        query = query.where('isBaseLocal', true).andWhere('isQuoteLocal', true);
+        query = query.where('isBaseLocal', false).andWhere('isQuoteLocal', false);
       } else {
         query = query.where((q) => {
           q.orWhere('isBaseLocal', true)

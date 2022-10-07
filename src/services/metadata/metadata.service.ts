@@ -39,8 +39,8 @@ export class MetadataService {
     const info = await this.source.getTokenInfo(symbolOrNetwork, contract);
     if (!info) return Promise.reject(new Error('token not found'));
     const { network } = info;
-    if (!isValidNetwork(network)) return Promise.reject('network not' + ' supported');
-    if (isProdMode() && !info.decimals)
+    if (network && !isValidNetwork(network)) return Promise.reject('network not' + ' supported');
+    if (info.isContract && network && isProdMode() && !info.decimals)
       info.decimals = await this.netSrv.getTokenDecimals(
         this.netSrv.getProvider(network),
         contract,

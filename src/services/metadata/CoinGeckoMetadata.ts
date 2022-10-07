@@ -1,18 +1,7 @@
 // tslint:disable-next-line:max-classes-per-file
 // @ts-ignore
-import { getChainID } from '../../network/common';
+import { CoinGeckoConfig, getChainID } from '../../network/common';
 import axios from 'axios';
-
-const networkMap = {
-  ethereum: 'ethereum',
-  binance: 'binance-smart-chain',
-  optimism: 'optimistic-ethereum',
-  polygon: 'polygon-pos',
-};
-
-const symbolMap = {
-  ETH: 'ethereum',
-};
 
 export class CoinGeckoMetadata {
   private url = 'https://api.coingecko.com/api/v3';
@@ -34,29 +23,30 @@ export class CoinGeckoMetadata {
   /**
    * Get logo url of contract
    * @param network The asset network
-   * @param contract The asset contract
+   * @param contract The asset contract address or symbol
    * @returns
    */
   async getTokenInfo(network: string, contract: string): Promise<TokenInfo> {
     try {
-      let path = `coins/${networkMap[network]}/contract/${contract}`;
-      const isSymbol = network.substr(0, 2).toLowerCase() !== '0x';
+      let path = `coins/${CoinGeckoConfig.networkMap[network]}/contract/${contract}`;
+      const isSymbol = contract.substr(0, 2).toLowerCase() !== '0x';
       if (isSymbol) {
-        const id = symbolMap[contract.toUpperCase()];
+        const id = CoinGeckoConfig.symbolMap[contract.toUpperCase()];
         if (!id) return Promise.reject(new Error('unsupported symbol'));
-        path = `coins/${symbolMap[contract.toUpperCase()]}`;
+        path = `coins/${CoinGeckoConfig.symbolMap[contract.toUpperCase()]}`;
       }
       const resp = await this.get(path, {});
       const data: CoinGecko.Asset = resp.data;
       return Promise.resolve({
         name: data.name,
-        chainId: getChainID(network),
+        chainId: network ? getChainID(network) : '',
         network,
         address: contract,
         type: 'ERC20',
-        decimals: data.detail_platforms[!isSymbol ? networkMap[network] : ''].decimal_place,
+        decimals: data.detail_platforms[data.asset_platform_id || ''].decimal_place,
         logoURI: data.image.large,
         price: data.market_data.current_price.usd,
+        isContract: !isSymbol,
       });
     } catch (e) {
       return Promise.reject(e);

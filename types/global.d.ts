@@ -1691,6 +1691,7 @@ declare global {
     name: string;
     decimals: number;
     price?: number;
+    isContract?: boolean;
   }
 
   interface SignatureInfo {

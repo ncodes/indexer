@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { PaymentMethods } from '../../common/payment_methods';
 import { getCodeList, getName } from 'country-list';
 import Meta, { FeeName } from '../../models/meta';
+import { isValidNetwork } from '../../network/common';
 
 @Controller('v1/misc')
 export class MiscController {
@@ -37,6 +38,7 @@ export class MiscController {
   async getTokenInfo(@Param('network') network: string, @Param('address') address: string) {
     let info: TokenInfo;
     network = network !== '-' ? network : undefined;
+    if (network && !isValidNetwork(network)) throw400('network not supported');
 
     // check if address exist in localhost network.
     // If yes, return it with a mock USD price of $1

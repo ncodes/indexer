@@ -16,6 +16,21 @@ export enum ChainIDs {
   Binance = 56,
 }
 
+// Configuration for CoinMarketCap API
+export const CoinGeckoConfig = {
+  networkMap: {
+    ethereum: 'ethereum',
+    binance: 'binance-smart-chain',
+    optimism: 'optimistic-ethereum',
+    polygon: 'polygon-pos',
+  },
+  symbolMap: {
+    ETH: 'ethereum',
+    BNB: 'binancecoin',
+    MATIC: 'matic-network',
+  },
+};
+
 /**
  * Get supported networks
  * @returns

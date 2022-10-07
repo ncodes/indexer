@@ -29,6 +29,15 @@
       "symbol": "NGN",
       "decimals": 18,
       "logoURI": "https://storage.googleapis.com/joint-images/naira.svg"
+    },
+    {
+      "asset": "",
+      "type": "LOCALHOST",
+      "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "name": "JOINT",
+      "symbol": "P2P",
+      "decimals": 18,
+      "logoURI": "https://storage.googleapis.com/joint-images/p2p.svg"
     }
   ],
   "version": {

@@ -3,15 +3,20 @@
 import { getChainID } from '../../network/common';
 import axios from 'axios';
 
+const networkMap = {
+  ethereum: 'ethereum',
+  binance: 'binance-smart-chain',
+  optimism: 'optimistic-ethereum',
+  polygon: 'polygon-pos',
+};
+
+const symbolMap = {
+  ETH: 'ethereum',
+};
+
 export class CoinGeckoMetadata {
   private url = 'https://api.coingecko.com/api/v3';
   private proUrl = 'https://pro-api.coingecko.com/api/v3';
-  networkMap = {
-    ethereum: 'ethereum',
-    binance: 'binance-smart-chain',
-    optimism: 'optimistic-ethereum',
-    polygon: 'polygon-pos',
-  };
 
   async get(path: string, params: any = {}) {
     if (process.env.COINGECKO_KEY) this.url = this.proUrl;
@@ -34,7 +39,14 @@ export class CoinGeckoMetadata {
    */
   async getTokenInfo(network: string, contract: string): Promise<TokenInfo> {
     try {
-      const resp = await this.get(`coins/${this.networkMap[network]}/contract/${contract}`, {});
+      let path = `coins/${networkMap[network]}/contract/${contract}`;
+      const isSymbol = network.substr(0, 2).toLowerCase() !== '0x';
+      if (isSymbol) {
+        const id = symbolMap[contract.toUpperCase()];
+        if (!id) return Promise.reject(new Error('unsupported symbol'));
+        path = `coins/${symbolMap[contract.toUpperCase()]}`;
+      }
+      const resp = await this.get(path, {});
       const data: CoinGecko.Asset = resp.data;
       return Promise.resolve({
         name: data.name,
@@ -42,7 +54,7 @@ export class CoinGeckoMetadata {
         network,
         address: contract,
         type: 'ERC20',
-        decimals: data.detail_platforms[this.networkMap[network]].decimal_place,
+        decimals: data.detail_platforms[!isSymbol ? networkMap[network] : ''].decimal_place,
         logoURI: data.image.large,
         price: data.market_data.current_price.usd,
       });

@@ -12,9 +12,13 @@ export class CoinMarketCapMetadata {
   }
 
   async getTokenInfo(network: string, contract: string): Promise<TokenInfo> {
-    const url = `https://pro-api.coinmarketcap.com/v2/cryptocurrency/info?CMC_PRO_API_KEY=${this.key}&address=${contract}`;
+    let url = `https://pro-api.coinmarketcap.com/v2/cryptocurrency/info?CMC_PRO_API_KEY=${this.key}&address=${contract}`;
+    const isSymbol = network.substr(0, 2).toLowerCase() !== '0x';
+    if (isSymbol) {
+      url = `https://pro-api.coinmarketcap.com/v2/cryptocurrency/info?CMC_PRO_API_KEY=${this.key}&symbol=${contract}`;
+    }
     const resp = await axios.get(url);
-    const info = _.values(resp.data.data)[0];
+    const info = _.values(!isSymbol ? resp.data.data : resp.data.data[contract.toUpperCase()])[0];
     const price = await this.getPrice(info.id);
     return Promise.resolve({
       network: network ? network : info.platform.slug,

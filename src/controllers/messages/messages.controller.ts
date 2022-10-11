@@ -1,15 +1,15 @@
 import {
   Body,
   Controller,
+  Get,
+  HttpException,
+  Param,
   Post,
+  Put,
+  Query,
   Req,
   UseGuards,
   ValidationPipe,
-  Query,
-  Get,
-  Put,
-  Param,
-  HttpException,
 } from '@nestjs/common';
 import { MessagesService } from './messages.service';
 import { BeAuthenticatedGuard, notPermitted } from '../../guards/be_authenticated.guard';
@@ -20,7 +20,7 @@ import Swap from '../../models/swap';
 import { ErrorTypes, ok, throw400, throw401, throw404 } from '../../common/responses/responses';
 import { Request } from 'express';
 import * as _ from 'lodash';
-import Message from '../../models/message';
+import Message, { isPaymentMethodType, MessageType } from '../../models/message';
 import { transaction } from 'objection';
 import { WebSocketService } from './webSocketService';
 import SwapsService from '../swaps/swaps.service';
@@ -68,6 +68,12 @@ export class MessagesController {
         ErrorTypes.Auth,
         `messages`,
       );
+
+    // For payment method type, ensure acknowledgement has not been received
+    if (isPaymentMethodType(body.type)) {
+      const ackMsg = await Message.getBySwapIdAndType(swap.id, MessageType.PaymentMethodAck);
+      if (ackMsg) throw400('payment method already acknowledged');
+    }
 
     // Create message
     let i = 0;

@@ -11,6 +11,15 @@ export enum MessageType {
   PaymentMethodAck = 'pm_ack',
 }
 
+export function isPaymentMethodType(type: MessageType) {
+  return [
+    MessageType.PaymentMethodAck,
+    MessageType.PaymentMethodPropose,
+    MessageType.PaymentMethodReject,
+    MessageType.PaymentMethodAccept,
+  ].includes(type);
+}
+
 /**
  * Message represents an encrypted message
  */
@@ -126,6 +135,16 @@ export default class Message extends BaseModel {
     let q = this.query(txn).where({ swapId: id });
     q = q.where('type', 'ilike', 'pm_%');
     return q.whereNotDeleted().orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
+  }
+
+  /**
+   * Get message by swap ID and type
+   * @param id The swap ID
+   * @param type The target type
+   * @param txn Optional transaction object
+   */
+  static getBySwapIdAndType(id: string, type: MessageType, txn?: Transaction): Promise<Message> {
+    return this.query(txn).where({ swapId: id, type }).first();
   }
 
   /**

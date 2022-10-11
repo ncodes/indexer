@@ -288,6 +288,35 @@ describe('MessagesController', () => {
         });
     });
 
+    it(`should return 400 when message is a payment method acknowledgement when there is an existing one for the swap`, async () => {
+      await User.updateById(u.id, { address: '0xProvider' });
+      const recipient = await User.create({
+        address: '0xTaker',
+        messengerPublicKey: 'abc',
+      });
+      const swap = await Swap.create({
+        orderId: 1,
+        provider: '0xProvider',
+        taker: '0xTaker',
+      });
+      await Message.create({ swapId: swap.id, type: MessageType.PaymentMethodAck });
+      await request(app.getHttpServer())
+        .post(`/v1/messages`)
+        .set('Authorization', 'bearer ' + token)
+        .send({
+          type: MessageType.PaymentMethodAck,
+          orderId: swap.orderId,
+          messages: [{ message: 'abc', recipient: 'abc' }],
+        })
+        .expect(400)
+        .expect({
+          error: {
+            type: 'invalid_request_error',
+            message: 'payment method already acknowledged',
+          },
+        });
+    });
+
     it(`should return 201 on success`, async () => {
       await User.updateById(u.id, { address: '0xProvider' });
       const recipient = await User.create({

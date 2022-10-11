@@ -11,8 +11,7 @@ export default class SwapsService {
    * Get a list of user IDs allowed to create messages for a given swap.
    * Only provider, taker and current dispute draftees are allowed.
    * @param swap The swap object
-   * @param addAppealedDisputeDraftees If true, appealed dispute draftees
-   * are added as participants.
+   * @param addAppealedDisputeDraftees If true, appealed dispute draftees are added as participants.
    */
   async getParticipants(swap: Swap, addAppealedDisputeDraftees = false): Promise<string[]> {
     const { provider, taker, network, marketId, orderId } = swap;
@@ -40,5 +39,16 @@ export default class SwapsService {
       if (user) participantsId.push(user.id);
     }
     return Promise.resolve(_.uniq(participantsId));
+  }
+
+  /**
+   * Check whether a user ID is a swap participant
+   * @param swap The swap object
+   * @param userId The user ID
+   * @param addAppealedDisputeDraftees If true, appealed dispute draftees are added as participants.
+   */
+  async isSwapParticipant(swap: Swap, userId: string, addAppealedDisputeDraftees = true) {
+    const participants = await this.getParticipants(swap, addAppealedDisputeDraftees);
+    return Promise.resolve(participants.includes(userId));
   }
 }

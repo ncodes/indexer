@@ -15,7 +15,7 @@ import { MessagesService } from './messages.service';
 import { BeAuthenticatedGuard, notPermitted } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
-import { CreateDTO, ListQueryDTO } from './dto';
+import { CreateDTO, ListPMQueryDTO, ListQueryDTO } from './dto';
 import Swap from '../../models/swap';
 import { ErrorTypes, ok, throw400, throw401, throw404 } from '../../common/responses/responses';
 import { Request } from 'express';
@@ -50,9 +50,9 @@ export class MessagesController {
     if (resp instanceof HttpException) throw resp;
 
     // Get swap object. Ensure it is not an instant swap
-    const swap = await Swap.getById(body.swapId);
-    if (!swap) throw404('swap order not found', ErrorTypes.InvalidRequest, 'swapId');
-    if (swap.instant) throw400('instant swap not supported', ErrorTypes.InvalidRequest, 'swapId');
+    const swap = await Swap.getByOrderId(body.orderId);
+    if (!swap) throw404('swap order not found', ErrorTypes.InvalidRequest, 'orderId');
+    if (swap.instant) throw400('instant swap not supported', ErrorTypes.InvalidRequest, 'orderId');
 
     // Get participant's list and ensure the authenticated user is a participant
     const participants = await this.swapSrv.getParticipants(swap);
@@ -132,8 +132,7 @@ export class MessagesController {
     if (!swap) throw404('swap order not found', ErrorTypes.InvalidRequest);
 
     // Make sure authenticated user is a participant
-    const participants = await this.swapSrv.getParticipants(swap, true);
-    if (!participants.includes(req.user.id)) throw notPermitted.build();
+    if (!(await this.swapSrv.isSwapParticipant(swap, req.user.id))) throw notPermitted.build();
 
     return ok().data(msg).build<Message>();
   }
@@ -145,14 +144,10 @@ export class MessagesController {
    */
   @Get()
   async list(@Req() req: Request, @Query(new ValidationPipe(ValPipeOpt)) body: ListQueryDTO) {
-    const swap = await Swap.getById(body.swapId);
-    if (!swap) throw404('swap order not found', ErrorTypes.InvalidRequest, 'swapId');
-
-    // Make sure authenticated user is a participant
-    const participants = await this.swapSrv.getParticipants(swap, true);
-    if (!participants.includes(req.user.id)) throw notPermitted.build();
-
-    // Get all messages
+    const swap = await Swap.getByOrderId(body.orderId);
+    if (!swap) throw404('swap order not found', ErrorTypes.InvalidRequest, 'orderId');
+    if (swap.instant) return ok().data([]).build();
+    if (!(await this.swapSrv.isSwapParticipant(swap, req.user.id))) throw notPermitted.build();
     return ok()
       .data((await Message.getBySwapId(swap.id, body.limit, body.before)).reverse())
       .build<Message[]>();
@@ -176,5 +171,24 @@ export class MessagesController {
     await MessageReadStatus.markRead(msg.id, req.user.id);
 
     return ok().data({ ok: true }).build<OKResponse>();
+  }
+
+  /**
+   * Check payment method messages
+   * @param req The request object
+   * @param body The query parameters
+   */
+  @Get(':orderId/pm-messages')
+  async getPaymentMethodMessages(
+    @Req() req: Request,
+    @Param(new ValidationPipe(ValPipeOpt)) body: ListPMQueryDTO,
+  ) {
+    const swap = await Swap.getByOrderId(body.orderId);
+    if (!swap) throw404('swap order not found', ErrorTypes.InvalidRequest, 'swapId');
+    if (!(await this.swapSrv.isSwapParticipant(swap, req.user.id, true)))
+      throw notPermitted.build();
+    return ok()
+      .data(await Message.getPaymentMessagesBySwapId(swap.id))
+      .build<Message[]>();
   }
 }

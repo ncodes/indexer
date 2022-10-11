@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { build400, ErrorTypes, throw400, throw404 } from '../../common/responses/responses';
+import { build400, ErrorTypes, throw404 } from '../../common/responses/responses';
 import { isHexadecimal } from 'class-validator';
 import User from '../../models/user';
 
 @Injectable()
 export class MessagesService {
+  constructor() {}
+
   /**
    * Validate a list of encrypted messages
    * @param messages The list of messages

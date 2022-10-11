@@ -119,7 +119,7 @@ describe('MessagesController', () => {
         });
     });
 
-    it('should return 400 when swap ID was not provided', async () => {
+    it('should return 400 when order ID was not provided', async () => {
       await request(app.getHttpServer())
         .post(`/v1/messages`)
         .set('Authorization', 'bearer ' + token)
@@ -127,8 +127,23 @@ describe('MessagesController', () => {
         .expect(400)
         .expect({
           error: {
-            message: 'swap ID is required',
-            param: 'swapId',
+            message: 'order ID is required',
+            param: 'orderId',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 400 when order id is not a number', async () => {
+      await request(app.getHttpServer())
+        .post(`/v1/messages`)
+        .set('Authorization', 'bearer ' + token)
+        .send({ type: MessageType.Chat, orderId: 'a' })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'must be a number',
+            param: 'orderId',
             type: 'invalid_request_error',
           },
         });
@@ -138,7 +153,7 @@ describe('MessagesController', () => {
       await request(app.getHttpServer())
         .post(`/v1/messages`)
         .set('Authorization', 'bearer ' + token)
-        .send({ type: MessageType.Chat, swapId: 'swap_123' })
+        .send({ type: MessageType.Chat, orderId: 1 })
         .expect(400)
         .expect({
           error: {
@@ -153,7 +168,7 @@ describe('MessagesController', () => {
       await request(app.getHttpServer())
         .post(`/v1/messages`)
         .set('Authorization', 'bearer ' + token)
-        .send({ type: MessageType.Chat, swapId: 'swap_123', messages: [{}] })
+        .send({ type: MessageType.Chat, orderId: 1, messages: [{}] })
         .expect(400)
         .expect({
           error: {
@@ -168,7 +183,7 @@ describe('MessagesController', () => {
       await request(app.getHttpServer())
         .post(`/v1/messages`)
         .set('Authorization', 'bearer ' + token)
-        .send({ type: MessageType.Chat, swapId: 'swap_123', messages: [{ message: 'abc' }] })
+        .send({ type: MessageType.Chat, orderId: 1, messages: [{ message: 'abc' }] })
         .expect(400)
         .expect({
           error: {
@@ -185,13 +200,13 @@ describe('MessagesController', () => {
         .set('Authorization', 'bearer ' + token)
         .send({
           type: MessageType.Chat,
-          swapId: 'swap_123',
+          orderId: 1,
           messages: [{ message: 'abc', recipient: 'abc' }],
         })
         .expect(404)
         .expect({
           error: {
-            param: 'swapId',
+            param: 'orderId',
             type: 'invalid_request_error',
             message: 'swap order not found',
           },
@@ -199,19 +214,19 @@ describe('MessagesController', () => {
     });
 
     it(`should return 400 when swap was an instant swap`, async () => {
-      const swap = await Swap.create({ instant: true });
+      const swap = await Swap.create({ orderId: 1, instant: true });
       await request(app.getHttpServer())
         .post(`/v1/messages`)
         .set('Authorization', 'bearer ' + token)
         .send({
           type: MessageType.Chat,
-          swapId: swap.id,
+          orderId: swap.orderId,
           messages: [{ message: 'abc', recipient: 'abc' }],
         })
         .expect(400)
         .expect({
           error: {
-            param: 'swapId',
+            param: 'orderId',
             type: 'invalid_request_error',
             message: 'instant swap not supported',
           },
@@ -222,6 +237,7 @@ describe('MessagesController', () => {
       await User.updateById(u.id, { address: '0xUnknown' });
       await User.create({ address: '0xTaker', messengerPublicKey: 'abc' });
       const swap = await Swap.create({
+        orderId: 1,
         provider: '0xProvider',
         taker: '0xTaker',
       });
@@ -230,7 +246,7 @@ describe('MessagesController', () => {
         .set('Authorization', 'bearer ' + token)
         .send({
           type: MessageType.Chat,
-          swapId: swap.id,
+          orderId: swap.orderId,
           messages: [{ message: 'abc', recipient: 'abc' }],
         })
         .expect(401)
@@ -250,6 +266,7 @@ describe('MessagesController', () => {
         messengerPublicKey: 'abc',
       });
       const swap = await Swap.create({
+        orderId: 1,
         provider: '0xProvider',
         taker: '0xTaker',
       });
@@ -258,7 +275,7 @@ describe('MessagesController', () => {
         .set('Authorization', 'bearer ' + token)
         .send({
           type: MessageType.Chat,
-          swapId: swap.id,
+          orderId: swap.orderId,
           messages: [{ message: 'abc', recipient: 'abc' }],
         })
         .expect(401)
@@ -278,6 +295,7 @@ describe('MessagesController', () => {
         messengerPublicKey: 'abc',
       });
       const swap = await Swap.create({
+        orderId: 1,
         provider: '0xProvider',
         taker: '0xTaker',
       });
@@ -288,7 +306,7 @@ describe('MessagesController', () => {
         .set('Authorization', 'bearer ' + token)
         .send({
           type: MessageType.Chat,
-          swapId: swap.id,
+          orderId: swap.orderId,
           messages: [{ message: 'abc', recipient: 'abc' }],
         })
         .expect(201)
@@ -401,7 +419,7 @@ describe('MessagesController', () => {
         });
     });
 
-    it('should return 400 when swap ID was not provided', async () => {
+    it('should return 400 when order ID was not provided', async () => {
       await request(app.getHttpServer())
         .get(`/v1/messages`)
         .set('Authorization', 'bearer ' + token)
@@ -409,8 +427,23 @@ describe('MessagesController', () => {
         .expect(400)
         .expect({
           error: {
-            message: 'swap ID is required',
-            param: 'swapId',
+            message: 'order ID is required',
+            param: 'orderId',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 400 when order Id is not a number', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/messages`)
+        .set('Authorization', 'bearer ' + token)
+        .query({ type: MessageType.Chat, orderId: 'a' })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'must be a number',
+            param: 'orderId',
             type: 'invalid_request_error',
           },
         });
@@ -420,11 +453,11 @@ describe('MessagesController', () => {
       await request(app.getHttpServer())
         .get(`/v1/messages`)
         .set('Authorization', 'bearer ' + token)
-        .query({ type: MessageType.Chat, swapId: 'abc' })
+        .query({ type: MessageType.Chat, orderId: 1 })
         .expect(404)
         .expect({
           error: {
-            param: 'swapId',
+            param: 'orderId',
             type: 'invalid_request_error',
             message: 'swap order not found',
           },
@@ -432,11 +465,11 @@ describe('MessagesController', () => {
     });
 
     it('should return 401 when authenticated user is not a swap participant', async () => {
-      const swap = await Swap.create({ provider: '0xProvider' });
+      const swap = await Swap.create({ orderId: 1, provider: '0xProvider' });
       await request(app.getHttpServer())
         .get(`/v1/messages`)
         .set('Authorization', 'bearer ' + token)
-        .query({ type: MessageType.Chat, swapId: swap.id })
+        .query({ type: MessageType.Chat, orderId: swap.orderId })
         .expect(401)
         .expect({
           error: {
@@ -448,13 +481,13 @@ describe('MessagesController', () => {
 
     it('should return 200 and correctly ordered messages', async () => {
       await User.updateById(u.id, { address: '0xProvider' });
-      const swap = await Swap.create({ provider: '0xProvider' });
+      const swap = await Swap.create({ orderId: 1, provider: '0xProvider' });
       const msg1 = await Message.create({ type: MessageType.Chat, swapId: swap.id });
       const msg2 = await Message.create({ swapId: swap.id });
       await request(app.getHttpServer())
         .get(`/v1/messages`)
         .set('Authorization', 'bearer ' + token)
-        .query({ swapId: swap.id })
+        .query({ orderId: swap.orderId })
         .expect(200)
         .expect((res) => {
           expect(res.body.data).toHaveLength(2);
@@ -466,14 +499,14 @@ describe('MessagesController', () => {
     describe('when limit is set', () => {
       it('should return 200 and correctly ordered messages', async () => {
         await User.updateById(u.id, { address: '0xProvider' });
-        const swap = await Swap.create({ provider: '0xProvider' });
+        const swap = await Swap.create({ orderId: 1, provider: '0xProvider' });
         await Message.create({ swapId: swap.id });
         const msg2 = await Message.create({ swapId: swap.id });
         const msg3 = await Message.create({ swapId: swap.id });
         await request(app.getHttpServer())
           .get(`/v1/messages`)
           .set('Authorization', 'bearer ' + token)
-          .query({ swapId: swap.id, limit: 2 })
+          .query({ orderId: swap.orderId, limit: 2 })
           .expect(200)
           .expect((res) => {
             expect(res.body.data).toHaveLength(2);
@@ -484,16 +517,16 @@ describe('MessagesController', () => {
     });
 
     describe('when before is set', () => {
-      it('should return 200 and correctly ordered messages', async () => {
+      it('should return 200 and correctly ordered messages (when before=3)', async () => {
         await User.updateById(u.id, { address: '0xProvider' });
-        const swap = await Swap.create({ provider: '0xProvider' });
+        const swap = await Swap.create({ orderId: 1, provider: '0xProvider' });
         const msg1 = await Message.create({ swapId: swap.id });
         const msg2 = await Message.create({ swapId: swap.id });
         await Message.create({ swapId: swap.id });
         await request(app.getHttpServer())
           .get(`/v1/messages`)
           .set('Authorization', 'bearer ' + token)
-          .query({ swapId: swap.id, before: 3 })
+          .query({ orderId: swap.orderId, before: 3 })
           .expect(200)
           .expect((res) => {
             expect(res.body.data).toHaveLength(2);
@@ -502,16 +535,16 @@ describe('MessagesController', () => {
           });
       });
 
-      it('should return 200 and correctly ordered messages', async () => {
+      it('should return 200 and correctly ordered messages (when before=2)', async () => {
         await User.updateById(u.id, { address: '0xProvider' });
-        const swap = await Swap.create({ provider: '0xProvider' });
+        const swap = await Swap.create({ orderId: 1, provider: '0xProvider' });
         const msg1 = await Message.create({ swapId: swap.id });
         await Message.create({ swapId: swap.id });
         await Message.create({ swapId: swap.id });
         await request(app.getHttpServer())
           .get(`/v1/messages`)
           .set('Authorization', 'bearer ' + token)
-          .query({ swapId: swap.id, before: 2 })
+          .query({ orderId: swap.orderId, before: 2 })
           .expect(200)
           .expect((res) => {
             expect(res.body.data).toHaveLength(1);
@@ -519,16 +552,16 @@ describe('MessagesController', () => {
           });
       });
 
-      it('should return 200 and correctly ordered messages', async () => {
+      it('should return 200 and correctly ordered messages (when before=3, limit=1)', async () => {
         await User.updateById(u.id, { address: '0xProvider' });
-        const swap = await Swap.create({ provider: '0xProvider' });
+        const swap = await Swap.create({ orderId: 1, provider: '0xProvider' });
         await Message.create({ swapId: swap.id });
         const msg2 = await Message.create({ swapId: swap.id });
         await Message.create({ swapId: swap.id });
         await request(app.getHttpServer())
           .get(`/v1/messages`)
           .set('Authorization', 'bearer ' + token)
-          .query({ swapId: swap.id, before: 3, limit: 1 })
+          .query({ orderId: swap.orderId, before: 3, limit: 1 })
           .expect(200)
           .expect((res) => {
             expect(res.body.data).toHaveLength(1);
@@ -603,8 +636,7 @@ describe('MessagesController', () => {
   describe('.countUnread', () => {
     it('should return 401 when not authorized', async () => {
       await request(app.getHttpServer())
-        .get(`/v1/messages`)
-        .send({})
+        .get(`/v1/messages/count-unread`)
         .expect(401)
         .expect({
           error: {
@@ -615,17 +647,76 @@ describe('MessagesController', () => {
     });
 
     it('should return 400 when swap ID was not provided', async () => {
+      await MessageReadStatus.create({ userId: u.id });
+      await MessageReadStatus.create({ userId: u.id });
       await request(app.getHttpServer())
-        .get(`/v1/messages`)
+        .get(`/v1/messages/count-unread`)
         .set('Authorization', 'bearer ' + token)
         .send({})
+        .expect(200)
+        .expect({
+          data: { count: '2' },
+        });
+    });
+  });
+
+  describe('.getPaymentMethodMessages', () => {
+    it('should return 401 when not authorized', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/messages/abc/pm-messages`)
+        .expect(401)
+        .expect({
+          error: {
+            type: 'authentication_error',
+            message: 'authorization header is required',
+          },
+        });
+    });
+
+    it('should return 400 when order ID is not a number', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/messages/abc/pm-messages`)
+        .set('Authorization', 'bearer ' + token)
         .expect(400)
         .expect({
           error: {
-            message: 'swap ID is required',
-            param: 'swapId',
+            message: 'must be a number',
+            param: 'orderId',
             type: 'invalid_request_error',
           },
+        });
+    });
+
+    it('should return 404 when order does not exist', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/messages/1/pm-messages`)
+        .set('Authorization', 'bearer ' + token)
+        .expect(404)
+        .expect({
+          error: {
+            param: 'swapId',
+            type: 'invalid_request_error',
+            message: 'swap order not found',
+          },
+        });
+    });
+
+    it('should return 200 and all payment method messages only', async () => {
+      await User.updateById(u.id, { address: '0xProvider' });
+      const swap = await Swap.create({ orderId: 1, provider: '0xProvider' });
+      await Message.create({ type: MessageType.Chat, swapId: swap.id });
+      await Message.create({ type: MessageType.PaymentMethodAccept, swapId: swap.id });
+      await Message.create({ type: MessageType.PaymentMethodPropose, swapId: swap.id });
+      await Message.create({ type: MessageType.PaymentMethodReject, swapId: swap.id });
+      await Message.create({ type: MessageType.PaymentMethodAck, swapId: swap.id });
+      await request(app.getHttpServer())
+        .get(`/v1/messages/${swap.orderId}/pm-messages`)
+        .set('Authorization', 'bearer ' + token)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data).toHaveLength(4);
+          const chat = res.body.data.find((m) => m.type === MessageType.Chat);
+          expect(chat).toBeUndefined();
         });
     });
   });

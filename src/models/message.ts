@@ -118,6 +118,17 @@ export default class Message extends BaseModel {
   }
 
   /**
+   * Get payment messages associated with a swap ID
+   * @param id The swap ID
+   * @param txn Optional transaction object
+   */
+  static getPaymentMessagesBySwapId(id: string, txn?: Transaction): Promise<Message[]> {
+    let q = this.query(txn).where({ swapId: id });
+    q = q.where('type', 'ilike', 'pm_%');
+    return q.whereNotDeleted().orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
+  }
+
+  /**
    * Get a message by ID
    * @param id The swap ID
    * @param txn Optional transaction object

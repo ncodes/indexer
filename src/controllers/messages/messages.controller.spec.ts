@@ -16,6 +16,7 @@ import { MessagesController } from './messages.controller';
 import Swap from '../../models/swap';
 import Message, { MessageType } from '../../models/message';
 import MessageReadStatus from '../../models/message_read_status';
+import Market from '../../models/market';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -288,35 +289,6 @@ describe('MessagesController', () => {
         });
     });
 
-    it(`should return 400 when message is a payment method acknowledgement when there is an existing one for the swap`, async () => {
-      await User.updateById(u.id, { address: '0xProvider' });
-      const recipient = await User.create({
-        address: '0xTaker',
-        messengerPublicKey: 'abc',
-      });
-      const swap = await Swap.create({
-        orderId: 1,
-        provider: '0xProvider',
-        taker: '0xTaker',
-      });
-      await Message.create({ swapId: swap.id, type: MessageType.PaymentMethodAck });
-      await request(app.getHttpServer())
-        .post(`/v1/messages`)
-        .set('Authorization', 'bearer ' + token)
-        .send({
-          type: MessageType.PaymentMethodAck,
-          orderId: swap.orderId,
-          messages: [{ message: 'abc', recipient: 'abc' }],
-        })
-        .expect(400)
-        .expect({
-          error: {
-            type: 'invalid_request_error',
-            message: 'payment method already acknowledged',
-          },
-        });
-    });
-
     it(`should return 201 on success`, async () => {
       await User.updateById(u.id, { address: '0xProvider' });
       const recipient = await User.create({
@@ -355,6 +327,43 @@ describe('MessagesController', () => {
       });
       expect(msgReadStatus).toBeDefined();
       expect(msgReadStatus.read).toBeFalsy();
+    });
+
+    describe('check payment method message', () => {
+      it(`should return 400 when message is a payment method acknowledgement when there is an existing one for the swap`, async () => {
+        await User.updateById(u.id, { address: '0xProvider' });
+        await User.create({
+          address: '0xTaker',
+          messengerPublicKey: 'abc',
+        });
+        const market = await Market.create({
+          marketId: 'mid',
+          isBaseLocal: false,
+          isQuoteLocal: true,
+        });
+        const swap = await Swap.create({
+          orderId: 1,
+          marketId: market.marketId,
+          provider: '0xProvider',
+          taker: '0xTaker',
+        });
+        await Message.create({ swapId: swap.id, type: MessageType.PaymentMethodAck });
+        await request(app.getHttpServer())
+          .post(`/v1/messages`)
+          .set('Authorization', 'bearer ' + token)
+          .send({
+            type: MessageType.PaymentMethodAck,
+            orderId: swap.orderId,
+            messages: [{ message: 'abc', recipient: 'abc' }],
+          })
+          .expect(400)
+          .expect({
+            error: {
+              type: 'invalid_request_error',
+              message: 'payment method already acknowledged',
+            },
+          });
+      });
     });
   });
 

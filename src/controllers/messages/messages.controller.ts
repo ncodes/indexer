@@ -20,7 +20,7 @@ import Swap from '../../models/swap';
 import { ErrorTypes, ok, throw400, throw401, throw404 } from '../../common/responses/responses';
 import { Request } from 'express';
 import * as _ from 'lodash';
-import Message, { isPaymentMethodType, MessageType } from '../../models/message';
+import Message, { isPaymentMethodType } from '../../models/message';
 import { transaction } from 'objection';
 import { WebSocketService } from './webSocketService';
 import SwapsService from '../swaps/swaps.service';
@@ -69,13 +69,13 @@ export class MessagesController {
         `messages`,
       );
 
-    // For payment method type, ensure acknowledgement has not been received
+    // Validate payment method message
     if (isPaymentMethodType(body.type)) {
-      const ackMsg = await Message.getBySwapIdAndType(swap.id, MessageType.PaymentMethodAck);
-      if (ackMsg) throw400('payment method already acknowledged');
+      await this.msgSrv.validatePaymentMessage(body.type, swap, req.user.address).catch((e) => {
+        throw e;
+      });
     }
 
-    // Create message
     let i = 0;
     let message;
     await transaction(Message, MessageReadStatus, async (Message, MessageReadStatus) => {

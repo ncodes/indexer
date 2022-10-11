@@ -269,13 +269,13 @@ describe('MarketsController', () => {
       it('should 200 and correct market', async () => {
         const m1 = await Market.create({
           network: net,
-          isBaseLocal: true,
-          isQuoteLocal: true,
+          isBaseLocal: false,
+          isQuoteLocal: false,
         });
         const m2 = await Market.create({
           network: net,
-          isBaseLocal: true,
-          isQuoteLocal: true,
+          isBaseLocal: false,
+          isQuoteLocal: false,
         });
         const m3 = await Market.create({
           network: net,

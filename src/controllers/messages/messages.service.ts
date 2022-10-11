@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { build400, ErrorTypes, throw404 } from '../../common/responses/responses';
+import { build400, build401, ErrorTypes, throw404 } from '../../common/responses/responses';
 import { isHexadecimal } from 'class-validator';
 import User from '../../models/user';
+import Message, { isAcceptOrRejectPaymentMethodType, MessageType } from '../../models/message';
+import Swap from '../../models/swap';
 
 @Injectable()
 export class MessagesService {
@@ -49,5 +51,34 @@ export class MessagesService {
       i++;
     }
     return Promise.resolve(recipients);
+  }
+
+  /**
+   * Validate payment message =
+   * @param type The type of message
+   * @param swap The swap object
+   * @param userAddress The requesting user
+   * @returns HTTPException on error
+   */
+  async validatePaymentMessage(type: MessageType, swap: Swap, userAddress: string) {
+    const ackMsg = await Message.getBySwapIdAndType(swap.id, MessageType.PaymentMethodAck);
+    if (ackMsg) return Promise.reject(build400('payment method already acknowledged'));
+    if (type === MessageType.PaymentMethodPropose) {
+      const onChainParty = await swap.getOnChainParty();
+      if (onChainParty.toLowerCase() !== userAddress.toLowerCase())
+        return Promise.reject(build401(`not authorize to create ${type} message`, ErrorTypes.Perm));
+    }
+    if (isAcceptOrRejectPaymentMethodType(type)) {
+      const offChainParty = await swap.getOffChainParty();
+      if (offChainParty.toLowerCase() !== userAddress.toLowerCase()) {
+        return Promise.reject(build401(`not authorize to create ${type} message`, ErrorTypes.Perm));
+      }
+    }
+    if (type === MessageType.PaymentMethodAck) {
+      const onChainParty = await swap.getOnChainParty();
+      if (onChainParty.toLowerCase() !== userAddress.toLowerCase())
+        return Promise.reject(build401(`not authorize to create ${type} message`, ErrorTypes.Perm));
+    }
+    return Promise.resolve();
   }
 }

@@ -69,6 +69,13 @@ export default class Swap extends BaseModel {
     super();
     Object.assign(this, init);
   }
+  static get tableName() {
+    return 'swaps';
+  }
+
+  static get relationMappings() {
+    return {};
+  }
 
   $beforeInsert() {
     super.$beforeInsert();
@@ -86,12 +93,24 @@ export default class Swap extends BaseModel {
     return `${this.base}/${this.quote}`.toUpperCase();
   }
 
-  static get tableName() {
-    return 'swaps';
+  /**
+   * Get the address of the on-chain side
+   */
+  async getOnChainParty() {
+    const market = await Market.getByMarketId(this.marketId);
+    if (!market) throw new Error('market not found');
+    if (market.isInstant()) throw new Error('both participants are on-chain');
+    return Promise.resolve(market.isBaseLocal ? this.taker : this.provider);
   }
 
-  static get relationMappings() {
-    return {};
+  /**
+   * Get the address of the off-chain side
+   */
+  async getOffChainParty() {
+    const market = await Market.getByMarketId(this.marketId);
+    if (!market) throw new Error('market not found');
+    if (market.isInstant()) throw new Error('both participants are on-chain');
+    return Promise.resolve(market.isBaseLocal ? this.provider : this.taker);
   }
 
   /**

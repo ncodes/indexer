@@ -20,6 +20,10 @@ export function isPaymentMethodType(type: MessageType) {
   ].includes(type);
 }
 
+export function isAcceptOrRejectPaymentMethodType(type: MessageType) {
+  return [MessageType.PaymentMethodAccept, MessageType.PaymentMethodReject].includes(type);
+}
+
 /**
  * Message represents an encrypted message
  */

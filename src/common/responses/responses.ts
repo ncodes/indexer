@@ -48,10 +48,7 @@ export class ErrorBuilder {
 
   build() {
     if (isDevMode()) console.error('Error: ', this._data);
-    return new HttpException(
-      HttpException.createBody(this.getObj(), undefined, this._status),
-      this._status,
-    );
+    return buildHttpException(this.getObj(), this._status);
   }
 
   json() {
@@ -69,6 +66,10 @@ export class ErrorBuilder {
     }
     throw this.build();
   }
+}
+
+export function buildHttpException(obj: any, status: number) {
+  return new HttpException(HttpException.createBody(obj, undefined, status), status);
 }
 
 /**
@@ -145,6 +146,7 @@ export enum ErrorTypes {
   Server = 'api_error',
   InvalidRequest = 'invalid_request_error',
   Auth = 'authentication_error',
+  Perm = 'permission_error',
 }
 
 /**

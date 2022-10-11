@@ -3,6 +3,7 @@ exports.up = function (knex) {
     knex.schema.createTable('messages', (table) => {
       table.increments('sn', { primaryKey: false });
       table.string('id').primary();
+      table.string('type');
       table.string('network');
       table.string('marketId');
       table.string('swapId');

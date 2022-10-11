@@ -1,12 +1,21 @@
 import * as crand from 'crypto-random-string';
-import Objection, { raw, Transaction } from 'objection';
+import Objection, { Transaction } from 'objection';
 import { BaseModel } from './base';
 import { isString } from 'class-validator';
+
+export enum MessageType {
+  Chat = 'chat',
+  PaymentMethodPropose = 'pm_propose',
+  PaymentMethodAccept = 'pm_accept',
+  PaymentMethodReject = 'pm_reject',
+  PaymentMethodAck = 'pm_ack',
+}
 
 /**
  * Message represents an encrypted message
  */
 export default class Message extends BaseModel {
+  type: MessageType = undefined;
   // The network name
   network?: string = undefined;
   // The market ID

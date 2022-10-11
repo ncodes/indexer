@@ -1,7 +1,12 @@
-import { IsNotEmpty, IsOptional } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
 import { makeValidatorMsg } from '../../common/validations/validation';
+import { MessageType } from '../../models/message';
 
 export class CreateDTO {
+  @IsEnum(MessageType, { message: makeValidatorMsg('invalid type', 'type') })
+  @IsNotEmpty({ message: makeValidatorMsg('type is required', 'type') })
+  type: MessageType;
+
   @IsNotEmpty({ message: makeValidatorMsg('swap ID is required', 'swapId') })
   swapId: string;
 

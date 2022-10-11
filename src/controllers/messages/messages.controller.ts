@@ -90,6 +90,7 @@ export class MessagesController {
       }
       message = await Message.create({
         id: msgId,
+        type: body.type,
         network: swap.network,
         marketId: swap.marketId,
         swapId: swap.id,

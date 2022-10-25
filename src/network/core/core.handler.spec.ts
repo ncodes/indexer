@@ -236,7 +236,7 @@ describe('CoreHandler', () => {
       );
 
       expect((await Meta.get(Meta.makeProtocolFeeKey(net, 'instantSwapFee'))).value).toEqual('10');
-      expect((await Meta.get(Meta.makeProtocolFeeKey(net, 'p2pSwapFee'))).value).toEqual('2');
+      expect((await Meta.get(Meta.makeProtocolFeeKey(net, 'syntheticSwapFee'))).value).toEqual('2');
       expect((await Meta.get(Meta.makeProtocolFeeKey(net, 'stableSwapFee'))).value).toEqual('12');
     });
   });

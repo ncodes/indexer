@@ -163,7 +163,7 @@ describe('NetworkService', () => {
 
     describe('swap.instant=false', () => {
       describe('base and quote assets are stable', () => {
-        it('should return use `p2pSwapFee` to calculate protocol fee', async () => {
+        it('should return use `syntheticSwapFee` to calculate protocol fee', async () => {
           const swap = new Swap({
             network: net,
             marketId: '0xMarket',
@@ -190,7 +190,7 @@ describe('NetworkService', () => {
             JSON.stringify({ '0xBase': 1, '0xQuote': 1 }),
           );
 
-          await Meta.create(Meta.makeProtocolFeeKey(net, 'p2pSwapFee'), '12');
+          await Meta.create(Meta.makeProtocolFeeKey(net, 'syntheticSwapFee'), '12');
           const res = service.getSwapFeeInfo(null, swap);
           await expect(res).resolves.toBeDefined();
 

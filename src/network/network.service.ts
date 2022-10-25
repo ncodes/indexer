@@ -211,7 +211,7 @@ export default class NetworkService {
     const commission = chargeable.mul(market.commission).div(10000);
 
     // Determine what protocol fee base point
-    let feeName: FeeName = FeeName.P2PSwapFee;
+    let feeName: FeeName = FeeName.SynthSwapFee;
     if (swap.instant) {
       const baseStable = await Meta.isStableAsset(swap.network, market.baseAddress, txn);
       const quoteStable = await Meta.isStableAsset(swap.network, market.quoteAddress, txn);

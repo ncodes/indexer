@@ -121,12 +121,12 @@ export class MiscController {
   async getProtocolFees(@Param('network') network: string) {
     const res: { [key in FeeName]: number } = {
       [FeeName.InstantSwapFee]: 0,
-      [FeeName.P2PSwapFee]: 0,
+      [FeeName.SynthSwapFee]: 0,
       [FeeName.StableSwapFee]: 0,
     };
 
-    const p2p = await Meta.getProtocolFee(network, FeeName.P2PSwapFee);
-    if (p2p) res[FeeName.P2PSwapFee] = parseFloat(p2p.value);
+    const p2p = await Meta.getProtocolFee(network, FeeName.SynthSwapFee);
+    if (p2p) res[FeeName.SynthSwapFee] = parseFloat(p2p.value);
 
     const instant = await Meta.getProtocolFee(network, FeeName.InstantSwapFee);
     if (instant) res[FeeName.InstantSwapFee] = parseFloat(instant.value);

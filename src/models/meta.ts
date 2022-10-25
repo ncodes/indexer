@@ -3,7 +3,7 @@ import { Transaction } from 'objection';
 
 export enum FeeName {
   InstantSwapFee = 'instantSwapFee',
-  P2PSwapFee = 'p2pSwapFee',
+  SynthSwapFee = 'syntheticSwapFee',
   StableSwapFee = 'stableSwapFee',
 }
 

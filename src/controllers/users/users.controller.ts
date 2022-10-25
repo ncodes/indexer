@@ -32,7 +32,6 @@ export class UsersController {
     let user = req.user;
     if (!user) {
       user = await User.getByAddress(address);
-      console.log(user);
       if (!user) throw404(ErrorMessages.UserNotFound);
       user.desensitize();
     }

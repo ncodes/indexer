@@ -121,12 +121,18 @@ export class CoreHandler extends Handler {
       'ProtocolFeeUpdated',
       async (
         instantSwapFee: BigNumber,
-        p2pSwapFee: BigNumber,
+        syntheticSwapFee: BigNumber,
         stableSwapFee: BigNumber,
         event: Event,
         txn?: Transaction,
       ) => {
-        return this.onProtocolFeeUpdated(instantSwapFee, p2pSwapFee, stableSwapFee, event, txn);
+        return this.onProtocolFeeUpdated(
+          instantSwapFee,
+          syntheticSwapFee,
+          stableSwapFee,
+          event,
+          txn,
+        );
       },
     );
 
@@ -572,14 +578,14 @@ export class CoreHandler extends Handler {
   /**
    * The protocol fees was updated
    * @param instantSwapFee The new instant swap fee
-   * @param p2pSwapFee The new p2p swap fee
+   * @param syntheticSwapFee The new p2p swap fee
    * @param stableSwapFee The new stable asset swap fee
    * @param event The event object
    * @param txn The transaction object
    */
   async onProtocolFeeUpdated(
     instantSwapFee: BigNumber,
-    p2pSwapFee: BigNumber,
+    syntheticSwapFee: BigNumber,
     stableSwapFee: BigNumber,
     event: Event,
     txn?: Transaction,
@@ -590,8 +596,8 @@ export class CoreHandler extends Handler {
       txn,
     );
     await Meta.update(
-      Meta.makeProtocolFeeKey(this.network, FeeName.P2PSwapFee),
-      p2pSwapFee.toString(),
+      Meta.makeProtocolFeeKey(this.network, FeeName.SynthSwapFee),
+      syntheticSwapFee.toString(),
       txn,
     );
     await Meta.update(

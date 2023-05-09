@@ -20,12 +20,6 @@ export class ListQueryDTO {
   @IsOptional()
   public amount?: string;
 
-  @IsOptional()
-  public country?: string;
-
-  @IsOptional()
-  public paymentMethod?: string;
-
   @Transform(({ value }) => toBoolean(value))
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'noMerge') })
   @IsOptional()

@@ -642,8 +642,6 @@ declare global {
       sats: number;
     }
 
-    export interface FullyDilutedValuation {}
-
     export interface TotalVolume {
       aed: number;
       ars: number;

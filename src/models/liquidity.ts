@@ -9,10 +9,6 @@ import * as moment from 'moment';
  * Liquidity represents a liquidity model
  */
 export default class Liquidity extends BaseModel {
-  // The liquidity provider's preferred country
-  country: string = undefined;
-  // The liquidity provider's payment method
-  paymentMethod: string = undefined;
   // The network associated with this object
   network: string = undefined;
   // The provider address
@@ -193,8 +189,6 @@ export default class Liquidity extends BaseModel {
    * @param provider??? Filter by provider address (optional)
    * @param maxOpenDisputes??? Allow only records with lower open disputes
    * @param amount Filter by swap amount within min and max swap amount
-   * @param country Filter by country
-   * @param paymentMethod Filter payment method
    * @param limit??? The number of records to return (optional).
    * @param offset??? The query offset (optional)
    * @param select Select specific fields (optional)
@@ -206,8 +200,6 @@ export default class Liquidity extends BaseModel {
     provider?: string,
     maxOpenDisputes?: number,
     amount: string = undefined,
-    country: string = undefined,
-    paymentMethod: string = undefined,
     limit?: number,
     offset?: number,
     select = [],
@@ -226,8 +218,6 @@ export default class Liquidity extends BaseModel {
       q = q
         .where(raw(`cast(?? as numeric)`, 'minSwap'), '<=', amount)
         .where(raw(`cast(?? as numeric)`, 'maxSwap'), '>=', amount);
-    if (country) q = q.where('country', 'ilike', country);
-    if (paymentMethod) q = q.where('paymentMethod', 'ilike', paymentMethod);
     if (offset) q = q.offset(offset);
     if (limit) q = q.limit(limit);
     return q

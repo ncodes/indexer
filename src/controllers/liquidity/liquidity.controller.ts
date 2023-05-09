@@ -36,8 +36,6 @@ export class LiquidityController {
         q.provider,
         parseInt(this.cfgSrv.getContractParam(q.net, 'maxOpenDisputes')),
         q.amount,
-        q.country ? getCode(q.country) : undefined,
-        q.paymentMethod,
         q.limit || 25,
         q.offset,
         q.select,

@@ -5,7 +5,6 @@ import { MetadataService } from '../../services/metadata/metadata.service';
 import NetworkService from '../../network/network.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { ConfigService } from '@nestjs/config';
-import { PaymentMethods } from '../../common/payment_methods';
 import { getCodeList, getName } from 'country-list';
 import Meta, { FeeName } from '../../models/meta';
 import { isValidNetwork } from '../../network/common';
@@ -135,14 +134,6 @@ export class MiscController {
     if (stable) res[FeeName.StableSwapFee] = parseFloat(stable.value);
 
     return ok().data(res).build();
-  }
-
-  /**
-   * Get payment methods
-   */
-  @Get('/payment-methods')
-  getPaymentMethods() {
-    return ok().data(PaymentMethods).build();
   }
 
   /**

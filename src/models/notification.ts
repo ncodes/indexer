@@ -1,4 +1,4 @@
-import * as crand from 'crypto-random-string';
+import { randStr } from '../common/common';
 import Objection, { raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 
@@ -24,7 +24,7 @@ export default class Notification extends BaseModel {
 
   $beforeInsert() {
     super.$beforeInsert();
-    this.id = 'notification_' + crand({ length: 24 });
+    this.id = 'notification_' + randStr(24);
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
@@ -49,7 +49,7 @@ export default class Notification extends BaseModel {
    */
   static create(data: Partial<Notification>, txn?: Transaction): Promise<Notification> {
     return new Promise(async (resolve, reject) => {
-      return this.query(txn).insert(data).then(resolve).catch(reject);
+      return this.query(txn).insertAndFetch(data).then(resolve).catch(reject);
     });
   }
 
@@ -82,7 +82,7 @@ export default class Notification extends BaseModel {
     limit: number,
     offset: number,
     txn?: Transaction,
-  ): Promise<Notification[]> {
+  ) {
     if (count) {
       const q = this.query(txn).where({ network, userId });
       return q

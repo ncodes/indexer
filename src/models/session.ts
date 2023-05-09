@@ -1,4 +1,4 @@
-import * as crand from 'crypto-random-string';
+import { randStr } from '../common/common';
 import Objection, { Model } from 'objection';
 import { BaseModel } from './base';
 import User from './user';
@@ -30,7 +30,7 @@ export default class Session extends BaseModel {
 
   $beforeInsert() {
     super.$beforeInsert();
-    this.id = 'session_' + crand({ length: 24 });
+    this.id = 'session_' + randStr(24);
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
@@ -44,7 +44,7 @@ export default class Session extends BaseModel {
    * getById finds a record by Id
    * @param id The user id
    */
-  static getById(id: string): Promise<Session> {
+  static getById(id: string) {
     return this.query().whereNotDeleted().findById(id).withGraphFetched('owner(notDeleted)');
   }
 
@@ -52,7 +52,7 @@ export default class Session extends BaseModel {
    * getBySignature finds a record by signature
    * @param signature The target signature
    */
-  static getBySignature(signature: string): Promise<Session> {
+  static getBySignature(signature: string) {
     return this.query()
       .where({ signature })
       .whereNotDeleted()

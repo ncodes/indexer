@@ -1,4 +1,4 @@
-import * as crand from 'crypto-random-string';
+import { randStr } from '../common/common';
 import Objection, { raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 
@@ -20,7 +20,7 @@ export default class PermittedTrader extends BaseModel {
 
   $beforeInsert() {
     super.$beforeInsert();
-    this.id = 'permitted_trader_' + crand({ length: 24 });
+    this.id = 'permitted_trader_' + randStr(24);
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
@@ -52,7 +52,7 @@ export default class PermittedTrader extends BaseModel {
         return resolve(softDeleted);
       }
 
-      return this.query(txn).insert(data).then(resolve).catch(reject);
+      return this.query(txn).insertAndFetch(data).then(resolve).catch(reject);
     });
   }
 

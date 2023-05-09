@@ -1,4 +1,4 @@
-import * as crand from 'crypto-random-string';
+import { randStr } from '../common/common';
 import Objection, { Model, raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 import * as _ from 'lodash';
@@ -68,7 +68,7 @@ export default class Dispute extends BaseModel {
 
   $beforeInsert() {
     super.$beforeInsert();
-    this.id = 'dispute_' + crand({ length: 24 });
+    this.id = 'dispute_' + randStr(24);
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
@@ -103,7 +103,7 @@ export default class Dispute extends BaseModel {
    */
   static create(data: Partial<Dispute>, txn?: Transaction): Promise<Dispute> {
     return new Promise(async (resolve, reject) => {
-      return this.query(txn).insert(data).then(resolve).catch(reject);
+      return this.query(txn).insertAndFetch(data).then(resolve).catch(reject);
     });
   }
 
@@ -112,7 +112,7 @@ export default class Dispute extends BaseModel {
    * @param q the query parameter
    * @param txn Optional transaction object
    */
-  static find(q: Partial<Dispute>, txn?: Transaction): Promise<Dispute> {
+  static find(q: Partial<Dispute>, txn?: Transaction) {
     return new Promise((resolve, reject) => {
       this.query(txn).where(q).whereNotDeleted().first().then(resolve).catch(reject);
     });
@@ -123,7 +123,7 @@ export default class Dispute extends BaseModel {
    * @param id The record id
    * @param txn Optional transaction object
    */
-  static getById(id: string, txn?: Transaction): Promise<Dispute> {
+  static getById(id: string, txn?: Transaction) {
     return this.query(txn).whereNotDeleted().findById(id);
   }
 
@@ -185,7 +185,7 @@ export default class Dispute extends BaseModel {
     orderId: number,
     disputeId: number,
     txn?: Transaction,
-  ): Promise<Dispute> {
+  ) {
     return this.query(txn)
       .where({ network, orderId, disputeId })
       .where('marketId', 'ilike', marketId)
@@ -200,12 +200,7 @@ export default class Dispute extends BaseModel {
    * @param orderId The order ID
    * @param txn Optional transaction object
    */
-  static getRecentOfOrder(
-    network: string,
-    marketId: string,
-    orderId: number,
-    txn?: Transaction,
-  ): Promise<Dispute> {
+  static getRecentOfOrder(network: string, marketId: string, orderId: number, txn?: Transaction) {
     return this.query(txn)
       .where({ network, orderId })
       .where('marketId', 'ilike', marketId)
@@ -220,7 +215,7 @@ export default class Dispute extends BaseModel {
    * @param limit The number of disputes to return
    * @param txn Optional transaction object
    */
-  static getByAfterEvidenceEndAt(limit = 100, txn?: Transaction): Promise<Dispute[]> {
+  static getByAfterEvidenceEndAt(limit = 100, txn?: Transaction) {
     return this.query(txn)
       .whereNotDeleted()
       .where('evidenceEndAt', 'is not', null)
@@ -241,7 +236,7 @@ export default class Dispute extends BaseModel {
    * @param limit The number of disputes to return
    * @param txn Optional transaction object
    */
-  static getByAfterCommitEndAt(limit = 100, txn?: Transaction): Promise<Dispute[]> {
+  static getByAfterCommitEndAt(limit = 100, txn?: Transaction) {
     return this.query(txn)
       .whereNotDeleted()
       .where('commitEndAt', 'is not', null)
@@ -262,7 +257,7 @@ export default class Dispute extends BaseModel {
    * @param limit The number of disputes to return
    * @param txn Optional transaction object
    */
-  static getByAfterRevealEndAt(limit = 100, txn?: Transaction): Promise<Dispute[]> {
+  static getByAfterRevealEndAt(limit = 100, txn?: Transaction) {
     return this.query(txn)
       .whereNotDeleted()
       .where('revealEndAt', 'is not', null)
@@ -283,7 +278,7 @@ export default class Dispute extends BaseModel {
    * @param limit The number of disputes to return
    * @param txn Optional transaction object
    */
-  static getByAfterAppealEndAt(limit = 100, txn?: Transaction): Promise<Dispute[]> {
+  static getByAfterAppealEndAt(limit = 100, txn?: Transaction) {
     return this.query(txn)
       .whereNotDeleted()
       .where('appealEndAt', 'is not', null)
@@ -350,7 +345,7 @@ export default class Dispute extends BaseModel {
     offset?: number,
     select = [],
     txn?: Transaction,
-  ): Promise<Dispute[]> {
+  ) {
     select = this.makeSelectList(select);
     let q = this.query(txn)
       .select(...select, raw('count(*) over() as' + ' "__queryCount"'))

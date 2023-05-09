@@ -12,12 +12,12 @@ import NetworkService from '../../network/network.service';
 import { MarketsService } from './markets.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { makeSession } from '../auth/utils';
-import * as cryptoRandomString from 'crypto-random-string';
 import Market from '../../models/market';
 import InvitedMediator from '../../models/invited_mediators';
 import PermittedTrader from '../../models/permitted_trader';
 import MarketProvider from '../../models/market_provider';
 import * as moment from 'moment';
+import { randStr } from '../../common/common';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -84,12 +84,7 @@ describe('MarketsController', () => {
   const net = 'ethereum';
   beforeEach(async () => {
     u = await User.create({ role: Roles.User });
-    token = await makeSession(
-      u,
-      cryptoRandomString({ length: 10 }),
-      '5',
-      mockCfgGet('auth.jwtSecret'),
-    );
+    token = await makeSession(u, randStr(), '5', mockCfgGet('auth.jwtSecret'));
   });
 
   describe('.get', () => {

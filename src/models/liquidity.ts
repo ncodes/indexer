@@ -1,4 +1,4 @@
-import * as crand from 'crypto-random-string';
+import { randStr } from '../common/common';
 import Objection, { raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 import Market from './market';
@@ -73,7 +73,7 @@ export default class Liquidity extends BaseModel {
 
   $beforeInsert() {
     super.$beforeInsert();
-    this.id = 'liquidity_' + crand({ length: 24 });
+    this.id = 'liquidity_' + randStr(24);
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
@@ -98,7 +98,7 @@ export default class Liquidity extends BaseModel {
    */
   static create(data: Partial<Liquidity>, txn?: Transaction): Promise<Liquidity> {
     return new Promise((resolve, reject) => {
-      return this.query(txn).insert(data).then(resolve).catch(reject);
+      return this.query(txn).insertAndFetch(data).then(resolve).catch(reject);
     });
   }
 
@@ -107,7 +107,7 @@ export default class Liquidity extends BaseModel {
    * @param id The record id
    * @param txn Optional transaction object
    */
-  static getById(id: string, txn?: Transaction): Promise<Liquidity> {
+  static getById(id: string, txn?: Transaction) {
     return this.query(txn).whereNotDeleted().findById(id);
   }
 
@@ -116,7 +116,7 @@ export default class Liquidity extends BaseModel {
    * @param address The base address
    * @param txn Optional transaction object
    */
-  static getByBaseAddress(address: string, txn?: Transaction): Promise<Liquidity> {
+  static getByBaseAddress(address: string, txn?: Transaction) {
     return this.query(txn).where({ baseAddress: address }).whereNotDeleted().first();
   }
 
@@ -134,7 +134,7 @@ export default class Liquidity extends BaseModel {
     provider?: string,
     select = [],
     txn?: Transaction,
-  ): Promise<Liquidity> {
+  ) {
     select = this.makeSelectList(select);
     return this.query(txn)
       .select(...select)
@@ -159,7 +159,7 @@ export default class Liquidity extends BaseModel {
     provider: string,
     upd: Partial<Liquidity>,
     txn?: Transaction,
-  ): Promise<number> {
+  ) {
     return this.query(txn)
       .whereNotDeleted()
       .where({ network })
@@ -212,7 +212,7 @@ export default class Liquidity extends BaseModel {
     offset?: number,
     select = [],
     txn?: Objection.Transaction,
-  ): Promise<Liquidity[]> {
+  ) {
     select = this.makeSelectList(select);
     let q = this.query(txn)
       .select(...select, raw('count(*) over() as' + ' "__queryCount"'))

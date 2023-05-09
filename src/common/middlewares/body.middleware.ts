@@ -1,6 +1,6 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { json } from 'body-parser';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 
 /**
  * Copied this middleware to parse the raw response into a param to use later

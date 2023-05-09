@@ -6,7 +6,7 @@ import { isDevMode, isLocal } from '../common/common';
 @Injectable()
 export class RedisService {
   private logger = new Logger(RedisService.name);
-  private client: redis.RedisClient;
+  private client: redis.RedisClientType;
 
   constructor(private cfg: ConfigService) {
     const opt = {
@@ -32,10 +32,12 @@ export class RedisService {
    */
   setWithExpire(key: string, value: string, expireSec: number): Promise<void> {
     return new Promise((res, rej) => {
-      this.client.setex(key, expireSec, value, (err) => {
-        if (err) return rej(err);
-        return res();
-      });
+      this.client
+        .setEx(key, expireSec, value)
+        .then(() => {
+          return res();
+        })
+        .catch(rej);
     });
   }
 
@@ -45,10 +47,12 @@ export class RedisService {
    */
   delete(key: string): Promise<void> {
     return new Promise((res, rej) => {
-      this.client.del(key, (err) => {
-        if (err) return rej(err);
-        return res();
-      });
+      this.client
+        .del(key)
+        .then(() => {
+          res();
+        })
+        .catch(rej);
     });
   }
 
@@ -58,8 +62,7 @@ export class RedisService {
    */
   exist(key: string): Promise<boolean> {
     return new Promise((res, rej) => {
-      this.client.exists(key, (err, ex) => {
-        if (err) return rej(err);
+      this.client.exists(key).then((ex) => {
         return res(ex === 1);
       });
     });

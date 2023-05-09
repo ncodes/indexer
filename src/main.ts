@@ -5,6 +5,7 @@ import * as sourceMapSupport from 'source-map-support';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/interceptors/exception_filter';
 import { appLogger } from './common/loggers/logger';
+
 dayjs.extend(utc);
 
 sourceMapSupport.install();

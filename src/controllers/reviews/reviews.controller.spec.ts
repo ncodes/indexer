@@ -8,11 +8,11 @@ import User from '../../models/user';
 import { Roles } from '../../common/roles';
 import * as request from 'supertest';
 import { makeSession } from '../auth/utils';
-import * as cryptoRandomString from 'crypto-random-string';
 import { ReviewsController } from './reviews.controller';
 import Swap from '../../models/swap';
 import Liquidity from '../../models/liquidity';
 import Review from '../../models/reviews';
+import { randStr } from '../../common/common';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -68,18 +68,8 @@ describe('ReviewsController', () => {
   beforeEach(async () => {
     u = await User.create({ role: Roles.User });
     u2 = await User.create({ role: Roles.User });
-    token = await makeSession(
-      u,
-      cryptoRandomString({ length: 10 }),
-      '5',
-      mockCfgGet('auth.jwtSecret'),
-    );
-    token2 = await makeSession(
-      u2,
-      cryptoRandomString({ length: 10 }),
-      '5',
-      mockCfgGet('auth.jwtSecret'),
-    );
+    token = await makeSession(u, randStr(), '5', mockCfgGet('auth.jwtSecret'));
+    token2 = await makeSession(u2, randStr(), '5', mockCfgGet('auth.jwtSecret'));
   });
 
   describe('.create', () => {

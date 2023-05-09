@@ -1,4 +1,4 @@
-import * as crand from 'crypto-random-string';
+import { randStr } from '../common/common';
 import Objection, { Transaction } from 'objection';
 import { BaseModel } from './base';
 
@@ -19,7 +19,7 @@ export default class Event extends BaseModel {
 
   $beforeInsert() {
     super.$beforeInsert();
-    this.id = 'event_' + crand({ length: 24 });
+    this.id = 'event_' + randStr(24);
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
@@ -43,7 +43,7 @@ export default class Event extends BaseModel {
    */
   static create(data: Partial<Event>, txn?: Transaction): Promise<Event> {
     return new Promise((resolve, reject) => {
-      return this.query(txn).insert(data).then(resolve).catch(reject);
+      return this.query(txn).insertAndFetch(data).then(resolve).catch(reject);
     });
   }
 
@@ -79,12 +79,7 @@ export default class Event extends BaseModel {
    */
   static find(q: Partial<Event>): Promise<Event> {
     return new Promise((resolve, reject) => {
-      this.query()
-        .where(q)
-        .whereNotDeleted()
-        .first()
-        .then(resolve)
-        .catch(reject);
+      this.query().where(q).whereNotDeleted().first().then(resolve).catch(reject);
     });
   }
 }

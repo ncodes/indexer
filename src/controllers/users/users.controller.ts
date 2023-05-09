@@ -1,17 +1,9 @@
-import { Body, Controller, Get, Param, Put, Req, UseGuards, ValidationPipe } from '@nestjs/common';
-import express, { Request } from 'express';
-import { ErrorMessages, ok, throw400, throw401, throw404 } from '../../common/responses/responses';
+import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
+import express from 'express';
+import { ErrorMessages, ok, throw401, throw404 } from '../../common/responses/responses';
 import User from '../../models/user';
 import { MayHaveKeyGuard } from '../../guards/may_have_token.guard';
 import { MayBeAuthenticatedGuard } from '../../guards/maybe_authenticated.guard';
-import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
-import { HasKeyGuard } from '../../guards/has_token.guard';
-import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
-import { UpdateCountryDTO, UpdateMethodDTO } from './dto';
-import { isValidPaymentMethod } from '../../common/payment_methods';
-import { getNameList } from 'country-list';
-import { transaction } from 'objection';
-import Liquidity from '../../models/liquidity';
 
 @Controller('v1/users')
 export class UsersController {

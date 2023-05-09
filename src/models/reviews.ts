@@ -1,4 +1,4 @@
-import * as crand from 'crypto-random-string';
+import { randStr } from '../common/common';
 import Objection, { raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 
@@ -28,7 +28,7 @@ export default class Review extends BaseModel {
 
   $beforeInsert() {
     super.$beforeInsert();
-    this.id = 'review_' + crand({ length: 24 });
+    this.id = 'review_' + randStr(24);
   }
 
   $beforeUpdate() {
@@ -57,7 +57,7 @@ export default class Review extends BaseModel {
    */
   static create(data: Partial<Review>, txn?: Transaction): Promise<Review> {
     return new Promise(async (resolve, reject) => {
-      return this.query(txn).insert(data).then(resolve).catch(reject);
+      return this.query(txn).insertAndFetch(data).then(resolve).catch(reject);
     });
   }
 
@@ -77,7 +77,7 @@ export default class Review extends BaseModel {
    * @param id The record ID
    * @param txn Optional transaction object
    */
-  static getById(id: string, txn?: Transaction): Promise<Review> {
+  static getById(id: string, txn?: Transaction) {
     return this.query(txn).where({ id }).whereNotDeleted().first();
   }
 
@@ -87,7 +87,7 @@ export default class Review extends BaseModel {
    * @param udp the fields to be updated
    * @param txn Optional transaction object
    */
-  static updateById(id: string, udp: Partial<Review>, txn?: Transaction): Promise<Review> {
+  static updateById(id: string, udp: Partial<Review>, txn?: Transaction) {
     return this.query(txn).whereNotDeleted().patchAndFetchById(id, udp);
   }
 
@@ -175,7 +175,7 @@ export default class Review extends BaseModel {
     limit?: number,
     offset?: number,
     txn?: Transaction,
-  ): Promise<Review[]> {
+  ) {
     let q = this.query(txn)
       .select('*', raw('count(*) over() as' + ' "__queryCount"'))
       .whereNotDeleted()

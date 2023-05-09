@@ -10,12 +10,12 @@ import * as request from 'supertest';
 import NetworkService from '../../network/network.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { makeSession } from '../auth/utils';
-import * as cryptoRandomString from 'crypto-random-string';
 import { LiquidityController } from './liquidity.controller';
 import { LiquidityService } from './liquidity.service';
 import { MarketsService } from '../markets/markets.service';
 import Liquidity from '../../models/liquidity';
 import { ConfigService } from '../config.service';
+import { randStr } from '../../common/common';
 
 const mockCfgGet = jest.fn();
 const mockGetContractParam = jest.fn();
@@ -84,12 +84,7 @@ describe('LiquidityController', () => {
   let token: string;
   beforeEach(async () => {
     u = await User.create({ role: Roles.User });
-    token = await makeSession(
-      u,
-      cryptoRandomString({ length: 10 }),
-      '5',
-      mockCfgGet('auth.jwtSecret'),
-    );
+    token = await makeSession(u, randStr(), '5', mockCfgGet('auth.jwtSecret'));
   });
 
   describe('.list', () => {

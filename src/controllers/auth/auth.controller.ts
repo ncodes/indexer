@@ -2,12 +2,18 @@ import { Body, Controller, Get, Post, Query, ValidationPipe } from '@nestjs/comm
 import { ConfigService } from '@nestjs/config';
 import { transaction } from 'objection';
 import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
-import { ErrorMessages, ok, throw400, throw401, throw404 } from '../../common/responses/responses';
+import {
+  ErrorMessages,
+  ErrorTypes,
+  ok,
+  throw400,
+  throw401,
+  throw404,
+} from '../../common/responses/responses';
 import { Roles } from '../../common/roles';
 import User from '../../models/user';
-import { ErrorTypes } from '../../common/responses/responses';
 import { AuthDTO, GetAuthorizerDTO } from './dto';
-import { parseSignature, makeSession } from './utils';
+import { makeSession, parseSignature } from './utils';
 import { isEmail } from 'class-validator';
 
 /**

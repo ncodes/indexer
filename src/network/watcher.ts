@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { Contract, providers, ethers } from 'ethers';
+import { Contract, ethers, providers } from 'ethers';
 import Meta from '../models/meta';
 import { shortenAddr } from '../common/utils/helpers';
 import * as sortArray from 'sort-array';

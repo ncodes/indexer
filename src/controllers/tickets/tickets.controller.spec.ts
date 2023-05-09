@@ -9,13 +9,13 @@ import { Roles } from '../../common/roles';
 import * as request from 'supertest';
 import NetworkService from '../../network/network.service';
 import { makeSession } from '../auth/utils';
-import * as cryptoRandomString from 'crypto-random-string';
 import { MarketsService } from '../markets/markets.service';
 import { TicketsController } from './tickets.controller';
 import { TicketsService } from './tickets.service';
 import Ticket from '../../models/ticket';
 import Market from '../../models/market';
 import * as moment from 'moment';
+import { randStr } from '../../common/common';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -76,12 +76,7 @@ describe('TicketsController', () => {
   const net = 'ethereum';
   beforeEach(async () => {
     u = await User.create({ role: Roles.User });
-    token = await makeSession(
-      u,
-      cryptoRandomString({ length: 10 }),
-      '5',
-      mockCfgGet('auth.jwtSecret'),
-    );
+    token = await makeSession(u, randStr(), '5', mockCfgGet('auth.jwtSecret'));
   });
 
   describe('.get', () => {

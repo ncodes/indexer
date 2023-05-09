@@ -12,7 +12,7 @@ import {
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
-import { CreateDTO, GetStatsQueryDTO, ListQueryDTO } from './dto';
+import { CreateDTO, ListQueryDTO } from './dto';
 import Swap from '../../models/swap';
 import { ErrorTypes, ok, throw400, throw401, throw404 } from '../../common/responses/responses';
 import express from 'express';

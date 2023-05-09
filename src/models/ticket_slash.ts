@@ -1,4 +1,4 @@
-import * as crand from 'crypto-random-string';
+import { randStr } from '../common/common';
 import Objection, { Transaction } from 'objection';
 import { BaseModel } from './base';
 
@@ -34,7 +34,7 @@ export default class TicketSlash extends BaseModel {
 
   $beforeInsert() {
     super.$beforeInsert();
-    this.id = 'ticket_slash_' + crand({ length: 24 });
+    this.id = 'ticket_slash_' + randStr(24);
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
@@ -59,7 +59,7 @@ export default class TicketSlash extends BaseModel {
    */
   static create(data: Partial<TicketSlash>, txn?: Transaction): Promise<TicketSlash> {
     return new Promise(async (resolve, reject) => {
-      return this.query(txn).insert(data).then(resolve).catch(reject);
+      return this.query(txn).insertAndFetch(data).then(resolve).catch(reject);
     });
   }
 
@@ -79,7 +79,7 @@ export default class TicketSlash extends BaseModel {
    * @param id The record id
    * @param txn Optional transaction object
    */
-  static getById(id: string, txn?: Transaction): Promise<TicketSlash> {
+  static getById(id: string, txn?: Transaction) {
     return this.query(txn).whereNotDeleted().findById(id);
   }
 

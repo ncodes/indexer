@@ -1,4 +1,4 @@
-import * as crand from 'crypto-random-string';
+import { randStr } from '../common/common';
 import Objection, { Transaction } from 'objection';
 import { BaseModel } from './base';
 
@@ -29,7 +29,7 @@ export default class Reveal extends BaseModel {
 
   $beforeInsert() {
     super.$beforeInsert();
-    this.id = 'reveal_' + crand({ length: 24 });
+    this.id = 'reveal_' + randStr(24);
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
@@ -54,7 +54,7 @@ export default class Reveal extends BaseModel {
    */
   static create(data: Partial<Reveal>, txn?: Transaction): Promise<Reveal> {
     return new Promise(async (resolve, reject) => {
-      return this.query(txn).insert(data).then(resolve).catch(reject);
+      return this.query(txn).insertAndFetch(data).then(resolve).catch(reject);
     });
   }
 
@@ -74,7 +74,7 @@ export default class Reveal extends BaseModel {
    * @param id The record id
    * @param txn Optional transaction object
    */
-  static getById(id: string, txn?: Transaction): Promise<Reveal> {
+  static getById(id: string, txn?: Transaction) {
     return this.query(txn).whereNotDeleted().findById(id);
   }
 
@@ -84,7 +84,7 @@ export default class Reveal extends BaseModel {
    * @param udp the fields to be updated
    * @param txn Optional transaction object
    */
-  static updateById(id: string, udp: Partial<Reveal>, txn?: Transaction): Promise<Reveal> {
+  static updateById(id: string, udp: Partial<Reveal>, txn?: Transaction) {
     return new Promise((resolve, reject) => {
       this.query(txn)
         .whereNotDeleted()

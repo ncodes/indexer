@@ -1,4 +1,4 @@
-import * as crand from 'crypto-random-string';
+import { randStr } from '../common/common';
 import Objection, { raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 import * as moment from 'moment';
@@ -79,7 +79,7 @@ export default class Swap extends BaseModel {
 
   $beforeInsert() {
     super.$beforeInsert();
-    this.id = 'swap_' + crand({ length: 24 });
+    this.id = 'swap_' + randStr(24);
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
@@ -120,7 +120,7 @@ export default class Swap extends BaseModel {
    */
   static create(data: Partial<Swap>, txn?: Transaction): Promise<Swap> {
     return new Promise(async (resolve, reject) => {
-      return this.query(txn).insert(data).then(resolve).catch(reject);
+      return this.query(txn).insertAndFetch(data).then(resolve).catch(reject);
     });
   }
 
@@ -140,7 +140,7 @@ export default class Swap extends BaseModel {
    * @param orderId the order ID
    * @param txn Optional transaction object
    */
-  static getByOrderId(orderId: number, txn?: Transaction): Promise<Swap> {
+  static getByOrderId(orderId: number, txn?: Transaction) {
     return this.query(txn).where({ orderId }).whereNotDeleted().first();
   }
 
@@ -149,7 +149,7 @@ export default class Swap extends BaseModel {
    * @param id the swap ID
    * @param txn Optional transaction object
    */
-  static getById(id: string, txn?: Transaction): Promise<Swap> {
+  static getById(id: string, txn?: Transaction) {
     return this.query(txn).where({ id }).whereNotDeleted().first();
   }
 
@@ -180,7 +180,7 @@ export default class Swap extends BaseModel {
    * @param select Select specific fields (optional)
    * @param txn Optional transaction object
    */
-  static get(network: string, orderId: number, select = [], txn?: Transaction): Promise<Swap> {
+  static get(network: string, orderId: number, select = [], txn?: Transaction) {
     select = this.makeSelectList(select);
     return this.query(txn)
       .select(...select)
@@ -195,7 +195,7 @@ export default class Swap extends BaseModel {
    * @param udp the fields to be updated
    * @param txn Optional transaction object
    */
-  static updateById(id: string, udp: Partial<Swap>, txn?: Transaction): Promise<Swap> {
+  static updateById(id: string, udp: Partial<Swap>, txn?: Transaction) {
     return this.query(txn).whereNotDeleted().patchAndFetchById(id, udp);
   }
 
@@ -205,7 +205,7 @@ export default class Swap extends BaseModel {
    * @param udp the fields to be updated
    * @param txn Optional transaction object
    */
-  static updateByOrderId(orderId: number, udp: Partial<Swap>, txn?: Transaction): Promise<number> {
+  static updateByOrderId(orderId: number, udp: Partial<Swap>, txn?: Transaction) {
     return this.query(txn).where({ orderId }).whereNotDeleted().patch(udp);
   }
 
@@ -374,7 +374,7 @@ export default class Swap extends BaseModel {
     offset?: number,
     select = [],
     txn?: Transaction,
-  ): Promise<Swap[]> {
+  ) {
     select = this.makeSelectList(select);
     let q = this.query(txn)
       .select(...select, raw('count(*) over() as' + ' "__queryCount"'))

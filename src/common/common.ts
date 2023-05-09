@@ -2,6 +2,8 @@ import * as bcrypt from 'bcrypt';
 import * as dayjs from 'dayjs';
 import * as utc from 'dayjs/plugin/utc';
 import Decimal from 'decimal.js';
+import { uid } from 'uid';
+
 dayjs.extend(utc);
 
 export const DecTen = new Decimal(10);
@@ -26,4 +28,8 @@ export function hashPassword(value: string) {
 
 export function nowDateForEmailSub() {
   return dayjs().utc().format('YYYY-MM-DD HH:mm:ss (UTC)');
+}
+
+export function randStr(len = 10) {
+  return uid(len);
 }

@@ -1,5 +1,5 @@
 /* tslint:disable:max-classes-per-file */
-import { IsNotEmpty, IsOptional } from 'class-validator';
+import { IsNotEmpty } from 'class-validator';
 import { makeValidatorMsg } from '../../common/validations/validation';
 
 /**

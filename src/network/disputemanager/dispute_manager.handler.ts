@@ -263,7 +263,9 @@ export class DisputeManagerHandler extends Handler {
     drafter: string,
     event: Event,
     txn?: Transaction,
-  ) {}
+  ) {
+    //
+  }
 
   /**
    * A mediator committed a hash for a vote
@@ -338,7 +340,9 @@ export class DisputeManagerHandler extends Handler {
    * @param event The event object
    * @param txn The transaction object
    */
-  async onWithdrawnReward(claimer: string, amount: BigNumber, event: Event, txn?: Transaction) {}
+  async onWithdrawnReward(claimer: string, amount: BigNumber, event: Event, txn?: Transaction) {
+    //
+  }
 
   /**
    * A dispute outcome was executed
@@ -392,7 +396,7 @@ export class DisputeManagerHandler extends Handler {
     );
 
     // Update liquidity
-    const swap = await Swap.get(dispute.network, dispute.orderId, txn);
+    const swap = await Swap.get(dispute.network, dispute.orderId, [], txn);
     const liquidity = await Liquidity.getLiquidity(
       swap.network,
       swap.marketId,

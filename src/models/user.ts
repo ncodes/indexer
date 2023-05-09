@@ -1,4 +1,4 @@
-import * as crand from 'crypto-random-string';
+import { randStr } from '../common/common';
 import Objection from 'objection';
 import { Roles } from '../common/roles';
 import { BaseModel } from './base';
@@ -18,7 +18,7 @@ export default class User extends BaseModel {
 
   $beforeInsert() {
     super.$beforeInsert();
-    this.id = 'user_' + crand({ length: 24 });
+    this.id = 'user_' + randStr(24);
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
@@ -55,7 +55,7 @@ export default class User extends BaseModel {
    * getById finds a user by Id
    * @param id The user id
    */
-  static getById(id: string): Promise<User> {
+  static getById(id: string) {
     return this.query().whereNotDeleted().findById(id);
   }
 

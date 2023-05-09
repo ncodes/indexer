@@ -1,4 +1,4 @@
-import * as crand from 'crypto-random-string';
+import { randStr } from '../common/common';
 import Objection, { raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 
@@ -20,7 +20,7 @@ export default class MarketProvider extends BaseModel {
 
   $beforeInsert() {
     super.$beforeInsert();
-    this.id = 'market_provider_' + crand({ length: 24 });
+    this.id = 'market_provider_' + randStr(24);
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
@@ -64,7 +64,7 @@ export default class MarketProvider extends BaseModel {
         return resolve(softDeletedUser);
       }
 
-      return this.query(txn).insert(data).then(resolve).catch(reject);
+      return this.query(txn).insertAndFetch(data).then(resolve).catch(reject);
     });
   }
 
@@ -73,7 +73,7 @@ export default class MarketProvider extends BaseModel {
    * @param id The record id
    * @param txn Optional transaction object
    */
-  static getById(id: string, txn?: Transaction): Promise<MarketProvider> {
+  static getById(id: string, txn?: Transaction) {
     return this.query(txn).whereNotDeleted().findById(id);
   }
 

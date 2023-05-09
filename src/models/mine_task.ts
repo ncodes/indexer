@@ -1,4 +1,4 @@
-import * as crand from 'crypto-random-string';
+import { randStr } from '../common/common';
 import Objection, { raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 import * as moment from 'moment';
@@ -41,7 +41,7 @@ export default class MineTask extends BaseModel {
 
   $beforeInsert() {
     super.$beforeInsert();
-    this.id = 'mine_task_' + crand({ length: 24 });
+    this.id = 'mine_task_' + randStr(24);
     if (!this.mineAt) this.mineAt = moment().toISOString();
   }
 
@@ -67,7 +67,7 @@ export default class MineTask extends BaseModel {
    */
   static create(data: Partial<MineTask>, txn?: Transaction): Promise<MineTask> {
     return new Promise((resolve, reject) => {
-      return this.query(txn).insert(data).then(resolve).catch(reject);
+      return this.query(txn).insertAndFetch(data).then(resolve).catch(reject);
     });
   }
 
@@ -76,7 +76,7 @@ export default class MineTask extends BaseModel {
    * @param id The record id
    * @param txn Optional transaction object
    */
-  static getById(id: string, txn?: Transaction): Promise<MineTask> {
+  static getById(id: string, txn?: Transaction) {
     return this.query(txn).whereNotDeleted().findById(id);
   }
 
@@ -94,7 +94,7 @@ export default class MineTask extends BaseModel {
     limit?: number,
     offset?: number,
     txn?: Transaction,
-  ): Promise<MineTask[]> {
+  ) {
     let q = this.query(txn)
       .select('*', raw('count(*) over() as' + ' "__queryCount"'))
       .whereNotDeleted()
@@ -111,7 +111,7 @@ export default class MineTask extends BaseModel {
    * @param type The task type
    * @param txn Optional transaction object
    */
-  static countTasks(network: string, type?: MineTaskType, txn?: Transaction): Promise<MineTask[]> {
+  static countTasks(network: string, type?: MineTaskType, txn?: Transaction) {
     let q = this.query(txn).whereNotDeleted().where({
       network,
       completed: false,
@@ -128,7 +128,7 @@ export default class MineTask extends BaseModel {
    * @param q the query parameter
    * @param txn Optional transaction object
    */
-  static find(q: Partial<MineTask>, txn?: Transaction): Promise<MineTask> {
+  static find(q: Partial<MineTask>, txn?: Transaction) {
     return new Promise((resolve, reject) => {
       this.query(txn).where(q).whereNotDeleted().first().then(resolve).catch(reject);
     });
@@ -164,7 +164,7 @@ export default class MineTask extends BaseModel {
    * @param udp the fields to be updated
    * @param txn Optional transaction object
    */
-  static updateById(id: string, udp: Partial<MineTask>, txn?: Transaction): Promise<MineTask> {
+  static updateById(id: string, udp: Partial<MineTask>, txn?: Transaction) {
     return new Promise((resolve, reject) => {
       this.query(txn).whereNotDeleted().patchAndFetchById(id, udp).then(resolve).catch(reject);
     });
@@ -184,7 +184,7 @@ export default class MineTask extends BaseModel {
     orderId: number,
     disputeId: number,
     txn?: Transaction,
-  ): Promise<number> {
+  ) {
     return this.query(txn)
       .where(
         'id',
@@ -220,7 +220,7 @@ export default class MineTask extends BaseModel {
     orderId: number,
     disputeId: number,
     txn?: Transaction,
-  ): Promise<number> {
+  ) {
     return this.query(txn)
       .where(
         'id',
@@ -256,7 +256,7 @@ export default class MineTask extends BaseModel {
     orderId: number,
     disputeId: number,
     txn?: Transaction,
-  ): Promise<number> {
+  ) {
     return this.query(txn)
       .where(
         'id',

@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { Event, providers } from 'ethers';
+import { BigNumber, Event, providers } from 'ethers';
 import { Transaction } from 'objection';
 import * as erc20ABI from '../../../abi/erc20.json';
 import Market from '../../models/market';
@@ -7,7 +7,6 @@ import { Handler } from '../handler';
 import MarketProvider from '../../models/market_provider';
 import InvitedMediator from '../../models/invited_mediators';
 import PermittedTrader from '../../models/permitted_trader';
-import { BigNumber } from 'ethers';
 import { NotifierService, NotifyType } from '../../jobs/mailer/NotifierService';
 import NetworkService from '../network.service';
 

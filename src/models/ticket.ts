@@ -1,4 +1,4 @@
-import * as crand from 'crypto-random-string';
+import { randStr } from '../common/common';
 import Objection, { raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 import Market from './market';
@@ -67,7 +67,7 @@ export default class Ticket extends BaseModel {
 
   $beforeInsert() {
     super.$beforeInsert();
-    this.id = 'ticket_' + crand({ length: 24 });
+    this.id = 'ticket_' + randStr(24);
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
@@ -92,7 +92,7 @@ export default class Ticket extends BaseModel {
    */
   static create(data: Partial<Ticket>, txn?: Transaction): Promise<Ticket> {
     return new Promise(async (resolve, reject) => {
-      return this.query(txn).insert(data).then(resolve).catch(reject);
+      return this.query(txn).insertAndFetch(data).then(resolve).catch(reject);
     });
   }
 
@@ -112,7 +112,7 @@ export default class Ticket extends BaseModel {
    * @param id The record id
    * @param txn Optional transaction object
    */
-  static getById(id: string, txn?: Transaction): Promise<Ticket> {
+  static getById(id: string, txn?: Transaction) {
     return this.query(txn).whereNotDeleted().findById(id);
   }
 
@@ -130,7 +130,7 @@ export default class Ticket extends BaseModel {
     index: number,
     select = [],
     txn?: Transaction,
-  ): Promise<Ticket> {
+  ) {
     select = this.makeSelectList(select);
     let q = this.query(txn)
       .select(...select)
@@ -147,7 +147,7 @@ export default class Ticket extends BaseModel {
    * @param udp the fields to be updated
    * @param txn Optional transaction object
    */
-  static updateById(id: string, udp: Partial<Ticket>, txn?: Transaction): Promise<Ticket> {
+  static updateById(id: string, udp: Partial<Ticket>, txn?: Transaction) {
     return new Promise((resolve, reject) => {
       this.query(txn)
         .whereNotDeleted()
@@ -223,7 +223,7 @@ export default class Ticket extends BaseModel {
     offset?: number,
     select = [],
     txn?: Transaction,
-  ): Promise<Ticket[]> {
+  ) {
     select = this.makeSelectList(select);
     let q = this.query(txn)
       .select(...select, raw('count(*) over() as' + ' "__queryCount"'))

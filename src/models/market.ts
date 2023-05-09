@@ -1,4 +1,4 @@
-import * as crand from 'crypto-random-string';
+import { randStr } from '../common/common';
 import Objection, { Model, QueryBuilderType, raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 import InvitedMediator from './invited_mediators';
@@ -81,7 +81,7 @@ export default class Market extends BaseModel {
 
   $beforeInsert() {
     super.$beforeInsert();
-    this.id = 'market_' + crand({ length: 24 });
+    this.id = 'market_' + randStr(24);
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
@@ -121,7 +121,7 @@ export default class Market extends BaseModel {
    */
   static create(data: Partial<Market>, txn?: Transaction): Promise<Market> {
     return new Promise((resolve, reject) => {
-      return this.query(txn).insert(data).then(resolve).catch(reject);
+      return this.query(txn).insertAndFetch(data).then(resolve).catch(reject);
     });
   }
 
@@ -130,7 +130,7 @@ export default class Market extends BaseModel {
    * @param id The record id
    * @param txn Optional transaction object
    */
-  static getById(id: string, txn?: Transaction): Promise<Market> {
+  static getById(id: string, txn?: Transaction) {
     return this.query(txn).whereNotDeleted().findById(id);
   }
 
@@ -139,7 +139,7 @@ export default class Market extends BaseModel {
    * @param id The record id
    * @param txn Optional transaction object
    */
-  static getByMarketId(id: string, txn?: Transaction): Promise<Market> {
+  static getByMarketId(id: string, txn?: Transaction) {
     return this.query(txn).whereNotDeleted().where({ marketId: id }).first();
   }
 
@@ -168,12 +168,7 @@ export default class Market extends BaseModel {
    * @param select Select specific fields (optional)
    * @param txn Optional transaction object
    */
-  static getMarket(
-    network: string,
-    marketId: string,
-    select = [],
-    txn?: Transaction,
-  ): Promise<Market> {
+  static getMarket(network: string, marketId: string, select = [], txn?: Transaction) {
     select = this.makeSelectList(select);
     return this.query(txn)
       .select(...select)
@@ -250,7 +245,7 @@ export default class Market extends BaseModel {
     offset: number,
     select = [],
     txn?: Objection.Transaction,
-  ): Promise<string | Market[]> {
+  ) {
     select = this.makeSelectList(select);
     let query = this.query(txn).select(...select, raw('count(*) over() as' + ' "__queryCount"'));
     if (network) query = query.where('network', 'ilike', network);

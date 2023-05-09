@@ -13,7 +13,6 @@ import Swap from '../../models/swap';
 import { ErrorTypes, ok, throw404 } from '../../common/responses/responses';
 import Market from '../../models/market';
 import { MarketsService } from '../markets/markets.service';
-import { isValidNetwork } from '../../network/common';
 import Liquidity from '../../models/liquidity';
 import { LiquidityService } from '../liquidity/liquidity.service';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';

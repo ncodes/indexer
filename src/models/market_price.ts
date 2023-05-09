@@ -1,4 +1,4 @@
-import * as crand from 'crypto-random-string';
+import { randStr } from '../common/common';
 import Objection, { Transaction } from 'objection';
 import { BaseModel } from './base';
 import * as moment from 'moment';
@@ -32,7 +32,7 @@ export default class MarketPrice extends BaseModel {
 
   $beforeInsert() {
     super.$beforeInsert();
-    this.id = 'market_price_' + crand({ length: 24 });
+    this.id = 'market_price_' + randStr(24);
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
@@ -56,7 +56,7 @@ export default class MarketPrice extends BaseModel {
    */
   static create(data: Partial<MarketPrice>, txn?: Transaction): Promise<MarketPrice> {
     return new Promise((resolve, reject) => {
-      return this.query(txn).insert(data).then(resolve).catch(reject);
+      return this.query(txn).insertAndFetch(data).then(resolve).catch(reject);
     });
   }
 

@@ -1,6 +1,6 @@
-import * as crand from 'crypto-random-string';
 import Objection, { Transaction } from 'objection';
 import { BaseModel } from './base';
+import { randStr } from '../common/common';
 
 /**
  * Commit represents a commit on a dispute
@@ -29,7 +29,7 @@ export default class Commit extends BaseModel {
 
   $beforeInsert() {
     super.$beforeInsert();
-    this.id = 'commit_' + crand({ length: 24 });
+    this.id = 'commit_' + randStr(24);
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
@@ -54,7 +54,7 @@ export default class Commit extends BaseModel {
    */
   static create(data: Partial<Commit>, txn?: Transaction): Promise<Commit> {
     return new Promise(async (resolve, reject) => {
-      return this.query(txn).insert(data).then(resolve).catch(reject);
+      return this.query(txn).insertAndFetch(data).then(resolve).catch(reject);
     });
   }
 
@@ -74,7 +74,7 @@ export default class Commit extends BaseModel {
    * @param id The record id
    * @param txn Optional transaction object
    */
-  static getById(id: string, txn?: Transaction): Promise<Commit> {
+  static getById(id: string, txn?: Transaction) {
     return this.query(txn).whereNotDeleted().findById(id);
   }
 

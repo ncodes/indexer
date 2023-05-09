@@ -9,7 +9,6 @@ import { Roles } from '../../common/roles';
 import * as request from 'supertest';
 import NetworkService from '../../network/network.service';
 import { makeSession } from '../auth/utils';
-import * as cryptoRandomString from 'crypto-random-string';
 import { MarketsService } from '../markets/markets.service';
 import { SwapsController } from './swaps.controller';
 import { LiquidityService } from '../liquidity/liquidity.service';
@@ -17,6 +16,7 @@ import Swap from '../../models/swap';
 import Market from '../../models/market';
 import Liquidity from '../../models/liquidity';
 import SwapsService from './swaps.service';
+import { randStr } from '../../common/common';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -77,12 +77,7 @@ describe('SwapsController', () => {
   const net = 'ethereum';
   beforeEach(async () => {
     u = await User.create({ role: Roles.User });
-    token = await makeSession(
-      u,
-      cryptoRandomString({ length: 10 }),
-      '5',
-      mockCfgGet('auth.jwtSecret'),
-    );
+    token = await makeSession(u, randStr(), '5', mockCfgGet('auth.jwtSecret'));
   });
 
   describe('.get', () => {

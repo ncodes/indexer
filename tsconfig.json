@@ -13,6 +13,7 @@
     "baseUrl": "./",
     "skipLibCheck": true,
     "incremental": true,
+    "lib": ["ES2021.String"],
     "allowJs": true,
     "paths": { "*": ["types/*.d.ts"] }
   }

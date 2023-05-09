@@ -32,7 +32,7 @@ export default class Meta extends BaseModel {
    * @param key The target key
    * @param txn The transaction object
    */
-  static get(key: string, txn?: Transaction): Promise<Meta> {
+  static get(key: string, txn?: Transaction) {
     return this.query(txn).where({ key }).first();
   }
 
@@ -42,8 +42,8 @@ export default class Meta extends BaseModel {
    * @param value The meta value
    * @param txn The transaction object
    */
-  static create(key: string, value: string, txn?: Transaction): Promise<Meta> {
-    return this.query(txn).insert({
+  static create(key: string, value: string, txn?: Transaction) {
+    return this.query(txn).insertAndFetch({
       key,
       value,
     });
@@ -130,7 +130,7 @@ export default class Meta extends BaseModel {
    * @param feeName The name of the fee type
    * @param txn The transaction object
    */
-  static getProtocolFee(network: string, feeName: FeeName, txn?: Transaction): Promise<Meta> {
+  static getProtocolFee(network: string, feeName: FeeName, txn?: Transaction) {
     const key = this.makeProtocolFeeKey(network, feeName);
     return this.query(txn).where('key', key).first();
   }

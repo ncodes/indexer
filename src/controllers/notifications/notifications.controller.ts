@@ -2,7 +2,6 @@ import { Controller, Get, Param, Put, Query, Req, UseGuards, ValidationPipe } fr
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import { Request } from 'express';
-import { isValidNetwork } from '../../network/common';
 import { ok, throw404 } from '../../common/responses/responses';
 import Notification from '../../models/notification';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';

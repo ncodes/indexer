@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, ValidationPipe } from '@nestjs/common';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import { ok, throw404 } from '../../common/responses/responses';

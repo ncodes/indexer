@@ -40,15 +40,9 @@ export async function makeSession(
  * @param msg The message that was signed
  * @param sig The signature to be verified
  * @param ignoreEmail Indicate to ignore email in the message
- * @param ignoreMsgPubKey Indicates to ignore message public key in message
  * @returns
  */
-export function parseSignature(
-  msg: string,
-  sig: string,
-  ignoreEmail = false,
-  ignoreMsgPubKey = false,
-): SignatureInfo {
+export function parseSignature(msg: string, sig: string, ignoreEmail = false): SignatureInfo {
   const rawMsg = Buffer.from(msg, 'hex');
   const hashMsg = utils.hashMessage(rawMsg.toString('utf-8'));
   const digest = utils.arrayify(hashMsg);
@@ -72,17 +66,11 @@ export function parseSignature(
     email = parsed['Email'];
   }
 
-  let messengerPublicKey;
-  if (!ignoreMsgPubKey) {
-    messengerPublicKey = parsed['Messenger Public Key'];
-  }
-
   const ts = moment(parsed['Timestamp']);
   if (moment().diff(ts, 'minute').valueOf() >= 5) throw new Error('expired signature');
 
   return {
     address: recoveredAddress.toLowerCase(),
     email,
-    messengerPublicKey,
   };
 }

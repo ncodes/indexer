@@ -8,8 +8,7 @@ import User from '../../models/user';
 import { ErrorTypes } from '../../common/responses/responses';
 import { AuthDTO, GetAuthorizerDTO } from './dto';
 import { parseSignature, makeSession } from './utils';
-import { isEmail, isEmpty } from 'class-validator';
-import { PublicKey } from 'eciesjs';
+import { isEmail } from 'class-validator';
 
 /**
  * AuthController handles all authentication functionalities.
@@ -41,19 +40,6 @@ export class AuthController {
       throw400('email is not valid', ErrorTypes.InvalidRequest, 'email');
     }
 
-    // Ensure messenger public key if valid if provided
-    if (sigInfo.messengerPublicKey) {
-      try {
-        PublicKey.fromHex(sigInfo.messengerPublicKey);
-      } catch (e) {
-        throw400(
-          'messenger public key is invalid',
-          ErrorTypes.InvalidRequest,
-          'messengerPublicKey',
-        );
-      }
-    }
-
     let token: string;
     let user: User;
     await transaction(User, async (User) => {
@@ -63,18 +49,11 @@ export class AuthController {
         user = await User.create({
           address: sigInfo.address,
           email: sigInfo.email,
-          messengerPublicKey: sigInfo.messengerPublicKey,
-          encMsgKey: body.encMsgKey,
           role: Roles.User,
         });
       } else {
         user = await User.updateById(user.id, {
           email: user.email !== sigInfo.email ? sigInfo.email : user.email,
-          encMsgKey: body.encMsgKey ? body.encMsgKey : user.encMsgKey,
-          messengerPublicKey:
-            user.messengerPublicKey !== sigInfo.messengerPublicKey
-              ? sigInfo.messengerPublicKey
-              : user.messengerPublicKey,
         });
       }
 
@@ -103,7 +82,7 @@ export class AuthController {
     let sigInfo: SignatureInfo;
 
     try {
-      sigInfo = parseSignature(body.msg, body.sig, true, true);
+      sigInfo = parseSignature(body.msg, body.sig, true);
     } catch (error) {
       throw401('signature is invalid or expired', ErrorTypes.Auth, 'sig');
     }

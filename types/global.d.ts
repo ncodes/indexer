@@ -1697,7 +1697,6 @@ declare global {
   interface SignatureInfo {
     address: string;
     email: string;
-    messengerPublicKey: string;
   }
 
   interface EncryptedMessage {

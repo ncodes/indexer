@@ -12,7 +12,6 @@ describe('Utils', () => {
         makeMsg(
           '0x14791697260E4c9A71f18484C9f997B308e59325',
           'person@gmail.com',
-          'public_key',
           moment().toISOString(),
         ),
       );
@@ -21,30 +20,24 @@ describe('Utils', () => {
       const sigInfo = parseSignature(msg.toString('hex'), sig);
       expect(sigInfo.address).toEqual('0x14791697260E4c9A71f18484C9f997B308e59325'.toLowerCase());
       expect(sigInfo.email).toEqual('person@gmail.com');
-      expect(sigInfo.messengerPublicKey).toEqual('public_key');
     });
 
-    it(
-      'should return correct data when some of ignoreEmail or' + ' ignoreMsgPubKey' + ' = true',
-      async () => {
-        const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
-        const wallet = new ethers.Wallet(privateKey);
-        const msg = Buffer.from(
-          makeMsg(
-            '0x14791697260E4c9A71f18484C9f997B308e59325',
-            'person@gmail.com',
-            'public_key',
-            moment().toISOString(),
-          ),
-        );
+    it('should return correct data when some of ignoreEmail = true', async () => {
+      const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
+      const wallet = new ethers.Wallet(privateKey);
+      const msg = Buffer.from(
+        makeMsg(
+          '0x14791697260E4c9A71f18484C9f997B308e59325',
+          'person@gmail.com',
+          moment().toISOString(),
+        ),
+      );
 
-        const sig = await wallet.signMessage(msg.toString());
-        const sigInfo = parseSignature(msg.toString('hex'), sig, true, true);
-        expect(sigInfo.address).toEqual('0x14791697260E4c9A71f18484C9f997B308e59325'.toLowerCase());
-        expect(sigInfo.email).toBeUndefined();
-        expect(sigInfo.messengerPublicKey).toBeUndefined();
-      },
-    );
+      const sig = await wallet.signMessage(msg.toString());
+      const sigInfo = parseSignature(msg.toString('hex'), sig, true);
+      expect(sigInfo.address).toEqual('0x14791697260E4c9A71f18484C9f997B308e59325'.toLowerCase());
+      expect(sigInfo.email).toBeUndefined();
+    });
 
     it('should return error when message is malformed', async () => {
       const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
@@ -52,7 +45,7 @@ describe('Utils', () => {
       const msg = Buffer.from(`invalid`);
       const sig = await wallet.signMessage(msg.toString());
       expect(() => {
-        parseSignature(msg.toString('hex'), sig, true, true);
+        parseSignature(msg.toString('hex'), sig, true);
       }).toThrowError('malformed message');
     });
 
@@ -62,7 +55,7 @@ describe('Utils', () => {
       const msg = Buffer.from(`invalid--**invalid`);
       const sig = await wallet.signMessage(msg.toString());
       expect(() => {
-        parseSignature(msg.toString('hex'), sig, true, true);
+        parseSignature(msg.toString('hex'), sig, true);
       }).toThrowError('malformed message');
     });
 
@@ -72,7 +65,7 @@ describe('Utils', () => {
       const msg = Buffer.from(`invalid--invalid`);
       const sig = await wallet.signMessage(msg.toString());
       expect(() => {
-        parseSignature(msg.toString('hex'), sig, true, true);
+        parseSignature(msg.toString('hex'), sig, true);
       }).toThrowError('address mismatch');
     });
 
@@ -85,7 +78,7 @@ describe('Utils', () => {
 Address: "0x123"`);
         const sig = await wallet.signMessage(msg.toString());
         expect(() => {
-          parseSignature(msg.toString('hex'), sig, true, true);
+          parseSignature(msg.toString('hex'), sig, true);
         }).toThrowError('address mismatch');
       },
     );

@@ -7,19 +7,8 @@ import { BaseModel } from './base';
  * User represents a user model
  */
 export default class User extends BaseModel {
-  // The email of the user
   email: string;
-  // The address of the user
   address: string;
-  // The messenger public key
-  messengerPublicKey: string;
-  // The encrypted message key data
-  encMsgKey: string;
-  // The user's preferred payment method
-  paymentMethod: string;
-  // The user's preferred trade country
-  country: string;
-  // The user's role
   role: string;
 
   constructor(init?: Partial<User>) {
@@ -41,8 +30,6 @@ export default class User extends BaseModel {
   desensitize() {
     delete this.email;
     delete this.role;
-    delete this.paymentMethod;
-    delete this.country;
     return this;
   }
 

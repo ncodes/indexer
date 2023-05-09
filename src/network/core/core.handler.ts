@@ -549,7 +549,9 @@ export class CoreHandler extends Handler {
    * @param event The event object
    * @param txn The transaction object
    */
-  async onRewardWithdrawn(claimer: string, amount: BigNumber, event: Event, txn?: Transaction) {}
+  async onRewardWithdrawn(claimer: string, amount: BigNumber, event: Event, txn?: Transaction) {
+    //
+  }
 
   /**
    * Some fee was sent to the fee sharer contract
@@ -714,8 +716,6 @@ export class CoreHandler extends Handler {
           minSwap: minSwap.toString(),
           maxSwap: maxSwap.toString(),
           timeToPay: timeToPay.toNumber(),
-          country: user ? user.country : undefined,
-          paymentMethod: user ? user.paymentMethod : undefined,
         },
         txn,
       );

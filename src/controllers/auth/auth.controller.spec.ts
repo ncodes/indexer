@@ -11,7 +11,6 @@ import { DBService } from '../../db/DBService';
 import Session from '../../models/session';
 import User from '../../models/user';
 import { AuthController } from './auth.controller';
-import { PrivateKey } from 'eciesjs';
 import { ErrorMessages } from '../../common/responses/responses';
 
 const mockCfgGet = jest.fn();
@@ -19,13 +18,12 @@ const ConfigServiceMock = jest.fn().mockImplementation(() => {
   return { get: mockCfgGet };
 });
 
-export function makeMsg(address: string, email: string, msgPubKey: string, timestamp: string) {
+export function makeMsg(address: string, email: string, timestamp: string) {
   return `Welcome to FiatX!
 
 --
 Address: "${address}"
 Email: ${email}
-Messenger Public Key: "${msgPubKey}"
 Timestamp: ${timestamp}`;
 }
 
@@ -124,45 +122,19 @@ describe('AuthController', () => {
         makeMsg(
           '0x14791697260E4c9A71f18484C9f997B308e59325',
           'person-gmail.com',
-          '',
           moment().toISOString(),
         ),
       );
       const sig = await wallet.signMessage(msg.toString());
       await request(app.getHttpServer())
         .post(`/v1/auth`)
-        .send({ sig, msg: msg.toString('hex'), messengerPublicKey: 'pubKey' })
+        .send({ sig, msg: msg.toString('hex') })
         .expect(400)
         .expect({
           error: {
             param: 'email',
             type: 'invalid_request_error',
             message: 'email is not valid',
-          },
-        });
-    });
-
-    it('should return error and status=400 when messengerPublicKey was invalid', async () => {
-      const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
-      const wallet = new ethers.Wallet(privateKey);
-      const msg = Buffer.from(
-        makeMsg(
-          '0x14791697260E4c9A71f18484C9f997B308e59325',
-          'person@gmail.com',
-          Buffer.alloc(32).toString('hex'),
-          moment().toISOString(),
-        ),
-      );
-      const sig = await wallet.signMessage(msg.toString());
-      await request(app.getHttpServer())
-        .post(`/v1/auth`)
-        .send({ sig, msg: msg.toString('hex'), messengerPublicKey: 'pubKey' })
-        .expect(400)
-        .expect({
-          error: {
-            param: 'messengerPublicKey',
-            type: 'invalid_request_error',
-            message: 'messenger public key is invalid',
           },
         });
     });
@@ -174,7 +146,6 @@ describe('AuthController', () => {
         makeMsg(
           '0x14791697260E4c9A71f18484C9f997B308e59327',
           'person@gmail.com',
-          new PrivateKey().publicKey.toHex(),
           moment().toISOString(),
         ),
       );
@@ -196,12 +167,7 @@ describe('AuthController', () => {
       const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
       const wallet = new ethers.Wallet(privateKey);
       const msg = Buffer.from(
-        makeMsg(
-          wallet.address,
-          'person@gmail.com',
-          new PrivateKey().publicKey.toHex(),
-          moment().subtract('5', 'm').toISOString(),
-        ),
+        makeMsg(wallet.address, 'person@gmail.com', moment().subtract('5', 'm').toISOString()),
       );
       const sig = await wallet.signMessage(msg.toString());
       await request(app.getHttpServer())
@@ -220,14 +186,7 @@ describe('AuthController', () => {
     it('should return status=201, create user, session and return session token', async () => {
       const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
       const wallet = new ethers.Wallet(privateKey);
-      const msg = Buffer.from(
-        makeMsg(
-          wallet.address,
-          'person@gmail.com',
-          new PrivateKey().publicKey.toHex(),
-          moment().toISOString(),
-        ),
-      );
+      const msg = Buffer.from(makeMsg(wallet.address, 'person@gmail.com', moment().toISOString()));
       const sig = await wallet.signMessage(msg.toString());
 
       await request(app.getHttpServer())
@@ -235,16 +194,12 @@ describe('AuthController', () => {
         .send({
           sig,
           msg: msg.toString('hex'),
-          messengerPublicKey: '029c48686c0b93232fb2706b6e6f3fe17157bffa9c000941f341075e4d73e67a3e',
-          encMsgKey: 'enc_msg_key',
         })
         .expect(201)
         .expect((res) => {
           expect(res.body.data.token).toBeDefined();
           expect(res.body.data.user).toBeDefined();
-          expect(res.body.data.user.encMsgKey).toEqual('enc_msg_key');
           expect(res.body.data.user.address.toLowerCase()).toEqual(wallet.address.toLowerCase());
-          expect(res.body.data.user.messengerPublicKey).toBeDefined();
         });
 
       const session = await Session.getBySignature(sig);
@@ -255,18 +210,10 @@ describe('AuthController', () => {
       const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
       const wallet = new ethers.Wallet(privateKey);
       const msg = Buffer.from(
-        makeMsg(
-          wallet.address,
-          'person@gmail.com',
-          new PrivateKey().publicKey.toHex(),
-          moment().subtract(1, 's').toISOString(),
-        ),
+        makeMsg(wallet.address, 'person@gmail.com', moment().subtract(1, 's').toISOString()),
       );
       const sig = await wallet.signMessage(msg.toString());
-      const existing = await User.create({
-        address: wallet.address,
-        encMsgKey: 'enc_msg_key',
-      });
+      const existing = await User.create({ address: wallet.address });
       let user: User;
       await request(app.getHttpServer())
         .post(`/v1/auth`)
@@ -274,13 +221,11 @@ describe('AuthController', () => {
           sig,
           msg: msg.toString('hex'),
           email: 'person@gmail.com',
-          encMsgKey: 'enc_msg_key2',
         })
         .expect(201)
         .expect((res) => {
           expect(res.body.data.token).toBeDefined();
           expect(res.body.data.user).toBeDefined();
-          expect(res.body.data.user.encMsgKey).toEqual('enc_msg_key2');
           expect(res.body.data.user.address.toLowerCase()).toEqual(wallet.address.toLowerCase());
           user = res.body.data.user;
         });
@@ -335,14 +280,7 @@ describe('AuthController', () => {
     it('should return error when no user is associated with the signatory', async () => {
       const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
       const wallet = new ethers.Wallet(privateKey);
-      const msg = Buffer.from(
-        makeMsg(
-          wallet.address,
-          'person@gmail.com',
-          new PrivateKey().publicKey.toHex(),
-          moment().toISOString(),
-        ),
-      );
+      const msg = Buffer.from(makeMsg(wallet.address, 'person@gmail.com', moment().toISOString()));
       const sig = await wallet.signMessage(msg.toString());
       await request(app.getHttpServer())
         .get(`/v1/auth/user`)
@@ -356,14 +294,7 @@ describe('AuthController', () => {
     it('should return error when no user is associated with the signatory', async () => {
       const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
       const wallet = new ethers.Wallet(privateKey);
-      const msg = Buffer.from(
-        makeMsg(
-          wallet.address,
-          'person@gmail.com',
-          new PrivateKey().publicKey.toHex(),
-          moment().toISOString(),
-        ),
-      );
+      const msg = Buffer.from(makeMsg(wallet.address, 'person@gmail.com', moment().toISOString()));
       const sig = await wallet.signMessage(msg.toString());
       const user = await User.create({ address: wallet.address });
       await request(app.getHttpServer())

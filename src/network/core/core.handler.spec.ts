@@ -79,8 +79,6 @@ describe('CoreHandler', () => {
         });
         const user = await User.create({
           address: '0xProvider',
-          country: 'NG',
-          paymentMethod: 'pm',
         });
         await expect(
           handler.onUpdatedLiquidity(
@@ -102,8 +100,6 @@ describe('CoreHandler', () => {
         expect(liq.quote).toEqual(market.quote);
         expect(liq.quoteAddress).toEqual(market.quoteAddress);
         expect(liq.provider).toEqual('0xProvider');
-        expect(liq.country).toEqual(user.country);
-        expect(liq.paymentMethod).toEqual(user.paymentMethod);
       });
 
       it('should update existing liquidity when the provider has an existing one', async () => {

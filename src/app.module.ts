@@ -20,7 +20,6 @@ import { SwapsModule } from './controllers/swaps/swaps.module';
 import { shortenAddr } from './common/utils/helpers';
 import { TicketsModule } from './controllers/tickets/tickets.module';
 import { DisputesModule } from './controllers/disputes/disputes.module';
-import { MessagesModule } from './controllers/messages/messages.module';
 import { UsersModule } from './controllers/users/users.module';
 import { ReviewsModule } from './controllers/reviews/reviews.module';
 import { AssetsModule } from './controllers/assets/assets.module';
@@ -94,7 +93,6 @@ function getProviders() {
     SwapsModule,
     TicketsModule,
     DisputesModule,
-    MessagesModule,
     UsersModule,
     ReviewsModule,
     AssetsModule,

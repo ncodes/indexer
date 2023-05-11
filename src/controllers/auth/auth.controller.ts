@@ -28,13 +28,12 @@ export class AuthController {
    * @param body The response body
    * @returns
    */
-  @Post()
+  @Post('')
   async auth(
     @Body(new ValidationPipe(CommonValidationPipeOpt))
     body: AuthDTO,
   ) {
     let sigInfo: SignatureInfo;
-
     try {
       sigInfo = parseSignature(body.msg, body.sig);
     } catch (error) {

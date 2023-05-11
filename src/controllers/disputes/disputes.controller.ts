@@ -1,13 +1,9 @@
 import { Controller, Get, Query, UseGuards, ValidationPipe } from '@nestjs/common';
-import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
-import { HasKeyGuard } from '../../guards/has_token.guard';
 import { ok } from '../../common/responses/responses';
 import Dispute from '../../models/dispute';
 import { ListQueryDTO } from './query.dto';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 
-@UseGuards(BeAuthenticatedGuard)
-@UseGuards(HasKeyGuard)
 @Controller('v1/disputes')
 export class DisputesController {
   /**

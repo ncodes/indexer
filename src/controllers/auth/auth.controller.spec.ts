@@ -172,7 +172,7 @@ describe('AuthController', () => {
       const sig = await wallet.signMessage(msg.toString());
       await request(app.getHttpServer())
         .post(`/v1/auth`)
-        .send({ sig, msg: msg.toString('hex'), messengerPublicKey: 'abc' })
+        .send({ sig, msg: msg.toString('hex') })
         .expect(401)
         .expect({
           error: {

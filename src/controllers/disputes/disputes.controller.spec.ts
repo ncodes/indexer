@@ -77,19 +77,6 @@ describe('DisputesController', () => {
   });
 
   describe('.list', () => {
-    it('should return 401 when not authorized', async () => {
-      await request(app.getHttpServer())
-        .get(`/v1/disputes`)
-        .send({})
-        .expect(401)
-        .expect({
-          error: {
-            type: 'authentication_error',
-            message: 'authorization header is required',
-          },
-        });
-    });
-
     it('should return 400 when network is unknown', async () => {
       await request(app.getHttpServer())
         .get(`/v1/disputes`)

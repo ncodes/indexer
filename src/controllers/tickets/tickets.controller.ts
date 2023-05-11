@@ -1,14 +1,10 @@
 import { Controller, Get, Query, UseGuards, ValidationPipe } from '@nestjs/common';
-import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
-import { HasKeyGuard } from '../../guards/has_token.guard';
 import { ok, throw404 } from '../../common/responses/responses';
 import Ticket from '../../models/ticket';
 import { TicketsService } from './tickets.service';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { GetQueryDTO, ListQueryDTO } from './query.dto';
 
-@UseGuards(BeAuthenticatedGuard)
-@UseGuards(HasKeyGuard)
 @Controller('v1/tickets')
 export class TicketsController {
   constructor(private tickSrv: TicketsService) {}

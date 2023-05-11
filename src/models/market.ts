@@ -126,7 +126,7 @@ export default class Market extends BaseModel {
   }
 
   /**
-   * getById finds a record by Id
+   * getById finds a record by ID
    * @param id The record id
    * @param txn Optional transaction object
    */
@@ -259,7 +259,8 @@ export default class Market extends BaseModel {
         query = query.where('isBaseLocal', false).andWhere('isQuoteLocal', false);
       } else {
         query = query.where((q) => {
-          q.orWhere('isBaseLocal', true)
+          return q
+            .orWhere('isBaseLocal', true)
             .andWhere('isQuoteLocal', false)
             .orWhere('isBaseLocal', false)
             .andWhere('isQuoteLocal', true);

@@ -99,7 +99,7 @@ export default class Liquidity extends BaseModel {
   }
 
   /**
-   * getById finds a record by Id
+   * getById finds a record by ID
    * @param id The record id
    * @param txn Optional transaction object
    */
@@ -137,7 +137,7 @@ export default class Liquidity extends BaseModel {
       .whereNotDeleted()
       .where({ network })
       .where((q) => {
-        if (mid) q.where('marketId', 'ILIKE', mid);
+        if (mid) return q.where('marketId', 'ILIKE', mid);
       })
       .where('provider', 'ILIKE', provider)
       .first();
@@ -348,16 +348,16 @@ export default class Liquidity extends BaseModel {
       const timeAgo = moment().subtract(withinHours, 'h').toISOString();
       this.query(txn)
         .where((q) => {
-          if (net) q.where({ network: net });
+          if (net) return q.where({ network: net });
         })
         .where((q) => {
-          if (mid) q.where('marketId', 'ILIKE', mid);
+          if (mid) return q.where('marketId', 'ILIKE', mid);
         })
         .where((q) => {
-          if (baseAddress) q.where('baseAddress', 'ILIKE', baseAddress);
+          if (baseAddress) return q.where('baseAddress', 'ILIKE', baseAddress);
         })
         .where((q) => {
-          if (withinHours) q.where('createdAt', '>', timeAgo);
+          if (withinHours) return q.where('createdAt', '>', timeAgo);
         })
         .where('amount', '>', 0)
         .orderByRaw('cast(price as numeric) asc')
@@ -391,17 +391,17 @@ export default class Liquidity extends BaseModel {
       const timeAgo = moment().subtract(withinHours, 'h').toISOString();
       this.query(txn)
         .where((q) => {
-          if (net) q.where({ network: net });
+          if (net) return q.where({ network: net });
         })
         .where((q) => {
-          if (mid) q.where('marketId', 'ILIKE', mid);
+          if (mid) return q.where('marketId', 'ILIKE', mid);
         })
         .where((q) => {
-          if (baseAddress) q.where('baseAddress', 'ILIKE', baseAddress);
+          if (baseAddress) return q.where('baseAddress', 'ILIKE', baseAddress);
         })
         .where('amount', '>', 0)
         .where((q) => {
-          if (withinHours) q.where('createdAt', '>', timeAgo);
+          if (withinHours) return q.where('createdAt', '>', timeAgo);
         })
         .orderByRaw('cast(price as numeric) desc')
         .whereNotDeleted()

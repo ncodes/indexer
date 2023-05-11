@@ -52,7 +52,7 @@ export default class User extends BaseModel {
   }
 
   /**
-   * getById finds a user by Id
+   * getById finds a user by ID
    * @param id The user id
    */
   static getById(id: string) {
@@ -67,21 +67,6 @@ export default class User extends BaseModel {
     return new Promise((resolve, reject) => {
       this.query()
         .where('email', 'ILIKE', email)
-        .whereNotDeleted()
-        .first()
-        .then(resolve)
-        .catch(reject);
-    });
-  }
-
-  /**
-   * getByMsgPubKey finds a user by their messenger public key
-   * @param msgPubKey The user's messenger public key
-   */
-  static getByMsgPubKey(msgPubKey: string): Promise<User> {
-    return new Promise((resolve, reject) => {
-      this.query()
-        .where('messengerPublicKey', 'ILIKE', msgPubKey)
         .whereNotDeleted()
         .first()
         .then(resolve)

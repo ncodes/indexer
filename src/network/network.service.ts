@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BigNumber, Contract, providers } from 'ethers';
 import * as coreABI from '../../abi/core.json';
@@ -31,6 +31,7 @@ import { Watcher } from './watcher';
 
 @Injectable()
 export default class NetworkService {
+  private logger = new Logger(NetworkService.name);
   private contracts: {
     [key: string]: KnownContracts;
   } = {};
@@ -40,7 +41,7 @@ export default class NetworkService {
 
   constructor(public cfgSrv: ConfigService, private notifSrv: NotifierService) {
     if (isTestMode()) return;
-    this.watch();
+    this.watch().catch(this.logger.error);
   }
 
   /**
@@ -139,9 +140,8 @@ export default class NetworkService {
       prov,
     );
 
-    const watcher = new Watcher(network, prov);
-
     // Add handlers to watcher
+    const watcher = new Watcher(network, prov);
     await watcher.add(
       new MarketCoreHandler(this, this.notifSrv, prov, network, this.contracts[network]),
       new CoreHandler(this, this.notifSrv, prov, network, this.contracts[network]),

@@ -5,7 +5,6 @@ import { LiquidityService } from './liquidity.service';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ListQueryDTO } from './query.dto';
 import { ConfigService } from '../config.service';
-import { getCode } from 'country-list';
 
 @Controller('v1/liquidities')
 export class LiquidityController {
@@ -18,8 +17,6 @@ export class LiquidityController {
    *  - [marketId] The market ID (optional)
    *  - [amount] Limit result to liquidity where amount is between their swap amount limit
    *  - [provider] The provider address (optional)
-   *  - [country] The preferred country associated with the liquidity (optional)
-   *  - [paymentMethod] The preferred payment method associated with the liquidity (optional)
    *  - [noMerge] Prevent merge of contract liquidity with DB liquidity object
    *  - [count] Returns the count of matching result
    *  - [limit] The number of result to return (optional)

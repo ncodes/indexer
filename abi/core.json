@@ -1,1782 +1,2997 @@
 [
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_marketCore",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_token",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_defaultTimeToPay",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_orderGraceDur",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_maxOpenOrders",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "orderID",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "canceller",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "bool",
-        "name": "byDispute",
-        "type": "bool"
-      }
-    ],
-    "name": "OrderCancelled",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "previousOwner",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "newOwner",
-        "type": "address"
-      }
-    ],
-    "name": "OwnershipTransferred",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "inventor",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "sharing",
-        "type": "uint256"
-      }
-    ],
-    "name": "ProtocolFeeSplitUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "instantSwapFee",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "syntheticSwapFee",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "stableSwapFee",
-        "type": "uint256"
-      }
-    ],
-    "name": "ProtocolFeeUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "addr",
-        "type": "address"
-      }
-    ],
-    "name": "RegStableAsset",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "marketID",
-        "type": "bytes32"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "provider",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "manager",
-        "type": "address"
-      }
-    ],
-    "name": "RemoveLiquidityManager",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "addr",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "RewardWithdrawn",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "marketID",
-        "type": "bytes32"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "provider",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "manager",
-        "type": "address"
-      }
-    ],
-    "name": "SetLiquidityManager",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "marketID",
-        "type": "bytes32"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "orderID",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "provider",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "swapper",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "price",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "byDispute",
-        "type": "bool"
-      }
-    ],
-    "name": "Swap",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "marketID",
-        "type": "bytes32"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "provider",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "send",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "orderID",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "price",
-        "type": "uint256"
-      }
-    ],
-    "name": "SwapOrder",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "marketID",
-        "type": "bytes32"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "orderID",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "paidAt",
-        "type": "uint256"
-      }
-    ],
-    "name": "SwapOrderPaid",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "marketID",
-        "type": "bytes32"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "provider",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "paused",
-        "type": "bool"
-      }
-    ],
-    "name": "TogglePause",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "claimer",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "TradeRewardWithdrawn",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "TransferredToFeePool",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "marketID",
-        "type": "bytes32"
-      },
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "deduction",
-        "type": "bool"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "price",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "minSwap",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "maxSwap",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "timeToPay",
-        "type": "uint256"
-      }
-    ],
-    "name": "UpdatedLiquidity",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "marketID",
-        "type": "bytes32"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "provider",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "manager",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "price",
-        "type": "uint256"
-      }
-    ],
-    "name": "UpdatedPrice",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address[]",
-        "name": "assets",
-        "type": "address[]"
-      },
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "deleted",
-        "type": "bool"
-      }
-    ],
-    "name": "UpdatedShareableAsset",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "asset",
-        "type": "address"
-      }
-    ],
-    "name": "VerifiedAsset",
-    "type": "event"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "addr",
-        "type": "address"
-      }
-    ],
-    "name": "canCreateDispute",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
-      }
-    ],
-    "name": "cancelOrder",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
-      }
-    ],
-    "name": "cancelOrderByDispute",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "marketID",
-        "type": "bytes32"
-      }
-    ],
-    "name": "clearLiquidityManager",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "disputeManager",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "asset",
-        "type": "address"
-      }
-    ],
-    "name": "feeBalanceOf",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "feePool",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "phase",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "period",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "asset",
-        "type": "address"
-      }
-    ],
-    "name": "getAssetPhaseVolume",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "mid",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      }
-    ],
-    "name": "getLiquidity",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "amount",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "price",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "minSwap",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "maxSwap",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "timeToPay",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "openOrders",
-            "type": "uint256"
-          },
-          {
-            "internalType": "bool",
-            "name": "paused",
-            "type": "bool"
-          }
-        ],
-        "internalType": "struct Structs.Liquidity",
-        "name": "",
-        "type": "tuple"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "marketID",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "address",
-        "name": "provider",
-        "type": "address"
-      }
-    ],
-    "name": "getLiquidityManager",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "id",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getMarket",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "address",
-            "name": "creator",
-            "type": "address"
-          },
-          {
-            "internalType": "uint256",
-            "name": "createdAt",
-            "type": "uint256"
-          },
-          {
-            "components": [
-              {
-                "internalType": "uint256",
-                "name": "timeAdded",
-                "type": "uint256"
-              },
-              {
-                "internalType": "address",
-                "name": "addr",
-                "type": "address"
-              },
-              {
-                "internalType": "bool",
-                "name": "isLocal",
-                "type": "bool"
-              }
-            ],
-            "internalType": "struct Structs.Asset",
-            "name": "base",
-            "type": "tuple"
-          },
-          {
-            "components": [
-              {
-                "internalType": "uint256",
-                "name": "timeAdded",
-                "type": "uint256"
-              },
-              {
-                "internalType": "address",
-                "name": "addr",
-                "type": "address"
-              },
-              {
-                "internalType": "bool",
-                "name": "isLocal",
-                "type": "bool"
-              }
-            ],
-            "internalType": "struct Structs.Asset",
-            "name": "quote",
-            "type": "tuple"
-          },
-          {
-            "internalType": "uint256",
-            "name": "numOrders",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "numDisputes",
-            "type": "uint256"
-          },
-          {
-            "internalType": "bool",
-            "name": "permPut",
-            "type": "bool"
-          },
-          {
-            "internalType": "bool",
-            "name": "permSwap",
-            "type": "bool"
-          },
-          {
-            "internalType": "bool",
-            "name": "permMediate",
-            "type": "bool"
-          },
-          {
-            "internalType": "uint256",
-            "name": "commission",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "numMediators",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "mediatorBond",
-            "type": "uint256"
-          }
-        ],
-        "internalType": "struct Structs.Market",
-        "name": "",
-        "type": "tuple"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
-      }
-    ],
-    "name": "getOrder",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "bytes32",
-            "name": "marketID",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "address",
-            "name": "provider",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "taker",
-            "type": "address"
-          },
-          {
-            "internalType": "uint256",
-            "name": "amount",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "price",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "createdAt",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "payDeadline",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "cancelTime",
-            "type": "uint256"
-          },
-          {
-            "internalType": "bool",
-            "name": "paid",
-            "type": "bool"
-          },
-          {
-            "internalType": "bool",
-            "name": "released",
-            "type": "bool"
-          },
-          {
-            "internalType": "bool",
-            "name": "disputed",
-            "type": "bool"
-          },
-          {
-            "internalType": "bool",
-            "name": "cancelled",
-            "type": "bool"
-          }
-        ],
-        "internalType": "struct Structs.Order",
-        "name": "",
-        "type": "tuple"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "startTime",
-        "type": "uint256"
-      }
-    ],
-    "name": "getPhasePeriod",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "t",
-        "type": "uint256"
-      }
-    ],
-    "name": "getRewardPhase",
-    "outputs": [
-      {
-        "internalType": "uint256[]",
-        "name": "",
-        "type": "uint256[]"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "phase",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "period",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "user",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "asset",
-        "type": "address"
-      }
-    ],
-    "name": "getUserPhaseVolume",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
-      }
-    ],
-    "name": "hasOrder",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "asset",
-        "type": "address"
-      }
-    ],
-    "name": "inventorBalanceOf",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "addr",
-        "type": "address"
-      }
-    ],
-    "name": "isShareable",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "addr",
-        "type": "address"
-      }
-    ],
-    "name": "isStable",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "addr",
-        "type": "address"
-      }
-    ],
-    "name": "isVerified",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
-      }
-    ],
-    "name": "markAsDisputed",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
-      }
-    ],
-    "name": "markAsPaid",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "addr",
-        "type": "address"
-      }
-    ],
-    "name": "markAsStable",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "addr",
-        "type": "address"
-      }
-    ],
-    "name": "markAsVerified",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "marketCore",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "owner",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
-      }
-    ],
-    "name": "releaseOrder",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
-      }
-    ],
-    "name": "releaseOrderByDispute",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "renounceOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "addr",
-        "type": "address"
-      }
-    ],
-    "name": "rewardBalanceOf",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "val",
-        "type": "uint256"
-      }
-    ],
-    "name": "setDefaultTimeToPay",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "val",
-        "type": "address"
-      }
-    ],
-    "name": "setDisputeManager",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "addr",
-        "type": "address"
-      }
-    ],
-    "name": "setFeePool",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "reward",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "interval",
-        "type": "uint256"
-      }
-    ],
-    "name": "setFeePoolConfig",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "val",
-        "type": "address"
-      }
-    ],
-    "name": "setInventor",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "marketID",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "bool",
-        "name": "deduct",
-        "type": "bool"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "price",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "minSwap",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "maxSwap",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "timeToPay",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "expireAt",
-        "type": "uint256"
-      }
-    ],
-    "name": "setLiquidity",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "marketID",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "address",
-        "name": "manager",
-        "type": "address"
-      }
-    ],
-    "name": "setLiquidityManager",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "addr",
-        "type": "address"
-      }
-    ],
-    "name": "setMarketCore",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "val",
-        "type": "uint256"
-      }
-    ],
-    "name": "setMaxOpenOrders",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "val",
-        "type": "uint256"
-      }
-    ],
-    "name": "setOrderGraceDur",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_instantSwapFee",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_syntheticSwapFee",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_stableSwapFee",
-        "type": "uint256"
-      }
-    ],
-    "name": "setProtoFee",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "inventorBP",
-        "type": "uint256"
-      }
-    ],
-    "name": "setProtocolFeeSplit",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256[][]",
-        "name": "phases",
-        "type": "uint256[][]"
-      }
-    ],
-    "name": "setRewardPhases",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address[]",
-        "name": "addrs",
-        "type": "address[]"
-      },
-      {
-        "internalType": "bool",
-        "name": "del",
-        "type": "bool"
-      }
-    ],
-    "name": "setShareables",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "asset",
-        "type": "address"
-      }
-    ],
-    "name": "shareablesBalanceOf",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "state",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "instantSwapFee",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "syntheticSwapFee",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "stableSwapFee",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "maxOpenOrders",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "inventor",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "inventorSplitBP",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "sharingSplitBP",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "defaultTimeToPay",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "orderGraceDur",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "numOrders",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "rewardPerFeePoolTx",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "feePoolTxInterval",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "marketID",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "address",
-        "name": "provider",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "maxPrice",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "expireAt",
-        "type": "uint256"
-      }
-    ],
-    "name": "swapQuoteForBase",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "marketID",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "uint256",
-        "name": "expireAt",
-        "type": "uint256"
-      }
-    ],
-    "name": "togglePause",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "token",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "addr",
-        "type": "address"
-      }
-    ],
-    "name": "tradeRewardBalanceOf",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "newOwner",
-        "type": "address"
-      }
-    ],
-    "name": "transferOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_token",
-        "type": "address"
-      }
-    ],
-    "name": "transferToFeePool",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "addr",
-        "type": "address"
-      }
-    ],
-    "name": "unmarkAsVerified",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "marketID",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "price",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "expireAt",
-        "type": "uint256"
-      }
-    ],
-    "name": "updateLiquidityPrice",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "addr",
-        "type": "address"
-      },
-      {
-        "internalType": "bool",
-        "name": "add",
-        "type": "bool"
-      }
-    ],
-    "name": "updateWriter",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "asset",
-        "type": "address"
-      }
-    ],
-    "name": "withdrawFeeBalance",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "asset",
-        "type": "address"
-      }
-    ],
-    "name": "withdrawInventorBalance",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "withdrawReward",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "withdrawTradeReward",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "writers",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  }
-]
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "_marketCore",
+         "type": "address"
+       },
+       {
+         "internalType": "address",
+         "name": "_token",
+         "type": "address"
+       },
+       {
+         "internalType": "uint256",
+         "name": "_minTimeToPay",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "_orderGraceDur",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "_maxOpenOrders",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "_maxOpenDisputes",
+         "type": "uint256"
+       }
+     ],
+     "stateMutability": "nonpayable",
+     "type": "constructor"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": false,
+         "internalType": "address",
+         "name": "manager",
+         "type": "address"
+       },
+       {
+         "indexed": false,
+         "internalType": "address",
+         "name": "finalizer",
+         "type": "address"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "orderId",
+         "type": "uint256"
+       },
+       {
+         "indexed": false,
+         "internalType": "bool",
+         "name": "released",
+         "type": "bool"
+       }
+     ],
+     "name": "FinalizedByManagerSig",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "bp",
+         "type": "uint256"
+       }
+     ],
+     "name": "NFTDiscountUpdated",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": false,
+         "internalType": "address",
+         "name": "marketID",
+         "type": "address"
+       },
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "provider",
+         "type": "address"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "lid",
+         "type": "uint256"
+       },
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "offerer",
+         "type": "address"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "offerId",
+         "type": "uint256"
+       }
+     ],
+     "name": "NewOffer",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": true,
+         "internalType": "uint256",
+         "name": "offerId",
+         "type": "uint256"
+       },
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "accepter",
+         "type": "address"
+       }
+     ],
+     "name": "OfferAccepted",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": true,
+         "internalType": "uint256",
+         "name": "offerId",
+         "type": "uint256"
+       },
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "canceller",
+         "type": "address"
+       }
+     ],
+     "name": "OfferCancelled",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": true,
+         "internalType": "uint256",
+         "name": "offerId",
+         "type": "uint256"
+       },
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "executor",
+         "type": "address"
+       }
+     ],
+     "name": "OfferExecuted",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": true,
+         "internalType": "uint256",
+         "name": "offerId",
+         "type": "uint256"
+       },
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "unaccepter",
+         "type": "address"
+       }
+     ],
+     "name": "OfferUnaccepted",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": true,
+         "internalType": "uint256",
+         "name": "offerId",
+         "type": "uint256"
+       },
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "offerer",
+         "type": "address"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "amount",
+         "type": "uint256"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "price",
+         "type": "uint256"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256[]",
+         "name": "ids",
+         "type": "uint256[]"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "deadline",
+         "type": "uint256"
+       }
+     ],
+     "name": "OfferUpdated",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": true,
+         "internalType": "uint256",
+         "name": "orderID",
+         "type": "uint256"
+       },
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "canceller",
+         "type": "address"
+       },
+       {
+         "indexed": true,
+         "internalType": "bool",
+         "name": "byDispute",
+         "type": "bool"
+       }
+     ],
+     "name": "OrderCancelled",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "previousOwner",
+         "type": "address"
+       },
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "newOwner",
+         "type": "address"
+       }
+     ],
+     "name": "OwnershipTransferred",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "inventor",
+         "type": "uint256"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "shared",
+         "type": "uint256"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "operator",
+         "type": "uint256"
+       }
+     ],
+     "name": "ProtocolFeeSplitUpdated",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "instantSwapFee",
+         "type": "uint256"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "synthSwapFee",
+         "type": "uint256"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "stableSwapFee",
+         "type": "uint256"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "fixedSynthSwapFee",
+         "type": "uint256"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "instantNFTSwapFee",
+         "type": "uint256"
+       }
+     ],
+     "name": "ProtocolFeeUpdated",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "marketID",
+         "type": "address"
+       },
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "provider",
+         "type": "address"
+       },
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "manager",
+         "type": "address"
+       }
+     ],
+     "name": "RemoveLiquidityManager",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "mid",
+         "type": "address"
+       },
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "provider",
+         "type": "address"
+       },
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "swapper",
+         "type": "address"
+       },
+       {
+         "indexed": false,
+         "internalType": "address",
+         "name": "recipient",
+         "type": "address"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256[6]",
+         "name": "numTypeInfo",
+         "type": "uint256[6]"
+       },
+       {
+         "indexed": false,
+         "internalType": "bool",
+         "name": "byDispute",
+         "type": "bool"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256[]",
+         "name": "idsFromLP",
+         "type": "uint256[]"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256[]",
+         "name": "idsFromTaker",
+         "type": "uint256[]"
+       }
+     ],
+     "name": "Swap",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "mid",
+         "type": "address"
+       },
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "provider",
+         "type": "address"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "lid",
+         "type": "uint256"
+       },
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "sender",
+         "type": "address"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "offerId",
+         "type": "uint256"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "deadline",
+         "type": "uint256"
+       }
+     ],
+     "name": "SwapOffer",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "mid",
+         "type": "address"
+       },
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "provider",
+         "type": "address"
+       },
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "swapper",
+         "type": "address"
+       },
+       {
+         "indexed": false,
+         "internalType": "address",
+         "name": "recipient",
+         "type": "address"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256[6]",
+         "name": "numTypeInfo",
+         "type": "uint256[6]"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256[]",
+         "name": "idsFromLP",
+         "type": "uint256[]"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256[]",
+         "name": "idsFromTaker",
+         "type": "uint256[]"
+       }
+     ],
+     "name": "SwapOrder",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": true,
+         "internalType": "uint256",
+         "name": "orderID",
+         "type": "uint256"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "paidAt",
+         "type": "uint256"
+       }
+     ],
+     "name": "SwapOrderPaid",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "marketID",
+         "type": "address"
+       },
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "provider",
+         "type": "address"
+       },
+       {
+         "indexed": false,
+         "internalType": "bool",
+         "name": "paused",
+         "type": "bool"
+       }
+     ],
+     "name": "TogglePause",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "claimer",
+         "type": "address"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "amount",
+         "type": "uint256"
+       }
+     ],
+     "name": "TradeRewardWithdrawn",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": false,
+         "internalType": "address",
+         "name": "asset",
+         "type": "address"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "amount",
+         "type": "uint256"
+       }
+     ],
+     "name": "TransferInventorBalance",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "token",
+         "type": "address"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "amount",
+         "type": "uint256"
+       },
+       {
+         "indexed": false,
+         "internalType": "address",
+         "name": "convAsset",
+         "type": "address"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "convAmount",
+         "type": "uint256"
+       }
+     ],
+     "name": "TransferredToFeePool",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "sender",
+         "type": "address"
+       },
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "marketID",
+         "type": "address"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "liq",
+         "type": "uint256"
+       },
+       {
+         "indexed": false,
+         "internalType": "bool",
+         "name": "deduction",
+         "type": "bool"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "amount",
+         "type": "uint256"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "price",
+         "type": "uint256"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256[]",
+         "name": "wantOrIds",
+         "type": "uint256[]"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256[]",
+         "name": "wantAndIds",
+         "type": "uint256[]"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "minSwap",
+         "type": "uint256"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "maxSwap",
+         "type": "uint256"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "timeToPay",
+         "type": "uint256"
+       }
+     ],
+     "name": "UpdateFungibleLiquidity",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "sender",
+         "type": "address"
+       },
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "marketID",
+         "type": "address"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "liq",
+         "type": "uint256"
+       },
+       {
+         "indexed": false,
+         "internalType": "bool",
+         "name": "deduction",
+         "type": "bool"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "price",
+         "type": "uint256"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256[]",
+         "name": "wantOrIds",
+         "type": "uint256[]"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256[]",
+         "name": "wantAndIds",
+         "type": "uint256[]"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "timeToPay",
+         "type": "uint256"
+       }
+     ],
+     "name": "UpdateNonFungibleLiquidity",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": false,
+         "internalType": "address",
+         "name": "swapRouter",
+         "type": "address"
+       },
+       {
+         "indexed": false,
+         "internalType": "address",
+         "name": "ethErc20Addr",
+         "type": "address"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "poolFee",
+         "type": "uint256"
+       }
+     ],
+     "name": "UpdatedAMMInfo",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": false,
+         "internalType": "address",
+         "name": "input",
+         "type": "address"
+       },
+       {
+         "indexed": false,
+         "internalType": "address",
+         "name": "output",
+         "type": "address"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "poolFee",
+         "type": "uint256"
+       }
+     ],
+     "name": "UpdatedAMMPoolInfo",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": false,
+         "internalType": "address",
+         "name": "addr",
+         "type": "address"
+       }
+     ],
+     "name": "UpdatedAssetRegistry",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": false,
+         "internalType": "address",
+         "name": "addr",
+         "type": "address"
+       }
+     ],
+     "name": "UpdatedBadge",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": false,
+         "internalType": "address",
+         "name": "addr",
+         "type": "address"
+       }
+     ],
+     "name": "UpdatedDisputeManager",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": false,
+         "internalType": "address",
+         "name": "addr",
+         "type": "address"
+       }
+     ],
+     "name": "UpdatedFeePool",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "interval",
+         "type": "uint256"
+       }
+     ],
+     "name": "UpdatedFeePoolConfig",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": false,
+         "internalType": "address",
+         "name": "addr",
+         "type": "address"
+       }
+     ],
+     "name": "UpdatedFeePurse",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": false,
+         "internalType": "address",
+         "name": "addr",
+         "type": "address"
+       }
+     ],
+     "name": "UpdatedInventor",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "marketID",
+         "type": "address"
+       },
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "provider",
+         "type": "address"
+       },
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "manager",
+         "type": "address"
+       }
+     ],
+     "name": "UpdatedLiquidityManager",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": false,
+         "internalType": "address",
+         "name": "addr",
+         "type": "address"
+       }
+     ],
+     "name": "UpdatedMarketCore",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "val",
+         "type": "uint256"
+       }
+     ],
+     "name": "UpdatedMaxOpenDisputes",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "val",
+         "type": "uint256"
+       }
+     ],
+     "name": "UpdatedMaxOpenOrders",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "val",
+         "type": "uint256"
+       }
+     ],
+     "name": "UpdatedMinTimeToPay",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": false,
+         "internalType": "address",
+         "name": "addr",
+         "type": "address"
+       }
+     ],
+     "name": "UpdatedNFT",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": false,
+         "internalType": "address",
+         "name": "addr",
+         "type": "address"
+       }
+     ],
+     "name": "UpdatedOperator",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "val",
+         "type": "uint256"
+       }
+     ],
+     "name": "UpdatedOrderGraceDur",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "marketID",
+         "type": "address"
+       },
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "provider",
+         "type": "address"
+       },
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "manager",
+         "type": "address"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
+         "name": "price",
+         "type": "uint256"
+       }
+     ],
+     "name": "UpdatedPrice",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": true,
+         "internalType": "address",
+         "name": "sender",
+         "type": "address"
+       }
+     ],
+     "name": "UpdatedReqSwapBadges",
+     "type": "event"
+   },
+   {
+     "anonymous": false,
+     "inputs": [
+       {
+         "indexed": false,
+         "internalType": "address",
+         "name": "addr",
+         "type": "address"
+       }
+     ],
+     "name": "UpdatedRewardPool",
+     "type": "event"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "uint256",
+         "name": "offerId",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "delay",
+         "type": "uint256"
+       }
+     ],
+     "name": "acceptOffer",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "uint256",
+         "name": "id",
+         "type": "uint256"
+       },
+       {
+         "internalType": "address",
+         "name": "addr",
+         "type": "address"
+       }
+     ],
+     "name": "canCreateDispute",
+     "outputs": [
+       {
+         "internalType": "bool",
+         "name": "",
+         "type": "bool"
+       }
+     ],
+     "stateMutability": "view",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "uint256",
+         "name": "offerId",
+         "type": "uint256"
+       }
+     ],
+     "name": "cancelOffer",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "uint256",
+         "name": "id",
+         "type": "uint256"
+       }
+     ],
+     "name": "cancelOrder",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "uint256",
+         "name": "id",
+         "type": "uint256"
+       }
+     ],
+     "name": "cancelOrderByDispute",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "uint256",
+         "name": "id",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "expireAt",
+         "type": "uint256"
+       },
+       {
+         "internalType": "bytes",
+         "name": "signature",
+         "type": "bytes"
+       }
+     ],
+     "name": "cancelOrderByManagerSig",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "marketID",
+         "type": "address"
+       }
+     ],
+     "name": "clearLiquidityManager",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "uint256",
+         "name": "interval",
+         "type": "uint256"
+       }
+     ],
+     "name": "configureFeePool",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "marketID",
+         "type": "address"
+       },
+       {
+         "internalType": "address",
+         "name": "provider",
+         "type": "address"
+       },
+       {
+         "internalType": "address",
+         "name": "recipient",
+         "type": "address"
+       },
+       {
+         "internalType": "uint256",
+         "name": "lid",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "amount",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "price",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256[]",
+         "name": "ids",
+         "type": "uint256[]"
+       },
+       {
+         "internalType": "uint256",
+         "name": "deadline",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "operator",
+         "type": "uint256"
+       }
+     ],
+     "name": "createOffer",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "uint256",
+         "name": "offerId",
+         "type": "uint256"
+       }
+     ],
+     "name": "executeOffer",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "owner",
+         "type": "address"
+       },
+       {
+         "internalType": "address",
+         "name": "asset",
+         "type": "address"
+       }
+     ],
+     "name": "feeBalanceOf",
+     "outputs": [
+       {
+         "internalType": "uint256",
+         "name": "",
+         "type": "uint256"
+       }
+     ],
+     "stateMutability": "view",
+     "type": "function"
+   },
+   {
+     "inputs": [],
+     "name": "getFeeBPs",
+     "outputs": [
+       {
+         "internalType": "uint256[3]",
+         "name": "",
+         "type": "uint256[3]"
+       }
+     ],
+     "stateMutability": "view",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "mid",
+         "type": "address"
+       },
+       {
+         "internalType": "address",
+         "name": "owner",
+         "type": "address"
+       },
+       {
+         "internalType": "uint256",
+         "name": "lid",
+         "type": "uint256"
+       }
+     ],
+     "name": "getLiquidity",
+     "outputs": [
+       {
+         "components": [
+           {
+             "internalType": "uint256[]",
+             "name": "ids",
+             "type": "uint256[]"
+           },
+           {
+             "internalType": "uint256",
+             "name": "amount",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "price",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "minSwap",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "maxSwap",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "timeToPay",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "openOrders",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "openDisputes",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "protoFeePurseId",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "mktCreatorFeePurseId",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256[]",
+             "name": "wantOrIds",
+             "type": "uint256[]"
+           },
+           {
+             "internalType": "uint256[]",
+             "name": "wantAndIds",
+             "type": "uint256[]"
+           },
+           {
+             "internalType": "bool",
+             "name": "paused",
+             "type": "bool"
+           },
+           {
+             "internalType": "address",
+             "name": "target",
+             "type": "address"
+           }
+         ],
+         "internalType": "struct Structs.Liquidity",
+         "name": "",
+         "type": "tuple"
+       }
+     ],
+     "stateMutability": "view",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "marketID",
+         "type": "address"
+       },
+       {
+         "internalType": "address",
+         "name": "provider",
+         "type": "address"
+       }
+     ],
+     "name": "getLiquidityManager",
+     "outputs": [
+       {
+         "internalType": "address",
+         "name": "",
+         "type": "address"
+       }
+     ],
+     "stateMutability": "view",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "id",
+         "type": "address"
+       }
+     ],
+     "name": "getMarket",
+     "outputs": [
+       {
+         "components": [
+           {
+             "internalType": "uint256",
+             "name": "createdAt",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "numOrders",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "numDisputes",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "numLiquidity",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "commission",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "numMediators",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "mediatorBond",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "disputeCost",
+             "type": "uint256"
+           },
+           {
+             "components": [
+               {
+                 "internalType": "uint256",
+                 "name": "disputeDelayTime",
+                 "type": "uint256"
+               },
+               {
+                 "internalType": "uint256",
+                 "name": "evidenceDur",
+                 "type": "uint256"
+               },
+               {
+                 "internalType": "uint256",
+                 "name": "predictDur",
+                 "type": "uint256"
+               },
+               {
+                 "internalType": "uint256",
+                 "name": "appealDur",
+                 "type": "uint256"
+               }
+             ],
+             "internalType": "struct Structs.MarketDur",
+             "name": "dur",
+             "type": "tuple"
+           },
+           {
+             "internalType": "address",
+             "name": "creator",
+             "type": "address"
+           },
+           {
+             "internalType": "address",
+             "name": "manager",
+             "type": "address"
+           },
+           {
+             "components": [
+               {
+                 "internalType": "address",
+                 "name": "addr",
+                 "type": "address"
+               },
+               {
+                 "internalType": "enum Structs.AssetType",
+                 "name": "assetType",
+                 "type": "uint8"
+               }
+             ],
+             "internalType": "struct Structs.Asset",
+             "name": "base",
+             "type": "tuple"
+           },
+           {
+             "components": [
+               {
+                 "internalType": "address",
+                 "name": "addr",
+                 "type": "address"
+               },
+               {
+                 "internalType": "enum Structs.AssetType",
+                 "name": "assetType",
+                 "type": "uint8"
+               }
+             ],
+             "internalType": "struct Structs.Asset",
+             "name": "quote",
+             "type": "tuple"
+           },
+           {
+             "components": [
+               {
+                 "internalType": "bool",
+                 "name": "put",
+                 "type": "bool"
+               },
+               {
+                 "internalType": "bool",
+                 "name": "swap",
+                 "type": "bool"
+               },
+               {
+                 "internalType": "bool",
+                 "name": "mediate",
+                 "type": "bool"
+               },
+               {
+                 "internalType": "bool",
+                 "name": "offerOnly",
+                 "type": "bool"
+               },
+               {
+                 "internalType": "bool",
+                 "name": "allowZeroOfferPrice",
+                 "type": "bool"
+               }
+             ],
+             "internalType": "struct Structs.MarketPerms",
+             "name": "perms",
+             "type": "tuple"
+           }
+         ],
+         "internalType": "struct Structs.Market",
+         "name": "",
+         "type": "tuple"
+       }
+     ],
+     "stateMutability": "view",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "uint256",
+         "name": "id",
+         "type": "uint256"
+       }
+     ],
+     "name": "getOffer",
+     "outputs": [
+       {
+         "components": [
+           {
+             "internalType": "address",
+             "name": "creator",
+             "type": "address"
+           },
+           {
+             "internalType": "address",
+             "name": "marketID",
+             "type": "address"
+           },
+           {
+             "internalType": "address",
+             "name": "provider",
+             "type": "address"
+           },
+           {
+             "internalType": "address",
+             "name": "recipient",
+             "type": "address"
+           },
+           {
+             "internalType": "uint256",
+             "name": "lid",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "amount",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "price",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256[]",
+             "name": "ids",
+             "type": "uint256[]"
+           },
+           {
+             "internalType": "uint256",
+             "name": "liq",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "deadline",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "execAt",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "operator",
+             "type": "uint256"
+           },
+           {
+             "internalType": "bool",
+             "name": "accepted",
+             "type": "bool"
+           },
+           {
+             "internalType": "bool",
+             "name": "cancelled",
+             "type": "bool"
+           },
+           {
+             "internalType": "bool",
+             "name": "executed",
+             "type": "bool"
+           }
+         ],
+         "internalType": "struct Structs.Offer",
+         "name": "",
+         "type": "tuple"
+       }
+     ],
+     "stateMutability": "view",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "uint256",
+         "name": "id",
+         "type": "uint256"
+       }
+     ],
+     "name": "getOrder",
+     "outputs": [
+       {
+         "components": [
+           {
+             "internalType": "address",
+             "name": "marketID",
+             "type": "address"
+           },
+           {
+             "internalType": "address",
+             "name": "provider",
+             "type": "address"
+           },
+           {
+             "internalType": "address",
+             "name": "taker",
+             "type": "address"
+           },
+           {
+             "internalType": "address",
+             "name": "recipient",
+             "type": "address"
+           },
+           {
+             "internalType": "address",
+             "name": "finalizer",
+             "type": "address"
+           },
+           {
+             "internalType": "uint256",
+             "name": "lid",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "amount",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "price",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "createdAt",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "payDeadline",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "cancelAt",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "disputeFrom",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "offerId",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "operator",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256[]",
+             "name": "takerIds",
+             "type": "uint256[]"
+           },
+           {
+             "internalType": "uint256[]",
+             "name": "providerIds",
+             "type": "uint256[]"
+           },
+           {
+             "internalType": "bool",
+             "name": "paid",
+             "type": "bool"
+           },
+           {
+             "internalType": "bool",
+             "name": "released",
+             "type": "bool"
+           },
+           {
+             "internalType": "bool",
+             "name": "disputed",
+             "type": "bool"
+           },
+           {
+             "internalType": "bool",
+             "name": "cancelled",
+             "type": "bool"
+           }
+         ],
+         "internalType": "struct Structs.Order",
+         "name": "",
+         "type": "tuple"
+       }
+     ],
+     "stateMutability": "view",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "addr",
+         "type": "address"
+       }
+     ],
+     "name": "getReqSwapBadges",
+     "outputs": [
+       {
+         "internalType": "string[2][]",
+         "name": "",
+         "type": "string[2][]"
+       }
+     ],
+     "stateMutability": "view",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "mid",
+         "type": "address"
+       },
+       {
+         "internalType": "address",
+         "name": "owner",
+         "type": "address"
+       },
+       {
+         "internalType": "uint256",
+         "name": "lid",
+         "type": "uint256"
+       }
+     ],
+     "name": "hasLiquidity",
+     "outputs": [
+       {
+         "internalType": "bool",
+         "name": "",
+         "type": "bool"
+       }
+     ],
+     "stateMutability": "view",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "uint256",
+         "name": "id",
+         "type": "uint256"
+       }
+     ],
+     "name": "hasOrder",
+     "outputs": [
+       {
+         "internalType": "bool",
+         "name": "",
+         "type": "bool"
+       }
+     ],
+     "stateMutability": "view",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "asset",
+         "type": "address"
+       }
+     ],
+     "name": "inventorBalanceOf",
+     "outputs": [
+       {
+         "internalType": "uint256",
+         "name": "",
+         "type": "uint256"
+       }
+     ],
+     "stateMutability": "view",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "addr",
+         "type": "address"
+       }
+     ],
+     "name": "isVerified",
+     "outputs": [
+       {
+         "internalType": "bool",
+         "name": "",
+         "type": "bool"
+       }
+     ],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "uint256",
+         "name": "id",
+         "type": "uint256"
+       }
+     ],
+     "name": "markAsDisputed",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "uint256",
+         "name": "id",
+         "type": "uint256"
+       }
+     ],
+     "name": "markOrderAsPaid",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "",
+         "type": "address"
+       },
+       {
+         "internalType": "address",
+         "name": "",
+         "type": "address"
+       },
+       {
+         "internalType": "uint256[]",
+         "name": "",
+         "type": "uint256[]"
+       },
+       {
+         "internalType": "uint256[]",
+         "name": "",
+         "type": "uint256[]"
+       },
+       {
+         "internalType": "bytes",
+         "name": "",
+         "type": "bytes"
+       }
+     ],
+     "name": "onERC1155BatchReceived",
+     "outputs": [
+       {
+         "internalType": "bytes4",
+         "name": "",
+         "type": "bytes4"
+       }
+     ],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "",
+         "type": "address"
+       },
+       {
+         "internalType": "address",
+         "name": "",
+         "type": "address"
+       },
+       {
+         "internalType": "uint256",
+         "name": "",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "",
+         "type": "uint256"
+       },
+       {
+         "internalType": "bytes",
+         "name": "",
+         "type": "bytes"
+       }
+     ],
+     "name": "onERC1155Received",
+     "outputs": [
+       {
+         "internalType": "bytes4",
+         "name": "",
+         "type": "bytes4"
+       }
+     ],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "operator",
+         "type": "address"
+       },
+       {
+         "internalType": "address",
+         "name": "asset",
+         "type": "address"
+       }
+     ],
+     "name": "operatorBalanceOf",
+     "outputs": [
+       {
+         "internalType": "uint256",
+         "name": "",
+         "type": "uint256"
+       }
+     ],
+     "stateMutability": "view",
+     "type": "function"
+   },
+   {
+     "inputs": [],
+     "name": "owner",
+     "outputs": [
+       {
+         "internalType": "address",
+         "name": "",
+         "type": "address"
+       }
+     ],
+     "stateMutability": "view",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "uint256",
+         "name": "id",
+         "type": "uint256"
+       }
+     ],
+     "name": "releaseOrder",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "uint256",
+         "name": "id",
+         "type": "uint256"
+       }
+     ],
+     "name": "releaseOrderByDispute",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "uint256",
+         "name": "id",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "expireAt",
+         "type": "uint256"
+       },
+       {
+         "internalType": "bytes",
+         "name": "signature",
+         "type": "bytes"
+       }
+     ],
+     "name": "releaseOrderByManagerSig",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [],
+     "name": "renounceOwnership",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "swapRouter",
+         "type": "address"
+       },
+       {
+         "internalType": "address",
+         "name": "ethErc20Addr",
+         "type": "address"
+       },
+       {
+         "internalType": "uint256",
+         "name": "poolFee",
+         "type": "uint256"
+       }
+     ],
+     "name": "setAmmInfo",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "input",
+         "type": "address"
+       },
+       {
+         "internalType": "address",
+         "name": "out",
+         "type": "address"
+       },
+       {
+         "internalType": "uint256",
+         "name": "poolFee",
+         "type": "uint256"
+       }
+     ],
+     "name": "setAmmPoolInfo",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "addr",
+         "type": "address"
+       }
+     ],
+     "name": "setAssetRegistry",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "val",
+         "type": "address"
+       }
+     ],
+     "name": "setBadge",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "addr",
+         "type": "address"
+       }
+     ],
+     "name": "setDisputeManager",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "uint256",
+         "name": "inventorBP",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "sharedBP",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "operatorBP",
+         "type": "uint256"
+       }
+     ],
+     "name": "setFeeBPs",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "addr",
+         "type": "address"
+       }
+     ],
+     "name": "setFeePool",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "val",
+         "type": "address"
+       }
+     ],
+     "name": "setFeePurse",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "addr",
+         "type": "address"
+       }
+     ],
+     "name": "setInventor",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "marketID",
+         "type": "address"
+       },
+       {
+         "internalType": "address",
+         "name": "manager",
+         "type": "address"
+       }
+     ],
+     "name": "setLiquidityManager",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "addr",
+         "type": "address"
+       }
+     ],
+     "name": "setMarketCore",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "uint256",
+         "name": "val",
+         "type": "uint256"
+       }
+     ],
+     "name": "setMaxOpenDisputes",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "uint256",
+         "name": "val",
+         "type": "uint256"
+       }
+     ],
+     "name": "setMaxOpenOrders",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "uint256",
+         "name": "val",
+         "type": "uint256"
+       }
+     ],
+     "name": "setMinTimeToPay",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "addr",
+         "type": "address"
+       }
+     ],
+     "name": "setNFT",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "uint256",
+         "name": "bp",
+         "type": "uint256"
+       }
+     ],
+     "name": "setNFTOwnerDiscount",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "addr",
+         "type": "address"
+       }
+     ],
+     "name": "setOperator",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "uint256",
+         "name": "val",
+         "type": "uint256"
+       }
+     ],
+     "name": "setOrderGraceDur",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "uint256",
+         "name": "_instantSwapFeeBp",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "_synthSwapFeeBp",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "_stableSwapFeeBp",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "_fixedSynthSwapFee",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "_fixedNFTSwapFee",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "_instantNFTSwapFeeBp",
+         "type": "uint256"
+       }
+     ],
+     "name": "setProtoFee",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "string[2][]",
+         "name": "swap",
+         "type": "string[2][]"
+       }
+     ],
+     "name": "setReqSwapBadges",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "addr",
+         "type": "address"
+       }
+     ],
+     "name": "setRewardPool",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "asset",
+         "type": "address"
+       }
+     ],
+     "name": "shareablesBalanceOf",
+     "outputs": [
+       {
+         "internalType": "uint256",
+         "name": "",
+         "type": "uint256"
+       }
+     ],
+     "stateMutability": "view",
+     "type": "function"
+   },
+   {
+     "inputs": [],
+     "name": "state",
+     "outputs": [
+       {
+         "components": [
+           {
+             "internalType": "uint256",
+             "name": "instantSwapFee",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "synthSwapFee",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "stableSwapFee",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "instantNFTSwapFee",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "maxOpenOrders",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "maxOpenDisputes",
+             "type": "uint256"
+           }
+         ],
+         "internalType": "struct StructsLib.IntSlotState",
+         "name": "ints",
+         "type": "tuple"
+       },
+       {
+         "internalType": "uint256",
+         "name": "minTimeToPay",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "orderGraceDur",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "numOrders",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "feePoolTxInterval",
+         "type": "uint256"
+       },
+       {
+         "internalType": "address",
+         "name": "inventor",
+         "type": "address"
+       },
+       {
+         "internalType": "address",
+         "name": "ammSwapRouter",
+         "type": "address"
+       }
+     ],
+     "stateMutability": "view",
+     "type": "function"
+   },
+   {
+     "inputs": [],
+     "name": "state2",
+     "outputs": [
+       {
+         "components": [
+           {
+             "internalType": "uint256",
+             "name": "nftDiscountBP",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "fixedSynthSwapFee",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "fixedNFTSwapFee",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "ammEthPoolFee",
+             "type": "uint256"
+           }
+         ],
+         "internalType": "struct StructsLib.UintSlotState2",
+         "name": "ints",
+         "type": "tuple"
+       },
+       {
+         "internalType": "address",
+         "name": "disputeManager",
+         "type": "address"
+       },
+       {
+         "internalType": "address",
+         "name": "nft",
+         "type": "address"
+       },
+       {
+         "internalType": "address",
+         "name": "ammEth",
+         "type": "address"
+       },
+       {
+         "internalType": "contract IAssetRegistry",
+         "name": "assetReg",
+         "type": "address"
+       },
+       {
+         "internalType": "contract IERC20",
+         "name": "token",
+         "type": "address"
+       },
+       {
+         "internalType": "contract IMarketCore",
+         "name": "marketCore",
+         "type": "address"
+       },
+       {
+         "internalType": "contract IFeePool",
+         "name": "feePool",
+         "type": "address"
+       },
+       {
+         "internalType": "contract IFeePurse",
+         "name": "feePurse",
+         "type": "address"
+       },
+       {
+         "internalType": "contract IBadge",
+         "name": "badge",
+         "type": "address"
+       },
+       {
+         "internalType": "contract IRewardPool",
+         "name": "rewardPool",
+         "type": "address"
+       },
+       {
+         "internalType": "contract IOperator",
+         "name": "operatorMgr",
+         "type": "address"
+       }
+     ],
+     "stateMutability": "view",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "bytes4",
+         "name": "interfaceId",
+         "type": "bytes4"
+       }
+     ],
+     "name": "supportsInterface",
+     "outputs": [
+       {
+         "internalType": "bool",
+         "name": "",
+         "type": "bool"
+       }
+     ],
+     "stateMutability": "view",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "marketID",
+         "type": "address"
+       },
+       {
+         "internalType": "address",
+         "name": "provider",
+         "type": "address"
+       },
+       {
+         "internalType": "address",
+         "name": "recipient",
+         "type": "address"
+       },
+       {
+         "internalType": "uint256",
+         "name": "lid",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "amount",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "maxPrice",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256[]",
+         "name": "ids",
+         "type": "uint256[]"
+       },
+       {
+         "internalType": "uint256",
+         "name": "txDeadline",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "operator",
+         "type": "uint256"
+       }
+     ],
+     "name": "swapQuoteForBase",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "marketID",
+         "type": "address"
+       },
+       {
+         "internalType": "uint256",
+         "name": "lid",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "expireAt",
+         "type": "uint256"
+       }
+     ],
+     "name": "togglePause",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "newOwner",
+         "type": "address"
+       }
+     ],
+     "name": "transferOwnership",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "_token",
+         "type": "address"
+       }
+     ],
+     "name": "transferToFeePool",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "uint256",
+         "name": "offerId",
+         "type": "uint256"
+       }
+     ],
+     "name": "unacceptOffer",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "marketID",
+         "type": "address"
+       },
+       {
+         "internalType": "uint256",
+         "name": "lid",
+         "type": "uint256"
+       },
+       {
+         "internalType": "bool",
+         "name": "deduct",
+         "type": "bool"
+       },
+       {
+         "internalType": "address",
+         "name": "target",
+         "type": "address"
+       },
+       {
+         "internalType": "uint256[2]",
+         "name": "amountAndPrice",
+         "type": "uint256[2]"
+       },
+       {
+         "internalType": "uint256[]",
+         "name": "wantOrIds",
+         "type": "uint256[]"
+       },
+       {
+         "internalType": "uint256[]",
+         "name": "wantAndIds",
+         "type": "uint256[]"
+       },
+       {
+         "internalType": "uint256[5]",
+         "name": "limits",
+         "type": "uint256[5]"
+       }
+     ],
+     "name": "updateFungibleLiquidity",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "marketID",
+         "type": "address"
+       },
+       {
+         "internalType": "address",
+         "name": "owner",
+         "type": "address"
+       },
+       {
+         "internalType": "uint256",
+         "name": "lid",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "price",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "expireAt",
+         "type": "uint256"
+       }
+     ],
+     "name": "updateLiquidityPrice",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "marketID",
+         "type": "address"
+       },
+       {
+         "internalType": "uint256",
+         "name": "lid",
+         "type": "uint256"
+       },
+       {
+         "internalType": "bool",
+         "name": "deduct",
+         "type": "bool"
+       },
+       {
+         "internalType": "address",
+         "name": "target",
+         "type": "address"
+       },
+       {
+         "internalType": "uint256[]",
+         "name": "ids",
+         "type": "uint256[]"
+       },
+       {
+         "internalType": "uint256",
+         "name": "price",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256[]",
+         "name": "wantOrIds",
+         "type": "uint256[]"
+       },
+       {
+         "internalType": "uint256[]",
+         "name": "wantAndIds",
+         "type": "uint256[]"
+       },
+       {
+         "internalType": "uint256[3]",
+         "name": "limits",
+         "type": "uint256[3]"
+       }
+     ],
+     "name": "updateNonFungibleLiquidity",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "uint256",
+         "name": "offerId",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "amount",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256",
+         "name": "price",
+         "type": "uint256"
+       },
+       {
+         "internalType": "uint256[]",
+         "name": "ids",
+         "type": "uint256[]"
+       },
+       {
+         "internalType": "uint256",
+         "name": "deadline",
+         "type": "uint256"
+       }
+     ],
+     "name": "updateOffer",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "marketID",
+         "type": "address"
+       },
+       {
+         "internalType": "address",
+         "name": "provider",
+         "type": "address"
+       },
+       {
+         "internalType": "uint256",
+         "name": "lid",
+         "type": "uint256"
+       },
+       {
+         "internalType": "bool",
+         "name": "incr",
+         "type": "bool"
+       }
+     ],
+     "name": "updateOpenDisputesCount",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "asset",
+         "type": "address"
+       }
+     ],
+     "name": "withdrawFeeBalance",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "asset",
+         "type": "address"
+       }
+     ],
+     "name": "withdrawInventorBalance",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   },
+   {
+     "inputs": [
+       {
+         "internalType": "address",
+         "name": "_token",
+         "type": "address"
+       }
+     ],
+     "name": "withdrawOperatorBalance",
+     "outputs": [],
+     "stateMutability": "nonpayable",
+     "type": "function"
+   }
+ ]

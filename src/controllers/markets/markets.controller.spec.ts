@@ -12,10 +12,10 @@ import NetworkService from '../../network/network.service';
 import { MarketsService } from './markets.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { makeSession } from '../auth/utils';
-import Market from '../../models/market';
+import Market, { AssetType } from '../../models/market';
 import InvitedMediator from '../../models/invited_mediators';
 import PermittedTrader from '../../models/permitted_trader';
-import MarketProvider from '../../models/market_provider';
+import LiquidityProvider from '../../models/market_provider';
 import * as moment from 'moment';
 import { randStr } from '../../common/common';
 
@@ -117,21 +117,21 @@ describe('MarketsController', () => {
     });
 
     it('should 200 and market object when market exists', async () => {
-      const market = await Market.create({ marketId: '0x123', network: net });
+      const market = await Market.create({ address: '0x123', network: net });
 
       const mockExtendMarket = jest
         .spyOn(app.get(MarketsService), 'extendMarket')
         .mockResolvedValue(null);
 
       await request(app.getHttpServer())
-        .get(`/v1/markets/${market.marketId}`)
+        .get(`/v1/markets/${market.address}`)
         .set('Authorization', 'bearer ' + token)
         .send({})
         .query({ net })
         .expect(200)
         .expect((res) => {
           expect(res.body.data.id).toEqual(market.id);
-          expect(res.body.data.marketId).toEqual(market.marketId);
+          expect(res.body.data.address).toEqual(market.address);
           expect(mockExtendMarket).toHaveBeenCalled();
         });
     });
@@ -166,7 +166,7 @@ describe('MarketsController', () => {
     });
 
     it('should 200 and list of markets when some markets exist', async () => {
-      const market = await Market.create({ network: net, marketId: '0x123' });
+      const market = await Market.create({ network: net, address: '0x123' });
       jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue(null);
       await request(app.getHttpServer())
         .get(`/v1/markets`)
@@ -183,7 +183,7 @@ describe('MarketsController', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({
           network: net,
-          marketId: '0x123',
+          address: '0x123',
           creator: '0xCreator',
         });
         await Market.create({});
@@ -206,13 +206,13 @@ describe('MarketsController', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({
           network: net,
-          marketId: '0x123',
+          address: '0x123',
           creator: '0xCreator',
           permSwap: false,
         });
         await Market.create({
           network: net,
-          marketId: '0xXYZ',
+          address: '0xXYZ',
           creator: '0xCreator',
           permSwap: true,
         });
@@ -235,13 +235,13 @@ describe('MarketsController', () => {
       it('should 200 and correct market', async () => {
         await Market.create({
           network: net,
-          marketId: '0x123',
+          address: '0x123',
           creator: '0xCreator',
           permMediate: false,
         });
         const market = await Market.create({
           network: net,
-          marketId: '0xXYZ',
+          address: '0xXYZ',
           creator: '0xCreator',
           permMediate: true,
         });
@@ -264,18 +264,20 @@ describe('MarketsController', () => {
       it('should 200 and correct market', async () => {
         const m1 = await Market.create({
           network: net,
-          isBaseLocal: false,
-          isQuoteLocal: false,
+          baseType: AssetType.ERC20,
+          quoteType: AssetType.ERC20,
+          instant: true,
         });
         const m2 = await Market.create({
           network: net,
-          isBaseLocal: false,
-          isQuoteLocal: false,
+          baseType: AssetType.ERC20,
+          quoteType: AssetType.ERC20,
+          instant: true,
         });
         const m3 = await Market.create({
           network: net,
-          isBaseLocal: false,
-          isQuoteLocal: true,
+          baseType: AssetType.ERC20,
+          quoteType: AssetType.SYNTH,
         });
 
         jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue(null);
@@ -393,7 +395,7 @@ describe('MarketsController', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({
           network: net,
-          marketId: '0x123',
+          address: '0x123',
           baseAddress: '0xBaseAddr',
         });
         await Market.create({});
@@ -416,7 +418,7 @@ describe('MarketsController', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({
           network: net,
-          marketId: '0x123',
+          address: '0x123',
           quoteAddress: '0xQuoteAddr',
         });
         await Market.create({});
@@ -439,7 +441,7 @@ describe('MarketsController', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({
           network: net,
-          marketId: '0x123',
+          address: '0x123',
           creator: '0xCreator',
         });
         await Market.create({});
@@ -462,7 +464,7 @@ describe('MarketsController', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({
           network: net,
-          marketId: '0x123',
+          address: '0x123',
         });
         await Market.create({});
 
@@ -470,7 +472,7 @@ describe('MarketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
-          .query({ query: market.marketId, net })
+          .query({ query: market.address, net })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -685,10 +687,10 @@ describe('MarketsController', () => {
     describe('with no filter', () => {
       it('should correct results', async () => {
         const mid = '0x123';
-        await InvitedMediator.create({ network: net, marketId: mid });
+        await InvitedMediator.create({ network: net, marketAddress: mid });
         const iv = await InvitedMediator.create({
           network: net,
-          marketId: mid,
+          marketAddress: mid,
         });
         await request(app.getHttpServer())
           .get(`/v1/markets/${mid}/invited_mediators`)
@@ -706,10 +708,10 @@ describe('MarketsController', () => {
     describe('with limit=1', () => {
       it('should correct results', async () => {
         const mid = '0x123';
-        await InvitedMediator.create({ network: net, marketId: mid });
+        await InvitedMediator.create({ network: net, marketAddress: mid });
         const iv = await InvitedMediator.create({
           network: net,
-          marketId: mid,
+          marketAddress: mid,
         });
         await request(app.getHttpServer())
           .get(`/v1/markets/${mid}/invited_mediators`)
@@ -727,10 +729,10 @@ describe('MarketsController', () => {
     describe('with accepted=true', () => {
       it('should correct results', async () => {
         const mid = '0x123';
-        await InvitedMediator.create({ network: net, marketId: mid });
+        await InvitedMediator.create({ network: net, marketAddress: mid });
         const iv = await InvitedMediator.create({
           network: net,
-          marketId: mid,
+          marketAddress: mid,
           accepted: true,
         });
         await request(app.getHttpServer())
@@ -751,12 +753,12 @@ describe('MarketsController', () => {
         const mid = '0x123';
         await InvitedMediator.create({
           network: net,
-          marketId: mid,
+          marketAddress: mid,
           accepted: true,
         });
         const iv = await InvitedMediator.create({
           network: net,
-          marketId: mid,
+          marketAddress: mid,
           accepted: false,
         });
         await request(app.getHttpServer())
@@ -777,9 +779,9 @@ describe('MarketsController', () => {
         const mid = '0x123';
         const iv = await InvitedMediator.create({
           network: net,
-          marketId: mid,
+          marketAddress: mid,
         });
-        await InvitedMediator.create({ network: net, marketId: mid });
+        await InvitedMediator.create({ network: net, marketAddress: mid });
         await request(app.getHttpServer())
           .get(`/v1/markets/${mid}/invited_mediators`)
           .set('Authorization', 'bearer ' + token)
@@ -814,10 +816,10 @@ describe('MarketsController', () => {
     describe('with no filter', () => {
       it('should correct results', async () => {
         const mid = '0x123';
-        await PermittedTrader.create({ network: net, marketId: mid });
+        await PermittedTrader.create({ network: net, marketAddress: mid });
         const iv = await PermittedTrader.create({
           network: net,
-          marketId: mid,
+          marketAddress: mid,
         });
         await request(app.getHttpServer())
           .get(`/v1/markets/${mid}/permitted_traders`)
@@ -835,10 +837,10 @@ describe('MarketsController', () => {
     describe('with limit=1', () => {
       it('should correct results', async () => {
         const mid = '0x123';
-        await PermittedTrader.create({ network: net, marketId: mid });
+        await PermittedTrader.create({ network: net, marketAddress: mid });
         const iv = await PermittedTrader.create({
           network: net,
-          marketId: mid,
+          marketAddress: mid,
         });
         await request(app.getHttpServer())
           .get(`/v1/markets/${mid}/permitted_traders`)
@@ -858,9 +860,9 @@ describe('MarketsController', () => {
         const mid = '0x123';
         const iv = await PermittedTrader.create({
           network: net,
-          marketId: mid,
+          marketAddress: mid,
         });
-        await PermittedTrader.create({ network: net, marketId: mid });
+        await PermittedTrader.create({ network: net, marketAddress: mid });
         await request(app.getHttpServer())
           .get(`/v1/markets/${mid}/permitted_traders`)
           .set('Authorization', 'bearer ' + token)
@@ -893,9 +895,9 @@ describe('MarketsController', () => {
 
     describe('with correct network', () => {
       it('should return 200 and correct result', async () => {
-        const prov = await MarketProvider.create({
+        const prov = await LiquidityProvider.create({
           network: net,
-          marketId: '0x123',
+          marketAddress: '0x123',
         });
         await request(app.getHttpServer())
           .get(`/v1/markets/0x123/permitted_providers`)
@@ -911,10 +913,10 @@ describe('MarketsController', () => {
 
     describe('with correct network and market ID', () => {
       it('should return 200 and correct result', async () => {
-        await MarketProvider.create({ network: net, marketId: '0x000' });
-        const prov = await MarketProvider.create({
+        await LiquidityProvider.create({ network: net, marketAddress: '0x000' });
+        const prov = await LiquidityProvider.create({
           network: net,
-          marketId: '0x123',
+          marketAddress: '0x123',
         });
         await request(app.getHttpServer())
           .get(`/v1/markets/0x123/permitted_providers`)
@@ -930,14 +932,14 @@ describe('MarketsController', () => {
 
     describe('with limit specified', () => {
       it('should return 200 and correct result', async () => {
-        await MarketProvider.create({
+        await LiquidityProvider.create({
           network: net,
-          marketId: '0x123',
+          marketAddress: '0x123',
           createdAt: moment().subtract(1, 's').toISOString(),
         });
-        const prov = await MarketProvider.create({
+        const prov = await LiquidityProvider.create({
           network: net,
-          marketId: '0x123',
+          marketAddress: '0x123',
           createdAt: moment().toISOString(),
         });
         await request(app.getHttpServer())
@@ -954,16 +956,16 @@ describe('MarketsController', () => {
 
     describe('with offset specified', () => {
       it('should return 200 and correct result', async () => {
-        const prov = await MarketProvider.create({
+        const prov = await LiquidityProvider.create({
           sn: 1,
           network: net,
-          marketId: '0x123',
+          marketAddress: '0x123',
           createdAt: moment().subtract(1, 's').toISOString(),
         });
-        await MarketProvider.create({
+        await LiquidityProvider.create({
           sn: 2,
           network: net,
-          marketId: '0x123',
+          marketAddress: '0x123',
           createdAt: moment().toISOString(),
         });
         await request(app.getHttpServer())
@@ -980,16 +982,16 @@ describe('MarketsController', () => {
 
     describe('with count specified', () => {
       it('should return 200 and correct count', async () => {
-        await MarketProvider.create({
+        await LiquidityProvider.create({
           sn: 1,
           network: net,
-          marketId: '0x123',
+          marketAddress: '0x123',
           createdAt: moment().subtract(1, 's').toISOString(),
         });
-        await MarketProvider.create({
+        await LiquidityProvider.create({
           sn: 2,
           network: net,
-          marketId: '0x123',
+          marketAddress: '0x123',
           createdAt: moment().toISOString(),
         });
         await request(app.getHttpServer())

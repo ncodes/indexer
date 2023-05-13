@@ -8,8 +8,8 @@ import { BaseModel } from './base';
 export default class Review extends BaseModel {
   // The network where the swap occurred
   network: string = undefined;
-  // The market ID
-  marketId: string = undefined;
+  // The market address
+  marketAddress: string = undefined;
   // The swap ID
   swapId?: string = undefined;
   // The user ID of the reviewer

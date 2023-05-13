@@ -117,21 +117,27 @@ export class MiscController {
    */
   @Get('/:network/protocol-fees')
   async getProtocolFees(@Param('network') network: string) {
-    const res: { [key in FeeName]: number } = {
-      [FeeName.InstantSwapFee]: 0,
-      [FeeName.SynthSwapFee]: 0,
-      [FeeName.StableSwapFee]: 0,
-    };
-
-    const p2p = await Meta.getProtocolFee(network, FeeName.SynthSwapFee);
-    if (p2p) res[FeeName.SynthSwapFee] = parseFloat(p2p.value);
-
-    const instant = await Meta.getProtocolFee(network, FeeName.InstantSwapFee);
-    if (instant) res[FeeName.InstantSwapFee] = parseFloat(instant.value);
-
-    const stable = await Meta.getProtocolFee(network, FeeName.StableSwapFee);
-    if (stable) res[FeeName.StableSwapFee] = parseFloat(stable.value);
-
-    return ok().data(res).build();
+    return ok()
+      .data({
+        [FeeName.InstantSwapFeeBp]: parseFloat(
+          (await Meta.getProtocolFee(network, FeeName.InstantSwapFeeBp))?.value ?? '0',
+        ),
+        [FeeName.SynthSwapFeeBp]: parseFloat(
+          (await Meta.getProtocolFee(network, FeeName.SynthSwapFeeBp))?.value ?? '0',
+        ),
+        [FeeName.StableSwapFeeBp]: parseFloat(
+          (await Meta.getProtocolFee(network, FeeName.StableSwapFeeBp))?.value ?? '0',
+        ),
+        [FeeName.FixedSynthSwapFee]: parseFloat(
+          (await Meta.getProtocolFee(network, FeeName.FixedSynthSwapFee))?.value ?? '0',
+        ),
+        [FeeName.FixedNFTSwapFee]: parseFloat(
+          (await Meta.getProtocolFee(network, FeeName.FixedNFTSwapFee))?.value ?? '0',
+        ),
+        [FeeName.InstantNFTSwapFeeBp]: parseFloat(
+          (await Meta.getProtocolFee(network, FeeName.InstantNFTSwapFeeBp))?.value ?? '0',
+        ),
+      })
+      .build();
   }
 }

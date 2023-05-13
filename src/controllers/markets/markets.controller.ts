@@ -13,7 +13,7 @@ import {
   ListPermittedTradersQueryDTO,
   ListQueryDTO,
 } from './query.dto';
-import MarketProvider from '../../models/market_provider';
+import LiquidityProvider from '../../models/market_provider';
 
 @Controller('v1/markets')
 export class MarketsController {
@@ -23,7 +23,7 @@ export class MarketsController {
 
   /**
    * Get a market
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param q The query object
    *  - mid The market ID
    *  - [net] The network where it exists
@@ -32,8 +32,11 @@ export class MarketsController {
    * @returns
    */
   @Get(':mid')
-  async get(@Param('mid') marketId: string, @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO) {
-    const market = await Market.getMarket(q.net, marketId, q.select);
+  async get(
+    @Param('mid') marketAddress: string,
+    @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO,
+  ) {
+    const market = await Market.getMarket(q.net, marketAddress, q.select);
     if (!market) throw404('market not found');
 
     try {
@@ -107,7 +110,7 @@ export class MarketsController {
 
   /**
    * List invited mediators of a market
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param q The query object
    *  - [network] The network name
    *  - [mid] The market ID
@@ -117,12 +120,12 @@ export class MarketsController {
    */
   @Get('/:mid/invited_mediators')
   async listInvitedMediators(
-    @Param('mid') marketId: string,
+    @Param('mid') marketAddress: string,
     @Query(new ValidationPipe(ValPipeOpt)) q: ListInvitedMediatorsQueryDTO,
   ) {
     const res = await InvitedMediator.searchByNetworkMarketID(
       q.net,
-      q.marketId,
+      q.marketAddress,
       q.accepted,
       q.limit,
       q.offset,
@@ -132,7 +135,7 @@ export class MarketsController {
 
   /**
    * List permitted traders of a market
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param q The query object
    *  - [network] The network name
    *  - [limit] Limit the result (optional)
@@ -140,17 +143,22 @@ export class MarketsController {
    */
   @Get('/:mid/permitted_traders')
   async listPermittedTraders(
-    @Param('mid') marketId: string,
+    @Param('mid') marketAddress: string,
     @Query(new ValidationPipe(ValPipeOpt)) q: ListPermittedTradersQueryDTO,
   ) {
     if (!isValidNetwork(q.net)) throw400('unknown network');
-    const res = await PermittedTrader.searchByNetworkMarketID(q.net, marketId, q.limit, q.offset);
+    const res = await PermittedTrader.searchByNetworkMarketID(
+      q.net,
+      marketAddress,
+      q.limit,
+      q.offset,
+    );
     return ok().data(res).build();
   }
 
   /**
    * List permitted providers
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param q The query object
    *  - [network] The network name
    *  - [limit] Limit the result (optional)
@@ -159,14 +167,14 @@ export class MarketsController {
    */
   @Get('/:mid/permitted_providers')
   async listPermittedProviders(
-    @Param('mid') marketId: string,
+    @Param('mid') marketAddress: string,
     @Query(new ValidationPipe(ValPipeOpt)) q: ListPermittedProviderQueryDTO,
   ) {
     if (q.count) {
-      const count = await MarketProvider.countByNetworkOrMarket(q.net, marketId);
+      const count = await LiquidityProvider.countByNetworkOrMarket(q.net, marketAddress);
       return ok().data({ count }).build<CountResponse>();
     }
-    const res = await MarketProvider.search(q.net, marketId, q.limit || 25, q.offset || 0);
-    return ok().data(res).build<MarketProvider[]>();
+    const res = await LiquidityProvider.search(q.net, marketAddress, q.limit || 25, q.offset || 0);
+    return ok().data(res).build<LiquidityProvider[]>();
   }
 }

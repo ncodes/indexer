@@ -18,8 +18,8 @@ export default class MarketPrice extends BaseModel {
   quote: string = undefined;
   // The quote asset address
   quoteAddress: string = undefined;
-  // The market ID
-  marketId: string;
+  // The market address
+  marketAddress: string;
   // The provider address
   provider: string;
   // The market price
@@ -74,7 +74,7 @@ export default class MarketPrice extends BaseModel {
   /**
    * Find the recent price before a given date
    * @param network The target network name
-   * @param marketId The target market ID
+   * @param marketAddress The target market ID
    * @param baseAddress The base address of a target asset
    * @param provider The provider address
    * @param before The target date
@@ -82,7 +82,7 @@ export default class MarketPrice extends BaseModel {
    */
   static async findRecentBefore(
     network: string,
-    marketId: string,
+    marketAddress: string,
     baseAddress: string,
     provider: string,
     before: string,
@@ -93,7 +93,7 @@ export default class MarketPrice extends BaseModel {
         if (network) q.where({ network });
       })
       .where((q) => {
-        if (marketId) q.where('marketId', 'ilike', marketId);
+        if (marketAddress) q.where('marketAddress', 'ilike', marketAddress);
       })
       .where((q) => {
         if (baseAddress) q.where('baseAddress', 'ilike', baseAddress);
@@ -109,14 +109,14 @@ export default class MarketPrice extends BaseModel {
   /**
    * Find the recent price
    * @param network The target network name
-   * @param marketId The target market ID
+   * @param marketAddress The target market ID
    * @param baseAddress The base address of a target asset
    * @param provider The provider address
    * @param txn Optional transaction object
    */
   static async findRecent(
     network?: string,
-    marketId?: string,
+    marketAddress?: string,
     baseAddress?: string,
     provider?: string,
     txn?: Transaction,
@@ -126,7 +126,7 @@ export default class MarketPrice extends BaseModel {
         if (network) q.where({ network });
       })
       .where((q) => {
-        if (marketId) q.where('marketId', 'ilike', marketId);
+        if (marketAddress) q.where('marketAddress', 'ilike', marketAddress);
       })
       .where((q) => {
         if (baseAddress) q.where('baseAddress', 'ilike', baseAddress);
@@ -141,14 +141,14 @@ export default class MarketPrice extends BaseModel {
   /**
    * Get hourly price change for a market
    * @param network The network name
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param provider The provider address
    * @param hours The price change period in hours
    * @param txn Optional transaction object
    */
   static async priceChange(
     network: string,
-    marketId: string,
+    marketAddress: string,
     provider: string,
     hours: number,
     txn?: Transaction,
@@ -156,14 +156,20 @@ export default class MarketPrice extends BaseModel {
     const timeAgo = moment().subtract(hours, 'h').toISOString();
     const priceHourAgo = await MarketPrice.findRecentBefore(
       network,
-      marketId,
+      marketAddress,
       undefined,
       provider,
       timeAgo,
       txn,
     );
     if (!priceHourAgo) return Promise.resolve(0);
-    const currentPrice = await MarketPrice.findRecent(network, marketId, undefined, provider, txn);
+    const currentPrice = await MarketPrice.findRecent(
+      network,
+      marketAddress,
+      undefined,
+      provider,
+      txn,
+    );
     return Promise.resolve(
       ToDec(currentPrice.price)
         .sub(priceHourAgo.price)

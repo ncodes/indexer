@@ -334,6 +334,12 @@
        {
          "indexed": false,
          "internalType": "uint256",
+         "name": "fixedNFTSwapFee",
+         "type": "uint256"
+       },
+       {
+         "indexed": false,
+         "internalType": "uint256",
          "name": "instantNFTSwapFee",
          "type": "uint256"
        }
@@ -2176,7 +2182,7 @@
          "type": "address"
        }
      ],
-     "name": "setBadge",
+     "name": "setBadgeMgr",
      "outputs": [],
      "stateMutability": "nonpayable",
      "type": "function"
@@ -2489,6 +2495,16 @@
            },
            {
              "internalType": "uint256",
+             "name": "fixedSynthSwapFee",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
+             "name": "fixedNFTSwapFee",
+             "type": "uint256"
+           },
+           {
+             "internalType": "uint256",
              "name": "maxOpenOrders",
              "type": "uint256"
            },
@@ -2545,16 +2561,6 @@
            {
              "internalType": "uint256",
              "name": "nftDiscountBP",
-             "type": "uint256"
-           },
-           {
-             "internalType": "uint256",
-             "name": "fixedSynthSwapFee",
-             "type": "uint256"
-           },
-           {
-             "internalType": "uint256",
-             "name": "fixedNFTSwapFee",
              "type": "uint256"
            },
            {

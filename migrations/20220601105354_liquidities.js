@@ -5,7 +5,7 @@ exports.up = function (knex) {
       table.string('id').primary();
       table.string('network');
       table.string('provider');
-      table.string('marketId');
+      table.string('marketAddress');
       table.string('base');
       table.string('baseAddress');
       table.string('quote');
@@ -30,7 +30,7 @@ exports.up = function (knex) {
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');
 
-      table.unique(['network', 'marketId', 'provider']);
+      table.unique(['network', 'marketAddress', 'provider']);
     }),
   ]);
 };

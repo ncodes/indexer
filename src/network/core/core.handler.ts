@@ -25,7 +25,7 @@ export class CoreHandler extends Handler {
     private notifSrv: NotifierService,
     private provider: providers.JsonRpcProvider,
     public network: string,
-    private contracts: KnownContracts,
+    private contracts: JointContracts,
   ) {
     super(netSrv.cfgSrv, network, contracts.core);
   }
@@ -37,7 +37,7 @@ export class CoreHandler extends Handler {
     this.on(
       'SwapOrder',
       async (
-        marketId: string,
+        marketAddress: string,
         provider: string,
         sender: string,
         orderId: BigNumber,
@@ -46,14 +46,23 @@ export class CoreHandler extends Handler {
         event: Event,
         txn?: Transaction,
       ) => {
-        return this.onSwapOrder(marketId, provider, sender, orderId, amount, price, event, txn);
+        return this.onSwapOrder(
+          marketAddress,
+          provider,
+          sender,
+          orderId,
+          amount,
+          price,
+          event,
+          txn,
+        );
       },
     );
 
     this.on(
       'Swap',
       async (
-        marketId: string,
+        marketAddress: string,
         orderId: BigNumber,
         provider: string,
         swapper: string,
@@ -64,7 +73,7 @@ export class CoreHandler extends Handler {
         txn?: Transaction,
       ) => {
         return this.onSwap(
-          marketId,
+          marketAddress,
           orderId,
           provider,
           swapper,
@@ -120,16 +129,22 @@ export class CoreHandler extends Handler {
     this.on(
       'ProtocolFeeUpdated',
       async (
-        instantSwapFee: BigNumber,
-        syntheticSwapFee: BigNumber,
-        stableSwapFee: BigNumber,
+        instantSwapFeeBp: BigNumber,
+        syntheticSwapFeeBp: BigNumber,
+        stableSwapFeeBp: BigNumber,
+        fixedSynthSwapFee: BigNumber,
+        fixedNFTSwapFee: BigNumber,
+        instantNFTSwapFeeBp: BigNumber,
         event: Event,
         txn?: Transaction,
       ) => {
         return this.onProtocolFeeUpdated(
-          instantSwapFee,
-          syntheticSwapFee,
-          stableSwapFee,
+          instantSwapFeeBp,
+          syntheticSwapFeeBp,
+          stableSwapFeeBp,
+          fixedSynthSwapFee,
+          fixedNFTSwapFee,
+          instantNFTSwapFeeBp,
           event,
           txn,
         );
@@ -155,7 +170,7 @@ export class CoreHandler extends Handler {
       'UpdatedLiquidity',
       async (
         sender: string,
-        marketId: string,
+        marketAddress: string,
         deduction: boolean,
         amount: BigNumber,
         price: BigNumber,
@@ -167,7 +182,7 @@ export class CoreHandler extends Handler {
       ) => {
         return this.onUpdatedLiquidity(
           sender,
-          marketId,
+          marketAddress,
           deduction,
           amount,
           price,
@@ -183,60 +198,60 @@ export class CoreHandler extends Handler {
     this.on(
       'UpdatedPrice',
       async (
-        marketId: string,
+        marketAddress: string,
         provider: string,
         manager: string,
         price: BigNumber,
         event: Event,
         txn: Transaction,
       ) => {
-        return this.onUpdatedPrice(marketId, provider, manager, price, event, txn);
+        return this.onUpdatedPrice(marketAddress, provider, manager, price, event, txn);
       },
     );
 
     this.on(
       'TogglePause',
       async (
-        marketId: string,
+        marketAddress: string,
         provider: string,
         paused: boolean,
         event: Event,
         txn?: Transaction,
       ) => {
-        return this.onTogglePause(marketId, provider, paused, event, txn);
+        return this.onTogglePause(marketAddress, provider, paused, event, txn);
       },
     );
 
     this.on(
       'SetLiquidityManager',
       async (
-        marketId: string,
+        marketAddress: string,
         provider: string,
         manager: string,
         event: Event,
         txn?: Transaction,
       ) => {
-        return this.onSetLiquidityManager(marketId, provider, manager, event, txn);
+        return this.onSetLiquidityManager(marketAddress, provider, manager, event, txn);
       },
     );
 
     this.on(
       'RemoveLiquidityManager',
       async (
-        marketId: string,
+        marketAddress: string,
         provider: string,
         manager: string,
         event: Event,
         txn?: Transaction,
       ) => {
-        return this.onRemoveLiquidityManager(marketId, provider, manager, event, txn);
+        return this.onRemoveLiquidityManager(marketAddress, provider, manager, event, txn);
       },
     );
   }
 
   /**
    * Handle new swap order
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param provider The liquidity provider's address
    * @param swapper The order creator (taker)
    * @param orderId The new order ID (non-zero)
@@ -246,7 +261,7 @@ export class CoreHandler extends Handler {
    * @param txn The transaction object
    */
   async onSwapOrder(
-    marketId: string,
+    marketAddress: string,
     provider: string,
     swapper: string,
     orderId: BigNumber,
@@ -255,10 +270,10 @@ export class CoreHandler extends Handler {
     event: Event,
     txn?: Transaction,
   ) {
-    const market = await Market.getMarket(this.network, marketId, undefined, txn);
+    const market = await Market.getMarket(this.network, marketAddress, undefined, txn);
     const swap = {
       network: this.network,
-      marketId,
+      marketAddress,
       provider,
       taker: swapper,
       base: market.base,
@@ -274,7 +289,7 @@ export class CoreHandler extends Handler {
     await Swap.create({ ...swap, ...info }, txn);
 
     // Update liquidity
-    const liq = await Liquidity.getLiquidity(this.network, marketId, provider, undefined, txn);
+    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, undefined, txn);
     await Liquidity.updateById(
       liq.id,
       {
@@ -292,12 +307,12 @@ export class CoreHandler extends Handler {
     const baseDecimal = await this.netSrv.getTokenDecimals(this.provider, market.baseAddress);
     const quoteDecimal = await this.netSrv.getTokenDecimals(this.provider, market.quoteAddress);
     await this.notifSrv.notify(NotifyType.NewOffChainSwap, this.network, provider, {
-      marketId,
+      marketAddress,
       provider,
       orderId: swap.orderId,
       base: market.base,
       quote: market.quote,
-      isBaseLocal: market.isBaseLocal,
+      baseType: market.baseType,
       amount: commify(formatUnits(swap.amount, baseDecimal)),
       cost: commify(formatUnits(info.cost, quoteDecimal)),
     });
@@ -307,7 +322,7 @@ export class CoreHandler extends Handler {
 
   /**
    * Handle new complete swap
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param orderId The new order ID (non-zero)
    * @param provider The liquidity provider's address
    * @param swapper The order creator (taker)
@@ -318,7 +333,7 @@ export class CoreHandler extends Handler {
    * @param txn The transaction object
    */
   async onSwap(
-    marketId: string,
+    marketAddress: string,
     orderId: BigNumber,
     provider: string,
     swapper: string,
@@ -329,10 +344,10 @@ export class CoreHandler extends Handler {
     txn?: Transaction,
   ) {
     if (orderId.isZero()) {
-      const market = await Market.getMarket(this.network, marketId, undefined, txn);
+      const market = await Market.getMarket(this.network, marketAddress, undefined, txn);
       const swap = {
         network: this.network,
-        marketId,
+        marketAddress,
         provider,
         taker: swapper,
         base: market.base,
@@ -354,7 +369,7 @@ export class CoreHandler extends Handler {
       // Update liquidity
       const liq = await Liquidity.getLiquidity(
         this.network,
-        swap.marketId,
+        swap.marketAddress,
         swap.provider,
         undefined,
         txn,
@@ -386,7 +401,7 @@ export class CoreHandler extends Handler {
       const baseDecimal = await this.netSrv.getTokenDecimals(this.provider, market.baseAddress);
       const quoteDecimal = await this.netSrv.getTokenDecimals(this.provider, market.quoteAddress);
       await this.notifSrv.notify(NotifyType.NewInstantSwap, this.network, provider, {
-        marketId,
+        marketAddress,
         base: market.base,
         quote: market.quote,
         amount: commify(formatUnits(swap.amount, baseDecimal)),
@@ -397,12 +412,12 @@ export class CoreHandler extends Handler {
       // Mark swap order as `released`
       const swap = await Swap.get(this.network, orderId.toNumber() - 1, undefined, txn);
       await Swap.updateById(swap.id, { released: true }, txn);
-      const { marketId, provider, cost } = swap;
+      const { marketAddress, provider, cost } = swap;
 
       // Mark the last dispute as `orderReleased` if there is any
       const dispute = await Dispute.getRecentOfOrder(
         this.network,
-        marketId,
+        marketAddress,
         orderId.toNumber() - 1,
         txn,
       );
@@ -411,7 +426,13 @@ export class CoreHandler extends Handler {
       }
 
       // Update liquidity
-      const liq = await Liquidity.getLiquidity(this.network, marketId, provider, undefined, txn);
+      const liq = await Liquidity.getLiquidity(
+        this.network,
+        marketAddress,
+        provider,
+        undefined,
+        txn,
+      );
       const now = moment();
       await Liquidity.updateById(
         liq.id,
@@ -421,13 +442,13 @@ export class CoreHandler extends Handler {
           amountSwapped: toBN(liq.amountSwapped).add(amount).toString(),
           completionRate: dispute
             ? liq.completionRate
-            : await Swap.getCompletionRate(this.network, marketId, provider, txn),
+            : await Swap.getCompletionRate(this.network, marketAddress, provider, txn),
         },
         txn,
       );
 
       // Update market
-      const market = await Market.getMarket(this.network, marketId, undefined, txn);
+      const market = await Market.getMarket(this.network, marketAddress, undefined, txn);
       await Market.updateById(
         market.id,
         {
@@ -435,7 +456,7 @@ export class CoreHandler extends Handler {
           amountSwapped: toBN(market.amountSwapped).add(amount).toString(),
           completionRate: dispute
             ? market.completionRate
-            : await Swap.getCompletionRate(this.network, marketId, undefined, txn),
+            : await Swap.getCompletionRate(this.network, marketAddress, undefined, txn),
         },
         txn,
       );
@@ -443,9 +464,9 @@ export class CoreHandler extends Handler {
       // Send notification
       const baseDecimal = await this.netSrv.getTokenDecimals(this.provider, market.baseAddress);
       const quoteDecimal = await this.netSrv.getTokenDecimals(this.provider, market.quoteAddress);
-      const taker = !market.isBaseLocal ? provider : swapper;
-      await this.notifSrv.notify(NotifyType.SwapOrderReleased, this.network, taker, {
-        marketId,
+      const recipient = swap.getPayer();
+      await this.notifSrv.notify(NotifyType.SwapOrderReleased, this.network, recipient, {
+        marketAddress,
         orderId: orderId.toNumber() - 1,
         base: market.base,
         quote: market.quote,
@@ -479,7 +500,7 @@ export class CoreHandler extends Handler {
     // Reduce open order count and liquidity
     const liq = await Liquidity.getLiquidity(
       this.network,
-      swap.marketId,
+      swap.marketAddress,
       swap.provider,
       undefined,
       txn,
@@ -490,12 +511,12 @@ export class CoreHandler extends Handler {
     });
 
     // Send notification
-    const market = await Market.getMarket(this.network, swap.marketId, undefined, txn);
+    const market = await Market.getMarket(this.network, swap.marketAddress, undefined, txn);
     const baseDecimal = await this.netSrv.getTokenDecimals(this.provider, market.baseAddress);
     const quoteDecimal = await this.netSrv.getTokenDecimals(this.provider, market.quoteAddress);
     const recipient = swap.provider === canceller ? swap.taker : swap.provider;
     await this.notifSrv.notify(NotifyType.SwapOrderCancelled, this.network, recipient, {
-      marketId: swap.marketId,
+      marketAddress: swap.marketAddress,
       orderId: orderId.toNumber(),
       base: market.base,
       quote: market.quote,
@@ -526,12 +547,12 @@ export class CoreHandler extends Handler {
 
     // Send notification
     const swap = await Swap.get(this.network, orderId.toNumber(), undefined, txn);
-    const market = await Market.getMarket(this.network, swap.marketId, undefined, txn);
+    const market = await Market.getMarket(this.network, swap.marketAddress, undefined, txn);
     const baseDecimal = await this.netSrv.getTokenDecimals(this.provider, market.baseAddress);
     const quoteDecimal = await this.netSrv.getTokenDecimals(this.provider, market.quoteAddress);
-    const recipient = !market.isBaseLocal ? swap.provider : swap.taker;
+    const recipient = swap.getPayer() == swap.provider ? swap.taker : swap.provider;
     await this.notifSrv.notify(NotifyType.SwapOrderPaid, this.network, recipient, {
-      marketId: swap.marketId,
+      marketAddress: swap.marketAddress,
       orderId: orderId.toNumber(),
       base: market.base,
       quote: market.quote,
@@ -579,32 +600,53 @@ export class CoreHandler extends Handler {
 
   /**
    * The protocol fees was updated
-   * @param instantSwapFee The new instant swap fee
-   * @param syntheticSwapFee The new p2p swap fee
-   * @param stableSwapFee The new stable asset swap fee
+   * @param instantSwapFeeBp The new instant swap fee in basis point
+   * @param syntheticSwapFeeBp The new p2p swap fee in basis point
+   * @param stableSwapFeeBp The new stable asset swap fee in basis point
+   * @param fixedSynthSwapFee The new fee for SYNTH/SYNTH swap (in P2P)
+   * @param fixedNFTSwapFee The new fee for NFT/NFT swap (in P2P)
+   * @param instantNFTSwapFeeBp The new fee for NFT/ERC20 swap in basis point
    * @param event The event object
    * @param txn The transaction object
    */
   async onProtocolFeeUpdated(
-    instantSwapFee: BigNumber,
-    syntheticSwapFee: BigNumber,
-    stableSwapFee: BigNumber,
+    instantSwapFeeBp: BigNumber,
+    syntheticSwapFeeBp: BigNumber,
+    stableSwapFeeBp: BigNumber,
+    fixedSynthSwapFee: BigNumber,
+    fixedNFTSwapFee: BigNumber,
+    instantNFTSwapFeeBp: BigNumber,
     event: Event,
     txn?: Transaction,
   ) {
     await Meta.update(
-      Meta.makeProtocolFeeKey(this.network, FeeName.InstantSwapFee),
-      instantSwapFee.toString(),
+      Meta.makeProtocolFeeKey(this.network, FeeName.InstantSwapFeeBp),
+      instantSwapFeeBp.toString(),
       txn,
     );
     await Meta.update(
-      Meta.makeProtocolFeeKey(this.network, FeeName.SynthSwapFee),
-      syntheticSwapFee.toString(),
+      Meta.makeProtocolFeeKey(this.network, FeeName.SynthSwapFeeBp),
+      syntheticSwapFeeBp.toString(),
       txn,
     );
     await Meta.update(
-      Meta.makeProtocolFeeKey(this.network, FeeName.StableSwapFee),
-      stableSwapFee.toString(),
+      Meta.makeProtocolFeeKey(this.network, FeeName.StableSwapFeeBp),
+      stableSwapFeeBp.toString(),
+      txn,
+    );
+    await Meta.update(
+      Meta.makeProtocolFeeKey(this.network, FeeName.FixedSynthSwapFee),
+      fixedSynthSwapFee.toString(),
+      txn,
+    );
+    await Meta.update(
+      Meta.makeProtocolFeeKey(this.network, FeeName.FixedNFTSwapFee),
+      fixedNFTSwapFee.toString(),
+      txn,
+    );
+    await Meta.update(
+      Meta.makeProtocolFeeKey(this.network, FeeName.InstantNFTSwapFeeBp),
+      instantNFTSwapFeeBp.toString(),
       txn,
     );
     return Promise.resolve();
@@ -670,7 +712,7 @@ export class CoreHandler extends Handler {
   /**
    * Market liquidity was updated
    * @param provider The liquidity owner address
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param deduction Indicates whether the update was a deduction or addition
    * @param amount The amount that was added or deducted
    * @param price The latest price
@@ -682,7 +724,7 @@ export class CoreHandler extends Handler {
    */
   async onUpdatedLiquidity(
     provider: string,
-    marketId: string,
+    marketAddress: string,
     deduction: boolean,
     amount: BigNumber,
     price: BigNumber,
@@ -693,20 +735,20 @@ export class CoreHandler extends Handler {
     txn?: Transaction,
   ) {
     // Get existing liquidity by the provider
-    const liq = await Liquidity.getLiquidity(this.network, marketId, provider, undefined, txn);
+    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, undefined, txn);
 
     // Find the provider
     const user = await User.getByAddress(provider);
 
     // Create the liquidity on database if not existing.
     // Otherwise, update the existing liquidity.
-    const market = await Market.getMarket(this.network, marketId, undefined);
+    const market = await Market.getMarket(this.network, marketAddress, undefined);
     if (!liq) {
       await Liquidity.create(
         {
           network: this.network,
           provider,
-          marketId,
+          marketAddress,
           base: market.base,
           baseAddress: market.baseAddress,
           quote: market.quote,
@@ -741,9 +783,15 @@ export class CoreHandler extends Handler {
         baseAddress: market.baseAddress,
         quote: market.quote,
         quoteAddress: market.quoteAddress,
-        marketId,
+        marketAddress,
         provider,
-        price: await Liquidity.getLowestPrice(this.network, marketId, undefined, undefined, txn),
+        price: await Liquidity.getLowestPrice(
+          this.network,
+          marketAddress,
+          undefined,
+          undefined,
+          txn,
+        ),
       },
       txn,
     );
@@ -753,7 +801,7 @@ export class CoreHandler extends Handler {
 
   /**
    * A market manager updated a liquidity's price
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param provider The liquidity provider's address
    * @param manager The liquidity manager's address
    * @param price
@@ -761,7 +809,7 @@ export class CoreHandler extends Handler {
    * @param txn The transaction object
    */
   async onUpdatedPrice(
-    marketId: string,
+    marketAddress: string,
     provider: string,
     manager: string,
     price: BigNumber,
@@ -769,7 +817,7 @@ export class CoreHandler extends Handler {
     txn?: Transaction,
   ) {
     // Get local liquidity
-    const liq = await Liquidity.getLiquidity(this.network, marketId, provider, undefined, txn);
+    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, undefined, txn);
     if (!liq) throw new Error('liquidity not found');
 
     // Update liquidity price
@@ -783,9 +831,15 @@ export class CoreHandler extends Handler {
         baseAddress: liq.baseAddress,
         quote: liq.quote,
         quoteAddress: liq.quoteAddress,
-        marketId,
+        marketAddress,
         provider,
-        price: await Liquidity.getLowestPrice(this.network, marketId, undefined, undefined, txn),
+        price: await Liquidity.getLowestPrice(
+          this.network,
+          marketAddress,
+          undefined,
+          undefined,
+          txn,
+        ),
       },
       txn,
     );
@@ -795,43 +849,43 @@ export class CoreHandler extends Handler {
 
   /**
    * A liquidity pause status was updated
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param provider The liquidity provider's address
    * @param paused Indicates whether the liquidity has been paused or un-paused
    * @param event The event object
    * @param txn The transaction object
    */
   async onTogglePause(
-    marketId: string,
+    marketAddress: string,
     provider: string,
     paused: boolean,
     event: Event,
     txn?: Transaction,
   ) {
-    const liq = await Liquidity.getLiquidity(this.network, marketId, provider, undefined, txn);
+    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, undefined, txn);
     await Liquidity.updateById(liq.id, { paused });
     return Promise.resolve(undefined);
   }
 
   /**
    * Liquidity manager was updated for a liquidity
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param provider The liquidity provider's address
    * @param manager The new liquidity manager's address
    * @param event The event object
    * @param txn The transaction object
    */
   async onSetLiquidityManager(
-    marketId: string,
+    marketAddress: string,
     provider: string,
     manager: string,
     event: Event,
     txn?: Transaction,
   ) {
-    const liq = await Liquidity.getLiquidity(this.network, marketId, provider, undefined, txn);
+    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, undefined, txn);
     await Liquidity.updateById(liq.id, { manager }, txn);
     await this.notifSrv.notify(NotifyType.NewLiquidityManager, this.network, manager, {
-      marketId,
+      marketAddress,
       provider,
     });
     return Promise.resolve(undefined);
@@ -839,24 +893,24 @@ export class CoreHandler extends Handler {
 
   /**
    * Liquidity manager was updated for a liquidity
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param provider The liquidity provider's address
    * @param manager The new liquidity manager's address
    * @param event The event object
    * @param txn The transaction object
    */
   async onRemoveLiquidityManager(
-    marketId: string,
+    marketAddress: string,
     provider: string,
     manager: string,
     event: Event,
     txn?: Transaction,
   ) {
-    const liq = await Liquidity.getLiquidity(this.network, marketId, provider, undefined, txn);
+    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, undefined, txn);
     if (liq) {
       await Liquidity.updateById(liq.id, { manager: null }, txn);
       await this.notifSrv.notify(NotifyType.RemoveLiquidityManager, this.network, manager, {
-        marketId,
+        marketAddress,
         provider,
       });
     }

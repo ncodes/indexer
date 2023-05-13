@@ -10,7 +10,7 @@ export class DisputesController {
    * List disputes
    * @param q The query object
    *  - [network] The network name
-   *  - [marketId] Filter by the  market ID
+   *  - [marketAddress] Filter by the  market ID
    *  - [creator] Filter by the dispute creator
    *  - [defendant] Filter by the dispute defendant
    *  - [orderId] Filter by the ID of the order the ticket was drafted to
@@ -32,7 +32,7 @@ export class DisputesController {
         .data(
           await Dispute.searchDisputes(
             q.net,
-            q.marketId,
+            q.marketAddress,
             q.creator,
             q.defendant,
             q.orderId,
@@ -53,7 +53,7 @@ export class DisputesController {
         .data({
           count: await Dispute.countDisputes(
             q.net,
-            q.marketId,
+            q.marketAddress,
             q.creator,
             q.defendant,
             q.orderId,

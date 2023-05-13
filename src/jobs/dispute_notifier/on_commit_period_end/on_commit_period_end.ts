@@ -57,7 +57,7 @@ export default class OnCommitPeriodEnd extends Base {
     // Get the drafted tickets
     const drafted = await Draft.getAll(
       swap.network,
-      swap.marketId,
+      swap.marketAddress,
       swap.orderId,
       dispute.disputeId,
     );
@@ -70,7 +70,7 @@ export default class OnCommitPeriodEnd extends Base {
     // Send notification
     for (const recipient of recipients) {
       await this.notifier.notify(NotifyType.CommitPhaseEnded, swap.network, recipient.address, {
-        marketId: swap.marketId,
+        marketAddress: swap.marketAddress,
         network: swap.network,
         orderId: swap.orderId,
         disputeId: dispute.disputeId,

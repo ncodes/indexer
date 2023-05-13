@@ -5,7 +5,7 @@ exports.up = function (knex) {
       table.string('id').primary();
       table.string('type');
       table.string('network');
-      table.string('marketId');
+      table.string('marketAddress');
       table.integer('orderId');
       table.integer('disputeId');
       table.boolean('completed').defaultTo(false);

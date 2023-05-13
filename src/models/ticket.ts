@@ -19,7 +19,7 @@ export default class Ticket extends BaseModel {
   // The index of the ticket
   index: number = undefined;
   // The market ID joined
-  marketId: string = undefined;
+  marketAddress: string = undefined;
   // The swap order ID drafted to
   orderId: number = undefined;
   // The dispute ID
@@ -161,14 +161,14 @@ export default class Ticket extends BaseModel {
   /**
    * count returns the count of record matching q
    * @param network The network name
-   * @param marketId The marker ID
+   * @param marketAddress The marker ID
    * @param txn Optional transaction object
    */
-  static countByNetworkAndMarket(network: string, marketId: string, txn?: Transaction) {
+  static countByNetworkAndMarket(network: string, marketAddress: string, txn?: Transaction) {
     return new Promise<string>((resolve, reject) => {
       this.query(txn)
         .where({ network })
-        .where('marketId', 'ilike', marketId)
+        .where('marketAddress', 'ilike', marketAddress)
         .count('id')
         .whereNotDeleted()
         .first()
@@ -182,7 +182,7 @@ export default class Ticket extends BaseModel {
   static makeSelectList(select = []) {
     select = select.filter((x) => Object.keys(new Ticket()).includes(x));
     select = select.length
-      ? _.uniq(select.concat(['id', 'marketId', 'network', 'owner', 'index', 'orderId']))
+      ? _.uniq(select.concat(['id', 'marketAddress', 'network', 'owner', 'index', 'orderId']))
       : ['*'];
     return select;
   }
@@ -190,7 +190,7 @@ export default class Ticket extends BaseModel {
   /**
    * searchTickets finds tickets
    * @param network The network name
-   * @param marketId The market ID (optional)
+   * @param marketAddress The market ID (optional)
    * @param owner Indicate to return ticket with matching owner
    * @param delegate Indicate to return ticket with matching delegate
    * @param orderId The order ID
@@ -208,7 +208,7 @@ export default class Ticket extends BaseModel {
    */
   static searchTickets(
     network: string,
-    marketId?: string,
+    marketAddress?: string,
     owner?: string,
     delegate?: string,
     orderId?: number,
@@ -229,7 +229,7 @@ export default class Ticket extends BaseModel {
       .select(...select, raw('count(*) over() as' + ' "__queryCount"'))
       .whereNotDeleted()
       .where({ network });
-    if (marketId) q = q.where('marketId', 'ILIKE', marketId);
+    if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
     q = q.where((q) => {
       if (owner && !delegate) q = q.where('owner', 'ILIKE', owner);
       if (delegate && !owner) q = q.where('delegate', 'ILIKE', delegate);
@@ -240,14 +240,14 @@ export default class Ticket extends BaseModel {
     if (disputeId !== undefined) q = q.where('disputeId', disputeId);
     if (joined !== undefined) {
       q = q.where((q) => {
-        if (joined) q.orWhere('marketId', 'is not', null);
-        else q.orWhere('marketId', 'is', null);
+        if (joined) q.orWhere('marketAddress', 'is not', null);
+        else q.orWhere('marketAddress', 'is', null);
       });
     }
     if (drafted !== undefined) q = q.where('drafted', drafted);
     if (expired) {
       q = q.where((q) => {
-        q.where('marketId', 'is', null)
+        q.where('marketAddress', 'is', null)
           .where('joinBy', 'is not', null)
           .where('joinBy', '<', 'now()')
           .orWhere('drained', true);
@@ -266,7 +266,7 @@ export default class Ticket extends BaseModel {
   /**
    * countTickets count tickets
    * @param network The network name
-   * @param marketId The market ID (optional)
+   * @param marketAddress The market ID (optional)
    * @param owner Indicate to return ticket with matching owner
    * @param delegate Indicate to return ticket with matching delegate
    * @param orderId The order ID
@@ -281,7 +281,7 @@ export default class Ticket extends BaseModel {
    */
   static countTickets(
     network: string,
-    marketId?: string,
+    marketAddress?: string,
     owner?: string,
     delegate?: string,
     orderId?: number,
@@ -295,7 +295,7 @@ export default class Ticket extends BaseModel {
     txn?: Transaction,
   ): Promise<Ticket[]> {
     let q = this.query(txn).whereNotDeleted().where({ network });
-    if (marketId) q = q.where('marketId', 'ILIKE', marketId);
+    if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
     q = q.where((q) => {
       if (owner && !delegate) q = q.where('owner', 'ILIKE', owner);
       if (delegate && !owner) q = q.where('delegate', 'ILIKE', delegate);
@@ -306,14 +306,14 @@ export default class Ticket extends BaseModel {
     if (disputeId !== undefined) q = q.where('disputeId', disputeId);
     if (joined !== undefined) {
       q = q.where((q) => {
-        if (joined) q.orWhere('marketId', 'is not', null);
-        else q.orWhere('marketId', 'is', null);
+        if (joined) q.orWhere('marketAddress', 'is not', null);
+        else q.orWhere('marketAddress', 'is', null);
       });
     }
     if (drafted !== undefined) q = q.where('drafted', drafted);
     if (expired) {
       q = q.where((q) => {
-        q.where('marketId', null)
+        q.where('marketAddress', null)
           .where('joinBy', 'is not', null)
           .where('joinBy', '<', 'now()')
           .orWhere('drained', true);

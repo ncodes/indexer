@@ -19,8 +19,8 @@ export default class MineTask extends BaseModel {
   type: MineTaskType;
   // The network associated with this object
   network: string = undefined;
-  // The market ID
-  marketId: string = undefined;
+  // The market address
+  marketAddress: string = undefined;
   // The swap order ID
   orderId: number = undefined;
   // The dispute index
@@ -173,14 +173,14 @@ export default class MineTask extends BaseModel {
   /**
    * Mark a single draft task as completed
    * @param network The network name
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param orderId The order index
    * @param disputeId The dispute index
    * @param txn Optional transaction object
    */
   static completeOneDraftTask(
     network: string,
-    marketId: string,
+    marketAddress: string,
     orderId: number,
     disputeId: number,
     txn?: Transaction,
@@ -198,7 +198,7 @@ export default class MineTask extends BaseModel {
             disputeId,
             completed: false,
           })
-          .where('marketId', 'ilike', marketId)
+          .where('marketAddress', 'ilike', marketAddress)
           .limit(1),
       )
       .patch({
@@ -209,14 +209,14 @@ export default class MineTask extends BaseModel {
   /**
    * Mark a single undraft task as completed
    * @param network The network name
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param orderId The order index
    * @param disputeId The dispute index
    * @param txn Optional transaction object
    */
   static completeOneUndraftTask(
     network: string,
-    marketId: string,
+    marketAddress: string,
     orderId: number,
     disputeId: number,
     txn?: Transaction,
@@ -234,7 +234,7 @@ export default class MineTask extends BaseModel {
             disputeId,
             completed: false,
           })
-          .where('marketId', 'ilike', marketId)
+          .where('marketAddress', 'ilike', marketAddress)
           .limit(1),
       )
       .patch({
@@ -245,14 +245,14 @@ export default class MineTask extends BaseModel {
   /**
    * Mark a single execution task as completed
    * @param network The network name
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param orderId The order index
    * @param disputeId The dispute index
    * @param txn Optional transaction object
    */
   static completeOneExecutionTask(
     network: string,
-    marketId: string,
+    marketAddress: string,
     orderId: number,
     disputeId: number,
     txn?: Transaction,
@@ -270,7 +270,7 @@ export default class MineTask extends BaseModel {
             disputeId,
             completed: false,
           })
-          .where('marketId', 'ilike', marketId)
+          .where('marketAddress', 'ilike', marketAddress)
           .limit(1),
       )
       .patch({

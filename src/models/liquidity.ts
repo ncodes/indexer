@@ -13,8 +13,8 @@ export default class Liquidity extends BaseModel {
   network: string = undefined;
   // The provider address
   provider: string = undefined;
-  // The market ID
-  marketId: string = undefined;
+  // The market address
+  marketAddress: string = undefined;
   // The base asset symbol
   base: string = undefined;
   // The base asset address
@@ -137,7 +137,7 @@ export default class Liquidity extends BaseModel {
       .whereNotDeleted()
       .where({ network })
       .where((q) => {
-        if (mid) return q.where('marketId', 'ILIKE', mid);
+        if (mid) return q.where('marketAddress', 'ILIKE', mid);
       })
       .where('provider', 'ILIKE', provider)
       .first();
@@ -169,7 +169,7 @@ export default class Liquidity extends BaseModel {
       ? _.uniq(
           select.concat([
             'id',
-            'marketId',
+            'marketAddress',
             'network',
             'provider',
             'base',
@@ -185,7 +185,7 @@ export default class Liquidity extends BaseModel {
   /**
    * getLiquidities finds liquidities
    * @param network The network name
-   * @param marketId??? The market ID (optional)
+   * @param marketAddress??? The market ID (optional)
    * @param provider??? Filter by provider address (optional)
    * @param maxOpenDisputes??? Allow only records with lower open disputes
    * @param amount Filter by swap amount within min and max swap amount
@@ -196,7 +196,7 @@ export default class Liquidity extends BaseModel {
    */
   static search(
     network: string,
-    marketId?: string,
+    marketAddress?: string,
     provider?: string,
     maxOpenDisputes?: number,
     amount: string = undefined,
@@ -211,7 +211,7 @@ export default class Liquidity extends BaseModel {
       .whereNotDeleted()
       .where({ network, paused: false })
       .where('amount', '>', '0');
-    if (marketId) q = q.where('marketId', 'ILIKE', marketId);
+    if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
     if (provider) q = q.where('provider', 'ILIKE', provider);
     if (maxOpenDisputes) q = q.where('openDisputes', '<', maxOpenDisputes);
     if (amount)
@@ -230,20 +230,20 @@ export default class Liquidity extends BaseModel {
   /**
    * countLiquidities count liquidities by network and optional provider
    * @param network The network name
-   * @param marketId The market ID (optional)
+   * @param marketAddress The market ID (optional)
    * @param provider Filter by provider address (optional)
    * @param maxOpenDisputes Allow only records with lower open disputes
    * @param txn Optional transaction object
    */
   static countLiquidities(
     network: string,
-    marketId?: string,
+    marketAddress?: string,
     provider?: string,
     maxOpenDisputes?: number,
     txn?: Transaction,
   ): Promise<Liquidity[]> {
     let q = this.query(txn).whereNotDeleted().where({ network, paused: false });
-    if (marketId) q = q.where('marketId', 'ILIKE', marketId);
+    if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
     if (provider) q = q.where('provider', 'ILIKE', provider);
     if (maxOpenDisputes) q = q.where('openDisputes', '<', maxOpenDisputes);
     return q
@@ -315,7 +315,7 @@ export default class Liquidity extends BaseModel {
   static countProvidersInMarket(net: string, mid: string, txn?: Transaction) {
     return new Promise<string>((resolve, reject) => {
       this.query(txn)
-        .where('marketId', 'ILIKE', mid)
+        .where('marketAddress', 'ILIKE', mid)
         .where('amount', '>', 0)
         .where({ network: net })
         .count('id')
@@ -351,7 +351,7 @@ export default class Liquidity extends BaseModel {
           if (net) return q.where({ network: net });
         })
         .where((q) => {
-          if (mid) return q.where('marketId', 'ILIKE', mid);
+          if (mid) return q.where('marketAddress', 'ILIKE', mid);
         })
         .where((q) => {
           if (baseAddress) return q.where('baseAddress', 'ILIKE', baseAddress);
@@ -394,7 +394,7 @@ export default class Liquidity extends BaseModel {
           if (net) return q.where({ network: net });
         })
         .where((q) => {
-          if (mid) return q.where('marketId', 'ILIKE', mid);
+          if (mid) return q.where('marketAddress', 'ILIKE', mid);
         })
         .where((q) => {
           if (baseAddress) return q.where('baseAddress', 'ILIKE', baseAddress);
@@ -425,7 +425,7 @@ export default class Liquidity extends BaseModel {
     return new Promise<string>((resolve, reject) => {
       this.query(txn)
         .select(raw('sum(cast(?? as numeric))', 'amount').as('total'))
-        .where('marketId', 'ILIKE', mid)
+        .where('marketAddress', 'ILIKE', mid)
         .where('amount', '>', 0)
         .where({ network: net })
         .whereNotDeleted()

@@ -60,7 +60,7 @@ describe('OnAppealPeriodEnd', () => {
     (2) when outcome is stalled because of reveals=0 (number of reveals >= majority)`, () => {
       let dispute: Dispute;
       let swap: Swap;
-      const marketId = '0xMarket';
+      const marketAddress = '0xMarket';
       const disputeId = 1;
       const orderId = 1;
 
@@ -68,7 +68,7 @@ describe('OnAppealPeriodEnd', () => {
         const now = moment();
         swap = await Swap.create({
           network: net,
-          marketId,
+          marketAddress,
           orderId,
           base: 'BASE',
           quote: 'QUOTE',
@@ -77,7 +77,7 @@ describe('OnAppealPeriodEnd', () => {
         });
         await Dispute.create({
           network: net,
-          marketId,
+          marketAddress,
           disputeId,
           orderId,
           numMediators: 3,
@@ -85,7 +85,7 @@ describe('OnAppealPeriodEnd', () => {
         });
         dispute = await Dispute.create({
           network: net,
-          marketId,
+          marketAddress,
           disputeId,
           orderId,
           numMediators: 3,
@@ -93,7 +93,7 @@ describe('OnAppealPeriodEnd', () => {
         });
         await Draft.create({
           network: net,
-          marketId,
+          marketAddress,
           orderId,
           disputeIndex: disputeId,
           owner: '0xDraftee',
@@ -109,7 +109,7 @@ describe('OnAppealPeriodEnd', () => {
       it('should send notification to taker, provider and draftees', async () => {
         await expect(srv.process()).resolves.toBeUndefined();
         const payload = {
-          marketId,
+          marketAddress,
           orderId,
           network: net,
           disputeId,
@@ -146,7 +146,7 @@ describe('OnAppealPeriodEnd', () => {
     (1) with matching dispute 
     (2) when outcome is cancelled`, () => {
       let swap: Swap;
-      const marketId = '0xMarket';
+      const marketAddress = '0xMarket';
       const disputeId = 1;
       const orderId = 1;
 
@@ -154,7 +154,7 @@ describe('OnAppealPeriodEnd', () => {
         const now = moment();
         swap = await Swap.create({
           network: net,
-          marketId,
+          marketAddress,
           orderId,
           base: 'BASE',
           quote: 'QUOTE',
@@ -163,7 +163,7 @@ describe('OnAppealPeriodEnd', () => {
         });
         await Dispute.create({
           network: net,
-          marketId,
+          marketAddress,
           disputeId,
           orderId,
           numMediators: 3,
@@ -171,7 +171,7 @@ describe('OnAppealPeriodEnd', () => {
         });
         await Dispute.create({
           network: net,
-          marketId,
+          marketAddress,
           disputeId,
           orderId,
           numMediators: 3,
@@ -179,7 +179,7 @@ describe('OnAppealPeriodEnd', () => {
         });
         await Draft.create({
           network: net,
-          marketId,
+          marketAddress,
           orderId,
           disputeIndex: disputeId,
           owner: '0xDraftee',
@@ -191,7 +191,7 @@ describe('OnAppealPeriodEnd', () => {
       it('should send notification to taker, provider and draftees', async () => {
         await expect(srv.process()).resolves.toBeUndefined();
         const payload = {
-          marketId,
+          marketAddress,
           orderId,
           network: net,
           disputeId,
@@ -213,7 +213,7 @@ describe('OnAppealPeriodEnd', () => {
     (1) with matching dispute 
     (2) when outcome is released`, () => {
       let swap: Swap;
-      const marketId = '0xMarket';
+      const marketAddress = '0xMarket';
       const disputeId = 1;
       const orderId = 1;
 
@@ -221,7 +221,7 @@ describe('OnAppealPeriodEnd', () => {
         const now = moment();
         swap = await Swap.create({
           network: net,
-          marketId,
+          marketAddress,
           orderId,
           base: 'BASE',
           quote: 'QUOTE',
@@ -230,7 +230,7 @@ describe('OnAppealPeriodEnd', () => {
         });
         await Dispute.create({
           network: net,
-          marketId,
+          marketAddress,
           disputeId,
           orderId,
           numMediators: 3,
@@ -238,7 +238,7 @@ describe('OnAppealPeriodEnd', () => {
         });
         await Dispute.create({
           network: net,
-          marketId,
+          marketAddress,
           disputeId,
           orderId,
           numMediators: 3,
@@ -246,7 +246,7 @@ describe('OnAppealPeriodEnd', () => {
         });
         await Draft.create({
           network: net,
-          marketId,
+          marketAddress,
           orderId,
           disputeIndex: disputeId,
           owner: '0xDraftee',
@@ -258,7 +258,7 @@ describe('OnAppealPeriodEnd', () => {
       it('should send notification to taker, provider and draftees', async () => {
         await expect(srv.process()).resolves.toBeUndefined();
         const payload = {
-          marketId,
+          marketAddress,
           orderId,
           network: net,
           disputeId,

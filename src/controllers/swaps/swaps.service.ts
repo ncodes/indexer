@@ -14,18 +14,18 @@ export default class SwapsService {
    * @param addAppealedDisputeDraftees If true, appealed dispute draftees are added as participants.
    */
   async getParticipants(swap: Swap, addAppealedDisputeDraftees = false): Promise<string[]> {
-    const { provider, taker, network, marketId, orderId } = swap;
+    const { provider, taker, network, marketAddress, orderId } = swap;
     const participants = [provider, taker];
-    const dispute = await Dispute.getRecentOfOrder(network, marketId, orderId);
+    const dispute = await Dispute.getRecentOfOrder(network, marketAddress, orderId);
     if (dispute) {
-      const draftees = await Draft.getAll(network, marketId, orderId, dispute.disputeId);
+      const draftees = await Draft.getAll(network, marketAddress, orderId, dispute.disputeId);
       draftees.forEach((draftee) => {
         participants.push(draftee.owner);
       });
 
       if (addAppealedDisputeDraftees && dispute.disputeId > 0) {
         for (let i = 0; i < dispute.disputeId; i++) {
-          const draftees = await Draft.getAll(network, marketId, orderId, i);
+          const draftees = await Draft.getAll(network, marketAddress, orderId, i);
           draftees.forEach((draftee) => {
             participants.push(draftee.owner);
           });

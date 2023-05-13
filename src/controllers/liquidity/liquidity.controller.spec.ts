@@ -108,13 +108,13 @@ describe('LiquidityController', () => {
         const liq = await Liquidity.create({
           network: net,
           provider: '0xProvider',
-          marketId: '0x123',
+          marketAddress: '0x123',
           amount: '10',
         });
         await Liquidity.create({
           network: net,
           provider: '0xProvider2',
-          marketId: '0x123',
+          marketAddress: '0x123',
           amount: '10',
         });
 
@@ -141,13 +141,13 @@ describe('LiquidityController', () => {
             network: net,
             provider: '0xProvider',
             amount: '10',
-            marketId: '0x123',
+            marketAddress: '0x123',
           });
           await Liquidity.create({
             network: net,
             provider: '0xProvider2',
             amount: '10',
-            marketId: '0x123',
+            marketAddress: '0x123',
           });
 
           const mockExtendLiquidity = jest
@@ -173,13 +173,13 @@ describe('LiquidityController', () => {
           network: net,
           provider: '0xProvider',
           amount: '10',
-          marketId: '0x123',
+          marketAddress: '0x123',
         });
         await Liquidity.create({
           network: net,
           provider: '0xProvider2',
           amount: '10',
-          marketId: '0x124',
+          marketAddress: '0x124',
         });
 
         const mockExtendLiquidity = jest
@@ -188,7 +188,7 @@ describe('LiquidityController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/liquidities`)
-          .query({ net, marketId: '0x123' })
+          .query({ net, marketAddress: '0x123' })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -208,14 +208,14 @@ describe('LiquidityController', () => {
         const liq = await Liquidity.create({
           network: net,
           provider: '0xProvider',
-          marketId: '0x123',
+          marketAddress: '0x123',
           amount: '10',
           openDisputes: 2,
         });
         await Liquidity.create({
           network: net,
           provider: '0xProvider2',
-          marketId: '0x124',
+          marketAddress: '0x124',
           amount: '10',
           openDisputes: 3,
         });
@@ -226,7 +226,7 @@ describe('LiquidityController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/liquidities`)
-          .query({ net, marketId: '0x123' })
+          .query({ net, marketAddress: '0x123' })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -246,7 +246,7 @@ describe('LiquidityController', () => {
         await Liquidity.create({
           network: net,
           provider: '0xProvider',
-          marketId: '0x123',
+          marketAddress: '0x123',
           amount: '10',
           minSwap: '3',
           maxSwap: '5',
@@ -254,7 +254,7 @@ describe('LiquidityController', () => {
         const liq2 = await Liquidity.create({
           network: net,
           provider: '0xProvider2',
-          marketId: '0x124',
+          marketAddress: '0x124',
           amount: '10',
           minSwap: '2',
           maxSwap: '6',
@@ -308,13 +308,13 @@ describe('LiquidityController', () => {
           network: net,
           provider: '0xProvider',
           amount: '10',
-          marketId: '0x123',
+          marketAddress: '0x123',
         });
         await Liquidity.create({
           network: net,
           provider: '0xProvider2',
           amount: '10',
-          marketId: '0x124',
+          marketAddress: '0x124',
         });
 
         const mockExtendLiquidity = jest
@@ -340,13 +340,13 @@ describe('LiquidityController', () => {
           network: net,
           provider: '0xProvider',
           amount: '10',
-          marketId: '0x123',
+          marketAddress: '0x123',
         });
         const liq = await Liquidity.create({
           network: net,
           provider: '0xProvider2',
           amount: '10',
-          marketId: '0x124',
+          marketAddress: '0x124',
         });
 
         const mockExtendLiquidity = jest
@@ -372,7 +372,7 @@ describe('LiquidityController', () => {
           network: net,
           provider: '0xProvider',
           amount: '10',
-          marketId: '0x123',
+          marketAddress: '0x123',
         });
         await request(app.getHttpServer())
           .get(`/v1/liquidities`)

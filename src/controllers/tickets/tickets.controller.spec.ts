@@ -163,20 +163,20 @@ describe('TicketsController', () => {
         const mockTicket = jest.spyOn(app.get(TicketsService), 'extendTicket');
         jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue();
 
-        await Market.create({ network: net, marketId: '0xMarket2' });
+        await Market.create({ network: net, address: '0xMarket2' });
         await Ticket.create({
           network: net,
           owner: '0xOwner',
-          marketId: '0xMarket',
+          marketAddress: '0xMarket',
         });
         const ticket = await Ticket.create({
           network: net,
-          marketId: '0xMarket2',
+          marketAddress: '0xMarket2',
         });
         await request(app.getHttpServer())
           .get(`/v1/tickets`)
           .set('Authorization', 'bearer ' + token)
-          .query({ net, marketId: '0xMarket2' })
+          .query({ net, marketAddress: '0xMarket2' })
           .send({})
           .expect(200)
           .expect((res) => {
@@ -192,7 +192,7 @@ describe('TicketsController', () => {
         const mockTicket = jest.spyOn(app.get(TicketsService), 'extendTicket');
 
         const ticket = await Ticket.create({ network: net, owner: '0xOwner' });
-        await Ticket.create({ network: net, marketId: '0xMarket2' });
+        await Ticket.create({ network: net, marketAddress: '0xMarket2' });
         await request(app.getHttpServer())
           .get(`/v1/tickets`)
           .set('Authorization', 'bearer ' + token)
@@ -215,7 +215,7 @@ describe('TicketsController', () => {
           network: net,
           delegate: '0xDelegate',
         });
-        await Ticket.create({ network: net, marketId: '0xMarket2' });
+        await Ticket.create({ network: net, marketAddress: '0xMarket2' });
         await request(app.getHttpServer())
           .get(`/v1/tickets`)
           .set('Authorization', 'bearer ' + token)
@@ -302,10 +302,10 @@ describe('TicketsController', () => {
         const mockTicket = jest.spyOn(app.get(TicketsService), 'extendTicket');
         jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue();
 
-        await Market.create({ network: net, marketId: '0xMarket' });
+        await Market.create({ network: net, address: '0xMarket' });
         const ticket = await Ticket.create({
           network: net,
-          marketId: '0xMarket',
+          marketAddress: '0xMarket',
         });
         await Ticket.create({ network: net });
 
@@ -326,8 +326,8 @@ describe('TicketsController', () => {
         const mockTicket = jest.spyOn(app.get(TicketsService), 'extendTicket');
         jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue();
 
-        await Market.create({ network: net, marketId: '0xMarket' });
-        await Ticket.create({ network: net, marketId: '0xMarket' });
+        await Market.create({ network: net, address: '0xMarket' });
+        await Ticket.create({ network: net, marketAddress: '0xMarket' });
         const ticket = await Ticket.create({ network: net });
 
         await request(app.getHttpServer())
@@ -436,7 +436,7 @@ describe('TicketsController', () => {
           const mockTicket = jest.spyOn(app.get(TicketsService), 'extendTicket');
           jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue();
 
-          await Market.create({ network: net, marketId: '0xMarket' });
+          await Market.create({ network: net, address: '0xMarket' });
           const now = moment();
           const ticket = await Ticket.create({
             network: net,

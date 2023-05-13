@@ -29,7 +29,7 @@ export class TicketsController {
   /**
    * List tickets
    * @param q The query object
-   *  - [marketId] Filter by the market the ticket joined
+   *  - [marketAddress] Filter by the market the ticket joined
    *  - [disputeId] Filter by the dispute the ticket was drafted to
    *  - [orderId] Filter by the order the ticket's current dispute belongs to
    *  - [owner] Filter by owner address
@@ -51,7 +51,7 @@ export class TicketsController {
     if (!q.count) {
       const result = await Ticket.searchTickets(
         q.net,
-        q.marketId,
+        q.marketAddress,
         q.owner,
         q.delegate,
         q.orderId,
@@ -75,7 +75,7 @@ export class TicketsController {
         .data({
           count: await Ticket.countTickets(
             q.net,
-            q.marketId,
+            q.marketAddress,
             q.owner,
             q.delegate,
             q.orderId,

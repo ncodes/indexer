@@ -11,7 +11,7 @@ export default class Commit extends BaseModel {
   // The address of the committer
   committer: string;
   // The market ID joined
-  marketId: string;
+  marketAddress: string;
   // The order ID
   orderId: number;
   // The dispute ID

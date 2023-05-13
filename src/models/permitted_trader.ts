@@ -8,8 +8,8 @@ import { BaseModel } from './base';
 export default class PermittedTrader extends BaseModel {
   // The network name
   network: string;
-  // The market ID
-  marketId: string;
+  // The market address
+  marketAddress: string;
   // The permitted address
   address: string;
 
@@ -70,19 +70,19 @@ export default class PermittedTrader extends BaseModel {
   /**
    * Find a record my network, market ID and address
    * @param network The network name
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param address The permitted address
    * @param txn Optional transaction object
    */
   static findByNetworkMarketIdAndAddress(
     network: string,
-    marketId: string,
+    marketAddress: string,
     address: string,
     txn?: Transaction,
   ) {
     return this.query(txn)
       .where('network', 'ilike', network)
-      .where('marketId', 'ilike', marketId)
+      .where('marketAddress', 'ilike', marketAddress)
       .where('address', 'ilike', address)
       .whereNotDeleted()
       .first();
@@ -91,14 +91,14 @@ export default class PermittedTrader extends BaseModel {
   /**
    * remove a permission
    * @param network The network name
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param address The permitted address
    * @param txn Optional transaction object
    */
-  static remove(network: string, marketId: string, address: string, txn?: Transaction) {
+  static remove(network: string, marketAddress: string, address: string, txn?: Transaction) {
     return this.query(txn)
       .where('network', 'ilike', network)
-      .where('marketId', 'ilike', marketId)
+      .where('marketAddress', 'ilike', marketAddress)
       .where('address', 'ilike', address)
       .delete();
   }
@@ -106,14 +106,14 @@ export default class PermittedTrader extends BaseModel {
   /**
    * searchByNetworkMarketID searches for records by network and market ID
    * @param network The network name
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param limit The result limit
    * @param offset The offset value
    * @param txn Optional transaction object
    */
   static searchByNetworkMarketID(
     network: string,
-    marketId: string,
+    marketAddress: string,
     limit: number,
     offset: number,
     txn?: Transaction,
@@ -121,7 +121,7 @@ export default class PermittedTrader extends BaseModel {
     let q = this.query(txn)
       .select(raw('*, count(*) over() as "__queryCount"'))
       .where('network', 'ILIKE', network);
-    if (marketId) q = q.where('marketId', 'ILIKE', marketId);
+    if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
     if (offset) q = q.offset(offset);
     if (limit) q = q.limit(limit);
     return q.whereNotDeleted().orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');

@@ -1634,12 +1634,13 @@ declare global {
     [key: string]: any;
   }
 
-  interface KnownContracts {
+  interface JointContracts {
     p2pToken?: Contract;
     marketCore?: Contract;
     core?: Contract;
     mediatorMgr?: Contract;
     disputeMgr?: Contract;
+    badgeMgr?: Contract;
     tokenPool?: Contract;
     lpPool?: Contract;
     feePool?: Contract;

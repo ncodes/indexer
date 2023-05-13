@@ -67,19 +67,19 @@ describe('DisputeManagerHandler', () => {
     describe('with no previous existing dispute for the order', () => {
       it('should create dispute with correct fields', async () => {
         const orderId = toBN(1);
-        const marketId = '0xMarket';
+        const marketAddress = '0xMarket';
         const disputeId = toBN(1);
 
         let market = await Market.create({
           network: net,
-          marketId,
+          address: marketAddress,
           numMediators: 3,
           totalSwaps: 2,
         });
 
         let liquidity = await Liquidity.create({
           network: net,
-          marketId: market.marketId,
+          marketAddress: market.address,
           provider: '0xProvider',
           totalSwaps: 2,
         });
@@ -87,7 +87,7 @@ describe('DisputeManagerHandler', () => {
         await Swap.create({
           network: net,
           orderId: orderId.toNumber(),
-          marketId,
+          marketAddress,
           provider: '0xProvider',
           taker: '0xTaker',
           base: 'BASE',
@@ -99,7 +99,12 @@ describe('DisputeManagerHandler', () => {
         ).resolves.toBeUndefined();
 
         // Expect dispute to be created
-        const dispute = await Dispute.get(net, marketId, orderId.toNumber(), disputeId.toNumber());
+        const dispute = await Dispute.get(
+          net,
+          marketAddress,
+          orderId.toNumber(),
+          disputeId.toNumber(),
+        );
         expect(dispute).toBeDefined();
         expect(dispute.wantRelease).toBeTruthy();
         expect(dispute.defendant).toEqual('0xTaker');
@@ -132,7 +137,7 @@ describe('DisputeManagerHandler', () => {
         const q = {
           type: MineTaskType.Draft,
           network: net,
-          marketId: market.marketId,
+          marketAddress: market.address,
           orderId: orderId.toNumber(),
           disputeId: disputeId.toNumber(),
         };
@@ -143,12 +148,12 @@ describe('DisputeManagerHandler', () => {
     describe('with there is an existing dispute for the order', () => {
       it('should create dispute with correct fields', async () => {
         const orderId = toBN(1);
-        const marketId = '0xMarket';
+        const marketAddress = '0xMarket';
         const disputeId = toBN(1);
 
         let market = await Market.create({
           network: net,
-          marketId,
+          address: marketAddress,
           numMediators: 3,
           openDisputes: 1,
           totalDisputes: 1,
@@ -156,7 +161,7 @@ describe('DisputeManagerHandler', () => {
 
         let liquidity = await Liquidity.create({
           network: net,
-          marketId: market.marketId,
+          marketAddress: market.address,
           provider: '0xProvider',
           openDisputes: 1,
           totalDisputes: 1,
@@ -164,14 +169,14 @@ describe('DisputeManagerHandler', () => {
 
         await Dispute.create({
           network: net,
-          marketId,
+          marketAddress,
           orderId: orderId.toNumber(),
         });
 
         await Swap.create({
           network: net,
           orderId: orderId.toNumber(),
-          marketId,
+          marketAddress,
           provider: '0xProvider',
           taker: '0xTaker',
           base: 'BASE',
@@ -185,7 +190,12 @@ describe('DisputeManagerHandler', () => {
         ).resolves.toBeUndefined();
 
         // Expect dispute to be created
-        const dispute = await Dispute.get(net, marketId, orderId.toNumber(), disputeId.toNumber());
+        const dispute = await Dispute.get(
+          net,
+          marketAddress,
+          orderId.toNumber(),
+          disputeId.toNumber(),
+        );
         expect(dispute).toBeDefined();
         expect(dispute.wantRelease).toBeTruthy();
         expect(dispute.defendant).toEqual('0xProvider');
@@ -216,7 +226,7 @@ describe('DisputeManagerHandler', () => {
         const q = {
           type: MineTaskType.Draft,
           network: net,
-          marketId: market.marketId,
+          marketAddress: market.address,
           orderId: orderId.toNumber(),
           disputeId: disputeId.toNumber(),
         };
@@ -228,14 +238,14 @@ describe('DisputeManagerHandler', () => {
   describe('.onCommitted', () => {
     it('should create a commit', async () => {
       const orderId = toBN(1);
-      const marketId = '0xMarket';
+      const marketAddress = '0xMarket';
       const disputeId = toBN(1);
       await expect(
-        handler.onCommitted(marketId, orderId, disputeId, '0xCommitter', '0xHash', {} as any),
+        handler.onCommitted(marketAddress, orderId, disputeId, '0xCommitter', '0xHash', {} as any),
       ).resolves.toBeUndefined();
 
       const commit = await Commit.find({
-        marketId,
+        marketAddress,
         orderId: orderId.toNumber(),
       });
       expect(commit).toBeDefined();
@@ -246,14 +256,14 @@ describe('DisputeManagerHandler', () => {
   describe('.onRevealed', () => {
     it('should create a commit', async () => {
       const orderId = toBN(1);
-      const marketId = '0xMarket';
+      const marketAddress = '0xMarket';
       const disputeId = toBN(1);
       await expect(
-        handler.onRevealed(marketId, orderId, disputeId, '0xRevealer', '1vote', {} as any),
+        handler.onRevealed(marketAddress, orderId, disputeId, '0xRevealer', '1vote', {} as any),
       ).resolves.toBeUndefined();
 
       const reveal = await Reveal.find({
-        marketId,
+        marketAddress,
         orderId: orderId.toNumber(),
       });
       expect(reveal).toBeDefined();
@@ -262,7 +272,7 @@ describe('DisputeManagerHandler', () => {
 
   describe('.onDecisionExecuted', () => {
     const orderId = toBN(1);
-    const marketId = '0xMarket';
+    const marketAddress = '0xMarket';
     const disputeId = toBN(1);
     let market: Market;
     let swap: Swap;
@@ -273,7 +283,7 @@ describe('DisputeManagerHandler', () => {
     beforeEach(async () => {
       market = await Market.create({
         network: net,
-        marketId,
+        address: marketAddress,
         numMediators,
         openDisputes: 1,
         totalDisputes: 1,
@@ -281,14 +291,14 @@ describe('DisputeManagerHandler', () => {
 
       liquidity = await Liquidity.create({
         network: net,
-        marketId: market.marketId,
+        marketAddress: market.address,
         provider: '0xProvider',
         openDisputes: 1,
       });
 
       await Dispute.create({
         network: net,
-        marketId,
+        marketAddress,
         orderId: orderId.toNumber(),
         disputeId: disputeId.toNumber(),
         numMediators,
@@ -296,7 +306,7 @@ describe('DisputeManagerHandler', () => {
 
       swap = await Swap.create({
         network: net,
-        marketId,
+        marketAddress,
         orderId: orderId.toNumber(),
         provider: '0xProvider',
         taker: '0xTaker',
@@ -306,7 +316,7 @@ describe('DisputeManagerHandler', () => {
 
       await Draft.create({
         network: net,
-        marketId,
+        marketAddress,
         orderId: orderId.toNumber(),
         disputeIndex: disputeId.toNumber(),
         owner: '0xDrafted',
@@ -314,7 +324,7 @@ describe('DisputeManagerHandler', () => {
 
       executeTask = await MineTask.create({
         network: net,
-        marketId,
+        marketAddress,
         orderId: orderId.toNumber(),
         disputeId: disputeId.toNumber(),
         type: MineTaskType.Execute,
@@ -325,7 +335,7 @@ describe('DisputeManagerHandler', () => {
       it('should consider dispute as released', async () => {
         await expect(
           handler.onDecisionExecuted(
-            marketId,
+            marketAddress,
             orderId,
             disputeId,
             '0xExecutor',
@@ -336,13 +346,18 @@ describe('DisputeManagerHandler', () => {
           ),
         ).resolves.toBeUndefined();
 
-        const dispute = await Dispute.get(net, marketId, orderId.toNumber(), disputeId.toNumber());
+        const dispute = await Dispute.get(
+          net,
+          marketAddress,
+          orderId.toNumber(),
+          disputeId.toNumber(),
+        );
         expect(dispute.executed).toBeTruthy();
         expect(dispute.released).toBeTruthy();
 
         // expect notification to have been sent
         const payload = {
-          marketId,
+          marketAddress,
           orderId: orderId.toNumber(),
           network: net,
           disputeId: disputeId.toNumber(),
@@ -386,7 +401,7 @@ describe('DisputeManagerHandler', () => {
         const q = {
           type: MineTaskType.Undraft,
           network: net,
-          marketId: market.marketId,
+          marketAddress: market.address,
           orderId: orderId.toNumber(),
           disputeId: disputeId.toNumber(),
         };
@@ -402,7 +417,7 @@ describe('DisputeManagerHandler', () => {
       it('should consider dispute as cancelled', async () => {
         await expect(
           handler.onDecisionExecuted(
-            marketId,
+            marketAddress,
             orderId,
             disputeId,
             '0xExecutor',
@@ -413,13 +428,18 @@ describe('DisputeManagerHandler', () => {
           ),
         ).resolves.toBeUndefined();
 
-        const dispute = await Dispute.get(net, marketId, orderId.toNumber(), disputeId.toNumber());
+        const dispute = await Dispute.get(
+          net,
+          marketAddress,
+          orderId.toNumber(),
+          disputeId.toNumber(),
+        );
         expect(dispute.executed).toBeTruthy();
         expect(dispute.released).toBeFalsy();
 
         // expect notification to have been sent
         const payload = {
-          marketId,
+          marketAddress,
           orderId: orderId.toNumber(),
           network: net,
           disputeId: disputeId.toNumber(),
@@ -450,7 +470,7 @@ describe('DisputeManagerHandler', () => {
       it('should consider dispute as stalled', async () => {
         await expect(
           handler.onDecisionExecuted(
-            marketId,
+            marketAddress,
             orderId,
             disputeId,
             '0xExecutor',
@@ -461,13 +481,18 @@ describe('DisputeManagerHandler', () => {
           ),
         ).resolves.toBeUndefined();
 
-        const dispute = await Dispute.get(net, marketId, orderId.toNumber(), disputeId.toNumber());
+        const dispute = await Dispute.get(
+          net,
+          marketAddress,
+          orderId.toNumber(),
+          disputeId.toNumber(),
+        );
         expect(dispute.executed).toBeTruthy();
         expect(dispute.released).toBeNull();
 
         // expect notification to have been sent
         const payload = {
-          marketId,
+          marketAddress,
           orderId: orderId.toNumber(),
           network: net,
           disputeId: disputeId.toNumber(),

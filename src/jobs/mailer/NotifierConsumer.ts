@@ -89,7 +89,7 @@ export class NotifierConsumer {
       network: job.network,
       userId: job.user.id,
       title: sub,
-      body: `You have been invited to mediate for this <a href="https://app.fiatx.co/market/${job.data.marketId}">market</a>. Go to the invitation page on the FIATX app to accept the invitation. You may ignore invitation if you are not interested.`,
+      body: `You have been invited to mediate for this <a href="https://app.fiatx.co/market/${job.data.marketAddress}">market</a>. Go to the invitation page on the FIATX app to accept the invitation. You may ignore invitation if you are not interested.`,
     });
 
     // Send email
@@ -133,7 +133,7 @@ export class NotifierConsumer {
       network: job.network,
       userId: job.user.id,
       title: sub,
-      body: `Your mediation access to this permissioned <a href="https://app.fiatx.co/market/${job.data.marketId}">market</a> has been revoked by the market creator.`,
+      body: `Your mediation access to this permissioned <a href="https://app.fiatx.co/market/${job.data.marketAddress}">market</a> has been revoked by the market creator.`,
     });
 
     // Send email
@@ -154,7 +154,7 @@ export class NotifierConsumer {
       network: job.network,
       userId: job.user.id,
       title: sub,
-      body: `You have been granted access to provide liquidity to this permissioned <a href="https://app.fiatx.co/market/${job.data.marketId}">market</a>`,
+      body: `You have been granted access to provide liquidity to this permissioned <a href="https://app.fiatx.co/market/${job.data.marketAddress}">market</a>`,
     });
 
     // Send email
@@ -175,7 +175,7 @@ export class NotifierConsumer {
       network: job.network,
       userId: job.user.id,
       title: sub,
-      body: `You are no longer permitted to provide liquidity to this permissioned <a href="https://app.fiatx.co/market/${job.data.marketId}">market</a>`,
+      body: `You are no longer permitted to provide liquidity to this permissioned <a href="https://app.fiatx.co/market/${job.data.marketAddress}">market</a>`,
     });
 
     // Send email
@@ -196,7 +196,7 @@ export class NotifierConsumer {
       network: job.network,
       userId: job.user.id,
       title: sub,
-      body: `You have been granted permission to carry out swap operations in this permissioned <a href="https://app.fiatx.co/market/${job.data.marketId}">market</a>.`,
+      body: `You have been granted permission to carry out swap operations in this permissioned <a href="https://app.fiatx.co/market/${job.data.marketAddress}">market</a>.`,
     });
 
     // Send email
@@ -217,7 +217,7 @@ export class NotifierConsumer {
       network: job.network,
       userId: job.user.id,
       title: sub,
-      body: `You are no longer permitted to carry out swap operations in this permissioned <a href="https://app.fiatx.co/market/${job.data.marketId}">market</a>`,
+      body: `You are no longer permitted to carry out swap operations in this permissioned <a href="https://app.fiatx.co/market/${job.data.marketAddress}">market</a>`,
     });
 
     // Send email
@@ -234,12 +234,12 @@ export class NotifierConsumer {
    */
   async notifyNewLiquidityManager(job: NotifyJob) {
     const sub = 'Granted Liquidity Manager Status';
-    const { marketId, provider } = job.data;
+    const { marketAddress, provider } = job.data;
     await Notification.create({
       network: job.network,
       userId: job.user.id,
       title: sub,
-      body: `You have been selected as the manager of ${provider}'s <a href="https://app.fiatx.co/liquidity/${provider}">liquidity</a> in this permissioned <a href="https://app.fiatx.co/market/${marketId}">market</a>`,
+      body: `You have been selected as the manager of ${provider}'s <a href="https://app.fiatx.co/liquidity/${provider}">liquidity</a> in this permissioned <a href="https://app.fiatx.co/market/${marketAddress}">market</a>`,
     });
 
     // Send email
@@ -256,14 +256,14 @@ export class NotifierConsumer {
    */
   async notifyRemoveLiquidityManager(job: NotifyJob) {
     const sub = 'Revoked Liquidity Manager Status';
-    const { marketId, provider } = job.data;
+    const { marketAddress, provider } = job.data;
     await Notification.create({
       network: job.network,
       userId: job.user.id,
       title: sub,
       body: `You have been removed as the manager of ${provider}'s <a href="https://app
 .fiatx.co/liquidity/${provider}">liquidity</a> in this
-permissioned <a href="https://app.fiatx.co/market/${marketId}">market</a>.`,
+permissioned <a href="https://app.fiatx.co/market/${marketAddress}">market</a>.`,
     });
 
     // Send email
@@ -405,14 +405,14 @@ Please carefully verify payment of ${cost} ${quote} and only release the assets 
    */
   async notifyMarketCreatorOnJoinedTicket(job: NotifyJob) {
     const sub = `New Market Mediator`;
-    const { marketId, owner } = job.data;
+    const { marketAddress, owner } = job.data;
     await Notification.create({
       network: job.network,
       userId: job.user.id,
       title: sub,
       body: `A mediator@${shortenAddr(
         owner,
-      )} has joined your <a href="https://app.fiatx.co/market/${marketId}">market</a>`,
+      )} has joined your <a href="https://app.fiatx.co/market/${marketAddress}">market</a>`,
     });
 
     // Send email
@@ -430,14 +430,14 @@ Please carefully verify payment of ${cost} ${quote} and only release the assets 
    */
   async notifyMarketCreatorOnLeftTicket(job: NotifyJob) {
     const sub = `Market Mediator Left`;
-    const { marketId, owner } = job.data;
+    const { marketAddress, owner } = job.data;
     await Notification.create({
       network: job.network,
       userId: job.user.id,
       title: sub,
       body: `A mediator@${shortenAddr(
         owner,
-      )} has joined your <a href="https://app.fiatx.co/market/${marketId}">market</a>`,
+      )} has joined your <a href="https://app.fiatx.co/market/${marketAddress}">market</a>`,
     });
 
     // Send email
@@ -478,14 +478,16 @@ Please carefully verify payment of ${cost} ${quote} and only release the assets 
    */
   async notifyTicketOwnerOnDraft(job: NotifyJob) {
     const sub = `Mediation Ticket Drafted`;
-    const { ticketId, orderId, marketId } = job.data;
+    const { ticketId, orderId, marketAddress } = job.data;
     await Notification.create({
       network: job.network,
       userId: job.user.id,
       title: sub,
       body: `Your ticket#${ticketId} has been drafted to mediate in a new dispute on swap
 <a href="https://app.fiatx.co/swap/${orderId}">order#${orderId}</a>
-of <a href="https://app.fiatx.co/market/${marketId}">market#${shortenAddr(marketId)}</a>.`,
+of <a href="https://app.fiatx.co/market/${marketAddress}">market#${shortenAddr(
+        marketAddress,
+      )}</a>.`,
     });
 
     await this.mailer.send('ticket-drafted', sub, job.user.email, {

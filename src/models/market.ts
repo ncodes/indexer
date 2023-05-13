@@ -4,12 +4,19 @@ import { BaseModel } from './base';
 import InvitedMediator from './invited_mediators';
 import * as _ from 'lodash';
 
+export enum AssetType {
+  SYNTH,
+  ERC20,
+  ERC721,
+  ERC1155,
+}
+
 /**
  * Market represents a market model
  */
 export default class Market extends BaseModel {
-  // The market ID
-  marketId: string = undefined;
+  // The market address
+  address: string = undefined;
   // The creator of the market
   creator: string = undefined;
   // The network it exists in
@@ -18,14 +25,16 @@ export default class Market extends BaseModel {
   base: string = undefined;
   // The base asset token address
   baseAddress: string = undefined;
-  // Indicates whether the base asset represents an off-chain asset
-  isBaseLocal: boolean = undefined;
+  // Indicates the type of the base asset
+  baseType: AssetType = undefined;
   // The quote asset symbol
   quote: string = undefined;
   // The quote asset token address
   quoteAddress: string = undefined;
-  // Indicates whether the quote asset represents an off-chain asset
-  isQuoteLocal: boolean = undefined;
+  // Indicates the type of quote asset
+  quoteType: AssetType = undefined;
+  // Indicates whether this is an instant market
+  instant: boolean = undefined;
   // The base/asset pair name
   pair: string = undefined;
   // The market's commission
@@ -100,8 +109,8 @@ export default class Market extends BaseModel {
         relation: Model.HasManyRelation,
         modelClass: InvitedMediator,
         join: {
-          from: 'markets.marketId',
-          to: 'invited_mediators.marketId',
+          from: 'markets.address',
+          to: 'invited_mediators.marketAddress',
         },
       },
     };
@@ -111,7 +120,63 @@ export default class Market extends BaseModel {
    * Checks if the market is an instant swap market
    */
   isInstant() {
-    return !this.isBaseLocal && !this.isQuoteLocal;
+    const { baseType, quoteType } = this;
+    return Market.isInstant(baseType, quoteType);
+  }
+
+  isFungible() {
+    return (
+      (Market.isERC20(this.baseType) || Market.isSynth(this.baseType)) &&
+      (Market.isERC20(this.quoteType) || Market.isSynth(this.quoteType))
+    );
+  }
+
+  involvesERC20() {
+    return Market.isERC20(this.baseType) || Market.isERC20(this.quoteType);
+  }
+
+  isBaseSynth() {
+    return Market.isSynth(this.baseType);
+  }
+
+  isQuoteSynth() {
+    return Market.isSynth(this.quoteType);
+  }
+
+  isBase(t: AssetType) {
+    return this.baseType == t;
+  }
+
+  isQuote(t: AssetType) {
+    return this.quoteType == t;
+  }
+
+  static isERC20(assetType: AssetType) {
+    return assetType == AssetType.ERC20;
+  }
+
+  static isSynth(assetType: AssetType) {
+    return assetType == AssetType.SYNTH;
+  }
+
+  static isNFT(assetType: AssetType) {
+    return assetType == AssetType.ERC721 || assetType == AssetType.ERC1155;
+  }
+
+  /**
+   * Check if an asset pair type represents an instant market
+   * @param baseType The base asset type
+   * @param quoteType The quote asset type
+   */
+  static isInstant(baseType: AssetType, quoteType: AssetType) {
+    const baseIsNFT = baseType == AssetType.ERC721 || baseType == AssetType.ERC1155;
+    const quoteIsNFT = quoteType == AssetType.ERC721 || quoteType == AssetType.ERC1155;
+    return (
+      (baseType == AssetType.ERC20 && quoteType == AssetType.ERC20) ||
+      (baseType == AssetType.ERC20 && quoteIsNFT) ||
+      (baseIsNFT && quoteType == AssetType.ERC20) ||
+      (baseIsNFT && quoteIsNFT)
+    );
   }
 
   /**
@@ -135,12 +200,12 @@ export default class Market extends BaseModel {
   }
 
   /**
-   * getByMarketId finds a market by market ID
-   * @param id The record id
+   * getByAddress finds a market by its address
+   * @param address The address of the market
    * @param txn Optional transaction object
    */
-  static getByMarketId(id: string, txn?: Transaction) {
-    return this.query(txn).whereNotDeleted().where({ marketId: id }).first();
+  static getByAddress(address: string, txn?: Transaction) {
+    return this.query(txn).whereNotDeleted().where('address', address).first();
   }
 
   static makeSelectList(select = []) {
@@ -149,7 +214,7 @@ export default class Market extends BaseModel {
       ? _.uniq(
           select.concat([
             'id',
-            'marketId',
+            'address',
             'network',
             'base',
             'baseAddress',
@@ -164,16 +229,16 @@ export default class Market extends BaseModel {
   /**
    * getMarket finds a market associated with a network
    * @param network The network name
-   * @param marketId The record id
+   * @param marketAddress The record id
    * @param select Select specific fields (optional)
    * @param txn Optional transaction object
    */
-  static getMarket(network: string, marketId: string, select = [], txn?: Transaction) {
+  static getMarket(network: string, marketAddress: string, select = [], txn?: Transaction) {
     select = this.makeSelectList(select);
     return this.query(txn)
       .select(...select)
       .where('network', 'ilike', network)
-      .where('marketId', 'ilike', marketId)
+      .where('address', 'ilike', marketAddress)
       .whereNotDeleted()
       .first();
   }
@@ -201,7 +266,7 @@ export default class Market extends BaseModel {
    */
   static makeSearchQuery(q: QueryBuilderType<any>, qs: string) {
     return q
-      .orWhere('marketId', qs)
+      .orWhere('address', qs)
       .orWhere('creator', 'ILIKE', `%${qs}%`)
       .orWhere('base', 'ILIKE', `%${qs}%`)
       .orWhere('baseAddress', 'ILIKE', qs)
@@ -237,7 +302,7 @@ export default class Market extends BaseModel {
     queryStr: string,
     noPermSwap = false,
     onlyPermMediate = false,
-    onlyInstant,
+    onlyInstant: boolean,
     minMediatorBond: string,
     minJoinedMediators: number,
     countOnly: boolean,
@@ -254,19 +319,7 @@ export default class Market extends BaseModel {
     if (quoteAsset) query = query.where('quoteAddress', 'ilike', quoteAsset);
     if (noPermSwap) query = query.where('permSwap', false);
     if (onlyPermMediate) query = query.where('permMediate', true);
-    if (onlyInstant !== undefined) {
-      if (onlyInstant) {
-        query = query.where('isBaseLocal', false).andWhere('isQuoteLocal', false);
-      } else {
-        query = query.where((q) => {
-          return q
-            .orWhere('isBaseLocal', true)
-            .andWhere('isQuoteLocal', false)
-            .orWhere('isBaseLocal', false)
-            .andWhere('isQuoteLocal', true);
-        });
-      }
-    }
+    if (onlyInstant !== undefined) query = query.where('instant', onlyInstant);
     if (minMediatorBond)
       query = query.where(raw(`cast(?? as numeric)`, 'mediatorBond'), '>=', minMediatorBond);
     if (minJoinedMediators) query = query.where('numMediatorsJoined', '>=', minJoinedMediators);

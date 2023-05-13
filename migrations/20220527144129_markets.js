@@ -3,14 +3,15 @@ exports.up = function (knex) {
     knex.schema.createTable('markets', (table) => {
       table.increments('sn', { primaryKey: false });
       table.string('id').primary();
-      table.string('marketId');
+      table.string('address');
       table.string('creator');
       table.string('base');
       table.string('baseAddress');
-      table.boolean('isBaseLocal').defaultTo(false);
+      table.integer('baseType').defaultTo(0);
       table.string('quote');
       table.string('quoteAddress');
-      table.boolean('isQuoteLocal').defaultTo(false);
+      table.integer('quoteType').defaultTo(0);
+      table.boolean('instant').defaultTo(false);
       table.string('pair');
       table.string('network');
       table.integer('numMediators').defaultTo(0);
@@ -33,8 +34,8 @@ exports.up = function (knex) {
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');
 
-      table.index('marketId');
-      table.unique(['network', 'marketId']);
+      table.index('address');
+      table.unique(['network', 'address']);
     }),
   ]);
 };

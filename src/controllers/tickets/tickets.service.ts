@@ -18,14 +18,14 @@ export class TicketsService {
    */
   async extendTicket(ticket: Ticket, noMerge = false, select = [], noMarket = false) {
     try {
-      const { network, marketId } = ticket;
+      const { network, marketAddress } = ticket;
       const now = moment();
 
       if (select.includes(`matured`) || !select.length)
         if (now.isAfter(ticket.matureAt)) ticket.matured = true;
 
       if (select.includes(`expired`) || !select.length) {
-        if (ticket.joinBy && now.isAfter(ticket.joinBy) && !marketId) ticket.expired = true;
+        if (ticket.joinBy && now.isAfter(ticket.joinBy) && !marketAddress) ticket.expired = true;
         if (ticket.drained) ticket.expired = true;
       }
 
@@ -38,8 +38,8 @@ export class TicketsService {
       if (select.includes(`canLeave`) || !select.length)
         if (ticket.leaveAt && now.isAfter(ticket.leaveAt)) ticket.canLeave = true;
 
-      if (!noMarket && ticket.marketId) {
-        const market = await Market.getMarket(network, marketId, select);
+      if (!noMarket && ticket.marketAddress) {
+        const market = await Market.getMarket(network, marketAddress, select);
         if (!market) return Promise.reject(new Error('market not found'));
         await this.marketSrv.extendMarket(market, noMerge, select);
         ticket.market = market;

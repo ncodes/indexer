@@ -1,0 +1,234 @@
+import { DBService } from '../../db/DBService';
+import { NoopLogger } from '../../common/loggers/noop_logger';
+import { BadgeManagerHandler } from './badge_manager.handler';
+import { toBN } from '../common';
+import BadgeGrant from '../../models/badge_grant';
+import * as moment from 'moment';
+import Badge from '../../models/badge';
+
+const BadgeManagerContract = jest.fn().mockImplementation(() => {
+  return {};
+});
+
+const MockNetworkService = jest.fn().mockImplementation(() => {
+  return {};
+});
+
+describe('BadgeManagerHandler', () => {
+  const issuer = '0xIssuer';
+  const issuerB = '0xIssuerB';
+  const grantee = '0xGrantee';
+  const badge = 'badge';
+  const path = 'path';
+  const keys = ['key1', 'key2'];
+  const values = ['val1', 'val2'];
+  const db = DBService.getForTest();
+  const net = 'ethereum';
+  let handler: BadgeManagerHandler;
+  const badgeMgrContract = new BadgeManagerContract();
+  const contracts = { core: badgeMgrContract };
+  const cfg = {};
+
+  afterEach(async () => {
+    await db.truncateTables();
+  });
+
+  afterAll(async () => {
+    await db.destroy();
+  });
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    handler = new BadgeManagerHandler(new MockNetworkService(), net, contracts);
+    handler.logger = new NoopLogger() as any;
+    handler.getParam = (param) => {
+      return cfg[param];
+    };
+    await db.truncateTables();
+  });
+
+  describe('.onGrantedBadge', () => {
+    it('should correctly create grant badge', async () => {
+      const expireAt = moment().add(10, 's');
+      await handler.onGrantedBadge(
+        'badge',
+        'path',
+        grantee,
+        keys,
+        values,
+        toBN(expireAt.unix()),
+        null,
+      );
+      const rec = await BadgeGrant.find({ badge, path });
+      expect(rec).toBeDefined();
+      expect(rec.grantee).toEqual(grantee);
+      expect(rec.metadata).toEqual({ key1: 'val1', key2: 'val2' });
+      expect(rec.expireAt).not.toBeNull();
+    });
+
+    it('should correctly create grant badge when expireAt is zero', async () => {
+      await handler.onGrantedBadge('badge', 'path', grantee, keys, values, toBN(0), null);
+      const rec = await BadgeGrant.find({ badge, path });
+      expect(rec).toBeDefined();
+      expect(rec.grantee).toEqual(grantee);
+      expect(rec.metadata).toEqual({ key1: 'val1', key2: 'val2' });
+      expect(rec.expireAt).toBeNull();
+    });
+  });
+
+  describe('.onRevokedBadge', () => {
+    it('should revoke granted badge when path is unset', async () => {
+      await handler.onGrantedBadge('badge', '', grantee, keys, values, toBN(0), null);
+      let grant = await BadgeGrant.find({ badge, grantee });
+      expect(grant).toBeDefined();
+
+      await handler.onRevokedBadge(badge, '', grantee, null);
+      grant = await BadgeGrant.find({ badge, path, grantee });
+      expect(grant).toBeUndefined();
+    });
+
+    it('should revoke granted badge when path is set', async () => {
+      await handler.onGrantedBadge('badge', '', grantee, keys, values, toBN(0), null);
+      await handler.onGrantedBadge('badge', path, grantee, keys, values, toBN(0), null);
+      let grant = await BadgeGrant.find({ badge, grantee, path });
+      expect(grant).toBeDefined();
+
+      await handler.onRevokedBadge(badge, path, grantee, null);
+      grant = await BadgeGrant.find({ badge, path, grantee });
+      expect(grant).toBeUndefined();
+    });
+  });
+
+  describe('.onAddedIssuer', () => {
+    it('should add a new badge issuer', async () => {
+      await handler.onAddedIssuer(issuer, badge, keys, values, null);
+      const rec = await Badge.find({ issuer, badge });
+      expect(rec).toBeDefined();
+      expect(rec.network).toEqual(net);
+      expect(rec.metadata).toEqual({ key1: 'val1', key2: 'val2' });
+    });
+  });
+
+  describe('.onReplacedIssuer', function () {
+    it('should replace issuer', async () => {
+      await handler.onAddedIssuer(issuer, badge, keys, values, null);
+      let rec = await Badge.find({ issuer, badge });
+      expect(rec).toBeDefined();
+      expect(rec.issuer).toEqual(issuer);
+      await handler.onReplacedIssuer(issuer, issuerB, badge, null);
+      rec = await Badge.find({ issuer: issuerB, badge });
+      expect(rec.issuer).toEqual(issuerB);
+    });
+  });
+
+  describe('.onPathRegistered', function () {
+    it('should add a new badge path', async () => {
+      await handler.onPathRegistered(issuer, badge, path, keys, values, null);
+      const rec = await Badge.find({ issuer, badge, path });
+      expect(rec).toBeDefined();
+      expect(rec.network).toEqual(net);
+      expect(rec.path).toEqual(path);
+      expect(rec.issuer).toEqual(issuer);
+      expect(rec.metadata).toEqual({ key1: 'val1', key2: 'val2' });
+    });
+  });
+
+  describe('.onAddedCoIssuer', function () {
+    it('should add a co-issuer to a badge', async () => {
+      await handler.onAddedIssuer(issuer, badge, keys, values, null);
+      let rec = await Badge.find({ issuer, badge });
+      expect(rec).toBeDefined();
+      await handler.onAddedCoIssuer(issuer, issuerB, badge, null);
+      rec = await Badge.find({ issuer, coIssuer: issuerB });
+      expect(rec).toBeDefined();
+    });
+  });
+
+  describe('.onRemovedCoIssuer', function () {
+    it('should remove the co-issuer to a badge', async () => {
+      await handler.onAddedIssuer(issuer, badge, keys, values, null);
+      let rec = await Badge.find({ issuer, badge });
+      expect(rec).toBeDefined();
+
+      await handler.onAddedCoIssuer(issuer, issuerB, badge, null);
+      rec = await Badge.find({ issuer, coIssuer: issuerB });
+      expect(rec).toBeDefined();
+
+      await handler.onRemovedCoIssuer(issuer, issuerB, badge, null);
+      rec = await Badge.find({ issuer, coIssuer: issuerB });
+      expect(rec).toBeUndefined();
+    });
+  });
+
+  describe('.onBadgeMetaUpdated', function () {
+    it('should correctly update the metadata when path is unset', async () => {
+      await handler.onAddedIssuer(issuer, badge, keys, values, null);
+      let rec = await Badge.find({ issuer, badge });
+      expect(rec).toBeDefined();
+      await handler.onBadgeMetaUpdated(issuer, badge, '', 'age', '100', null);
+      rec = await Badge.find({ issuer, badge });
+      expect(rec.metadata).toEqual({ key1: 'val1', key2: 'val2', age: '100' });
+    });
+
+    it('should correctly update the metadata when path is set', async () => {
+      await handler.onAddedIssuer(issuer, badge, keys, values, null);
+      await handler.onPathRegistered(issuer, badge, path, keys, values, null);
+      let rec = await Badge.find({ issuer, badge, path });
+      expect(rec).toBeDefined();
+
+      await handler.onBadgeMetaUpdated(issuer, badge, path, 'age', '100', null);
+      rec = await Badge.find({ issuer, badge, path });
+      expect(rec.metadata).toEqual({ key1: 'val1', key2: 'val2', age: '100' });
+    });
+  });
+
+  describe('.onGranteeBadgeMetaUpdated', function () {
+    it('should update metadata correctly when path is unset', async () => {
+      await handler.onGrantedBadge('badge', '', grantee, keys, values, toBN(0), null);
+      let grant = await BadgeGrant.find({ badge, grantee });
+      expect(grant).toBeDefined();
+      expect(grant.metadata).toEqual({ key1: 'val1', key2: 'val2' });
+
+      await handler.onGranteeBadgeMetaUpdated(issuer, grantee, badge, '', 'age', '100', null);
+      grant = await BadgeGrant.find({ badge, grantee });
+      expect(grant.metadata).toEqual({ key1: 'val1', key2: 'val2', age: '100' });
+    });
+
+    it('should update metadata correctly when path is set', async () => {
+      await handler.onGrantedBadge('badge', path, grantee, keys, values, toBN(0), null);
+      let grant = await BadgeGrant.find({ badge, grantee });
+      expect(grant).toBeDefined();
+      expect(grant.metadata).toEqual({ key1: 'val1', key2: 'val2' });
+
+      await handler.onGranteeBadgeMetaUpdated(issuer, grantee, badge, path, 'age', '100', null);
+      grant = await BadgeGrant.find({ badge, grantee });
+      expect(grant.metadata).toEqual({ key1: 'val1', key2: 'val2', age: '100' });
+    });
+  });
+
+  describe('.onBadgeOwnershipTransferred', function () {
+    it('should update metadata correctly when path is unset', async () => {
+      await handler.onAddedIssuer(issuer, badge, keys, values, null);
+      let rec = await Badge.find({ issuer, badge });
+      expect(rec).toBeDefined();
+
+      await handler.onBadgeOwnershipTransferred(badge, '', issuer, issuerB, null);
+      rec = await Badge.find({ badge, issuer: issuerB });
+      expect(rec).toBeDefined();
+    });
+
+    it('should update metadata correctly when path is set', async () => {
+      await handler.onAddedIssuer(issuer, badge, keys, values, null);
+      let rec = await Badge.find({ issuer, badge });
+      expect(rec).toBeDefined();
+
+      await handler.onPathRegistered(issuer, badge, path, keys, values, null);
+      rec = await Badge.find({ issuer, badge, path });
+      expect(rec).toBeDefined();
+
+      await handler.onBadgeOwnershipTransferred(badge, path, issuer, issuerB, null);
+      rec = await Badge.find({ badge, path, issuer: issuerB });
+      expect(rec).toBeDefined();
+    });
+  });
+});

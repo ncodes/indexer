@@ -241,19 +241,19 @@
        {
          "indexed": true,
          "internalType": "address",
-         "name": "_id",
+         "name": "id",
          "type": "address"
        },
        {
          "indexed": false,
          "internalType": "address",
-         "name": "_old",
+         "name": "oldOwner",
          "type": "address"
        },
        {
          "indexed": false,
          "internalType": "address",
-         "name": "_new",
+         "name": "newOwner",
          "type": "address"
        }
      ],
@@ -401,6 +401,24 @@
          "internalType": "address",
          "name": "id",
          "type": "address"
+       },
+       {
+         "indexed": false,
+         "internalType": "string[2][]",
+         "name": "",
+         "type": "string[2][]"
+       },
+       {
+         "indexed": false,
+         "internalType": "string[2][]",
+         "name": "",
+         "type": "string[2][]"
+       },
+       {
+         "indexed": false,
+         "internalType": "string[2][]",
+         "name": "",
+         "type": "string[2][]"
        }
      ],
      "name": "UpdatedMarketBadges",

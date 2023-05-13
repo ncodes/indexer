@@ -35,6 +35,7 @@ export default () => ({
         tokenPoolAddr: process.env.ETHEREUM_TOKEN_POOL_ADDRESS,
         lpPoolAddr: process.env.ETHEREUM_LP_POOL_ADDRESS,
         feePoolAddr: process.env.ETHEREUM_FEE_POOL_ADDRESS,
+        badgeMgrAddr: process.env.ETHEREUM_BADGE_MGR_ADDRESS,
       },
       localhost: {
         rpcUrl: process.env.LOCALHOST_RPC_URL,
@@ -46,6 +47,7 @@ export default () => ({
         tokenPoolAddr: process.env.LOCALHOST_TOKEN_POOL_ADDRESS,
         lpPoolAddr: process.env.LOCALHOST_LP_POOL_ADDRESS,
         feePoolAddr: process.env.LOCALHOST_FEE_POOL_ADDRESS,
+        badgeMgrAddr: process.env.LOCALHOST_BADGE_MGR_ADDRESS,
       },
     },
     contractsParams: {

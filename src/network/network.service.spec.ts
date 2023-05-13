@@ -4,7 +4,7 @@ import { NotifierService } from '../jobs/mailer/NotifierService';
 import { DBService } from '../db/DBService';
 import NetworkService from './network.service';
 import Swap from '../models/swap';
-import Market from '../models/market';
+import Market, { AssetType } from '../models/market';
 import { BigNumber } from 'ethers';
 import Meta from '../models/meta';
 
@@ -68,7 +68,7 @@ describe('NetworkService', () => {
 
   describe('.getSwapFeeInfo', () => {
     it('should return error when market was not found', async () => {
-      const swap = new Swap({ network: net, marketId: '0xMarket' });
+      const swap = new Swap({ network: net, marketAddress: '0xMarket' });
       await expect(service.getSwapFeeInfo(null, swap)).rejects.toEqual(
         new Error('market not found'),
       );
@@ -79,20 +79,20 @@ describe('NetworkService', () => {
         it('should return use `instantSwapFee` to calculate protocol fee', async () => {
           const swap = new Swap({
             network: net,
-            marketId: '0xMarket',
+            marketAddress: '0xMarket',
             price: '1000000000000000000',
             amount: '10000000000000000000',
             instant: true,
           });
 
           await Market.create({
-            marketId: swap.marketId,
+            address: swap.marketAddress,
             commission: 1,
             network: net,
             baseAddress: '0xBase',
-            isBaseLocal: false,
+            baseType: AssetType.ERC20,
             quoteAddress: '0xQuote',
-            isQuoteLocal: false,
+            quoteType: AssetType.ERC20,
           });
 
           (service.newContract as any) = () => {
@@ -119,20 +119,20 @@ describe('NetworkService', () => {
         it('should return use `stableSwapFee` to calculate protocol fee', async () => {
           const swap = new Swap({
             network: net,
-            marketId: '0xMarket',
+            marketAddress: '0xMarket',
             price: '1000000000000000000',
             amount: '10000000000000000000',
             instant: true,
           });
 
           await Market.create({
-            marketId: swap.marketId,
+            address: swap.marketAddress,
             network: net,
             commission: 1,
             baseAddress: '0xBase',
-            isBaseLocal: false,
+            baseType: AssetType.ERC20,
             quoteAddress: '0xQuote',
-            isQuoteLocal: false,
+            quoteType: AssetType.ERC20,
           });
 
           (service.newContract as any) = () => {
@@ -166,17 +166,19 @@ describe('NetworkService', () => {
         it('should return use `syntheticSwapFee` to calculate protocol fee', async () => {
           const swap = new Swap({
             network: net,
-            marketId: '0xMarket',
+            marketAddress: '0xMarket',
             price: '1000000000000000000',
             amount: '10000000000000000000',
             instant: false,
           });
 
           await Market.create({
-            marketId: swap.marketId,
+            address: swap.marketAddress,
             network: net,
             commission: 1,
+            baseType: AssetType.ERC20,
             baseAddress: '0xBase',
+            quoteType: AssetType.ERC20,
             quoteAddress: '0xQuote',
           });
 

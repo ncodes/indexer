@@ -72,13 +72,13 @@ describe('TicketsService', () => {
   });
 
   describe('.extendTicket', () => {
-    describe('when ticket.marketId is set', () => {
+    describe('when ticket.marketAddress is set', () => {
       it('should return error when market was not found', async () => {
         const ticket = await Ticket.create({
           network: net,
           owner: '0xOwner',
           index: 0,
-          marketId: '0xMarket',
+          marketAddress: '0xMarket',
         });
 
         await expect(service.extendTicket(ticket, false, undefined, false)).rejects.toEqual(
@@ -89,13 +89,13 @@ describe('TicketsService', () => {
       it('should append market to ticket if when market exist', async () => {
         const market = await Market.create({
           network: net,
-          marketId: '0xMarket',
+          address: '0xMarket',
         });
         const ticket = await Ticket.create({
           network: net,
           owner: '0xOwner',
           index: 0,
-          marketId: market.marketId,
+          marketAddress: market.address,
         });
 
         jest.spyOn(module.get(MarketsService), 'extendMarket').mockResolvedValue();
@@ -109,17 +109,17 @@ describe('TicketsService', () => {
       });
     });
 
-    describe('when ticket.marketId is set bot `noMarket` is true', () => {
+    describe('when ticket.marketAddress is set bot `noMarket` is true', () => {
       it('should append market to ticket if when market exist', async () => {
         const market = await Market.create({
           network: net,
-          marketId: '0xMarket',
+          address: '0xMarket',
         });
         const ticket = await Ticket.create({
           network: net,
           owner: '0xOwner',
           index: 0,
-          marketId: market.marketId,
+          marketAddress: market.address,
         });
         jest.spyOn(module.get(MarketsService), 'extendMarket').mockResolvedValue();
         await expect(service.extendTicket(ticket, false, undefined, true)).resolves.toBeUndefined();
@@ -131,13 +131,13 @@ describe('TicketsService', () => {
       it('should set `matured` = true', async () => {
         const market = await Market.create({
           network: net,
-          marketId: '0xMarket',
+          address: '0xMarket',
         });
         const ticket = await Ticket.create({
           network: net,
           owner: '0xOwner',
           index: 0,
-          marketId: market.marketId,
+          marketAddress: market.address,
           matureAt: moment().subtract('1', 'hour').toISOString(),
         });
         jest.spyOn(module.get(MarketsService), 'extendMarket').mockResolvedValue();
@@ -148,7 +148,7 @@ describe('TicketsService', () => {
       });
     });
 
-    describe('when `joinBy` is set to a past date and `marketId` is set', () => {
+    describe('when `joinBy` is set to a past date and `marketAddress` is set', () => {
       it('should set `expired` = true', async () => {
         const ticket = await Ticket.create({
           network: net,

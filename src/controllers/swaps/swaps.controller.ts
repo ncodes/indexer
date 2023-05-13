@@ -48,13 +48,18 @@ export class SwapsController {
     if (!swap) throw404('swap not found');
 
     // Get market
-    const market = await Market.getMarket(q.net, swap.marketId, q.select);
+    const market = await Market.getMarket(q.net, swap.marketAddress, q.select);
     if (!market) return throw404('market not found');
     await this.marketSrv.extendMarket(market, q.noMerge);
     swap.market = market;
 
     // Get liquidity
-    const liquidity = await Liquidity.getLiquidity(q.net, swap.marketId, swap.provider, q.select);
+    const liquidity = await Liquidity.getLiquidity(
+      q.net,
+      swap.marketAddress,
+      swap.provider,
+      q.select,
+    );
     if (!liquidity) return throw404('liquidity not found');
     await this.liqSrv.extendLiquidity(liquidity, q.noMerge, q.select, true);
     swap.liquidity = liquidity;
@@ -66,7 +71,7 @@ export class SwapsController {
    * List all swaps on a network
    * @param q The query object
    *  - [network] The network name.
-   *  - [marketId] The market ID (optional)
+   *  - [marketAddress] The market ID (optional)
    *  - [address] The address involved as a provider or taker (optional)
    *  - [noMerge] Prevent merge of contract liquidity with DB liquidity object
    *  - [limit] The number of result to return (optional)
@@ -78,7 +83,7 @@ export class SwapsController {
   async list(@Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
     const swaps = await Swap.searchSwaps(
       q.net,
-      q.marketId,
+      q.marketAddress,
       q.address,
       q.limit || 25,
       q.offset,
@@ -86,12 +91,17 @@ export class SwapsController {
     );
 
     for (const swap of swaps) {
-      const market = await Market.getMarket(q.net, swap.marketId, q.select);
+      const market = await Market.getMarket(q.net, swap.marketAddress, q.select);
       if (!market) return throw404('market not found');
       await this.marketSrv.extendMarket(market, q.noMerge, q.select);
       swap.market = market;
 
-      const liquidity = await Liquidity.getLiquidity(q.net, swap.marketId, swap.provider, q.select);
+      const liquidity = await Liquidity.getLiquidity(
+        q.net,
+        swap.marketAddress,
+        swap.provider,
+        q.select,
+      );
       if (!liquidity) return throw404('liquidity not found');
       await this.liqSrv.extendLiquidity(liquidity, q.noMerge, q.select, true);
       swap.liquidity = liquidity;

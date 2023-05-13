@@ -4,6 +4,7 @@ import { BigNumber, Contract, providers } from 'ethers';
 import * as coreABI from '../../abi/core.json';
 import * as disputeManagerABI from '../../abi/disputemanager.json';
 import * as feePoolABI from '../../abi/feepool.json';
+import * as badgeMgrABI from '../../abi/badgemanager.json';
 import * as lpPoolABI from '../../abi/lppool.json';
 import * as marketCoreABI from '../../abi/marketcore.json';
 import * as erc20ABI from '../../abi/erc20.json';
@@ -28,12 +29,13 @@ import { Signer } from '@ethersproject/abstract-signer';
 import { Provider } from '@ethersproject/abstract-provider';
 import { ContractInterface } from '@ethersproject/contracts/src.ts';
 import { Watcher } from './watcher';
+import { BadgeManagerHandler } from './badge/badge_manager.handler';
 
 @Injectable()
 export default class NetworkService {
   private logger = new Logger(NetworkService.name);
   private contracts: {
-    [key: string]: KnownContracts;
+    [key: string]: JointContracts;
   } = {};
   private providers: {
     [key: string]: providers.JsonRpcProvider;
@@ -139,6 +141,11 @@ export default class NetworkService {
       feePoolABI,
       prov,
     );
+    this.contracts[network].badgeMgr = new Contract(
+      this.cfgSrv.get(`app.networks.${network}.badgeMgrAddr`),
+      badgeMgrABI,
+      prov,
+    );
 
     // Add handlers to watcher
     const watcher = new Watcher(network, prov);
@@ -147,6 +154,7 @@ export default class NetworkService {
       new CoreHandler(this, this.notifSrv, prov, network, this.contracts[network]),
       new MediatorManagerHandler(this, this.notifSrv, prov, network, this.contracts[network]),
       new DisputeManagerHandler(this, this.notifSrv, prov, network, this.contracts[network]),
+      new BadgeManagerHandler(prov, network, this.contracts[network]),
       new TokenPoolHandler(prov, network, this.contracts[network]),
       new LPPoolHandler(prov, network, this.contracts[network]),
       new FeePoolHandler(prov, network, this.contracts[network]),
@@ -201,21 +209,21 @@ export default class NetworkService {
     marketFeeBP: number;
     totalFee: string;
   }> {
-    const market = await Market.getMarket(swap.network, swap.marketId);
+    const market = await Market.getMarket(swap.network, swap.marketAddress);
     if (!market) return Promise.reject(new Error('market not found'));
 
     // Calculate commission
     const baseDec = await this.getTokenDecimals(provider, market.baseAddress);
     const cost = BigNumber.from(swap.price).mul(swap.amount).div(BigNumber.from(10).pow(baseDec));
-    const chargeable = market.isBaseLocal ? cost : BigNumber.from(swap.amount);
+    const chargeable = market.isBaseSynth() ? cost : BigNumber.from(swap.amount);
     const commission = chargeable.mul(market.commission).div(10000);
 
     // Determine what protocol fee base point
-    let feeName: FeeName = FeeName.SynthSwapFee;
+    let feeName: FeeName = FeeName.SynthSwapFeeBp;
     if (swap.instant) {
       const baseStable = await Meta.isStableAsset(swap.network, market.baseAddress, txn);
       const quoteStable = await Meta.isStableAsset(swap.network, market.quoteAddress, txn);
-      feeName = baseStable && quoteStable ? FeeName.StableSwapFee : FeeName.InstantSwapFee;
+      feeName = baseStable && quoteStable ? FeeName.StableSwapFeeBp : FeeName.InstantSwapFeeBp;
     }
 
     // Calculate protocol and market fees
@@ -224,7 +232,7 @@ export default class NetworkService {
     return Promise.resolve({
       cost: cost.toString(),
       chargedAmount: chargeable.toString(),
-      costCharged: market.isBaseLocal,
+      costCharged: market.isBaseSynth(),
       protocolFeeBP: parseInt(feeBP.value),
       protocolFee: fee.toString(),
       totalFee: commission.add(fee).toString(),

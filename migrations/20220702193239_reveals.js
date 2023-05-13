@@ -4,7 +4,7 @@ exports.up = function (knex) {
       table.increments('sn', { primaryKey: false });
       table.string('id').primary();
       table.string('network');
-      table.string('marketId');
+      table.string('marketAddress');
       table.integer('orderId');
       table.integer('disputeId');
       table.string('revealer');

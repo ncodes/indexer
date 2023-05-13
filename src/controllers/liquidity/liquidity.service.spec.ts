@@ -75,12 +75,12 @@ describe('LiquidityService', () => {
       describe('when noMerge=true', () => {
         it('should not attempt to merge contract market object with db object', async () => {
           const market = await Market.create({
-            marketId: '0x123',
+            address: '0x123',
             network: net,
           });
           const liquidity: Liquidity = new Liquidity({
             network: net,
-            marketId: market.marketId,
+            marketAddress: market.address,
             provider: '0xProvider',
           });
 
@@ -88,7 +88,7 @@ describe('LiquidityService', () => {
 
           await service.extendLiquidity(liquidity, true);
           expect(liquidity.network).toEqual(net);
-          expect(liquidity.marketId).toEqual('0x123');
+          expect(liquidity.marketAddress).toEqual('0x123');
           expect(liquidity.provider).toEqual('0xProvider');
           expect(liquidity.market).toBeDefined();
           expect(liquidity.market.id).toEqual(market.id);
@@ -101,7 +101,7 @@ describe('LiquidityService', () => {
           async () => {
             const liquidity: Liquidity = new Liquidity({
               network: net,
-              marketId: '0x123',
+              marketAddress: '0x123',
               provider: '0xProvider',
             });
 

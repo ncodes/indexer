@@ -3,17 +3,17 @@ import Objection, { raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 
 /**
- * MarketProvider represents a liquidity provider of a market
+ * LiquidityProvider represents a liquidity provider of a market
  */
-export default class MarketProvider extends BaseModel {
+export default class LiquidityProvider extends BaseModel {
   // The network name
   network: string;
-  // The market ID
-  marketId: string;
+  // The market address
+  marketAddress: string;
   // The provider's address
   address: string;
 
-  constructor(init?: Partial<MarketProvider>) {
+  constructor(init?: Partial<LiquidityProvider>) {
     super();
     Object.assign(this, init);
   }
@@ -24,7 +24,7 @@ export default class MarketProvider extends BaseModel {
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
-    const object = json as MarketProvider;
+    const object = json as LiquidityProvider;
     object.object = 'market_provider';
     delete object.deletedAt;
     return object;
@@ -43,13 +43,13 @@ export default class MarketProvider extends BaseModel {
    * @param data The transfer info
    * @param txn Optional transaction object
    */
-  static create(data: Partial<MarketProvider>, txn?: Transaction): Promise<MarketProvider> {
+  static create(data: Partial<LiquidityProvider>, txn?: Transaction): Promise<LiquidityProvider> {
     return new Promise(async (resolve, reject) => {
       // Find a matching soft-deleted user
       const softDeletedUser = await this.query(txn)
         .where('network', 'ILIKE', data.network)
         .where((q) => {
-          if (data.marketId) q.where('marketId', 'ILIKE', data.marketId);
+          if (data.marketAddress) q.where('marketAddress', 'ILIKE', data.marketAddress);
         })
         .where((q) => {
           if (data.address) q.where('address', 'ILIKE', data.address);
@@ -82,7 +82,7 @@ export default class MarketProvider extends BaseModel {
    * @param email The provider address
    * @param txn Optional transaction object
    */
-  static getByAddress(email: string, txn?: Transaction): Promise<MarketProvider> {
+  static getByAddress(email: string, txn?: Transaction): Promise<LiquidityProvider> {
     return new Promise((resolve, reject) => {
       this.query(txn)
         .where('address', 'ILIKE', email)
@@ -98,7 +98,7 @@ export default class MarketProvider extends BaseModel {
    * @param q the query parameter
    * @param txn Optional transaction object
    */
-  static find(q: Partial<MarketProvider>, txn?: Transaction): Promise<MarketProvider> {
+  static find(q: Partial<LiquidityProvider>, txn?: Transaction): Promise<LiquidityProvider> {
     return new Promise((resolve, reject) => {
       this.query(txn).where(q).whereNotDeleted().first().then(resolve).catch(reject);
     });
@@ -112,9 +112,9 @@ export default class MarketProvider extends BaseModel {
    */
   static updateById(
     id: string,
-    udp: Partial<MarketProvider>,
+    udp: Partial<LiquidityProvider>,
     txn?: Transaction,
-  ): Promise<MarketProvider> {
+  ): Promise<LiquidityProvider> {
     return new Promise((resolve, reject) => {
       this.query(txn)
         .whereNotDeleted()
@@ -128,14 +128,14 @@ export default class MarketProvider extends BaseModel {
   /**
    * Delete a record
    * @param network The network name
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param address The provider's address
    * @param txn The transaction object
    */
-  static remove(network: string, marketId: string, address: string, txn?: Transaction) {
+  static remove(network: string, marketAddress: string, address: string, txn?: Transaction) {
     return this.query(txn)
       .where('network', 'ILIKE', network)
-      .where('marketId', 'ILIKE', marketId)
+      .where('marketAddress', 'ILIKE', marketAddress)
       .where('address', 'ILIKE', address)
       .delete();
   }
@@ -143,13 +143,13 @@ export default class MarketProvider extends BaseModel {
   /**
    * count returns the count of record matching q
    * @param network The network name
-   * @param marketId The market ID (optional)
+   * @param marketAddress The market ID (optional)
    * @param txn Optional transaction object
    */
-  static countByNetworkOrMarket(network: string, marketId: string, txn?: Transaction) {
+  static countByNetworkOrMarket(network: string, marketAddress: string, txn?: Transaction) {
     return new Promise<string>((resolve, reject) => {
       let q = this.query(txn).where('network', 'ILIKE', network);
-      if (marketId) q = q.where('marketId', 'ILIKE', marketId);
+      if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
       q.count('id')
         .whereNotDeleted()
         .first()
@@ -163,15 +163,15 @@ export default class MarketProvider extends BaseModel {
   /**
    * Search finds records with key-set pagination
    * @param network The network name
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param limit The number of records to return.
    * @param offset The offset value
    */
-  static search(network: string, marketId: string, limit: number, offset: number) {
+  static search(network: string, marketAddress: string, limit: number, offset: number) {
     let q = this.query()
       .select(raw('*, count(*) over() as "__queryCount"'))
       .where('network', 'ILIKE', network);
-    if (marketId) q = q.where('marketId', 'ILIKE', marketId);
+    if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
     if (offset) q = q.offset(offset);
     if (limit) q = q.limit(limit);
     return q.whereNotDeleted().orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');

@@ -21,25 +21,25 @@ describe('MarketPrice', () => {
     it('should return correct rate', async () => {
       await Swap.create({
         network: net,
-        marketId: '0xMarket',
+        marketAddress: '0xMarket',
         provider: '0xProvider',
         released: true,
       });
       await Swap.create({
         network: net,
-        marketId: '0xMarket',
+        marketAddress: '0xMarket',
         provider: '0xProvider',
         released: true,
         byDispute: true,
       });
       await Swap.create({
         network: net,
-        marketId: '0xMarket',
+        marketAddress: '0xMarket',
         provider: '0xProvider',
       });
       await Swap.create({
         network: net,
-        marketId: '0xMarket',
+        marketAddress: '0xMarket',
         provider: '0xProvider2',
         released: true,
       });

@@ -4,14 +4,14 @@ exports.up = function (knex) {
       table.increments('sn', { primaryKey: false });
       table.string('id').primary();
       table.string('network');
-      table.string('marketId');
+      table.string('marketAddress');
       table.string('address');
       table.timestamp('createdAt');
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');
 
-      table.unique(['network', 'marketId', 'address']);
-      table.index(['network', 'marketId', 'address']);
+      table.unique(['network', 'marketAddress', 'address']);
+      table.index(['network', 'marketAddress', 'address']);
     }),
   ]);
 };

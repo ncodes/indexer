@@ -17,7 +17,7 @@ export default class Dispute extends BaseModel {
   // The amount paid as deposit
   deposit: string = undefined;
   // The market ID joined
-  marketId: string = undefined;
+  marketAddress: string = undefined;
   // The order index
   orderId: number = undefined;
   // The dispute index
@@ -147,20 +147,20 @@ export default class Dispute extends BaseModel {
   /**
    * countByNetworkAndMarketId counts dispute associated with a market order
    * @param network The network name
-   * @param marketId The marker ID
+   * @param marketAddress The marker ID
    * @param orderId The order ID
    * @param txn Optional transaction object
    */
   static countByNetworkAndMarketIdAndOrderId(
     network: string,
-    marketId: string,
+    marketAddress: string,
     orderId: number,
     txn?: Transaction,
   ) {
     return new Promise<string>((resolve, reject) => {
       this.query(txn)
         .where({ network, orderId })
-        .where('marketId', 'ilike', marketId)
+        .where('marketAddress', 'ilike', marketAddress)
         .count('id')
         .whereNotDeleted()
         .first()
@@ -174,21 +174,21 @@ export default class Dispute extends BaseModel {
   /**
    * Get a specific dispute
    * @param network The network name
-   * @param marketId The marker ID
+   * @param marketAddress The marker ID
    * @param orderId The order ID
    * @param disputeId The dispute ID
    * @param txn Optional transaction object
    */
   static get(
     network: string,
-    marketId: string,
+    marketAddress: string,
     orderId: number,
     disputeId: number,
     txn?: Transaction,
   ) {
     return this.query(txn)
       .where({ network, orderId, disputeId })
-      .where('marketId', 'ilike', marketId)
+      .where('marketAddress', 'ilike', marketAddress)
       .whereNotDeleted()
       .first();
   }
@@ -196,14 +196,19 @@ export default class Dispute extends BaseModel {
   /**
    * Get a recently created dispute of an order
    * @param network The network name
-   * @param marketId The marker ID
+   * @param marketAddress The marker ID
    * @param orderId The order ID
    * @param txn Optional transaction object
    */
-  static getRecentOfOrder(network: string, marketId: string, orderId: number, txn?: Transaction) {
+  static getRecentOfOrder(
+    network: string,
+    marketAddress: string,
+    orderId: number,
+    txn?: Transaction,
+  ) {
     return this.query(txn)
       .where({ network, orderId })
-      .where('marketId', 'ilike', marketId)
+      .where('marketAddress', 'ilike', marketAddress)
       .orderBy('disputeId', 'DESC')
       .whereNotDeleted()
       .first();
@@ -299,7 +304,7 @@ export default class Dispute extends BaseModel {
       ? _.uniq(
           select.concat([
             'id',
-            'marketId',
+            'marketAddress',
             'network',
             'creator',
             'disputeId',
@@ -314,7 +319,7 @@ export default class Dispute extends BaseModel {
   /**
    * searchDisputes finds disputes
    * @param network The network name
-   * @param marketId The market ID (optional)
+   * @param marketAddress The market ID (optional)
    * @param creator Indicate to return dispute by the given dispute creator
    * @param defendant Indicate to return dispute by the given defendant
    * @param orderId The order ID
@@ -331,7 +336,7 @@ export default class Dispute extends BaseModel {
    */
   static searchDisputes(
     network: string,
-    marketId?: string,
+    marketAddress?: string,
     creator?: string,
     defendant?: string,
     orderId?: number,
@@ -352,7 +357,7 @@ export default class Dispute extends BaseModel {
       .withGraphFetched('draftees')
       .whereNotDeleted()
       .where({ network });
-    if (marketId) q = q.where('marketId', 'ILIKE', marketId);
+    if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
     if (creator) q = q.where('creator', 'ILIKE', creator);
     if (defendant) q = q.where('defendant', 'ILIKE', defendant);
     if (orderId) q = q.where('orderId', orderId);
@@ -370,7 +375,7 @@ export default class Dispute extends BaseModel {
   /**
    * countTickets count disputes
    * @param network The network name
-   * @param marketId The market ID (optional)
+   * @param marketAddress The market ID (optional)
    * @param creator Indicate to return dispute by the given dispute creator
    * @param defendant Indicate to return dispute by the given defendant
    * @param orderId The order ID
@@ -384,7 +389,7 @@ export default class Dispute extends BaseModel {
    */
   static countDisputes(
     network: string,
-    marketId?: string,
+    marketAddress?: string,
     creator?: string,
     defendant?: string,
     orderId?: number,
@@ -397,7 +402,7 @@ export default class Dispute extends BaseModel {
     txn?: Transaction,
   ): Promise<Dispute[]> {
     let q = this.query(txn).whereNotDeleted().where({ network });
-    if (marketId) q = q.where('marketId', 'ILIKE', marketId);
+    if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
     if (creator) q = q.where('creator', 'ILIKE', creator);
     if (defendant) q = q.where('defendant', 'ILIKE', defendant);
     if (orderId) q = q.where('orderId', orderId);

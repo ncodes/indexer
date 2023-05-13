@@ -57,7 +57,7 @@ describe('OnCommitPeriodEnd', () => {
     describe(`with matching dispute`, () => {
       let dispute: Dispute;
       let swap: Swap;
-      const marketId = '0xMarket';
+      const marketAddress = '0xMarket';
       const disputeId = 1;
       const orderId = 1;
 
@@ -65,7 +65,7 @@ describe('OnCommitPeriodEnd', () => {
         const now = moment();
         swap = await Swap.create({
           network: net,
-          marketId,
+          marketAddress,
           orderId,
           base: 'BASE',
           quote: 'QUOTE',
@@ -74,7 +74,7 @@ describe('OnCommitPeriodEnd', () => {
         });
         await Dispute.create({
           network: net,
-          marketId,
+          marketAddress,
           disputeId,
           orderId,
           numMediators: 3,
@@ -82,7 +82,7 @@ describe('OnCommitPeriodEnd', () => {
         });
         dispute = await Dispute.create({
           network: net,
-          marketId,
+          marketAddress,
           disputeId,
           orderId,
           numMediators: 3,
@@ -91,7 +91,7 @@ describe('OnCommitPeriodEnd', () => {
         });
         await Draft.create({
           network: net,
-          marketId,
+          marketAddress,
           orderId,
           disputeIndex: disputeId,
           owner: '0xDraftee',
@@ -107,7 +107,7 @@ describe('OnCommitPeriodEnd', () => {
       it('should send notification to taker, provider and draftees', async () => {
         await expect(srv.process()).resolves.toBeUndefined();
         const payload = {
-          marketId,
+          marketAddress,
           orderId,
           network: net,
           disputeId,

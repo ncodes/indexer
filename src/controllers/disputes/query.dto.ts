@@ -11,7 +11,7 @@ export class ListQueryDTO {
   public net?: string;
 
   @IsOptional()
-  public marketId?: string;
+  public marketAddress?: string;
 
   @IsOptional()
   public creator?: string;

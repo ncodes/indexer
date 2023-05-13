@@ -6,7 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BigNumber } from 'ethers';
 import * as moment from 'moment';
 import { DBService } from '../../db/DBService';
-import Market from '../../models/market';
+import Market, { AssetType } from '../../models/market';
 import Swap from '../../models/swap';
 import { TokenList } from '../../common/token_list';
 
@@ -144,13 +144,13 @@ describe('MarketsService', () => {
           } as any);
 
           let market: Market = await Market.create({
-            marketId: '0x123',
+            address: '0x123',
             creator: '0xUser',
             network: net,
             baseAddress: '0xBase',
             quoteAddress: '0xQuote',
-            isBaseLocal: false,
-            isQuoteLocal: false,
+            baseType: AssetType.ERC20,
+            quoteType: AssetType.ERC20,
           });
 
           // Mocks
@@ -166,32 +166,32 @@ describe('MarketsService', () => {
 
           await Swap.create({
             network: market.network,
-            marketId: market.marketId,
+            marketAddress: market.address,
             instant: true,
             amount: '10',
           });
           await Swap.create({
             network: market.network,
-            marketId: market.marketId,
+            marketAddress: market.address,
             instant: true,
             amount: '5',
           });
           await Swap.create({
             network: market.network,
-            marketId: market.marketId,
+            marketAddress: market.address,
             instant: false,
             amount: '1',
           });
           await Swap.create({
             network: market.network,
-            marketId: market.marketId,
+            marketAddress: market.address,
             instant: false,
             createdAt: moment().subtract(1440, 'm').toISOString(),
           });
 
           await service.extendMarket(market, false);
           expect(mockGetMarketCore).toHaveBeenCalledWith(net);
-          expect(mockMarket).toHaveBeenCalledWith(market.marketId);
+          expect(mockMarket).toHaveBeenCalledWith(market.address);
           expect(market.creator).toEqual('0x12345');
           expect(market.network).toEqual(net);
           expect(market.baseLogo).toEqual('https://logo.png');
@@ -207,8 +207,8 @@ describe('MarketsService', () => {
 
           // When market base and quote asset are not all on-chain
           market = await Market.updateById(market.id, {
-            isBaseLocal: false,
-            isQuoteLocal: true,
+            baseType: AssetType.ERC20,
+            quoteType: AssetType.SYNTH,
           });
           await service.extendMarket(market, false);
           expect(market.totalSwaps24h).toEqual('1');
@@ -222,7 +222,7 @@ describe('MarketsService', () => {
       TokenList['0xQuote'] = { image: 'https://logo2.png' };
 
       const market: Market = new Market({
-        marketId: '0x123',
+        address: '0x123',
         creator: '0xUser',
         network: net,
         baseAddress: '0xBase',
@@ -242,7 +242,7 @@ describe('MarketsService', () => {
 
       await service.extendMarket(market, true);
       expect(mockGetMarketCore).not.toHaveBeenCalledWith(net);
-      expect(mockMarket).not.toHaveBeenCalledWith(market.marketId);
+      expect(mockMarket).not.toHaveBeenCalledWith(market.address);
       expect(market.permPut).toBeUndefined();
       expect(market.permSwap).toBeUndefined();
       expect(market.creator).toEqual('0xUser');

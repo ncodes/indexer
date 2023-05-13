@@ -11,7 +11,7 @@ export default class Reveal extends BaseModel {
   // The address of the committer
   revealer: string;
   // The market ID joined
-  marketId: string;
+  marketAddress: string;
   // The order ID
   orderId: number;
   // The dispute ID

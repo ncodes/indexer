@@ -230,7 +230,6 @@ export class Watcher {
       if (this.events.length === 0) return;
       const evt = this.events.splice(0, 1)[0];
       try {
-        // evt.event.event
         await this.emit(evt);
         evt.promise.resolve();
       } catch (e) {

@@ -8,8 +8,8 @@ import { BaseModel } from './base';
 export default class InvitedMediator extends BaseModel {
   // The network name
   network: string;
-  // The market ID
-  marketId: string;
+  // The market address
+  marketAddress: string;
   // The invited account address
   address: string;
   // Indicates whether the invite is accepted
@@ -74,19 +74,19 @@ export default class InvitedMediator extends BaseModel {
   /**
    * findInviteNetworkMarketIDAndAddress an invitation
    * @param network The network name
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param address The invited address
    * @param txn Optional transaction object
    */
   static findInviteByNetworkMarketIDAndAddress(
     network: string,
-    marketId: string,
+    marketAddress: string,
     address: string,
     txn?: Transaction,
   ) {
     return this.query(txn)
       .where('network', 'ilike', network)
-      .where('marketId', 'ilike', marketId)
+      .where('marketAddress', 'ilike', marketAddress)
       .where('address', 'ilike', address)
       .whereNotDeleted()
       .first();
@@ -95,7 +95,7 @@ export default class InvitedMediator extends BaseModel {
   /**
    * searchByNetworkMarketID searches for invitations by network and market ID
    * @param network The network name
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param acceptedOnly When set, returns only accepted or unaccepted records
    * @param limit The result limit
    * @param offset The offset value
@@ -103,7 +103,7 @@ export default class InvitedMediator extends BaseModel {
    */
   static searchByNetworkMarketID(
     network: string,
-    marketId: string,
+    marketAddress: string,
     acceptedOnly: boolean,
     limit: number,
     offset: number,
@@ -112,7 +112,7 @@ export default class InvitedMediator extends BaseModel {
     let q = this.query(txn)
       .select(raw('*, count(*) over() as "__queryCount"'))
       .where('network', 'ILIKE', network);
-    if (marketId) q = q.where('marketId', 'ILIKE', marketId);
+    if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
     if (limit) q = q.limit(limit);
     if (offset) q = q.offset(offset);
     if (acceptedOnly !== undefined) q = q.where({ accepted: acceptedOnly });
@@ -122,21 +122,21 @@ export default class InvitedMediator extends BaseModel {
   /**
    * updateInvite updates an invitation
    * @param network The network name
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param address The invited address
    * @param upd The proposed update
    * @param txn Optional transaction object
    */
   static updateInvite(
     network: string,
-    marketId: string,
+    marketAddress: string,
     address: string,
     upd: Partial<InvitedMediator>,
     txn?: Transaction,
   ) {
     return this.query(txn)
       .where('network', 'ilike', network)
-      .where('marketId', 'ilike', marketId)
+      .where('marketAddress', 'ilike', marketAddress)
       .where('address', 'ilike', address)
       .whereNotDeleted()
       .patch(upd);
@@ -145,14 +145,14 @@ export default class InvitedMediator extends BaseModel {
   /**
    * remove an invitation
    * @param network The network name
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param address The invited address
    * @param txn Optional transaction object
    */
-  static remove(network: string, marketId: string, address: string, txn?: Transaction) {
+  static remove(network: string, marketAddress: string, address: string, txn?: Transaction) {
     return this.query(txn)
       .where('network', 'ilike', network)
-      .where('marketId', 'ilike', marketId)
+      .where('marketAddress', 'ilike', marketAddress)
       .where('address', 'ilike', address)
       .delete();
   }

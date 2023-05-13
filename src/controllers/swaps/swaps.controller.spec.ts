@@ -121,7 +121,7 @@ describe('SwapsController', () => {
     });
 
     it('should return 404 when swap order was not found', async () => {
-      await Swap.create({ network: net, orderId: 1, marketId: '0xMarket' });
+      await Swap.create({ network: net, orderId: 1, marketAddress: '0xMarket' });
       await request(app.getHttpServer())
         .get(`/v1/swaps/1`)
         .query({ net })
@@ -135,12 +135,12 @@ describe('SwapsController', () => {
     it('should return 404 when liquidity was not found', async () => {
       const market = await Market.create({
         network: net,
-        marketId: '0xMarket',
+        address: '0xMarket',
       });
       await Swap.create({
         network: net,
         orderId: 1,
-        marketId: market.marketId,
+        marketAddress: market.address,
       });
       jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue();
       await request(app.getHttpServer())
@@ -156,12 +156,12 @@ describe('SwapsController', () => {
     it('should return 404 when liquidity was not found', async () => {
       const market = await Market.create({
         network: net,
-        marketId: '0xMarket',
+        address: '0xMarket',
       });
       await Swap.create({
         network: net,
         orderId: 1,
-        marketId: market.marketId,
+        marketAddress: market.address,
       });
       jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue();
       await request(app.getHttpServer())
@@ -177,17 +177,17 @@ describe('SwapsController', () => {
     it('should return 200 with correct result', async () => {
       const market = await Market.create({
         network: net,
-        marketId: '0xMarket',
+        address: '0xMarket',
       });
       await Liquidity.create({
         network: net,
-        marketId: market.marketId,
+        marketAddress: market.address,
         provider: '0xProvider',
       });
       await Swap.create({
         network: net,
         orderId: 1,
-        marketId: market.marketId,
+        marketAddress: market.address,
         provider: '0xProvider',
       });
       jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue();
@@ -237,29 +237,29 @@ describe('SwapsController', () => {
       it('should return 200 and correct result', async () => {
         const market = await Market.create({
           network: net,
-          marketId: '0xMarket',
+          address: '0xMarket',
         });
         await Liquidity.create({
           network: net,
-          marketId: market.marketId,
+          marketAddress: market.address,
           provider: '0xProvider',
         });
         await Liquidity.create({
           network: net,
-          marketId: market.marketId,
+          marketAddress: market.address,
           provider: '0xProvider2',
         });
         const swap = await Swap.create({
           network: net,
           orderId: 1,
-          marketId: market.marketId,
+          marketAddress: market.address,
           provider: '0xProvider',
         });
 
         const swap2 = await Swap.create({
           network: net,
           orderId: 1,
-          marketId: market.marketId,
+          marketAddress: market.address,
           taker: '0xProvider',
           provider: '0xProvider2',
         });
@@ -269,7 +269,7 @@ describe('SwapsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/swaps`)
-          .query({ net, mid: market.marketId, address: '0xProvider' })
+          .query({ net, mid: market.address, address: '0xProvider' })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -280,7 +280,7 @@ describe('SwapsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/swaps`)
-          .query({ net, mid: market.marketId, address: '0xProvider2' })
+          .query({ net, mid: market.address, address: '0xProvider2' })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -294,28 +294,28 @@ describe('SwapsController', () => {
       it('should return 200 and correct result', async () => {
         const market = await Market.create({
           network: net,
-          marketId: '0xMarket',
+          address: '0xMarket',
         });
         await Liquidity.create({
           network: net,
-          marketId: market.marketId,
+          marketAddress: market.address,
           provider: '0xProvider',
         });
         await Liquidity.create({
           network: net,
-          marketId: market.marketId,
+          marketAddress: market.address,
           provider: '0xProvider2',
         });
         await Swap.create({
           network: net,
           orderId: 1,
-          marketId: market.marketId,
+          marketAddress: market.address,
           provider: '0xProvider',
         });
         const swap2 = await Swap.create({
           network: net,
           orderId: 2,
-          marketId: market.marketId,
+          marketAddress: market.address,
           provider: '0xProvider',
         });
 
@@ -324,7 +324,7 @@ describe('SwapsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/swaps`)
-          .query({ net, mid: market.marketId, address: '0xProvider', limit: 1 })
+          .query({ net, mid: market.address, address: '0xProvider', limit: 1 })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -339,28 +339,28 @@ describe('SwapsController', () => {
       it('should return 200 and correct result', async () => {
         const market = await Market.create({
           network: net,
-          marketId: '0xMarket',
+          address: '0xMarket',
         });
         await Liquidity.create({
           network: net,
-          marketId: market.marketId,
+          marketAddress: market.address,
           provider: '0xProvider',
         });
         await Liquidity.create({
           network: net,
-          marketId: market.marketId,
+          marketAddress: market.address,
           provider: '0xProvider2',
         });
         const swap = await Swap.create({
           network: net,
           orderId: 1,
-          marketId: market.marketId,
+          marketAddress: market.address,
           provider: '0xProvider',
         });
         await Swap.create({
           network: net,
           orderId: 2,
-          marketId: market.marketId,
+          marketAddress: market.address,
           provider: '0xProvider',
         });
 
@@ -371,7 +371,7 @@ describe('SwapsController', () => {
           .get(`/v1/swaps`)
           .query({
             net,
-            mid: market.marketId,
+            mid: market.address,
             address: '0xProvider',
             offset: 1,
             limit: 1,

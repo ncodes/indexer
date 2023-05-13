@@ -132,7 +132,7 @@ describe('MediatorManagerHandler', () => {
       let market = await Market.create({
         network: net,
         creator: '0xCreator',
-        marketId: '0xMarket',
+        address: '0xMarket',
         totalJoinedMediatorsBond: '100',
         numMediatorsJoined: 1,
       });
@@ -150,7 +150,7 @@ describe('MediatorManagerHandler', () => {
       ).resolves.toBeUndefined();
 
       ticket = await Ticket.getById(ticket.id);
-      expect(ticket.marketId).toEqual('0xMarket');
+      expect(ticket.marketAddress).toEqual('0xMarket');
       expect(ticket.leaveAt).toBeDefined();
       const expectedLeaveAt = moment.unix(now + parseInt(handler.getParam('minTicketTenureDur')));
       expect(moment(ticket.leaveAt).unix()).toEqual(expectedLeaveAt.unix());
@@ -161,7 +161,7 @@ describe('MediatorManagerHandler', () => {
 
       // expect notification to have been sent
       expect(mockNotify).toHaveBeenCalledWith(NotifyType.JoinedMarket, net, '0xCreator', {
-        marketId: '0xMarket',
+        marketAddress: '0xMarket',
         owner: '0xOwner',
         numTickets: '1',
       });
@@ -173,7 +173,7 @@ describe('MediatorManagerHandler', () => {
       let market = await Market.create({
         network: net,
         creator: '0xCreator',
-        marketId: '0xMarket',
+        address: '0xMarket',
         numMediatorsJoined: 2,
         totalJoinedMediatorsBond: '200',
       });
@@ -193,7 +193,7 @@ describe('MediatorManagerHandler', () => {
       ).resolves.toBeUndefined();
 
       ticket = await Ticket.getById(ticket.id);
-      expect(ticket.marketId).toBeNull();
+      expect(ticket.marketAddress).toBeNull();
       expect(ticket.leaveAt).toBeNull();
       const expectedLeaveAt = moment.unix(now + parseInt(handler.getParam('ticketExpireDur')));
       expect(moment(ticket.joinBy).unix()).toEqual(expectedLeaveAt.unix());
@@ -204,7 +204,7 @@ describe('MediatorManagerHandler', () => {
 
       // expect notification to have been sent
       expect(mockNotify).toHaveBeenCalledWith(NotifyType.LeftMarket, net, '0xCreator', {
-        marketId: '0xMarket',
+        marketAddress: '0xMarket',
         owner: '0xOwner',
         numTickets: '0',
       });
@@ -219,14 +219,14 @@ describe('MediatorManagerHandler', () => {
         owner: '0xOwner',
       });
 
-      const marketId = '0xMarket';
+      const marketAddress = '0xMarket';
       const ticketId = toBN(1);
       const orderId = toBN(23);
       const disputeId = toBN(2);
 
       const swap = await Swap.create({
         network: net,
-        marketId,
+        marketAddress,
         orderId: orderId.toNumber(),
         base: 'BASE',
         quote: 'QUOTE',
@@ -236,7 +236,7 @@ describe('MediatorManagerHandler', () => {
 
       let dispute = await Dispute.create({
         network: net,
-        marketId,
+        marketAddress,
         orderId: orderId.toNumber(),
         disputeId: disputeId.toNumber(),
         numMediators: 1,
@@ -245,14 +245,14 @@ describe('MediatorManagerHandler', () => {
 
       await Draft.create({
         network: net,
-        marketId,
+        marketAddress,
         disputeIndex: disputeId.toNumber(),
         orderId: orderId.toNumber(),
         owner: '0xDraftOwner1',
       });
       await Draft.create({
         network: net,
-        marketId,
+        marketAddress,
         disputeIndex: disputeId.toNumber(),
         orderId: orderId.toNumber(),
         owner: '0xDraftOwner2',
@@ -261,7 +261,7 @@ describe('MediatorManagerHandler', () => {
       let draftTask = await MineTask.create({
         type: MineTaskType.Draft,
         network: net,
-        marketId,
+        marketAddress,
         orderId: orderId.toNumber(),
         disputeId: disputeId.toNumber(),
       });
@@ -269,7 +269,9 @@ describe('MediatorManagerHandler', () => {
       const now = moment().unix();
       const getBlock = jest.fn().mockResolvedValue({ timestamp: now });
       await expect(
-        handler.onDrafted(marketId, '0xOwner', ticketId, orderId, disputeId, { getBlock } as any),
+        handler.onDrafted(marketAddress, '0xOwner', ticketId, orderId, disputeId, {
+          getBlock,
+        } as any),
       ).resolves.toBeUndefined();
 
       // Ticket should be updated correctly
@@ -306,7 +308,7 @@ describe('MediatorManagerHandler', () => {
 
       // expect notification to be sent to drafted ticket owner
       expect(mockNotify).toHaveBeenNthCalledWith(1, NotifyType.TicketDrafted, net, '0xOwner', {
-        marketId: '0xMarket',
+        marketAddress: '0xMarket',
         owner: '0xOwner',
         ticketId: 1,
         orderId: 23,
@@ -314,7 +316,7 @@ describe('MediatorManagerHandler', () => {
 
       // expect FullyDrafted notification to be sent to swap participants
       const fullyDraftedLocal = {
-        marketId,
+        marketAddress,
         orderId: orderId.toNumber(),
         numDrafted: 1,
         disputeId: disputeId.toNumber(),
@@ -367,7 +369,7 @@ describe('MediatorManagerHandler', () => {
       // expect an `execute` dispute mining task to be created since
       // dispute is fully drafted (1 mediator)
       const execTask = await MineTask.find({
-        marketId,
+        marketAddress,
         orderId: orderId.toNumber(),
         disputeId: disputeId.toNumber(),
         type: MineTaskType.Execute,
@@ -383,14 +385,14 @@ describe('MediatorManagerHandler', () => {
           owner: '0xOwner',
         });
 
-        const marketId = '0xMarket';
+        const marketAddress = '0xMarket';
         const ticketId = toBN(1);
         const orderId = toBN(23);
         const disputeId = toBN(2);
 
         const swap = await Swap.create({
           network: net,
-          marketId,
+          marketAddress,
           orderId: orderId.toNumber(),
           base: 'BASE',
           quote: 'QUOTE',
@@ -400,7 +402,7 @@ describe('MediatorManagerHandler', () => {
 
         let dispute = await Dispute.create({
           network: net,
-          marketId,
+          marketAddress,
           orderId: orderId.toNumber(),
           disputeId: disputeId.toNumber(),
           numMediators: 2,
@@ -409,14 +411,14 @@ describe('MediatorManagerHandler', () => {
 
         await Draft.create({
           network: net,
-          marketId,
+          marketAddress,
           disputeIndex: disputeId.toNumber(),
           orderId: orderId.toNumber(),
           owner: '0xDraftOwner1',
         });
         await Draft.create({
           network: net,
-          marketId,
+          marketAddress,
           disputeIndex: disputeId.toNumber(),
           orderId: orderId.toNumber(),
           owner: '0xDraftOwner2',
@@ -425,7 +427,7 @@ describe('MediatorManagerHandler', () => {
         let draftTask = await MineTask.create({
           type: MineTaskType.Draft,
           network: net,
-          marketId,
+          marketAddress,
           orderId: orderId.toNumber(),
           disputeId: disputeId.toNumber(),
         });
@@ -433,7 +435,9 @@ describe('MediatorManagerHandler', () => {
         const now = moment().unix();
         const getBlock = jest.fn().mockResolvedValue({ timestamp: now });
         await expect(
-          handler.onDrafted(marketId, '0xOwner', ticketId, orderId, disputeId, { getBlock } as any),
+          handler.onDrafted(marketAddress, '0xOwner', ticketId, orderId, disputeId, {
+            getBlock,
+          } as any),
         ).resolves.toBeUndefined();
 
         // Ticket should be updated correctly
@@ -461,7 +465,7 @@ describe('MediatorManagerHandler', () => {
 
         // expect notification to be sent to drafted ticket owner
         expect(mockNotify).toHaveBeenNthCalledWith(1, NotifyType.TicketDrafted, net, '0xOwner', {
-          marketId: '0xMarket',
+          marketAddress: '0xMarket',
           owner: '0xOwner',
           ticketId: 1,
           orderId: 23,
@@ -482,7 +486,7 @@ describe('MediatorManagerHandler', () => {
     it('should un-mark ticket as drafted', async () => {
       let ticket = await Ticket.create({
         network: net,
-        marketId: '0xMarket',
+        marketAddress: '0xMarket',
         index: 1,
         owner: '0xOwner',
         orderId: 23,
@@ -492,7 +496,7 @@ describe('MediatorManagerHandler', () => {
       const undraftTask1 = await MineTask.create({
         type: MineTaskType.Undraft,
         network: net,
-        marketId: ticket.marketId,
+        marketAddress: ticket.marketAddress,
         orderId: ticket.orderId,
         disputeId: ticket.disputeId,
       });
@@ -500,7 +504,7 @@ describe('MediatorManagerHandler', () => {
       const undraftTask2 = await MineTask.create({
         type: MineTaskType.Undraft,
         network: net,
-        marketId: ticket.marketId,
+        marketAddress: ticket.marketAddress,
         orderId: ticket.orderId,
         disputeId: ticket.disputeId,
       });
@@ -545,7 +549,7 @@ describe('MediatorManagerHandler', () => {
       let ticket = await Ticket.create({
         network: net,
         index: 1,
-        marketId: '0xMarket',
+        marketAddress: '0xMarket',
         owner: '0xOwner',
         bond: toBN(20).toString(),
         orderId: 23,
@@ -563,7 +567,7 @@ describe('MediatorManagerHandler', () => {
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.slashed).toBeTruthy();
       expect(ticket.bond).toEqual(toBN(10).toString());
-      expect(ticket.marketId).toBeNull();
+      expect(ticket.marketAddress).toBeNull();
       expect(ticket.orderId).toBeNull();
       const expectedLeaveAt = moment.unix(now + parseInt(handler.getParam('ticketExpireDur')));
       expect(moment(ticket.joinBy).unix()).toEqual(expectedLeaveAt.unix());
@@ -571,7 +575,7 @@ describe('MediatorManagerHandler', () => {
       const slash = await TicketSlash.find({
         network: net,
         owner: '0xOwner',
-        marketId: '0xMarket',
+        marketAddress: '0xMarket',
         index: 1,
       });
       expect(slash).toBeDefined();
@@ -582,7 +586,7 @@ describe('MediatorManagerHandler', () => {
 
       // expect notification to have been sent
       expect(mockNotify).toHaveBeenCalledWith(NotifyType.TicketSlashed, net, '0xOwner', {
-        marketId: '0xMarket',
+        marketAddress: '0xMarket',
         owner: '0xOwner',
         ticketId: '1',
         orderId: '23',
@@ -598,7 +602,7 @@ describe('MediatorManagerHandler', () => {
       await Ticket.create({
         network: net,
         index: 1,
-        marketId: '0xMarket',
+        marketAddress: '0xMarket',
         owner: '0xOwner',
         bond: toBN(20).toString(),
         orderId: 23,
@@ -622,7 +626,7 @@ describe('MediatorManagerHandler', () => {
       await Ticket.create({
         network: net,
         index: 1,
-        marketId: '0xMarket',
+        marketAddress: '0xMarket',
         owner: '0xOwner',
         bond: toBN(20).toString(),
         orderId: 23,

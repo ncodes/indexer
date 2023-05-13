@@ -13,7 +13,7 @@ export default class TicketSlash extends BaseModel {
   // The index of the ticket
   index: number;
   // The market ID joined
-  marketId: string;
+  marketAddress: string;
   // The ticket ID
   ticketId: string;
   // The order ID

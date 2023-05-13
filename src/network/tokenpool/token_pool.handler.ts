@@ -5,7 +5,7 @@ export class TokenPoolHandler extends Handler {
   constructor(
     private provider: providers.JsonRpcProvider,
     public network: string,
-    private contracts: KnownContracts,
+    private contracts: JointContracts,
   ) {
     super(null, network, contracts.tokenPool);
   }

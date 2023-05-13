@@ -2,9 +2,12 @@ import { BaseModel } from './base';
 import { Transaction } from 'objection';
 
 export enum FeeName {
-  InstantSwapFee = 'instantSwapFee',
-  SynthSwapFee = 'syntheticSwapFee',
-  StableSwapFee = 'stableSwapFee',
+  InstantSwapFeeBp = 'instantSwapFeeBp',
+  SynthSwapFeeBp = 'syntheticSwapFeeBp',
+  StableSwapFeeBp = 'stableSwapFeeBp',
+  FixedSynthSwapFee = 'fixedSynthSwapFee',
+  FixedNFTSwapFee = 'fixedNFTSwapFee',
+  InstantNFTSwapFeeBp = 'instantNFTSwapFeeBp',
 }
 
 /**

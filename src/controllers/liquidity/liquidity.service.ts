@@ -20,13 +20,13 @@ export class LiquidityService {
    */
   async extendLiquidity(liq: Liquidity, noMerge = false, select = [], noMarket = false) {
     try {
-      const { marketId, network: net, provider } = liq;
-      const market = await Market.getMarket(net, marketId, select);
+      const { marketAddress, network: net, provider } = liq;
+      const market = await Market.getMarket(net, marketAddress, select);
       if (!market) return Promise.reject(new Error('market not found'));
       if (select.includes(`totalSwaps24h`) || !select.length)
         liq.totalSwaps24h = await Swap.countByNetworkAndMarketAndProvider(
           net,
-          marketId,
+          marketAddress,
           provider,
           market.isInstant(),
           1440,
@@ -34,14 +34,14 @@ export class LiquidityService {
       if (select.includes(`volume24h`) || !select.length)
         liq.volume24h = await Swap.getVolume(
           net,
-          marketId,
+          marketAddress,
           undefined,
           provider,
           1400,
           market.isInstant(),
         );
       if (select.includes(`priceChange`) || !select.length)
-        liq.priceChange = await MarketPrice.priceChange(net, marketId, provider, 24);
+        liq.priceChange = await MarketPrice.priceChange(net, marketAddress, provider, 24);
 
       // Get market, extend it and assign to liquidity
       if (!noMarket) {

@@ -21,7 +21,7 @@ export class DisputeManagerHandler extends Handler {
     private notifSrv: NotifierService,
     private provider: providers.JsonRpcProvider,
     public network: string,
-    private contracts: KnownContracts,
+    private contracts: JointContracts,
   ) {
     super(netSrv.cfgSrv, network, contracts.disputeMgr);
   }
@@ -47,7 +47,7 @@ export class DisputeManagerHandler extends Handler {
     this.on(
       'DraftedMediator',
       async (
-        marketId: string,
+        marketAddress: string,
         orderId: BigNumber,
         ticketOwner: string,
         ticketId: BigNumber,
@@ -56,7 +56,7 @@ export class DisputeManagerHandler extends Handler {
         txn?: Transaction,
       ) => {
         return this.onDraftedMediator(
-          marketId,
+          marketAddress,
           orderId,
           ticketOwner,
           ticketId,
@@ -70,7 +70,7 @@ export class DisputeManagerHandler extends Handler {
     this.on(
       'Committed',
       async (
-        marketId: string,
+        marketAddress: string,
         orderId: BigNumber,
         disputeId: BigNumber,
         committer: string,
@@ -78,14 +78,14 @@ export class DisputeManagerHandler extends Handler {
         event: ethers.Event,
         txn?: Transaction,
       ) => {
-        return this.onCommitted(marketId, orderId, disputeId, committer, hash, event, txn);
+        return this.onCommitted(marketAddress, orderId, disputeId, committer, hash, event, txn);
       },
     );
 
     this.on(
       'Revealed',
       async (
-        marketId: string,
+        marketAddress: string,
         orderId: BigNumber,
         disputeId: BigNumber,
         revealer: string,
@@ -93,7 +93,7 @@ export class DisputeManagerHandler extends Handler {
         event: ethers.Event,
         txn?: Transaction,
       ) => {
-        return this.onRevealed(marketId, orderId, disputeId, revealer, vote, event, txn);
+        return this.onRevealed(marketAddress, orderId, disputeId, revealer, vote, event, txn);
       },
     );
 
@@ -107,7 +107,7 @@ export class DisputeManagerHandler extends Handler {
     this.on(
       'DecisionExecuted',
       async (
-        marketId: string,
+        marketAddress: string,
         orderId: BigNumber,
         disputeId: BigNumber,
         executor: string,
@@ -117,7 +117,7 @@ export class DisputeManagerHandler extends Handler {
         event: ethers.Event,
       ) => {
         return this.onDecisionExecuted(
-          marketId,
+          marketAddress,
           orderId,
           disputeId,
           executor,
@@ -150,13 +150,13 @@ export class DisputeManagerHandler extends Handler {
     const swap = await Swap.get(this.network, orderId.toNumber(), undefined, txn);
     const numDisp = await Dispute.countByNetworkAndMarketIdAndOrderId(
       swap.network,
-      swap.marketId,
+      swap.marketAddress,
       swap.orderId,
       txn,
     );
 
     // Calculate number of mediators required
-    const market = await Market.getMarket(this.network, swap.marketId, undefined, txn);
+    const market = await Market.getMarket(this.network, swap.marketAddress, undefined, txn);
     const numMediators = Math.min(
       market.numMediators * (parseInt(numDisp) + 1),
       Math.min(parseInt(this.getParam('maxMediatorPerDispute'))),
@@ -169,7 +169,7 @@ export class DisputeManagerHandler extends Handler {
         network: this.network,
         creator,
         defendant: swap.provider === creator ? swap.taker : swap.provider,
-        marketId: swap.marketId,
+        marketAddress: swap.marketAddress,
         orderId: swap.orderId,
         disputeId: disputeId.toNumber(),
         wantRelease,
@@ -188,7 +188,7 @@ export class DisputeManagerHandler extends Handler {
           {
             type: MineTaskType.Draft,
             network: swap.network,
-            marketId: swap.marketId,
+            marketAddress: swap.marketAddress,
             orderId: swap.orderId,
             disputeId: disputeId.toNumber(),
           },
@@ -213,7 +213,7 @@ export class DisputeManagerHandler extends Handler {
     // Update liquidity
     const liquidity = await Liquidity.getLiquidity(
       swap.network,
-      swap.marketId,
+      swap.marketAddress,
       swap.provider,
       undefined,
       txn,
@@ -247,7 +247,7 @@ export class DisputeManagerHandler extends Handler {
 
   /**
    * A mediator was drafted
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param orderId The order ID
    * @param ticketOwner The drafted mediator's address
    * @param ticketId The ticket ID
@@ -256,7 +256,7 @@ export class DisputeManagerHandler extends Handler {
    * @param txn The transaction object
    */
   async onDraftedMediator(
-    marketId: string,
+    marketAddress: string,
     orderId: BigNumber,
     ticketOwner: string,
     ticketId: BigNumber,
@@ -269,7 +269,7 @@ export class DisputeManagerHandler extends Handler {
 
   /**
    * A mediator committed a hash for a vote
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param orderId The order ID
    * @param disputeId The dispute ID
    * @param committer The address of the mediator
@@ -278,7 +278,7 @@ export class DisputeManagerHandler extends Handler {
    * @param txn The transaction object
    */
   async onCommitted(
-    marketId: string,
+    marketAddress: string,
     orderId: BigNumber,
     disputeId: BigNumber,
     committer: string,
@@ -289,7 +289,7 @@ export class DisputeManagerHandler extends Handler {
     await Commit.create(
       {
         network: this.network,
-        marketId,
+        marketAddress,
         committer,
         hash,
         orderId: orderId.toNumber(),
@@ -302,7 +302,7 @@ export class DisputeManagerHandler extends Handler {
 
   /**
    * A mediator revealed a committed vote
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param orderId The order ID
    * @param disputeId The dispute ID
    * @param revealer The address of the mediator
@@ -311,7 +311,7 @@ export class DisputeManagerHandler extends Handler {
    * @param txn The transaction object
    */
   async onRevealed(
-    marketId: string,
+    marketAddress: string,
     orderId: BigNumber,
     disputeId: BigNumber,
     revealer: string,
@@ -322,7 +322,7 @@ export class DisputeManagerHandler extends Handler {
     await Reveal.create(
       {
         network: this.network,
-        marketId,
+        marketAddress,
         revealer,
         vote,
         orderId: orderId.toNumber(),
@@ -346,7 +346,7 @@ export class DisputeManagerHandler extends Handler {
 
   /**
    * A dispute outcome was executed
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param orderId The order ID
    * @param disputeId The dispute ID
    * @param executor The address dispute outcome executed
@@ -357,7 +357,7 @@ export class DisputeManagerHandler extends Handler {
    * @param txn The transaction object
    */
   async onDecisionExecuted(
-    marketId: string,
+    marketAddress: string,
     orderId: BigNumber,
     disputeId: BigNumber,
     executor: string,
@@ -369,7 +369,7 @@ export class DisputeManagerHandler extends Handler {
   ) {
     let dispute = await Dispute.get(
       this.network,
-      marketId,
+      marketAddress,
       orderId.toNumber(),
       disputeId.toNumber(),
       txn,
@@ -388,7 +388,7 @@ export class DisputeManagerHandler extends Handler {
     );
 
     // Update market
-    const market = await Market.getMarket(this.network, marketId, undefined, txn);
+    const market = await Market.getMarket(this.network, marketAddress, undefined, txn);
     await Market.updateById(
       market.id,
       { openDisputes: !stalled ? market.openDisputes - 1 : market.openDisputes },
@@ -399,7 +399,7 @@ export class DisputeManagerHandler extends Handler {
     const swap = await Swap.get(dispute.network, dispute.orderId, [], txn);
     const liquidity = await Liquidity.getLiquidity(
       swap.network,
-      swap.marketId,
+      swap.marketAddress,
       swap.provider,
       undefined,
       txn,
@@ -420,7 +420,7 @@ export class DisputeManagerHandler extends Handler {
           {
             type: MineTaskType.Undraft,
             network: dispute.network,
-            marketId: dispute.marketId,
+            marketAddress: dispute.marketAddress,
             orderId: dispute.orderId,
             disputeId: dispute.disputeId,
           },
@@ -431,7 +431,7 @@ export class DisputeManagerHandler extends Handler {
     // Complete a dispute execution mining task
     await MineTask.completeOneExecutionTask(
       this.network,
-      marketId,
+      marketAddress,
       dispute.orderId,
       dispute.disputeId,
       txn,
@@ -444,7 +444,7 @@ export class DisputeManagerHandler extends Handler {
     // Get the drafted tickets
     const drafted = await Draft.getAll(
       swap.network,
-      swap.marketId,
+      swap.marketAddress,
       swap.orderId,
       dispute.disputeId,
     );
@@ -458,7 +458,7 @@ export class DisputeManagerHandler extends Handler {
     const { released } = dispute;
     for (const recipient of recipients) {
       await this.notifSrv.notify(NotifyType.DisputeExecuted, swap.network, recipient.address, {
-        marketId: swap.marketId,
+        marketAddress: swap.marketAddress,
         network: swap.network,
         orderId: swap.orderId,
         disputeId: dispute.disputeId,

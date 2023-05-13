@@ -105,17 +105,17 @@ describe('DisputesController', () => {
       });
     });
 
-    describe('query: marketId is set', () => {
+    describe('query: marketAddress is set', () => {
       it('should return correctly', async () => {
         await Dispute.create({ network: net });
         const market = await Dispute.create({
           network: net,
-          marketId: '0xMarket',
+          marketAddress: '0xMarket',
         });
         await request(app.getHttpServer())
           .get(`/v1/disputes`)
           .set('Authorization', 'bearer ' + token)
-          .query({ net, marketId: market.marketId })
+          .query({ net, marketAddress: market.marketAddress })
           .send({})
           .expect(200)
           .expect((res) => {

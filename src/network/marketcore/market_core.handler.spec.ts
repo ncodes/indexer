@@ -1,8 +1,8 @@
 import { MarketCoreHandler } from './market_core.handler';
 import { DBService } from '../../db/DBService';
-import Market from '../../models/market';
+import Market, { AssetType } from '../../models/market';
 import { NoopLogger } from '../../common/loggers/noop_logger';
-import MarketProvider from '../../models/market_provider';
+import LiquidityProvider from '../../models/market_provider';
 import InvitedMediator from '../../models/invited_mediators';
 import * as moment from 'moment';
 import PermittedTrader from '../../models/permitted_trader';
@@ -88,14 +88,14 @@ describe('MarketCoreHandler', () => {
           creator,
           baseAsset,
           quoteAsset,
-          true,
-          true,
+          BigNumber.from(AssetType.SYNTH),
+          BigNumber.from(AssetType.SYNTH),
           BigNumber.from(1),
           BigNumber.from(10),
           { transactionHash: '0xTxHash' } as any,
         ),
       ).resolves.toBeUndefined();
-      const market = await Market.getByMarketId('0x123');
+      const market = await Market.getByAddress('0x123');
       expect(market).toBeDefined();
       expect(market.network).toEqual(handler.network);
       expect(market.creator).toEqual(creator);
@@ -103,8 +103,8 @@ describe('MarketCoreHandler', () => {
       expect(market.baseAddress).toEqual(baseAsset);
       expect(market.quoteAddress).toEqual(quoteAsset);
       expect(market.quote).toEqual('USDT');
-      expect(market.isBaseLocal).toBeTruthy();
-      expect(market.isQuoteLocal).toBeTruthy();
+      expect(market.baseType).toEqual(AssetType.SYNTH);
+      expect(market.quoteType).toEqual(AssetType.SYNTH);
       expect(market.commission).toEqual(1);
       expect(market.pair).toEqual('BTCUSDT');
       expect(market.txHash).toEqual('0xTxHash');
@@ -121,9 +121,9 @@ describe('MarketCoreHandler', () => {
       await expect(
         handler.onMarketPutAllowed('0x123', '0xAddr', {} as any),
       ).resolves.toBeUndefined();
-      const provider = await MarketProvider.find({
+      const provider = await LiquidityProvider.find({
         network: net,
-        marketId: '0x123',
+        marketAddress: '0x123',
         address: '0xAddr',
       });
       expect(provider).toBeDefined();
@@ -131,19 +131,19 @@ describe('MarketCoreHandler', () => {
 
     describe('when market provider already exist but soft-deleted', () => {
       it('should create new MarketProvider', async () => {
-        const provider = await MarketProvider.create({
+        const provider = await LiquidityProvider.create({
           network: net,
-          marketId: '0x123',
+          marketAddress: '0x123',
           address: '0xAddr',
         });
-        await MarketProvider.remove(provider.network, provider.marketId, provider.address);
+        await LiquidityProvider.remove(provider.network, provider.marketAddress, provider.address);
 
         await expect(
           handler.onMarketPutAllowed('0x123', '0xAddr', {} as any),
         ).resolves.toBeUndefined();
-        const provider2 = await MarketProvider.find({
+        const provider2 = await LiquidityProvider.find({
           network: net,
-          marketId: '0x123',
+          marketAddress: '0x123',
           address: '0xAddr',
         });
         expect(provider2).toBeDefined();
@@ -152,7 +152,7 @@ describe('MarketCoreHandler', () => {
 
         // expect notification to have been sent
         expect(mockNotify).toHaveBeenCalledWith(NotifyType.PutApproved, net, provider.address, {
-          marketId: provider.marketId,
+          marketAddress: provider.marketAddress,
         });
       });
     });
@@ -160,25 +160,25 @@ describe('MarketCoreHandler', () => {
 
   describe('.onMarketPutRevoked', () => {
     it('should soft delete existing matching MarketProvider', async () => {
-      const provider = await MarketProvider.create({
+      const provider = await LiquidityProvider.create({
         network: net,
-        marketId: '0x123',
+        marketAddress: '0x123',
         address: '0xAddr',
       });
 
       await expect(
         handler.onMarketPutRevoked('0x123', '0xAddr', {} as any),
       ).resolves.toBeUndefined();
-      const provider2 = await MarketProvider.getById(provider.id);
+      const provider2 = await LiquidityProvider.getById(provider.id);
       expect(provider2).toBeUndefined();
 
-      const provider3 = await MarketProvider.query().where('id', provider.id).first();
+      const provider3 = await LiquidityProvider.query().where('id', provider.id).first();
       expect(provider3).toBeDefined();
       expect(provider3.deletedAt).toBeDefined();
 
       // expect notification to have been sent
       expect(mockNotify).toHaveBeenCalledWith(NotifyType.PutRevoked, net, provider.address, {
-        marketId: provider.marketId,
+        marketAddress: provider.marketAddress,
       });
     });
   });
@@ -201,7 +201,7 @@ describe('MarketCoreHandler', () => {
         NotifyType.MediationInviteReceived,
         net,
         '0xProvider',
-        { marketId: invite.marketId },
+        { marketAddress: invite.marketAddress },
       );
     });
 
@@ -211,7 +211,7 @@ describe('MarketCoreHandler', () => {
       async () => {
         let invite = await InvitedMediator.create({
           network: net,
-          marketId: '0x123',
+          marketAddress: '0x123',
           address: '0xProvider',
           accepted: true,
           deletedAt: moment().toISOString(),
@@ -226,7 +226,7 @@ describe('MarketCoreHandler', () => {
           NotifyType.MediationInviteReceived,
           net,
           '0xProvider',
-          { marketId: invite.marketId },
+          { marketAddress: invite.marketAddress },
         );
       },
     );
@@ -236,14 +236,14 @@ describe('MarketCoreHandler', () => {
     it('should soft delete unaccepted invitation', async () => {
       let invite = await InvitedMediator.create({
         network: net,
-        marketId: '0x123',
+        marketAddress: '0x123',
         address: '0xProvider',
       });
-      await handler.onUnInvitedMediator(invite.marketId, invite.address, {} as any);
+      await handler.onUnInvitedMediator(invite.marketAddress, invite.address, {} as any);
       invite = await InvitedMediator.query()
         .where({
           network: net,
-          marketId: '0x123',
+          marketAddress: '0x123',
           address: '0xProvider',
         })
         .first();
@@ -255,15 +255,15 @@ describe('MarketCoreHandler', () => {
     it('should not soft delete accepted invitation', async () => {
       let invite = await InvitedMediator.create({
         network: net,
-        marketId: '0x123',
+        marketAddress: '0x123',
         address: '0xProvider',
         accepted: true,
       });
-      await handler.onUnInvitedMediator(invite.marketId, invite.address, {} as any);
+      await handler.onUnInvitedMediator(invite.marketAddress, invite.address, {} as any);
       invite = await InvitedMediator.query()
         .where({
           network: net,
-          marketId: '0x123',
+          marketAddress: '0x123',
           address: '0xProvider',
         })
         .first();
@@ -275,17 +275,17 @@ describe('MarketCoreHandler', () => {
 
   describe('.onAcceptedMediatorInvite', () => {
     it('should mark invitation as `accepted`', async () => {
-      await Market.create({ creator: '0xCreator', marketId: '0x123' });
+      await Market.create({ creator: '0xCreator', address: '0x123' });
       let invite = await InvitedMediator.create({
         network: net,
-        marketId: '0x123',
+        marketAddress: '0x123',
         address: '0xProvider',
       });
-      await handler.onAcceptedMediatorInvite(invite.marketId, invite.address, {} as any);
+      await handler.onAcceptedMediatorInvite(invite.marketAddress, invite.address, {} as any);
       invite = await InvitedMediator.query()
         .where({
           network: net,
-          marketId: '0x123',
+          marketAddress: '0x123',
           address: '0xProvider',
         })
         .first();
@@ -293,7 +293,7 @@ describe('MarketCoreHandler', () => {
 
       // expect notification to have been sent
       expect(mockNotify).toHaveBeenCalledWith(NotifyType.MediatorInviteAccepted, net, '0xCreator', {
-        marketId: invite.marketId,
+        marketAddress: invite.marketAddress,
         invitee: '0xProvider',
       });
     });
@@ -303,14 +303,14 @@ describe('MarketCoreHandler', () => {
     it('should soft delete invitation', async () => {
       let invite = await InvitedMediator.create({
         network: net,
-        marketId: '0x123',
+        marketAddress: '0x123',
         address: '0xProvider',
       });
-      await handler.onRevokedMediator(invite.marketId, invite.address, {} as any);
+      await handler.onRevokedMediator(invite.marketAddress, invite.address, {} as any);
       invite = await InvitedMediator.query()
         .where({
           network: net,
-          marketId: '0x123',
+          marketAddress: '0x123',
           address: '0xProvider',
         })
         .first();
@@ -318,7 +318,7 @@ describe('MarketCoreHandler', () => {
 
       // expect notification to have been sent
       expect(mockNotify).toHaveBeenCalledWith(NotifyType.MediatorRevoked, net, '0xProvider', {
-        marketId: invite.marketId,
+        marketAddress: invite.marketAddress,
       });
     });
   });
@@ -337,14 +337,14 @@ describe('MarketCoreHandler', () => {
 
       // expect notification to have been sent
       expect(mockNotify).toHaveBeenCalledWith(NotifyType.SwapApproved, net, perm.address, {
-        marketId: perm.marketId,
+        marketAddress: perm.marketAddress,
       });
     });
 
     it('should undo soft delete when existing entry was previously soft-deleted', async () => {
       let perm = await PermittedTrader.create({
         network: net,
-        marketId: '0x123',
+        marketAddress: '0x123',
         address: '0xProvider',
         deletedAt: moment().toISOString(),
       });
@@ -358,14 +358,14 @@ describe('MarketCoreHandler', () => {
     it('should soft delete permission', async () => {
       let perm = await PermittedTrader.create({
         network: net,
-        marketId: '0x123',
+        marketAddress: '0x123',
         address: '0xProvider',
       });
-      await handler.onRevokedSwap(perm.marketId, perm.address, {} as any);
+      await handler.onRevokedSwap(perm.marketAddress, perm.address, {} as any);
       perm = await PermittedTrader.query()
         .where({
           network: net,
-          marketId: '0x123',
+          marketAddress: '0x123',
           address: '0xProvider',
         })
         .first();
@@ -373,7 +373,7 @@ describe('MarketCoreHandler', () => {
 
       // expect notification to have been sent
       expect(mockNotify).toHaveBeenCalledWith(NotifyType.SwapRevoked, net, perm.address, {
-        marketId: perm.marketId,
+        marketAddress: perm.marketAddress,
       });
     });
   });

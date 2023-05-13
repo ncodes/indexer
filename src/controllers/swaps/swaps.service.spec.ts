@@ -43,7 +43,7 @@ describe('SwapsService', () => {
           taker: '0xTaker',
           provider: '0xProvider',
           network: net,
-          marketId: '0xMarket',
+          marketAddress: '0xMarket',
           orderId: 1,
         });
         const res = await service.getParticipants(swap, false);
@@ -59,7 +59,7 @@ describe('SwapsService', () => {
             taker: '0xTaker',
             provider: '0xProvider', // participant 1
             network: net,
-            marketId: '0xMarket', // participant 2
+            marketAddress: '0xMarket', // participant 2
             orderId: 1,
           });
           const res = await service.getParticipants(swap, false);
@@ -79,25 +79,25 @@ describe('SwapsService', () => {
           taker: '0xTaker',
           provider: '0xProvider',
           network: net,
-          marketId: '0xMarket',
+          marketAddress: '0xMarket',
           orderId: 1,
         });
         const dispute = await Dispute.create({
           network: net,
           orderId: swap.orderId,
-          marketId: swap.marketId,
+          marketAddress: swap.marketAddress,
           disputeId: 0,
         });
         await Draft.create({
           network: net,
-          marketId: swap.marketId,
+          marketAddress: swap.marketAddress,
           orderId: swap.orderId,
           disputeIndex: dispute.disputeId,
           owner: '0xDraftee',
         });
         await Draft.create({
           network: net,
-          marketId: swap.marketId,
+          marketAddress: swap.marketAddress,
           orderId: swap.orderId,
           disputeIndex: dispute.disputeId,
           owner: '0xDraftee2',
@@ -122,38 +122,38 @@ describe('SwapsService', () => {
           taker: '0xTaker',
           provider: '0xProvider',
           network: net,
-          marketId: '0xMarket',
+          marketAddress: '0xMarket',
           orderId: 1,
         });
         const dispute = await Dispute.create({
           network: net,
           orderId: swap.orderId,
-          marketId: swap.marketId,
+          marketAddress: swap.marketAddress,
           disputeId: 0,
         });
         const dispute1 = await Dispute.create({
           network: net,
           orderId: swap.orderId,
-          marketId: swap.marketId,
+          marketAddress: swap.marketAddress,
           disputeId: 1,
         });
         await Draft.create({
           network: net,
-          marketId: swap.marketId,
+          marketAddress: swap.marketAddress,
           orderId: swap.orderId,
           disputeIndex: dispute.disputeId,
           owner: '0xDraftee',
         });
         await Draft.create({
           network: net,
-          marketId: swap.marketId,
+          marketAddress: swap.marketAddress,
           orderId: swap.orderId,
           disputeIndex: dispute.disputeId,
           owner: '0xDraftee2',
         });
         await Draft.create({
           network: net,
-          marketId: swap.marketId,
+          marketAddress: swap.marketAddress,
           orderId: swap.orderId,
           disputeIndex: dispute1.disputeId,
           owner: '0xDraftee3',

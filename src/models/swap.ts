@@ -1,5 +1,5 @@
 import { randStr } from '../common/common';
-import Objection, { raw, Transaction } from 'objection';
+import Objection, { Model, raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 import * as moment from 'moment';
 import { ToDec } from '../common/common';
@@ -13,8 +13,8 @@ import * as _ from 'lodash';
 export default class Swap extends BaseModel {
   // The network name
   network?: string = undefined;
-  // The market ID
-  marketId?: string = undefined;
+  // The market address
+  marketAddress?: string = undefined;
   // The base asset symbol
   base: string = undefined;
   // The base asset address
@@ -74,7 +74,16 @@ export default class Swap extends BaseModel {
   }
 
   static get relationMappings() {
-    return {};
+    return {
+      market: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: Market,
+        join: {
+          from: 'swaps.marketAddress',
+          to: 'markets.address',
+        },
+      },
+    };
   }
 
   $beforeInsert() {
@@ -94,23 +103,21 @@ export default class Swap extends BaseModel {
   }
 
   /**
-   * Get the address of the on-chain side
+   * getPayer determines whether the provider or the taker is expected to make off-chain payment
    */
-  async getOnChainParty() {
-    const market = await Market.getByMarketId(this.marketId);
-    if (!market) throw new Error('market not found');
-    if (market.isInstant()) throw new Error('both participants are on-chain');
-    return Promise.resolve(market.isBaseLocal ? this.taker : this.provider);
-  }
-
-  /**
-   * Get the address of the off-chain side
-   */
-  async getOffChainParty() {
-    const market = await Market.getByMarketId(this.marketId);
-    if (!market) throw new Error('market not found');
-    if (market.isInstant()) throw new Error('both participants are on-chain');
-    return Promise.resolve(market.isBaseLocal ? this.provider : this.taker);
+  getPayer() {
+    const { baseType, quoteType } = this.market;
+    let payer: string;
+    if (this.market.isFungible() && this.market.involvesERC20()) {
+      payer = !Market.isSynth(baseType) ? this.taker : this.provider;
+    } else if (Market.isSynth(baseType) && Market.isSynth(quoteType)) {
+      payer = this.taker;
+    } else if (Market.isSynth(baseType) && Market.isERC20(quoteType)) {
+      payer = this.provider;
+    } else if (Market.isNFT(baseType) && Market.isSynth(quoteType)) {
+      payer = this.taker;
+    }
+    return payer;
   }
 
   /**
@@ -150,7 +157,7 @@ export default class Swap extends BaseModel {
    * @param txn Optional transaction object
    */
   static getById(id: string, txn?: Transaction) {
-    return this.query(txn).where({ id }).whereNotDeleted().first();
+    return this.query(txn).where({ id }).withGraphFetched('market').whereNotDeleted().first();
   }
 
   static makeSelectList(select = []) {
@@ -159,7 +166,7 @@ export default class Swap extends BaseModel {
       ? _.uniq(
           select.concat([
             'id',
-            'marketId',
+            'marketAddress',
             'network',
             'base',
             'baseAddress',
@@ -185,6 +192,7 @@ export default class Swap extends BaseModel {
     return this.query(txn)
       .select(...select)
       .where({ network, orderId })
+      .withGraphFetched('market')
       .whereNotDeleted()
       .first();
   }
@@ -212,7 +220,7 @@ export default class Swap extends BaseModel {
   /**
    * count by network and market
    * @param network The network name
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param provider The provider address
    * @param instant? Filter by instant swap
    * @param minutesAgo? Filter between now and some minutes ago
@@ -220,14 +228,14 @@ export default class Swap extends BaseModel {
    */
   static countByNetworkAndMarketAndProvider(
     network: string,
-    marketId: string,
+    marketAddress: string,
     provider: string,
     instant?: boolean,
     minutesAgo?: number,
     txn?: Objection.Transaction,
   ) {
     return new Promise<string>((resolve, reject) => {
-      let q = this.query(txn).where({ network }).where('marketId', 'ilike', marketId);
+      let q = this.query(txn).where({ network }).where('marketAddress', 'ilike', marketAddress);
       if (provider) q = q.where('provider', 'ilike', provider);
       if (instant !== undefined) q = q.where({ instant });
       if (minutesAgo)
@@ -245,7 +253,7 @@ export default class Swap extends BaseModel {
   /**
    * Get the trade volume of a market/provider within now and some time ago.
    * @param network The network name.
-   * @param marketId The base asset address
+   * @param marketAddress The base asset address
    * @param baseAddress The base address
    * @param provider The provider address
    * @param timeAgo The number of minutes ago to use as the start time
@@ -254,7 +262,7 @@ export default class Swap extends BaseModel {
    */
   static getVolume(
     network: string,
-    marketId: string,
+    marketAddress: string,
     baseAddress: string,
     provider: string,
     timeAgo: number,
@@ -268,7 +276,7 @@ export default class Swap extends BaseModel {
           if (network) q.where('network', network);
         })
         .where((q) => {
-          if (marketId) q.where('marketId', 'ilike', marketId);
+          if (marketAddress) q.where('marketAddress', 'ilike', marketAddress);
         })
         .where((q) => {
           if (baseAddress) q.where('baseAddress', 'ilike', baseAddress);
@@ -290,7 +298,7 @@ export default class Swap extends BaseModel {
   /**
    * Count number of released, cancelled or disputed swaps
    * @param network The network name
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param provider The provider address
    * @param released Indicate to return count for released swaps
    * @param cancelled Indicate to return count for cancelled swaps
@@ -299,7 +307,7 @@ export default class Swap extends BaseModel {
    */
   static countByState(
     network: string,
-    marketId: string,
+    marketAddress: string,
     provider: string,
     released?: boolean,
     cancelled?: boolean,
@@ -307,7 +315,7 @@ export default class Swap extends BaseModel {
     txn?: Objection.Transaction,
   ) {
     return new Promise<string>((resolve, reject) => {
-      let q = this.query(txn).where({ network }).where('marketId', 'ilike', marketId);
+      let q = this.query(txn).where({ network }).where('marketAddress', 'ilike', marketAddress);
       if (provider) q = q.where('provider', 'ilike', provider);
       if (released !== undefined) q = q.where({ released });
       if (cancelled !== undefined) q = q.where({ cancelled });
@@ -325,19 +333,19 @@ export default class Swap extends BaseModel {
   /**
    * Calculate completion rate
    * @param network The network name
-   * @param marketId The market ID
+   * @param marketAddress The market ID
    * @param provider The provider address
    * @param txn
    */
   static async getCompletionRate(
     network: string,
-    marketId: string,
+    marketAddress: string,
     provider: string,
     txn?: Objection.Transaction,
   ) {
     const nReleased = await Swap.countByState(
       network,
-      marketId,
+      marketAddress,
       provider,
       true,
       undefined,
@@ -346,7 +354,7 @@ export default class Swap extends BaseModel {
     );
     const nSwaps = await Swap.countByState(
       network,
-      marketId,
+      marketAddress,
       provider,
       undefined,
       undefined,
@@ -359,7 +367,7 @@ export default class Swap extends BaseModel {
   /**
    * search for swaps
    * @param network The network name
-   * @param marketId The market ID (optional)
+   * @param marketAddress The market ID (optional)
    * @param providerOrTaker Filter only where address is provider or taker
    * @param limit The number of records to return (optional).
    * @param offset The query offset (optional)
@@ -368,7 +376,7 @@ export default class Swap extends BaseModel {
    */
   static searchSwaps(
     network: string,
-    marketId?: string,
+    marketAddress?: string,
     providerOrTaker?: string,
     limit?: number,
     offset?: number,
@@ -380,7 +388,7 @@ export default class Swap extends BaseModel {
       .select(...select, raw('count(*) over() as' + ' "__queryCount"'))
       .whereNotDeleted()
       .where({ network });
-    if (marketId) q = q.where('marketId', 'ILIKE', marketId);
+    if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
     if (providerOrTaker) {
       q = q.where((q) => {
         q.orWhere('provider', 'ILIKE', providerOrTaker).orWhere('taker', 'ILIKE', providerOrTaker);

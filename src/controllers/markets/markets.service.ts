@@ -52,28 +52,28 @@ export class MarketsService {
    */
   async extendMarket(market: Market, noMerge = false, select = []) {
     try {
-      const { marketId, network: net, baseAddress, quoteAddress } = market;
+      const { address, network: net, baseAddress, quoteAddress } = market;
 
       if (!noMerge) {
-        const _m = await (await this.netSrv.getMarketCore(net)).markets(market.marketId);
+        const _m = await (await this.netSrv.getMarketCore(net)).markets(market.address);
         let marketFromContract = this.normalizeMarket(_m);
         if (select.length) marketFromContract = _.pick(marketFromContract, select) as any;
         this.merge(marketFromContract, market);
       }
 
       if (select.includes(`numProviders`) || !select.length)
-        market.numProviders = await Liquidity.countProvidersInMarket(net, marketId);
+        market.numProviders = await Liquidity.countProvidersInMarket(net, address);
       if (select.includes(`totalLiquidity`) || !select.length)
-        market.totalLiquidity = await Liquidity.getTotalMarketLiquidity(net, marketId);
-      market.lowestPrice = await Liquidity.getLowestPrice(net, marketId, undefined);
+        market.totalLiquidity = await Liquidity.getTotalMarketLiquidity(net, address);
+      market.lowestPrice = await Liquidity.getLowestPrice(net, address, undefined);
       if (select.includes(`lowestPrice24h`) || !select.length)
-        market.lowestPrice24h = await Liquidity.getLowestPrice(net, marketId, undefined, 24);
+        market.lowestPrice24h = await Liquidity.getLowestPrice(net, address, undefined, 24);
       if (select.includes(`highestPrice24h`) || !select.length)
-        market.highestPrice24h = await Liquidity.getHighestPrice(net, marketId, undefined, 24);
+        market.highestPrice24h = await Liquidity.getHighestPrice(net, address, undefined, 24);
       if (select.includes(`totalSwaps24h`) || !select.length)
         market.totalSwaps24h = await Swap.countByNetworkAndMarketAndProvider(
           net,
-          marketId,
+          address,
           undefined,
           market.isInstant(),
           1440,
@@ -81,14 +81,14 @@ export class MarketsService {
       if (select.includes(`volume24h`) || !select.length)
         market.volume24h = await Swap.getVolume(
           net,
-          marketId,
+          address,
           undefined,
           undefined,
           1400,
           market.isInstant(),
         );
       if (select.includes(`priceChange`) || !select.length)
-        market.priceChange = await MarketPrice.priceChange(net, marketId, undefined, 24);
+        market.priceChange = await MarketPrice.priceChange(net, address, undefined, 24);
       if (select.includes(`baseLogo`) || !select.length)
         market.baseLogo = getTokenLogo(net, baseAddress);
       if (select.includes(`quoteLogo`) || !select.length)

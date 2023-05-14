@@ -30,6 +30,12 @@ exports.up = function (knex) {
       table.boolean('permPut').defaultTo(false);
       table.boolean('permSwap').defaultTo(false);
       table.boolean('permMediate').defaultTo(false);
+      table.integer('disputeDelayTime');
+      table.integer('evidenceDur');
+      table.integer('predictDur');
+      table.integer('appealDur');
+      table.string('manager');
+      table.string('disputeCost');
       table.string('txHash');
       table.timestamp('lastSwapAt');
       table.timestamp('createdAt');

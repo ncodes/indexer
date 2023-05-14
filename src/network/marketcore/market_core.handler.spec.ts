@@ -9,6 +9,7 @@ import PermittedTrader from '../../models/permitted_trader';
 import { NotifyType } from '../../jobs/mailer/NotifierService';
 import { BigNumber } from 'ethers';
 import MarketBadge, { BadgeScope } from '../../models/market_badge';
+import { toBN } from '../common';
 
 const MarketCoreContract = jest.fn().mockImplementation(() => {
   return {};
@@ -175,7 +176,7 @@ describe('MarketCoreHandler', () => {
 
   describe('.onZeroPriceEnabled', () => {
     it('should set allowZeroPrice to true', async () => {
-      let market = await Market.create({ address: marketAddress });
+      let market = await Market.create({ network: net, address: marketAddress });
       await expect(handler.onZeroPriceEnabled(market.address, null)).resolves.toBeUndefined();
       market = await Market.getById(market.id);
       expect(market.allowZeroPrice).toBeTruthy();
@@ -184,7 +185,7 @@ describe('MarketCoreHandler', () => {
 
   describe('.onTransferredOwnership', () => {
     it('should update creator', async () => {
-      let market = await Market.create({ address: marketAddress, creator: '0x1' });
+      let market = await Market.create({ network: net, address: marketAddress, creator: '0x1' });
       await expect(
         handler.onTransferredOwnership(market.address, '0x1', '0x2', null),
       ).resolves.toBeUndefined();
@@ -195,7 +196,7 @@ describe('MarketCoreHandler', () => {
 
   describe('.onOfferOnlyEnabled', () => {
     it('should update creator', async () => {
-      let market = await Market.create({ address: marketAddress });
+      let market = await Market.create({ network: net, address: marketAddress });
       await expect(handler.onOfferOnlyEnabled(market.address, null)).resolves.toBeUndefined();
       market = await Market.getById(market.id);
       expect(market.offerOnly).toBeTruthy();
@@ -461,6 +462,50 @@ describe('MarketCoreHandler', () => {
       expect(mockNotify).toHaveBeenCalledWith(NotifyType.SwapRevoked, net, perm.address, {
         marketAddress: perm.marketAddress,
       });
+    });
+  });
+
+  describe('.onUpdatedDisputeDurations', function () {
+    it('should update market correctly', async () => {
+      const mkt = await Market.create({ network: net, address: marketAddress });
+      await expect(
+        handler.onUpdatedDisputeDurations(marketAddress, toBN(1), toBN(2), toBN(3), toBN(4), null),
+      ).resolves.toBeUndefined();
+      const updMkt = await Market.getById(mkt.id);
+      expect(updMkt.disputeDelayTime).toEqual(1);
+      expect(updMkt.evidenceDur).toEqual(2);
+      expect(updMkt.predictDur).toEqual(3);
+      expect(updMkt.appealDur).toEqual(4);
+    });
+  });
+
+  describe('.onUpdatedMarketManager', function () {
+    it('should update market correctly', async () => {
+      const mkt = await Market.create({
+        network: net,
+        address: marketAddress,
+        manager: '0xManager',
+      });
+      await expect(
+        handler.onUpdatedMarketManager(marketAddress, '0xNewManager', null),
+      ).resolves.toBeUndefined();
+      const updMkt = await Market.getById(mkt.id);
+      expect(updMkt.manager).toEqual('0xNewManager');
+    });
+  });
+
+  describe('.onUpdatedDisputeCost', function () {
+    it('should update market correctly', async () => {
+      const mkt = await Market.create({
+        network: net,
+        address: marketAddress,
+        disputeCost: '1',
+      });
+      await expect(
+        handler.onUpdatedDisputeCost(marketAddress, toBN(2), null),
+      ).resolves.toBeUndefined();
+      const updMkt = await Market.getById(mkt.id);
+      expect(updMkt.disputeCost).toEqual('2');
     });
   });
 });

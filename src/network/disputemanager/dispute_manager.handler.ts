@@ -241,8 +241,6 @@ export class DisputeManagerHandler extends Handler {
     };
     const recipient = swap.provider === creator ? swap.taker : swap.provider;
     await this.notifSrv.notify(NotifyType.DisputeCreated, this.network, recipient, locals);
-
-    return Promise.resolve();
   }
 
   /**
@@ -297,7 +295,6 @@ export class DisputeManagerHandler extends Handler {
       },
       txn,
     );
-    return Promise.resolve();
   }
 
   /**
@@ -330,7 +327,6 @@ export class DisputeManagerHandler extends Handler {
       },
       txn,
     );
-    return Promise.resolve();
   }
 
   /**
@@ -467,7 +463,5 @@ export class DisputeManagerHandler extends Handler {
         outcome: released === null ? 'Stalled' : released ? 'Release' : 'Cancel',
       });
     }
-
-    return Promise.resolve();
   }
 }

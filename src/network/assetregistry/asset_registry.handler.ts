@@ -86,6 +86,5 @@ export class AssetRegistryHandler extends Handler {
       },
       txn,
     );
-    return;
   }
 }

@@ -121,22 +121,6 @@ export class MarketCoreHandler extends Handler {
       },
     );
 
-    this.on('UpdatedBadgeAddr', async (addr: string, event: Event) => {
-      return;
-    });
-
-    this.on('UpdatedRewardPoolAddr', async (addr: string, event: Event) => {
-      return;
-    });
-
-    this.on('UpdatedDefaultMediatorBond', async (newValue: BigNumber, event: Event) => {
-      return;
-    });
-
-    this.on('UpdatedDefaultDisputeDelayTime', async (newValue: BigNumber, event: Event) => {
-      return;
-    });
-
     this.on(
       'UpdatedDisputeDurations',
       async (
@@ -146,18 +130,33 @@ export class MarketCoreHandler extends Handler {
         predictDur: BigNumber,
         appealDur: BigNumber,
         event: Event,
+        txn: Transaction,
       ) => {
-        return;
+        return this.onUpdatedDisputeDurations(
+          id,
+          disputeDelayTime,
+          evidenceDur,
+          predictDur,
+          appealDur,
+          event,
+          txn,
+        );
       },
     );
 
-    this.on('UpdatedMarketManager', async (id: string, mgrAdr: string, event: Event) => {
-      return;
-    });
+    this.on(
+      'UpdatedMarketManager',
+      async (id: string, managerAddr: string, event: Event, txn?: Transaction) => {
+        return this.onUpdatedMarketManager(id, managerAddr, event, txn);
+      },
+    );
 
-    this.on('UpdatedDisputeCost', async (id: string, newCost: BigNumber, event: Event) => {
-      return;
-    });
+    this.on(
+      'UpdatedDisputeCost',
+      async (id: string, newCost: BigNumber, event: Event, txn?: Transaction) => {
+        return this.onUpdatedDisputeCost(id, newCost, event, txn);
+      },
+    );
   }
 
   /**
@@ -217,7 +216,6 @@ export class MarketCoreHandler extends Handler {
         txn,
       );
     }
-    return Promise.resolve();
   }
 
   /**
@@ -227,8 +225,7 @@ export class MarketCoreHandler extends Handler {
    * @param txn The db transaction object
    */
   async onZeroPriceEnabled(id: string, event: Event, txn?: Transaction) {
-    await Market.updateByAddress(id, { allowZeroPrice: true }, txn);
-    return Promise.resolve();
+    await Market.updateByNetworkAddress(this.network, id, { allowZeroPrice: true }, txn);
   }
 
   /**
@@ -246,8 +243,7 @@ export class MarketCoreHandler extends Handler {
     event: Event,
     txn?: Transaction,
   ) {
-    await Market.updateByAddress(id, { creator: newOwner }, txn);
-    return Promise.resolve();
+    await Market.updateByNetworkAddress(this.network, id, { creator: newOwner }, txn);
   }
 
   /**
@@ -257,8 +253,7 @@ export class MarketCoreHandler extends Handler {
    * @param txn The db transaction object
    */
   async onOfferOnlyEnabled(id: string, event: Event, txn?: Transaction) {
-    await Market.updateByAddress(id, { offerOnly: true }, txn);
-    return Promise.resolve();
+    await Market.updateByNetworkAddress(this.network, id, { offerOnly: true }, txn);
   }
 
   /**
@@ -528,7 +523,60 @@ export class MarketCoreHandler extends Handler {
    * @param txn The db transaction object
    */
   async onUpdatedCommission(id: string, value: BigNumber, event: Event, txn?: Transaction) {
-    await Market.updateByAddress(id, { commission: value.toNumber() }, txn);
-    return Promise.resolve();
+    await Market.updateByNetworkAddress(this.network, id, { commission: value.toNumber() }, txn);
+  }
+
+  /**
+   * Updated dispute durations
+   * @param id The market ID
+   * @param disputeDelayTime Number of seconds before dispute can be started
+   * @param evidenceDur Number of seconds within which evidence must be shared
+   * @param predictDur Number of seconds for votes to be committed and revealed
+   * @param appealDur Number of seconds within which an appeal must be created after prediction phase
+   * @param event The event object
+   * @param txn The db transaction object
+   */
+  async onUpdatedDisputeDurations(
+    id: string,
+    disputeDelayTime: BigNumber,
+    evidenceDur: BigNumber,
+    predictDur: BigNumber,
+    appealDur: BigNumber,
+    event: Event,
+    txn?: Transaction,
+  ) {
+    await Market.updateByNetworkAddress(
+      this.network,
+      id,
+      {
+        disputeDelayTime: disputeDelayTime.toNumber(),
+        evidenceDur: evidenceDur.toNumber(),
+        predictDur: predictDur.toNumber(),
+        appealDur: appealDur.toNumber(),
+      },
+      txn,
+    );
+  }
+
+  /**
+   * Updated market manager
+   * @param id The market ID
+   * @param managerAddr The new manager address
+   * @param event The event object
+   * @param txn The db transaction object
+   */
+  async onUpdatedMarketManager(id: string, managerAddr: string, event: Event, txn?: Transaction) {
+    await Market.updateByNetworkAddress(this.network, id, { manager: managerAddr }, txn);
+  }
+
+  /**
+   * Updated dispute cost
+   * @param id The market ID
+   * @param newCost The new dispute cost
+   * @param event The event object
+   * @param txn The db transaction object
+   */
+  async onUpdatedDisputeCost(id: string, newCost: BigNumber, event: Event, txn?: Transaction) {
+    await Market.updateByNetworkAddress(this.network, id, { disputeCost: newCost.toString() }, txn);
   }
 }

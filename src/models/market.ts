@@ -3,6 +3,7 @@ import Objection, { Model, QueryBuilderType, raw, Transaction } from 'objection'
 import { BaseModel } from './base';
 import InvitedMediator from './invited_mediators';
 import * as _ from 'lodash';
+import { BigNumber } from 'ethers';
 
 export enum AssetType {
   SYNTH,
@@ -73,6 +74,18 @@ export default class Market extends BaseModel {
   permMediate: boolean = undefined;
   // The minimum mediator bond
   mediatorBond: string = undefined;
+  // Number of seconds before dispute can be started
+  disputeDelayTime: number;
+  // Number of seconds within which evidence must be shared
+  evidenceDur: number;
+  // Number of seconds for votes to be committed and revealed
+  predictDur: number;
+  // Number of seconds within which an appeal must be created after prediction phase
+  appealDur: number;
+  // The market manager
+  manager: string;
+  // The cost of starting a dispute (in P2P)
+  disputeCost: string;
 
   // *** Non-persisted fields **//
   numDisputes: number; // (include appeals)
@@ -249,7 +262,7 @@ export default class Market extends BaseModel {
 
   /**
    * find a record
-   * @param q the query parameter
+   * @param q The query parameter
    * @param txn Optional transaction object
    */
   static find(q: Partial<Market>, txn?: Transaction): Promise<Market> {
@@ -352,7 +365,7 @@ export default class Market extends BaseModel {
 
   /**
    * count returns the count of record matching q
-   * @param q the query parameter
+   * @param q The query parameter
    * @param txn Optional transaction object
    */
   static count(q: Partial<Market>, txn?: Transaction) {
@@ -371,8 +384,8 @@ export default class Market extends BaseModel {
 
   /**
    * updateById updates a record by ID
-   * @param id the record id
-   * @param udp the fields to be updated
+   * @param id The record id
+   * @param udp The fields to be updated
    * @param txn Optional transaction object
    */
   static updateById(id: string, udp: Partial<Market>, txn?: Transaction): Promise<Market> {
@@ -388,17 +401,20 @@ export default class Market extends BaseModel {
 
   /**
    * updateByMarketAddress updates a record by market address
-   * @param address the market address
-   * @param udp the fields to be updated
+   * @param network The target network
+   * @param address The market address
+   * @param udp The fields to be updated
    * @param txn Optional transaction object
    */
-  static updateByAddress(
+  static updateByNetworkAddress(
+    network: string,
     address: string,
     udp: Partial<Market>,
     txn?: Transaction,
   ): Promise<number> {
     return new Promise((resolve, reject) => {
       this.query(txn)
+        .where({ network })
         .where('address', 'ilike', address)
         .whereNotDeleted()
         .patch(udp)

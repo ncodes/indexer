@@ -203,7 +203,6 @@ export class MediatorManagerHandler extends Handler {
       },
       txn,
     );
-    return Promise.resolve();
   }
 
   /**
@@ -224,7 +223,6 @@ export class MediatorManagerHandler extends Handler {
     const block = await event.getBlock();
     const cancelAt = block.timestamp + parseInt(this.getParam('ticketCancelDur'));
     await Ticket.updateById(ticket.id, { cancelAt: moment.unix(cancelAt).toISOString() }, txn);
-    return Promise.resolve();
   }
 
   /**
@@ -254,7 +252,6 @@ export class MediatorManagerHandler extends Handler {
       { bond: '0', drained: true, drainedAt: moment().toISOString() },
       txn,
     );
-    return Promise.resolve();
   }
 
   /**
@@ -301,8 +298,6 @@ export class MediatorManagerHandler extends Handler {
       owner,
       numTickets,
     });
-
-    return Promise.resolve();
   }
 
   /**
@@ -354,8 +349,6 @@ export class MediatorManagerHandler extends Handler {
       owner,
       numTickets,
     });
-
-    return Promise.resolve();
   }
 
   /**
@@ -511,8 +504,6 @@ export class MediatorManagerHandler extends Handler {
         );
       }
     }
-
-    return Promise.resolve();
   }
 
   /**
@@ -563,8 +554,6 @@ export class MediatorManagerHandler extends Handler {
       },
       txn,
     );
-
-    return Promise.resolve();
   }
 
   /**
@@ -638,8 +627,6 @@ export class MediatorManagerHandler extends Handler {
       asset: 'P2P',
       reason: !voted ? 'DID NOT VOTE' : 'VOTED WITH MINORITY',
     });
-
-    return Promise.resolve();
   }
 
   /**
@@ -678,7 +665,6 @@ export class MediatorManagerHandler extends Handler {
       },
       txn,
     );
-    return Promise.resolve();
   }
 
   /**
@@ -697,6 +683,5 @@ export class MediatorManagerHandler extends Handler {
     txn?: Transaction,
   ) {
     await Ticket.removeDelegate(this.network, owner, ticketId.toNumber(), delegate, txn);
-    return Promise.resolve();
   }
 }

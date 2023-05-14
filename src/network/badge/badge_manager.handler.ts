@@ -194,7 +194,6 @@ export class BadgeManagerHandler extends Handler {
       },
       txn,
     );
-    return Promise.resolve();
   }
 
   /**
@@ -213,7 +212,6 @@ export class BadgeManagerHandler extends Handler {
     txn?: Transaction,
   ) {
     await BadgeGrant.deleteByNetAndBadgeAndPath(this.network, badge, path || null, txn);
-    return Promise.resolve();
   }
 
   /**
@@ -245,7 +243,6 @@ export class BadgeManagerHandler extends Handler {
       },
       txn,
     );
-    return Promise.resolve();
   }
 
   /**
@@ -271,7 +268,6 @@ export class BadgeManagerHandler extends Handler {
       { issuer: newIssuer },
       txn,
     );
-    return Promise.resolve();
   }
 
   /**
@@ -306,7 +302,6 @@ export class BadgeManagerHandler extends Handler {
       },
       txn,
     );
-    return Promise.resolve();
   }
 
   /**
@@ -332,7 +327,6 @@ export class BadgeManagerHandler extends Handler {
       { coIssuer },
       txn,
     );
-    return Promise.resolve();
   }
 
   /**
@@ -358,7 +352,6 @@ export class BadgeManagerHandler extends Handler {
       { coIssuer: null },
       txn,
     );
-    return Promise.resolve();
   }
 
   /**
@@ -388,7 +381,6 @@ export class BadgeManagerHandler extends Handler {
     });
     existing.metadata[key] = value;
     await Badge.updateById(existing.id, { metadata: existing.metadata }, txn);
-    return Promise.resolve();
   }
 
   /**
@@ -451,6 +443,5 @@ export class BadgeManagerHandler extends Handler {
       { issuer: newOwner },
       txn,
     );
-    return Promise.resolve();
   }
 }

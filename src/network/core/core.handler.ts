@@ -301,8 +301,6 @@ export class CoreHandler extends Handler {
       amount: commify(formatUnits(swap.amount, baseDecimal)),
       cost: commify(formatUnits(info.cost, quoteDecimal)),
     });
-
-    return Promise.resolve();
   }
 
   /**
@@ -460,7 +458,6 @@ export class CoreHandler extends Handler {
         cost: commify(formatUnits(cost, quoteDecimal)),
       });
     }
-    return Promise.resolve();
   }
 
   /**
@@ -509,8 +506,6 @@ export class CoreHandler extends Handler {
       amount: commify(formatUnits(swap.amount, baseDecimal)),
       cost: commify(formatUnits(swap.cost, quoteDecimal)),
     });
-
-    return Promise.resolve();
   }
 
   /**
@@ -544,8 +539,6 @@ export class CoreHandler extends Handler {
       amount: commify(formatUnits(swap.amount, baseDecimal)),
       cost: commify(formatUnits(swap.cost, quoteDecimal)),
     });
-
-    return Promise.resolve();
   }
 
   /**
@@ -580,7 +573,6 @@ export class CoreHandler extends Handler {
       },
       txn,
     );
-    return Promise.resolve();
   }
 
   /**
@@ -634,7 +626,6 @@ export class CoreHandler extends Handler {
       instantNFTSwapFeeBp.toString(),
       txn,
     );
-    return Promise.resolve();
   }
 
   /**
@@ -723,8 +714,6 @@ export class CoreHandler extends Handler {
       },
       txn,
     );
-
-    return Promise.resolve();
   }
 
   /**
@@ -771,8 +760,6 @@ export class CoreHandler extends Handler {
       },
       txn,
     );
-
-    return Promise.resolve();
   }
 
   /**

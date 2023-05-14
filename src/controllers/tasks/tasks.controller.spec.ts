@@ -10,17 +10,20 @@ import { SupportedNetworks } from '../../network/common';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 import * as moment from 'moment';
 import Meta from '../../models/meta';
+import AssetRegistry from '../../models/asset_registry';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
   return { get: mockCfgGet };
 });
 
-describe('LiquidityController', () => {
+describe('TaskController', () => {
   let app: INestApplication;
   const db = DBService.getForTest();
   let cfgObj = {};
   const net = SupportedNetworks.Ethereum;
+  const token = '0xToken';
+  const token2 = '0xToken2';
 
   afterEach(async () => {
     await db.truncateTables();
@@ -118,10 +121,8 @@ describe('LiquidityController', () => {
 
     describe('when there are no tasks for FeeTransfer type', () => {
       it('should return 200 and shareable assets', async () => {
-        await Meta.update(
-          Meta.makeSharableAssetsKey(net),
-          JSON.stringify({ '0xToken': 1, '0xToken2': 1 }),
-        );
+        await AssetRegistry.create({ network: net, address: token, sharable: true });
+        await AssetRegistry.create({ network: net, address: token2, sharable: true });
         await request(app.getHttpServer())
           .get(`/v1/tasks`)
           .query({ net, type: MineTaskType.FeeTransfer })
@@ -129,9 +130,9 @@ describe('LiquidityController', () => {
           .expect((res) => {
             expect(res.body.data).toHaveLength(2);
             expect(res.body.data[0].network).toEqual(net);
-            expect(res.body.data[0].transferredToken).toEqual('0xToken');
+            expect(res.body.data[0].transferredToken).toEqual(token);
             expect(res.body.data[1].network).toEqual(net);
-            expect(res.body.data[1].transferredToken).toEqual('0xToken2');
+            expect(res.body.data[1].transferredToken).toEqual(token2);
           });
       });
     });

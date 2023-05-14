@@ -35,6 +35,10 @@ export default class Market extends BaseModel {
   quoteType: AssetType = undefined;
   // Indicates whether this is an instant market
   instant: boolean = undefined;
+  // Indicates that liquidities can have zero price
+  allowZeroPrice: boolean;
+  // Indicates that all liquidity can be accessed only via offer
+  offerOnly: boolean;
   // The base/asset pair name
   pair: string = undefined;
   // The market's commission
@@ -347,17 +351,6 @@ export default class Market extends BaseModel {
   }
 
   /**
-   * findAll finds all records
-   * @param q the query parameter
-   * @param txn The transaction object
-   */
-  static findAll(q: Partial<Market>, txn?: Transaction): Promise<Market[]> {
-    return new Promise((resolve, reject) => {
-      this.query(txn).where(q).whereNotDeleted().then(resolve).catch(reject);
-    });
-  }
-
-  /**
    * count returns the count of record matching q
    * @param q the query parameter
    * @param txn Optional transaction object
@@ -388,6 +381,27 @@ export default class Market extends BaseModel {
         .whereNotDeleted()
         .patchAndFetchById(id, udp)
         .execute()
+        .then(resolve)
+        .catch(reject);
+    });
+  }
+
+  /**
+   * updateByMarketAddress updates a record by market address
+   * @param address the market address
+   * @param udp the fields to be updated
+   * @param txn Optional transaction object
+   */
+  static updateByAddress(
+    address: string,
+    udp: Partial<Market>,
+    txn?: Transaction,
+  ): Promise<number> {
+    return new Promise((resolve, reject) => {
+      this.query(txn)
+        .where('address', 'ilike', address)
+        .whereNotDeleted()
+        .patch(udp)
         .then(resolve)
         .catch(reject);
     });

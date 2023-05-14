@@ -9,6 +9,7 @@ import InvitedMediator from '../../models/invited_mediators';
 import PermittedTrader from '../../models/permitted_trader';
 import { NotifierService, NotifyType } from '../../jobs/mailer/NotifierService';
 import NetworkService from '../network.service';
+import MarketBadge, { BadgeScope } from '../../models/market_badge';
 
 export class MarketCoreHandler extends Handler {
   public logger = new Logger(MarketCoreHandler.name);
@@ -33,8 +34,8 @@ export class MarketCoreHandler extends Handler {
         owner: string,
         base: string,
         quote: string,
-        baseType: BigNumber,
-        quoteType: BigNumber,
+        baseType: number,
+        quoteType: number,
         commission: BigNumber,
         numMediators: BigNumber,
         event: Event,
@@ -91,10 +92,6 @@ export class MarketCoreHandler extends Handler {
       return this.onUpdatedCommission(id, value, event);
     });
 
-    this.on('UpdatedMinMediatorBond', async (id: string, value: BigNumber, event: Event) => {
-      return this.onUpdatedMinMediatorBond(id, value, event);
-    });
-
     this.on('OfferOnlyEnabled', async (id: string, event: Event) => {
       return this.onOfferOnlyEnabled(id, event);
     });
@@ -118,8 +115,9 @@ export class MarketCoreHandler extends Handler {
         swap: [string, string][],
         mediate: [string, string][],
         event: Event,
+        txn: Transaction,
       ) => {
-        return this.onUpdatedMarketBadges(id, put, swap, mediate, event);
+        return this.onUpdatedMarketBadges(id, put, swap, mediate, event, txn);
       },
     );
 
@@ -153,10 +151,6 @@ export class MarketCoreHandler extends Handler {
       },
     );
 
-    this.on('SetPutPerm', async (id: string, enabled: boolean, event: Event) => {
-      return this.onSetPutPerm(id, enabled, event);
-    });
-
     this.on('UpdatedMarketManager', async (id: string, mgrAdr: string, event: Event) => {
       return;
     });
@@ -166,26 +160,105 @@ export class MarketCoreHandler extends Handler {
     });
   }
 
+  /**
+   * Updated a market's badges
+   * @param id The market ID
+   * @param put The PUT badges
+   * @param swap The SWAP badges
+   * @param mediate The MEDIATE badges
+   * @param event The event object
+   * @param txn The db transaction object
+   */
   async onUpdatedMarketBadges(
     id: string,
     put: [string, string][],
     swap: [string, string][],
     mediate: [string, string][],
     event: Event,
+    txn?: Transaction,
   ) {
-    return;
+    await MarketBadge.deleteByMarketAddress(this.network, id, txn);
+    for (const badge of put) {
+      if (badge[0] == '' && badge[1] == '') continue;
+      await MarketBadge.create(
+        {
+          network: this.network,
+          marketAddress: id,
+          badge: badge[0],
+          path: badge[1],
+          scope: BadgeScope.PUT,
+        },
+        txn,
+      );
+    }
+    for (const badge of swap) {
+      if (badge[0] == '' && badge[1] == '') continue;
+      await MarketBadge.create(
+        {
+          network: this.network,
+          marketAddress: id,
+          badge: badge[0],
+          path: badge[1],
+          scope: BadgeScope.SWAP,
+        },
+        txn,
+      );
+    }
+    for (const badge of mediate) {
+      if (badge[0] == '' && badge[1] == '') continue;
+      await MarketBadge.create(
+        {
+          network: this.network,
+          marketAddress: id,
+          badge: badge[0],
+          path: badge[1],
+          scope: BadgeScope.MEDIATE,
+        },
+        txn,
+      );
+    }
+    return Promise.resolve();
   }
 
-  async onZeroPriceEnabled(id: string, event: Event) {
-    return;
+  /**
+   * Enabled zero-priced liquidity for a market
+   * @param id The market ID
+   * @param event The event object
+   * @param txn The db transaction object
+   */
+  async onZeroPriceEnabled(id: string, event: Event, txn?: Transaction) {
+    await Market.updateByAddress(id, { allowZeroPrice: true }, txn);
+    return Promise.resolve();
   }
 
-  async onTransferredOwnership(id: string, oldOwner: string, newOwner: string, event: Event) {
-    return;
+  /**
+   * Transferred ownership to another address
+   * @param id The market ID
+   * @param oldOwner The old owner address
+   * @param newOwner The new owner address
+   * @param event The event object
+   * @param txn The db transaction object
+   */
+  async onTransferredOwnership(
+    id: string,
+    oldOwner: string,
+    newOwner: string,
+    event: Event,
+    txn?: Transaction,
+  ) {
+    await Market.updateByAddress(id, { creator: newOwner }, txn);
+    return Promise.resolve();
   }
 
-  async onOfferOnlyEnabled(id: string, event: Event) {
-    return;
+  /**
+   * Offer was enabled
+   * @param id The market ID
+   * @param event The event object
+   * @param txn The db transaction object
+   */
+  async onOfferOnlyEnabled(id: string, event: Event, txn?: Transaction) {
+    await Market.updateByAddress(id, { offerOnly: true }, txn);
+    return Promise.resolve();
   }
 
   /**
@@ -206,8 +279,8 @@ export class MarketCoreHandler extends Handler {
     owner: string,
     baseAsset: string,
     quoteAsset: string,
-    baseType: BigNumber,
-    quoteType: BigNumber,
+    baseType: number,
+    quoteType: number,
     commission: BigNumber,
     numMediators: BigNumber,
     event: Event,
@@ -226,11 +299,11 @@ export class MarketCoreHandler extends Handler {
         creator: owner,
         base,
         baseAddress: baseAsset,
-        baseType: baseType.toNumber(),
+        baseType: baseType,
         quote,
         quoteAddress: quoteAsset,
-        quoteType: quoteType.toNumber(),
-        instant: Market.isInstant(baseType.toNumber(), quoteType.toNumber()),
+        quoteType: quoteType,
+        instant: Market.isInstant(baseType, quoteType),
         pair: `${base}${quote}`,
         network: this.network,
         commission: commission.toNumber(),
@@ -245,16 +318,6 @@ export class MarketCoreHandler extends Handler {
     );
 
     return Promise.resolve(undefined);
-  }
-
-  /**
-   * Enabled or disabled permissioned liquidity provisioning
-   * @param id The market ID
-   * @param enabled The new state
-   * @param event
-   */
-  async onSetPutPerm(id: string, enabled: boolean, event: Event) {
-    // no implementation yet
   }
 
   /**
@@ -324,6 +387,7 @@ export class MarketCoreHandler extends Handler {
       address,
       txn,
     );
+
     if (!invite) {
       await InvitedMediator.create(
         {
@@ -334,9 +398,12 @@ export class MarketCoreHandler extends Handler {
         txn,
       );
     }
+
     await this.notifSrv.notify(NotifyType.MediationInviteReceived, this.network, address, {
       marketAddress,
     });
+
+    return Promise.resolve(undefined);
   }
 
   /**
@@ -354,6 +421,7 @@ export class MarketCoreHandler extends Handler {
       txn,
     );
     if (!invite.accepted) await InvitedMediator.remove(this.network, id, address, txn);
+    return Promise.resolve(undefined);
   }
 
   /**
@@ -383,6 +451,8 @@ export class MarketCoreHandler extends Handler {
       marketAddress,
       invitee: address,
     });
+
+    return Promise.resolve(undefined);
   }
 
   /**
@@ -399,6 +469,8 @@ export class MarketCoreHandler extends Handler {
     await this.notifSrv.notify(NotifyType.MediatorRevoked, this.network, address, {
       marketAddress,
     });
+
+    return Promise.resolve(undefined);
   }
 
   /**
@@ -452,19 +524,11 @@ export class MarketCoreHandler extends Handler {
    * A market's commission has been set
    * @param id The market ID
    * @param value The updated value
-   * @param event
+   * @param event The event object
+   * @param txn The db transaction object
    */
-  async onUpdatedCommission(id: string, value: BigNumber, event: Event) {
-    //
-  }
-
-  /**
-   * The minimum market mediator bond was updated
-   * @param id The market ID
-   * @param value The updated value
-   * @param event
-   */
-  async onUpdatedMinMediatorBond(id: string, value: BigNumber, event: Event) {
-    //
+  async onUpdatedCommission(id: string, value: BigNumber, event: Event, txn?: Transaction) {
+    await Market.updateByAddress(id, { commission: value.toNumber() }, txn);
+    return Promise.resolve();
   }
 }

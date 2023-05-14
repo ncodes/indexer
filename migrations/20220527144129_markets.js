@@ -12,6 +12,8 @@ exports.up = function (knex) {
       table.string('quoteAddress');
       table.integer('quoteType').defaultTo(0);
       table.boolean('instant').defaultTo(false);
+      table.boolean('allowZeroPrice').defaultTo(false);
+      table.boolean('offerOnly').defaultTo(false);
       table.string('pair');
       table.string('network');
       table.integer('numMediators').defaultTo(0);

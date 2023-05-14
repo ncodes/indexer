@@ -1644,6 +1644,7 @@ declare global {
     tokenPool?: Contract;
     lpPool?: Contract;
     feePool?: Contract;
+    assetRegistry?: Contract;
   }
 
   interface ContractMarket {

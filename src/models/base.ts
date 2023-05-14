@@ -21,6 +21,8 @@ export class BaseModel extends softDelete(Model) {
   deletedAt: string = undefined;
   // The object name of the record
   object: string;
+  // Used to access the count in a count query
+  count: string;
 
   $beforeInsert() {
     if (!this.createdAt) this.createdAt = moment().utc().toISOString();

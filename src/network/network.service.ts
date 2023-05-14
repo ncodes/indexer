@@ -5,6 +5,7 @@ import * as coreABI from '../../abi/core.json';
 import * as disputeManagerABI from '../../abi/disputemanager.json';
 import * as feePoolABI from '../../abi/feepool.json';
 import * as badgeMgrABI from '../../abi/badgemanager.json';
+import * as assetRegABI from '../../abi/assetregistry.json';
 import * as lpPoolABI from '../../abi/lppool.json';
 import * as marketCoreABI from '../../abi/marketcore.json';
 import * as erc20ABI from '../../abi/erc20.json';
@@ -30,6 +31,8 @@ import { Provider } from '@ethersproject/abstract-provider';
 import { ContractInterface } from '@ethersproject/contracts/src.ts';
 import { Watcher } from './watcher';
 import { BadgeManagerHandler } from './badge/badge_manager.handler';
+import { AssetRegistryHandler } from './assetregistry/asset_registry.handler';
+import AssetRegistry from '../models/asset_registry';
 
 @Injectable()
 export default class NetworkService {
@@ -146,6 +149,11 @@ export default class NetworkService {
       badgeMgrABI,
       prov,
     );
+    this.contracts[network].assetRegistry = new Contract(
+      this.cfgSrv.get(`app.networks.${network}.assetRegAddr`),
+      assetRegABI,
+      prov,
+    );
 
     // Add handlers to watcher
     const watcher = new Watcher(network, prov);
@@ -158,6 +166,7 @@ export default class NetworkService {
       new TokenPoolHandler(prov, network, this.contracts[network]),
       new LPPoolHandler(prov, network, this.contracts[network]),
       new FeePoolHandler(prov, network, this.contracts[network]),
+      new AssetRegistryHandler(prov, network, this.contracts[network]),
     );
   }
 
@@ -221,8 +230,8 @@ export default class NetworkService {
     // Determine what protocol fee base point
     let feeName: FeeName = FeeName.SynthSwapFeeBp;
     if (swap.instant) {
-      const baseStable = await Meta.isStableAsset(swap.network, market.baseAddress, txn);
-      const quoteStable = await Meta.isStableAsset(swap.network, market.quoteAddress, txn);
+      const baseStable = await AssetRegistry.isStable(swap.network, market.baseAddress, txn);
+      const quoteStable = await AssetRegistry.isStable(swap.network, market.quoteAddress, txn);
       feeName = baseStable && quoteStable ? FeeName.StableSwapFeeBp : FeeName.InstantSwapFeeBp;
     }
 

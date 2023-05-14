@@ -243,39 +243,6 @@ describe('CoreHandler', () => {
     });
   });
 
-  describe('.onUpdatedShareableAsset', () => {
-    it('should update correctly', async () => {
-      await handler.onUpdatedShareableAsset(['0xAsset', '0xAsset2'], false, {} as any);
-      let shareable = await Meta.get(Meta.makeSharableAssetsKey(net));
-      expect(shareable).toBeDefined();
-      expect(JSON.parse(shareable.value)).toHaveProperty('0xAsset');
-      expect(JSON.parse(shareable.value)).toHaveProperty('0xAsset2');
-
-      await handler.onUpdatedShareableAsset(['0xAsset'], true, {} as any);
-      shareable = await Meta.get(Meta.makeSharableAssetsKey(net));
-      expect(JSON.parse(shareable.value)).not.toHaveProperty('0xAsset');
-      expect(JSON.parse(shareable.value)).toHaveProperty('0xAsset2');
-    });
-  });
-
-  describe('.onRegStableAsset', () => {
-    it('should update correctly', async () => {
-      await handler.onRegStableAsset('0xAsset', {} as any);
-      const meta = await Meta.get(Meta.makeStableAssetsKey(net));
-      expect(meta).toBeDefined();
-      expect(JSON.parse(meta.value)).toHaveProperty('0xAsset');
-    });
-  });
-
-  describe('.onVerifiedAsset', () => {
-    it('should update correctly', async () => {
-      await handler.onVerifiedAsset('0xAsset', {} as any);
-      const meta = await Meta.get(Meta.makeVerifiedAssetsKey(net));
-      expect(meta).toBeDefined();
-      expect(JSON.parse(meta.value)).toHaveProperty('0xAsset');
-    });
-  });
-
   describe('.onSwapOrder', () => {
     it('should create swap correctly and send notification to liquidity provider', async () => {
       const market = await Market.create({

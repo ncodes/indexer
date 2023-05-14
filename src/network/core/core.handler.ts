@@ -152,21 +152,6 @@ export class CoreHandler extends Handler {
     );
 
     this.on(
-      'UpdatedShareableAsset',
-      async (assets: string[], deleted: boolean, event: Event, txn?: Transaction) => {
-        return this.onUpdatedShareableAsset(assets, deleted, event, txn);
-      },
-    );
-
-    this.on('RegStableAsset', async (address: string, event: Event, txn?: Transaction) => {
-      return this.onRegStableAsset(address, event, txn);
-    });
-
-    this.on('VerifiedAsset', async (address: string, event: Event, txn?: Transaction) => {
-      return this.onVerifiedAsset(address, event, txn);
-    });
-
-    this.on(
       'UpdatedLiquidity',
       async (
         sender: string,
@@ -650,63 +635,6 @@ export class CoreHandler extends Handler {
       txn,
     );
     return Promise.resolve();
-  }
-
-  /**
-   * The shareable asset index was updated
-   * @param assets The list of asset addresses
-   * @param deleted Indicates whether the assets where added or deleted
-   * @param event The event object
-   * @param txn The transaction object
-   */
-  async onUpdatedShareableAsset(
-    assets: string[],
-    deleted: boolean,
-    event: Event,
-    txn?: Transaction,
-  ) {
-    const key = Meta.makeSharableAssetsKey(this.network);
-    const existing = await Meta.get(key, txn);
-    let shareable: any = {};
-    if (existing) shareable = JSON.parse(existing.value);
-    assets.forEach((asset) => {
-      if (deleted) {
-        delete shareable[asset];
-      } else {
-        shareable[asset] = 1;
-      }
-    });
-    return await Meta.update(key, JSON.stringify(shareable), txn);
-  }
-
-  /**
-   * A new asset was marked as a stable asset
-   * @param address The asset address
-   * @param event The event object
-   * @param txn The transaction object
-   */
-  async onRegStableAsset(address: string, event: Event, txn?: Transaction) {
-    const key = Meta.makeStableAssetsKey(this.network);
-    const existing = await Meta.get(key, txn);
-    let stable: any = {};
-    if (existing) stable = JSON.parse(existing.value);
-    stable[address] = 1;
-    return await Meta.update(key, JSON.stringify(stable), txn);
-  }
-
-  /**
-   * A new asset was verified for reward sharing
-   * @param address The asset address
-   * @param event The event object
-   * @param txn The transaction object
-   */
-  async onVerifiedAsset(address: string, event: Event, txn?: Transaction) {
-    const key = Meta.makeVerifiedAssetsKey(this.network);
-    const existing = await Meta.get(key, txn);
-    let verified: any = {};
-    if (existing) verified = JSON.parse(existing.value);
-    verified[address] = 1;
-    return await Meta.update(key, JSON.stringify(verified), txn);
   }
 
   /**

@@ -7,6 +7,7 @@ import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { ConfigService } from '@nestjs/config';
 import Meta, { FeeName } from '../../models/meta';
 import { isValidNetwork } from '../../network/common';
+import AssetRegistry from '../../models/asset_registry';
 
 @Controller('v1/misc')
 export class MiscController {
@@ -93,7 +94,7 @@ export class MiscController {
    */
   @Get('/:network/shareable-tokens')
   async getShareableTokens(@Param('network') network: string) {
-    const addresses = await Meta.getShareableAssets(network);
+    const addresses = await AssetRegistry.getSharedAssets(network);
     return ok()
       .data(addresses.map((addr) => addr.toLowerCase()))
       .build();
@@ -105,7 +106,7 @@ export class MiscController {
    */
   @Get('/:network/stable-tokens')
   async getStableTokens(@Param('network') network: string) {
-    const addresses = await Meta.getStableAssets(network);
+    const addresses = await AssetRegistry.getStableAssets(network);
     return ok()
       .data(addresses.map((addr) => addr.toLowerCase()))
       .build();

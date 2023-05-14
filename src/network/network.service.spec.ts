@@ -6,7 +6,8 @@ import NetworkService from './network.service';
 import Swap from '../models/swap';
 import Market, { AssetType } from '../models/market';
 import { BigNumber } from 'ethers';
-import Meta from '../models/meta';
+import Meta, { FeeName } from '../models/meta';
+import AssetRegistry from '../models/asset_registry';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -24,6 +25,9 @@ const MockERC20Contract = jest.fn().mockImplementation(() => {
 });
 
 describe('NetworkService', () => {
+  const marketAddress = '0xMarket';
+  const baseAsset = '0xBase';
+  const quoteAsset = '0xQuote';
   let module: TestingModule;
   const net = 'ethereum';
   let service: NetworkService;
@@ -68,7 +72,7 @@ describe('NetworkService', () => {
 
   describe('.getSwapFeeInfo', () => {
     it('should return error when market was not found', async () => {
-      const swap = new Swap({ network: net, marketAddress: '0xMarket' });
+      const swap = new Swap({ network: net, marketAddress: marketAddress });
       await expect(service.getSwapFeeInfo(null, swap)).rejects.toEqual(
         new Error('market not found'),
       );
@@ -76,10 +80,10 @@ describe('NetworkService', () => {
 
     describe('swap.instant=true', () => {
       describe('base and quote assets are not stable', () => {
-        it('should return use `instantSwapFee` to calculate protocol fee', async () => {
+        it('should use `instantSwapFee` to calculate protocol fee', async () => {
           const swap = new Swap({
             network: net,
-            marketAddress: '0xMarket',
+            marketAddress,
             price: '1000000000000000000',
             amount: '10000000000000000000',
             instant: true,
@@ -89,9 +93,9 @@ describe('NetworkService', () => {
             address: swap.marketAddress,
             commission: 1,
             network: net,
-            baseAddress: '0xBase',
+            baseAddress: baseAsset,
             baseType: AssetType.ERC20,
-            quoteAddress: '0xQuote',
+            quoteAddress: quoteAsset,
             quoteType: AssetType.ERC20,
           });
 
@@ -100,7 +104,7 @@ describe('NetworkService', () => {
           };
           mockDecimals.mockResolvedValue(BigNumber.from(18));
 
-          await Meta.create(Meta.makeProtocolFeeKey(net, 'instantSwapFee'), '12');
+          await Meta.create(Meta.makeProtocolFeeKey(net, FeeName.InstantSwapFeeBp), '12');
           const res = service.getSwapFeeInfo(null, swap);
           await expect(res).resolves.toBeDefined();
 
@@ -116,10 +120,10 @@ describe('NetworkService', () => {
       });
 
       describe('base and quote assets are stable', () => {
-        it('should return use `stableSwapFee` to calculate protocol fee', async () => {
+        it('should use `stableSwapFee` to calculate protocol fee', async () => {
           const swap = new Swap({
             network: net,
-            marketAddress: '0xMarket',
+            marketAddress: marketAddress,
             price: '1000000000000000000',
             amount: '10000000000000000000',
             instant: true,
@@ -129,9 +133,9 @@ describe('NetworkService', () => {
             address: swap.marketAddress,
             network: net,
             commission: 1,
-            baseAddress: '0xBase',
+            baseAddress: baseAsset,
             baseType: AssetType.ERC20,
-            quoteAddress: '0xQuote',
+            quoteAddress: quoteAsset,
             quoteType: AssetType.ERC20,
           });
 
@@ -140,12 +144,10 @@ describe('NetworkService', () => {
           };
           mockDecimals.mockResolvedValue(BigNumber.from(18));
 
-          await Meta.create(
-            Meta.makeStableAssetsKey(net),
-            JSON.stringify({ '0xBase': 1, '0xQuote': 1 }),
-          );
+          await AssetRegistry.create({ network: net, address: baseAsset, stable: true });
+          await AssetRegistry.create({ network: net, address: quoteAsset, stable: true });
+          await Meta.create(Meta.makeProtocolFeeKey(net, FeeName.StableSwapFeeBp), '12');
 
-          await Meta.create(Meta.makeProtocolFeeKey(net, 'stableSwapFee'), '12');
           const res = service.getSwapFeeInfo(null, swap);
           await expect(res).resolves.toBeDefined();
 
@@ -163,10 +165,10 @@ describe('NetworkService', () => {
 
     describe('swap.instant=false', () => {
       describe('base and quote assets are stable', () => {
-        it('should return use `syntheticSwapFee` to calculate protocol fee', async () => {
+        it('should use `syntheticSwapFee` to calculate protocol fee', async () => {
           const swap = new Swap({
             network: net,
-            marketAddress: '0xMarket',
+            marketAddress: marketAddress,
             price: '1000000000000000000',
             amount: '10000000000000000000',
             instant: false,
@@ -177,9 +179,9 @@ describe('NetworkService', () => {
             network: net,
             commission: 1,
             baseType: AssetType.ERC20,
-            baseAddress: '0xBase',
+            baseAddress: baseAsset,
             quoteType: AssetType.ERC20,
-            quoteAddress: '0xQuote',
+            quoteAddress: quoteAsset,
           });
 
           (service.newContract as any) = () => {
@@ -187,12 +189,10 @@ describe('NetworkService', () => {
           };
           mockDecimals.mockResolvedValue(BigNumber.from(18));
 
-          await Meta.create(
-            Meta.makeStableAssetsKey(net),
-            JSON.stringify({ '0xBase': 1, '0xQuote': 1 }),
-          );
+          await AssetRegistry.create({ network: net, address: baseAsset, stable: true });
+          await AssetRegistry.create({ network: net, address: quoteAsset, stable: true });
+          await Meta.create(Meta.makeProtocolFeeKey(net, FeeName.SynthSwapFeeBp), '12');
 
-          await Meta.create(Meta.makeProtocolFeeKey(net, 'syntheticSwapFee'), '12');
           const res = service.getSwapFeeInfo(null, swap);
           await expect(res).resolves.toBeDefined();
 

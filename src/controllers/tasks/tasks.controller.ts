@@ -4,7 +4,7 @@ import { ListQueryDTO } from './query.dto';
 import { ok } from '../../common/responses/responses';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 import * as moment from 'moment';
-import Meta from '../../models/meta';
+import AssetRegistry from '../../models/asset_registry';
 
 @Controller('v1/tasks')
 export class TasksController {
@@ -27,7 +27,7 @@ export class TasksController {
       // shareable asset. This type of task can be executed immediately
       // for assets newly registered as shareable
       if (q.type === MineTaskType.FeeTransfer && !tasks.length) {
-        const sharables = await Meta.getShareableAssets(q.net);
+        const sharables = await AssetRegistry.getSharedAssets(q.net);
         if (sharables && sharables.length) {
           sharables.forEach((address) => {
             tasks.push(

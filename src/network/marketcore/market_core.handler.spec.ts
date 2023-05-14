@@ -8,6 +8,7 @@ import * as moment from 'moment';
 import PermittedTrader from '../../models/permitted_trader';
 import { NotifyType } from '../../jobs/mailer/NotifierService';
 import { BigNumber } from 'ethers';
+import MarketBadge, { BadgeScope } from '../../models/market_badge';
 
 const MarketCoreContract = jest.fn().mockImplementation(() => {
   return {};
@@ -28,6 +29,9 @@ const MockNetworkService = jest.fn().mockImplementation(() => {
 describe('MarketCoreHandler', () => {
   const db = DBService.getForTest();
   const net = 'net';
+  const marketAddress = '0xMarket';
+  const badge = 'badge';
+  const path = 'path';
   let handler: MarketCoreHandler;
   const marketCoreContract = new MarketCoreContract();
   const contracts = {
@@ -88,8 +92,8 @@ describe('MarketCoreHandler', () => {
           creator,
           baseAsset,
           quoteAsset,
-          BigNumber.from(AssetType.SYNTH),
-          BigNumber.from(AssetType.SYNTH),
+          AssetType.SYNTH,
+          AssetType.SYNTH,
           BigNumber.from(1),
           BigNumber.from(10),
           { transactionHash: '0xTxHash' } as any,
@@ -113,6 +117,88 @@ describe('MarketCoreHandler', () => {
       expect(market.permSwap).toEqual(true);
       expect(market.permMediate).toEqual(true);
       expect(market.mediatorBond).toEqual('1000');
+    });
+  });
+
+  describe('.onUpdatedMarketBadges', function () {
+    it('should correctly update existing market badges', async () => {
+      const put = await MarketBadge.create({
+        network: net,
+        marketAddress,
+        badge,
+        path,
+        scope: BadgeScope.PUT,
+      });
+
+      const swap = await MarketBadge.create({
+        network: net,
+        marketAddress,
+        badge,
+        path: '',
+        scope: BadgeScope.SWAP,
+      });
+
+      await MarketBadge.create({
+        network: net,
+        marketAddress,
+        badge: 'badge2',
+        path: 'path2',
+        scope: BadgeScope.MEDIATE,
+      });
+
+      await expect(
+        handler.onUpdatedMarketBadges(
+          marketAddress,
+          [['badge2', 'path2']],
+          [['badge2', 'path3']],
+          [['', '']],
+          null,
+        ),
+      ).resolves.toBeUndefined();
+
+      const updPut = await MarketBadge.find({ marketAddress, scope: BadgeScope.PUT });
+      expect(updPut.badge).not.toEqual(put.badge);
+      expect(updPut.badge).toEqual('badge2');
+      expect(updPut.path).not.toEqual(put.path);
+      expect(updPut.path).toEqual('path2');
+
+      const updSwap = await MarketBadge.find({ marketAddress, scope: BadgeScope.SWAP });
+      expect(updSwap.badge).not.toEqual(swap.badge);
+      expect(updSwap.badge).toEqual('badge2');
+      expect(updSwap.path).not.toEqual(swap.path);
+      expect(updSwap.path).toEqual('path3');
+
+      const updMediate = await MarketBadge.find({ marketAddress, scope: BadgeScope.MEDIATE });
+      expect(updMediate).toBeUndefined();
+    });
+  });
+
+  describe('.onZeroPriceEnabled', () => {
+    it('should set allowZeroPrice to true', async () => {
+      let market = await Market.create({ address: marketAddress });
+      await expect(handler.onZeroPriceEnabled(market.address, null)).resolves.toBeUndefined();
+      market = await Market.getById(market.id);
+      expect(market.allowZeroPrice).toBeTruthy();
+    });
+  });
+
+  describe('.onTransferredOwnership', () => {
+    it('should update creator', async () => {
+      let market = await Market.create({ address: marketAddress, creator: '0x1' });
+      await expect(
+        handler.onTransferredOwnership(market.address, '0x1', '0x2', null),
+      ).resolves.toBeUndefined();
+      market = await Market.getById(market.id);
+      expect(market.creator).toEqual('0x2');
+    });
+  });
+
+  describe('.onOfferOnlyEnabled', () => {
+    it('should update creator', async () => {
+      let market = await Market.create({ address: marketAddress });
+      await expect(handler.onOfferOnlyEnabled(market.address, null)).resolves.toBeUndefined();
+      market = await Market.getById(market.id);
+      expect(market.offerOnly).toBeTruthy();
     });
   });
 

@@ -5,6 +5,8 @@ exports.up = function (knex) {
       table.string('id').primary();
       table.string('network');
       table.string('marketAddress');
+      table.string('provider');
+      table.integer('lid');
       table.string('badge');
       table.string('path');
       table.string('scope');

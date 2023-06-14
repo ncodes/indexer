@@ -49,13 +49,10 @@ export default class InvitedMediator extends BaseModel {
     return new Promise(async (resolve, reject) => {
       const softDeleted = await this.query(txn).where(data).whereDeleted().first();
       if (softDeleted) {
-        await this.query(txn)
-          .where('id', softDeleted.id)
-          .patch({ accepted: false, deletedAt: null });
+        await this.query(txn).where('id', softDeleted.id).patch({ accepted: false, deletedAt: null });
         delete softDeleted.deletedAt;
         return resolve(softDeleted);
       }
-
       return this.query(txn).insertAndFetch(data).then(resolve).catch(reject);
     });
   }
@@ -109,9 +106,7 @@ export default class InvitedMediator extends BaseModel {
     offset: number,
     txn?: Transaction,
   ) {
-    let q = this.query(txn)
-      .select(raw('*, count(*) over() as "__queryCount"'))
-      .where('network', 'ILIKE', network);
+    let q = this.query(txn).select(raw('*, count(*) over() as "__queryCount"')).where('network', 'ILIKE', network);
     if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
     if (limit) q = q.limit(limit);
     if (offset) q = q.offset(offset);

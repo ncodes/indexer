@@ -1,7 +1,7 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { FeaturedAssets } from '../../common/featured_assets';
 import Swap from '../../models/swap';
-import { ToDec } from '../../common/common';
+import { toDec } from '../../common/common';
 import { ok, throw404 } from '../../common/responses/responses';
 import MarketPrice from '../../models/market_price';
 import Liquidity from '../../models/liquidity';
@@ -25,28 +25,14 @@ export class AssetsController {
       // Get and add all volumes from all supported network deployments
       for (const c of fa.contracts) {
         const volume = await Swap.getVolume(undefined, undefined, c.addr, undefined, 1440);
-        data.volume24h = ToDec(volume).add(data.volume24h).toString();
+        data.volume24h = toDec(volume).add(data.volume24h).toString();
       }
 
       // Get other data from the first deployment (typically, the most
       // popular deployment).
-      data.price24h = await MarketPrice.priceChangeByBaseAddress(
-        undefined,
-        fa.contracts[0].addr,
-        24,
-      );
-      data.lowestPrice24h = await Liquidity.getLowestPrice(
-        undefined,
-        undefined,
-        fa.contracts[0].addr,
-        24,
-      );
-      data.highestPrice24h = await Liquidity.getHighestPrice(
-        undefined,
-        undefined,
-        fa.contracts[0].addr,
-        24,
-      );
+      data.price24h = await MarketPrice.priceChangeByBaseAddress(undefined, fa.contracts[0].addr, 24);
+      data.lowestPrice24h = await Liquidity.getLowestPrice(undefined, undefined, fa.contracts[0].addr, 24);
+      data.highestPrice24h = await Liquidity.getHighestPrice(undefined, undefined, fa.contracts[0].addr, 24);
     }
 
     return ok().data(res).build();
@@ -71,7 +57,7 @@ export class AssetsController {
     };
 
     const volume = await Swap.getVolume(undefined, undefined, address, undefined, 1440);
-    data.volume24h = ToDec(volume).add(data.volume24h).toString();
+    data.volume24h = toDec(volume).add(data.volume24h).toString();
     data.price24h = await MarketPrice.priceChangeByBaseAddress(undefined, address, 24);
     data.lowestPrice24h = await Liquidity.getLowestPrice(undefined, undefined, address, 24);
     data.highestPrice24h = await Liquidity.getHighestPrice(undefined, undefined, address, 24);

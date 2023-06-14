@@ -2,7 +2,7 @@ import { Injectable, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { Decimal } from 'decimal.js';
-import { ToDec } from './../common/common';
+import { toDec } from './../common/common';
 
 interface Rates {
   [key: string]: number;
@@ -21,9 +21,7 @@ export class ExchangeRateService {
   async updateCache(): Promise<Rates> {
     try {
       const resp = await axios.get(
-        `https://openexchangerates.org/api/latest.json?app_id=${this.cfgSrv.get(
-          'app.openexchangerate.key',
-        )}`,
+        `https://openexchangerates.org/api/latest.json?app_id=${this.cfgSrv.get('app.openexchangerate.key')}`,
       );
       this.rates = resp.data.rates;
       return Promise.resolve(this.rates);
@@ -40,7 +38,7 @@ export class ExchangeRateService {
     if (!this.rates) await this.updateCache();
     const rate = this.rates[symbol.toUpperCase()];
     if (!rate) return Promise.resolve(undefined);
-    return Promise.resolve(ToDec(rate));
+    return Promise.resolve(toDec(rate));
   }
 }
 

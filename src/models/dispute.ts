@@ -135,12 +135,7 @@ export default class Dispute extends BaseModel {
    */
   static updateById(id: string, udp: Partial<Dispute>, txn?: Transaction): Promise<Dispute> {
     return new Promise((resolve, reject) => {
-      this.query(txn)
-        .whereNotDeleted()
-        .patchAndFetchById(id, udp)
-        .execute()
-        .then(resolve)
-        .catch(reject);
+      this.query(txn).whereNotDeleted().patchAndFetchById(id, udp).execute().then(resolve).catch(reject);
     });
   }
 
@@ -179,13 +174,7 @@ export default class Dispute extends BaseModel {
    * @param disputeId The dispute ID
    * @param txn Optional transaction object
    */
-  static get(
-    network: string,
-    marketAddress: string,
-    orderId: number,
-    disputeId: number,
-    txn?: Transaction,
-  ) {
+  static get(network: string, marketAddress: string, orderId: number, disputeId: number, txn?: Transaction) {
     return this.query(txn)
       .where({ network, orderId, disputeId })
       .where('marketAddress', 'ilike', marketAddress)
@@ -200,12 +189,7 @@ export default class Dispute extends BaseModel {
    * @param orderId The order ID
    * @param txn Optional transaction object
    */
-  static getRecentOfOrder(
-    network: string,
-    marketAddress: string,
-    orderId: number,
-    txn?: Transaction,
-  ) {
+  static getRecentOfOrder(network: string, marketAddress: string, orderId: number, txn?: Transaction) {
     return this.query(txn)
       .where({ network, orderId })
       .where('marketAddress', 'ilike', marketAddress)
@@ -301,17 +285,7 @@ export default class Dispute extends BaseModel {
   static makeSelectList(select = []) {
     select = select.filter((x) => Object.keys(new Dispute()).includes(x));
     select = select.length
-      ? _.uniq(
-          select.concat([
-            'id',
-            'marketAddress',
-            'network',
-            'creator',
-            'disputeId',
-            'orderId',
-            'defendant',
-          ]),
-        )
+      ? _.uniq(select.concat(['id', 'marketAddress', 'network', 'creator', 'disputeId', 'orderId', 'defendant']))
       : ['*'];
     return select;
   }

@@ -1,5 +1,5 @@
 import { Controller, Get, Param } from '@nestjs/common';
-import { findInLocalhost, getTokenInfo, TokenList } from '../../common/token_list';
+import { findInLocalhost, getTokenInfo, TokenLists } from '../../common/token_list';
 import { ok, throw400 } from '../../common/responses/responses';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import NetworkService from '../../network/network.service';
@@ -24,7 +24,7 @@ export class MiscController {
    */
   @Get('token-list/:network')
   async getTokenList(@Param('network') network: string) {
-    return ok().data(TokenList[network]).build();
+    return ok().data(TokenLists[network]).build();
   }
 
   /**
@@ -35,15 +35,14 @@ export class MiscController {
    */
   @Get('token-info/:network/:address')
   async getTokenInfo(@Param('network') network: string, @Param('address') address: string) {
-    let info: TokenInfo;
+    let info: TokenList.Token;
     network = network !== '-' ? network : undefined;
     if (network && !isValidNetwork(network)) throw400('network not supported');
 
     // check if address exist in localhost network.
     // If yes, return it with a mock USD price of $1
     // Useful for testing
-    const assetInfo = findInLocalhost(address);
-    if (assetInfo) info = { network, price: 1, ...assetInfo };
+    info = findInLocalhost(address);
 
     if (!info && network) info = getTokenInfo(network, address);
     if (!info) info = await this.metadataSrv.getTokenInfo(network, address);
@@ -118,27 +117,14 @@ export class MiscController {
    */
   @Get('/:network/protocol-fees')
   async getProtocolFees(@Param('network') network: string) {
-    return ok()
-      .data({
-        [FeeName.InstantSwapFeeBp]: parseFloat(
-          (await Meta.getProtocolFee(network, FeeName.InstantSwapFeeBp))?.value ?? '0',
-        ),
-        [FeeName.SynthSwapFeeBp]: parseFloat(
-          (await Meta.getProtocolFee(network, FeeName.SynthSwapFeeBp))?.value ?? '0',
-        ),
-        [FeeName.StableSwapFeeBp]: parseFloat(
-          (await Meta.getProtocolFee(network, FeeName.StableSwapFeeBp))?.value ?? '0',
-        ),
-        [FeeName.FixedSynthSwapFee]: parseFloat(
-          (await Meta.getProtocolFee(network, FeeName.FixedSynthSwapFee))?.value ?? '0',
-        ),
-        [FeeName.FixedNFTSwapFee]: parseFloat(
-          (await Meta.getProtocolFee(network, FeeName.FixedNFTSwapFee))?.value ?? '0',
-        ),
-        [FeeName.InstantNFTSwapFeeBp]: parseFloat(
-          (await Meta.getProtocolFee(network, FeeName.InstantNFTSwapFeeBp))?.value ?? '0',
-        ),
-      })
-      .build();
+    const data = {
+      [FeeName.InstantSwapFeeBp]: await Meta.getProtocolFee(network, FeeName.InstantSwapFeeBp),
+      [FeeName.SynthSwapFeeBp]: await Meta.getProtocolFee(network, FeeName.SynthSwapFeeBp),
+      [FeeName.StableSwapFeeBp]: await Meta.getProtocolFee(network, FeeName.StableSwapFeeBp),
+      [FeeName.FixedSynthSwapFee]: await Meta.getProtocolFee(network, FeeName.FixedSynthSwapFee),
+      [FeeName.FixedNFTSwapFee]: await Meta.getProtocolFee(network, FeeName.FixedNFTSwapFee),
+      [FeeName.InstantNFTSwapFeeBp]: await Meta.getProtocolFee(network, FeeName.InstantNFTSwapFeeBp),
+    };
+    return ok().data(data).build();
   }
 }

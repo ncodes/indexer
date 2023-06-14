@@ -1,5 +1,5 @@
 import { randStr } from '../common/common';
-import Objection from 'objection';
+import Objection, { Transaction } from 'objection';
 import { Roles } from '../common/roles';
 import { BaseModel } from './base';
 
@@ -62,10 +62,11 @@ export default class User extends BaseModel {
   /**
    * getByEmail finds a user by their email address
    * @param email The user's email address
+   * @param txn Optional transaction object
    */
-  static getByEmail(email: string): Promise<User> {
+  static getByEmail(email: string, txn?: Transaction): Promise<User> {
     return new Promise((resolve, reject) => {
-      this.query()
+      this.query(txn)
         .where('email', 'ILIKE', email)
         .whereNotDeleted()
         .first()
@@ -77,10 +78,11 @@ export default class User extends BaseModel {
   /**
    * getByAddress finds a user by their address
    * @param address The user's address
+   * @param txn Optional transaction object
    */
-  static getByAddress(address: string): Promise<User> {
+  static getByAddress(address: string, txn?: Transaction): Promise<User> {
     return new Promise((resolve, reject) => {
-      this.query()
+      this.query(txn)
         .where('address', 'ILIKE', address)
         .whereNotDeleted()
         .first()

@@ -1,3 +1,7 @@
+/** @typedef {import('knex/types').Knex} knex */
+/**
+ * @param {knex} knex
+ */
 exports.up = function (knex) {
   return Promise.all([
     knex.schema.createTable('liquidities', (table) => {
@@ -5,17 +9,22 @@ exports.up = function (knex) {
       table.string('id').primary();
       table.string('network');
       table.string('provider');
+      table.integer('lid');
       table.string('marketAddress');
+      table.string('target');
       table.string('base');
       table.string('baseAddress');
       table.string('quote');
       table.string('quoteAddress');
+      table.string('price');
       table.string('amount');
       table.string('amountSwapped').defaultTo(0);
-      table.string('price');
       table.string('minSwap');
       table.string('maxSwap');
       table.string('manager');
+      table.jsonb('ids').defaultTo([]);
+      table.jsonb('wantOrIds').defaultTo([]);
+      table.jsonb('wantAndIds').defaultTo([]);
       table.integer('timeToPay').defaultTo(0);
       table.boolean('paused').defaultTo(false);
       table.integer('openOrders').defaultTo(0);
@@ -29,8 +38,6 @@ exports.up = function (knex) {
       table.timestamp('createdAt');
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');
-
-      table.unique(['network', 'marketAddress', 'provider']);
     }),
   ]);
 };

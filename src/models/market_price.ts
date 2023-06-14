@@ -2,7 +2,7 @@ import { randStr } from '../common/common';
 import Objection, { Transaction } from 'objection';
 import { BaseModel } from './base';
 import * as moment from 'moment';
-import { ToDec } from '../common/common';
+import { toDec } from '../common/common';
 
 /**
  * MarketPrice represents a market's historic price
@@ -10,18 +10,16 @@ import { ToDec } from '../common/common';
 export default class MarketPrice extends BaseModel {
   // The network name
   network: string;
-  // The base asset symbol
-  base: string = undefined;
-  // The base asset address
-  baseAddress: string = undefined;
-  // The quote asset symbol
-  quote: string = undefined;
-  // The quote asset address
-  quoteAddress: string = undefined;
   // The market address
   marketAddress: string;
+  // The base asset address
+  baseAddress: string = undefined;
+  // The quote asset address
+  quoteAddress: string = undefined;
   // The provider address
   provider: string;
+  // The liquidity ID
+  lid: number;
   // The market price
   price: string;
 
@@ -154,28 +152,11 @@ export default class MarketPrice extends BaseModel {
     txn?: Transaction,
   ): Promise<number> {
     const timeAgo = moment().subtract(hours, 'h').toISOString();
-    const priceHourAgo = await MarketPrice.findRecentBefore(
-      network,
-      marketAddress,
-      undefined,
-      provider,
-      timeAgo,
-      txn,
-    );
+    const priceHourAgo = await MarketPrice.findRecentBefore(network, marketAddress, undefined, provider, timeAgo, txn);
     if (!priceHourAgo) return Promise.resolve(0);
-    const currentPrice = await MarketPrice.findRecent(
-      network,
-      marketAddress,
-      undefined,
-      provider,
-      txn,
-    );
+    const currentPrice = await MarketPrice.findRecent(network, marketAddress, undefined, provider, txn);
     return Promise.resolve(
-      ToDec(currentPrice.price)
-        .sub(priceHourAgo.price)
-        .div(ToDec(priceHourAgo.price))
-        .mul(100)
-        .toNumber(),
+      toDec(currentPrice.price).sub(priceHourAgo.price).div(toDec(priceHourAgo.price)).mul(100).toNumber(),
     );
   }
 
@@ -193,28 +174,11 @@ export default class MarketPrice extends BaseModel {
     txn?: Transaction,
   ): Promise<number> {
     const timeAgo = moment().subtract(hours, 'h').toISOString();
-    const priceHourAgo = await MarketPrice.findRecentBefore(
-      network,
-      undefined,
-      baseAddress,
-      undefined,
-      timeAgo,
-      txn,
-    );
+    const priceHourAgo = await MarketPrice.findRecentBefore(network, undefined, baseAddress, undefined, timeAgo, txn);
     if (!priceHourAgo) return Promise.resolve(0);
-    const currentPrice = await MarketPrice.findRecent(
-      network,
-      undefined,
-      baseAddress,
-      undefined,
-      txn,
-    );
+    const currentPrice = await MarketPrice.findRecent(network, undefined, baseAddress, undefined, txn);
     return Promise.resolve(
-      ToDec(currentPrice.price)
-        .sub(priceHourAgo.price)
-        .div(ToDec(priceHourAgo.price))
-        .mul(100)
-        .toNumber(),
+      toDec(currentPrice.price).sub(priceHourAgo.price).div(toDec(priceHourAgo.price)).mul(100).toNumber(),
     );
   }
 }

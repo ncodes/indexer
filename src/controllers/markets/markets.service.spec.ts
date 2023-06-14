@@ -8,16 +8,22 @@ import * as moment from 'moment';
 import { DBService } from '../../db/DBService';
 import Market, { AssetType } from '../../models/market';
 import Swap from '../../models/swap';
-import { TokenList } from '../../common/token_list';
+import { TokenLists } from '../../common/token_list';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
   return { get: mockCfgGet };
 });
 
-const mockGetMarketCore = jest.fn();
+const mockMarkets = jest.fn();
 const NetworkServiceMock = jest.fn().mockImplementation(() => {
-  return { getMarketCore: mockGetMarketCore };
+  return {
+    getContracts: jest.fn().mockReturnValue({
+      marketCore: {
+        markets: mockMarkets,
+      },
+    }),
+  };
 });
 
 const mockGetLogo = jest.fn();
@@ -49,7 +55,6 @@ describe('MarketsService', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     mockCfgGet.mockReset();
-    mockGetMarketCore.mockReset();
     mockGetLogo.mockReset();
 
     cfgObj = {};
@@ -131,95 +136,91 @@ describe('MarketsService', () => {
 
   describe('.extendMarket', () => {
     describe('when noMerge=false', () => {
-      it(
-        'should attempt to merge contract market object into the given' + ' market object',
-        async () => {
-          TokenList[net].tokens.push({
-            address: '0xBase',
-            logoURI: 'https://logo.png',
-          } as any);
-          TokenList[net].tokens.push({
-            address: '0xQuote',
-            logoURI: 'https://logo2.png',
-          } as any);
+      it('should attempt to merge contract market object into the given' + ' market object', async () => {
+        TokenLists[net].tokens.push({
+          address: '0xBase',
+          logoURI: 'https://logo.png',
+        } as any);
+        TokenLists[net].tokens.push({
+          address: '0xQuote',
+          logoURI: 'https://logo2.png',
+        } as any);
 
-          let market: Market = await Market.create({
-            address: '0x123',
-            creator: '0xUser',
-            network: net,
-            baseAddress: '0xBase',
-            quoteAddress: '0xQuote',
-            baseType: AssetType.ERC20,
-            quoteType: AssetType.ERC20,
-          });
+        let market: Market = await Market.create({
+          address: '0x123',
+          creator: '0xUser',
+          network: net,
+          baseAddress: '0xBase',
+          quoteAddress: '0xQuote',
+          baseType: AssetType.ERC20,
+          quoteType: AssetType.ERC20,
+        });
 
-          // Mocks
-          const contractMarket = {
+        // Mocks
+        const contractMarket = {
+          perms: {
             permPut: true,
             permSwap: true,
-            creator: '0x12345',
-          };
-          const mockMarket = jest.fn();
-          mockGetMarketCore.mockResolvedValue({ markets: mockMarket });
-          mockMarket.mockResolvedValue(contractMarket);
-          mockGetLogo.mockResolvedValue('https://logo.png');
+          },
+          creator: '0x12345',
+        };
+        mockMarkets.mockResolvedValue(contractMarket);
+        mockGetLogo.mockResolvedValue('https://logo.png');
 
-          await Swap.create({
-            network: market.network,
-            marketAddress: market.address,
-            instant: true,
-            amount: '10',
-          });
-          await Swap.create({
-            network: market.network,
-            marketAddress: market.address,
-            instant: true,
-            amount: '5',
-          });
-          await Swap.create({
-            network: market.network,
-            marketAddress: market.address,
-            instant: false,
-            amount: '1',
-          });
-          await Swap.create({
-            network: market.network,
-            marketAddress: market.address,
-            instant: false,
-            createdAt: moment().subtract(1440, 'm').toISOString(),
-          });
+        await Swap.create({
+          network: market.network,
+          marketAddress: market.address,
+          instant: true,
+          amount: '10',
+        });
+        await Swap.create({
+          network: market.network,
+          marketAddress: market.address,
+          instant: true,
+          amount: '5',
+        });
+        await Swap.create({
+          network: market.network,
+          marketAddress: market.address,
+          instant: false,
+          amount: '1',
+        });
+        await Swap.create({
+          network: market.network,
+          marketAddress: market.address,
+          instant: false,
+          createdAt: moment().subtract(1440, 'm').toISOString(),
+        });
 
-          await service.extendMarket(market, false);
-          expect(mockGetMarketCore).toHaveBeenCalledWith(net);
-          expect(mockMarket).toHaveBeenCalledWith(market.address);
-          expect(market.creator).toEqual('0x12345');
-          expect(market.network).toEqual(net);
-          expect(market.baseLogo).toEqual('https://logo.png');
-          expect(market.quoteLogo).toEqual('https://logo2.png');
-          expect(market.numProviders).toBeDefined();
-          expect(market.totalLiquidity).toBeDefined();
-          expect(market.lowestPrice24h).toBeDefined();
-          expect(market.highestPrice24h).toBeDefined();
-          expect(market.lowestPrice).toBeDefined();
-          expect(market.priceChange).toBeDefined();
-          expect(market.totalSwaps24h).toEqual('2');
-          expect(market.volume24h).toEqual('15');
+        await service.extendMarket(market, false);
+        expect(mockMarkets).toHaveBeenCalledWith(market.address);
+        expect(market.creator).toEqual('0x12345');
+        expect(market.network).toEqual(net);
+        expect(market.baseLogo).toEqual('https://logo.png');
+        expect(market.quoteLogo).toEqual('https://logo2.png');
+        expect(market.numProviders).toBeDefined();
+        expect(market.totalLiquidity).toBeDefined();
+        expect(market.lowestPrice24h).toBeDefined();
+        expect(market.highestPrice24h).toBeDefined();
+        expect(market.lowestPrice).toBeDefined();
+        expect(market.priceChange).toBeDefined();
+        expect(market.totalSwaps24h).toEqual('2');
+        expect(market.volume24h).toEqual('15');
 
-          // When market base and quote asset are not all on-chain
-          market = await Market.updateById(market.id, {
-            baseType: AssetType.ERC20,
-            quoteType: AssetType.SYNTH,
-          });
-          await service.extendMarket(market, false);
-          expect(market.totalSwaps24h).toEqual('1');
-          expect(market.volume24h).toEqual('1');
-        },
-      );
+        // When market base and quote asset are not all on-chain
+        market = await Market.updateById(market.id, {
+          baseType: AssetType.ERC20,
+          quoteType: AssetType.SYNTH,
+        });
+        await service.extendMarket(market, false);
+        expect(market.totalSwaps24h).toEqual('1');
+        expect(market.volume24h).toEqual('1');
+      });
     });
 
     it('should not merge if noMerge=true', async () => {
-      TokenList['0xBase'] = { image: 'https://logo.png' };
-      TokenList['0xQuote'] = { image: 'https://logo2.png' };
+      TokenLists['0xBase'] = { image: 'https://logo.png' };
+      TokenLists['0xQuote'] = { image: 'https://logo2.png' };
 
       const market: Market = new Market({
         address: '0x123',
@@ -235,14 +236,11 @@ describe('MarketsService', () => {
         permSwap: true,
         creator: '0x12345',
       };
-      const mockMarket = jest.fn();
-      mockGetMarketCore.mockResolvedValue({ markets: mockMarket });
-      mockMarket.mockResolvedValue(contractMarket);
+      mockMarkets.mockResolvedValue(contractMarket);
       mockGetLogo.mockResolvedValue('https://logo.png');
 
       await service.extendMarket(market, true);
-      expect(mockGetMarketCore).not.toHaveBeenCalledWith(net);
-      expect(mockMarket).not.toHaveBeenCalledWith(market.address);
+      expect(mockMarkets).not.toHaveBeenCalledWith(market.address);
       expect(market.permPut).toBeUndefined();
       expect(market.permSwap).toBeUndefined();
       expect(market.creator).toEqual('0xUser');

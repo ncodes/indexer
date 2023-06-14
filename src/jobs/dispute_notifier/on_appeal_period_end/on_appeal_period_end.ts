@@ -5,7 +5,7 @@ import Dispute from '../../../models/dispute';
 import Swap from '../../../models/swap';
 import Draft from '../../../models/draft';
 import * as _ from 'lodash';
-import { NotifierService, NotifyType } from '../../mailer/NotifierService';
+import { NotifierService, NotificationID } from '../../mailer/NotifierService';
 import Reveal from '../../../models/reveal';
 
 /**
@@ -55,12 +55,7 @@ export default class OnAppealPeriodEnd extends Base {
     recipients.push({ address: swap.provider }, { address: swap.taker });
 
     // Get the drafted tickets
-    const drafted = await Draft.getAll(
-      swap.network,
-      swap.marketAddress,
-      swap.orderId,
-      dispute.disputeId,
-    );
+    const drafted = await Draft.getAll(swap.network, swap.marketAddress, swap.orderId, dispute.disputeId);
     recipients.push(
       ..._.map(drafted, (v) => {
         return { address: v.owner, drafted: true };
@@ -78,7 +73,7 @@ export default class OnAppealPeriodEnd extends Base {
 
     // Send notification
     for (const recipient of recipients) {
-      await this.notifier.notify(NotifyType.AppealPhaseEnded, swap.network, recipient.address, {
+      await this.notifier.notify(NotificationID.AppealPhaseEnded, swap.network, recipient.address, {
         marketAddress: swap.marketAddress,
         network: swap.network,
         orderId: swap.orderId,

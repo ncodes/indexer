@@ -2,10 +2,11 @@ import { randStr } from '../common/common';
 import Objection, { Model, raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 import * as moment from 'moment';
-import { ToDec } from '../common/common';
+import { toDec } from '../common/common';
 import Market from './market';
 import Liquidity from './liquidity';
 import * as _ from 'lodash';
+import { toBN } from '../network/common';
 
 /**
  * Swap represents a swap operation
@@ -25,10 +26,14 @@ export default class Swap extends BaseModel {
   quoteAddress: string = undefined;
   // The order ID (if swap created an order)
   orderId?: number = undefined;
+  // The liquidity ID
+  lid?: number = undefined;
   // The liquidity provider's address
   provider?: string = undefined;
   // The swap initiator's address
   taker?: string = undefined;
+  // The offer ID (if the swap originated as a result of an offer execution)
+  offerId?: number = undefined;
   // The output amount of the swap
   amount?: string = undefined;
   // The price of 1 unit of output asset
@@ -41,26 +46,22 @@ export default class Swap extends BaseModel {
   cancelled?: boolean = undefined;
   // Indicates whether the swap was released
   released?: boolean = undefined;
+  // The address that released or cancelled the swap
+  finalizer?: string = undefined;
   // Indicates whether the swap was released/paid via dispute resolution
   byDispute?: boolean = undefined;
-  // The cost of the swapping amount
-  cost?: string = undefined;
-  // The amount from which fee was charged
-  chargedAmount: string = undefined;
-  // Indicates whether the charged amount is the swap cost or swap amount
-  costCharged: boolean = undefined;
-  // The protocol fee base point
-  protocolFeeBP: number = undefined;
+  // A list NFT IDs provided by the liquidity provider for the swap
+  providerIds?: number[] = undefined;
+  // A list NFT IDs provided by the taker for the swap
+  takerIds?: number[] = undefined;
   // The protocol fee charged
-  protocolFee: string = undefined;
-  // The market fee base point
-  marketFeeBP: number = undefined;
+  protocolFee?: string = undefined;
   // The market fee charged
-  marketFee: string = undefined;
-  // The total fee charged (market + protocol fees)
-  totalFee: string = undefined;
+  marketCreatorFee?: string = undefined;
+  // The address of the operator that pushed the swap
+  operator?: number = undefined;
   // The transaction hash where the swap was created
-  txHash: string = undefined;
+  txHash?: string = undefined;
 
   market: Market;
   liquidity: Liquidity;
@@ -89,6 +90,8 @@ export default class Swap extends BaseModel {
   $beforeInsert() {
     super.$beforeInsert();
     this.id = 'swap_' + randStr(24);
+    this.providerIds = this.providerIds ? (JSON.stringify(this.providerIds) as any) : this.providerIds;
+    this.takerIds = this.takerIds ? (JSON.stringify(this.takerIds) as any) : this.takerIds;
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
@@ -98,21 +101,31 @@ export default class Swap extends BaseModel {
     return object;
   }
 
+  // getPair returns the pair symbol in the format BASE/QUOTE
   getPair() {
     return `${this.base}/${this.quote}`.toUpperCase();
   }
 
+  // getCost returns the cost of the swap.
+  // @throws if the cost is not monetary (i.e. if the swap is for NFTs)
+  getCost() {
+    if (!this.amount && this.price) return toBN(this.price);
+    if (this.amount && this.price) return toBN(this.amount).mul(this.price);
+    throw new Error('cost is not monetary');
+  }
+
   /**
-   * getPayer determines whether the provider or the taker is expected to make off-chain payment
+   * getPayer determines whether the provider or the taker is
+   * expected to make off-chain payment
    */
   getPayer() {
-    const { baseType, quoteType } = this.market;
     let payer: string;
-    if (this.market.isFungible() && this.market.involvesERC20()) {
-      payer = !Market.isSynth(baseType) ? this.taker : this.provider;
+    const { baseType, quoteType } = this.market;
+    if (Market.isERC20(baseType) && Market.isSynth(quoteType)) {
+      payer = this.taker;
     } else if (Market.isSynth(baseType) && Market.isSynth(quoteType)) {
       payer = this.taker;
-    } else if (Market.isSynth(baseType) && Market.isERC20(quoteType)) {
+    } else if (Market.isSynth(baseType) && (Market.isERC20(quoteType) || Market.isNFT(quoteType))) {
       payer = this.provider;
     } else if (Market.isNFT(baseType) && Market.isSynth(quoteType)) {
       payer = this.taker;
@@ -204,17 +217,18 @@ export default class Swap extends BaseModel {
    * @param txn Optional transaction object
    */
   static updateById(id: string, udp: Partial<Swap>, txn?: Transaction) {
-    return this.query(txn).whereNotDeleted().patchAndFetchById(id, udp);
+    return this.query(txn).whereNotDeleted().patchAndFetchById(id, udp).withGraphFetched('market');
   }
 
   /**
    * updateByOrderId updates a swap by order ID
+   * @param network The net work name
    * @param orderId The order ID
    * @param udp the fields to be updated
    * @param txn Optional transaction object
    */
-  static updateByOrderId(orderId: number, udp: Partial<Swap>, txn?: Transaction) {
-    return this.query(txn).where({ orderId }).whereNotDeleted().patch(udp);
+  static updateByOrderId(network: string, orderId: number, udp: Partial<Swap>, txn?: Transaction) {
+    return this.query(txn).where('network', network).where({ orderId }).whereNotDeleted().patch(udp);
   }
 
   /**
@@ -238,8 +252,7 @@ export default class Swap extends BaseModel {
       let q = this.query(txn).where({ network }).where('marketAddress', 'ilike', marketAddress);
       if (provider) q = q.where('provider', 'ilike', provider);
       if (instant !== undefined) q = q.where({ instant });
-      if (minutesAgo)
-        q = q.where('createdAt', '>=', moment().subtract(minutesAgo, 'minutes').toISOString());
+      if (minutesAgo) q = q.where('createdAt', '>=', moment().subtract(minutesAgo, 'minutes').toISOString());
       q.count('id')
         .whereNotDeleted()
         .first()
@@ -273,19 +286,19 @@ export default class Swap extends BaseModel {
       this.query(txn)
         .select(raw('sum(cast(?? as numeric))', 'amount').as('total'))
         .where((q) => {
-          if (network) q.where('network', network);
+          if (network) return q.where('network', network);
         })
         .where((q) => {
-          if (marketAddress) q.where('marketAddress', 'ilike', marketAddress);
+          if (marketAddress) return q.where('marketAddress', 'ilike', marketAddress);
         })
         .where((q) => {
-          if (baseAddress) q.where('baseAddress', 'ilike', baseAddress);
+          if (baseAddress) return q.where('baseAddress', 'ilike', baseAddress);
         })
         .where((q) => {
-          if (provider !== undefined) q.where('provider', 'ilike', provider);
+          if (provider !== undefined) return q.where('provider', 'ilike', provider);
         })
         .where((q) => {
-          if (instant !== undefined) q.where('instant', instant);
+          if (instant !== undefined) return q.where('instant', instant);
         })
         .where('createdAt', '>=', moment().subtract(timeAgo, 'm').toISOString())
         .then((res: any) => {
@@ -343,25 +356,9 @@ export default class Swap extends BaseModel {
     provider: string,
     txn?: Objection.Transaction,
   ) {
-    const nReleased = await Swap.countByState(
-      network,
-      marketAddress,
-      provider,
-      true,
-      undefined,
-      false,
-      txn,
-    );
-    const nSwaps = await Swap.countByState(
-      network,
-      marketAddress,
-      provider,
-      undefined,
-      undefined,
-      undefined,
-      txn,
-    );
-    return Promise.resolve(ToDec(nReleased).div(nSwaps).mul(100).toDP(2).toNumber());
+    const nReleased = await Swap.countByState(network, marketAddress, provider, true, undefined, false, txn);
+    const nSwaps = await Swap.countByState(network, marketAddress, provider, undefined, undefined, undefined, txn);
+    return Promise.resolve(toDec(nReleased).div(nSwaps).mul(100).toDP(2).toNumber());
   }
 
   /**
@@ -391,7 +388,7 @@ export default class Swap extends BaseModel {
     if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
     if (providerOrTaker) {
       q = q.where((q) => {
-        q.orWhere('provider', 'ILIKE', providerOrTaker).orWhere('taker', 'ILIKE', providerOrTaker);
+        return q.orWhere('provider', 'ILIKE', providerOrTaker).orWhere('taker', 'ILIKE', providerOrTaker);
       });
     }
     if (offset) q = q.offset(offset);

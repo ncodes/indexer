@@ -7,12 +7,8 @@ import * as moment from 'moment';
 import * as console from 'console';
 
 export class BadgeManagerHandler extends Handler {
-  constructor(
-    private provider: providers.JsonRpcProvider,
-    public network: string,
-    private contracts: JointContracts,
-  ) {
-    super(null, network, contracts.badgeMgr);
+  constructor(private provider: providers.JsonRpcProvider, public network: string, private contracts: JointContracts) {
+    super(BadgeManagerHandler.name, null, network, contracts.badgeMgr);
   }
 
   /**
@@ -31,28 +27,13 @@ export class BadgeManagerHandler extends Handler {
         event: Event,
         txn?: Transaction,
       ) => {
-        return this.onGrantedBadge(
-          badge,
-          path,
-          grantee,
-          metadataKeys,
-          metadataValues,
-          expireAt,
-          event,
-          txn,
-        );
+        return this.onGrantedBadge(badge, path, grantee, metadataKeys, metadataValues, expireAt, event, txn);
       },
     );
 
     this.on(
       'RevokedBadge',
-      async (
-        badge: string,
-        path: string,
-        grantee: string,
-        event: ethers.Event,
-        txn?: Transaction,
-      ) => {
+      async (badge: string, path: string, grantee: string, event: ethers.Event, txn?: Transaction) => {
         return this.onRevokedBadge(badge, path, grantee, event, txn);
       },
     );
@@ -73,13 +54,7 @@ export class BadgeManagerHandler extends Handler {
 
     this.on(
       'ReplacedIssuer',
-      async (
-        oldIssuer: string,
-        newIssuer: string,
-        badge: string,
-        event: ethers.Event,
-        txn?: Transaction,
-      ) => {
+      async (oldIssuer: string, newIssuer: string, badge: string, event: ethers.Event, txn?: Transaction) => {
         return this.onReplacedIssuer(oldIssuer, newIssuer, badge, event, txn);
       },
     );
@@ -99,19 +74,13 @@ export class BadgeManagerHandler extends Handler {
       },
     );
 
-    this.on(
-      'AddedCoIssuer',
-      async (issuer: string, coIssuer: string, badge: string, event: ethers.Event) => {
-        return this.onAddedCoIssuer(issuer, coIssuer, badge, event);
-      },
-    );
+    this.on('AddedCoIssuer', async (issuer: string, coIssuer: string, badge: string, event: ethers.Event) => {
+      return this.onAddedCoIssuer(issuer, coIssuer, badge, event);
+    });
 
-    this.on(
-      'RemovedCoIssuer',
-      async (issuer: string, coIssuer: string, badge: string, event: ethers.Event) => {
-        return this.onRemovedCoIssuer(issuer, coIssuer, badge, event);
-      },
-    );
+    this.on('RemovedCoIssuer', async (issuer: string, coIssuer: string, badge: string, event: ethers.Event) => {
+      return this.onRemovedCoIssuer(issuer, coIssuer, badge, event);
+    });
 
     this.on(
       'BadgeMetaUpdated',
@@ -204,13 +173,7 @@ export class BadgeManagerHandler extends Handler {
    * @param event The event object
    * @param txn The transaction object
    */
-  async onRevokedBadge(
-    badge: string,
-    path: string,
-    grantee: string,
-    event: ethers.Event,
-    txn?: Transaction,
-  ) {
+  async onRevokedBadge(badge: string, path: string, grantee: string, event: ethers.Event, txn?: Transaction) {
     await BadgeGrant.deleteByNetAndBadgeAndPath(this.network, badge, path || null, txn);
   }
 
@@ -253,13 +216,7 @@ export class BadgeManagerHandler extends Handler {
    * @param event The event object
    * @param txn The transaction object
    */
-  async onReplacedIssuer(
-    oldIssuer: string,
-    newIssuer: string,
-    badge: string,
-    event: ethers.Event,
-    txn?: Transaction,
-  ) {
+  async onReplacedIssuer(oldIssuer: string, newIssuer: string, badge: string, event: ethers.Event, txn?: Transaction) {
     await Badge.updateByNetAndIssuerAndBadgeAndPath(
       this.network,
       oldIssuer,
@@ -312,21 +269,8 @@ export class BadgeManagerHandler extends Handler {
    * @param event The event object
    * @param txn The transaction object
    */
-  async onAddedCoIssuer(
-    issuer: string,
-    coIssuer: string,
-    badge: string,
-    event: ethers.Event,
-    txn?: Transaction,
-  ) {
-    await Badge.updateByNetAndIssuerAndBadgeAndPath(
-      this.network,
-      issuer,
-      badge,
-      undefined,
-      { coIssuer },
-      txn,
-    );
+  async onAddedCoIssuer(issuer: string, coIssuer: string, badge: string, event: ethers.Event, txn?: Transaction) {
+    await Badge.updateByNetAndIssuerAndBadgeAndPath(this.network, issuer, badge, undefined, { coIssuer }, txn);
   }
 
   /**
@@ -337,21 +281,8 @@ export class BadgeManagerHandler extends Handler {
    * @param event The event object
    * @param txn The transaction object
    */
-  async onRemovedCoIssuer(
-    issuer: string,
-    coIssuer: string,
-    badge: string,
-    event: ethers.Event,
-    txn?: Transaction,
-  ) {
-    await Badge.updateByNetAndIssuerAndBadgeAndPath(
-      this.network,
-      issuer,
-      badge,
-      undefined,
-      { coIssuer: null },
-      txn,
-    );
+  async onRemovedCoIssuer(issuer: string, coIssuer: string, badge: string, event: ethers.Event, txn?: Transaction) {
+    await Badge.updateByNetAndIssuerAndBadgeAndPath(this.network, issuer, badge, undefined, { coIssuer: null }, txn);
   }
 
   /**

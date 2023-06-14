@@ -26,7 +26,7 @@ export class CoinGeckoMetadata {
    * @param contract The asset contract address or symbol
    * @returns
    */
-  async getTokenInfo(network: string, contract: string): Promise<TokenInfo> {
+  async getTokenInfo(network: string, contract: string): Promise<TokenMetadata> {
     try {
       let path = `coins/${CoinGeckoConfig.networkMap[network]}/contract/${contract}`;
       const isSymbol = contract.substr(0, 2).toLowerCase() !== '0x';

@@ -3,12 +3,13 @@ import * as dayjs from 'dayjs';
 import * as utc from 'dayjs/plugin/utc';
 import Decimal from 'decimal.js';
 import { uid } from 'uid';
+import { BigNumberish } from 'ethers';
 
 dayjs.extend(utc);
 
 export const DecTen = new Decimal(10);
 export const AppName = () => process.env.APP_NAME;
-export const ToDec = (val: string | number) => new Decimal(val);
+export const toDec = (val: BigNumberish) => new Decimal(val.toString());
 export function isDevMode(nodeEnvOnly = false) {
   return process.env.NODE_ENV === 'development' || (!nodeEnvOnly && process.env.DEV_MODE);
 }

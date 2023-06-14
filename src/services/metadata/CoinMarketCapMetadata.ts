@@ -17,7 +17,7 @@ export class CoinMarketCapMetadata {
    * @param contract The asset contract address or symbol
    * @returns
    */
-  async getTokenInfo(network: string, contract: string): Promise<TokenInfo> {
+  async getTokenInfo(network: string, contract: string): Promise<TokenMetadata> {
     let url = `https://pro-api.coinmarketcap.com/v2/cryptocurrency/info?CMC_PRO_API_KEY=${this.key}&address=${contract}`;
     const isSymbol = contract.substr(0, 2).toLowerCase() !== '0x';
     if (isSymbol) {

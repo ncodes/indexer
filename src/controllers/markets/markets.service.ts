@@ -55,8 +55,8 @@ export class MarketsService {
       const { address, network: net, baseAddress, quoteAddress } = market;
 
       if (!noMerge) {
-        const _m = await (await this.netSrv.getMarketCore(net)).markets(market.address);
-        let marketFromContract = this.normalizeMarket(_m);
+        const mktFromChain = await this.netSrv.getContracts(net).marketCore.markets(market.address);
+        let marketFromContract = this.normalizeMarket(mktFromChain);
         if (select.length) marketFromContract = _.pick(marketFromContract, select) as any;
         this.merge(marketFromContract, market);
       }
@@ -79,20 +79,11 @@ export class MarketsService {
           1440,
         );
       if (select.includes(`volume24h`) || !select.length)
-        market.volume24h = await Swap.getVolume(
-          net,
-          address,
-          undefined,
-          undefined,
-          1400,
-          market.isInstant(),
-        );
+        market.volume24h = await Swap.getVolume(net, address, undefined, undefined, 1400, market.isInstant());
       if (select.includes(`priceChange`) || !select.length)
         market.priceChange = await MarketPrice.priceChange(net, address, undefined, 24);
-      if (select.includes(`baseLogo`) || !select.length)
-        market.baseLogo = getTokenLogo(net, baseAddress);
-      if (select.includes(`quoteLogo`) || !select.length)
-        market.quoteLogo = getTokenLogo(net, quoteAddress);
+      if (select.includes(`baseLogo`) || !select.length) market.baseLogo = getTokenLogo(net, baseAddress);
+      if (select.includes(`quoteLogo`) || !select.length) market.quoteLogo = getTokenLogo(net, quoteAddress);
 
       return Promise.resolve();
     } catch (error) {

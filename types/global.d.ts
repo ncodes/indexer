@@ -1,6 +1,18 @@
 import User from '../src/models/user';
-import { BigNumber, Contract } from 'ethers';
-import { NotifyType } from '../src/jobs/mailer/NotifierService';
+import { BigNumber } from 'ethers';
+import { NotificationID } from '../src/jobs/mailer/NotifierService';
+import {
+  AssetRegistry,
+  BadgeManager,
+  Core,
+  DisputeManager,
+  FeePool,
+  LPPool,
+  MarketCore,
+  MediatorManager,
+  Token,
+  TokenPool,
+} from '../typechain';
 
 declare global {
   namespace CoinGecko {
@@ -1618,10 +1630,6 @@ declare global {
     }
   }
 
-  interface SentResponse {
-    sent: boolean;
-  }
-
   interface OKResponse {
     ok: boolean;
   }
@@ -1635,16 +1643,16 @@ declare global {
   }
 
   interface JointContracts {
-    p2pToken?: Contract;
-    marketCore?: Contract;
-    core?: Contract;
-    mediatorMgr?: Contract;
-    disputeMgr?: Contract;
-    badgeMgr?: Contract;
-    tokenPool?: Contract;
-    lpPool?: Contract;
-    feePool?: Contract;
-    assetRegistry?: Contract;
+    p2pToken?: Token;
+    marketCore?: MarketCore;
+    core?: Core;
+    mediatorMgr?: MediatorManager;
+    disputeMgr?: DisputeManager;
+    badgeMgr?: BadgeManager;
+    tokenPool?: TokenPool;
+    lpPool?: LPPool;
+    feePool?: FeePool;
+    assetRegistry?: AssetRegistry;
   }
 
   interface ContractMarket {
@@ -1677,15 +1685,15 @@ declare global {
     paused: boolean;
   }
 
-  interface NotifyJob {
-    notifType: NotifyType;
+  interface NotifyJob<T> {
+    notifType: NotificationID;
     network: string;
     recipient: string;
     user: User;
-    data: { [key: string]: string };
+    data: T;
   }
 
-  interface TokenInfo {
+  interface TokenMetadata {
     logoURI: string;
     network: string;
     name: string;
@@ -1699,11 +1707,6 @@ declare global {
     email: string;
   }
 
-  interface EncryptedMessage {
-    message: string;
-    recipient: string;
-  }
-
   interface AssetStat {
     symbol?: string;
     address?: string;
@@ -1713,5 +1716,31 @@ declare global {
     highestPrice24h?: string;
     network?: string;
     dominantColor?: string;
+  }
+
+  namespace TokenList {
+    interface TokenData {
+      name: string;
+      logoURI: string;
+      timestamp: string;
+      tokens: Token[];
+      version: Version;
+    }
+
+    interface Token {
+      asset?: string;
+      type?: string;
+      address?: string;
+      name?: string;
+      symbol?: string;
+      decimals?: number;
+      logoURI?: string;
+    }
+
+    interface Version {
+      major: number;
+      minor: number;
+      patch: number;
+    }
   }
 }

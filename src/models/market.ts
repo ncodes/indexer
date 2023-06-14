@@ -3,13 +3,17 @@ import Objection, { Model, QueryBuilderType, raw, Transaction } from 'objection'
 import { BaseModel } from './base';
 import InvitedMediator from './invited_mediators';
 import * as _ from 'lodash';
-import { BigNumber } from 'ethers';
 
 export enum AssetType {
   SYNTH,
   ERC20,
   ERC721,
   ERC1155,
+}
+
+export interface Asset {
+  asset: string;
+  type: AssetType;
 }
 
 /**
@@ -28,10 +32,14 @@ export default class Market extends BaseModel {
   baseAddress: string = undefined;
   // Indicates the type of the base asset
   baseType: AssetType = undefined;
+  // The base asset decimals (if applicable)
+  baseDecimals: number;
   // The quote asset symbol
   quote: string = undefined;
   // The quote asset token address
   quoteAddress: string = undefined;
+  // The quote asset decimals (if applicable)
+  quoteDecimals: number;
   // Indicates the type of quote asset
   quoteType: AssetType = undefined;
   // Indicates whether this is an instant market
@@ -133,6 +141,24 @@ export default class Market extends BaseModel {
     };
   }
 
+  getBaseAsset(): Asset {
+    return {
+      asset: this.base,
+      type: this.baseType,
+    };
+  }
+
+  getQuoteAsset(): Asset {
+    return {
+      asset: this.quote,
+      type: this.quoteType,
+    };
+  }
+
+  static isOnchain(assetType: AssetType) {
+    return this.isERC20(assetType) || this.isNFT(assetType);
+  }
+
   /**
    * Checks if the market is an instant swap market
    */
@@ -148,7 +174,7 @@ export default class Market extends BaseModel {
     );
   }
 
-  involvesERC20() {
+  hasERC20() {
     return Market.isERC20(this.baseType) || Market.isERC20(this.quoteType);
   }
 
@@ -170,6 +196,14 @@ export default class Market extends BaseModel {
 
   static isERC20(assetType: AssetType) {
     return assetType == AssetType.ERC20;
+  }
+
+  static isERC721(assetType: AssetType) {
+    return assetType == AssetType.ERC721;
+  }
+
+  static isERC1155(assetType: AssetType) {
+    return assetType == AssetType.ERC1155;
   }
 
   static isSynth(assetType: AssetType) {
@@ -228,17 +262,7 @@ export default class Market extends BaseModel {
   static makeSelectList(select = []) {
     select = select.filter((x) => Object.keys(new Market()).includes(x));
     select = select.length
-      ? _.uniq(
-          select.concat([
-            'id',
-            'address',
-            'network',
-            'base',
-            'baseAddress',
-            'quote',
-            'quoteAddress',
-          ]),
-        )
+      ? _.uniq(select.concat(['id', 'address', 'network', 'base', 'baseAddress', 'quote', 'quoteAddress']))
       : ['*'];
     return select;
   }
@@ -337,8 +361,7 @@ export default class Market extends BaseModel {
     if (noPermSwap) query = query.where('permSwap', false);
     if (onlyPermMediate) query = query.where('permMediate', true);
     if (onlyInstant !== undefined) query = query.where('instant', onlyInstant);
-    if (minMediatorBond)
-      query = query.where(raw(`cast(?? as numeric)`, 'mediatorBond'), '>=', minMediatorBond);
+    if (minMediatorBond) query = query.where(raw(`cast(?? as numeric)`, 'mediatorBond'), '>=', minMediatorBond);
     if (minJoinedMediators) query = query.where('numMediatorsJoined', '>=', minJoinedMediators);
     if (queryStr)
       query = query.where((q) => {
@@ -390,12 +413,7 @@ export default class Market extends BaseModel {
    */
   static updateById(id: string, udp: Partial<Market>, txn?: Transaction): Promise<Market> {
     return new Promise((resolve, reject) => {
-      this.query(txn)
-        .whereNotDeleted()
-        .patchAndFetchById(id, udp)
-        .execute()
-        .then(resolve)
-        .catch(reject);
+      this.query(txn).whereNotDeleted().patchAndFetchById(id, udp).execute().then(resolve).catch(reject);
     });
   }
 

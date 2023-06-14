@@ -24,18 +24,6 @@ export class DBService {
   }
 
   /**
-   * Get DB service for the given Knex object.
-   * @param {Knex.Knex} knex - The Knex object.
-   * @returns {DBService}
-   */
-  static withKnex(knex: Knex.Knex) {
-    const srv = new DBService(null);
-    srv.knex = knex;
-    Model.knex(srv.knex);
-    return srv;
-  }
-
-  /**
    * Get DB services suitable for test environment
    * @returns {DBService}
    */

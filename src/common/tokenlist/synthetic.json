@@ -1,0 +1,21 @@
+{
+  "name": "Joint Protocol: Synthetic",
+  "logoURI": "",
+  "timestamp": "2021-10-07T08:50:36.056Z",
+  "tokens": [
+    {
+      "asset": "",
+      "type": "SYNTHETIC",
+      "address": "0x00000000000000000000000000000000000000001",
+      "name": "USD",
+      "symbol": "USD",
+      "decimals": 18,
+      "logoURI": "https://assets-cdn.trustwallet.com/blockchains/polygon/assets/0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619/logo.png"
+    }
+  ],
+  "version": {
+    "major": 1,
+    "minor": 0,
+    "patch": 0
+  }
+}

@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { NoopLogger } from '../../../common/loggers/noop_logger';
 import { DBService } from '../../../db/DBService';
-import { NotifierService, NotifyType } from '../../mailer/NotifierService';
+import { NotifierService, NotificationID } from '../../mailer/NotifierService';
 import Dispute from '../../../models/dispute';
 import * as moment from 'moment';
 import Swap from '../../../models/swap';
@@ -115,28 +115,10 @@ describe('OnCommitPeriodEnd', () => {
           pair: swap.getPair(),
           revealPhaseHoursLeft: moment(dispute.revealEndAt).fromNow(true),
         };
-        expect(mockNotify).toHaveBeenNthCalledWith(
-          1,
-          NotifyType.CommitPhaseEnded,
-          net,
-          '0xProvider',
-          payload,
-        );
-        expect(mockNotify).toHaveBeenNthCalledWith(
-          2,
-          NotifyType.CommitPhaseEnded,
-          net,
-          '0xTaker',
-          payload,
-        );
+        expect(mockNotify).toHaveBeenNthCalledWith(1, NotificationID.CommitPhaseEnded, net, '0xProvider', payload);
+        expect(mockNotify).toHaveBeenNthCalledWith(2, NotificationID.CommitPhaseEnded, net, '0xTaker', payload);
         payload.drafted = true;
-        expect(mockNotify).toHaveBeenNthCalledWith(
-          3,
-          NotifyType.CommitPhaseEnded,
-          net,
-          '0xDraftee',
-          payload,
-        );
+        expect(mockNotify).toHaveBeenNthCalledWith(3, NotificationID.CommitPhaseEnded, net, '0xDraftee', payload);
       });
     });
   });

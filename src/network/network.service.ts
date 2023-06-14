@@ -1,48 +1,56 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { BigNumber, Contract, providers } from 'ethers';
-import * as coreABI from '../../abi/core.json';
-import * as disputeManagerABI from '../../abi/disputemanager.json';
-import * as feePoolABI from '../../abi/feepool.json';
-import * as badgeMgrABI from '../../abi/badgemanager.json';
-import * as assetRegABI from '../../abi/assetregistry.json';
-import * as lpPoolABI from '../../abi/lppool.json';
-import * as marketCoreABI from '../../abi/marketcore.json';
-import * as erc20ABI from '../../abi/erc20.json';
-import * as mediatorManagerABI from '../../abi/mediatormanager.json';
-import * as tokenPoolABI from '../../abi/tokenpool.json';
-import * as p2pTokenABI from '../../abi/token.json';
-import { SupportedNetworks } from './common';
+import { Contract, providers } from 'ethers';
+import * as coreABI from '../../abi/Core.json';
+import * as disputeManagerABI from '../../abi/DisputeManager.json';
+import * as feePoolABI from '../../abi/FeePool.json';
+import * as badgeMgrABI from '../../abi/BadgeManager.json';
+import * as assetRegABI from '../../abi/AssetRegistry.json';
+import * as lpPoolABI from '../../abi/LPPool.json';
+import * as marketCoreABI from '../../abi/MarketCore.json';
+import * as mediatorManagerABI from '../../abi/MediatorManager.json';
+import * as tokenPoolABI from '../../abi/TokenPool.json';
+import * as p2pTokenABI from '../../abi/Token.json';
+import * as erc20TokenABI from '../../abi/ERC20.json';
+import { SupportedNetworks, toBN } from './common';
 import { CoreHandler } from './core/core.handler';
 import { DisputeManagerHandler } from './disputemanager/dispute_manager.handler';
 import { FeePoolHandler } from './feepool/fee_pool.handler';
 import { LPPoolHandler } from './lppool/lp_pool.handler';
 import { MarketCoreHandler } from './marketcore/market_core.handler';
 import { MediatorManagerHandler } from './mediatormanager/mediator_manager.handler';
-import { TokenPoolHandler } from './tokenpool/token_pool.handler';
 import { NotifierService } from '../jobs/mailer/NotifierService';
-import Swap from '../models/swap';
-import { Transaction } from 'objection';
-import Market from '../models/market';
-import Meta, { FeeName } from '../models/meta';
 import { isTestMode } from '../common/common';
-import { Signer } from '@ethersproject/abstract-signer';
-import { Provider } from '@ethersproject/abstract-provider';
-import { ContractInterface } from '@ethersproject/contracts/src.ts';
 import { Watcher } from './watcher';
 import { BadgeManagerHandler } from './badge/badge_manager.handler';
 import { AssetRegistryHandler } from './assetregistry/asset_registry.handler';
-import AssetRegistry from '../models/asset_registry';
+import {
+  AssetRegistry,
+  BadgeManager,
+  Core,
+  DisputeManager,
+  ERC20,
+  FeePool,
+  LPPool,
+  MarketCore,
+  MediatorManager,
+  Token,
+  TokenPool,
+} from '../../typechain';
+
+interface ContractInfo {
+  [key: string]: JointContracts;
+}
+
+interface JsonRpcProviders {
+  [key: string]: providers.JsonRpcProvider;
+}
 
 @Injectable()
 export default class NetworkService {
   private logger = new Logger(NetworkService.name);
-  private contracts: {
-    [key: string]: JointContracts;
-  } = {};
-  private providers: {
-    [key: string]: providers.JsonRpcProvider;
-  } = {};
+  private contracts: ContractInfo = {};
+  private providers: JsonRpcProviders = {};
 
   constructor(public cfgSrv: ConfigService, private notifSrv: NotifierService) {
     if (isTestMode()) return;
@@ -67,30 +75,21 @@ export default class NetworkService {
   }
 
   /**
-   * Get market core contract
-   * @param network The network name
-   * @returns
-   */
-  getMarketCore(network: string) {
-    return this.getContracts(network).marketCore;
-  }
-
-  /**
-   * Get market core contract
-   * @param network The network name
-   * @returns
-   */
-  getCore(network: string) {
-    return this.getContracts(network).core;
-  }
-
-  /**
    * Get a network's provider
    * @param network The network name
    * @returns
    */
   getProvider(network: string): providers.JsonRpcProvider {
     return this.providers[network];
+  }
+
+  /**
+   * Get an  ERC20 contract
+   * @param network The network name
+   * @param address The contract address
+   */
+  getERC20Contract(network: string, address: string): ERC20 {
+    return new Contract(address, erc20TokenABI, this.providers[network]) as ERC20;
   }
 
   /**
@@ -108,145 +107,65 @@ export default class NetworkService {
       this.cfgSrv.get(`app.networks.${network}.p2pTokenAddr`),
       p2pTokenABI,
       prov,
-    );
+    ) as Token;
     this.contracts[network].marketCore = new Contract(
       this.cfgSrv.get(`app.networks.${network}.marketCoreAddr`),
       marketCoreABI,
       prov,
-    );
+    ) as MarketCore;
     this.contracts[network].core = new Contract(
       this.cfgSrv.get(`app.networks.${network}.coreAddr`),
       coreABI,
       prov,
-    );
+    ) as Core;
     this.contracts[network].mediatorMgr = new Contract(
       this.cfgSrv.get(`app.networks.${network}.mediatorMgrAddr`),
       mediatorManagerABI,
       prov,
-    );
+    ) as MediatorManager;
     this.contracts[network].disputeMgr = new Contract(
       this.cfgSrv.get(`app.networks.${network}.disputeMgrAddr`),
       disputeManagerABI,
       prov,
-    );
+    ) as DisputeManager;
     this.contracts[network].tokenPool = new Contract(
       this.cfgSrv.get(`app.networks.${network}.tokenPoolAddr`),
       tokenPoolABI,
       prov,
-    );
+    ) as TokenPool;
     this.contracts[network].lpPool = new Contract(
       this.cfgSrv.get(`app.networks.${network}.lpPoolAddr`),
       lpPoolABI,
       prov,
-    );
+    ) as LPPool;
     this.contracts[network].feePool = new Contract(
       this.cfgSrv.get(`app.networks.${network}.feePoolAddr`),
       feePoolABI,
       prov,
-    );
+    ) as FeePool;
     this.contracts[network].badgeMgr = new Contract(
       this.cfgSrv.get(`app.networks.${network}.badgeMgrAddr`),
       badgeMgrABI,
       prov,
-    );
+    ) as BadgeManager;
     this.contracts[network].assetRegistry = new Contract(
       this.cfgSrv.get(`app.networks.${network}.assetRegAddr`),
       assetRegABI,
       prov,
-    );
+    ) as AssetRegistry;
 
     // Add handlers to watcher
     const watcher = new Watcher(network, prov);
     await watcher.add(
       new MarketCoreHandler(this, this.notifSrv, prov, network, this.contracts[network]),
-      new CoreHandler(this, this.notifSrv, prov, network, this.contracts[network]),
       new MediatorManagerHandler(this, this.notifSrv, prov, network, this.contracts[network]),
       new DisputeManagerHandler(this, this.notifSrv, prov, network, this.contracts[network]),
+      new CoreHandler(this, this.notifSrv, prov, network, this.contracts[network]),
       new BadgeManagerHandler(prov, network, this.contracts[network]),
-      new TokenPoolHandler(prov, network, this.contracts[network]),
+      // new TokenPoolHandler(prov, network, this.contracts[network]),
       new LPPoolHandler(prov, network, this.contracts[network]),
       new FeePoolHandler(prov, network, this.contracts[network]),
       new AssetRegistryHandler(prov, network, this.contracts[network]),
     );
-  }
-
-  /**
-   * Create instance of Contract
-   * @param addressOrName The contract address
-   * @param contractInterface The contract ABI
-   * @param signerOrProvider The network provider
-   */
-  public newContract(
-    addressOrName: string,
-    contractInterface: ContractInterface,
-    signerOrProvider?: Signer | Provider,
-  ) {
-    return new Contract(addressOrName, contractInterface, signerOrProvider);
-  }
-
-  /**
-   * Get token decimals
-   * @param provider The network provider
-   * @param token The token address
-   */
-  public async getTokenDecimals(
-    provider: providers.JsonRpcProvider,
-    token: string,
-  ): Promise<number> {
-    const base = this.newContract(token, erc20ABI, provider);
-    return base.decimals();
-  }
-
-  /**
-   * Get swap fee information
-   * @param provider The provider object
-   * @param swap The swap object
-   * @param txn The transaction object
-   * @return
-   */
-  async getSwapFeeInfo(
-    provider: providers.JsonRpcProvider,
-    swap: Swap,
-    txn?: Transaction,
-  ): Promise<{
-    cost: string;
-    chargedAmount: string;
-    costCharged: boolean;
-    protocolFeeBP: number;
-    protocolFee: string;
-    marketFee: string;
-    marketFeeBP: number;
-    totalFee: string;
-  }> {
-    const market = await Market.getMarket(swap.network, swap.marketAddress);
-    if (!market) return Promise.reject(new Error('market not found'));
-
-    // Calculate commission
-    const baseDec = await this.getTokenDecimals(provider, market.baseAddress);
-    const cost = BigNumber.from(swap.price).mul(swap.amount).div(BigNumber.from(10).pow(baseDec));
-    const chargeable = market.isBaseSynth() ? cost : BigNumber.from(swap.amount);
-    const commission = chargeable.mul(market.commission).div(10000);
-
-    // Determine what protocol fee base point
-    let feeName: FeeName = FeeName.SynthSwapFeeBp;
-    if (swap.instant) {
-      const baseStable = await AssetRegistry.isStable(swap.network, market.baseAddress, txn);
-      const quoteStable = await AssetRegistry.isStable(swap.network, market.quoteAddress, txn);
-      feeName = baseStable && quoteStable ? FeeName.StableSwapFeeBp : FeeName.InstantSwapFeeBp;
-    }
-
-    // Calculate protocol and market fees
-    const feeBP = await Meta.getProtocolFee(swap.network, feeName);
-    const fee = chargeable.mul(feeBP.value).div(10000);
-    return Promise.resolve({
-      cost: cost.toString(),
-      chargedAmount: chargeable.toString(),
-      costCharged: market.isBaseSynth(),
-      protocolFeeBP: parseInt(feeBP.value),
-      protocolFee: fee.toString(),
-      totalFee: commission.add(fee).toString(),
-      marketFeeBP: market.commission,
-      marketFee: commission.toString(),
-    });
   }
 }

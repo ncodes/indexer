@@ -58,6 +58,7 @@ export class SwapsController {
       q.net,
       swap.marketAddress,
       swap.provider,
+      undefined,
       q.select,
     );
     if (!liquidity) return throw404('liquidity not found');
@@ -100,6 +101,7 @@ export class SwapsController {
         q.net,
         swap.marketAddress,
         swap.provider,
+        undefined,
         q.select,
       );
       if (!liquidity) return throw404('liquidity not found');

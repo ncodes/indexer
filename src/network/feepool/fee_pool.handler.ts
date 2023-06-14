@@ -2,12 +2,8 @@ import { BigNumber, Event, providers } from 'ethers';
 import { Handler } from '../handler';
 
 export class FeePoolHandler extends Handler {
-  constructor(
-    private provider: providers.JsonRpcProvider,
-    public network: string,
-    private contracts: JointContracts,
-  ) {
-    super(null, network, contracts.feePool);
+  constructor(private provider: providers.JsonRpcProvider, public network: string, private contracts: JointContracts) {
+    super(FeePoolHandler.name, null, network, contracts.feePool);
   }
 
   /**
@@ -18,12 +14,9 @@ export class FeePoolHandler extends Handler {
       return this.onRewardAdded(token, amount, event);
     });
 
-    this.on(
-      'RewardWithdrawn',
-      async (token: string, account: string, amount: BigNumber, event: Event) => {
-        return this.onRewardWithdrawn(token, account, amount, event);
-      },
-    );
+    this.on('RewardWithdrawn', async (token: string, account: string, amount: BigNumber, event: Event) => {
+      return this.onRewardWithdrawn(token, account, amount, event);
+    });
 
     this.on('Recovered', async (token: string, amount: BigNumber, event: Event) => {
       return this.onRecovered(token, amount, event);

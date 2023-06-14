@@ -5,7 +5,7 @@ import Dispute from '../../../models/dispute';
 import Swap from '../../../models/swap';
 import Draft from '../../../models/draft';
 import * as _ from 'lodash';
-import { NotifierService, NotifyType } from '../../mailer/NotifierService';
+import { NotifierService, NotificationID } from '../../mailer/NotifierService';
 import * as moment from 'moment';
 import { commify, formatUnits } from 'ethers/lib/utils';
 import Reveal from '../../../models/reveal';
@@ -55,18 +55,10 @@ export default class OnRevealPeriodEnd extends Base {
 
     // Get the swap order
     const swap = await Swap.get(dispute.network, dispute.orderId);
-    recipients.push(
-      { address: swap.provider, participant: true },
-      { address: swap.taker, participant: true },
-    );
+    recipients.push({ address: swap.provider, participant: true }, { address: swap.taker, participant: true });
 
     // Get the drafted tickets
-    const drafted = await Draft.getAll(
-      swap.network,
-      swap.marketAddress,
-      swap.orderId,
-      dispute.disputeId,
-    );
+    const drafted = await Draft.getAll(swap.network, swap.marketAddress, swap.orderId, dispute.disputeId);
     recipients.push(
       ..._.map(drafted, (v) => {
         return { address: v.owner };
@@ -84,7 +76,7 @@ export default class OnRevealPeriodEnd extends Base {
 
     // Send notification
     for (const recipient of recipients) {
-      await this.notifier.notify(NotifyType.RevealPhaseEnded, swap.network, recipient.address, {
+      await this.notifier.notify(NotificationID.RevealPhaseEnded, swap.network, recipient.address, {
         marketAddress: swap.marketAddress,
         network: swap.network,
         orderId: swap.orderId,
@@ -92,9 +84,7 @@ export default class OnRevealPeriodEnd extends Base {
         participant: recipient.participant,
         pair: swap.getPair(),
         outcome,
-        cost: commify(
-          formatUnits(this.cfgSrv.get(`app.contractsParams.${swap.network}.disputeCost`), 18),
-        ),
+        cost: commify(formatUnits(this.cfgSrv.get(`app.contractsParams.${swap.network}.disputeCost`), 18)),
         appealPhaseHoursLeft: moment(dispute.appealEndAt).fromNow(false),
       });
     }

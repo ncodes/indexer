@@ -4,12 +4,8 @@ import { Transaction } from 'objection';
 import AssetRegistry from '../../models/asset_registry';
 
 export class AssetRegistryHandler extends Handler {
-  constructor(
-    private provider: providers.JsonRpcProvider,
-    public network: string,
-    private contracts: JointContracts,
-  ) {
-    super(null, network, contracts.assetRegistry);
+  constructor(private provider: providers.JsonRpcProvider, public network: string, private contracts: JointContracts) {
+    super(AssetRegistryHandler.name, null, network, contracts.assetRegistry);
   }
 
   /**

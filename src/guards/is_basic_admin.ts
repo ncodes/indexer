@@ -19,11 +19,7 @@ export class IsBasicAdmin implements CanActivate {
 
       if (!auth) {
         return rej(
-          error()
-            .type(ErrorTypes.Auth)
-            .status(HttpStatus.UNAUTHORIZED)
-            .msg('authorization header is required')
-            .build(),
+          error().type(ErrorTypes.Auth).status(HttpStatus.UNAUTHORIZED).msg('authorization header is required').build(),
         );
       }
 
@@ -38,10 +34,7 @@ export class IsBasicAdmin implements CanActivate {
       }
 
       const user = basicAuth(req);
-      if (
-        user.name !== this.cfgSrv.get('app.rootAdminUser') ||
-        user.pass !== this.cfgSrv.get('app.rootAdminPass')
-      ) {
+      if (user.name !== this.cfgSrv.get('app.rootAdminUser') || user.pass !== this.cfgSrv.get('app.rootAdminPass')) {
         return rej(notPermitted.build());
       }
 

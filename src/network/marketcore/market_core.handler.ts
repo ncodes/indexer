@@ -1,18 +1,22 @@
 import { Logger } from '@nestjs/common';
 import { BigNumber, Event, providers } from 'ethers';
 import { Transaction } from 'objection';
-import * as erc20ABI from '../../../abi/erc20.json';
+import * as erc20ABI from '../../../abi/ERC20.json';
+import * as erc721ABI from '../../../abi/ERC721.json';
 import Market from '../../models/market';
 import { Handler } from '../handler';
 import LiquidityProvider from '../../models/market_provider';
 import InvitedMediator from '../../models/invited_mediators';
 import PermittedTrader from '../../models/permitted_trader';
-import { NotifierService, NotifyType } from '../../jobs/mailer/NotifierService';
+import { NotifierService, NotificationID } from '../../jobs/mailer/NotifierService';
 import NetworkService from '../network.service';
 import MarketBadge, { BadgeScope } from '../../models/market_badge';
+import { findInSynthetic } from '../../common/token_list';
+import * as console from 'console';
 
 export class MarketCoreHandler extends Handler {
   public logger = new Logger(MarketCoreHandler.name);
+
   constructor(
     private netSrv: NetworkService,
     private notifSrv: NotifierService,
@@ -20,7 +24,7 @@ export class MarketCoreHandler extends Handler {
     public network: string,
     private contracts: JointContracts,
   ) {
-    super(netSrv.cfgSrv, network, contracts.marketCore);
+    super(MarketCoreHandler.name, netSrv.cfgSrv, network, contracts.marketCore);
   }
 
   /**
@@ -41,18 +45,7 @@ export class MarketCoreHandler extends Handler {
         event: Event,
         txn: Transaction,
       ) => {
-        return this.onNewMarket(
-          id,
-          owner,
-          base,
-          quote,
-          baseType,
-          quoteType,
-          commission,
-          numMediators,
-          event,
-          txn,
-        );
+        return this.onNewMarket(id, owner, base, quote, baseType, quoteType, commission, numMediators, event, txn);
       },
     );
 
@@ -96,12 +89,9 @@ export class MarketCoreHandler extends Handler {
       return this.onOfferOnlyEnabled(id, event);
     });
 
-    this.on(
-      'TransferredOwnership',
-      async (id: string, oldOwner: string, newOwner: string, event: Event) => {
-        return this.onTransferredOwnership(id, oldOwner, newOwner, event);
-      },
-    );
+    this.on('TransferredOwnership', async (id: string, oldOwner: string, newOwner: string, event: Event) => {
+      return this.onTransferredOwnership(id, oldOwner, newOwner, event);
+    });
 
     this.on('ZeroPriceEnabled', async (id: string, event: Event) => {
       return this.onZeroPriceEnabled(id, event);
@@ -132,31 +122,17 @@ export class MarketCoreHandler extends Handler {
         event: Event,
         txn: Transaction,
       ) => {
-        return this.onUpdatedDisputeDurations(
-          id,
-          disputeDelayTime,
-          evidenceDur,
-          predictDur,
-          appealDur,
-          event,
-          txn,
-        );
+        return this.onUpdatedDisputeDurations(id, disputeDelayTime, evidenceDur, predictDur, appealDur, event, txn);
       },
     );
 
-    this.on(
-      'UpdatedMarketManager',
-      async (id: string, managerAddr: string, event: Event, txn?: Transaction) => {
-        return this.onUpdatedMarketManager(id, managerAddr, event, txn);
-      },
-    );
+    this.on('UpdatedMarketManager', async (id: string, managerAddr: string, event: Event, txn?: Transaction) => {
+      return this.onUpdatedMarketManager(id, managerAddr, event, txn);
+    });
 
-    this.on(
-      'UpdatedDisputeCost',
-      async (id: string, newCost: BigNumber, event: Event, txn?: Transaction) => {
-        return this.onUpdatedDisputeCost(id, newCost, event, txn);
-      },
-    );
+    this.on('UpdatedDisputeCost', async (id: string, newCost: BigNumber, event: Event, txn?: Transaction) => {
+      return this.onUpdatedDisputeCost(id, newCost, event, txn);
+    });
   }
 
   /**
@@ -236,13 +212,7 @@ export class MarketCoreHandler extends Handler {
    * @param event The event object
    * @param txn The db transaction object
    */
-  async onTransferredOwnership(
-    id: string,
-    oldOwner: string,
-    newOwner: string,
-    event: Event,
-    txn?: Transaction,
-  ) {
+  async onTransferredOwnership(id: string, oldOwner: string, newOwner: string, event: Event, txn?: Transaction) {
     await Market.updateByNetworkAddress(this.network, id, { creator: newOwner }, txn);
   }
 
@@ -282,31 +252,73 @@ export class MarketCoreHandler extends Handler {
     txn?: Transaction,
   ) {
     this.logger.log(`NewMarket: processing...`);
-    const baseToken = this.newContract(baseAsset, erc20ABI, this.provider);
-    const quoteToken = this.newContract(quoteAsset, erc20ABI, this.provider);
-    const base = (await baseToken.symbol()).toUpperCase();
-    const quote = (await quoteToken.symbol()).toUpperCase();
-    const mc = this.netSrv.getMarketCore(this.network);
-    const market = await mc.getMarket(id, { blockTag: event.blockNumber });
+
+    let baseSymbol = '',
+      quoteSymbol = '',
+      baseDecimals: number,
+      quoteDecimals: number;
+
+    if (Market.isERC20(baseType)) {
+      const baseToken = this.newContract(baseAsset, erc20ABI, this.provider);
+      baseSymbol = (await baseToken.symbol()).toUpperCase();
+      baseDecimals = await baseToken.decimals();
+    }
+
+    if (Market.isERC20(quoteType)) {
+      const quoteToken = this.newContract(quoteAsset, erc20ABI, this.provider);
+      quoteSymbol = (await quoteToken.symbol()).toUpperCase();
+      quoteDecimals = await quoteToken.decimals();
+    }
+
+    if (Market.isERC721(baseType)) {
+      const baseToken = this.newContract(baseAsset, erc721ABI, this.provider);
+      baseSymbol = (await baseToken.symbol()).toUpperCase();
+    }
+
+    if (Market.isERC721(quoteType)) {
+      const quoteToken = this.newContract(quoteAsset, erc721ABI, this.provider);
+      quoteSymbol = (await quoteToken.symbol()).toUpperCase();
+    }
+
+    if (Market.isSynth(baseType)) {
+      const token = findInSynthetic(baseAsset);
+      if (token) {
+        baseSymbol = token.symbol.toUpperCase();
+        baseDecimals = token.decimals;
+      }
+    }
+
+    if (Market.isSynth(quoteType)) {
+      const token = findInSynthetic(quoteAsset);
+      if (token) {
+        quoteSymbol = token.symbol.toUpperCase();
+        quoteDecimals = token.decimals;
+      }
+    }
+
+    const market = await this.contracts.marketCore.getMarket(id, { blockTag: event.blockNumber });
+
     await Market.create(
       {
         address: id,
         creator: owner,
-        base,
+        base: baseSymbol,
         baseAddress: baseAsset,
         baseType: baseType,
-        quote,
+        baseDecimals: baseDecimals,
+        quote: quoteSymbol,
         quoteAddress: quoteAsset,
         quoteType: quoteType,
+        quoteDecimals: quoteDecimals,
         instant: Market.isInstant(baseType, quoteType),
-        pair: `${base}${quote}`,
+        pair: `${baseSymbol}${quoteSymbol}`,
         network: this.network,
         commission: commission.toNumber(),
         txHash: event.transactionHash,
         numMediators: numMediators.toNumber(),
-        permPut: market.permPut,
-        permSwap: market.permSwap,
-        permMediate: market.permMediate,
+        permPut: market.perms.put,
+        permSwap: market.perms.swap,
+        permMediate: market.perms.mediate,
         mediatorBond: market.mediatorBond.toString(),
       },
       txn,
@@ -322,12 +334,7 @@ export class MarketCoreHandler extends Handler {
    * @param event The event object
    * @param txn The db transaction object
    */
-  async onMarketPutAllowed(
-    marketAddress: string,
-    address: string,
-    event: Event,
-    txn?: Transaction,
-  ) {
+  async onMarketPutAllowed(marketAddress: string, address: string, event: Event, txn?: Transaction) {
     await LiquidityProvider.create(
       {
         network: this.network,
@@ -338,7 +345,7 @@ export class MarketCoreHandler extends Handler {
     );
 
     // Notify approved user
-    await this.notifSrv.notify(NotifyType.PutApproved, this.network, address, {
+    await this.notifSrv.notify(NotificationID.PutApproved, this.network, address, {
       marketAddress,
     });
 
@@ -352,16 +359,11 @@ export class MarketCoreHandler extends Handler {
    * @param event The event object
    * @param txn The db transaction object
    */
-  async onMarketPutRevoked(
-    marketAddress: string,
-    address: string,
-    event: Event,
-    txn?: Transaction,
-  ) {
+  async onMarketPutRevoked(marketAddress: string, address: string, event: Event, txn?: Transaction) {
     await LiquidityProvider.remove(this.network, marketAddress, address, txn);
 
     // Notify revoked user
-    await this.notifSrv.notify(NotifyType.PutRevoked, this.network, address, {
+    await this.notifSrv.notify(NotificationID.PutRevoked, this.network, address, {
       marketAddress,
     });
 
@@ -394,7 +396,7 @@ export class MarketCoreHandler extends Handler {
       );
     }
 
-    await this.notifSrv.notify(NotifyType.MediationInviteReceived, this.network, address, {
+    await this.notifSrv.notify(NotificationID.MediatorInviteReceived, this.network, address, {
       marketAddress,
     });
 
@@ -409,12 +411,7 @@ export class MarketCoreHandler extends Handler {
    * @param txn The db transaction object
    */
   async onUnInvitedMediator(id: string, address: string, event: Event, txn?: Transaction) {
-    const invite = await InvitedMediator.findInviteByNetworkMarketIDAndAddress(
-      this.network,
-      id,
-      address,
-      txn,
-    );
+    const invite = await InvitedMediator.findInviteByNetworkMarketIDAndAddress(this.network, id, address, txn);
     if (!invite.accepted) await InvitedMediator.remove(this.network, id, address, txn);
     return Promise.resolve(undefined);
   }
@@ -426,23 +423,12 @@ export class MarketCoreHandler extends Handler {
    * @param event The event object
    * @param txn The db transaction object
    */
-  async onAcceptedMediatorInvite(
-    marketAddress: string,
-    address: string,
-    event: Event,
-    txn?: Transaction,
-  ) {
-    await InvitedMediator.updateInvite(
-      this.network,
-      marketAddress,
-      address,
-      { accepted: true },
-      txn,
-    );
+  async onAcceptedMediatorInvite(marketAddress: string, address: string, event: Event, txn?: Transaction) {
+    await InvitedMediator.updateInvite(this.network, marketAddress, address, { accepted: true }, txn);
 
     // Notify market creator
     const market = await Market.getByAddress(marketAddress, txn);
-    await this.notifSrv.notify(NotifyType.MediatorInviteAccepted, this.network, market.creator, {
+    await this.notifSrv.notify(NotificationID.MediatorInviteAccepted, this.network, market.creator, {
       marketAddress,
       invitee: address,
     });
@@ -461,7 +447,7 @@ export class MarketCoreHandler extends Handler {
     await InvitedMediator.remove(this.network, marketAddress, address, txn);
 
     // Notify mediator
-    await this.notifSrv.notify(NotifyType.MediatorRevoked, this.network, address, {
+    await this.notifSrv.notify(NotificationID.MediatorRevoked, this.network, address, {
       marketAddress,
     });
 
@@ -476,12 +462,7 @@ export class MarketCoreHandler extends Handler {
    * @param txn The db transaction object
    */
   async onAllowedSwap(marketAddress: string, address: string, event: Event, txn?: Transaction) {
-    const perm = await PermittedTrader.findByNetworkMarketIdAndAddress(
-      this.network,
-      marketAddress,
-      address,
-      txn,
-    );
+    const perm = await PermittedTrader.findByNetworkMarketIdAndAddress(this.network, marketAddress, address, txn);
     if (!perm) {
       await PermittedTrader.create(
         {
@@ -492,7 +473,7 @@ export class MarketCoreHandler extends Handler {
         txn,
       );
 
-      await this.notifSrv.notify(NotifyType.SwapApproved, this.network, address, {
+      await this.notifSrv.notify(NotificationID.SwapApproved, this.network, address, {
         marketAddress,
       });
     }
@@ -509,7 +490,7 @@ export class MarketCoreHandler extends Handler {
    */
   async onRevokedSwap(marketAddress: string, address: string, event: Event, txn?: Transaction) {
     await PermittedTrader.remove(this.network, marketAddress, address, txn);
-    await this.notifSrv.notify(NotifyType.SwapRevoked, this.network, address, {
+    await this.notifSrv.notify(NotificationID.SwapRevoked, this.network, address, {
       marketAddress,
     });
     return Promise.resolve(undefined);

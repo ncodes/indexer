@@ -1,5 +1,6 @@
-import { BigNumber } from 'ethers';
+import { BigNumber, BigNumberish } from 'ethers';
 import { EnumValues } from 'enum-values';
+import { toDec } from '../common/common';
 
 export enum SupportedNetworks {
   Ethereum = 'ethereum',
@@ -66,4 +67,22 @@ export function isValidNetwork(network: string) {
  */
 export function toBN(v) {
   return BigNumber.from(v || 0);
+}
+
+// pow10 returns 10^decimals
+export function pow10(decimals: number) {
+  return BigNumber.from(10).pow(decimals);
+}
+
+// pow10D returns 10^decimals as a Decimal object
+export function pow10D(decimals: number) {
+  return toDec(10).pow(decimals);
+}
+
+export function powOf(n: BigNumberish, power: number) {
+  return toBN(
+    toDec(n)
+      .mul(toDec(pow10(power)))
+      .toFixed(0),
+  );
 }

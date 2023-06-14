@@ -27,7 +27,8 @@
     "mig:dev:up": "knex-migrate up --env=development",
     "mig:dev:rollback": "knex-migrate rollback --env=development",
     "mig:prod:up": "knex-migrate up --env=production",
-    "mig:prod:rollback": "knex-migrate rollback --env=production"
+    "mig:prod:rollback": "knex-migrate rollback --env=production",
+    "typechain": "typechain --target ethers-v5 --out-dir typechain abi/*.json"
   },
   "dependencies": {
     "@ethersproject/abstract-provider": "^5.7.0",
@@ -125,6 +126,7 @@
     "@nestjs/cli": "^9.4.2",
     "@nestjs/schematics": "^9.1.0",
     "@nestjs/testing": "^9.4.0",
+    "@typechain/ethers-v5": "^11.0.0",
     "@types/bcrypt": "^5.0.0",
     "@types/bluebird": "^3.5.38",
     "@types/cron": "^2.0.1",
@@ -145,6 +147,7 @@
     "ts-jest": "^29.1.0",
     "ts-node": "^10.9.1",
     "tslint-config-prettier": "^1.18.0",
+    "typechain": "^8.2.0",
     "typescript": "^5.0.4",
     "typescript-eslint": "^0.0.1-alpha.0"
   },

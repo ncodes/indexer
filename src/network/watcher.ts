@@ -4,7 +4,7 @@ import Meta from '../models/meta';
 import { shortenAddr } from '../common/utils/helpers';
 import * as sortArray from 'sort-array';
 import { Handler } from './handler';
-import { isTestMode } from '../common/common';
+import { isDevMode, isTestMode } from '../common/common';
 import Event from '../models/events';
 import * as defer from 'defer-promise';
 
@@ -39,7 +39,7 @@ export class Watcher {
   async add(...handlers: Handler[]) {
     for (const h of handlers) {
       this.handlers.push(h);
-      this.intervals[h.getContract().address] = this.sync(h.getContract());
+      this.intervals[h.getContract().address] = this.sync(h.name, h.getContract());
       h.listen();
     }
     return Promise.resolve();
@@ -55,17 +55,6 @@ export class Watcher {
   }
 
   /**
-   * Get the last sync height for a given key
-   * @param key
-   * @private
-   */
-  private static async getSyncHeightFromDB(key: string) {
-    const meta = await Meta.get(key);
-    if (!meta) return undefined;
-    return meta.value;
-  }
-
-  /**
    * Get a handler by contract address
    * @param address The contract address
    */
@@ -78,7 +67,7 @@ export class Watcher {
   /**
    * Watch for event on new block
    */
-  watchBlock(contract: Contract) {
+  watchBlock(handlerName: string, contract: Contract) {
     const listener = async (curBlock: number) => {
       try {
         const key = `lastSyncedHeight_${this.network}_${contract.address}`;
@@ -115,7 +104,7 @@ export class Watcher {
       } catch (e) {
         this.logger.error('WatchBlock(): ', e);
         this.provider.off('block', listener);
-        this.sync(contract);
+        this.sync(handlerName, contract);
       }
     };
     this.provider.on('block', listener);
@@ -123,9 +112,10 @@ export class Watcher {
 
   /**
    * Synchronize events for the given contract
+   * @param handlerName The handler name
    * @param contract The target contract
    */
-  sync(contract: Contract) {
+  sync(handlerName: string, contract: Contract) {
     return setInterval(async () => {
       try {
         // Get last synced block height
@@ -141,7 +131,7 @@ export class Watcher {
         // If we are, stop watching on interval. Instead, watch on new block.
         const curBlock = await contract.provider.getBlockNumber();
         if (parseInt(meta.value) + 1 > curBlock) {
-          this.watchBlock(contract);
+          this.watchBlock(handlerName, contract);
           clearInterval(this.intervals[contract.address]);
           return;
         }
@@ -174,7 +164,7 @@ export class Watcher {
         // Update the last sync height
         await Meta.update(key, endBlock.toString());
       } catch (e) {
-        this.logger.error(`watch(${shortenAddr(contract.address)}): ` + e.message);
+        this.logger.error(`watch(${handlerName}): ` + e.message, e.stack);
       }
     }, 1000);
   }
@@ -214,9 +204,7 @@ export class Watcher {
     } catch (error) {
       await txn.rollback();
       if (error.message.indexOf('duplicate key') !== -1) return Promise.resolve();
-      this.logger.error(
-        `Error (Event: ${e.event.event}, Contract: ${shortenAddr(e.contract)}): ${error.message}`,
-      );
+      this.logger.error(`Error (Event: ${e.event.event}, Contract: ${shortenAddr(e.contract)}): ${error.message}`);
       return Promise.reject(error);
     }
   }
@@ -226,15 +214,18 @@ export class Watcher {
    * @private
    */
   private processEvents() {
-    setInterval(async () => {
-      if (this.events.length === 0) return;
-      const evt = this.events.splice(0, 1)[0];
-      try {
-        await this.emit(evt);
-        evt.promise.resolve();
-      } catch (e) {
-        evt.promise.reject(e);
-      }
-    }, 100);
+    setInterval(
+      async () => {
+        if (this.events.length === 0) return;
+        const evt = this.events.splice(0, 1)[0];
+        try {
+          await this.emit(evt);
+          evt.promise.resolve();
+        } catch (e) {
+          evt.promise.reject(e);
+        }
+      },
+      isDevMode() ? 100 : 1000,
+    );
   }
 }

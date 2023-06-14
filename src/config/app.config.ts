@@ -6,11 +6,13 @@ export default () => ({
     throttle_limit: process.env.THROTTLE_LIMIT,
     rootAdminUser: process.env.ROOT_ADMIN_USER,
     rootAdminPass: process.env.ROOT_ADMIN_PASS,
+    disableNotifications: process.env.DISABLE_NOTIFICATIONS,
+    tokenMetadataSource: process.env.TOKEN_METADATA_SOURCE,
     redis: {
       url: process.env.REDIS_URL,
     },
     cmc: {
-      key: process.env.CMC_KEY,
+      key: process.env.COINMARKETCAP_KEY,
     },
     openexchangerate: {
       key: process.env.OPENEXRATE_KEY,

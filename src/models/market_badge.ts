@@ -10,13 +10,17 @@ export enum BadgeScope {
 }
 
 /**
- * MarketBadge represents a badge requirement for a market
+ * MarketBadge represents a badge assignment to a market and its liquidities
  */
 export default class MarketBadge extends BaseModel {
   // The network where the badge was granted
   network: string = undefined;
   // Market address
   marketAddress: string = undefined;
+  // The provider's address
+  provider: string = undefined;
+  // The liquidity ID
+  lid: number;
   // The badge assigned to the grantee
   badge: string = undefined;
   // The path part of a badge
@@ -86,5 +90,24 @@ export default class MarketBadge extends BaseModel {
    */
   static deleteByMarketAddress(network: string, address: string, txn?: Transaction) {
     return this.query(txn).where({ network }).where('marketAddress', 'ilike', address).hardDelete();
+  }
+
+  /**
+   * Delete records belonging to a provider in a market
+   * @param network The network name
+   * @param market The market address
+   * @param provider The provider address
+   * @param lid The provider's liquidity ID
+   * @param txn Optional transaction object
+   */
+  static deleteByMarketAndProvider(network: string, market: string, provider: string, lid?: number, txn?: Transaction) {
+    return this.query(txn)
+      .where({ network })
+      .where('marketAddress', 'ilike', market)
+      .where('provider', 'ilike', provider)
+      .where((q) => {
+        if (lid) return q.where({ lid });
+      })
+      .hardDelete();
   }
 }

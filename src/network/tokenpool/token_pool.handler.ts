@@ -2,12 +2,8 @@ import { BigNumber, Event, providers } from 'ethers';
 import { Handler } from '../handler';
 
 export class TokenPoolHandler extends Handler {
-  constructor(
-    private provider: providers.JsonRpcProvider,
-    public network: string,
-    private contracts: JointContracts,
-  ) {
-    super(null, network, contracts.tokenPool);
+  constructor(private provider: providers.JsonRpcProvider, public network: string, private contracts: JointContracts) {
+    super(TokenPoolHandler.name, null, network, contracts.tokenPool);
   }
 
   /**

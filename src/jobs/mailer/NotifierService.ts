@@ -1,39 +1,46 @@
 import { Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
+import { ConfigService } from '@nestjs/config';
 
-export enum NotifyType {
-  MediationInviteReceived,
-  MediatorInviteAccepted,
-  MediatorRevoked,
-  PutApproved,
-  PutRevoked,
-  SwapApproved,
-  SwapRevoked,
-  NewLiquidityManager,
-  RemoveLiquidityManager,
-  NewInstantSwap,
-  NewOffChainSwap,
-  SwapOrderReleased,
-  SwapOrderCancelled,
-  SwapOrderPaid,
-  JoinedMarket,
-  LeftMarket,
-  TicketSlashed,
-  TicketDrafted,
-  DisputeCreated,
-  FullyDrafted,
-  EvidencePhaseStarted,
-  EvidencePhaseEnded,
-  CommitPhaseEnded,
-  RevealPhaseEnded,
-  AppealPhaseEnded,
-  DisputeExecuted,
+export enum NotificationID {
+  MediatorInviteReceived = 'MediatorInviteReceived',
+  MediatorInviteAccepted = 'MediatorInviteAccepted',
+  MediatorRevoked = 'MediatorRevoked',
+  PutApproved = 'PutApproved',
+  PutRevoked = 'PutRevoked',
+  SwapApproved = 'SwapApproved',
+  SwapRevoked = 'SwapRevoked',
+  NewLiquidityManager = 'NewLiquidityManager',
+  RemoveLiquidityManager = 'RemoveLiquidityManager',
+  NewInstantSwap = 'NewInstantSwap',
+  NewInteractiveSwap = 'NewInteractiveSwap',
+  SwapOrderReleased = 'SwapOrderReleased',
+  SwapOrderCancelled = 'SwapOrderCancelled',
+  SwapOrderPaid = 'SwapOrderPaid',
+  NewTicketJoinedMarket = 'NewTicketJoinedMarket',
+  TicketLeftMarket = 'TicketLeftMarket',
+  TicketSlashed = 'TicketSlashed',
+  TicketDrafted = 'TicketDrafted',
+  DisputeCreated = 'DisputeCreated',
+  FullyDrafted = 'FullyDrafted',
+  EvidencePhaseStarted = 'EvidencePhaseStarted',
+  EvidencePhaseEnded = 'EvidencePhaseEnded',
+  CommitPhaseEnded = 'CommitPhaseEnded',
+  RevealPhaseEnded = 'RevealPhaseEnded',
+  AppealPhaseEnded = 'AppealPhaseEnded',
+  DisputeExecuted = 'DisputeExecuted',
+  NewOffer = 'NewOffer',
+  OfferUpdated = 'OfferUpdated',
+  OfferAccepted = 'OfferAccepted',
+  OfferCancelled = 'OfferCancelled',
+  OfferUnaccepted = 'OfferUnaccepted',
+  OfferExecuted = 'OfferExecuted',
 }
 
 @Injectable()
 export class NotifierService {
-  constructor(@InjectQueue('notifier') private queue: Queue) {}
+  constructor(@InjectQueue('notifier') private queue: Queue, private cfgSrv: ConfigService) {}
 
   /**
    * Schedule notification
@@ -42,7 +49,8 @@ export class NotifierService {
    * @param recipient The address of the recipient
    * @param data The context data
    */
-  notify(notifType: NotifyType, network: string, recipient: string, data: { [key: string]: any }) {
+  notify(notifType: NotificationID, network: string, recipient: string, data: { [key: string]: any }) {
+    if (this.cfgSrv.get('app.disableNotifications') === 'true') return Promise.resolve();
     return this.queue.add(
       { notifType, recipient, network, data },
       {

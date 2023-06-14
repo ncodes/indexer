@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { NoopLogger } from '../../../common/loggers/noop_logger';
 import { DBService } from '../../../db/DBService';
-import { NotifierService, NotifyType } from '../../mailer/NotifierService';
+import { NotifierService, NotificationID } from '../../mailer/NotifierService';
 import Dispute from '../../../models/dispute';
 import * as moment from 'moment';
 import Swap from '../../../models/swap';
@@ -128,28 +128,10 @@ describe('OnRevealPeriodEnd', () => {
           cost: commify(formatUnits(disputeCost, 18)),
           appealPhaseHoursLeft: moment(dispute.appealEndAt).fromNow(false),
         };
-        expect(mockNotify).toHaveBeenNthCalledWith(
-          1,
-          NotifyType.RevealPhaseEnded,
-          net,
-          '0xProvider',
-          payload,
-        );
-        expect(mockNotify).toHaveBeenNthCalledWith(
-          2,
-          NotifyType.RevealPhaseEnded,
-          net,
-          '0xTaker',
-          payload,
-        );
+        expect(mockNotify).toHaveBeenNthCalledWith(1, NotificationID.RevealPhaseEnded, net, '0xProvider', payload);
+        expect(mockNotify).toHaveBeenNthCalledWith(2, NotificationID.RevealPhaseEnded, net, '0xTaker', payload);
         delete payload.participant;
-        expect(mockNotify).toHaveBeenNthCalledWith(
-          3,
-          NotifyType.RevealPhaseEnded,
-          net,
-          '0xDraftee',
-          payload,
-        );
+        expect(mockNotify).toHaveBeenNthCalledWith(3, NotificationID.RevealPhaseEnded, net, '0xDraftee', payload);
       });
     });
 
@@ -213,13 +195,7 @@ describe('OnRevealPeriodEnd', () => {
           cost: commify(formatUnits(disputeCost, 18)),
           appealPhaseHoursLeft: moment(dispute.appealEndAt).fromNow(false),
         };
-        expect(mockNotify).toHaveBeenNthCalledWith(
-          1,
-          NotifyType.RevealPhaseEnded,
-          net,
-          '0xProvider',
-          payload,
-        );
+        expect(mockNotify).toHaveBeenNthCalledWith(1, NotificationID.RevealPhaseEnded, net, '0xProvider', payload);
       });
     });
 
@@ -283,13 +259,7 @@ describe('OnRevealPeriodEnd', () => {
           cost: commify(formatUnits(disputeCost, 18)),
           appealPhaseHoursLeft: moment(dispute.appealEndAt).fromNow(false),
         };
-        expect(mockNotify).toHaveBeenNthCalledWith(
-          1,
-          NotifyType.RevealPhaseEnded,
-          net,
-          '0xProvider',
-          payload,
-        );
+        expect(mockNotify).toHaveBeenNthCalledWith(1, NotificationID.RevealPhaseEnded, net, '0xProvider', payload);
       });
     });
   });

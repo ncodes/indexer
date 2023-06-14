@@ -8,9 +8,11 @@ exports.up = function (knex) {
       table.string('base');
       table.string('baseAddress');
       table.integer('baseType').defaultTo(0);
+      table.integer('baseDecimals').defaultTo(0);
       table.string('quote');
       table.string('quoteAddress');
       table.integer('quoteType').defaultTo(0);
+      table.integer('quoteDecimals').defaultTo(0);
       table.boolean('instant').defaultTo(false);
       table.boolean('allowZeroPrice').defaultTo(false);
       table.boolean('offerOnly').defaultTo(false);

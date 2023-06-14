@@ -10,6 +10,16 @@ export enum FeeName {
   InstantNFTSwapFeeBp = 'instantNFTSwapFeeBp',
 }
 
+export enum ProtocolFeeBeneficiary {
+  Inventor = 'inventor_fee_bp',
+  Shared = 'shared_fee_bp',
+  Operator = 'operator_fee_bp',
+}
+
+export enum ProtocolParams {
+  NFTDiscountBP = 'nft_discount_bp',
+}
+
 /**
  * Meta represents key and value pair.
  */
@@ -89,8 +99,9 @@ export default class Meta extends BaseModel {
    * @param feeName The name of the fee type
    * @param txn The transaction object
    */
-  static getProtocolFee(network: string, feeName: FeeName, txn?: Transaction) {
+  static async getProtocolFee(network: string, feeName: FeeName, txn?: Transaction) {
     const key = this.makeProtocolFeeKey(network, feeName);
-    return this.query(txn).where('key', key).first();
+    const rec = await this.query(txn).where('key', key).first();
+    return rec ? parseFloat(rec.value) : '0';
   }
 }

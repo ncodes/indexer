@@ -7,7 +7,7 @@ import Ticket from '../../models/ticket';
 import TicketSlash from '../../models/ticket_slash';
 import Draft from '../../models/draft';
 import Market from '../../models/market';
-import { NotifyType } from '../../jobs/mailer/NotifierService';
+import { NotificationID } from '../../jobs/mailer/NotifierService';
 import Dispute from '../../models/dispute';
 import Swap from '../../models/swap';
 import MineTask, { MineTaskType } from '../../models/mine_task';
@@ -49,13 +49,7 @@ describe('MediatorManagerHandler', () => {
     jest.clearAllMocks();
     mockNotify.mockReset();
     mockGetContracts.mockReset();
-    handler = new MediatorManagerHandler(
-      new MockNetworkService(),
-      new MockNotifierService(),
-      null,
-      net,
-      contracts,
-    );
+    handler = new MediatorManagerHandler(new MockNetworkService(), new MockNotifierService(), null, net, contracts);
     handler.logger = new NoopLogger() as any;
     handler.getParam = (param) => {
       return {
@@ -160,7 +154,7 @@ describe('MediatorManagerHandler', () => {
       expect(market.numMediatorsJoined).toEqual(2);
 
       // expect notification to have been sent
-      expect(mockNotify).toHaveBeenCalledWith(NotifyType.JoinedMarket, net, '0xCreator', {
+      expect(mockNotify).toHaveBeenCalledWith(NotificationID.NewTicketJoinedMarket, net, '0xCreator', {
         marketAddress: '0xMarket',
         owner: '0xOwner',
         numTickets: '1',
@@ -203,7 +197,7 @@ describe('MediatorManagerHandler', () => {
       expect(market.totalJoinedMediatorsBond).toEqual('100');
 
       // expect notification to have been sent
-      expect(mockNotify).toHaveBeenCalledWith(NotifyType.LeftMarket, net, '0xCreator', {
+      expect(mockNotify).toHaveBeenCalledWith(NotificationID.TicketLeftMarket, net, '0xCreator', {
         marketAddress: '0xMarket',
         owner: '0xOwner',
         numTickets: '0',
@@ -295,19 +289,15 @@ describe('MediatorManagerHandler', () => {
       expect(unix(evidEndAt).isSame(dispute.evidenceEndAt)).toBeTruthy();
       const expectedCommitEndAt = evidEndAt + parseInt(handler.getParam('predictDur')) / 2;
       expect(unix(expectedCommitEndAt).isSame(dispute.commitEndAt)).toBeTruthy();
-      expect(
-        unix(evidEndAt + parseInt(handler.getParam('predictDur'))).isSame(dispute.predictEndAt),
-      ).toBeTruthy();
+      expect(unix(evidEndAt + parseInt(handler.getParam('predictDur'))).isSame(dispute.predictEndAt)).toBeTruthy();
       const expectedAppealEndAt =
-        evidEndAt +
-        parseInt(handler.getParam('predictDur')) +
-        parseInt(handler.getParam('appealDur'));
+        evidEndAt + parseInt(handler.getParam('predictDur')) + parseInt(handler.getParam('appealDur'));
       expect(unix(expectedAppealEndAt).isSame(dispute.appealEndAt)).toBeTruthy();
 
       expect(mockNotify).toBeCalledTimes(6);
 
       // expect notification to be sent to drafted ticket owner
-      expect(mockNotify).toHaveBeenNthCalledWith(1, NotifyType.TicketDrafted, net, '0xOwner', {
+      expect(mockNotify).toHaveBeenNthCalledWith(1, NotificationID.TicketDrafted, net, '0xOwner', {
         marketAddress: '0xMarket',
         owner: '0xOwner',
         ticketId: 1,
@@ -323,40 +313,28 @@ describe('MediatorManagerHandler', () => {
         pair: `${swap.base}/${swap.quote}`.toUpperCase(),
         evidencePhaseHoursLeft: moment(dispute.evidenceEndAt).fromNow(true),
       };
-      expect(mockNotify).toHaveBeenNthCalledWith(
-        2,
-        NotifyType.FullyDrafted,
-        net,
-        swap.provider,
-        fullyDraftedLocal,
-      );
-      expect(mockNotify).toHaveBeenNthCalledWith(
-        3,
-        NotifyType.FullyDrafted,
-        net,
-        swap.taker,
-        fullyDraftedLocal,
-      );
+      expect(mockNotify).toHaveBeenNthCalledWith(2, NotificationID.FullyDrafted, net, swap.provider, fullyDraftedLocal);
+      expect(mockNotify).toHaveBeenNthCalledWith(3, NotificationID.FullyDrafted, net, swap.taker, fullyDraftedLocal);
 
       // expect EvidencePhaseStarted notification to be sent to drafted
       // ticket owners
       expect(mockNotify).toHaveBeenNthCalledWith(
         4,
-        NotifyType.EvidencePhaseStarted,
+        NotificationID.EvidencePhaseStarted,
         net,
         '0xDraftOwner1',
         fullyDraftedLocal,
       );
       expect(mockNotify).toHaveBeenNthCalledWith(
         5,
-        NotifyType.EvidencePhaseStarted,
+        NotificationID.EvidencePhaseStarted,
         net,
         '0xDraftOwner2',
         fullyDraftedLocal,
       );
       expect(mockNotify).toHaveBeenNthCalledWith(
         6,
-        NotifyType.EvidencePhaseStarted,
+        NotificationID.EvidencePhaseStarted,
         net,
         '0xOwner',
         fullyDraftedLocal,
@@ -464,7 +442,7 @@ describe('MediatorManagerHandler', () => {
         expect(mockNotify).toBeCalledTimes(1);
 
         // expect notification to be sent to drafted ticket owner
-        expect(mockNotify).toHaveBeenNthCalledWith(1, NotifyType.TicketDrafted, net, '0xOwner', {
+        expect(mockNotify).toHaveBeenNthCalledWith(1, NotificationID.TicketDrafted, net, '0xOwner', {
           marketAddress: '0xMarket',
           owner: '0xOwner',
           ticketId: 1,
@@ -509,9 +487,7 @@ describe('MediatorManagerHandler', () => {
         disputeId: ticket.disputeId,
       });
 
-      await expect(
-        handler.onUndrafted('0xMarket', '0xOwner', toBN(1), true, {} as any),
-      ).resolves.toBeUndefined();
+      await expect(handler.onUndrafted('0xMarket', '0xOwner', toBN(1), true, {} as any)).resolves.toBeUndefined();
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.drafted).toBeFalsy();
       expect(ticket.draftedAt).toBeNull();
@@ -526,9 +502,7 @@ describe('MediatorManagerHandler', () => {
       expect(numCompleted).toEqual(1);
 
       // not slashed
-      await expect(
-        handler.onUndrafted('0xMarket', '0xOwner', toBN(1), false, {} as any),
-      ).resolves.toBeUndefined();
+      await expect(handler.onUndrafted('0xMarket', '0xOwner', toBN(1), false, {} as any)).resolves.toBeUndefined();
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.drafted).toBeFalsy();
       expect(ticket.draftedAt).toBeNull();
@@ -585,7 +559,7 @@ describe('MediatorManagerHandler', () => {
       expect(slash.orderId).toEqual(23);
 
       // expect notification to have been sent
-      expect(mockNotify).toHaveBeenCalledWith(NotifyType.TicketSlashed, net, '0xOwner', {
+      expect(mockNotify).toHaveBeenCalledWith(NotificationID.TicketSlashed, net, '0xOwner', {
         marketAddress: '0xMarket',
         owner: '0xOwner',
         ticketId: '1',
@@ -608,9 +582,7 @@ describe('MediatorManagerHandler', () => {
         orderId: 23,
       });
 
-      await expect(
-        handler.onDelegatedAccount('0xOwner', toBN(1), '0xDelegate', {} as any),
-      ).resolves.toBeUndefined();
+      await expect(handler.onDelegatedAccount('0xOwner', toBN(1), '0xDelegate', {} as any)).resolves.toBeUndefined();
 
       const delegateTicket = await Ticket.find({
         delegated: true,
@@ -634,9 +606,7 @@ describe('MediatorManagerHandler', () => {
         delegate: '0xDelegate',
       });
 
-      await expect(
-        handler.onUndelegatedAccount('0xOwner', toBN(1), '0xDelegate', {} as any),
-      ).resolves.toBeUndefined();
+      await expect(handler.onUndelegatedAccount('0xOwner', toBN(1), '0xDelegate', {} as any)).resolves.toBeUndefined();
 
       const delegateTicket = await Ticket.find({
         delegated: true,

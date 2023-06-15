@@ -1,5 +1,4 @@
 import { INestApplication } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { NoopLogger } from '../../../common/loggers/noop_logger';
 import { DBService } from '../../../db/DBService';
@@ -11,6 +10,8 @@ import Draft from '../../../models/draft';
 import Reveal from '../../../models/reveal';
 import OnRevealPeriodEnd from './on_reveal_period_end';
 import { commify, formatUnits } from 'ethers/lib/utils';
+import { ConfigService } from '../../../config/config.service';
+import Meta, { MetaKeys } from '../../../models/meta';
 
 const mockNotify = jest.fn();
 const MockNotifierService = jest.fn().mockImplementation(() => {
@@ -25,7 +26,6 @@ describe('OnRevealPeriodEnd', () => {
 
   const disputeCost = '100';
   const cfg = {};
-  cfg[`app.contractsParams.${net}.disputeCost`] = disputeCost;
 
   afterEach(async () => {
     await db.truncateTables();
@@ -40,6 +40,13 @@ describe('OnRevealPeriodEnd', () => {
     MockNotifierService.mockClear();
     mockNotify.mockReset();
     await db.truncateTables();
+
+    await Meta.create(
+      Meta.makeNetKey(net, MetaKeys.ContractsParams),
+      JSON.stringify({
+        disputeCost: '100',
+      }),
+    );
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [ConfigService, OnRevealPeriodEnd, NotifierService],

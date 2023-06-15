@@ -1743,4 +1743,52 @@ declare global {
       patch: number;
     }
   }
+
+  interface ContractsParams {
+    // Core params
+    minTimeToPay: number;
+    orderGraceDur: number;
+    maxOpenOrders: number;
+    maxOpenDisputes: number;
+    transferToFeePoolInterval: number;
+    nftDiscountBP: number;
+
+    // Market manager params
+    baseTicketPrice: number;
+    ticketWindowDur: number;
+    ticketsPerWindow: number;
+    ticketSupply: number;
+    priceSupplyDeltaBP: number;
+    minInactiveWindowBeforeReset: number;
+    soldOutBP: number;
+    ticketMatureDur: number;
+    ticketCancelDur: number;
+    minTicketTenureDur: number;
+    ticketExpireDur: number;
+    maxMediators: number;
+    noVoteSlashBP: number;
+    loseVoteSlashBP: number;
+
+    // Dispute manager params
+    rewardWindowAlloc: BigNumber;
+    rewardWindowDur: number;
+    redeemWindowRewardDur: number;
+    predictDur: number;
+    appealDur: number;
+    evidenceDur: number;
+    disputeCost: number;
+    maxMediatorPerDispute: number;
+
+    // Chainlink params
+    chainlinkKeyHash: string;
+    chainlinkCoordinator: string;
+    chainlinkSubId: number;
+
+    // Operator params
+    operatorBond: BigNumber;
+
+    // Others
+    safe: string;
+    allocatorAddr: string;
+  }
 }

@@ -4,7 +4,7 @@ import { MetadataService } from '../../services/metadata/metadata.service';
 import { MarketsService } from '../markets/markets.service';
 import { LiquidityController } from './liquidity.controller';
 import { LiquidityService } from './liquidity.service';
-import { ConfigService } from '../config.service';
+import { ConfigService } from '../../config/config.service';
 
 @Module({
   imports: [NetworkModule],

@@ -6,7 +6,7 @@ import MarketPrice from '../../models/market_price';
 import { Handler } from '../handler';
 import { NotifierService, NotificationID } from '../../jobs/mailer/NotifierService';
 import Swap from '../../models/swap';
-import Meta, { FeeName, ProtocolFeeBeneficiary, ProtocolParams } from '../../models/meta';
+import Meta, { FeeName, MetaKeys, ProtocolFeeBeneficiary, ProtocolParams } from '../../models/meta';
 import NetworkService from '../network.service';
 import Market from '../../models/market';
 import * as moment from 'moment';
@@ -321,6 +321,22 @@ export class CoreHandler extends Handler {
         return this.onUpdatedLiquiditySwapBadges(marketAddress, provider, lid, badges, event, txn);
       },
     );
+
+    this.on('UpdatedMinTimeToPay', async (value: BigNumber, event: Event, txn?: Transaction) => {
+      return this.onParameterUpdate('minTimeToPay', value.toString(), event, txn);
+    });
+
+    this.on('UpdatedOrderGraceDur', async (value: BigNumber, event: Event, txn?: Transaction) => {
+      return this.onParameterUpdate('orderGraceDur', value.toString(), event, txn);
+    });
+
+    this.on('UpdatedMaxOpenOrders', async (value: BigNumber, event: Event, txn?: Transaction) => {
+      return this.onParameterUpdate('maxOpenOrders', value.toString(), event, txn);
+    });
+
+    this.on('UpdatedMaxOpenDisputes', async (value: BigNumber, event: Event, txn?: Transaction) => {
+      return this.onParameterUpdate('maxOpenDisputes', value.toString(), event, txn);
+    });
   }
 
   /**
@@ -633,7 +649,7 @@ export class CoreHandler extends Handler {
   async onTransferredToFeePool(token: string, amount: BigNumber, event: Event, txn?: Transaction) {
     // Add a task for the future
     const block = await event.getBlock();
-    const mineAt = block.timestamp + parseInt(this.getParam('transferToFeePoolInterval'));
+    const mineAt = block.timestamp + parseInt(await Meta.getContractParam(this.network, 'transferToFeePoolInterval'));
     await MineTask.create(
       {
         type: MineTaskType.FeeTransfer,
@@ -667,28 +683,12 @@ export class CoreHandler extends Handler {
     event: Event,
     txn?: Transaction,
   ) {
-    await Meta.update(
-      Meta.makeProtocolFeeKey(this.network, FeeName.InstantSwapFeeBp),
-      instantSwapFeeBp.toString(),
-      txn,
-    );
-    await Meta.update(
-      Meta.makeProtocolFeeKey(this.network, FeeName.SynthSwapFeeBp),
-      syntheticSwapFeeBp.toString(),
-      txn,
-    );
-    await Meta.update(Meta.makeProtocolFeeKey(this.network, FeeName.StableSwapFeeBp), stableSwapFeeBp.toString(), txn);
-    await Meta.update(
-      Meta.makeProtocolFeeKey(this.network, FeeName.FixedSynthSwapFee),
-      fixedSynthSwapFee.toString(),
-      txn,
-    );
-    await Meta.update(Meta.makeProtocolFeeKey(this.network, FeeName.FixedNFTSwapFee), fixedNFTSwapFee.toString(), txn);
-    await Meta.update(
-      Meta.makeProtocolFeeKey(this.network, FeeName.InstantNFTSwapFeeBp),
-      instantNFTSwapFeeBp.toString(),
-      txn,
-    );
+    await Meta.update(Meta.makeNetKey(this.network, FeeName.InstantSwapFeeBp), instantSwapFeeBp.toString(), txn);
+    await Meta.update(Meta.makeNetKey(this.network, FeeName.SynthSwapFeeBp), syntheticSwapFeeBp.toString(), txn);
+    await Meta.update(Meta.makeNetKey(this.network, FeeName.StableSwapFeeBp), stableSwapFeeBp.toString(), txn);
+    await Meta.update(Meta.makeNetKey(this.network, FeeName.FixedSynthSwapFee), fixedSynthSwapFee.toString(), txn);
+    await Meta.update(Meta.makeNetKey(this.network, FeeName.FixedNFTSwapFee), fixedNFTSwapFee.toString(), txn);
+    await Meta.update(Meta.makeNetKey(this.network, FeeName.InstantNFTSwapFeeBp), instantNFTSwapFeeBp.toString(), txn);
   }
 
   /**
@@ -1016,9 +1016,9 @@ export class CoreHandler extends Handler {
     event: Event,
     txn?: Transaction,
   ) {
-    await Meta.update(Meta.makeProtocolFeeKey(this.network, ProtocolFeeBeneficiary.Inventor), inventor.toString(), txn);
-    await Meta.update(Meta.makeProtocolFeeKey(this.network, ProtocolFeeBeneficiary.Shared), shared.toString(), txn);
-    await Meta.update(Meta.makeProtocolFeeKey(this.network, ProtocolFeeBeneficiary.Operator), operator.toString(), txn);
+    await Meta.update(Meta.makeNetKey(this.network, ProtocolFeeBeneficiary.Inventor), inventor.toString(), txn);
+    await Meta.update(Meta.makeNetKey(this.network, ProtocolFeeBeneficiary.Shared), shared.toString(), txn);
+    await Meta.update(Meta.makeNetKey(this.network, ProtocolFeeBeneficiary.Operator), operator.toString(), txn);
   }
 
   /**
@@ -1028,7 +1028,7 @@ export class CoreHandler extends Handler {
    * @param txn The transaction object
    */
   async onNFTDiscountUpdated(discountBp: BigNumber, event: Event, txn?: Transaction) {
-    await Meta.update(Meta.makeProtocolFeeKey(this.network, ProtocolParams.NFTDiscountBP), discountBp.toString(), txn);
+    await this.onParameterUpdate('nftDiscountBP', discountBp.toString(), event, txn);
   }
 
   /**
@@ -1052,7 +1052,7 @@ export class CoreHandler extends Handler {
   ) {
     // Get the on-chain offer
     const onChainOffer = await this.contracts.core.getOffer(offerId.sub(1));
-    if (!onChainOffer) throw new Error('onChainOffer not found');
+    if (!onChainOffer) throw new Error('on-chain offer not found');
 
     // Save the offer
     const offer = await Offer.create(
@@ -1176,7 +1176,7 @@ export class CoreHandler extends Handler {
     offer = await Offer.updateByOfferId(offerId.toNumber(), { accepted: false, execAt: null }, txn);
 
     // Send notification
-    await this.notifSrv.notify(NotificationID.OfferUnaccepted, this.network, offer.provider, {
+    await this.notifSrv.notify(NotificationID.OfferUnaccepted, this.network, offer.creator, {
       offer,
     });
   }
@@ -1202,7 +1202,7 @@ export class CoreHandler extends Handler {
   }
 
   /**
-   * Liquidity swap badges were updated
+   * Liquidity swap `badges were updated
    * @param marketAddress The market ID
    * @param provider The liquidity provider's address
    * @param lid The liquidity ID
@@ -1234,5 +1234,16 @@ export class CoreHandler extends Handler {
         txn,
       );
     }
+  }
+
+  /**
+   * Updated a parameter
+   * @param param The parameter name
+   * @param value The updated value
+   * @param event The event object
+   * @param txn The transaction object
+   */
+  async onParameterUpdate(param: keyof ContractsParams, value: string, event: Event, txn?: Transaction) {
+    await Meta.updateContractsParams(this.network, txn, (params) => (params[param] = value));
   }
 }

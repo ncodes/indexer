@@ -7,14 +7,21 @@ import Market, { AssetType } from '../../models/market';
 import { powOf, toBN } from '../common';
 import MarketPrice from '../../models/market_price';
 import { NotificationID } from '../../jobs/mailer/NotifierService';
-import Meta, { FeeName } from '../../models/meta';
+import Meta, { FeeName, MetaKeys, ProtocolFeeBeneficiary, ProtocolParams } from '../../models/meta';
 import Swap from '../../models/swap';
 import Dispute from '../../models/dispute';
 import * as moment from 'moment';
 import MineTask, { MineTaskType } from '../../models/mine_task';
+import Offer from '../../models/offers';
+import MarketBadge from '../../models/market_badge';
 
+const mockGetOrder = jest.fn();
+const mockGetOffer = jest.fn();
 const CoreContract = jest.fn().mockImplementation(() => {
-  return {};
+  return {
+    getOrder: mockGetOrder,
+    getOffer: mockGetOffer,
+  };
 });
 
 const mockNotify = jest.fn();
@@ -23,7 +30,6 @@ const MockNotifierService = jest.fn().mockImplementation(() => {
 });
 
 const mockComputeSwapFees = jest.fn();
-const mockGetTokenDecimals = jest.fn();
 const MockNetworkService = jest.fn().mockImplementation(() => {
   return {};
 });
@@ -38,6 +44,7 @@ describe('CoreHandler', () => {
   const baseAddress = '0xBase';
   const quoteAddress = '0xQuote';
   const txHash = '0xTxHash';
+  const userAddr = '0xUser';
   const db = DBService.getForTest();
   const net = 'ethereum';
   let handler: CoreHandler;
@@ -45,7 +52,6 @@ describe('CoreHandler', () => {
   const contracts = {
     core: coreContract,
   };
-  const cfg = { transferToFeePoolInterval: '86400' };
 
   afterEach(async () => {
     await db.truncateTables();
@@ -59,12 +65,16 @@ describe('CoreHandler', () => {
     jest.clearAllMocks();
     handler = new CoreHandler(new MockNetworkService(), new MockNotifierService(), null, net, contracts);
     handler.logger = new NoopLogger() as any;
-    handler.getParam = (param) => {
-      return cfg[param];
-    };
     handler.computeSwapFees = mockComputeSwapFees;
-    handler.getTokenDecimals = mockGetTokenDecimals;
+
     await db.truncateTables();
+
+    await Meta.create(
+      Meta.makeNetKey(net, MetaKeys.ContractsParams),
+      JSON.stringify({
+        transferToFeePoolInterval: 86400,
+      }),
+    );
   });
 
   describe('.computeSwapFees', function () {
@@ -535,12 +545,12 @@ describe('CoreHandler', () => {
   describe('.onProtocolFeeUpdated', () => {
     it('should update correctly', async () => {
       await handler.onProtocolFeeUpdated(toBN(10), toBN(2), toBN(12), toBN(1), toBN(2), toBN(3), {} as any);
-      expect((await Meta.get(Meta.makeProtocolFeeKey(net, FeeName.InstantSwapFeeBp))).value).toEqual('10');
-      expect((await Meta.get(Meta.makeProtocolFeeKey(net, FeeName.SynthSwapFeeBp))).value).toEqual('2');
-      expect((await Meta.get(Meta.makeProtocolFeeKey(net, FeeName.StableSwapFeeBp))).value).toEqual('12');
-      expect((await Meta.get(Meta.makeProtocolFeeKey(net, FeeName.FixedSynthSwapFee))).value).toEqual('1');
-      expect((await Meta.get(Meta.makeProtocolFeeKey(net, FeeName.FixedNFTSwapFee))).value).toEqual('2');
-      expect((await Meta.get(Meta.makeProtocolFeeKey(net, FeeName.InstantNFTSwapFeeBp))).value).toEqual('3');
+      expect((await Meta.get(Meta.makeNetKey(net, FeeName.InstantSwapFeeBp))).value).toEqual('10');
+      expect((await Meta.get(Meta.makeNetKey(net, FeeName.SynthSwapFeeBp))).value).toEqual('2');
+      expect((await Meta.get(Meta.makeNetKey(net, FeeName.StableSwapFeeBp))).value).toEqual('12');
+      expect((await Meta.get(Meta.makeNetKey(net, FeeName.FixedSynthSwapFee))).value).toEqual('1');
+      expect((await Meta.get(Meta.makeNetKey(net, FeeName.FixedNFTSwapFee))).value).toEqual('2');
+      expect((await Meta.get(Meta.makeNetKey(net, FeeName.InstantNFTSwapFeeBp))).value).toEqual('3');
     });
   });
 
@@ -749,7 +759,7 @@ describe('CoreHandler', () => {
           disputeId: 1,
         });
 
-        mockComputeSwapFees.mockResolvedValue({ protocolFee: 2, marketCreatorFee: 3 });
+        mockGetOrder.mockResolvedValue({ finalizer: userAddr });
 
         const numTypeInfo = [orderId, toBN(liq.lid), toBN(swap.amount), toBN(liq.price), toBN(1), toBN(1)];
         const [, , amount, , ,] = numTypeInfo;
@@ -771,6 +781,7 @@ describe('CoreHandler', () => {
         expect(swap.marketAddress).toEqual(market.address);
         expect(swap.instant).toBeFalsy();
         expect(swap.released).toBeTruthy();
+        expect(swap.finalizer).toEqual(userAddr);
 
         const liqUpd = await Liquidity.getLiquidity(net, marketAddress, provider);
         expect(liqUpd.openOrders).toEqual(1);
@@ -957,6 +968,243 @@ describe('CoreHandler', () => {
       expect(moment(mineTasks[0].mineAt).isAfter(moment.unix(now))).toBeTruthy();
       expect(mineTasks[0].transferredToken).toEqual(token);
       expect(mineTasks[0].transferredAmount).toEqual(amount.toString());
+    });
+  });
+
+  describe('.onProtocolFeeSplitUpdated', function () {
+    it('should save correct meta values', async () => {
+      await expect(handler.onProtocolFeeSplitUpdated(toBN(1), toBN(2), toBN(3), {} as any)).resolves.toBeUndefined();
+      expect(await Meta.get(Meta.makeNetKey(net, ProtocolFeeBeneficiary.Inventor))).toHaveProperty('value', '1');
+      expect(await Meta.get(Meta.makeNetKey(net, ProtocolFeeBeneficiary.Shared))).toHaveProperty('value', '2');
+      expect(await Meta.get(Meta.makeNetKey(net, ProtocolFeeBeneficiary.Operator))).toHaveProperty('value', '3');
+    });
+  });
+
+  describe('.onNFTDiscountUpdated', function () {
+    it('should save correct meta value', async () => {
+      await expect(handler.onNFTDiscountUpdated(toBN(1), {} as any)).resolves.toBeUndefined();
+      expect(await Meta.getContractParam(net, 'nftDiscountBP')).toEqual('1');
+    });
+  });
+
+  describe('.onNewOffer', function () {
+    it('should throw error if offer does not exist on-chain', async () => {
+      mockGetOffer.mockResolvedValue(undefined);
+      await expect(
+        handler.onNewOffer(marketAddress, provider, toBN(0), taker, toBN(0), {} as any),
+      ).rejects.toThrowError('on-chain offer not found');
+    });
+
+    it('should create new offer in database', async () => {
+      const now = moment();
+      const onchainOffer = {
+        amount: powOf(10, 18),
+        price: powOf(1, 18),
+        ids: [toBN(1), toBN(2)],
+        deadline: toBN(now.unix()),
+      };
+      mockGetOffer.mockResolvedValue(onchainOffer);
+
+      const offerId = toBN(1);
+      const lid = toBN(0);
+      await expect(
+        handler.onNewOffer(marketAddress, provider, lid, taker, offerId, {} as any),
+      ).resolves.toBeUndefined();
+
+      const offer = await Offer.getByOfferId(offerId.sub(1).toNumber());
+      expect(offer.network).toEqual(net);
+      expect(offer.marketAddress).toEqual(marketAddress);
+      expect(offer.provider).toEqual(provider);
+      expect(offer.lid).toEqual(lid.toNumber());
+      expect(offer.creator).toEqual(taker);
+      expect(offer.amount).toEqual(onchainOffer.amount.toString());
+      expect(offer.price).toEqual(onchainOffer.price.toString());
+      expect(offer.ids).toEqual(onchainOffer.ids.map((id) => id.toNumber()));
+      expect(moment(offer.deadline).toISOString()).toEqual(moment.unix(now.unix()).toISOString());
+
+      expect(mockNotify).toHaveBeenCalledWith(NotificationID.NewOffer, net, provider, {
+        offer,
+      });
+    });
+  });
+
+  describe('.onOfferUpdated', function () {
+    it('should update offer correctly', async () => {
+      let offer = await Offer.create({
+        network: net,
+        marketAddress,
+        offerId: 1,
+        provider,
+      });
+
+      const deadline = moment().add(1, 'day').unix();
+      await expect(
+        handler.onOfferUpdated(toBN(1), userAddr, toBN(2), toBN(3), [toBN(4)], toBN(deadline), {} as any),
+      ).resolves.toBeUndefined();
+
+      offer = await Offer.getByOfferId(offer.offerId);
+      expect(offer).toBeDefined();
+      expect(offer.amount).toEqual('2');
+      expect(offer.price).toEqual('3');
+      expect(offer.ids).toEqual([4]);
+      expect(moment(offer.deadline).toISOString()).toEqual(moment.unix(deadline).toISOString());
+
+      expect(mockNotify).toHaveBeenCalledWith(NotificationID.OfferUpdated, net, provider, {
+        offer,
+      });
+    });
+  });
+
+  describe('.onOfferAccepted', function () {
+    it('should update offer correctly', async () => {
+      let offer = await Offer.create({
+        network: net,
+        marketAddress,
+        offerId: 1,
+        provider,
+        creator: userAddr,
+      });
+
+      const execAt = moment().add(1, 'day').unix();
+      await expect(handler.onOfferAccepted(toBN(1), provider, execAt, {} as any)).resolves.toBeUndefined();
+
+      offer = await Offer.getByOfferId(offer.offerId);
+      expect(offer).toBeDefined();
+      expect(offer.accepted).toBeTruthy();
+      expect(moment(offer.execAt).toISOString()).toEqual(moment.unix(execAt).toISOString());
+
+      expect(mockNotify).toHaveBeenCalledWith(NotificationID.OfferAccepted, net, userAddr, {
+        offer,
+      });
+    });
+  });
+
+  describe('.onOfferCancelled', function () {
+    it('should update offer correctly', async () => {
+      let offer = await Offer.create({
+        network: net,
+        marketAddress,
+        offerId: 1,
+        provider,
+        creator: userAddr,
+      });
+
+      await expect(handler.onOfferCancelled(toBN(1), userAddr, {} as any)).resolves.toBeUndefined();
+
+      offer = await Offer.getByOfferId(offer.offerId);
+      expect(offer).toBeDefined();
+      expect(offer.cancelled).toBeTruthy();
+
+      expect(mockNotify).toHaveBeenCalledWith(NotificationID.OfferCancelled, net, provider, {
+        offer,
+      });
+    });
+  });
+
+  describe('.onOfferUnaccepted', function () {
+    it('should update offer correctly', async () => {
+      let offer = await Offer.create({
+        network: net,
+        marketAddress,
+        offerId: 1,
+        provider,
+        creator: userAddr,
+        accepted: true,
+        execAt: moment().toISOString(),
+      });
+
+      await expect(handler.onOfferUnaccepted(toBN(1), userAddr, {} as any)).resolves.toBeUndefined();
+
+      offer = await Offer.getByOfferId(offer.offerId);
+      expect(offer).toBeDefined();
+      expect(offer.accepted).toBeFalsy();
+      expect(offer.execAt).toBeNull();
+
+      expect(mockNotify).toHaveBeenCalledWith(NotificationID.OfferUnaccepted, net, userAddr, {
+        offer,
+      });
+    });
+  });
+
+  describe('.onOfferExecuted', function () {
+    it('should update offer correctly', async () => {
+      let offer = await Offer.create({
+        network: net,
+        marketAddress,
+        offerId: 1,
+        provider,
+        creator: userAddr,
+      });
+
+      await expect(handler.onOfferExecuted(toBN(1), userAddr, {} as any)).resolves.toBeUndefined();
+
+      offer = await Offer.getByOfferId(offer.offerId);
+      expect(offer).toBeDefined();
+      expect(offer.executed).toBeTruthy();
+
+      expect(mockNotify).toHaveBeenCalledWith(NotificationID.OfferExecuted, net, provider, {
+        offer,
+      });
+    });
+  });
+
+  describe('.onUpdatedLiquiditySwapBadges', function () {
+    it("should update liquidity provider's badges", async () => {
+      const lid = toBN(0);
+      await expect(
+        handler.onUpdatedLiquiditySwapBadges(
+          marketAddress,
+          provider,
+          lid,
+          [
+            ['badge1', 'path1'],
+            ['badge2', 'path2'],
+          ],
+          {} as any,
+        ),
+      ).resolves.toBeUndefined();
+      let badges = await MarketBadge.findAll({ marketAddress, provider, lid: lid.toNumber() });
+      expect(badges).toHaveLength(2);
+      expect(badges[0].badge).toEqual('badge1');
+      expect(badges[0].path).toEqual('path1');
+      expect(badges[1].badge).toEqual('badge2');
+      expect(badges[1].path).toEqual('path2');
+
+      // Update again
+      await expect(
+        handler.onUpdatedLiquiditySwapBadges(
+          marketAddress,
+          provider,
+          lid,
+          [
+            ['badge3', 'path3'],
+            ['badge4', 'path4'],
+          ],
+          {} as any,
+        ),
+      ).resolves.toBeUndefined();
+      badges = await MarketBadge.findAll({ marketAddress, provider, lid: lid.toNumber() });
+      expect(badges).toHaveLength(2);
+      expect(badges[0].badge).toEqual('badge3');
+      expect(badges[0].path).toEqual('path3');
+      expect(badges[1].badge).toEqual('badge4');
+      expect(badges[1].path).toEqual('path4');
+    });
+  });
+
+  describe('.onParameterUpdate', function () {
+    it('should throw error if contract params metadata has not been initialized', async () => {
+      const key = Meta.makeNetKey(net, MetaKeys.ContractsParams);
+      await Meta.update(key, '');
+      await expect(handler.onParameterUpdate('appealDur', '1', {} as any)).rejects.toThrow(
+        'Contracts params not initialized',
+      );
+    });
+
+    it('should update contract params correctly', async () => {
+      await expect(handler.onParameterUpdate('appealDur', '1', {} as any)).resolves.toBeUndefined();
+      const value = await Meta.getContractParam(net, 'appealDur');
+      expect(value).toEqual('1');
     });
   });
 });

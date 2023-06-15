@@ -261,13 +261,13 @@ export class MarketCoreHandler extends Handler {
     if (Market.isERC20(baseType)) {
       const baseToken = this.newContract(baseAsset, erc20ABI, this.provider);
       baseSymbol = (await baseToken.symbol()).toUpperCase();
-      baseDecimals = await baseToken.decimals();
+      baseDecimals = (await baseToken.decimals()).toNumber();
     }
 
     if (Market.isERC20(quoteType)) {
       const quoteToken = this.newContract(quoteAsset, erc20ABI, this.provider);
       quoteSymbol = (await quoteToken.symbol()).toUpperCase();
-      quoteDecimals = await quoteToken.decimals();
+      quoteDecimals = (await quoteToken.decimals()).toNumber();
     }
 
     if (Market.isERC721(baseType)) {

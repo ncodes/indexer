@@ -2,7 +2,7 @@ import { Injectable, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { Decimal } from 'decimal.js';
-import { toDec } from './../common/common';
+import { toDec } from '../common/common';
 
 interface Rates {
   [key: string]: number;

@@ -4,6 +4,7 @@ import * as erc20ABI from '../../abi/ERC20.json';
 import { Provider } from '@ethersproject/abstract-provider';
 import { EventEmitter2 } from 'eventemitter2';
 import { ConfigService } from '@nestjs/config';
+import Meta from '../models/meta';
 
 /**
  * Handler handles incoming contract events.
@@ -31,8 +32,8 @@ export abstract class Handler extends EventEmitter2 {
    * Get contract parameters
    * @param param The parameter name
    */
-  getParam(param: string): string {
-    return this.cfg.get(`app.contractsParams.${this.network}.${param}`);
+  async getParam(param: keyof ContractsParams): Promise<string> {
+    return Meta.getContractParam(this.network, param);
   }
 
   /**

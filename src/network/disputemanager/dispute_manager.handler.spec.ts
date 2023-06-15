@@ -316,16 +316,7 @@ describe('DisputeManagerHandler', () => {
     describe('when winningVote=0x31', () => {
       it('should consider dispute as released', async () => {
         await expect(
-          handler.onDecisionExecuted(
-            marketAddress,
-            orderId,
-            disputeId,
-            '0xExecutor',
-            true,
-            '0x31',
-            toBN(100),
-            {} as any,
-          ),
+          handler.onDecisionExecuted(marketAddress, orderId, disputeId, '0xExecutor', true, '0x31', {} as any),
         ).resolves.toBeUndefined();
 
         const dispute = await Dispute.get(net, marketAddress, orderId.toNumber(), disputeId.toNumber());
@@ -375,16 +366,7 @@ describe('DisputeManagerHandler', () => {
     describe('when winningVote=0x30', () => {
       it('should consider dispute as cancelled', async () => {
         await expect(
-          handler.onDecisionExecuted(
-            marketAddress,
-            orderId,
-            disputeId,
-            '0xExecutor',
-            true,
-            '0x30',
-            toBN(100),
-            {} as any,
-          ),
+          handler.onDecisionExecuted(marketAddress, orderId, disputeId, '0xExecutor', true, '0x30', {} as any),
         ).resolves.toBeUndefined();
 
         const dispute = await Dispute.get(net, marketAddress, orderId.toNumber(), disputeId.toNumber());
@@ -417,16 +399,7 @@ describe('DisputeManagerHandler', () => {
     describe('when winningVote=0x00 (or anything not 0x30 or 0x31)', () => {
       it('should consider dispute as stalled', async () => {
         await expect(
-          handler.onDecisionExecuted(
-            marketAddress,
-            orderId,
-            disputeId,
-            '0xExecutor',
-            true,
-            '0x00',
-            toBN(100),
-            {} as any,
-          ),
+          handler.onDecisionExecuted(marketAddress, orderId, disputeId, '0xExecutor', true, '0x00', {} as any),
         ).resolves.toBeUndefined();
 
         const dispute = await Dispute.get(net, marketAddress, orderId.toNumber(), disputeId.toNumber());

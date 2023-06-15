@@ -4,7 +4,8 @@ import Liquidity from '../../models/liquidity';
 import { LiquidityService } from './liquidity.service';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ListQueryDTO } from './query.dto';
-import { ConfigService } from '../config.service';
+import { ConfigService } from '../../config/config.service';
+import Meta from '../../models/meta';
 
 @Controller('v1/liquidities')
 export class LiquidityController {
@@ -26,12 +27,13 @@ export class LiquidityController {
    */
   @Get()
   async list(@Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
+    const maxOpenDisputes = parseInt(await this.cfgSrv.getContractParam(q.net, 'maxOpenDisputes'));
     if (!q.count) {
       const liquidities = await Liquidity.search(
         q.net,
         q.marketAddress,
         q.provider,
-        parseInt(this.cfgSrv.getContractParam(q.net, 'maxOpenDisputes')),
+        maxOpenDisputes,
         q.amount,
         q.limit || 25,
         q.offset,
@@ -45,12 +47,7 @@ export class LiquidityController {
     } else {
       return ok()
         .data({
-          count: await Liquidity.countLiquidities(
-            q.net,
-            q.marketAddress,
-            q.provider,
-            parseInt(this.cfgSrv.getContractParam(q.net, 'maxOpenDisputes')),
-          ),
+          count: await Liquidity.countLiquidities(q.net, q.marketAddress, q.provider, maxOpenDisputes),
         })
         .build();
     }

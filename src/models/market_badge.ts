@@ -74,6 +74,17 @@ export default class MarketBadge extends BaseModel {
   }
 
   /**
+   * Find all records
+   * @param q the query parameter
+   * @param txn Optional transaction object
+   */
+  static findAll(q: Partial<MarketBadge>, txn?: Transaction): Promise<MarketBadge[]> {
+    return new Promise((resolve, reject) => {
+      this.query(txn).where(q).whereNotDeleted().then(resolve).catch(reject);
+    });
+  }
+
+  /**
    * Find a record by ID
    * @param id The record id
    * @param txn Optional transaction object

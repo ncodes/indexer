@@ -37,7 +37,9 @@ export class TokenPoolHandler extends Handler {
    * @param amount The amount staked
    * @param event The event object
    */
-  async onStaked(account: string, amount: BigNumber, event: Event) {}
+  async onStaked(account: string, amount: BigNumber, event: Event) {
+    // TODO: Implement
+  }
 
   /**
    * An account added a vested stake
@@ -45,7 +47,9 @@ export class TokenPoolHandler extends Handler {
    * @param amount The amount staked
    * @param event The event object
    */
-  async onVestStaked(account: string, amount: BigNumber, event: Event) {}
+  async onVestStaked(account: string, amount: BigNumber, event: Event) {
+    // TODO: Implement
+  }
 
   /**
    * An account withdrew some stake
@@ -53,7 +57,9 @@ export class TokenPoolHandler extends Handler {
    * @param amount The amount withdrawn
    * @param event The event object
    */
-  async onStakeWithdrawn(account: string, amount: BigNumber, event: Event) {}
+  async onStakeWithdrawn(account: string, amount: BigNumber, event: Event) {
+    // TODO: Implement
+  }
 
   /**
    * An account withdrew some reward
@@ -61,7 +67,9 @@ export class TokenPoolHandler extends Handler {
    * @param amount The amount of reward withdrawn
    * @param event The event object
    */
-  async onRewardWithdrawn(account: string, amount: BigNumber, event: Event) {}
+  async onRewardWithdrawn(account: string, amount: BigNumber, event: Event) {
+    // TODO: Implement
+  }
 
   /**
    * An erroneously sent token was recovered
@@ -69,5 +77,7 @@ export class TokenPoolHandler extends Handler {
    * @param amount The amount recovered
    * @param event The event object
    */
-  async onRecovered(token: string, amount: BigNumber, event: Event) {}
+  async onRecovered(token: string, amount: BigNumber, event: Event) {
+    // TODO: Implement
+  }
 }

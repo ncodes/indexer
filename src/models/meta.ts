@@ -20,6 +20,10 @@ export enum ProtocolParams {
   NFTDiscountBP = 'nft_discount_bp',
 }
 
+export enum MetaKeys {
+  ContractsParams = 'contractsParams',
+}
+
 /**
  * Meta represents key and value pair.
  */
@@ -85,12 +89,12 @@ export default class Meta extends BaseModel {
   }
 
   /**
-   * Make protocol fee key
+   * Make network-scoped key
    * @param network The name of the network
-   * @param feeName The name of the fee type
+   * @param keyName The name of the key name
    */
-  static makeProtocolFeeKey(network: string, feeName) {
-    return `${network}:${feeName}`;
+  static makeNetKey(network: string, keyName) {
+    return `${network}:${keyName}`;
   }
 
   /**
@@ -100,8 +104,41 @@ export default class Meta extends BaseModel {
    * @param txn The transaction object
    */
   static async getProtocolFee(network: string, feeName: FeeName, txn?: Transaction) {
-    const key = this.makeProtocolFeeKey(network, feeName);
+    const key = this.makeNetKey(network, feeName);
     const rec = await this.query(txn).where('key', key).first();
     return rec ? parseFloat(rec.value) : '0';
+  }
+
+  /**
+   * Update contracts parameters metadata of a network
+   * @param network The network name
+   * @param txn The transaction object
+   * @param updFn The update function
+   */
+  static async updateContractsParams(
+    network: string,
+    txn: Transaction,
+    updFn: (params: { [key: string]: string }) => void,
+  ) {
+    const key = Meta.makeNetKey(network, MetaKeys.ContractsParams);
+    const existing = await Meta.get(key, txn);
+    if (!existing || !existing.value) throw new Error('Contracts params not initialized');
+    const obj = JSON.parse(existing.value);
+    if (updFn) updFn(obj);
+    await Meta.update(key, JSON.stringify(obj), txn);
+  }
+
+  /**
+   * Get a contract parameter
+   * @param network The network name
+   * @param param The name of the parameter
+   * @param txn The transaction object
+   */
+  static async getContractParam(network: string, param: keyof ContractsParams, txn?: Transaction): Promise<string> {
+    const key = Meta.makeNetKey(network, MetaKeys.ContractsParams);
+    const existing = await Meta.get(key, txn);
+    if (!existing) throw new Error('Contracts params not initialized');
+    const obj = JSON.parse(existing.value);
+    return obj[param];
   }
 }

@@ -36,26 +36,11 @@ export class DisputeManagerHandler extends Handler {
         orderId: BigNumber,
         creator: string,
         disputeId: BigNumber,
-        wantRelease,
+        wantRelease: boolean,
         event: ethers.Event,
         txn?: Transaction,
       ) => {
         return this.onDisputeCreated(orderId, creator, disputeId, wantRelease, event, txn);
-      },
-    );
-
-    this.on(
-      'DraftedMediator',
-      async (
-        marketAddress: string,
-        orderId: BigNumber,
-        ticketOwner: string,
-        ticketId: BigNumber,
-        drafter: string,
-        event: ethers.Event,
-        txn?: Transaction,
-      ) => {
-        return this.onDraftedMediator(marketAddress, orderId, ticketOwner, ticketId, drafter, event, txn);
       },
     );
 
@@ -89,10 +74,6 @@ export class DisputeManagerHandler extends Handler {
       },
     );
 
-    this.on('WithdrawnReward', (claimer: string, amount: BigNumber, event: ethers.Event, txn?: Transaction) => {
-      return this.onWithdrawnReward(claimer, amount, event, txn);
-    });
-
     this.on(
       'DecisionExecuted',
       async (
@@ -102,19 +83,9 @@ export class DisputeManagerHandler extends Handler {
         executor: string,
         abandoned: boolean,
         winningVote: string,
-        execReward: BigNumber,
         event: ethers.Event,
       ) => {
-        return this.onDecisionExecuted(
-          marketAddress,
-          orderId,
-          disputeId,
-          executor,
-          abandoned,
-          winningVote,
-          execReward,
-          event,
-        );
+        return this.onDecisionExecuted(marketAddress, orderId, disputeId, executor, abandoned, winningVote, event);
       },
     );
   }
@@ -148,7 +119,7 @@ export class DisputeManagerHandler extends Handler {
     const market = await Market.getMarket(this.network, swap.marketAddress, undefined, txn);
     const numMediators = Math.min(
       market.numMediators * (parseInt(numDisp) + 1),
-      Math.min(parseInt(this.getParam('maxMediatorPerDispute'))),
+      Math.min(parseInt(await this.getParam('maxMediatorPerDispute'))),
     );
 
     // Create dispute
@@ -232,28 +203,6 @@ export class DisputeManagerHandler extends Handler {
   }
 
   /**
-   * A mediator was drafted
-   * @param marketAddress The market ID
-   * @param orderId The order ID
-   * @param ticketOwner The drafted mediator's address
-   * @param ticketId The ticket ID
-   * @param drafter The address of the drafter
-   * @param event The event object
-   * @param txn The transaction object
-   */
-  async onDraftedMediator(
-    marketAddress: string,
-    orderId: BigNumber,
-    ticketOwner: string,
-    ticketId: BigNumber,
-    drafter: string,
-    event: Event,
-    txn?: Transaction,
-  ) {
-    //
-  }
-
-  /**
    * A mediator committed a hash for a vote
    * @param marketAddress The market ID
    * @param orderId The order ID
@@ -318,17 +267,6 @@ export class DisputeManagerHandler extends Handler {
   }
 
   /**
-   * Some reward was withdrawn
-   * @param claimer The address of the withdrawer
-   * @param amount The amount withdrawn
-   * @param event The event object
-   * @param txn The transaction object
-   */
-  async onWithdrawnReward(claimer: string, amount: BigNumber, event: Event, txn?: Transaction) {
-    //
-  }
-
-  /**
    * A dispute outcome was executed
    * @param marketAddress The market ID
    * @param orderId The order ID
@@ -336,7 +274,6 @@ export class DisputeManagerHandler extends Handler {
    * @param executor The address dispute outcome executed
    * @param abandoned Indicate the dispute was abandoned
    * @param winningVote The vote that was predicted by the majority.
-   * @param execReward The reward paid to the executor.
    * @param event The event object
    * @param txn The transaction object
    */
@@ -347,7 +284,6 @@ export class DisputeManagerHandler extends Handler {
     executor: string,
     abandoned: boolean,
     winningVote: string,
-    execReward: BigNumber,
     event: Event,
     txn?: Transaction,
   ) {

@@ -37,14 +37,18 @@ export class LPPoolHandler extends Handler {
    * @param amount The amount that was withdrawn
    * @param event The event object
    */
-  async onRewardWithdrawn(account: string, amount: BigNumber, event: ethers.Event) {}
+  async onRewardWithdrawn(account: string, amount: BigNumber, event: ethers.Event) {
+    // TODO: Implement
+  }
 
   /**
    * Reward tokens were transferred to the contract
    * @param amount The amount transferred
    * @param event The event object
    */
-  async onRewardAdded(amount: BigNumber, event: ethers.Event) {}
+  async onRewardAdded(amount: BigNumber, event: ethers.Event) {
+    // TODO: Implement
+  }
 
   /**
    * An account locked some LP tokens
@@ -52,7 +56,9 @@ export class LPPoolHandler extends Handler {
    * @param amount The amount of LP tokens
    * @param event The event object
    */
-  async onLocked(account: string, amount: BigNumber, event: ethers.Event) {}
+  async onLocked(account: string, amount: BigNumber, event: ethers.Event) {
+    // TODO: Implement
+  }
 
   /**
    * An account unlocked some LP tokens
@@ -60,7 +66,9 @@ export class LPPoolHandler extends Handler {
    * @param amount The amount of LP tokens unlocked
    * @param event The event object
    */
-  async onUnlocked(account: string, amount: BigNumber, event: ethers.Event) {}
+  async onUnlocked(account: string, amount: BigNumber, event: ethers.Event) {
+    // TODO: Implement
+  }
 
   /**
    * An erroneously sent token was recovered
@@ -68,5 +76,7 @@ export class LPPoolHandler extends Handler {
    * @param amount The amount recovered
    * @param event The event object
    */
-  async onRecovered(token: string, amount: BigNumber, event: ethers.Event) {}
+  async onRecovered(token: string, amount: BigNumber, event: ethers.Event) {
+    // TODO: Implement
+  }
 }

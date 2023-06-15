@@ -12,7 +12,7 @@ import * as mediatorManagerABI from '../../abi/MediatorManager.json';
 import * as tokenPoolABI from '../../abi/TokenPool.json';
 import * as p2pTokenABI from '../../abi/Token.json';
 import * as erc20TokenABI from '../../abi/ERC20.json';
-import { SupportedNetworks, toBN } from './common';
+import { SupportedNetworks } from './common';
 import { CoreHandler } from './core/core.handler';
 import { DisputeManagerHandler } from './disputemanager/dispute_manager.handler';
 import { FeePoolHandler } from './feepool/fee_pool.handler';
@@ -37,6 +37,7 @@ import {
   Token,
   TokenPool,
 } from '../../typechain';
+import Meta, { MetaKeys } from '../models/meta';
 
 interface ContractInfo {
   [key: string]: JointContracts;
@@ -93,13 +94,25 @@ export default class NetworkService {
   }
 
   /**
+   * Load initial contracts params for a given network
+   * @param network The network name
+   */
+  async loadInitialContractParams(network: string) {
+    const contractsParams = this.cfgSrv.get(`app.contractsParams.${network}`);
+    const key = Meta.makeNetKey(network, MetaKeys.ContractsParams);
+    const params = await Meta.get(key);
+    if (params && params.value) return;
+    await Meta.create(key, JSON.stringify(contractsParams));
+    this.logger.log('Loaded initial contracts parameters');
+  }
+
+  /**
    * Connect and watch contracts on the Ethereum mainnet.
    * @param network The name of the network
    */
   async watchNetwork(network: string) {
-    const prov = new providers.JsonRpcProvider(this.cfgSrv.get(`app.networks.${network}.rpcUrl`));
-
     this.contracts[network] = {};
+    const prov = new providers.JsonRpcProvider(this.cfgSrv.get(`app.networks.${network}.rpcUrl`));
     this.providers[network] = prov;
 
     // Initialize contracts
@@ -153,6 +166,9 @@ export default class NetworkService {
       assetRegABI,
       prov,
     ) as AssetRegistry;
+
+    // Load initial contract params
+    await this.loadInitialContractParams(network);
 
     // Add handlers to watcher
     const watcher = new Watcher(network, prov);

@@ -11,6 +11,7 @@ import { NotificationID } from '../../jobs/mailer/NotifierService';
 import Dispute from '../../models/dispute';
 import Swap from '../../models/swap';
 import MineTask, { MineTaskType } from '../../models/mine_task';
+import Meta, { MetaKeys } from '../../models/meta';
 
 const MarketCoreContract = jest.fn().mockImplementation(() => {
   return {};
@@ -51,17 +52,18 @@ describe('MediatorManagerHandler', () => {
     mockGetContracts.mockReset();
     handler = new MediatorManagerHandler(new MockNetworkService(), new MockNotifierService(), null, net, contracts);
     handler.logger = new NoopLogger() as any;
-    handler.getParam = (param) => {
-      return {
+
+    await Meta.create(
+      Meta.makeNetKey(net, MetaKeys.ContractsParams),
+      JSON.stringify({
         ticketCancelDur: '604800',
         minTicketTenureDur: '86400',
         ticketExpireDur: '172800',
         predictDur: '2',
         appealDur: '2',
         evidenceDur: '2',
-      }[param];
-    };
-    await db.truncateTables();
+      }),
+    );
   });
 
   describe('.onTicketPurchased', () => {
@@ -97,7 +99,7 @@ describe('MediatorManagerHandler', () => {
       ).resolves.toBeUndefined();
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.cancelAt).toBeDefined();
-      const expectedCancelAt = moment.unix(now + parseInt(handler.getParam('ticketCancelDur')));
+      const expectedCancelAt = moment.unix(now + parseInt(await handler.getParam('ticketCancelDur')));
       expect(moment(ticket.cancelAt).unix()).toEqual(expectedCancelAt.unix());
     });
   });
@@ -146,7 +148,7 @@ describe('MediatorManagerHandler', () => {
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.marketAddress).toEqual('0xMarket');
       expect(ticket.leaveAt).toBeDefined();
-      const expectedLeaveAt = moment.unix(now + parseInt(handler.getParam('minTicketTenureDur')));
+      const expectedLeaveAt = moment.unix(now + parseInt(await Meta.getContractParam(net, 'minTicketTenureDur')));
       expect(moment(ticket.leaveAt).unix()).toEqual(expectedLeaveAt.unix());
 
       market = await Market.getById(market.id);
@@ -189,7 +191,7 @@ describe('MediatorManagerHandler', () => {
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.marketAddress).toBeNull();
       expect(ticket.leaveAt).toBeNull();
-      const expectedLeaveAt = moment.unix(now + parseInt(handler.getParam('ticketExpireDur')));
+      const expectedLeaveAt = moment.unix(now + parseInt(await Meta.getContractParam(net, 'ticketExpireDur')));
       expect(moment(ticket.joinBy).unix()).toEqual(expectedLeaveAt.unix());
 
       market = await Market.getById(market.id);
@@ -285,13 +287,17 @@ describe('MediatorManagerHandler', () => {
       const unix = moment.unix;
       dispute = await Dispute.getById(dispute.id);
       expect(dispute.numMediatorsDrafted).toEqual(1);
-      const evidEndAt = now + parseInt(handler.getParam('evidenceDur'));
+      const evidEndAt = now + parseInt(await Meta.getContractParam(net, 'evidenceDur'));
       expect(unix(evidEndAt).isSame(dispute.evidenceEndAt)).toBeTruthy();
-      const expectedCommitEndAt = evidEndAt + parseInt(handler.getParam('predictDur')) / 2;
+      const expectedCommitEndAt = evidEndAt + parseInt(await Meta.getContractParam(net, 'predictDur')) / 2;
       expect(unix(expectedCommitEndAt).isSame(dispute.commitEndAt)).toBeTruthy();
-      expect(unix(evidEndAt + parseInt(handler.getParam('predictDur'))).isSame(dispute.predictEndAt)).toBeTruthy();
+      expect(
+        unix(evidEndAt + parseInt(await Meta.getContractParam(net, 'predictDur'))).isSame(dispute.predictEndAt),
+      ).toBeTruthy();
       const expectedAppealEndAt =
-        evidEndAt + parseInt(handler.getParam('predictDur')) + parseInt(handler.getParam('appealDur'));
+        evidEndAt +
+        parseInt(await Meta.getContractParam(net, 'predictDur')) +
+        parseInt(await Meta.getContractParam(net, 'appealDur'));
       expect(unix(expectedAppealEndAt).isSame(dispute.appealEndAt)).toBeTruthy();
 
       expect(mockNotify).toBeCalledTimes(6);
@@ -543,7 +549,7 @@ describe('MediatorManagerHandler', () => {
       expect(ticket.bond).toEqual(toBN(10).toString());
       expect(ticket.marketAddress).toBeNull();
       expect(ticket.orderId).toBeNull();
-      const expectedLeaveAt = moment.unix(now + parseInt(handler.getParam('ticketExpireDur')));
+      const expectedLeaveAt = moment.unix(now + parseInt(await Meta.getContractParam(net, 'ticketExpireDur')));
       expect(moment(ticket.joinBy).unix()).toEqual(expectedLeaveAt.unix());
 
       const slash = await TicketSlash.find({

@@ -7,6 +7,7 @@ import Draft from '../../../models/draft';
 import * as _ from 'lodash';
 import { NotifierService, NotificationID } from '../../mailer/NotifierService';
 import Reveal from '../../../models/reveal';
+import * as console from 'console';
 
 /**
  * OnAppealPeriodEnd finds disputes whose appeal period has ended
@@ -63,25 +64,21 @@ export default class OnAppealPeriodEnd extends Base {
     );
 
     // Compute outcome
-    const majority = Math.ceil((51 * dispute.numMediators) / 100);
     const reveals = await Reveal.findByDispute(swap.network, swap.orderId, dispute.disputeId);
+    const majority = Math.ceil((51 * dispute.numMediators) / 100);
     const nRelease = reveals.filter((x) => x.vote === '0x31').length;
     const nCancel = reveals.filter((x) => x.vote === '0x30').length;
-    let outcome = 'Stalled';
-    outcome = nRelease >= majority ? 'Release' : outcome;
-    outcome = nCancel >= majority ? 'Cancel' : outcome;
 
-    // Send notification
-    for (const recipient of recipients) {
-      await this.notifier.notify(NotificationID.AppealPhaseEnded, swap.network, recipient.address, {
-        marketAddress: swap.marketAddress,
-        network: swap.network,
-        orderId: swap.orderId,
-        disputeId: dispute.disputeId,
-        drafted: recipient.drafted,
-        pair: swap.getPair(),
-        outcome,
-      });
+    // Send notification. Don't send notification for stalled disputes since re-appeals
+    // can be created at any time after the outcome is known
+    if (nRelease >= majority || nCancel >= majority) {
+      for (const recipient of recipients) {
+        await this.notifier.notify(NotificationID.AppealPhaseEnded, swap.network, recipient.address, {
+          swap,
+          disputeId: dispute.disputeId,
+          drafted: recipient.drafted,
+        });
+      }
     }
 
     // Mark dispute row as notified

@@ -12,7 +12,7 @@ import { NotifierService, NotificationID } from '../../jobs/mailer/NotifierServi
 import NetworkService from '../network.service';
 import MarketBadge, { BadgeScope } from '../../models/market_badge';
 import { findInSynthetic } from '../../common/token_list';
-import * as console from 'console';
+import Liquidity from '../../models/liquidity';
 
 export class MarketCoreHandler extends Handler {
   public logger = new Logger(MarketCoreHandler.name);
@@ -261,39 +261,37 @@ export class MarketCoreHandler extends Handler {
     if (Market.isERC20(baseType)) {
       const baseToken = this.newContract(baseAsset, erc20ABI, this.provider);
       baseSymbol = (await baseToken.symbol()).toUpperCase();
-      baseDecimals = (await baseToken.decimals()).toNumber();
+      baseDecimals = await baseToken.decimals();
     }
 
     if (Market.isERC20(quoteType)) {
       const quoteToken = this.newContract(quoteAsset, erc20ABI, this.provider);
       quoteSymbol = (await quoteToken.symbol()).toUpperCase();
-      quoteDecimals = (await quoteToken.decimals()).toNumber();
+      quoteDecimals = await quoteToken.decimals();
     }
 
     if (Market.isERC721(baseType)) {
       const baseToken = this.newContract(baseAsset, erc721ABI, this.provider);
       baseSymbol = (await baseToken.symbol()).toUpperCase();
+      baseDecimals = 0;
     }
 
     if (Market.isERC721(quoteType)) {
       const quoteToken = this.newContract(quoteAsset, erc721ABI, this.provider);
       quoteSymbol = (await quoteToken.symbol()).toUpperCase();
+      quoteDecimals = 0;
     }
 
     if (Market.isSynth(baseType)) {
       const token = findInSynthetic(baseAsset);
-      if (token) {
-        baseSymbol = token.symbol.toUpperCase();
-        baseDecimals = token.decimals;
-      }
+      baseSymbol = token ? token.symbol.toUpperCase() : 'SYNTH_UNK';
+      baseDecimals = token ? token.decimals : 18;
     }
 
     if (Market.isSynth(quoteType)) {
       const token = findInSynthetic(quoteAsset);
-      if (token) {
-        quoteSymbol = token.symbol.toUpperCase();
-        quoteDecimals = token.decimals;
-      }
+      quoteSymbol = token ? token.symbol.toUpperCase() : 'SYNTH_UNK';
+      quoteDecimals = token ? token.decimals : 18;
     }
 
     const market = await this.contracts.marketCore.getMarket(id, { blockTag: event.blockNumber });
@@ -344,30 +342,32 @@ export class MarketCoreHandler extends Handler {
       txn,
     );
 
-    // Notify approved user
-    await this.notifSrv.notify(NotificationID.PutApproved, this.network, address, {
-      marketAddress,
-    });
+    // Enable any existing liquidity created by the user
+    await Liquidity.updateAllForProvider(this.network, marketAddress, address, { swapDisabled: false }, txn);
 
-    return Promise.resolve(undefined);
+    // Notify approved user
+    const market = await Market.getMarket(this.network, marketAddress, [], txn);
+    await this.notifSrv.notify(NotificationID.PutApproved, this.network, address, {
+      market,
+    });
   }
 
   /**
-   * New address revoked from providing liquidity to a market
+   * An address was revoked from providing liquidity to a market
    * @param marketAddress The market ID
-   * @param address The address approved
+   * @param address The address revoked
    * @param event The event object
    * @param txn The db transaction object
    */
   async onMarketPutRevoked(marketAddress: string, address: string, event: Event, txn?: Transaction) {
     await LiquidityProvider.remove(this.network, marketAddress, address, txn);
 
-    // Notify revoked user
-    await this.notifSrv.notify(NotificationID.PutRevoked, this.network, address, {
-      marketAddress,
-    });
+    // Disable all liquidity created by the revoked user
+    await Liquidity.updateAllForProvider(this.network, marketAddress, address, { swapDisabled: true }, txn);
 
-    return Promise.resolve(undefined);
+    // Notify revoked user
+    const market = await Market.getMarket(this.network, marketAddress, [], txn);
+    await this.notifSrv.notify(NotificationID.PutRevoked, this.network, address, { market });
   }
 
   /**
@@ -396,11 +396,8 @@ export class MarketCoreHandler extends Handler {
       );
     }
 
-    await this.notifSrv.notify(NotificationID.MediatorInviteReceived, this.network, address, {
-      marketAddress,
-    });
-
-    return Promise.resolve(undefined);
+    const market = await Market.getMarket(this.network, marketAddress, [], txn);
+    await this.notifSrv.notify(NotificationID.MediatorInviteReceived, this.network, address, { market });
   }
 
   /**
@@ -413,7 +410,6 @@ export class MarketCoreHandler extends Handler {
   async onUnInvitedMediator(id: string, address: string, event: Event, txn?: Transaction) {
     const invite = await InvitedMediator.findInviteByNetworkMarketIDAndAddress(this.network, id, address, txn);
     if (!invite.accepted) await InvitedMediator.remove(this.network, id, address, txn);
-    return Promise.resolve(undefined);
   }
 
   /**
@@ -429,11 +425,9 @@ export class MarketCoreHandler extends Handler {
     // Notify market creator
     const market = await Market.getByAddress(marketAddress, txn);
     await this.notifSrv.notify(NotificationID.MediatorInviteAccepted, this.network, market.creator, {
-      marketAddress,
+      market,
       invitee: address,
     });
-
-    return Promise.resolve(undefined);
   }
 
   /**
@@ -447,11 +441,8 @@ export class MarketCoreHandler extends Handler {
     await InvitedMediator.remove(this.network, marketAddress, address, txn);
 
     // Notify mediator
-    await this.notifSrv.notify(NotificationID.MediatorRevoked, this.network, address, {
-      marketAddress,
-    });
-
-    return Promise.resolve(undefined);
+    const market = await Market.getMarket(this.network, marketAddress, [], txn);
+    await this.notifSrv.notify(NotificationID.MediatorRevoked, this.network, address, { market });
   }
 
   /**
@@ -462,23 +453,11 @@ export class MarketCoreHandler extends Handler {
    * @param txn The db transaction object
    */
   async onAllowedSwap(marketAddress: string, address: string, event: Event, txn?: Transaction) {
-    const perm = await PermittedTrader.findByNetworkMarketIdAndAddress(this.network, marketAddress, address, txn);
-    if (!perm) {
-      await PermittedTrader.create(
-        {
-          network: this.network,
-          marketAddress,
-          address,
-        },
-        txn,
-      );
+    await PermittedTrader.create({ network: this.network, marketAddress, address }, txn);
 
-      await this.notifSrv.notify(NotificationID.SwapApproved, this.network, address, {
-        marketAddress,
-      });
-    }
-
-    return Promise.resolve(undefined);
+    // Notify approved user
+    const market = await Market.getMarket(this.network, marketAddress, [], txn);
+    await this.notifSrv.notify(NotificationID.SwapApproved, this.network, address, { market });
   }
 
   /**
@@ -490,10 +469,10 @@ export class MarketCoreHandler extends Handler {
    */
   async onRevokedSwap(marketAddress: string, address: string, event: Event, txn?: Transaction) {
     await PermittedTrader.remove(this.network, marketAddress, address, txn);
-    await this.notifSrv.notify(NotificationID.SwapRevoked, this.network, address, {
-      marketAddress,
-    });
-    return Promise.resolve(undefined);
+
+    // Notify revoked user
+    const market = await Market.getMarket(this.network, marketAddress, [], txn);
+    await this.notifSrv.notify(NotificationID.SwapRevoked, this.network, address, { market });
   }
 
   /**

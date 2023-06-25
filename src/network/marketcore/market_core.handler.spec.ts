@@ -11,6 +11,7 @@ import { BigNumber } from 'ethers';
 import MarketBadge, { BadgeScope } from '../../models/market_badge';
 import { toBN } from '../common';
 import { TokenLists } from '../../common/token_list';
+import Liquidity from '../../models/liquidity';
 
 const mockGetMarket = jest.fn();
 const MarketCoreContract = jest.fn().mockImplementation(() => {
@@ -73,12 +74,12 @@ describe('MarketCoreHandler', () => {
           case baseAsset:
             return {
               symbol: jest.fn().mockResolvedValue(base),
-              decimals: jest.fn().mockResolvedValue(toBN(18)),
+              decimals: jest.fn().mockResolvedValue(18),
             };
           case quoteAsset:
             return {
               symbol: jest.fn().mockResolvedValue(quote),
-              decimals: jest.fn().mockResolvedValue(toBN(18)),
+              decimals: jest.fn().mockResolvedValue(18),
             };
         }
       };
@@ -168,6 +169,42 @@ describe('MarketCoreHandler', () => {
         expect(market.quoteType).toEqual(AssetType.SYNTH);
         expect(market.quoteDecimals).toEqual(10);
         expect(market.pair).toEqual(`${base}${quote}`);
+      });
+
+      describe('when SYNTH asset is known in the token list', function () {
+        it('should create market and use defaults for synthetic-related fields', async () => {
+          TokenLists.synthetic.tokens = [];
+
+          mockGetMarket.mockResolvedValue({
+            perms: {
+              put: true,
+              swap: true,
+              mediate: true,
+            },
+            mediatorBond: BigNumber.from('1000'),
+          });
+          await expect(
+            handler.onNewMarket(
+              marketAddress,
+              creator,
+              baseAsset,
+              quoteAsset,
+              AssetType.ERC20,
+              AssetType.SYNTH,
+              BigNumber.from(1),
+              BigNumber.from(10),
+              { transactionHash: txHash } as any,
+            ),
+          ).resolves.toBeUndefined();
+          const market = await Market.getByAddress(marketAddress);
+          expect(market).toBeDefined();
+          expect(market.base).toEqual(base);
+          expect(market.baseAddress).toEqual(baseAsset);
+          expect(market.quoteAddress).toEqual(quoteAsset);
+          expect(market.quote).toEqual('SYNTH_UNK');
+          expect(market.quoteDecimals).toEqual(18);
+          expect(market.pair).toEqual(`${market.base}${market.quote}`);
+        });
       });
     });
 
@@ -313,18 +350,34 @@ describe('MarketCoreHandler', () => {
   });
 
   describe('.onMarketPutAllowed', () => {
-    it('should create new MarketProvider', async () => {
+    it('should create new Liquidity Provider', async () => {
+      let liq = await Liquidity.create({ network: net, marketAddress, provider: userAddr, swapDisabled: true });
+      let liq2 = await Liquidity.create({ network: net, marketAddress, provider: userAddr, swapDisabled: true });
+
       await expect(handler.onMarketPutAllowed(marketAddress, userAddr, {} as any)).resolves.toBeUndefined();
+
       const provider = await LiquidityProvider.find({
         network: net,
         marketAddress: marketAddress,
         address: userAddr,
       });
       expect(provider).toBeDefined();
+
+      // Should re-enable liquidity
+      liq = await Liquidity.getById(liq.id);
+      expect(liq.swapDisabled).toBeFalsy();
+      liq2 = await Liquidity.getById(liq2.id);
+      expect(liq2.swapDisabled).toBeFalsy();
     });
 
     describe('when market provider already exist but soft-deleted', () => {
-      it('should create new MarketProvider', async () => {
+      it('should create new Liquidity Provider', async () => {
+        const market = await Market.create({
+          network: net,
+          address: marketAddress,
+          manager: userAddr,
+        });
+
         const provider = await LiquidityProvider.create({
           network: net,
           marketAddress: marketAddress,
@@ -346,19 +399,22 @@ describe('MarketCoreHandler', () => {
 
         // expect notification to have been sent
         expect(mockNotify).toHaveBeenCalledWith(NotificationID.PutApproved, net, provider.address, {
-          marketAddress: provider.marketAddress,
+          market,
         });
       });
     });
   });
 
   describe('.onMarketPutRevoked', () => {
-    it('should soft delete existing matching MarketProvider', async () => {
+    it('should soft delete existing matching Liquidity Provider', async () => {
       const provider = await LiquidityProvider.create({
         network: net,
         marketAddress: marketAddress,
         address: userAddr,
       });
+
+      let liq = await Liquidity.create({ network: net, marketAddress, provider: userAddr });
+      let liq2 = await Liquidity.create({ network: net, marketAddress, provider: userAddr });
 
       await expect(handler.onMarketPutRevoked(marketAddress, userAddr, {} as any)).resolves.toBeUndefined();
       const provider2 = await LiquidityProvider.getById(provider.id);
@@ -368,14 +424,31 @@ describe('MarketCoreHandler', () => {
       expect(provider3).toBeDefined();
       expect(provider3.deletedAt).toBeDefined();
 
+      // Liquidity should be marked as disabled
+      liq = await Liquidity.getById(liq.id);
+      expect(liq.swapDisabled).toBeTruthy();
+      liq2 = await Liquidity.getById(liq2.id);
+      expect(liq2.swapDisabled).toBeTruthy();
+
       // expect notification to have been sent
+      const market = await Market.getById(marketAddress);
       expect(mockNotify).toHaveBeenCalledWith(NotificationID.PutRevoked, net, provider.address, {
-        marketAddress: provider.marketAddress,
+        market,
       });
     });
   });
 
   describe('.onInvitedMediator', () => {
+    let market: Market;
+
+    beforeEach(async () => {
+      market = await Market.create({
+        network: net,
+        address: marketAddress,
+        manager: userAddr,
+      });
+    });
+
     it('should create invitation', async () => {
       await handler.onInvitedMediator(marketAddress, userAddr, {} as any);
       const invite = await InvitedMediator.findInviteByNetworkMarketIDAndAddress(net, marketAddress, userAddr);
@@ -385,9 +458,7 @@ describe('MarketCoreHandler', () => {
       expect(invite.accepted).toBeFalsy();
 
       // expect notification to have been sent
-      expect(mockNotify).toHaveBeenCalledWith(NotificationID.MediatorInviteReceived, net, userAddr, {
-        marketAddress: invite.marketAddress,
-      });
+      expect(mockNotify).toHaveBeenCalledWith(NotificationID.MediatorInviteReceived, net, userAddr, { market });
     });
 
     it(
@@ -406,9 +477,7 @@ describe('MarketCoreHandler', () => {
         expect(invite.deletedAt).toBeNull();
 
         // expect notification to have been sent
-        expect(mockNotify).toHaveBeenCalledWith(NotificationID.MediatorInviteReceived, net, userAddr, {
-          marketAddress: invite.marketAddress,
-        });
+        expect(mockNotify).toHaveBeenCalledWith(NotificationID.MediatorInviteReceived, net, userAddr, { market });
       },
     );
   });
@@ -456,7 +525,7 @@ describe('MarketCoreHandler', () => {
 
   describe('.onAcceptedMediatorInvite', () => {
     it('should mark invitation as `accepted`', async () => {
-      await Market.create({ creator: creator, address: marketAddress });
+      const market = await Market.create({ creator: creator, address: marketAddress });
 
       let invite = await InvitedMediator.create({
         network: net,
@@ -476,7 +545,7 @@ describe('MarketCoreHandler', () => {
 
       // expect notification to have been sent
       expect(mockNotify).toHaveBeenCalledWith(NotificationID.MediatorInviteAccepted, net, creator, {
-        marketAddress: invite.marketAddress,
+        market,
         invitee: userAddr,
       });
     });
@@ -484,6 +553,12 @@ describe('MarketCoreHandler', () => {
 
   describe('.onRevokedMediator', () => {
     it('should soft delete invitation', async () => {
+      const market = await Market.create({
+        network: net,
+        address: marketAddress,
+        manager: userAddr,
+      });
+
       let invite = await InvitedMediator.create({
         network: net,
         marketAddress: marketAddress,
@@ -501,13 +576,21 @@ describe('MarketCoreHandler', () => {
       expect(invite.deletedAt).toBeDefined();
 
       // expect notification to have been sent
-      expect(mockNotify).toHaveBeenCalledWith(NotificationID.MediatorRevoked, net, userAddr, {
-        marketAddress: invite.marketAddress,
-      });
+      expect(mockNotify).toHaveBeenCalledWith(NotificationID.MediatorRevoked, net, userAddr, { market });
     });
   });
 
   describe('.onAllowedSwap', () => {
+    let market: Market;
+
+    beforeEach(async () => {
+      market = await Market.create({
+        network: net,
+        address: marketAddress,
+        manager: userAddr,
+      });
+    });
+
     it('should create permission for address', async () => {
       await handler.onAllowedSwap(marketAddress, userAddr, {} as any);
       const perm = await PermittedTrader.findByNetworkMarketIdAndAddress(net, marketAddress, userAddr);
@@ -517,7 +600,7 @@ describe('MarketCoreHandler', () => {
 
       // expect notification to have been sent
       expect(mockNotify).toHaveBeenCalledWith(NotificationID.SwapApproved, net, perm.address, {
-        marketAddress: perm.marketAddress,
+        market,
       });
     });
 
@@ -536,6 +619,12 @@ describe('MarketCoreHandler', () => {
 
   describe('.onRevokedSwap', () => {
     it('should soft delete permission', async () => {
+      const market = await Market.create({
+        network: net,
+        address: marketAddress,
+        manager: userAddr,
+      });
+
       let perm = await PermittedTrader.create({
         network: net,
         marketAddress: marketAddress,
@@ -552,9 +641,7 @@ describe('MarketCoreHandler', () => {
       expect(perm.deletedAt).toBeDefined();
 
       // expect notification to have been sent
-      expect(mockNotify).toHaveBeenCalledWith(NotificationID.SwapRevoked, net, perm.address, {
-        marketAddress: perm.marketAddress,
-      });
+      expect(mockNotify).toHaveBeenCalledWith(NotificationID.SwapRevoked, net, perm.address, { market });
     });
   });
 

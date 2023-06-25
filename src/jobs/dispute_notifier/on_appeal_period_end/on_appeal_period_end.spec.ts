@@ -10,6 +10,7 @@ import * as moment from 'moment';
 import Swap from '../../../models/swap';
 import Draft from '../../../models/draft';
 import Reveal from '../../../models/reveal';
+import Market from '../../../models/market';
 
 const mockNotify = jest.fn();
 const MockNotifierService = jest.fn().mockImplementation(() => {
@@ -21,6 +22,10 @@ describe('OnAppealPeriodEnd', () => {
   const db = DBService.getForTest();
   let srv: OnAppealPeriodEnd;
   const net = 'net';
+  const marketAddress = '0xMarket';
+  const provider = '0xProvider';
+  const taker = '0xTaker';
+  const draftee = '0xDraftee';
 
   afterEach(async () => {
     await db.truncateTables();
@@ -50,6 +55,29 @@ describe('OnAppealPeriodEnd', () => {
   });
 
   describe('.process', () => {
+    let swap: Swap;
+    let market: Market;
+    let dispute: Dispute;
+    const orderId = 1;
+    const disputeId = 1;
+
+    beforeEach(async () => {
+      market = await Market.create({
+        network: net,
+        address: marketAddress,
+      });
+
+      swap = await Swap.create({
+        network: net,
+        marketAddress,
+        orderId,
+        base: 'BASE',
+        quote: 'QUOTE',
+        provider: provider,
+        taker: taker,
+      });
+    });
+
     it('should return undefined if srv is already processing', async () => {
       srv.setProcessing(true);
       await expect(srv.process()).resolves.toBeUndefined();
@@ -58,23 +86,8 @@ describe('OnAppealPeriodEnd', () => {
     describe(`
     (1) with matching dispute 
     (2) when outcome is stalled because of reveals=0 (number of reveals >= majority)`, () => {
-      let dispute: Dispute;
-      let swap: Swap;
-      const marketAddress = '0xMarket';
-      const disputeId = 1;
-      const orderId = 1;
-
       beforeEach(async () => {
         const now = moment();
-        swap = await Swap.create({
-          network: net,
-          marketAddress,
-          orderId,
-          base: 'BASE',
-          quote: 'QUOTE',
-          provider: '0xProvider',
-          taker: '0xTaker',
-        });
         await Dispute.create({
           network: net,
           marketAddress,
@@ -96,7 +109,7 @@ describe('OnAppealPeriodEnd', () => {
           marketAddress,
           orderId,
           disputeIndex: disputeId,
-          owner: '0xDraftee',
+          owner: draftee,
         });
       });
 
@@ -106,43 +119,17 @@ describe('OnAppealPeriodEnd', () => {
         expect(dispute.notifiedOnAppealEndAt).toBeTruthy();
       });
 
-      it('should send notification to taker, provider and draftees', async () => {
+      it('should not send notification to taker, provider and draftees', async () => {
         await expect(srv.process()).resolves.toBeUndefined();
-        const payload = {
-          marketAddress,
-          orderId,
-          network: net,
-          disputeId,
-          drafted: undefined,
-          pair: swap.getPair(),
-          outcome: 'Stalled',
-        };
-        expect(mockNotify).toHaveBeenNthCalledWith(1, NotificationID.AppealPhaseEnded, net, '0xProvider', payload);
-        expect(mockNotify).toHaveBeenNthCalledWith(2, NotificationID.AppealPhaseEnded, net, '0xTaker', payload);
-        payload.drafted = true;
-        expect(mockNotify).toHaveBeenNthCalledWith(3, NotificationID.AppealPhaseEnded, net, '0xDraftee', payload);
+        expect(mockNotify).not.toHaveBeenCalled();
       });
     });
 
     describe(`
     (1) with matching dispute 
     (2) when outcome is cancelled`, () => {
-      let swap: Swap;
-      const marketAddress = '0xMarket';
-      const disputeId = 1;
-      const orderId = 1;
-
       beforeEach(async () => {
         const now = moment();
-        swap = await Swap.create({
-          network: net,
-          marketAddress,
-          orderId,
-          base: 'BASE',
-          quote: 'QUOTE',
-          provider: '0xProvider',
-          taker: '0xTaker',
-        });
         await Dispute.create({
           network: net,
           marketAddress,
@@ -164,7 +151,7 @@ describe('OnAppealPeriodEnd', () => {
           marketAddress,
           orderId,
           disputeIndex: disputeId,
-          owner: '0xDraftee',
+          owner: draftee,
         });
         await Reveal.create({ network: net, orderId, disputeId, vote: '0x30' });
         await Reveal.create({ network: net, orderId, disputeId, vote: '0x30' });
@@ -172,38 +159,22 @@ describe('OnAppealPeriodEnd', () => {
 
       it('should send notification to taker, provider and draftees', async () => {
         await expect(srv.process()).resolves.toBeUndefined();
-        const payload = {
-          marketAddress,
-          orderId,
-          network: net,
-          disputeId,
-          drafted: undefined,
-          pair: swap.getPair(),
-          outcome: 'Cancel',
-        };
-        expect(mockNotify).toHaveBeenNthCalledWith(1, NotificationID.AppealPhaseEnded, net, '0xProvider', payload);
+        swap.market = market;
+        const payload = { swap, disputeId, drafted: undefined };
+        expect(mockNotify).toHaveBeenCalledTimes(3);
+        expect(mockNotify).toHaveBeenNthCalledWith(1, NotificationID.AppealPhaseEnded, net, provider, payload);
+        expect(mockNotify).toHaveBeenNthCalledWith(2, NotificationID.AppealPhaseEnded, net, taker, payload);
+        payload.drafted = true;
+        expect(mockNotify).toHaveBeenNthCalledWith(3, NotificationID.AppealPhaseEnded, net, draftee, payload);
       });
     });
 
     describe(`
     (1) with matching dispute 
     (2) when outcome is released`, () => {
-      let swap: Swap;
-      const marketAddress = '0xMarket';
-      const disputeId = 1;
-      const orderId = 1;
-
       beforeEach(async () => {
         const now = moment();
-        swap = await Swap.create({
-          network: net,
-          marketAddress,
-          orderId,
-          base: 'BASE',
-          quote: 'QUOTE',
-          provider: '0xProvider',
-          taker: '0xTaker',
-        });
+
         await Dispute.create({
           network: net,
           marketAddress,
@@ -225,7 +196,7 @@ describe('OnAppealPeriodEnd', () => {
           marketAddress,
           orderId,
           disputeIndex: disputeId,
-          owner: '0xDraftee',
+          owner: draftee,
         });
         await Reveal.create({ network: net, orderId, disputeId, vote: '0x31' });
         await Reveal.create({ network: net, orderId, disputeId, vote: '0x31' });
@@ -233,16 +204,13 @@ describe('OnAppealPeriodEnd', () => {
 
       it('should send notification to taker, provider and draftees', async () => {
         await expect(srv.process()).resolves.toBeUndefined();
-        const payload = {
-          marketAddress,
-          orderId,
-          network: net,
-          disputeId,
-          drafted: undefined,
-          pair: swap.getPair(),
-          outcome: 'Release',
-        };
-        expect(mockNotify).toHaveBeenNthCalledWith(1, NotificationID.AppealPhaseEnded, net, '0xProvider', payload);
+        swap.market = market;
+        const payload = { swap, disputeId, drafted: undefined };
+        expect(mockNotify).toHaveBeenCalledTimes(3);
+        expect(mockNotify).toHaveBeenNthCalledWith(1, NotificationID.AppealPhaseEnded, net, provider, payload);
+        expect(mockNotify).toHaveBeenNthCalledWith(2, NotificationID.AppealPhaseEnded, net, taker, payload);
+        payload.drafted = true;
+        expect(mockNotify).toHaveBeenNthCalledWith(3, NotificationID.AppealPhaseEnded, net, draftee, payload);
       });
     });
   });

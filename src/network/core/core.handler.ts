@@ -1,12 +1,12 @@
 import { Logger } from '@nestjs/common';
-import { BigNumber, Event, providers } from 'ethers';
+import { BigNumber, constants, Event, providers } from 'ethers';
 import { Transaction } from 'objection';
 import Liquidity from '../../models/liquidity';
 import MarketPrice from '../../models/market_price';
 import { Handler } from '../handler';
 import { NotifierService, NotificationID } from '../../jobs/mailer/NotifierService';
 import Swap from '../../models/swap';
-import Meta, { FeeName, MetaKeys, ProtocolFeeBeneficiary, ProtocolParams } from '../../models/meta';
+import Meta, { FeeName, ProtocolFeeBeneficiary } from '../../models/meta';
 import NetworkService from '../network.service';
 import Market from '../../models/market';
 import * as moment from 'moment';
@@ -16,6 +16,8 @@ import MineTask, { MineTaskType } from '../../models/mine_task';
 import * as _ from 'lodash';
 import Offer from '../../models/offers';
 import MarketBadge, { BadgeScope } from '../../models/market_badge';
+import { toLower } from 'lodash';
+import { includesStr, isEqualStr } from '../../common/common';
 
 export class CoreHandler extends Handler {
   logger = new Logger(CoreHandler.name);
@@ -68,6 +70,7 @@ export class CoreHandler extends Handler {
         provider: string,
         swapper: string,
         recipient: string,
+        releaser: string,
         numTypeInfo: BigNumber[],
         byDispute: boolean,
         idsFromProvider: BigNumber[],
@@ -80,6 +83,7 @@ export class CoreHandler extends Handler {
           provider,
           swapper,
           recipient,
+          releaser,
           numTypeInfo,
           byDispute,
           idsFromProvider,
@@ -97,8 +101,8 @@ export class CoreHandler extends Handler {
       },
     );
 
-    this.on('SwapOrderPaid', async (orderId: BigNumber, event: Event, txn?: Transaction) => {
-      return this.onSwapOrderPaid(orderId, event, txn);
+    this.on('SwapOrderPaid', async (orderId: BigNumber, disputeFrom: BigNumber, event: Event, txn?: Transaction) => {
+      return this.onSwapOrderPaid(orderId, disputeFrom, event, txn);
     });
 
     this.on('TransferredToFeePool', async (token: string, amount: BigNumber, event: Event, txn?: Transaction) => {
@@ -235,15 +239,15 @@ export class CoreHandler extends Handler {
 
     this.on(
       'UpdatedLiquidityManager',
-      async (marketAddress: string, provider: string, manager: string, event: Event, txn?: Transaction) => {
-        return this.onUpdatedLiquidityManager(marketAddress, provider, manager, event, txn);
-      },
-    );
-
-    this.on(
-      'RemoveLiquidityManager',
-      async (marketAddress: string, provider: string, manager: string, event: Event, txn?: Transaction) => {
-        return this.onRemoveLiquidityManager(marketAddress, provider, manager, event, txn);
+      async (
+        marketAddress: string,
+        provider: string,
+        manager: string,
+        oldManager: string,
+        event: Event,
+        txn?: Transaction,
+      ) => {
+        return this.onUpdatedLiquidityManager(marketAddress, provider, manager, oldManager, event, txn);
       },
     );
 
@@ -266,10 +270,26 @@ export class CoreHandler extends Handler {
         lid: BigNumber,
         offerer: string,
         offerId: BigNumber,
+        amount: BigNumber,
+        price: BigNumber,
+        ids: BigNumber[],
+        deadline: BigNumber,
         event: Event,
         txn?: Transaction,
       ) => {
-        return this.onNewOffer(marketAddress, provider, lid, offerer, offerId, event, txn);
+        return this.onNewOffer(
+          marketAddress,
+          provider,
+          lid,
+          offerer,
+          offerId,
+          amount,
+          price,
+          ids,
+          deadline,
+          event,
+          txn,
+        );
       },
     );
 
@@ -342,9 +362,13 @@ export class CoreHandler extends Handler {
   /**
    * Get swap fees
    * @param swap The swap object
+   * @param blockTag The block tag
    * @return
    */
-  async computeSwapFees(swap: Partial<Swap>): Promise<{ protocolFee: string; marketCreatorFee: string }> {
+  async computeSwapFees(
+    swap: Partial<Swap>,
+    blockTag?: providers.BlockTag,
+  ): Promise<{ protocolFee: string; marketCreatorFee: string }> {
     const core = this.contracts.core;
     const fees: BigNumber[] = await core.computeSwapFee(
       swap.marketAddress,
@@ -353,6 +377,7 @@ export class CoreHandler extends Handler {
       swap.taker,
       swap.amount,
       swap.price,
+      { blockTag },
     );
     return Promise.resolve({
       protocolFee: fees[0].toString(),
@@ -383,8 +408,14 @@ export class CoreHandler extends Handler {
     event: Event,
     txn?: Transaction,
   ) {
-    const market = await Market.getMarket(this.network, marketAddress, undefined, txn);
-    const [orderId, lid, amount, price, offerId, operator] = numTypeInfo;
+    let market = await Market.getMarket(this.network, marketAddress, undefined, txn);
+    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, undefined, undefined, txn);
+
+    const [orderId, lid, , price, offerId, operator, cancelAt] = numTypeInfo;
+    let amount = numTypeInfo[2];
+
+    // If quote is NFT, use the whole amount of the liquidity
+    amount = Market.isNFT(market.quoteType) ? toBN(liq.amount) : amount;
 
     // Create swap
     let swap: Partial<Swap> = {
@@ -405,16 +436,16 @@ export class CoreHandler extends Handler {
       takerIds: idsFromTaker.map((id) => id.toNumber()),
       operator: operator.toNumber(),
       txHash: event.transactionHash,
+      cancelAt: moment.unix(cancelAt.toNumber()).toISOString(),
     };
 
     // Get swap fee info
-    const info = await this.computeSwapFees(swap);
+    const info = await this.computeSwapFees(swap, event.blockNumber);
 
     // Create swap entry
     swap = await Swap.create({ ...swap, ...info }, txn);
 
     // Update liquidity
-    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, undefined, undefined, txn);
     await Liquidity.updateById(
       liq.id,
       {
@@ -426,10 +457,11 @@ export class CoreHandler extends Handler {
     );
 
     // Update market
-    await Market.updateById(market.id, { totalSwaps: market.totalSwaps + 1 }, txn);
+    market = await Market.updateById(market.id, { totalSwaps: market.totalSwaps + 1 }, txn);
+    swap.market = market;
 
     // Send notification
-    await this.notifSrv.notify(NotificationID.NewInteractiveSwap, this.network, provider, {
+    await this.notifSrv.notify(NotificationID.NewInteractiveSwap, this.network, provider, <SwapOrderNotificationData>{
       marketAddress,
       provider,
       swapper,
@@ -444,6 +476,7 @@ export class CoreHandler extends Handler {
    * @param provider The liquidity provider's address
    * @param swapper The order creator (taker)
    * @param recipient An alternative recipient of the swapper's base asset
+   * @param releaser The releaser of the order
    * @param numTypeInfo List of integer parameters
    * @param byDispute Indicates whether the order was released by dispute
    * @param idsFromProvider List of NFT IDs from the LP
@@ -456,6 +489,7 @@ export class CoreHandler extends Handler {
     provider: string,
     swapper: string,
     recipient: string,
+    releaser: string,
     numTypeInfo: BigNumber[],
     byDispute: boolean,
     idsFromProvider: BigNumber[],
@@ -463,10 +497,16 @@ export class CoreHandler extends Handler {
     event: Event,
     txn?: Transaction,
   ) {
-    const [orderId, lid, amount, price, offerId, operator] = numTypeInfo;
+    const [orderId, lid, , price, offerId, operator] = numTypeInfo;
+    let amount = numTypeInfo[2];
 
     if (orderId.isZero()) {
       let market = await Market.getMarket(this.network, marketAddress, undefined, txn);
+      let liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
+
+      // If quote is NFT, use the whole amount of the liquidity
+      amount = Market.isNFT(market.quoteType) ? toBN(liq.amount) : amount;
+
       let swap: Partial<Swap> = {
         network: this.network,
         lid: lid.toNumber(),
@@ -489,18 +529,10 @@ export class CoreHandler extends Handler {
         takerIds: idsFromTaker.map((id) => id.toNumber()),
         txHash: event.transactionHash,
       };
-      const info = await this.computeSwapFees(swap);
+      const info = await this.computeSwapFees(swap, event.blockNumber);
       swap = await Swap.create({ ...swap, ...info }, txn);
 
       // Update liquidity
-      let liq = await Liquidity.getLiquidity(
-        this.network,
-        swap.marketAddress,
-        swap.provider,
-        lid.toNumber(),
-        undefined,
-        txn,
-      );
       const now = moment().toISOString();
       liq = await Liquidity.updateById(
         liq.id,
@@ -525,7 +557,7 @@ export class CoreHandler extends Handler {
       );
 
       // Send notification
-      await this.notifSrv.notify(NotificationID.NewInstantSwap, this.network, provider, {
+      await this.notifSrv.notify(NotificationID.NewInstantSwap, this.network, provider, <InstantSwapNotificationData>{
         market,
         swap,
         liq,
@@ -533,11 +565,8 @@ export class CoreHandler extends Handler {
     } else {
       let swap = await Swap.get(this.network, orderId.toNumber() - 1, undefined, txn);
 
-      // get order from contract
-      const order = await this.contracts.core.getOrder(orderId.toNumber() - 1);
-
       // Update the swap record
-      swap = await Swap.updateById(swap.id, { released: true, finalizer: order.finalizer }, txn);
+      swap = await Swap.updateById(swap.id, { released: true, finalizer: releaser, byDispute }, txn);
 
       // Mark the last dispute as `orderReleased` if there is any
       const { marketAddress, provider } = swap;
@@ -575,17 +604,18 @@ export class CoreHandler extends Handler {
         },
         txn,
       );
-
       swap.market = market;
 
       // Send notification
-      await this.notifSrv.notify(NotificationID.SwapOrderReleased, this.network, swap.getPayer(), {
-        marketAddress,
-        market,
-        liq,
-        swap,
-        byDispute,
-      });
+      // Send to either taker or provider if one of them is the finalizer.
+      // or send to both if neither is the finalizer
+      const notifData = { market, liq, swap };
+      if (includesStr([swap.provider, swap.taker], swap.finalizer)) {
+        await this.notifSrv.notify(NotificationID.SwapOrderReleased, this.network, swap.getPayer(), notifData);
+      } else {
+        await this.notifSrv.notify(NotificationID.SwapOrderReleased, this.network, swap.provider, notifData);
+        await this.notifSrv.notify(NotificationID.SwapOrderReleased, this.network, swap.taker, notifData);
+      }
     }
   }
 
@@ -609,25 +639,35 @@ export class CoreHandler extends Handler {
       amount: toBN(liq.amount).add(swap.amount).toString(),
     });
 
-    // Send notification
+    // Send notification.
+    // Send to either taker or provider if one of them is the canceller.
+    // or send to both if neither is the canceller
     const market = await Market.getMarket(this.network, swap.marketAddress, undefined, txn);
-    const recipient = swap.provider === canceller ? swap.taker : swap.provider;
-    await this.notifSrv.notify(NotificationID.SwapOrderCancelled, this.network, recipient, {
-      market,
-      liq,
-      swap,
-      byDispute,
-    });
+    const notifData = { market, liq, swap };
+    if (includesStr([swap.provider, swap.taker], canceller)) {
+      const recipient = swap.provider === canceller ? swap.taker : swap.provider;
+      await this.notifSrv.notify(NotificationID.SwapOrderCancelled, this.network, recipient, notifData);
+    } else {
+      await this.notifSrv.notify(NotificationID.SwapOrderCancelled, this.network, swap.provider, notifData);
+      await this.notifSrv.notify(NotificationID.SwapOrderCancelled, this.network, swap.taker, notifData);
+    }
   }
 
   /**
    * An order was marked as `paid`
    * @param orderId The order ID
+   * @param disputeFrom The time after which the order can be disputed
    * @param event The event object
    * @param txn The transaction object
    */
-  async onSwapOrderPaid(orderId: BigNumber, event: Event, txn?: Transaction) {
-    await Swap.updateByOrderId(this.network, orderId.toNumber(), { paid: true }, txn);
+  async onSwapOrderPaid(orderId: BigNumber, disputeFrom: BigNumber, event: Event, txn?: Transaction) {
+    // Update the order
+    await Swap.updateByOrderId(
+      this.network,
+      orderId.toNumber(),
+      { paid: true, disputeFrom: moment.unix(disputeFrom.toNumber()).toISOString() },
+      txn,
+    );
 
     // Send notification
     const swap = await Swap.get(this.network, orderId.toNumber(), undefined, txn);
@@ -962,6 +1002,7 @@ export class CoreHandler extends Handler {
    * @param marketAddress The market ID
    * @param provider The liquidity provider's address
    * @param manager The new liquidity manager's address
+   * @param oldManager The old liquidity manager's address
    * @param event The event object
    * @param txn The transaction object
    */
@@ -969,36 +1010,23 @@ export class CoreHandler extends Handler {
     marketAddress: string,
     provider: string,
     manager: string,
+    oldManager: string,
     event: Event,
     txn?: Transaction,
   ) {
-    await Liquidity.updateAllForProvider(this.network, marketAddress, provider, { manager }, txn);
-    await this.notifSrv.notify(NotificationID.NewLiquidityManager, this.network, manager, {
-      marketAddress,
-      provider,
-    });
-  }
+    if (isEqualStr(manager, oldManager)) return;
 
-  /**
-   * Liquidity manager was updated for a liquidity
-   * @param marketAddress The market ID
-   * @param provider The liquidity provider's address
-   * @param manager The new liquidity manager's address
-   * @param event The event object
-   * @param txn The transaction object
-   */
-  async onRemoveLiquidityManager(
-    marketAddress: string,
-    provider: string,
-    manager: string,
-    event: Event,
-    txn?: Transaction,
-  ) {
-    await Liquidity.updateAllForProvider(this.network, marketAddress, provider, { manager: null }, txn);
-    await this.notifSrv.notify(NotificationID.RemoveLiquidityManager, this.network, manager, {
-      marketAddress,
-      provider,
-    });
+    await Liquidity.updateAllForProvider(this.network, marketAddress, provider, { manager }, txn);
+
+    // Notify the old manager
+    const market = await Market.getMarket(this.network, marketAddress, undefined, txn);
+    const notifData = { market, provider };
+    if (oldManager != constants.AddressZero && !isEqualStr(manager, oldManager)) {
+      await this.notifSrv.notify(NotificationID.RemoveLiquidityManager, this.network, oldManager, notifData);
+    }
+
+    // Notify the new manager
+    await this.notifSrv.notify(NotificationID.UpdatedLiquidityManager, this.network, manager, notifData);
   }
 
   /**
@@ -1038,6 +1066,10 @@ export class CoreHandler extends Handler {
    * @param lid The liquidity ID
    * @param offerer The offer creator's address
    * @param offerId The offer ID
+   * @param amount The offer amount
+   * @param price The offer price
+   * @param ids The offered NFT IDs
+   * @param deadline The offer deadline
    * @param event The event object
    * @param txn The transaction object
    */
@@ -1047,13 +1079,13 @@ export class CoreHandler extends Handler {
     lid: BigNumber,
     offerer: string,
     offerId: BigNumber,
+    amount: BigNumber,
+    price: BigNumber,
+    ids: BigNumber[],
+    deadline: BigNumber,
     event: Event,
     txn?: Transaction,
   ) {
-    // Get the on-chain offer
-    const onChainOffer = await this.contracts.core.getOffer(offerId.sub(1));
-    if (!onChainOffer) throw new Error('on-chain offer not found');
-
     // Save the offer
     const offer = await Offer.create(
       {
@@ -1063,16 +1095,21 @@ export class CoreHandler extends Handler {
         lid: lid.toNumber(),
         offerId: offerId.sub(1).toNumber(),
         creator: offerer,
-        amount: onChainOffer.amount.toString(),
-        price: onChainOffer.price.toString(),
-        ids: onChainOffer.ids.map((id) => id.toNumber()),
-        deadline: moment.unix(onChainOffer.deadline.toNumber()).toISOString(),
+        amount: amount.toString(),
+        price: price.toString(),
+        ids: ids.map((id) => id.toNumber()),
+        deadline: moment.unix(deadline.toNumber()).toISOString(),
       },
       txn,
     );
 
+    const market = await Market.getMarket(this.network, marketAddress, undefined, txn);
+    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
+
     // Send notification
     await this.notifSrv.notify(NotificationID.NewOffer, this.network, provider, {
+      market,
+      liq,
       offer,
     });
   }
@@ -1110,8 +1147,15 @@ export class CoreHandler extends Handler {
       txn,
     );
 
+    const { marketAddress, provider, lid } = offer;
+    const market = await Market.getMarket(this.network, marketAddress, undefined, txn);
+    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, txn);
+
     // Send notification
     await this.notifSrv.notify(NotificationID.OfferUpdated, this.network, offer.provider, {
+      updated: true,
+      market,
+      liq,
       offer,
     });
   }
@@ -1135,29 +1179,15 @@ export class CoreHandler extends Handler {
       txn,
     );
 
+    const { marketAddress, provider, lid } = offer;
+    const market = await Market.getMarket(this.network, marketAddress, undefined, txn);
+    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, txn);
+
     // Send notification
     await this.notifSrv.notify(NotificationID.OfferAccepted, this.network, offer.creator, {
       offer,
-    });
-  }
-
-  /**
-   * Offer was cancelled
-   * @param offerId The offer ID
-   * @param canceller The offer canceller's address
-   * @param event The event object
-   * @param txn The transaction object
-   */
-  async onOfferCancelled(offerId: BigNumber, canceller: string, event: Event, txn?: Transaction) {
-    let offer = await Offer.getByOfferId(offerId.toNumber(), txn);
-    if (!offer) throw new Error('Offer not found');
-
-    // Update the offer
-    offer = await Offer.updateByOfferId(offerId.toNumber(), { cancelled: true }, txn);
-
-    // Send notification
-    await this.notifSrv.notify(NotificationID.OfferCancelled, this.network, offer.provider, {
-      offer,
+      liq,
+      market,
     });
   }
 
@@ -1175,9 +1205,41 @@ export class CoreHandler extends Handler {
     // Update the offer
     offer = await Offer.updateByOfferId(offerId.toNumber(), { accepted: false, execAt: null }, txn);
 
+    const { marketAddress, provider, lid } = offer;
+    const market = await Market.getMarket(this.network, marketAddress, undefined, txn);
+    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, txn);
+
     // Send notification
     await this.notifSrv.notify(NotificationID.OfferUnaccepted, this.network, offer.creator, {
       offer,
+      liq,
+      market,
+    });
+  }
+
+  /**
+   * Offer was cancelled
+   * @param offerId The offer ID
+   * @param canceller The offer canceller's address
+   * @param event The event object
+   * @param txn The transaction object
+   */
+  async onOfferCancelled(offerId: BigNumber, canceller: string, event: Event, txn?: Transaction) {
+    let offer = await Offer.getByOfferId(offerId.toNumber(), txn);
+    if (!offer) throw new Error('Offer not found');
+
+    // Update the offer
+    offer = await Offer.updateByOfferId(offerId.toNumber(), { cancelled: true }, txn);
+
+    const { marketAddress, provider, lid } = offer;
+    const market = await Market.getMarket(this.network, marketAddress, undefined, txn);
+    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, txn);
+
+    // Send notification
+    await this.notifSrv.notify(NotificationID.OfferCancelled, this.network, offer.provider, {
+      offer,
+      liq,
+      market,
     });
   }
 
@@ -1195,9 +1257,15 @@ export class CoreHandler extends Handler {
     // Update the offer
     offer = await Offer.updateByOfferId(offerId.toNumber(), { executed: true }, txn);
 
+    const { marketAddress, provider, lid } = offer;
+    const market = await Market.getMarket(this.network, marketAddress, undefined, txn);
+    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, txn);
+
     // Send notification
     await this.notifSrv.notify(NotificationID.OfferExecuted, this.network, offer.provider, {
       offer,
+      market,
+      liq,
     });
   }
 

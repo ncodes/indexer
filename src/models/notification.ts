@@ -2,12 +2,49 @@ import { randStr } from '../common/common';
 import Objection, { raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 
+export enum NotificationType {
+  InstantSwap = 'swap:instant',
+  InteractiveSwap = 'swap:interactive',
+  OrderCancellation = 'order:cancellation',
+  OrderPaid = 'order:paid',
+  OrderReleased = 'order:released',
+  MediateInviteReceived = 'market:perm:mediate:invite_received',
+  MediateInviteAccepted = 'market:perm:mediate:invite_accepted',
+  MediatePermRevoked = 'market:perm:mediate:revoked',
+  PutApproved = 'market:perm:put:approved',
+  PutRevoked = 'market:perm:put:revoked',
+  SwapApproved = 'market:perm:swap:approved',
+  SwapRevoked = 'market:perm:swap:revoked',
+  NewLiqManager = 'market:liquidity-manager:updated',
+  RemovedLiqManager = 'market:liquidity-manager:removed',
+  MediatorJoined = 'market:mediator-ticket:joined',
+  MediatorLeft = 'market:mediator-ticket:left',
+  DisputeCreated = 'dispute:created',
+  DisputeTicketDrafted = 'dispute:ticket-drafted',
+  DisputeEvidenceSubmission = 'dispute:evidence-submission',
+  EvidencePhaseStarted = 'dispute:evidence-phase-started',
+  DisputeTicketSlashed = 'dispute:ticket-slashed',
+  EvidencePhaseEnded = 'dispute:evidence-phase-ended',
+  CommitPhaseEnded = 'dispute:commit-phase-ended',
+  RevealPhaseEnded = 'dispute:reveal-phase-ended',
+  AppealPhaseEnded = 'dispute:appeal-phase-ended',
+  DisputeExecuted = 'dispute:executed',
+  NewOffer = 'offer:new',
+  OfferUpdated = 'offer:updated',
+  OfferAccepted = 'offer:accepted',
+  OfferUnaccepted = 'offer:unaccepted',
+  OfferCancelled = 'offer:cancelled',
+  OfferExecuted = 'offer:executed',
+}
+
 /**
  * Notification represents a notification
  */
 export default class Notification extends BaseModel {
   // The network name
   network: string;
+  // The notification type
+  type: NotificationType;
   // The user ID
   userId: string;
   // The title of the message
@@ -93,9 +130,7 @@ export default class Notification extends BaseModel {
         });
     }
 
-    let q = this.query(txn)
-      .select(raw('*, count(*) over() as "__queryCount"'))
-      .where({ network, userId });
+    let q = this.query(txn).select(raw('*, count(*) over() as "__queryCount"')).where({ network, userId });
     if (read !== undefined) q = q.where({ read });
     if (limit) q = q.limit(limit);
     if (offset) q = q.offset(offset);
@@ -120,12 +155,7 @@ export default class Notification extends BaseModel {
    */
   static updateById(id: string, udp: Partial<Notification>): Promise<Notification> {
     return new Promise((resolve, reject) => {
-      this.query()
-        .whereNotDeleted()
-        .patchAndFetchById(id, udp)
-        .execute()
-        .then(resolve)
-        .catch(reject);
+      this.query().whereNotDeleted().patchAndFetchById(id, udp).execute().then(resolve).catch(reject);
     });
   }
 }

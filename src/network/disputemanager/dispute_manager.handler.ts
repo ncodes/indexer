@@ -11,7 +11,7 @@ import { NotifierService, NotificationID } from '../../jobs/mailer/NotifierServi
 import NetworkService from '../network.service';
 import Draft from '../../models/draft';
 import * as _ from 'lodash';
-import { toDec } from '../../common/common';
+import { isEqualStr, toDec } from '../../common/common';
 import Liquidity from '../../models/liquidity';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 
@@ -117,13 +117,13 @@ export class DisputeManagerHandler extends Handler {
 
     // Calculate number of mediators required
     const market = await Market.getMarket(this.network, swap.marketAddress, undefined, txn);
-    const numMediators = Math.min(
-      market.numMediators * (parseInt(numDisp) + 1),
-      Math.min(parseInt(await this.getParam('maxMediatorPerDispute'))),
-    );
+    const maxMediatorPerDispute = parseInt(await this.getParam('maxMediatorPerDispute'));
+    const numMediators = market.permMediate
+      ? market.numMediators
+      : Math.min(market.numMediators * (numDisp + 1), maxMediatorPerDispute);
 
     // Create dispute
-    const appeal = parseInt(numDisp) > 0;
+    const appeal = numDisp > 0;
     const dispute = await Dispute.create(
       {
         network: this.network,
@@ -134,7 +134,9 @@ export class DisputeManagerHandler extends Handler {
         disputeId: disputeId.toNumber(),
         wantRelease,
         appeal,
-        deposit: toBN(this.getParam('disputeCost')).mul(numDisp).toString(),
+        deposit: toBN(await this.getParam('disputeCost'))
+          .mul(numDisp)
+          .toString(),
         numMediators,
       },
       txn,
@@ -190,16 +192,12 @@ export class DisputeManagerHandler extends Handler {
       txn,
     );
 
-    // Send notification
-    const locals = {
-      orderId: orderId.toNumber(),
-      wantRelease,
-      creator,
-      appeal: dispute.appeal,
-      pair: `${swap.base}/${swap.quote}`.toUpperCase(),
-    };
-    const recipient = swap.provider === creator ? swap.taker : swap.provider;
-    await this.notifSrv.notify(NotificationID.DisputeCreated, this.network, recipient, locals);
+    // Send notification;
+    const recipient = isEqualStr(swap.provider, creator) ? swap.taker : swap.provider;
+    await this.notifSrv.notify(NotificationID.DisputeCreated, this.network, recipient, {
+      dispute,
+      swap,
+    });
   }
 
   /**
@@ -293,11 +291,7 @@ export class DisputeManagerHandler extends Handler {
     const stalled = !['0x30', '0x31'].includes(winningVote);
     dispute = await Dispute.updateById(
       dispute.id,
-      {
-        executed: true,
-        released: !stalled ? winningVote === '0x31' : null,
-        abandoned,
-      },
+      { executed: true, released: !stalled ? winningVote === '0x31' : null, abandoned },
       txn,
     );
 
@@ -317,9 +311,7 @@ export class DisputeManagerHandler extends Handler {
     );
     await Liquidity.updateById(
       liquidity.id,
-      {
-        openDisputes: !stalled ? liquidity.openDisputes - 1 : liquidity.openDisputes,
-      },
+      { openDisputes: !stalled ? liquidity.openDisputes - 1 : liquidity.openDisputes },
       txn,
     );
 
@@ -344,10 +336,12 @@ export class DisputeManagerHandler extends Handler {
 
     // Collate notification recipients
     const recipients: { address: string; drafted?: boolean }[] = [];
-    recipients.push({ address: swap.provider }, { address: swap.taker });
+
+    // Send execution notice to provider and taker only if the dispute was not stalled
+    if (!stalled) recipients.push({ address: swap.provider }, { address: swap.taker });
 
     // Get the drafted tickets
-    const drafted = await Draft.getAll(swap.network, swap.marketAddress, swap.orderId, dispute.disputeId);
+    const drafted = await Draft.getAll(swap.network, swap.marketAddress, swap.orderId, dispute.disputeId, txn);
     recipients.push(
       ..._.map(drafted, (v) => {
         return { address: v.owner, drafted: true };
@@ -355,16 +349,11 @@ export class DisputeManagerHandler extends Handler {
     );
 
     // Send notification
-    const { released } = dispute;
     for (const recipient of recipients) {
       await this.notifSrv.notify(NotificationID.DisputeExecuted, swap.network, recipient.address, {
-        marketAddress: swap.marketAddress,
-        network: swap.network,
-        orderId: swap.orderId,
-        disputeId: dispute.disputeId,
+        swap,
+        dispute,
         drafted: recipient.drafted,
-        pair: swap.getPair(),
-        outcome: released === null ? 'Stalled' : released ? 'Release' : 'Cancel',
       });
     }
   }

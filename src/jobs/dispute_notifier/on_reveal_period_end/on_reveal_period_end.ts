@@ -70,21 +70,18 @@ export default class OnRevealPeriodEnd extends Base {
     const reveals = await Reveal.findByDispute(swap.network, swap.orderId, dispute.disputeId);
     const nRelease = reveals.filter((x) => x.vote === '0x31').length;
     const nCancel = reveals.filter((x) => x.vote === '0x30').length;
-    let outcome = 'Stalled';
-    outcome = nRelease >= majority ? 'Release' : outcome;
-    outcome = nCancel >= majority ? 'Cancel' : outcome;
 
     // Send notification
     for (const recipient of recipients) {
       await this.notifier.notify(NotificationID.RevealPhaseEnded, swap.network, recipient.address, {
-        marketAddress: swap.marketAddress,
-        network: swap.network,
-        orderId: swap.orderId,
+        swap,
         disputeId: dispute.disputeId,
+        numMediators: dispute.numMediators,
         participant: recipient.participant,
-        pair: swap.getPair(),
-        outcome,
-        cost: commify(formatUnits(await this.cfgSrv.getContractParam(swap.network, 'disputeCost'), 18)),
+        nRelease,
+        nCancel,
+        majority,
+        cost: commify(formatUnits(await this.cfgSrv.getContractParam(swap.network, 'disputeCost'), 18)), // TODO: the market is where dispute cost is stored
         appealPhaseHoursLeft: moment(dispute.appealEndAt).fromNow(false),
       });
     }

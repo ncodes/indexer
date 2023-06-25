@@ -9,7 +9,7 @@ import { Roles } from '../../common/roles';
 import * as request from 'supertest';
 import { makeSession } from '../auth/utils';
 import { NotificationsController } from './notifications.controller';
-import Notification from '../../models/notification';
+import Notification, { NotificationType } from '../../models/notification';
 import { randStr } from '../../common/common';
 
 const mockCfgGet = jest.fn();
@@ -96,7 +96,7 @@ describe('NotificationsController', () => {
     });
 
     it('should return correct result', async () => {
-      const notif = await Notification.create({ network: net, userId: u.id });
+      const notif = await Notification.create({ type: NotificationType.InstantSwap, network: net, userId: u.id });
       await request(app.getHttpServer())
         .get(`/v1/notifications`)
         .query({ net })
@@ -110,8 +110,9 @@ describe('NotificationsController', () => {
 
     describe('read=true', () => {
       it('should return read result', async () => {
-        await Notification.create({ network: net, userId: u.id });
+        await Notification.create({ type: NotificationType.InstantSwap, network: net, userId: u.id });
         const notif = await Notification.create({
+          type: NotificationType.InstantSwap,
           network: net,
           userId: u.id,
           read: true,
@@ -130,8 +131,9 @@ describe('NotificationsController', () => {
 
     describe('limit=1', () => {
       it('should return correct results', async () => {
-        await Notification.create({ network: net, userId: u.id });
+        await Notification.create({ type: NotificationType.InstantSwap, network: net, userId: u.id });
         const notif = await Notification.create({
+          type: NotificationType.InstantSwap,
           network: net,
           userId: u.id,
           read: true,
@@ -150,8 +152,8 @@ describe('NotificationsController', () => {
 
     describe('offset > 0', () => {
       it('should return correct results', async () => {
-        const notif = await Notification.create({ network: net, userId: u.id });
-        await Notification.create({ network: net, userId: u.id, read: true });
+        const notif = await Notification.create({ type: NotificationType.InstantSwap, network: net, userId: u.id });
+        await Notification.create({ type: NotificationType.InstantSwap, network: net, userId: u.id, read: true });
         await request(app.getHttpServer())
           .get(`/v1/notifications`)
           .query({ net, limit: 1, offset: 1 })
@@ -166,8 +168,8 @@ describe('NotificationsController', () => {
 
     describe('count=true', () => {
       it('should return correct results', async () => {
-        const notif = await Notification.create({ network: net, userId: u.id });
-        await Notification.create({ network: net, userId: u.id, read: true });
+        const notif = await Notification.create({ type: NotificationType.InstantSwap, network: net, userId: u.id });
+        await Notification.create({ type: NotificationType.InstantSwap, network: net, userId: u.id, read: true });
         await request(app.getHttpServer())
           .get(`/v1/notifications`)
           .query({ net, count: true })
@@ -207,7 +209,7 @@ describe('NotificationsController', () => {
     });
 
     it('should return 200 when update was successful', async () => {
-      let notif = await Notification.create({ network: net, userId: u.id });
+      let notif = await Notification.create({ type: NotificationType.InstantSwap, network: net, userId: u.id });
       await request(app.getHttpServer())
         .put(`/v1/notifications/${notif.id}/mark-read`)
         .set('Authorization', 'bearer ' + token)

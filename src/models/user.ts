@@ -9,6 +9,8 @@ import { BaseModel } from './base';
 export default class User extends BaseModel {
   email: string;
   address: string;
+  locale: string;
+  timezone: string;
   role: string;
 
   constructor(init?: Partial<User>) {
@@ -66,12 +68,7 @@ export default class User extends BaseModel {
    */
   static getByEmail(email: string, txn?: Transaction): Promise<User> {
     return new Promise((resolve, reject) => {
-      this.query(txn)
-        .where('email', 'ILIKE', email)
-        .whereNotDeleted()
-        .first()
-        .then(resolve)
-        .catch(reject);
+      this.query(txn).where('email', 'ILIKE', email).whereNotDeleted().first().then(resolve).catch(reject);
     });
   }
 
@@ -82,12 +79,7 @@ export default class User extends BaseModel {
    */
   static getByAddress(address: string, txn?: Transaction): Promise<User> {
     return new Promise((resolve, reject) => {
-      this.query(txn)
-        .where('address', 'ILIKE', address)
-        .whereNotDeleted()
-        .first()
-        .then(resolve)
-        .catch(reject);
+      this.query(txn).where('address', 'ILIKE', address).whereNotDeleted().first().then(resolve).catch(reject);
     });
   }
 
@@ -136,12 +128,7 @@ export default class User extends BaseModel {
    */
   static updateById(id: string, udp: Partial<User>): Promise<User> {
     return new Promise((resolve, reject) => {
-      this.query()
-        .whereNotDeleted()
-        .patchAndFetchById(id, udp)
-        .execute()
-        .then(resolve)
-        .catch(reject);
+      this.query().whereNotDeleted().patchAndFetchById(id, udp).execute().then(resolve).catch(reject);
     });
   }
 

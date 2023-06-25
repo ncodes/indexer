@@ -8,7 +8,7 @@ import { toBN } from '../common';
 import TicketSlash from '../../models/ticket_slash';
 import NetworkService from '../network.service';
 import { NotifierService, NotificationID } from '../../jobs/mailer/NotifierService';
-import { commify, formatUnits } from 'ethers/lib/utils';
+import { commify, formatEther, formatUnits } from 'ethers/lib/utils';
 import Market from '../../models/market';
 import Draft from '../../models/draft';
 import Dispute from '../../models/dispute';
@@ -65,8 +65,15 @@ export class MediatorManagerHandler extends Handler {
 
     this.on(
       'LeftMarket',
-      async (owner: string, marketAddress: string, ticketId: BigNumber, event: ethers.Event, txn?: Transaction) => {
-        return this.onLeftMarket(owner, marketAddress, ticketId, event, txn);
+      async (
+        marketAddress: string,
+        owner: string,
+        ticketId: BigNumber,
+        joinBy: BigNumber,
+        event: ethers.Event,
+        txn?: Transaction,
+      ) => {
+        return this.onLeftMarket(marketAddress, owner, ticketId, joinBy, event, txn);
       },
     );
 
@@ -211,16 +218,20 @@ export class MediatorManagerHandler extends Handler {
     await Ticket.updateById(ticket.id, { marketAddress, leaveAt: moment.unix(leaveAt).toISOString() }, txn);
 
     // Update market
-    const market = await Market.getMarket(this.network, marketAddress, undefined, txn);
-    await Market.updateById(market.id, {
-      totalJoinedMediatorsBond: toBN(market.totalJoinedMediatorsBond).add(ticket.bond).toString(),
-      numMediatorsJoined: market.numMediatorsJoined + 1,
-    });
+    let market = await Market.getMarket(this.network, marketAddress, undefined, txn);
+    market = await Market.updateById(
+      market.id,
+      {
+        totalJoinedMediatorsBond: toBN(market.totalJoinedMediatorsBond).add(ticket.bond).toString(),
+        numMediatorsJoined: market.numMediatorsJoined + 1,
+      },
+      txn,
+    );
 
     // Send notification
     const numTickets = await Ticket.countByNetworkAndMarket(this.network, marketAddress, txn);
     await this.notifSrv.notify(NotificationID.NewTicketJoinedMarket, this.network, market.creator, {
-      marketAddress,
+      market,
       owner,
       numTickets,
     });
@@ -228,44 +239,48 @@ export class MediatorManagerHandler extends Handler {
 
   /**
    * A ticket left a market
-   * @param owner The ticket owner
    * @param marketAddress The ID of the market joined
+   * @param owner The ticket owner
    * @param ticketId The unique id of the ticket
+   * @param joinBy The time the ticket must join a market otherwise it will be expired
    * @param event The event object
    * @param txn The database transaction handle
    */
   async onLeftMarket(
-    owner: string,
     marketAddress: string,
+    owner: string,
     ticketId: BigNumber,
+    joinBy: BigNumber,
     event: ethers.Event,
     txn?: Transaction,
   ) {
     const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, ticketId.toNumber(), undefined, txn);
 
-    const block = await event.getBlock();
-    const joinBy = block.timestamp + parseInt(await this.getParam('ticketExpireDur'));
     await Ticket.updateById(
       ticket.id,
       {
         marketAddress: null,
         leaveAt: null,
-        joinBy: moment.unix(joinBy).toISOString(),
+        joinBy: moment.unix(joinBy.toNumber()).toISOString(),
       },
       txn,
     );
 
     // Update market
-    const market = await Market.getMarket(this.network, marketAddress, undefined, txn);
-    await Market.updateById(market.id, {
-      totalJoinedMediatorsBond: toBN(market.totalJoinedMediatorsBond).sub(ticket.bond).toString(),
-      numMediatorsJoined: market.numMediatorsJoined - 1,
-    });
+    let market = await Market.getMarket(this.network, marketAddress, undefined, txn);
+    market = await Market.updateById(
+      market.id,
+      {
+        totalJoinedMediatorsBond: toBN(market.totalJoinedMediatorsBond).sub(ticket.bond).toString(),
+        numMediatorsJoined: market.numMediatorsJoined - 1,
+      },
+      txn,
+    );
 
     // Send notification
     const numTickets = await Ticket.countByNetworkAndMarket(this.network, marketAddress, txn);
     await this.notifSrv.notify(NotificationID.TicketLeftMarket, this.network, market.creator, {
-      marketAddress,
+      market,
       owner,
       numTickets,
     });
@@ -363,23 +378,15 @@ export class MediatorManagerHandler extends Handler {
 
     // Send notification
     await this.notifSrv.notify(NotificationID.TicketDrafted, this.network, owner, {
-      marketAddress,
       owner,
       ticketId: ticketId.toNumber(),
-      orderId: orderId.toNumber(),
+      dispute,
     });
 
-    // Send notification to provider and taker when fully drafted
     if (fullyDrafted) {
+      // Send notification to provider and taker when fully drafted
       const swap = await Swap.get(this.network, orderId.toNumber(), undefined, txn);
-      const locals = {
-        marketAddress,
-        orderId: orderId.toNumber(),
-        numDrafted,
-        disputeId: disputeId.toNumber(),
-        pair: `${swap.base}/${swap.quote}`.toUpperCase(),
-        evidencePhaseHoursLeft: moment(dispute.evidenceEndAt).fromNow(true),
-      };
+      const locals = { dispute, evidencePhaseHoursLeft: moment(dispute.evidenceEndAt).fromNow(true) };
       await this.notifSrv.notify(NotificationID.FullyDrafted, this.network, swap.provider, locals);
       await this.notifSrv.notify(NotificationID.FullyDrafted, this.network, swap.taker, locals);
 
@@ -450,11 +457,11 @@ export class MediatorManagerHandler extends Handler {
     event: ethers.Event,
     txn?: Transaction,
   ) {
-    const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, ticketId.toNumber(), undefined, txn);
-
     const block = await event.getBlock();
     const joinBy = block.timestamp + parseInt(await this.getParam('ticketExpireDur'));
-    await Ticket.updateById(
+
+    let ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, ticketId.toNumber(), undefined, txn);
+    ticket = await Ticket.updateById(
       ticket.id,
       {
         orderId: null,
@@ -481,19 +488,15 @@ export class MediatorManagerHandler extends Handler {
         winSide,
       },
       txn,
-    );
-
-    // Send notification
-    const p2pDecimal = await this.netSrv.getContracts(this.network).p2pToken.decimals();
-    await this.notifSrv.notify(NotificationID.TicketSlashed, this.network, owner, {
-      marketAddress,
-      owner,
-      ticketId: ticketId.toString(),
-      orderId: ticket.orderId.toString(),
-      amount: commify(formatUnits(amount, p2pDecimal)),
-      asset: 'P2P',
-      reason: !voted ? 'DID NOT VOTE' : 'VOTED WITH MINORITY',
-    });
+    ),
+      // Send notification
+      await this.notifSrv.notify(NotificationID.TicketSlashed, this.network, owner, {
+        ticket,
+        owner,
+        amount: commify(formatEther(amount)),
+        voted,
+        asset: 'P2P',
+      });
   }
 
   /**

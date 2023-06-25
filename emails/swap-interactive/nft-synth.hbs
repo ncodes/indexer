@@ -1,0 +1,24 @@
+<table style="margin: auto; width: 100%;  background-color: #ffffff;  border-radius: 5px;">
+  <tr>
+    <td style="padding: 10px 30px; font-size: 20px; line-height: 30px;">
+      Hello {{userAddrShort}},
+      <br><br>
+      Your liquidity has received a new swap order. The buyer wants to swap <b>{{price}} {{market.quote}}</b> for <b>{{baseSize}} {{market.base}}</b> token{{pluralStr}} ({{>printTokenIDs ids=swap.providerIds}}).
+      <br>
+      <br>
+      <div {{> alertStyle }}>
+        <div style="padding: 5px 10px;">Review the order and share your payment details with the buyer to receive {{price}} {{market.quote}}.
+        </div>
+        <div style="padding: 5px 10px; border-top: 1px dashed #d1d3cf; font-weight: bold;">This order will expire in <span style="color: #d34f4f;">{{cancelAt}}</span></div>
+      </div>
+      <br>
+      {{> primaryButton this }}
+      <br>
+      <br>
+      Love, <br>
+      {{app}} Team
+    </td>
+  </tr>
+</table>
+
+

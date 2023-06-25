@@ -111,6 +111,30 @@
         "internalType": "uint256",
         "name": "offerId",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "price",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256[]",
+        "name": "ids",
+        "type": "uint256[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "deadline",
+        "type": "uint256"
       }
     ],
     "name": "NewOffer",
@@ -359,31 +383,6 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "marketId",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "provider",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "manager",
-        "type": "address"
-      }
-    ],
-    "name": "RemoveLiquidityManager",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
         "name": "mid",
         "type": "address"
       },
@@ -403,6 +402,12 @@
         "indexed": false,
         "internalType": "address",
         "name": "recipient",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "releaser",
         "type": "address"
       },
       {
@@ -462,9 +467,9 @@
       },
       {
         "indexed": false,
-        "internalType": "uint256[6]",
+        "internalType": "uint256[7]",
         "name": "numTypeInfo",
-        "type": "uint256[6]"
+        "type": "uint256[7]"
       },
       {
         "indexed": false,
@@ -489,6 +494,12 @@
         "indexed": true,
         "internalType": "uint256",
         "name": "orderID",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "disputeFrom",
         "type": "uint256"
       }
     ],
@@ -821,6 +832,12 @@
         "indexed": true,
         "internalType": "address",
         "name": "manager",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "oldManager",
         "type": "address"
       }
     ],
@@ -1172,19 +1189,6 @@
       }
     ],
     "name": "cancelOrderByManagerSig",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "marketId",
-        "type": "address"
-      }
-    ],
-    "name": "clearLiquidityManager",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

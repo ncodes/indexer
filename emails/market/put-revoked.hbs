@@ -1,0 +1,21 @@
+<table style="margin: auto; width: 100%;  background-color: #ffffff;  border-radius: 5px;">
+  <tr>
+    <td style="padding: 10px 30px; font-size: 20px; line-height: 30px;">
+      Hello {{userAddrShort}},
+      <br><br>
+      Your permission to add liquidity to a <a href="{{marketLink}}">market</a> has been revoked by the market creator.
+      <br /><br />
+      <div class="alert" {{> alertStyle }}>
+        <div style="padding: 5px 10px; ">{{> badgeInfo label='INFO' }} You will no longer be able to add liquidity to the market.</div>
+        <div style="padding: 5px 10px; border-top: 1px dashed #f7f7f7">{{> badgeInfo label='INFO' }} Existing liquidity will no longer be swappable; they can be withdrawn.</div>
+      </div>
+      <br>
+      {{> primaryButton this }}
+      <br>
+      Love, <br>
+      {{app}} Team
+    </td>
+  </tr>
+</table>
+
+

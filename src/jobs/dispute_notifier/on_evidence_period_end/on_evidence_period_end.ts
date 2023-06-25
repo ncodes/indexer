@@ -50,28 +50,21 @@ export default class OnEvidencePeriodEnd extends Base {
   async notify(dispute: Dispute) {
     const recipients: { address: string; drafted?: boolean }[] = [];
 
-    // Get the swap order
+    // Get the swap order and add participants as recipients
     const swap = await Swap.get(dispute.network, dispute.orderId);
     recipients.push({ address: swap.provider }, { address: swap.taker });
 
     // Get the drafted tickets
     const drafted = await Draft.getAll(swap.network, swap.marketAddress, swap.orderId, dispute.disputeId);
-    recipients.push(
-      ..._.map(drafted, (v) => {
-        return { address: v.owner, drafted: true };
-      }),
-    );
+    recipients.push(..._.map(drafted, (v) => ({ address: v.owner, drafted: true })));
 
     // Send notification
     for (const recipient of recipients) {
       await this.notifier.notify(NotificationID.EvidencePhaseEnded, swap.network, recipient.address, {
-        marketAddress: swap.marketAddress,
-        network: swap.network,
-        orderId: swap.orderId,
+        swap,
         disputeId: dispute.disputeId,
-        drafted: recipient.drafted,
-        pair: swap.getPair(),
         commitPhaseHoursLeft: moment(dispute.commitEndAt).fromNow(true),
+        drafted: recipient.drafted,
       });
     }
 

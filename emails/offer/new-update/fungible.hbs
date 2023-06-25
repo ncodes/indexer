@@ -1,0 +1,21 @@
+<table style="margin: auto; width: 100%;  background-color: #ffffff;  border-radius: 5px;">
+  <tr>
+    <td style="padding: 10px 30px; font-size: 20px; line-height: 30px;">
+      Hello {{userAddrShort}},
+      <br><br>
+      {{#not updated}}A new{{else}}An updated{{/not}} offer was received for your liquidity. The offerer, {{creatorShort}}, wants <b>{{amount}} {{market.base}}</b> for <b>{{price}} {{market.quote}}</b>.
+      <br><br>
+      <div class="alert" {{> alertStyle }}>
+        <div style="padding: 5px 10px;">{{> badgeInfo label='INFO' }}  <b>Offer expires in</b>: {{deadline}}</div>
+        <div style="padding: 5px 10px; border-top: 1px solid #f7f7f7;">{{> badgeInfo label='INFO' }}  You can ignore the offer if not interested</div>
+      </div>
+      <br>
+      {{> primaryButton this }}
+      <br>
+      Love, <br>
+      {{app}} Team
+    </td>
+  </tr>
+</table>
+
+

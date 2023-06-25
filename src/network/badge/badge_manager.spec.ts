@@ -50,15 +50,7 @@ describe('BadgeManagerHandler', () => {
   describe('.onGrantedBadge', () => {
     it('should correctly create grant badge', async () => {
       const expireAt = moment().add(10, 's');
-      await handler.onGrantedBadge(
-        'badge',
-        'path',
-        grantee,
-        keys,
-        values,
-        toBN(expireAt.unix()),
-        null,
-      );
+      await handler.onGrantedBadge('badge', 'path', grantee, keys, values, toBN(expireAt.unix()), null);
       const rec = await BadgeGrant.find({ badge, path });
       expect(rec).toBeDefined();
       expect(rec.grantee).toEqual(grantee);

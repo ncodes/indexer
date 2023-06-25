@@ -9,6 +9,7 @@ import * as moment from 'moment';
 import Swap from '../../../models/swap';
 import Draft from '../../../models/draft';
 import OnCommitPeriodEnd from './on_commit_period_end';
+import Market from '../../../models/market';
 
 const mockNotify = jest.fn();
 const MockNotifierService = jest.fn().mockImplementation(() => {
@@ -20,6 +21,9 @@ describe('OnCommitPeriodEnd', () => {
   const db = DBService.getForTest();
   let srv: OnCommitPeriodEnd;
   const net = 'net';
+  const provider = '0xProvider';
+  const taker = '0xTaker';
+  const draftee = '0xDraftee';
 
   afterEach(async () => {
     await db.truncateTables();
@@ -57,20 +61,25 @@ describe('OnCommitPeriodEnd', () => {
     describe(`with matching dispute`, () => {
       let dispute: Dispute;
       let swap: Swap;
+      let market: Market;
       const marketAddress = '0xMarket';
       const disputeId = 1;
       const orderId = 1;
 
       beforeEach(async () => {
         const now = moment();
+        market = await Market.create({
+          network: net,
+          address: marketAddress,
+        });
         swap = await Swap.create({
           network: net,
           marketAddress,
           orderId,
           base: 'BASE',
           quote: 'QUOTE',
-          provider: '0xProvider',
-          taker: '0xTaker',
+          provider: provider,
+          taker: taker,
         });
         await Dispute.create({
           network: net,
@@ -94,7 +103,7 @@ describe('OnCommitPeriodEnd', () => {
           marketAddress,
           orderId,
           disputeIndex: disputeId,
-          owner: '0xDraftee',
+          owner: draftee,
         });
       });
 
@@ -106,19 +115,17 @@ describe('OnCommitPeriodEnd', () => {
 
       it('should send notification to taker, provider and draftees', async () => {
         await expect(srv.process()).resolves.toBeUndefined();
+        swap.market = market;
         const payload = {
-          marketAddress,
-          orderId,
-          network: net,
+          swap,
           disputeId,
           drafted: undefined,
-          pair: swap.getPair(),
           revealPhaseHoursLeft: moment(dispute.revealEndAt).fromNow(true),
         };
-        expect(mockNotify).toHaveBeenNthCalledWith(1, NotificationID.CommitPhaseEnded, net, '0xProvider', payload);
-        expect(mockNotify).toHaveBeenNthCalledWith(2, NotificationID.CommitPhaseEnded, net, '0xTaker', payload);
+        expect(mockNotify).toHaveBeenNthCalledWith(1, NotificationID.CommitPhaseEnded, net, provider, payload);
+        expect(mockNotify).toHaveBeenNthCalledWith(2, NotificationID.CommitPhaseEnded, net, taker, payload);
         payload.drafted = true;
-        expect(mockNotify).toHaveBeenNthCalledWith(3, NotificationID.CommitPhaseEnded, net, '0xDraftee', payload);
+        expect(mockNotify).toHaveBeenNthCalledWith(3, NotificationID.CommitPhaseEnded, net, draftee, payload);
       });
     });
   });

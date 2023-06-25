@@ -1,0 +1,25 @@
+<table style="margin: auto; width: 100%;  background-color: #ffffff;  border-radius: 5px;">
+  <tr>
+    <td style="padding: 10px 30px; font-size: 20px; line-height: 30px;">
+      Hello {{userAddrShort}},
+      <br><br>
+      The evidence review phase has ended for dispute #{{disputeId}}.
+      {{#if drafted}}It is time to <b>encrypt and commit</b> your vote{{else}}It is time for the mediators to <b>encrypt and commit</b> their vote{{/if}}.
+      <br><br>
+      {{#if drafted}}You are required to vote either to <b>release</b> or <b>cancel</b> the disputed order.{{else}}Mediators are required to vote either to <b>release</b> or <b>cancel</b>
+        the disputed order.{{/if}}
+      <br /><br />
+      <div class="alert" {{> alertStyle }}>
+        <div style="padding: 5px 10px; ">{{> badgeInfo label='INFO' }} <b>Commit Phase Ends in:</b> {{commitPhaseHoursLeft}}.</div>
+        <div style="padding: 5px 10px; ">{{> badgeInfo label='INFO' }} <b>Next Phase:</b> Decrypt and reveal vote.</div>
+      </div>
+      <br>
+      {{> primaryButton this }}
+      <br>
+      Love, <br>
+      {{app}} Team
+    </td>
+  </tr>
+</table>
+
+

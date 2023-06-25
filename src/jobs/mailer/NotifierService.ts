@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { ConfigService } from '@nestjs/config';
+import { NotifierConsumer } from './NotifierConsumer';
+import { isDevMode } from '../../common/common';
 
 export enum NotificationID {
   MediatorInviteReceived = 'MediatorInviteReceived',
@@ -11,7 +13,7 @@ export enum NotificationID {
   PutRevoked = 'PutRevoked',
   SwapApproved = 'SwapApproved',
   SwapRevoked = 'SwapRevoked',
-  NewLiquidityManager = 'NewLiquidityManager',
+  UpdatedLiquidityManager = 'UpdatedLiquidityManager',
   RemoveLiquidityManager = 'RemoveLiquidityManager',
   NewInstantSwap = 'NewInstantSwap',
   NewInteractiveSwap = 'NewInteractiveSwap',
@@ -40,7 +42,11 @@ export enum NotificationID {
 
 @Injectable()
 export class NotifierService {
-  constructor(@InjectQueue('notifier') private queue: Queue, private cfgSrv: ConfigService) {}
+  constructor(
+    @InjectQueue('notifier') private queue: Queue,
+    private cfgSrv: ConfigService,
+    private notifier: NotifierConsumer,
+  ) {}
 
   /**
    * Schedule notification
@@ -51,13 +57,40 @@ export class NotifierService {
    */
   notify(notifType: NotificationID, network: string, recipient: string, data: { [key: string]: any }) {
     if (this.cfgSrv.get('app.disableNotifications') === 'true') return Promise.resolve();
+    if (isDevMode()) return this.notifyNow(notifType, network, recipient, data);
     return this.queue.add(
-      { notifType, recipient, network, data },
+      {
+        appUrl: this.cfgSrv.get('app.appUrl'),
+        notifType,
+        recipient,
+        network,
+        data,
+      },
       {
         removeOnComplete: true,
         attempts: 5,
         backoff: { type: 'exponential', delay: 3000 },
       },
     );
+  }
+
+  /**
+   * Send notification without queueing
+   * @param notifType The notification type
+   * @param network The network where the event occurred
+   * @param recipient The address of the recipient
+   * @param data The context data
+   */
+  notifyNow(notifType: NotificationID, network: string, recipient: string, data: any) {
+    if (this.cfgSrv.get('app.disableNotifications') === 'true') return Promise.resolve();
+    return this.notifier.notify({
+      data: {
+        appUrl: this.cfgSrv.get('app.appUrl'),
+        notifType,
+        recipient,
+        network,
+        data,
+      },
+    } as any);
   }
 }

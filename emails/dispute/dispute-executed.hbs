@@ -1,0 +1,22 @@
+<table style="margin: auto; width: 100%;  background-color: #ffffff;  border-radius: 5px;">
+  <tr>
+    <td style="padding: 10px 30px; font-size: 20px; line-height: 30px;">
+      Hello {{userAddrShort}},
+      <br><br>
+      Dispute #{{dispute.disputeId}} has been executed.
+      {{#isnt outcome 'stalled'}}
+        The order has been {{outcome}}.
+      {{else}}
+        Mediation reward has been credited to your account.
+        Your ticket will be undrafted in preparation for the next dispute.
+      {{/isnt}}
+      <br><br>
+      {{> primaryButton this }}
+      <br>
+      Love, <br>
+      {{app}} Team
+    </td>
+  </tr>
+</table>
+
+

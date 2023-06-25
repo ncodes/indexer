@@ -210,6 +210,10 @@ export default class Market extends BaseModel {
     return assetType == AssetType.SYNTH;
   }
 
+  static isFungible(assetType: AssetType) {
+    return assetType == AssetType.ERC20 || assetType == AssetType.SYNTH;
+  }
+
   static isNFT(assetType: AssetType) {
     return assetType == AssetType.ERC721 || assetType == AssetType.ERC1155;
   }

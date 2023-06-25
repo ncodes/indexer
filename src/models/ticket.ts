@@ -124,13 +124,7 @@ export default class Ticket extends BaseModel {
    * @param select Select specific fields (optional)
    * @param txn Optional transaction object
    */
-  static getByNetworkOwnerAndIndex(
-    network: string,
-    owner: string,
-    index: number,
-    select = [],
-    txn?: Transaction,
-  ) {
+  static getByNetworkOwnerAndIndex(network: string, owner: string, index: number, select = [], txn?: Transaction) {
     select = this.makeSelectList(select);
     let q = this.query(txn)
       .select(...select)
@@ -148,14 +142,7 @@ export default class Ticket extends BaseModel {
    * @param txn Optional transaction object
    */
   static updateById(id: string, udp: Partial<Ticket>, txn?: Transaction) {
-    return new Promise((resolve, reject) => {
-      this.query(txn)
-        .whereNotDeleted()
-        .patchAndFetchById(id, udp)
-        .execute()
-        .then(resolve)
-        .catch(reject);
-    });
+    return this.query(txn).whereNotDeleted().patchAndFetchById(id, udp).execute();
   }
 
   /**
@@ -233,8 +220,7 @@ export default class Ticket extends BaseModel {
     q = q.where((q) => {
       if (owner && !delegate) q = q.where('owner', 'ILIKE', owner);
       if (delegate && !owner) q = q.where('delegate', 'ILIKE', delegate);
-      if (owner && delegate)
-        q.where('owner', 'ILIKE', owner).orWhere('delegate', 'ILIKE', delegate);
+      if (owner && delegate) q.where('owner', 'ILIKE', owner).orWhere('delegate', 'ILIKE', delegate);
     });
     if (orderId !== undefined) q = q.where('orderId', orderId);
     if (disputeId !== undefined) q = q.where('disputeId', disputeId);
@@ -299,8 +285,7 @@ export default class Ticket extends BaseModel {
     q = q.where((q) => {
       if (owner && !delegate) q = q.where('owner', 'ILIKE', owner);
       if (delegate && !owner) q = q.where('delegate', 'ILIKE', delegate);
-      if (owner && delegate)
-        q.where('owner', 'ILIKE', owner).orWhere('delegate', 'ILIKE', delegate);
+      if (owner && delegate) q.where('owner', 'ILIKE', owner).orWhere('delegate', 'ILIKE', delegate);
     });
     if (orderId !== undefined) q = q.where('orderId', orderId);
     if (disputeId !== undefined) q = q.where('disputeId', disputeId);
@@ -338,13 +323,7 @@ export default class Ticket extends BaseModel {
    * @param delegate The invited address
    * @param txn Optional transaction object
    */
-  static removeDelegate(
-    network: string,
-    owner: string,
-    ticketIdx: number,
-    delegate: string,
-    txn?: Transaction,
-  ) {
+  static removeDelegate(network: string, owner: string, ticketIdx: number, delegate: string, txn?: Transaction) {
     return this.query(txn)
       .where('network', network)
       .where('owner', 'ilike', owner)

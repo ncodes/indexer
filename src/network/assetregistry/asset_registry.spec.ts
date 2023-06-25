@@ -1,9 +1,6 @@
 import { DBService } from '../../db/DBService';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { toBN } from '../common';
-import BadgeGrant from '../../models/badge_grant';
-import * as moment from 'moment';
-import Badge from '../../models/badge';
 import { AssetRegistryHandler } from './asset_registry.handler';
 import AssetRegistry from '../../models/asset_registry';
 
@@ -61,17 +58,7 @@ describe('AssetRegistryHandler', () => {
         verified: false,
       });
       await expect(
-        handler.onAssetRegistryUpdated(
-          asset,
-          toBN(300),
-          toBN(150),
-          toBN(200),
-          toBN(2000),
-          true,
-          false,
-          true,
-          null,
-        ),
+        handler.onAssetRegistryUpdated(asset, toBN(300), toBN(150), toBN(200), toBN(2000), true, false, true, null),
       ).resolves.toBeUndefined();
       const res = await AssetRegistry.find({ network: net, address: asset });
       expect(res.curRate).toEqual('300');

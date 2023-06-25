@@ -7,7 +7,6 @@ import { BigNumberish } from 'ethers';
 
 dayjs.extend(utc);
 
-export const DecTen = new Decimal(10);
 export const AppName = () => process.env.APP_NAME;
 export const toDec = (val: BigNumberish) => new Decimal(val.toString());
 export function isDevMode(nodeEnvOnly = false) {
@@ -23,14 +22,16 @@ export function isTestMode() {
   return process.env.NODE_ENV === 'test';
 }
 
-export function hashPassword(value: string) {
-  return bcrypt.hashSync(value, 10);
-}
-
-export function nowDateForEmailSub() {
-  return dayjs().utc().format('YYYY-MM-DD HH:mm:ss (UTC)');
-}
-
 export function randStr(len = 10) {
   return uid(len);
+}
+
+// isEqualStr compares two strings in lowercase
+export function isEqualStr(addr1: string, addr2: string) {
+  return addr1.toLowerCase() === addr2.toLowerCase();
+}
+
+// Check if arr of lower case strings contains a string
+export function includesStr(arr: string[], str: string) {
+  return arr.map((s) => s.toLowerCase()).includes(str.toLowerCase());
 }

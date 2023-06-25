@@ -1,6 +1,7 @@
 import { BigNumber, BigNumberish } from 'ethers';
 import { EnumValues } from 'enum-values';
 import { toDec } from '../common/common';
+import Decimal from 'decimal.js';
 
 export enum SupportedNetworks {
   Ethereum = 'ethereum',
@@ -79,10 +80,21 @@ export function pow10D(decimals: number) {
   return toDec(10).pow(decimals);
 }
 
+// powOf returns n * 10^power
 export function powOf(n: BigNumberish, power: number) {
   return toBN(
     toDec(n)
       .mul(toDec(pow10(power)))
       .toFixed(0),
   );
+}
+
+// toFixed returns n with up to places decimal places.
+// If n's decimal includes only zeros, it returns n with 2 decimal places.
+// Ex: if places=5, n=1.00000, toFixed(n) returns 1.00 but
+// if n=1.00001, toFixed(n) returns 1.00001
+export function toFixed(n: Decimal, places?: number): string {
+  const n2 = n.toDP(places);
+  if (n2.div(n.toFixed(0)).eq(1)) return n.toFixed(2);
+  return n.toFixed();
 }

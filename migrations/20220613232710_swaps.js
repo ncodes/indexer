@@ -28,6 +28,8 @@ exports.up = function (knex) {
       table.string('protocolFee');
       table.string('marketCreatorFee');
       table.string('txHash');
+      table.timestamp('disputeFrom');
+      table.timestamp('cancelAt');
       table.timestamp('createdAt');
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');

@@ -13,6 +13,13 @@ import {
   Token,
   TokenPool,
 } from '../typechain';
+import Market from '../src/models/market';
+import Swap from '../src/models/swap';
+import Liquidity from '../src/models/liquidity';
+import Dispute from '../src/models/dispute';
+import { commify, formatEther } from 'ethers/lib/utils';
+import Ticket from '../src/models/ticket';
+import Offer from '../src/models/offers';
 
 declare global {
   namespace CoinGecko {
@@ -1689,7 +1696,8 @@ declare global {
     notifType: NotificationID;
     network: string;
     recipient: string;
-    user: User;
+    appUrl: string;
+    user?: User;
     data: T;
   }
 
@@ -1790,5 +1798,162 @@ declare global {
     // Others
     safe: string;
     allocatorAddr: string;
+  }
+
+  export interface InstantSwapNotificationData {
+    market: Market;
+    swap: Partial<Swap>;
+    liq: Liquidity;
+  }
+
+  export interface SwapOrderNotificationData {
+    marketAddress: string;
+    provider: string;
+    swapper: string;
+    swap: Partial<Swap>;
+    market: Market;
+  }
+
+  interface CancelledOrderNotification {
+    market: Market;
+    liq: Liquidity;
+    swap: Swap;
+  }
+
+  interface OrderReleasedNotification {
+    market: Market;
+    liq: Liquidity;
+    swap: Swap;
+  }
+
+  interface OrderPaidNotification {
+    swap: Swap;
+    market: Market;
+  }
+
+  interface MediatorInviteReceivedNotification {
+    market: Market;
+  }
+
+  interface MediatorInviteAcceptedNotification {
+    market: Market;
+    invitee: string;
+  }
+
+  interface MediatorRevokedNotification {
+    market: Market;
+  }
+
+  interface PutApprovedNotification {
+    market: Market;
+  }
+
+  interface PutRevokedNotification {
+    market: Market;
+  }
+
+  interface SwapApprovedNotification {
+    market: Market;
+  }
+
+  interface SwapRevokedNotification {
+    market: Market;
+  }
+
+  interface UpdatedLiquidityManagerNotification {
+    market: Market;
+    provider: string;
+  }
+
+  interface RemoveLiquidityManagerNotification {
+    market: Market;
+    provider: string;
+  }
+
+  interface NewTicketJoinedMarketNotification {
+    market: Market;
+    owner: string;
+    numTickets: string;
+  }
+
+  interface NewTicketLeftMarketNotification {
+    market: Market;
+    owner: string;
+    numTickets: string;
+  }
+
+  interface DisputeCreatedNotification {
+    dispute: Dispute;
+    swap: Swap;
+  }
+
+  interface TicketDraftedNotification {
+    owner: string;
+    ticketId: number;
+    dispute: Dispute;
+  }
+
+  interface FullyDraftedNotification {
+    dispute: Dispute;
+    evidencePhaseHoursLeft: string;
+  }
+
+  interface TicketSlashedNotification {
+    ticket: Ticket;
+    owner: string;
+    amount: string;
+    voted: boolean;
+    asset: string;
+  }
+
+  interface EvidencePeriodEndedNotification {
+    swap: Swap;
+    disputeId: number;
+    commitPhaseHoursLeft: string;
+    drafted: boolean;
+  }
+
+  interface CommitPhaseEndedNotification {
+    swap: Swap;
+    disputeId: number;
+    drafted: boolean;
+    revealPhaseHoursLeft: string;
+  }
+
+  interface RevealPhaseEndedNotification {
+    swap: Swap;
+    disputeId: number;
+    participant: boolean;
+    nRelease: number;
+    nCancel: number;
+    numMediators: number;
+    majority: number;
+    cost: string;
+    appealPhaseHoursLeft: string;
+  }
+
+  interface AppealPhaseEndedNotification {
+    swap: Swap;
+    disputeId: number;
+    drafted: boolean;
+    nRelease: number;
+    nCancel: number;
+    majority: number;
+  }
+
+  interface DisputeExecutedNotification {
+    swap: Swap;
+    dispute: Dispute;
+    drafted: boolean;
+  }
+
+  interface BaseOfferNotification {
+    offer: Offer;
+    market: Market;
+    liq: Liquidity;
+  }
+
+  interface NewUpdatedOfferNotification extends BaseOfferNotification {
+    updated: boolean;
   }
 }

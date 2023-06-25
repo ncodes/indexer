@@ -152,7 +152,7 @@ export default class Dispute extends BaseModel {
     orderId: number,
     txn?: Transaction,
   ) {
-    return new Promise<string>((resolve, reject) => {
+    return new Promise<number>((resolve, reject) => {
       this.query(txn)
         .where({ network, orderId })
         .where('marketAddress', 'ilike', marketAddress)
@@ -160,7 +160,7 @@ export default class Dispute extends BaseModel {
         .whereNotDeleted()
         .first()
         .then((res: any) => {
-          return resolve(res.count);
+          return resolve(parseInt(res.count));
         })
         .catch(reject);
     });

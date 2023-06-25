@@ -52,6 +52,8 @@ export default class Liquidity extends BaseModel {
   manager: string = undefined;
   // Indicates that the liquidity has been paused
   paused: boolean = undefined;
+  // Indicates that the swapping has been disabled for the liquidity
+  swapDisabled: boolean = undefined;
   // The number of open swap orders
   openOrders: number = undefined;
   // The last time this liquidity successfully completed a swap

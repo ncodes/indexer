@@ -53,6 +53,7 @@ export default () => ({
   app: {
     nodeEnv: process.env.NODE_ENV,
     url: process.env.URL,
+    appUrl: process.env.APP_URL,
     throttle_ttl: process.env.THROTTLE_TTL,
     throttle_limit: process.env.THROTTLE_LIMIT,
     rootAdminUser: process.env.ROOT_ADMIN_USER,

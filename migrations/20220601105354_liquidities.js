@@ -27,6 +27,7 @@ exports.up = function (knex) {
       table.jsonb('wantAndIds').defaultTo([]);
       table.integer('timeToPay').defaultTo(0);
       table.boolean('paused').defaultTo(false);
+      table.boolean('swapDisabled').defaultTo(false);
       table.integer('openOrders').defaultTo(0);
       table.integer('openDisputes').defaultTo(0);
       table.integer('totalDisputes').defaultTo(0);

@@ -1,0 +1,17 @@
+<table style="margin: auto; width: 100%;  background-color: #ffffff;  border-radius: 5px;">
+  <tr>
+    <td style="padding: 10px 30px; font-size: 20px; line-height: 30px;">
+      Hello {{userAddrShort}},
+      <br><br>
+      A swap order you are involved in has been released{{#if swap.byDispute}} through dispute resolution{{/if}}.
+      Assets held in the order have been transferred to the trade participants.
+      <br><br>
+      {{> primaryButton this }}
+      <br>
+      Love, <br>
+      {{app}} Team
+    </td>
+  </tr>
+</table>
+
+

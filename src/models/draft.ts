@@ -87,12 +87,7 @@ export default class Draft extends BaseModel {
    */
   static updateById(id: string, udp: Partial<Draft>, txn?: Transaction) {
     return new Promise((resolve, reject) => {
-      this.query(txn)
-        .whereNotDeleted()
-        .patchAndFetchById(id, udp)
-        .execute()
-        .then(resolve)
-        .catch(reject);
+      this.query(txn).whereNotDeleted().patchAndFetchById(id, udp).execute().then(resolve).catch(reject);
     });
   }
 
@@ -104,13 +99,7 @@ export default class Draft extends BaseModel {
    * @param disputeIndex The dispute ID
    * @param txn Optional transaction object
    */
-  static getAll(
-    network: string,
-    marketAddress: string,
-    orderId: number,
-    disputeIndex: number,
-    txn?: Transaction,
-  ) {
+  static getAll(network: string, marketAddress: string, orderId: number, disputeIndex: number, txn?: Transaction) {
     return this.query(txn)
       .whereNotDeleted()
       .where('marketAddress', 'ilike', marketAddress)

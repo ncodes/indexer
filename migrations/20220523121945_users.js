@@ -5,6 +5,8 @@ exports.up = function (knex) {
       table.string('id').primary();
       table.string('email');
       table.string('address');
+      table.string('locale');
+      table.string('timezone');
       table.text('encMsgKey');
       table.string('role');
       table.timestamp('createdAt');

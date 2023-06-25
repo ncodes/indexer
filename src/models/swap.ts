@@ -60,6 +60,10 @@ export default class Swap extends BaseModel {
   marketCreatorFee?: string = undefined;
   // The address of the operator that pushed the swap
   operator?: number = undefined;
+  // Time after which the swap can be cancelled
+  cancelAt?: string = undefined;
+  // Time after which the swap can be disputed after being marked as paid
+  disputeFrom?: string = undefined;
   // The transaction hash where the swap was created
   txHash?: string = undefined;
 
@@ -82,6 +86,14 @@ export default class Swap extends BaseModel {
         join: {
           from: 'swaps.marketAddress',
           to: 'markets.address',
+        },
+      },
+      liquidity: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: Liquidity,
+        join: {
+          from: 'swaps.lid',
+          to: 'liquidity.lid',
         },
       },
     };

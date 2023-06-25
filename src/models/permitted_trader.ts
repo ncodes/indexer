@@ -74,12 +74,7 @@ export default class PermittedTrader extends BaseModel {
    * @param address The permitted address
    * @param txn Optional transaction object
    */
-  static findByNetworkMarketIdAndAddress(
-    network: string,
-    marketAddress: string,
-    address: string,
-    txn?: Transaction,
-  ) {
+  static findByNetworkMarketIdAndAddress(network: string, marketAddress: string, address: string, txn?: Transaction) {
     return this.query(txn)
       .where('network', 'ilike', network)
       .where('marketAddress', 'ilike', marketAddress)
@@ -118,9 +113,7 @@ export default class PermittedTrader extends BaseModel {
     offset: number,
     txn?: Transaction,
   ) {
-    let q = this.query(txn)
-      .select(raw('*, count(*) over() as "__queryCount"'))
-      .where('network', 'ILIKE', network);
+    let q = this.query(txn).select(raw('*, count(*) over() as "__queryCount"')).where('network', 'ILIKE', network);
     if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
     if (offset) q = q.offset(offset);
     if (limit) q = q.limit(limit);

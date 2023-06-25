@@ -5,6 +5,7 @@ exports.up = function (knex) {
       table.string('id').primary();
       table.string('network');
       table.string('userId');
+      table.string('type').notNullable();
       table.text('title');
       table.text('body');
       table.boolean('read').defaultTo(false);

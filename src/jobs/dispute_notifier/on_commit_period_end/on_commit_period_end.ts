@@ -65,12 +65,9 @@ export default class OnCommitPeriodEnd extends Base {
     // Send notification
     for (const recipient of recipients) {
       await this.notifier.notify(NotificationID.CommitPhaseEnded, swap.network, recipient.address, {
-        marketAddress: swap.marketAddress,
-        network: swap.network,
-        orderId: swap.orderId,
+        swap,
         disputeId: dispute.disputeId,
         drafted: recipient.drafted,
-        pair: swap.getPair(),
         revealPhaseHoursLeft: moment(dispute.revealEndAt).fromNow(true),
       });
     }

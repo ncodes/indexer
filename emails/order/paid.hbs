@@ -1,0 +1,22 @@
+<table style="margin: auto; width: 100%;  background-color: #ffffff;  border-radius: 5px;">
+  <tr>
+    <td style="padding: 10px 30px; font-size: 20px; line-height: 30px;">
+      Hello {{userAddrShort}},
+      <br><br>
+      A swap order you are involved in was marked as <b>PAID</b> by the counterparty.
+      Kindly verify payment and release the locked asset to complete the order.
+      <br><br>
+      <div class="alert" {{> alertStyle }}>
+        <div style="padding: 5px 10px;">{{> badgeDanger label='DANGER' }}  Please verify the payment with your financial service provider before you release.</div>
+        <div style="padding: 5px 10px; border-top: 1px dashed #f7f7f7; font-weight: bold;">This order can be appealed in <span style="color: #707073;">{{disputeFrom}}</span></div>
+      </div>
+      <br>
+      {{> primaryButton this }}
+      <br>
+      Love, <br>
+      {{app}} Team
+    </td>
+  </tr>
+</table>
+
+

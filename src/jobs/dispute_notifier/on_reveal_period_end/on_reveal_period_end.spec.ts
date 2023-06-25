@@ -12,6 +12,7 @@ import OnRevealPeriodEnd from './on_reveal_period_end';
 import { commify, formatUnits } from 'ethers/lib/utils';
 import { ConfigService } from '../../../config/config.service';
 import Meta, { MetaKeys } from '../../../models/meta';
+import Market from '../../../models/market';
 
 const mockNotify = jest.fn();
 const MockNotifierService = jest.fn().mockImplementation(() => {
@@ -23,6 +24,10 @@ describe('OnRevealPeriodEnd', () => {
   const db = DBService.getForTest();
   let srv: OnRevealPeriodEnd;
   const net = 'net';
+  const provider = '0xProvider';
+  const taker = '0xTaker';
+  const draftee = '0xDraftee';
+  const marketAddress = '0xMarket';
 
   const disputeCost = '100';
   const cfg = {};
@@ -66,6 +71,35 @@ describe('OnRevealPeriodEnd', () => {
   });
 
   describe('.process', () => {
+    let market: Market;
+    let dispute: Dispute;
+    let swap: Swap;
+    const disputeId = 1;
+    const orderId = 1;
+
+    beforeEach(async () => {
+      market = await Market.create({
+        network: net,
+        address: '0xMarket',
+      });
+      swap = await Swap.create({
+        network: net,
+        marketAddress,
+        orderId,
+        base: 'BASE',
+        quote: 'QUOTE',
+        provider: provider,
+        taker: taker,
+      });
+      await Draft.create({
+        network: net,
+        marketAddress,
+        orderId,
+        disputeIndex: disputeId,
+        owner: '0xDraftee',
+      });
+    });
+
     it('should return undefined if srv is already processing', async () => {
       srv.setProcessing(true);
       await expect(srv.process()).resolves.toBeUndefined();
@@ -74,23 +108,8 @@ describe('OnRevealPeriodEnd', () => {
     describe(`
     (1) with matching dispute 
     (2) when outcome is stalled because of reveals=0 (number of reveals >= majority)`, () => {
-      let dispute: Dispute;
-      let swap: Swap;
-      const marketAddress = '0xMarket';
-      const disputeId = 1;
-      const orderId = 1;
-
       beforeEach(async () => {
         const now = moment();
-        swap = await Swap.create({
-          network: net,
-          marketAddress,
-          orderId,
-          base: 'BASE',
-          quote: 'QUOTE',
-          provider: '0xProvider',
-          taker: '0xTaker',
-        });
         await Dispute.create({
           network: net,
           marketAddress,
@@ -106,13 +125,6 @@ describe('OnRevealPeriodEnd', () => {
           numMediators: 3,
           revealEndAt: now.subtract(1, 'h').toISOString(),
           appealEndAt: now.add(1, 'h').toISOString(),
-        });
-        await Draft.create({
-          network: net,
-          marketAddress,
-          orderId,
-          disputeIndex: disputeId,
-          owner: '0xDraftee',
         });
       });
 
@@ -123,20 +135,21 @@ describe('OnRevealPeriodEnd', () => {
       });
 
       it('should send notification to taker, provider and draftees', async () => {
+        swap.market = market;
         await expect(srv.process()).resolves.toBeUndefined();
         const payload = {
-          marketAddress,
-          orderId,
-          network: net,
+          swap,
           disputeId,
+          numMediators: dispute.numMediators,
+          nRelease: 0,
+          nCancel: 0,
+          majority: 2,
           participant: true,
-          pair: swap.getPair(),
-          outcome: 'Stalled',
           cost: commify(formatUnits(disputeCost, 18)),
           appealPhaseHoursLeft: moment(dispute.appealEndAt).fromNow(false),
         };
-        expect(mockNotify).toHaveBeenNthCalledWith(1, NotificationID.RevealPhaseEnded, net, '0xProvider', payload);
-        expect(mockNotify).toHaveBeenNthCalledWith(2, NotificationID.RevealPhaseEnded, net, '0xTaker', payload);
+        expect(mockNotify).toHaveBeenNthCalledWith(1, NotificationID.RevealPhaseEnded, net, provider, payload);
+        expect(mockNotify).toHaveBeenNthCalledWith(2, NotificationID.RevealPhaseEnded, net, taker, payload);
         delete payload.participant;
         expect(mockNotify).toHaveBeenNthCalledWith(3, NotificationID.RevealPhaseEnded, net, '0xDraftee', payload);
       });
@@ -145,23 +158,8 @@ describe('OnRevealPeriodEnd', () => {
     describe(`
     (1) with matching dispute 
     (2) when outcome is cancelled`, () => {
-      let swap: Swap;
-      let dispute: Dispute;
-      const marketAddress = '0xMarket';
-      const disputeId = 1;
-      const orderId = 1;
-
       beforeEach(async () => {
         const now = moment();
-        swap = await Swap.create({
-          network: net,
-          marketAddress,
-          orderId,
-          base: 'BASE',
-          quote: 'QUOTE',
-          provider: '0xProvider',
-          taker: '0xTaker',
-        });
         await Dispute.create({
           network: net,
           marketAddress,
@@ -178,54 +176,33 @@ describe('OnRevealPeriodEnd', () => {
           revealEndAt: now.subtract(1, 'h').toISOString(),
           appealEndAt: now.add(1, 'h').toISOString(),
         });
-        await Draft.create({
-          network: net,
-          marketAddress,
-          orderId,
-          disputeIndex: disputeId,
-          owner: '0xDraftee',
-        });
         await Reveal.create({ network: net, orderId, disputeId, vote: '0x30' });
         await Reveal.create({ network: net, orderId, disputeId, vote: '0x30' });
       });
 
       it('should send notification to taker, provider and draftees', async () => {
+        swap.market = market;
         await expect(srv.process()).resolves.toBeUndefined();
         const payload = {
-          marketAddress,
-          orderId,
-          network: net,
+          swap,
           disputeId,
+          numMediators: dispute.numMediators,
+          nRelease: 0,
+          nCancel: 2,
+          majority: 2,
           participant: true,
-          pair: swap.getPair(),
-          outcome: 'Cancel',
           cost: commify(formatUnits(disputeCost, 18)),
           appealPhaseHoursLeft: moment(dispute.appealEndAt).fromNow(false),
         };
-        expect(mockNotify).toHaveBeenNthCalledWith(1, NotificationID.RevealPhaseEnded, net, '0xProvider', payload);
+        expect(mockNotify).toHaveBeenNthCalledWith(1, NotificationID.RevealPhaseEnded, net, provider, payload);
       });
     });
 
     describe(`
     (1) with matching dispute 
     (2) when outcome is released`, () => {
-      let swap: Swap;
-      let dispute: Dispute;
-      const marketAddress = '0xMarket';
-      const disputeId = 1;
-      const orderId = 1;
-
       beforeEach(async () => {
         const now = moment();
-        swap = await Swap.create({
-          network: net,
-          marketAddress,
-          orderId,
-          base: 'BASE',
-          quote: 'QUOTE',
-          provider: '0xProvider',
-          taker: '0xTaker',
-        });
         await Dispute.create({
           network: net,
           marketAddress,
@@ -242,31 +219,25 @@ describe('OnRevealPeriodEnd', () => {
           revealEndAt: now.subtract(1, 'h').toISOString(),
           appealEndAt: now.add(1, 'h').toISOString(),
         });
-        await Draft.create({
-          network: net,
-          marketAddress,
-          orderId,
-          disputeIndex: disputeId,
-          owner: '0xDraftee',
-        });
         await Reveal.create({ network: net, orderId, disputeId, vote: '0x31' });
         await Reveal.create({ network: net, orderId, disputeId, vote: '0x31' });
       });
 
       it('should send notification to taker, provider and draftees', async () => {
+        swap.market = market;
         await expect(srv.process()).resolves.toBeUndefined();
         const payload = {
-          marketAddress,
-          orderId,
-          network: net,
+          swap,
           disputeId,
+          numMediators: dispute.numMediators,
+          nRelease: 2,
+          nCancel: 0,
+          majority: 2,
           participant: true,
-          pair: swap.getPair(),
-          outcome: 'Release',
           cost: commify(formatUnits(disputeCost, 18)),
           appealPhaseHoursLeft: moment(dispute.appealEndAt).fromNow(false),
         };
-        expect(mockNotify).toHaveBeenNthCalledWith(1, NotificationID.RevealPhaseEnded, net, '0xProvider', payload);
+        expect(mockNotify).toHaveBeenNthCalledWith(1, NotificationID.RevealPhaseEnded, net, provider, payload);
       });
     });
   });

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { NotifierConsumer } from './NotifierConsumer';
 import { NotifierService } from './NotifierService';
-import { MailerService } from '../../services/mailer.service';
+import { MailerService } from '../../services/mailer/mailer.service';
 import { BullModule } from '@nestjs/bull';
 
 @Module({

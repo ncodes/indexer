@@ -256,3 +256,5 @@ export const ErrServerError = error()
   .type(ErrorTypes.Server)
   .msg('server error')
   .build();
+
+export const ErrBadSignature = build401('signature is invalid or expired', ErrorTypes.Auth, 'sig');

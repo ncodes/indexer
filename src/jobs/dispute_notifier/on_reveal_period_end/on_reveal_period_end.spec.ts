@@ -96,7 +96,7 @@ describe('OnRevealPeriodEnd', () => {
         marketAddress,
         orderId,
         disputeIndex: disputeId,
-        owner: '0xDraftee',
+        owner: draftee,
       });
     });
 
@@ -151,7 +151,7 @@ describe('OnRevealPeriodEnd', () => {
         expect(mockNotify).toHaveBeenNthCalledWith(1, NotificationID.RevealPhaseEnded, net, provider, payload);
         expect(mockNotify).toHaveBeenNthCalledWith(2, NotificationID.RevealPhaseEnded, net, taker, payload);
         delete payload.participant;
-        expect(mockNotify).toHaveBeenNthCalledWith(3, NotificationID.RevealPhaseEnded, net, '0xDraftee', payload);
+        expect(mockNotify).toHaveBeenNthCalledWith(3, NotificationID.RevealPhaseEnded, net, draftee, payload);
       });
     });
 

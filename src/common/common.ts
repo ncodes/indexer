@@ -1,9 +1,9 @@
-import * as bcrypt from 'bcrypt';
 import * as dayjs from 'dayjs';
 import * as utc from 'dayjs/plugin/utc';
 import Decimal from 'decimal.js';
 import { uid } from 'uid';
 import { BigNumberish } from 'ethers';
+import * as crypto from 'crypto';
 
 dayjs.extend(utc);
 
@@ -34,4 +34,11 @@ export function isEqualStr(addr1: string, addr2: string) {
 // Check if arr of lower case strings contains a string
 export function includesStr(arr: string[], str: string) {
   return arr.map((s) => s.toLowerCase()).includes(str.toLowerCase());
+}
+
+// sha1 returns the has of str
+export function sha1(str: string) {
+  const sum = crypto.createHash('sha1');
+  sum.update(str);
+  return sum.digest('hex');
 }

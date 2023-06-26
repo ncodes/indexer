@@ -1710,7 +1710,7 @@ declare global {
     isContract?: boolean;
   }
 
-  interface SignatureInfo {
+  interface SignatureData {
     address: string;
     email: string;
   }

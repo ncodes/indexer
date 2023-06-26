@@ -53,11 +53,7 @@ export default class Session extends BaseModel {
    * @param signature The target signature
    */
   static getBySignature(signature: string) {
-    return this.query()
-      .where({ signature })
-      .whereNotDeleted()
-      .withGraphFetched('owner(notDeleted)')
-      .first();
+    return this.query().where({ signature }).whereNotDeleted().withGraphFetched('owner(notDeleted)').first();
   }
 
   /**

@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { transaction } from 'objection';
 import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
 import {
+  ErrBadSignature,
   ErrorMessages,
   ErrorTypes,
   ok,
@@ -13,8 +14,9 @@ import {
 import { Roles } from '../../common/roles';
 import User from '../../models/user';
 import { AuthDTO, GetAuthorizerDTO } from './dto';
-import { makeSession, parseSignature } from './utils';
+import { hasSeenSignature, makeSession, parseSignature } from './utils';
 import { isEmail } from 'class-validator';
+import { sha1 } from '../../common/common';
 
 /**
  * AuthController handles all authentication functionalities.
@@ -33,42 +35,34 @@ export class AuthController {
     @Body(new ValidationPipe(CommonValidationPipeOpt))
     body: AuthDTO,
   ) {
-    let sigInfo: SignatureInfo;
+    // Make sure signature is unique
+    if (await hasSeenSignature(body.sig)) throw ErrBadSignature;
+
+    let sigData: SignatureData;
     try {
-      sigInfo = parseSignature(body.msg, body.sig);
+      sigData = parseSignature(body.msg, body.sig);
     } catch (error) {
-      throw401('signature is invalid or expired', ErrorTypes.Auth, 'sig');
+      throw ErrBadSignature;
     }
 
     // Ensure email is valid if provided
-    if (sigInfo.email && !isEmail(sigInfo.email)) {
+    if (sigData.email && !isEmail(sigData.email)) {
       throw400('email is not valid', ErrorTypes.InvalidRequest, 'email');
     }
 
     let token: string;
     let user: User;
     await transaction(User, async (User) => {
-      user = await User.getByAddress(sigInfo.address);
+      user = await User.getByAddress(sigData.address);
 
       if (!user) {
-        user = await User.create({
-          address: sigInfo.address,
-          email: sigInfo.email,
-          role: Roles.User,
-        });
+        user = await User.create({ address: sigData.address, email: sigData.email, role: Roles.User });
       } else {
-        user = await User.updateById(user.id, {
-          email: user.email !== sigInfo.email ? sigInfo.email : user.email,
-        });
+        user = await User.updateById(user.id, { email: user.email !== sigData.email ? sigData.email : user.email });
       }
 
       // Create session token
-      token = await makeSession(
-        user,
-        body.sig,
-        this.cfgSrv.get('auth.jwtExpMin'),
-        this.cfgSrv.get('auth.jwtSecret'),
-      );
+      token = await makeSession(user, body.sig, this.cfgSrv.get('auth.jwtExpMin'), this.cfgSrv.get('auth.jwtSecret'));
     });
 
     return ok().data({ token, user }).build();
@@ -84,7 +78,7 @@ export class AuthController {
     @Query(new ValidationPipe(CommonValidationPipeOpt))
     body: GetAuthorizerDTO,
   ) {
-    let sigInfo: SignatureInfo;
+    let sigInfo: SignatureData;
 
     try {
       sigInfo = parseSignature(body.msg, body.sig, true);

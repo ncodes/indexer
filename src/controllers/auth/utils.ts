@@ -5,6 +5,18 @@ import * as moment from 'moment';
 import Session from '../../models/session';
 import User from '../../models/user';
 import * as yaml from 'js-yaml';
+import { sha1 } from '../../common/common';
+
+export const SignatureError = new Error('signature is invalid or expired');
+
+/**
+ * isSignatureUnique checks if a signature is associated to a known session
+ * @param signature The signature to check
+ */
+export async function hasSeenSignature(signature: string) {
+  const existingSig = await Session.getBySignature(sha1(signature));
+  return Promise.resolve(existingSig);
+}
 
 /**
  * makeSession creates a session and generates a session token
@@ -21,11 +33,10 @@ export async function makeSession(
 ): Promise<string> {
   try {
     // Ensure the signature has not been used before
-    const existingSig = await Session.getBySignature(signature);
-    if (existingSig) return Promise.reject(new Error('signature is invalid or expired'));
+    if (await hasSeenSignature(sha1(signature))) return Promise.reject(SignatureError);
 
     // Create session
-    const session = await Session.create(user.id, signature);
+    const session = await Session.create(user.id, sha1(signature));
     const exp = moment().add(jwtExpMin, 'minutes').unix();
     const token = jwt.sign({ exp, id: session.id, type: 'session' }, jwtSecret);
 
@@ -42,7 +53,7 @@ export async function makeSession(
  * @param ignoreEmail Indicate to ignore email in the message
  * @returns
  */
-export function parseSignature(msg: string, sig: string, ignoreEmail = false): SignatureInfo {
+export function parseSignature(msg: string, sig: string, ignoreEmail = false): SignatureData {
   const rawMsg = Buffer.from(msg, 'hex');
   const hashMsg = utils.hashMessage(rawMsg.toString('utf-8'));
   const digest = utils.arrayify(hashMsg);

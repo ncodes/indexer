@@ -12,6 +12,7 @@ import Session from '../../models/session';
 import User from '../../models/user';
 import { AuthController } from './auth.controller';
 import { ErrorMessages } from '../../common/responses/responses';
+import { sha1 } from '../../common/common';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -19,7 +20,7 @@ const ConfigServiceMock = jest.fn().mockImplementation(() => {
 });
 
 export function makeMsg(address: string, email: string, timestamp: string) {
-  return `Welcome to FiatX!
+  return `Welcome to App!
 
 --
 Address: "${address}"
@@ -119,11 +120,7 @@ describe('AuthController', () => {
       const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
       const wallet = new ethers.Wallet(privateKey);
       const msg = Buffer.from(
-        makeMsg(
-          '0x14791697260E4c9A71f18484C9f997B308e59325',
-          'person-gmail.com',
-          moment().toISOString(),
-        ),
+        makeMsg('0x14791697260E4c9A71f18484C9f997B308e59325', 'person-gmail.com', moment().toISOString()),
       );
       const sig = await wallet.signMessage(msg.toString());
       await request(app.getHttpServer())
@@ -143,11 +140,7 @@ describe('AuthController', () => {
       const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
       const wallet = new ethers.Wallet(privateKey);
       const msg = Buffer.from(
-        makeMsg(
-          '0x14791697260E4c9A71f18484C9f997B308e59327',
-          'person@gmail.com',
-          moment().toISOString(),
-        ),
+        makeMsg('0x14791697260E4c9A71f18484C9f997B308e59327', 'person@gmail.com', moment().toISOString()),
       );
       const sig = await wallet.signMessage(msg.toString());
       await request(app.getHttpServer())
@@ -166,9 +159,7 @@ describe('AuthController', () => {
     it('should return error and status=401 when signed message includes expired timestamp', async () => {
       const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
       const wallet = new ethers.Wallet(privateKey);
-      const msg = Buffer.from(
-        makeMsg(wallet.address, 'person@gmail.com', moment().subtract('5', 'm').toISOString()),
-      );
+      const msg = Buffer.from(makeMsg(wallet.address, 'person@gmail.com', moment().subtract('5', 'm').toISOString()));
       const sig = await wallet.signMessage(msg.toString());
       await request(app.getHttpServer())
         .post(`/v1/auth`)
@@ -209,9 +200,7 @@ describe('AuthController', () => {
     it('should update existing user when there is a user with matching address', async () => {
       const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
       const wallet = new ethers.Wallet(privateKey);
-      const msg = Buffer.from(
-        makeMsg(wallet.address, 'person@gmail.com', moment().subtract(1, 's').toISOString()),
-      );
+      const msg = Buffer.from(makeMsg(wallet.address, 'person@gmail.com', moment().subtract(1, 's').toISOString()));
       const sig = await wallet.signMessage(msg.toString());
       const existing = await User.create({ address: wallet.address });
       let user: User;
@@ -231,6 +220,29 @@ describe('AuthController', () => {
         });
       expect(existing.id).toEqual(user.id);
       expect(user.email).toEqual('person@gmail.com');
+    });
+
+    it('should return status=401 if a session exist with matching signature', async () => {
+      const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
+      const wallet = new ethers.Wallet(privateKey);
+      const msg = Buffer.from(makeMsg(wallet.address, 'person@gmail.com', moment().subtract(1, 's').toISOString()));
+      const sig = await wallet.signMessage(msg.toString());
+      await Session.create('user_123', sha1(sig));
+      await request(app.getHttpServer())
+        .post(`/v1/auth`)
+        .send({
+          sig,
+          msg: msg.toString('hex'),
+          email: 'person@gmail.com',
+        })
+        .expect(401)
+        .expect({
+          error: {
+            param: 'sig',
+            type: 'authentication_error',
+            message: 'signature is invalid or expired',
+          },
+        });
     });
   });
 

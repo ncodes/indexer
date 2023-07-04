@@ -11,36 +11,12 @@ const _abi = [
     inputs: [
       {
         internalType: "uint256",
-        name: "_defaultMinMediatorBond",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
         name: "_defaultDisputeDelayTime",
         type: "uint256",
       },
     ],
     stateMutability: "nonpayable",
     type: "constructor",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "address",
-        name: "id",
-        type: "address",
-      },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "addr",
-        type: "address",
-      },
-    ],
-    name: "AcceptedMediatorInvite",
-    type: "event",
   },
   {
     anonymous: false,
@@ -90,25 +66,6 @@ const _abi = [
         type: "address",
       },
       {
-        indexed: true,
-        internalType: "address",
-        name: "addr",
-        type: "address",
-      },
-    ],
-    name: "InvitedMediator",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "address",
-        name: "id",
-        type: "address",
-      },
-      {
         indexed: false,
         internalType: "address",
         name: "owner",
@@ -140,6 +97,18 @@ const _abi = [
       },
       {
         indexed: false,
+        internalType: "bool",
+        name: "permPut",
+        type: "bool",
+      },
+      {
+        indexed: false,
+        internalType: "bool",
+        name: "permSwap",
+        type: "bool",
+      },
+      {
+        indexed: false,
         internalType: "uint256",
         name: "commission",
         type: "uint256",
@@ -147,7 +116,7 @@ const _abi = [
       {
         indexed: false,
         internalType: "uint256",
-        name: "numMediators",
+        name: "mediatePoolId",
         type: "uint256",
       },
     ],
@@ -184,25 +153,6 @@ const _abi = [
       },
     ],
     name: "OwnershipTransferred",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "address",
-        name: "id",
-        type: "address",
-      },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "addr",
-        type: "address",
-      },
-    ],
-    name: "RevokedMediator",
     type: "event",
   },
   {
@@ -272,25 +222,6 @@ const _abi = [
     anonymous: false,
     inputs: [
       {
-        indexed: true,
-        internalType: "address",
-        name: "id",
-        type: "address",
-      },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "addr",
-        type: "address",
-      },
-    ],
-    name: "UnInvitedMediator",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
         indexed: false,
         internalType: "address",
         name: "addr",
@@ -336,38 +267,6 @@ const _abi = [
     anonymous: false,
     inputs: [
       {
-        indexed: false,
-        internalType: "uint256",
-        name: "val",
-        type: "uint256",
-      },
-    ],
-    name: "UpdatedDefaultMediatorBond",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "address",
-        name: "id",
-        type: "address",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "cost",
-        type: "uint256",
-      },
-    ],
-    name: "UpdatedDisputeCost",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
         indexed: true,
         internalType: "address",
         name: "id",
@@ -391,12 +290,6 @@ const _abi = [
         name: "predictDur",
         type: "uint256",
       },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "appealDur",
-        type: "uint256",
-      },
     ],
     name: "UpdatedDisputeDurations",
     type: "event",
@@ -409,12 +302,6 @@ const _abi = [
         internalType: "address",
         name: "id",
         type: "address",
-      },
-      {
-        indexed: false,
-        internalType: "string[2][]",
-        name: "",
-        type: "string[2][]",
       },
       {
         indexed: false,
@@ -460,19 +347,6 @@ const _abi = [
         name: "addr",
         type: "address",
       },
-    ],
-    name: "UpdatedRewardPoolAddr",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: "address",
-        name: "addr",
-        type: "address",
-      },
       {
         indexed: false,
         internalType: "bool",
@@ -504,19 +378,6 @@ const _abi = [
         type: "address",
       },
     ],
-    name: "acceptMediateInvite",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "id",
-        type: "address",
-      },
-    ],
     name: "allowZeroOfferPrice",
     outputs: [],
     stateMutability: "nonpayable",
@@ -532,24 +393,6 @@ const _abi = [
         type: "address",
       },
     ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "marketId",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "addr",
-        type: "address",
-      },
-    ],
-    name: "checkMarketMediatorBadges",
-    outputs: [],
     stateMutability: "view",
     type: "function",
   },
@@ -586,23 +429,13 @@ const _abi = [
         type: "bool",
       },
       {
-        internalType: "bool",
-        name: "permMediate",
-        type: "bool",
-      },
-      {
         internalType: "uint256",
         name: "commission",
         type: "uint256",
       },
       {
         internalType: "uint256",
-        name: "mediatorBond",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "numMediators",
+        name: "mediatePoolId",
         type: "uint256",
       },
     ],
@@ -614,32 +447,6 @@ const _abi = [
   {
     inputs: [],
     name: "defaultDisputeDelayTime",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "defaultMediatorBond",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "getDefaultMinMediatorBond",
     outputs: [
       {
         internalType: "uint256",
@@ -689,17 +496,7 @@ const _abi = [
           },
           {
             internalType: "uint256",
-            name: "numMediators",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "mediatorBond",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "disputeCost",
+            name: "poolId",
             type: "uint256",
           },
           {
@@ -717,11 +514,6 @@ const _abi = [
               {
                 internalType: "uint256",
                 name: "predictDur",
-                type: "uint256",
-              },
-              {
-                internalType: "uint256",
-                name: "appealDur",
                 type: "uint256",
               },
             ],
@@ -787,11 +579,6 @@ const _abi = [
               },
               {
                 internalType: "bool",
-                name: "mediate",
-                type: "bool",
-              },
-              {
-                internalType: "bool",
                 name: "offerOnly",
                 type: "bool",
               },
@@ -822,32 +609,8 @@ const _abi = [
         type: "address",
       },
     ],
-    name: "getNumMediators",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "id",
-        type: "address",
-      },
-    ],
     name: "getReqBadges",
     outputs: [
-      {
-        internalType: "string[2][]",
-        name: "",
-        type: "string[2][]",
-      },
       {
         internalType: "string[2][]",
         name: "",
@@ -871,72 +634,6 @@ const _abi = [
       },
     ],
     name: "hasMarket",
-    outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "id",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "addr",
-        type: "address",
-      },
-    ],
-    name: "inviteMediator",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-    ],
-    name: "invitedMediators",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "id",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "addr",
-        type: "address",
-      },
-    ],
-    name: "isMediatorPermitted",
     outputs: [
       {
         internalType: "bool",
@@ -1045,17 +742,7 @@ const _abi = [
       },
       {
         internalType: "uint256",
-        name: "numMediators",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "mediatorBond",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "disputeCost",
+        name: "poolId",
         type: "uint256",
       },
       {
@@ -1073,11 +760,6 @@ const _abi = [
           {
             internalType: "uint256",
             name: "predictDur",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "appealDur",
             type: "uint256",
           },
         ],
@@ -1143,11 +825,6 @@ const _abi = [
           },
           {
             internalType: "bool",
-            name: "mediate",
-            type: "bool",
-          },
-          {
-            internalType: "bool",
             name: "offerOnly",
             type: "bool",
           },
@@ -1160,43 +837,6 @@ const _abi = [
         internalType: "struct Structs.MarketPerms",
         name: "perms",
         type: "tuple",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-    ],
-    name: "mediateAllowList",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "numMarkets",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
       },
     ],
     stateMutability: "view",
@@ -1267,9 +907,9 @@ const _abi = [
     name: "putAllowList",
     outputs: [
       {
-        internalType: "uint256",
+        internalType: "bool",
         name: "",
-        type: "uint256",
+        type: "bool",
       },
     ],
     stateMutability: "view",
@@ -1280,35 +920,6 @@ const _abi = [
     name: "renounceOwnership",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    name: "reqMediateBadges",
-    outputs: [
-      {
-        internalType: "string",
-        name: "",
-        type: "string",
-      },
-    ],
-    stateMutability: "view",
     type: "function",
   },
   {
@@ -1382,24 +993,6 @@ const _abi = [
         type: "address",
       },
     ],
-    name: "revokeMediator",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "id",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "addr",
-        type: "address",
-      },
-    ],
     name: "revokePut",
     outputs: [],
     stateMutability: "nonpayable",
@@ -1421,19 +1014,6 @@ const _abi = [
     name: "revokeSwap",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "rewardPool",
-    outputs: [
-      {
-        internalType: "contract IRewardPool",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
     type: "function",
   },
   {
@@ -1516,37 +1096,6 @@ const _abi = [
   {
     inputs: [
       {
-        internalType: "uint256",
-        name: "val",
-        type: "uint256",
-      },
-    ],
-    name: "setDefaultMediatorBond",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "id",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "cost",
-        type: "uint256",
-      },
-    ],
-    name: "setDisputeCost",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
         internalType: "address",
         name: "id",
         type: "address",
@@ -1564,11 +1113,6 @@ const _abi = [
       {
         internalType: "uint256",
         name: "predictDur",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "appealDur",
         type: "uint256",
       },
     ],
@@ -1631,17 +1175,7 @@ const _abi = [
           },
           {
             internalType: "uint256",
-            name: "numMediators",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "mediatorBond",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "disputeCost",
+            name: "poolId",
             type: "uint256",
           },
           {
@@ -1659,11 +1193,6 @@ const _abi = [
               {
                 internalType: "uint256",
                 name: "predictDur",
-                type: "uint256",
-              },
-              {
-                internalType: "uint256",
-                name: "appealDur",
                 type: "uint256",
               },
             ],
@@ -1729,11 +1258,6 @@ const _abi = [
               },
               {
                 internalType: "bool",
-                name: "mediate",
-                type: "bool",
-              },
-              {
-                internalType: "bool",
                 name: "offerOnly",
                 type: "bool",
               },
@@ -1775,26 +1299,8 @@ const _abi = [
         name: "swap",
         type: "string[2][]",
       },
-      {
-        internalType: "string[2][]",
-        name: "mediate",
-        type: "string[2][]",
-      },
     ],
     name: "setRequiredBadges",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "addr",
-        type: "address",
-      },
-    ],
-    name: "setRewardPool",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -1815,9 +1321,9 @@ const _abi = [
     name: "swapAllowList",
     outputs: [
       {
-        internalType: "uint256",
+        internalType: "bool",
         name: "",
-        type: "uint256",
+        type: "bool",
       },
     ],
     stateMutability: "view",
@@ -1850,24 +1356,6 @@ const _abi = [
       },
     ],
     name: "transferOwnership",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "id",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "addr",
-        type: "address",
-      },
-    ],
-    name: "unInviteMediator",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",

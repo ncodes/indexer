@@ -6,7 +6,7 @@ exports.up = function (knex) {
       table.string('network');
       table.string('owner');
       table.integer('index');
-      table.string('marketAddress');
+      table.integer('poolId');
       table.string('ticketId');
       table.integer('orderId');
       table.integer('disputeId');

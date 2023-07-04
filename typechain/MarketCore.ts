@@ -31,19 +31,12 @@ export declare namespace Structs {
     disputeDelayTime: BigNumberish;
     evidenceDur: BigNumberish;
     predictDur: BigNumberish;
-    appealDur: BigNumberish;
   };
 
-  export type MarketDurStructOutput = [
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber
-  ] & {
+  export type MarketDurStructOutput = [BigNumber, BigNumber, BigNumber] & {
     disputeDelayTime: BigNumber;
     evidenceDur: BigNumber;
     predictDur: BigNumber;
-    appealDur: BigNumber;
   };
 
   export type AssetStruct = { addr: string; assetType: BigNumberish };
@@ -56,21 +49,13 @@ export declare namespace Structs {
   export type MarketPermsStruct = {
     put: boolean;
     swap: boolean;
-    mediate: boolean;
     offerOnly: boolean;
     allowZeroOfferPrice: boolean;
   };
 
-  export type MarketPermsStructOutput = [
-    boolean,
-    boolean,
-    boolean,
-    boolean,
-    boolean
-  ] & {
+  export type MarketPermsStructOutput = [boolean, boolean, boolean, boolean] & {
     put: boolean;
     swap: boolean;
-    mediate: boolean;
     offerOnly: boolean;
     allowZeroOfferPrice: boolean;
   };
@@ -81,9 +66,7 @@ export declare namespace Structs {
     numDisputes: BigNumberish;
     numLiquidity: BigNumberish;
     commission: BigNumberish;
-    numMediators: BigNumberish;
-    mediatorBond: BigNumberish;
-    disputeCost: BigNumberish;
+    poolId: BigNumberish;
     dur: Structs.MarketDurStruct;
     creator: string;
     manager: string;
@@ -93,8 +76,6 @@ export declare namespace Structs {
   };
 
   export type MarketStructOutput = [
-    BigNumber,
-    BigNumber,
     BigNumber,
     BigNumber,
     BigNumber,
@@ -113,9 +94,7 @@ export declare namespace Structs {
     numDisputes: BigNumber;
     numLiquidity: BigNumber;
     commission: BigNumber;
-    numMediators: BigNumber;
-    mediatorBond: BigNumber;
-    disputeCost: BigNumber;
+    poolId: BigNumber;
     dur: Structs.MarketDurStructOutput;
     creator: string;
     manager: string;
@@ -127,125 +106,83 @@ export declare namespace Structs {
 
 export interface MarketCoreInterface extends utils.Interface {
   functions: {
-    "acceptMediateInvite(address)": FunctionFragment;
     "allowZeroOfferPrice(address)": FunctionFragment;
     "badge()": FunctionFragment;
-    "checkMarketMediatorBadges(address,address)": FunctionFragment;
-    "createMarket(address,address,uint8,uint8,bool,bool,bool,uint256,uint256,uint256)": FunctionFragment;
+    "createMarket(address,address,uint8,uint8,bool,bool,uint256,uint256)": FunctionFragment;
     "defaultDisputeDelayTime()": FunctionFragment;
-    "defaultMediatorBond()": FunctionFragment;
-    "getDefaultMinMediatorBond()": FunctionFragment;
     "getMarket(address)": FunctionFragment;
-    "getNumMediators(address)": FunctionFragment;
     "getReqBadges(address)": FunctionFragment;
     "hasMarket(address)": FunctionFragment;
-    "inviteMediator(address,address)": FunctionFragment;
-    "invitedMediators(address,address)": FunctionFragment;
-    "isMediatorPermitted(address,address)": FunctionFragment;
     "isPutPermitted(address,address)": FunctionFragment;
     "isSwapPermitted(address,address)": FunctionFragment;
     "markAsOfferOnly(address)": FunctionFragment;
     "markets(address)": FunctionFragment;
-    "mediateAllowList(address,address)": FunctionFragment;
-    "numMarkets()": FunctionFragment;
     "owner()": FunctionFragment;
     "permitPut(address,address)": FunctionFragment;
     "permitSwap(address,address)": FunctionFragment;
     "putAllowList(address,address)": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
-    "reqMediateBadges(address,uint256,uint256)": FunctionFragment;
     "reqPutBadges(address,uint256,uint256)": FunctionFragment;
     "reqSwapBadges(address,uint256,uint256)": FunctionFragment;
-    "revokeMediator(address,address)": FunctionFragment;
     "revokePut(address,address)": FunctionFragment;
     "revokeSwap(address,address)": FunctionFragment;
-    "rewardPool()": FunctionFragment;
     "setBadgeMgr(address)": FunctionFragment;
     "setCommission(address,uint256)": FunctionFragment;
     "setCounters(address,bool,bool,bool,uint256)": FunctionFragment;
     "setDefaultDisputeDelayTime(uint256)": FunctionFragment;
-    "setDefaultMediatorBond(uint256)": FunctionFragment;
-    "setDisputeCost(address,uint256)": FunctionFragment;
-    "setDisputeDurations(address,uint256,uint256,uint256,uint256)": FunctionFragment;
+    "setDisputeDurations(address,uint256,uint256,uint256)": FunctionFragment;
     "setManager(address,address)": FunctionFragment;
-    "setMarket(address,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,(uint256,uint256,uint256,uint256),address,address,(address,uint8),(address,uint8),(bool,bool,bool,bool,bool)))": FunctionFragment;
-    "setRequiredBadges(address,string[2][],string[2][],string[2][])": FunctionFragment;
-    "setRewardPool(address)": FunctionFragment;
+    "setMarket(address,(uint256,uint256,uint256,uint256,uint256,uint256,(uint256,uint256,uint256),address,address,(address,uint8),(address,uint8),(bool,bool,bool,bool)))": FunctionFragment;
+    "setRequiredBadges(address,string[2][],string[2][])": FunctionFragment;
     "swapAllowList(address,address)": FunctionFragment;
     "transferOwnership(address,address)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
-    "unInviteMediator(address,address)": FunctionFragment;
     "updateWriter(address,bool)": FunctionFragment;
     "writers(address)": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
-      | "acceptMediateInvite"
       | "allowZeroOfferPrice"
       | "badge"
-      | "checkMarketMediatorBadges"
       | "createMarket"
       | "defaultDisputeDelayTime"
-      | "defaultMediatorBond"
-      | "getDefaultMinMediatorBond"
       | "getMarket"
-      | "getNumMediators"
       | "getReqBadges"
       | "hasMarket"
-      | "inviteMediator"
-      | "invitedMediators"
-      | "isMediatorPermitted"
       | "isPutPermitted"
       | "isSwapPermitted"
       | "markAsOfferOnly"
       | "markets"
-      | "mediateAllowList"
-      | "numMarkets"
       | "owner"
       | "permitPut"
       | "permitSwap"
       | "putAllowList"
       | "renounceOwnership"
-      | "reqMediateBadges"
       | "reqPutBadges"
       | "reqSwapBadges"
-      | "revokeMediator"
       | "revokePut"
       | "revokeSwap"
-      | "rewardPool"
       | "setBadgeMgr"
       | "setCommission"
       | "setCounters"
       | "setDefaultDisputeDelayTime"
-      | "setDefaultMediatorBond"
-      | "setDisputeCost"
       | "setDisputeDurations"
       | "setManager"
       | "setMarket"
       | "setRequiredBadges"
-      | "setRewardPool"
       | "swapAllowList"
       | "transferOwnership(address,address)"
       | "transferOwnership(address)"
-      | "unInviteMediator"
       | "updateWriter"
       | "writers"
   ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "acceptMediateInvite",
-    values: [string]
-  ): string;
-  encodeFunctionData(
     functionFragment: "allowZeroOfferPrice",
     values: [string]
   ): string;
   encodeFunctionData(functionFragment: "badge", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "checkMarketMediatorBadges",
-    values: [string, string]
-  ): string;
   encodeFunctionData(
     functionFragment: "createMarket",
     values: [
@@ -255,8 +192,6 @@ export interface MarketCoreInterface extends utils.Interface {
       BigNumberish,
       boolean,
       boolean,
-      boolean,
-      BigNumberish,
       BigNumberish,
       BigNumberish
     ]
@@ -265,36 +200,12 @@ export interface MarketCoreInterface extends utils.Interface {
     functionFragment: "defaultDisputeDelayTime",
     values?: undefined
   ): string;
-  encodeFunctionData(
-    functionFragment: "defaultMediatorBond",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getDefaultMinMediatorBond",
-    values?: undefined
-  ): string;
   encodeFunctionData(functionFragment: "getMarket", values: [string]): string;
-  encodeFunctionData(
-    functionFragment: "getNumMediators",
-    values: [string]
-  ): string;
   encodeFunctionData(
     functionFragment: "getReqBadges",
     values: [string]
   ): string;
   encodeFunctionData(functionFragment: "hasMarket", values: [string]): string;
-  encodeFunctionData(
-    functionFragment: "inviteMediator",
-    values: [string, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "invitedMediators",
-    values: [string, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "isMediatorPermitted",
-    values: [string, string]
-  ): string;
   encodeFunctionData(
     functionFragment: "isPutPermitted",
     values: [string, string]
@@ -308,14 +219,6 @@ export interface MarketCoreInterface extends utils.Interface {
     values: [string]
   ): string;
   encodeFunctionData(functionFragment: "markets", values: [string]): string;
-  encodeFunctionData(
-    functionFragment: "mediateAllowList",
-    values: [string, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "numMarkets",
-    values?: undefined
-  ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "permitPut",
@@ -334,10 +237,6 @@ export interface MarketCoreInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "reqMediateBadges",
-    values: [string, BigNumberish, BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "reqPutBadges",
     values: [string, BigNumberish, BigNumberish]
   ): string;
@@ -346,20 +245,12 @@ export interface MarketCoreInterface extends utils.Interface {
     values: [string, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "revokeMediator",
-    values: [string, string]
-  ): string;
-  encodeFunctionData(
     functionFragment: "revokePut",
     values: [string, string]
   ): string;
   encodeFunctionData(
     functionFragment: "revokeSwap",
     values: [string, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "rewardPool",
-    values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "setBadgeMgr", values: [string]): string;
   encodeFunctionData(
@@ -375,16 +266,8 @@ export interface MarketCoreInterface extends utils.Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "setDefaultMediatorBond",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setDisputeCost",
-    values: [string, BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "setDisputeDurations",
-    values: [string, BigNumberish, BigNumberish, BigNumberish, BigNumberish]
+    values: [string, BigNumberish, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "setManager",
@@ -396,11 +279,7 @@ export interface MarketCoreInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "setRequiredBadges",
-    values: [string, [string, string][], [string, string][], [string, string][]]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setRewardPool",
-    values: [string]
+    values: [string, [string, string][], [string, string][]]
   ): string;
   encodeFunctionData(
     functionFragment: "swapAllowList",
@@ -415,28 +294,16 @@ export interface MarketCoreInterface extends utils.Interface {
     values: [string]
   ): string;
   encodeFunctionData(
-    functionFragment: "unInviteMediator",
-    values: [string, string]
-  ): string;
-  encodeFunctionData(
     functionFragment: "updateWriter",
     values: [string, boolean]
   ): string;
   encodeFunctionData(functionFragment: "writers", values: [string]): string;
 
   decodeFunctionResult(
-    functionFragment: "acceptMediateInvite",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "allowZeroOfferPrice",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "badge", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "checkMarketMediatorBadges",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "createMarket",
     data: BytesLike
@@ -445,36 +312,12 @@ export interface MarketCoreInterface extends utils.Interface {
     functionFragment: "defaultDisputeDelayTime",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "defaultMediatorBond",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getDefaultMinMediatorBond",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "getMarket", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "getNumMediators",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "getReqBadges",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "hasMarket", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "inviteMediator",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "invitedMediators",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "isMediatorPermitted",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "isPutPermitted",
     data: BytesLike
@@ -488,11 +331,6 @@ export interface MarketCoreInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "markets", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "mediateAllowList",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "numMarkets", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "permitPut", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "permitSwap", data: BytesLike): Result;
@@ -505,10 +343,6 @@ export interface MarketCoreInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "reqMediateBadges",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "reqPutBadges",
     data: BytesLike
   ): Result;
@@ -516,13 +350,8 @@ export interface MarketCoreInterface extends utils.Interface {
     functionFragment: "reqSwapBadges",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "revokeMediator",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "revokePut", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "revokeSwap", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "rewardPool", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "setBadgeMgr",
     data: BytesLike
@@ -540,14 +369,6 @@ export interface MarketCoreInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "setDefaultMediatorBond",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setDisputeCost",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "setDisputeDurations",
     data: BytesLike
   ): Result;
@@ -555,10 +376,6 @@ export interface MarketCoreInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "setMarket", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "setRequiredBadges",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setRewardPool",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -574,79 +391,49 @@ export interface MarketCoreInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "unInviteMediator",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "updateWriter",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "writers", data: BytesLike): Result;
 
   events: {
-    "AcceptedMediatorInvite(address,address)": EventFragment;
     "AllowedPut(address,address)": EventFragment;
     "AllowedSwap(address,address)": EventFragment;
-    "InvitedMediator(address,address)": EventFragment;
-    "NewMarket(address,address,address,address,uint8,uint8,uint256,uint256)": EventFragment;
+    "NewMarket(address,address,address,address,uint8,uint8,bool,bool,uint256,uint256)": EventFragment;
     "OfferOnlyEnabled(address)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
-    "RevokedMediator(address,address)": EventFragment;
     "RevokedPut(address,address)": EventFragment;
     "RevokedSwap(address,address)": EventFragment;
     "TransferredOwnership(address,address,address)": EventFragment;
-    "UnInvitedMediator(address,address)": EventFragment;
     "UpdatedBadgeAddr(address)": EventFragment;
     "UpdatedCommission(address,uint256)": EventFragment;
     "UpdatedDefaultDisputeDelayTime(uint256)": EventFragment;
-    "UpdatedDefaultMediatorBond(uint256)": EventFragment;
-    "UpdatedDisputeCost(address,uint256)": EventFragment;
-    "UpdatedDisputeDurations(address,uint256,uint256,uint256,uint256)": EventFragment;
-    "UpdatedMarketBadges(address,string[2][],string[2][],string[2][])": EventFragment;
+    "UpdatedDisputeDurations(address,uint256,uint256,uint256)": EventFragment;
+    "UpdatedMarketBadges(address,string[2][],string[2][])": EventFragment;
     "UpdatedMarketManager(address,address)": EventFragment;
-    "UpdatedRewardPoolAddr(address)": EventFragment;
     "WriterUpdated(address,bool)": EventFragment;
     "ZeroPriceEnabled(address)": EventFragment;
   };
 
-  getEvent(nameOrSignatureOrTopic: "AcceptedMediatorInvite"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AllowedPut"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AllowedSwap"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "InvitedMediator"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "NewMarket"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OfferOnlyEnabled"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RevokedMediator"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RevokedPut"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RevokedSwap"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "TransferredOwnership"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UnInvitedMediator"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "UpdatedBadgeAddr"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "UpdatedCommission"): EventFragment;
   getEvent(
     nameOrSignatureOrTopic: "UpdatedDefaultDisputeDelayTime"
   ): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedDefaultMediatorBond"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedDisputeCost"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "UpdatedDisputeDurations"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "UpdatedMarketBadges"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "UpdatedMarketManager"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedRewardPoolAddr"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "WriterUpdated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ZeroPriceEnabled"): EventFragment;
 }
-
-export interface AcceptedMediatorInviteEventObject {
-  id: string;
-  addr: string;
-}
-export type AcceptedMediatorInviteEvent = TypedEvent<
-  [string, string],
-  AcceptedMediatorInviteEventObject
->;
-
-export type AcceptedMediatorInviteEventFilter =
-  TypedEventFilter<AcceptedMediatorInviteEvent>;
 
 export interface AllowedPutEventObject {
   id: string;
@@ -670,17 +457,6 @@ export type AllowedSwapEvent = TypedEvent<
 
 export type AllowedSwapEventFilter = TypedEventFilter<AllowedSwapEvent>;
 
-export interface InvitedMediatorEventObject {
-  id: string;
-  addr: string;
-}
-export type InvitedMediatorEvent = TypedEvent<
-  [string, string],
-  InvitedMediatorEventObject
->;
-
-export type InvitedMediatorEventFilter = TypedEventFilter<InvitedMediatorEvent>;
-
 export interface NewMarketEventObject {
   id: string;
   owner: string;
@@ -688,11 +464,24 @@ export interface NewMarketEventObject {
   quote: string;
   baseType: number;
   quoteType: number;
+  permPut: boolean;
+  permSwap: boolean;
   commission: BigNumber;
-  numMediators: BigNumber;
+  mediatePoolId: BigNumber;
 }
 export type NewMarketEvent = TypedEvent<
-  [string, string, string, string, number, number, BigNumber, BigNumber],
+  [
+    string,
+    string,
+    string,
+    string,
+    number,
+    number,
+    boolean,
+    boolean,
+    BigNumber,
+    BigNumber
+  ],
   NewMarketEventObject
 >;
 
@@ -720,17 +509,6 @@ export type OwnershipTransferredEvent = TypedEvent<
 
 export type OwnershipTransferredEventFilter =
   TypedEventFilter<OwnershipTransferredEvent>;
-
-export interface RevokedMediatorEventObject {
-  id: string;
-  addr: string;
-}
-export type RevokedMediatorEvent = TypedEvent<
-  [string, string],
-  RevokedMediatorEventObject
->;
-
-export type RevokedMediatorEventFilter = TypedEventFilter<RevokedMediatorEvent>;
 
 export interface RevokedPutEventObject {
   id: string;
@@ -767,18 +545,6 @@ export type TransferredOwnershipEvent = TypedEvent<
 export type TransferredOwnershipEventFilter =
   TypedEventFilter<TransferredOwnershipEvent>;
 
-export interface UnInvitedMediatorEventObject {
-  id: string;
-  addr: string;
-}
-export type UnInvitedMediatorEvent = TypedEvent<
-  [string, string],
-  UnInvitedMediatorEventObject
->;
-
-export type UnInvitedMediatorEventFilter =
-  TypedEventFilter<UnInvitedMediatorEvent>;
-
 export interface UpdatedBadgeAddrEventObject {
   addr: string;
 }
@@ -813,38 +579,14 @@ export type UpdatedDefaultDisputeDelayTimeEvent = TypedEvent<
 export type UpdatedDefaultDisputeDelayTimeEventFilter =
   TypedEventFilter<UpdatedDefaultDisputeDelayTimeEvent>;
 
-export interface UpdatedDefaultMediatorBondEventObject {
-  val: BigNumber;
-}
-export type UpdatedDefaultMediatorBondEvent = TypedEvent<
-  [BigNumber],
-  UpdatedDefaultMediatorBondEventObject
->;
-
-export type UpdatedDefaultMediatorBondEventFilter =
-  TypedEventFilter<UpdatedDefaultMediatorBondEvent>;
-
-export interface UpdatedDisputeCostEventObject {
-  id: string;
-  cost: BigNumber;
-}
-export type UpdatedDisputeCostEvent = TypedEvent<
-  [string, BigNumber],
-  UpdatedDisputeCostEventObject
->;
-
-export type UpdatedDisputeCostEventFilter =
-  TypedEventFilter<UpdatedDisputeCostEvent>;
-
 export interface UpdatedDisputeDurationsEventObject {
   id: string;
   disputeDelayTime: BigNumber;
   evidenceDur: BigNumber;
   predictDur: BigNumber;
-  appealDur: BigNumber;
 }
 export type UpdatedDisputeDurationsEvent = TypedEvent<
-  [string, BigNumber, BigNumber, BigNumber, BigNumber],
+  [string, BigNumber, BigNumber, BigNumber],
   UpdatedDisputeDurationsEventObject
 >;
 
@@ -855,10 +597,9 @@ export interface UpdatedMarketBadgesEventObject {
   id: string;
   arg1: [string, string][];
   arg2: [string, string][];
-  arg3: [string, string][];
 }
 export type UpdatedMarketBadgesEvent = TypedEvent<
-  [string, [string, string][], [string, string][], [string, string][]],
+  [string, [string, string][], [string, string][]],
   UpdatedMarketBadgesEventObject
 >;
 
@@ -876,17 +617,6 @@ export type UpdatedMarketManagerEvent = TypedEvent<
 
 export type UpdatedMarketManagerEventFilter =
   TypedEventFilter<UpdatedMarketManagerEvent>;
-
-export interface UpdatedRewardPoolAddrEventObject {
-  addr: string;
-}
-export type UpdatedRewardPoolAddrEvent = TypedEvent<
-  [string],
-  UpdatedRewardPoolAddrEventObject
->;
-
-export type UpdatedRewardPoolAddrEventFilter =
-  TypedEventFilter<UpdatedRewardPoolAddrEvent>;
 
 export interface WriterUpdatedEventObject {
   addr: string;
@@ -937,23 +667,12 @@ export interface MarketCore extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    acceptMediateInvite(
-      id: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
     allowZeroOfferPrice(
       id: string,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
     badge(overrides?: CallOverrides): Promise<[string]>;
-
-    checkMarketMediatorBadges(
-      marketId: string,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<[void]>;
 
     createMarket(
       base: string,
@@ -962,53 +681,24 @@ export interface MarketCore extends BaseContract {
       quoteType: BigNumberish,
       permPut: boolean,
       permSwap: boolean,
-      permMediate: boolean,
       commission: BigNumberish,
-      mediatorBond: BigNumberish,
-      numMediators: BigNumberish,
+      mediatePoolId: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
     defaultDisputeDelayTime(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    defaultMediatorBond(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    getDefaultMinMediatorBond(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     getMarket(
       id: string,
       overrides?: CallOverrides
     ): Promise<[Structs.MarketStructOutput]>;
 
-    getNumMediators(
-      id: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
     getReqBadges(
       id: string,
       overrides?: CallOverrides
-    ): Promise<[[string, string][], [string, string][], [string, string][]]>;
+    ): Promise<[[string, string][], [string, string][]]>;
 
     hasMarket(id: string, overrides?: CallOverrides): Promise<[boolean]>;
-
-    inviteMediator(
-      id: string,
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    invitedMediators(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    isMediatorPermitted(
-      id: string,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
 
     isPutPermitted(
       id: string,
@@ -1038,8 +728,6 @@ export interface MarketCore extends BaseContract {
         BigNumber,
         BigNumber,
         BigNumber,
-        BigNumber,
-        BigNumber,
         Structs.MarketDurStructOutput,
         string,
         string,
@@ -1052,9 +740,7 @@ export interface MarketCore extends BaseContract {
         numDisputes: BigNumber;
         numLiquidity: BigNumber;
         commission: BigNumber;
-        numMediators: BigNumber;
-        mediatorBond: BigNumber;
-        disputeCost: BigNumber;
+        poolId: BigNumber;
         dur: Structs.MarketDurStructOutput;
         creator: string;
         manager: string;
@@ -1063,14 +749,6 @@ export interface MarketCore extends BaseContract {
         perms: Structs.MarketPermsStructOutput;
       }
     >;
-
-    mediateAllowList(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    numMarkets(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
@@ -1090,18 +768,11 @@ export interface MarketCore extends BaseContract {
       arg0: string,
       arg1: string,
       overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
+    ): Promise<[boolean]>;
 
     renounceOwnership(
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
-
-    reqMediateBadges(
-      arg0: string,
-      arg1: BigNumberish,
-      arg2: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
 
     reqPutBadges(
       arg0: string,
@@ -1117,12 +788,6 @@ export interface MarketCore extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string]>;
 
-    revokeMediator(
-      id: string,
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
     revokePut(
       id: string,
       addr: string,
@@ -1134,8 +799,6 @@ export interface MarketCore extends BaseContract {
       addr: string,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
-
-    rewardPool(overrides?: CallOverrides): Promise<[string]>;
 
     setBadgeMgr(
       addr: string,
@@ -1162,23 +825,11 @@ export interface MarketCore extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
-    setDefaultMediatorBond(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setDisputeCost(
-      id: string,
-      cost: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
     setDisputeDurations(
       id: string,
       disputeDelayTime: BigNumberish,
       evidenceDur: BigNumberish,
       predictDur: BigNumberish,
-      appealDur: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
@@ -1198,12 +849,6 @@ export interface MarketCore extends BaseContract {
       id: string,
       put: [string, string][],
       swap: [string, string][],
-      mediate: [string, string][],
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setRewardPool(
-      addr: string,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
@@ -1211,7 +856,7 @@ export interface MarketCore extends BaseContract {
       arg0: string,
       arg1: string,
       overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
+    ): Promise<[boolean]>;
 
     "transferOwnership(address,address)"(
       id: string,
@@ -1224,12 +869,6 @@ export interface MarketCore extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
-    unInviteMediator(
-      id: string,
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
     updateWriter(
       addr: string,
       add: boolean,
@@ -1239,23 +878,12 @@ export interface MarketCore extends BaseContract {
     writers(arg0: string, overrides?: CallOverrides): Promise<[boolean]>;
   };
 
-  acceptMediateInvite(
-    id: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
   allowZeroOfferPrice(
     id: string,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
   badge(overrides?: CallOverrides): Promise<string>;
-
-  checkMarketMediatorBadges(
-    marketId: string,
-    addr: string,
-    overrides?: CallOverrides
-  ): Promise<void>;
 
   createMarket(
     base: string,
@@ -1264,50 +892,24 @@ export interface MarketCore extends BaseContract {
     quoteType: BigNumberish,
     permPut: boolean,
     permSwap: boolean,
-    permMediate: boolean,
     commission: BigNumberish,
-    mediatorBond: BigNumberish,
-    numMediators: BigNumberish,
+    mediatePoolId: BigNumberish,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
   defaultDisputeDelayTime(overrides?: CallOverrides): Promise<BigNumber>;
-
-  defaultMediatorBond(overrides?: CallOverrides): Promise<BigNumber>;
-
-  getDefaultMinMediatorBond(overrides?: CallOverrides): Promise<BigNumber>;
 
   getMarket(
     id: string,
     overrides?: CallOverrides
   ): Promise<Structs.MarketStructOutput>;
 
-  getNumMediators(id: string, overrides?: CallOverrides): Promise<BigNumber>;
-
   getReqBadges(
     id: string,
     overrides?: CallOverrides
-  ): Promise<[[string, string][], [string, string][], [string, string][]]>;
+  ): Promise<[[string, string][], [string, string][]]>;
 
   hasMarket(id: string, overrides?: CallOverrides): Promise<boolean>;
-
-  inviteMediator(
-    id: string,
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  invitedMediators(
-    arg0: string,
-    arg1: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  isMediatorPermitted(
-    id: string,
-    addr: string,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
 
   isPutPermitted(
     id: string,
@@ -1337,8 +939,6 @@ export interface MarketCore extends BaseContract {
       BigNumber,
       BigNumber,
       BigNumber,
-      BigNumber,
-      BigNumber,
       Structs.MarketDurStructOutput,
       string,
       string,
@@ -1351,9 +951,7 @@ export interface MarketCore extends BaseContract {
       numDisputes: BigNumber;
       numLiquidity: BigNumber;
       commission: BigNumber;
-      numMediators: BigNumber;
-      mediatorBond: BigNumber;
-      disputeCost: BigNumber;
+      poolId: BigNumber;
       dur: Structs.MarketDurStructOutput;
       creator: string;
       manager: string;
@@ -1362,14 +960,6 @@ export interface MarketCore extends BaseContract {
       perms: Structs.MarketPermsStructOutput;
     }
   >;
-
-  mediateAllowList(
-    arg0: string,
-    arg1: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  numMarkets(overrides?: CallOverrides): Promise<BigNumber>;
 
   owner(overrides?: CallOverrides): Promise<string>;
 
@@ -1389,18 +979,11 @@ export interface MarketCore extends BaseContract {
     arg0: string,
     arg1: string,
     overrides?: CallOverrides
-  ): Promise<BigNumber>;
+  ): Promise<boolean>;
 
   renounceOwnership(
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
-
-  reqMediateBadges(
-    arg0: string,
-    arg1: BigNumberish,
-    arg2: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<string>;
 
   reqPutBadges(
     arg0: string,
@@ -1416,12 +999,6 @@ export interface MarketCore extends BaseContract {
     overrides?: CallOverrides
   ): Promise<string>;
 
-  revokeMediator(
-    id: string,
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
   revokePut(
     id: string,
     addr: string,
@@ -1433,8 +1010,6 @@ export interface MarketCore extends BaseContract {
     addr: string,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
-
-  rewardPool(overrides?: CallOverrides): Promise<string>;
 
   setBadgeMgr(
     addr: string,
@@ -1461,23 +1036,11 @@ export interface MarketCore extends BaseContract {
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
-  setDefaultMediatorBond(
-    val: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setDisputeCost(
-    id: string,
-    cost: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
   setDisputeDurations(
     id: string,
     disputeDelayTime: BigNumberish,
     evidenceDur: BigNumberish,
     predictDur: BigNumberish,
-    appealDur: BigNumberish,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
@@ -1497,12 +1060,6 @@ export interface MarketCore extends BaseContract {
     id: string,
     put: [string, string][],
     swap: [string, string][],
-    mediate: [string, string][],
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setRewardPool(
-    addr: string,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
@@ -1510,7 +1067,7 @@ export interface MarketCore extends BaseContract {
     arg0: string,
     arg1: string,
     overrides?: CallOverrides
-  ): Promise<BigNumber>;
+  ): Promise<boolean>;
 
   "transferOwnership(address,address)"(
     id: string,
@@ -1523,12 +1080,6 @@ export interface MarketCore extends BaseContract {
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
-  unInviteMediator(
-    id: string,
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
   updateWriter(
     addr: string,
     add: boolean,
@@ -1538,17 +1089,9 @@ export interface MarketCore extends BaseContract {
   writers(arg0: string, overrides?: CallOverrides): Promise<boolean>;
 
   callStatic: {
-    acceptMediateInvite(id: string, overrides?: CallOverrides): Promise<void>;
-
     allowZeroOfferPrice(id: string, overrides?: CallOverrides): Promise<void>;
 
     badge(overrides?: CallOverrides): Promise<string>;
-
-    checkMarketMediatorBadges(
-      marketId: string,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
 
     createMarket(
       base: string,
@@ -1557,50 +1100,24 @@ export interface MarketCore extends BaseContract {
       quoteType: BigNumberish,
       permPut: boolean,
       permSwap: boolean,
-      permMediate: boolean,
       commission: BigNumberish,
-      mediatorBond: BigNumberish,
-      numMediators: BigNumberish,
+      mediatePoolId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
     defaultDisputeDelayTime(overrides?: CallOverrides): Promise<BigNumber>;
-
-    defaultMediatorBond(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getDefaultMinMediatorBond(overrides?: CallOverrides): Promise<BigNumber>;
 
     getMarket(
       id: string,
       overrides?: CallOverrides
     ): Promise<Structs.MarketStructOutput>;
 
-    getNumMediators(id: string, overrides?: CallOverrides): Promise<BigNumber>;
-
     getReqBadges(
       id: string,
       overrides?: CallOverrides
-    ): Promise<[[string, string][], [string, string][], [string, string][]]>;
+    ): Promise<[[string, string][], [string, string][]]>;
 
     hasMarket(id: string, overrides?: CallOverrides): Promise<boolean>;
-
-    inviteMediator(
-      id: string,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    invitedMediators(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    isMediatorPermitted(
-      id: string,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
 
     isPutPermitted(
       id: string,
@@ -1627,8 +1144,6 @@ export interface MarketCore extends BaseContract {
         BigNumber,
         BigNumber,
         BigNumber,
-        BigNumber,
-        BigNumber,
         Structs.MarketDurStructOutput,
         string,
         string,
@@ -1641,9 +1156,7 @@ export interface MarketCore extends BaseContract {
         numDisputes: BigNumber;
         numLiquidity: BigNumber;
         commission: BigNumber;
-        numMediators: BigNumber;
-        mediatorBond: BigNumber;
-        disputeCost: BigNumber;
+        poolId: BigNumber;
         dur: Structs.MarketDurStructOutput;
         creator: string;
         manager: string;
@@ -1652,14 +1165,6 @@ export interface MarketCore extends BaseContract {
         perms: Structs.MarketPermsStructOutput;
       }
     >;
-
-    mediateAllowList(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    numMarkets(overrides?: CallOverrides): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
@@ -1679,16 +1184,9 @@ export interface MarketCore extends BaseContract {
       arg0: string,
       arg1: string,
       overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    ): Promise<boolean>;
 
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
-
-    reqMediateBadges(
-      arg0: string,
-      arg1: BigNumberish,
-      arg2: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<string>;
 
     reqPutBadges(
       arg0: string,
@@ -1704,12 +1202,6 @@ export interface MarketCore extends BaseContract {
       overrides?: CallOverrides
     ): Promise<string>;
 
-    revokeMediator(
-      id: string,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
     revokePut(
       id: string,
       addr: string,
@@ -1721,8 +1213,6 @@ export interface MarketCore extends BaseContract {
       addr: string,
       overrides?: CallOverrides
     ): Promise<void>;
-
-    rewardPool(overrides?: CallOverrides): Promise<string>;
 
     setBadgeMgr(addr: string, overrides?: CallOverrides): Promise<void>;
 
@@ -1746,23 +1236,11 @@ export interface MarketCore extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    setDefaultMediatorBond(
-      val: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setDisputeCost(
-      id: string,
-      cost: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
     setDisputeDurations(
       id: string,
       disputeDelayTime: BigNumberish,
       evidenceDur: BigNumberish,
       predictDur: BigNumberish,
-      appealDur: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1782,17 +1260,14 @@ export interface MarketCore extends BaseContract {
       id: string,
       put: [string, string][],
       swap: [string, string][],
-      mediate: [string, string][],
       overrides?: CallOverrides
     ): Promise<void>;
-
-    setRewardPool(addr: string, overrides?: CallOverrides): Promise<void>;
 
     swapAllowList(
       arg0: string,
       arg1: string,
       overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    ): Promise<boolean>;
 
     "transferOwnership(address,address)"(
       id: string,
@@ -1802,12 +1277,6 @@ export interface MarketCore extends BaseContract {
 
     "transferOwnership(address)"(
       newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    unInviteMediator(
-      id: string,
-      addr: string,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1821,15 +1290,6 @@ export interface MarketCore extends BaseContract {
   };
 
   filters: {
-    "AcceptedMediatorInvite(address,address)"(
-      id?: string | null,
-      addr?: string | null
-    ): AcceptedMediatorInviteEventFilter;
-    AcceptedMediatorInvite(
-      id?: string | null,
-      addr?: string | null
-    ): AcceptedMediatorInviteEventFilter;
-
     "AllowedPut(address,address)"(
       id?: string | null,
       addr?: string | null
@@ -1845,24 +1305,17 @@ export interface MarketCore extends BaseContract {
       addr?: string | null
     ): AllowedSwapEventFilter;
 
-    "InvitedMediator(address,address)"(
-      id?: string | null,
-      addr?: string | null
-    ): InvitedMediatorEventFilter;
-    InvitedMediator(
-      id?: string | null,
-      addr?: string | null
-    ): InvitedMediatorEventFilter;
-
-    "NewMarket(address,address,address,address,uint8,uint8,uint256,uint256)"(
+    "NewMarket(address,address,address,address,uint8,uint8,bool,bool,uint256,uint256)"(
       id?: string | null,
       owner?: null,
       base?: null,
       quote?: null,
       baseType?: null,
       quoteType?: null,
+      permPut?: null,
+      permSwap?: null,
       commission?: null,
-      numMediators?: null
+      mediatePoolId?: null
     ): NewMarketEventFilter;
     NewMarket(
       id?: string | null,
@@ -1871,8 +1324,10 @@ export interface MarketCore extends BaseContract {
       quote?: null,
       baseType?: null,
       quoteType?: null,
+      permPut?: null,
+      permSwap?: null,
       commission?: null,
-      numMediators?: null
+      mediatePoolId?: null
     ): NewMarketEventFilter;
 
     "OfferOnlyEnabled(address)"(
@@ -1888,15 +1343,6 @@ export interface MarketCore extends BaseContract {
       previousOwner?: string | null,
       newOwner?: string | null
     ): OwnershipTransferredEventFilter;
-
-    "RevokedMediator(address,address)"(
-      id?: string | null,
-      addr?: string | null
-    ): RevokedMediatorEventFilter;
-    RevokedMediator(
-      id?: string | null,
-      addr?: string | null
-    ): RevokedMediatorEventFilter;
 
     "RevokedPut(address,address)"(
       id?: string | null,
@@ -1924,15 +1370,6 @@ export interface MarketCore extends BaseContract {
       newOwner?: null
     ): TransferredOwnershipEventFilter;
 
-    "UnInvitedMediator(address,address)"(
-      id?: string | null,
-      addr?: string | null
-    ): UnInvitedMediatorEventFilter;
-    UnInvitedMediator(
-      id?: string | null,
-      addr?: string | null
-    ): UnInvitedMediatorEventFilter;
-
     "UpdatedBadgeAddr(address)"(addr?: null): UpdatedBadgeAddrEventFilter;
     UpdatedBadgeAddr(addr?: null): UpdatedBadgeAddrEventFilter;
 
@@ -1952,48 +1389,28 @@ export interface MarketCore extends BaseContract {
       val?: null
     ): UpdatedDefaultDisputeDelayTimeEventFilter;
 
-    "UpdatedDefaultMediatorBond(uint256)"(
-      val?: null
-    ): UpdatedDefaultMediatorBondEventFilter;
-    UpdatedDefaultMediatorBond(
-      val?: null
-    ): UpdatedDefaultMediatorBondEventFilter;
-
-    "UpdatedDisputeCost(address,uint256)"(
-      id?: string | null,
-      cost?: null
-    ): UpdatedDisputeCostEventFilter;
-    UpdatedDisputeCost(
-      id?: string | null,
-      cost?: null
-    ): UpdatedDisputeCostEventFilter;
-
-    "UpdatedDisputeDurations(address,uint256,uint256,uint256,uint256)"(
+    "UpdatedDisputeDurations(address,uint256,uint256,uint256)"(
       id?: string | null,
       disputeDelayTime?: null,
       evidenceDur?: null,
-      predictDur?: null,
-      appealDur?: null
+      predictDur?: null
     ): UpdatedDisputeDurationsEventFilter;
     UpdatedDisputeDurations(
       id?: string | null,
       disputeDelayTime?: null,
       evidenceDur?: null,
-      predictDur?: null,
-      appealDur?: null
+      predictDur?: null
     ): UpdatedDisputeDurationsEventFilter;
 
-    "UpdatedMarketBadges(address,string[2][],string[2][],string[2][])"(
+    "UpdatedMarketBadges(address,string[2][],string[2][])"(
       id?: string | null,
       arg1?: null,
-      arg2?: null,
-      arg3?: null
+      arg2?: null
     ): UpdatedMarketBadgesEventFilter;
     UpdatedMarketBadges(
       id?: string | null,
       arg1?: null,
-      arg2?: null,
-      arg3?: null
+      arg2?: null
     ): UpdatedMarketBadgesEventFilter;
 
     "UpdatedMarketManager(address,address)"(
@@ -2004,11 +1421,6 @@ export interface MarketCore extends BaseContract {
       id?: string | null,
       mgr?: null
     ): UpdatedMarketManagerEventFilter;
-
-    "UpdatedRewardPoolAddr(address)"(
-      addr?: null
-    ): UpdatedRewardPoolAddrEventFilter;
-    UpdatedRewardPoolAddr(addr?: null): UpdatedRewardPoolAddrEventFilter;
 
     "WriterUpdated(address,bool)"(
       addr?: null,
@@ -2023,23 +1435,12 @@ export interface MarketCore extends BaseContract {
   };
 
   estimateGas: {
-    acceptMediateInvite(
-      id: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
     allowZeroOfferPrice(
       id: string,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
     badge(overrides?: CallOverrides): Promise<BigNumber>;
-
-    checkMarketMediatorBadges(
-      marketId: string,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
 
     createMarket(
       base: string,
@@ -2048,44 +1449,18 @@ export interface MarketCore extends BaseContract {
       quoteType: BigNumberish,
       permPut: boolean,
       permSwap: boolean,
-      permMediate: boolean,
       commission: BigNumberish,
-      mediatorBond: BigNumberish,
-      numMediators: BigNumberish,
+      mediatePoolId: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
     defaultDisputeDelayTime(overrides?: CallOverrides): Promise<BigNumber>;
 
-    defaultMediatorBond(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getDefaultMinMediatorBond(overrides?: CallOverrides): Promise<BigNumber>;
-
     getMarket(id: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    getNumMediators(id: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     getReqBadges(id: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     hasMarket(id: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    inviteMediator(
-      id: string,
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    invitedMediators(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    isMediatorPermitted(
-      id: string,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
 
     isPutPermitted(
       id: string,
@@ -2105,14 +1480,6 @@ export interface MarketCore extends BaseContract {
     ): Promise<BigNumber>;
 
     markets(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    mediateAllowList(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    numMarkets(overrides?: CallOverrides): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -2138,13 +1505,6 @@ export interface MarketCore extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
-    reqMediateBadges(
-      arg0: string,
-      arg1: BigNumberish,
-      arg2: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     reqPutBadges(
       arg0: string,
       arg1: BigNumberish,
@@ -2159,12 +1519,6 @@ export interface MarketCore extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    revokeMediator(
-      id: string,
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
     revokePut(
       id: string,
       addr: string,
@@ -2176,8 +1530,6 @@ export interface MarketCore extends BaseContract {
       addr: string,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
-
-    rewardPool(overrides?: CallOverrides): Promise<BigNumber>;
 
     setBadgeMgr(
       addr: string,
@@ -2204,23 +1556,11 @@ export interface MarketCore extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
-    setDefaultMediatorBond(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setDisputeCost(
-      id: string,
-      cost: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
     setDisputeDurations(
       id: string,
       disputeDelayTime: BigNumberish,
       evidenceDur: BigNumberish,
       predictDur: BigNumberish,
-      appealDur: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
@@ -2240,12 +1580,6 @@ export interface MarketCore extends BaseContract {
       id: string,
       put: [string, string][],
       swap: [string, string][],
-      mediate: [string, string][],
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setRewardPool(
-      addr: string,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
@@ -2266,12 +1600,6 @@ export interface MarketCore extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
-    unInviteMediator(
-      id: string,
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
     updateWriter(
       addr: string,
       add: boolean,
@@ -2282,23 +1610,12 @@ export interface MarketCore extends BaseContract {
   };
 
   populateTransaction: {
-    acceptMediateInvite(
-      id: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
     allowZeroOfferPrice(
       id: string,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
     badge(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    checkMarketMediatorBadges(
-      marketId: string,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
 
     createMarket(
       base: string,
@@ -2307,10 +1624,8 @@ export interface MarketCore extends BaseContract {
       quoteType: BigNumberish,
       permPut: boolean,
       permSwap: boolean,
-      permMediate: boolean,
       commission: BigNumberish,
-      mediatorBond: BigNumberish,
-      numMediators: BigNumberish,
+      mediatePoolId: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
@@ -2318,20 +1633,7 @@ export interface MarketCore extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    defaultMediatorBond(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getDefaultMinMediatorBond(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     getMarket(
-      id: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getNumMediators(
       id: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -2343,24 +1645,6 @@ export interface MarketCore extends BaseContract {
 
     hasMarket(
       id: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    inviteMediator(
-      id: string,
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    invitedMediators(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    isMediatorPermitted(
-      id: string,
-      addr: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -2386,14 +1670,6 @@ export interface MarketCore extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    mediateAllowList(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    numMarkets(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     permitPut(
@@ -2418,13 +1694,6 @@ export interface MarketCore extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
-    reqMediateBadges(
-      arg0: string,
-      arg1: BigNumberish,
-      arg2: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     reqPutBadges(
       arg0: string,
       arg1: BigNumberish,
@@ -2439,12 +1708,6 @@ export interface MarketCore extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    revokeMediator(
-      id: string,
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
     revokePut(
       id: string,
       addr: string,
@@ -2456,8 +1719,6 @@ export interface MarketCore extends BaseContract {
       addr: string,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
-
-    rewardPool(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     setBadgeMgr(
       addr: string,
@@ -2484,23 +1745,11 @@ export interface MarketCore extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
-    setDefaultMediatorBond(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setDisputeCost(
-      id: string,
-      cost: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
     setDisputeDurations(
       id: string,
       disputeDelayTime: BigNumberish,
       evidenceDur: BigNumberish,
       predictDur: BigNumberish,
-      appealDur: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
@@ -2520,12 +1769,6 @@ export interface MarketCore extends BaseContract {
       id: string,
       put: [string, string][],
       swap: [string, string][],
-      mediate: [string, string][],
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setRewardPool(
-      addr: string,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
@@ -2543,12 +1786,6 @@ export interface MarketCore extends BaseContract {
 
     "transferOwnership(address)"(
       newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    unInviteMediator(
-      id: string,
-      addr: string,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 

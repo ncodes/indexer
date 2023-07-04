@@ -12,8 +12,8 @@ export default class TicketSlash extends BaseModel {
   owner: string;
   // The index of the ticket
   index: number;
-  // The market ID joined
-  marketAddress: string;
+  // The ticket's pool id
+  poolId: number;
   // The ticket ID
   ticketId: string;
   // The order ID
@@ -89,18 +89,9 @@ export default class TicketSlash extends BaseModel {
    * @param udp the fields to be updated
    * @param txn Optional transaction object
    */
-  static updateById(
-    id: string,
-    udp: Partial<TicketSlash>,
-    txn?: Transaction,
-  ): Promise<TicketSlash> {
+  static updateById(id: string, udp: Partial<TicketSlash>, txn?: Transaction): Promise<TicketSlash> {
     return new Promise((resolve, reject) => {
-      this.query(txn)
-        .whereNotDeleted()
-        .patchAndFetchById(id, udp)
-        .execute()
-        .then(resolve)
-        .catch(reject);
+      this.query(txn).whereNotDeleted().patchAndFetchById(id, udp).execute().then(resolve).catch(reject);
     });
   }
 }

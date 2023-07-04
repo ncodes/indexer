@@ -8,12 +8,12 @@ import { toBN } from '../common';
 import TicketSlash from '../../models/ticket_slash';
 import NetworkService from '../network.service';
 import { NotifierService, NotificationID } from '../../jobs/mailer/NotifierService';
-import { commify, formatEther, formatUnits } from 'ethers/lib/utils';
-import Market from '../../models/market';
+import { commify, formatEther } from 'ethers/lib/utils';
 import Draft from '../../models/draft';
 import Dispute from '../../models/dispute';
 import Swap from '../../models/swap';
 import MineTask, { MineTaskType } from '../../models/mine_task';
+import Meta from '../../models/meta';
 
 export class MediatorManagerHandler extends Handler {
   constructor(
@@ -35,13 +35,14 @@ export class MediatorManagerHandler extends Handler {
       async (
         owner: string,
         id: BigNumber,
+        poolId: BigNumber,
         amount: BigNumber,
         matureAt: BigNumber,
         joinBy: BigNumber,
         event: ethers.Event,
         txn?: Transaction,
       ) => {
-        return this.onTicketPurchased(owner, id, amount, matureAt, joinBy, event, txn);
+        return this.onTicketPurchased(owner, id, poolId, amount, matureAt, joinBy, event, txn);
       },
     );
 
@@ -57,23 +58,9 @@ export class MediatorManagerHandler extends Handler {
     );
 
     this.on(
-      'JoinedMarket',
-      async (owner: string, marketAddress: string, ticketId: BigNumber, event: ethers.Event, txn?: Transaction) => {
-        return this.onJoinedMarket(owner, marketAddress, ticketId, event, txn);
-      },
-    );
-
-    this.on(
-      'LeftMarket',
-      async (
-        marketAddress: string,
-        owner: string,
-        ticketId: BigNumber,
-        joinBy: BigNumber,
-        event: ethers.Event,
-        txn?: Transaction,
-      ) => {
-        return this.onLeftMarket(marketAddress, owner, ticketId, joinBy, event, txn);
+      'JoinedPool',
+      async (owner: string, pooldId: BigNumber, ticketId: BigNumber, event: ethers.Event, txn?: Transaction) => {
+        return this.onJoinedPool(owner, pooldId, ticketId, event, txn);
       },
     );
 
@@ -85,24 +72,25 @@ export class MediatorManagerHandler extends Handler {
         ticketId: BigNumber,
         orderId: BigNumber,
         disputeId: BigNumber,
+        drafter: string,
         event: ethers.Event,
         txn?: Transaction,
       ) => {
-        return this.onDrafted(marketAddress, owner, ticketId, orderId, disputeId, event, txn);
+        return this.onDrafted(marketAddress, owner, ticketId, orderId, disputeId, drafter, event, txn);
       },
     );
 
     this.on(
       'Undrafted',
       async (
-        marketAddress: string,
         owner: string,
         ticketId: BigNumber,
         slashed: boolean,
+        undrafter: string,
         event: ethers.Event,
         txn?: Transaction,
       ) => {
-        return this.onUndrafted(marketAddress, owner, ticketId, slashed, event, txn);
+        return this.onUndrafted(owner, ticketId, slashed, undrafter, event, txn);
       },
     );
 
@@ -123,16 +111,29 @@ export class MediatorManagerHandler extends Handler {
     );
 
     this.on(
-      'DelegatedAccount',
-      async (owner: string, ticketId: BigNumber, delegate: string, event: ethers.Event, txn?: Transaction) => {
-        return this.onDelegatedAccount(owner, ticketId, delegate, event, txn);
-      },
-    );
-
-    this.on(
-      'UndelegatedAccount',
-      async (owner: string, ticketId: BigNumber, delegate: string, event: ethers.Event, txn?: Transaction) => {
-        return this.onUndelegatedAccount(owner, ticketId, delegate, event, txn);
+      'UpdatedTicketPool',
+      async (
+        poolId: BigNumber,
+        reqBond: BigNumber,
+        draftReward: BigNumber,
+        winReward: BigNumber,
+        noVoteSlashBP: BigNumber,
+        loseVoteSlashBP: BigNumber,
+        numDraftees: BigNumber,
+        event: ethers.Event,
+        txn?: Transaction,
+      ) => {
+        return this.onUpdatedTicketPool(
+          poolId,
+          reqBond,
+          draftReward,
+          winReward,
+          noVoteSlashBP,
+          loseVoteSlashBP,
+          numDraftees,
+          event,
+          txn,
+        );
       },
     );
   }
@@ -141,6 +142,7 @@ export class MediatorManagerHandler extends Handler {
    * A ticket was purchased
    * @param owner The address of the ticket purchaser
    * @param id The unique id of the ticket
+   * @param poolId The pool id of the ticket
    * @param amount The amount locked in the ticket
    * @param matureAt Ticket become matured after this time.
    * @param joinBy Ticket must join a market before this time or become expired.
@@ -150,6 +152,7 @@ export class MediatorManagerHandler extends Handler {
   async onTicketPurchased(
     owner: string,
     id: BigNumber,
+    poolId: BigNumber,
     amount: BigNumber,
     matureAt: BigNumber,
     joinBy: BigNumber,
@@ -161,6 +164,7 @@ export class MediatorManagerHandler extends Handler {
         network: this.network,
         owner,
         index: id.toNumber(),
+        poolId: poolId.toNumber(),
         bond: amount.toString(),
         matureAt: moment.unix(matureAt.toNumber()).toISOString(),
         joinBy: moment.unix(joinBy.toNumber()).toISOString(),
@@ -200,90 +204,14 @@ export class MediatorManagerHandler extends Handler {
   /**
    * A ticket joined a market
    * @param owner The ticket owner
-   * @param marketAddress The ID of the market joined
+   * @param poolId The pool ID of the ticket
    * @param ticketId The unique id of the ticket
    * @param event The event object
    * @param txn The database transaction handle
    */
-  async onJoinedMarket(
-    owner: string,
-    marketAddress: string,
-    ticketId: BigNumber,
-    event: ethers.Event,
-    txn?: Transaction,
-  ) {
+  async onJoinedPool(owner: string, poolId: BigNumber, ticketId: BigNumber, event: ethers.Event, txn?: Transaction) {
     const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, ticketId.toNumber(), undefined, txn);
-    const block = await event.getBlock();
-    const leaveAt = block.timestamp + parseInt(await this.getParam('minTicketTenureDur'));
-    await Ticket.updateById(ticket.id, { marketAddress, leaveAt: moment.unix(leaveAt).toISOString() }, txn);
-
-    // Update market
-    let market = await Market.getMarket(this.network, marketAddress, undefined, txn);
-    market = await Market.updateById(
-      market.id,
-      {
-        totalJoinedMediatorsBond: toBN(market.totalJoinedMediatorsBond).add(ticket.bond).toString(),
-        numMediatorsJoined: market.numMediatorsJoined + 1,
-      },
-      txn,
-    );
-
-    // Send notification
-    const numTickets = await Ticket.countByNetworkAndMarket(this.network, marketAddress, txn);
-    await this.notifSrv.notify(NotificationID.NewTicketJoinedMarket, this.network, market.creator, {
-      market,
-      owner,
-      numTickets,
-    });
-  }
-
-  /**
-   * A ticket left a market
-   * @param marketAddress The ID of the market joined
-   * @param owner The ticket owner
-   * @param ticketId The unique id of the ticket
-   * @param joinBy The time the ticket must join a market otherwise it will be expired
-   * @param event The event object
-   * @param txn The database transaction handle
-   */
-  async onLeftMarket(
-    marketAddress: string,
-    owner: string,
-    ticketId: BigNumber,
-    joinBy: BigNumber,
-    event: ethers.Event,
-    txn?: Transaction,
-  ) {
-    const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, ticketId.toNumber(), undefined, txn);
-
-    await Ticket.updateById(
-      ticket.id,
-      {
-        marketAddress: null,
-        leaveAt: null,
-        joinBy: moment.unix(joinBy.toNumber()).toISOString(),
-      },
-      txn,
-    );
-
-    // Update market
-    let market = await Market.getMarket(this.network, marketAddress, undefined, txn);
-    market = await Market.updateById(
-      market.id,
-      {
-        totalJoinedMediatorsBond: toBN(market.totalJoinedMediatorsBond).sub(ticket.bond).toString(),
-        numMediatorsJoined: market.numMediatorsJoined - 1,
-      },
-      txn,
-    );
-
-    // Send notification
-    const numTickets = await Ticket.countByNetworkAndMarket(this.network, marketAddress, txn);
-    await this.notifSrv.notify(NotificationID.TicketLeftMarket, this.network, market.creator, {
-      market,
-      owner,
-      numTickets,
-    });
+    await Ticket.updateById(ticket.id, { poolId: poolId.toNumber(), joined: true }, txn);
   }
 
   /**
@@ -293,6 +221,7 @@ export class MediatorManagerHandler extends Handler {
    * @param ticketId The unique id of the ticket
    * @param orderId The ID of the order ticket was drafted to
    * @param disputeId The dispute ID
+   * @param drafter The address if the drafter
    * @param event The event object
    * @param txn The database transaction handle
    */
@@ -302,6 +231,7 @@ export class MediatorManagerHandler extends Handler {
     ticketId: BigNumber,
     orderId: BigNumber,
     disputeId: BigNumber,
+    drafter: string,
     event: ethers.Event,
     txn?: Transaction,
   ) {
@@ -344,7 +274,6 @@ export class MediatorManagerHandler extends Handler {
     const evidEndAt = fullyDrafted ? now + parseInt(await this.getParam('evidenceDur')) : undefined;
     const commitEndAt = fullyDrafted ? evidEndAt + parseInt(await this.getParam('predictDur')) / 2 : undefined;
     const predictEndAt = fullyDrafted ? evidEndAt + parseInt(await this.getParam('predictDur')) : undefined;
-    const appealEndAt = fullyDrafted ? predictEndAt + parseInt(await this.getParam('appealDur')) : undefined;
     dispute = await Dispute.updateById(
       dispute.id,
       {
@@ -353,7 +282,6 @@ export class MediatorManagerHandler extends Handler {
         commitEndAt: commitEndAt ? moment.unix(commitEndAt).toISOString() : undefined,
         predictEndAt: predictEndAt ? moment.unix(predictEndAt).toISOString() : undefined,
         revealEndAt: predictEndAt ? moment.unix(predictEndAt).toISOString() : undefined,
-        appealEndAt: appealEndAt ? moment.unix(appealEndAt).toISOString() : undefined,
       },
       txn,
     );
@@ -370,7 +298,7 @@ export class MediatorManagerHandler extends Handler {
           marketAddress,
           orderId: orderId.toNumber(),
           disputeId: disputeId.toNumber(),
-          mineAt: dispute.appealEndAt,
+          mineAt: dispute.revealEndAt,
         },
         txn,
       );
@@ -402,23 +330,23 @@ export class MediatorManagerHandler extends Handler {
    * A ticket was undrafted
    * @param owner The ticket owner
    * @param ticketId The unique id of the ticket
-   * @param marketAddress The ID of the market the ticket joined
    * @param slashed Indicates whether the ticket was slashed
+   * @param undrafter The address of the caller
    * @param event The event object
    * @param txn The database transaction handle
    */
   async onUndrafted(
-    marketAddress: string,
     owner: string,
     ticketId: BigNumber,
     slashed: boolean,
+    undrafter: string,
     event: ethers.Event,
     txn?: Transaction,
   ) {
     const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, ticketId.toNumber(), undefined, txn);
 
     // Complete an undraft mining task
-    await MineTask.completeOneUndraftTask(this.network, marketAddress, ticket.orderId, ticket.disputeId, txn);
+    await MineTask.completeOneUndraftTask(this.network, ticket.orderId, ticket.disputeId, txn);
 
     // Note: You might think it is appropriate to set `orderId` and
     // `disputeId` to null, but do not. The next event (TicketSlashed)
@@ -469,7 +397,6 @@ export class MediatorManagerHandler extends Handler {
         slashed: true,
         bond: toBN(ticket.bond).sub(amount).toString(),
         joinBy: moment.unix(joinBy).toISOString(),
-        marketAddress: null,
       },
       txn,
     );
@@ -479,7 +406,7 @@ export class MediatorManagerHandler extends Handler {
         network: ticket.network,
         owner: ticket.owner,
         index: ticket.index,
-        marketAddress: ticket.marketAddress,
+        poolId: ticket.poolId,
         ticketId: ticket.id,
         orderId: ticket.orderId,
         disputeId: ticket.disputeId,
@@ -500,52 +427,40 @@ export class MediatorManagerHandler extends Handler {
   }
 
   /**
-   * A ticket was delegated to another account
-   * @param owner The ticket owner
-   * @param ticketId The unique id of the ticket
-   * @param delegate The address of the new delegate
+   * Ticket pool was updated
+   * @param poolId The ID of the pool
+   * @param reqBond The pool's required bond
+   * @param draftReward The reward for drafted tickets
+   * @param winReward The reward for winning tickets
+   * @param noVoteSlashBP The slash BP for tickets that did not vote
+   * @param loseVoteSlashBP The slash BP for tickets that voted for the losing side
+   * @param numDraftees The number of draftees
    * @param event The event object
    * @param txn The database transaction handle
    */
-  async onDelegatedAccount(
-    owner: string,
-    ticketId: BigNumber,
-    delegate: string,
+  async onUpdatedTicketPool(
+    poolId: BigNumber,
+    reqBond: BigNumber,
+    draftReward: BigNumber,
+    winReward: BigNumber,
+    noVoteSlashBP: BigNumber,
+    loseVoteSlashBP: BigNumber,
+    numDraftees: BigNumber,
     event: ethers.Event,
     txn?: Transaction,
   ) {
-    const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, ticketId.toNumber(), undefined, txn);
-    await Ticket.create(
-      {
-        network: this.network,
-        owner,
-        index: ticket.index,
-        bond: ticket.bond,
-        matureAt: ticket.matureAt,
-        joinBy: ticket.joinBy,
-        delegated: true,
-        delegate,
-        txHash: event.transactionHash,
-      },
+    await Meta.update(
+      Meta.makeMediatorPoolKey(this.network, poolId.toNumber()),
+      JSON.stringify(<PoolParams>{
+        poolId: poolId.toNumber(),
+        reqBond: reqBond.toString(),
+        draftReward: draftReward.toString(),
+        winReward: winReward.toString(),
+        noVoteSlashBP: noVoteSlashBP.toString(),
+        loseVoteSlashBP: loseVoteSlashBP.toString(),
+        numDraftees: numDraftees.toNumber(),
+      }),
       txn,
     );
-  }
-
-  /**
-   * A delegate was un-delegated from a ticket
-   * @param owner The ticket owner
-   * @param ticketId The unique id of the ticket
-   * @param delegate The address of the delegate
-   * @param event The event object
-   * @param txn The database transaction handle
-   */
-  async onUndelegatedAccount(
-    owner: string,
-    ticketId: BigNumber,
-    delegate: string,
-    event: ethers.Event,
-    txn?: Transaction,
-  ) {
-    await Ticket.removeDelegate(this.network, owner, ticketId.toNumber(), delegate, txn);
   }
 }

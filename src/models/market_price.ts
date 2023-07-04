@@ -3,6 +3,7 @@ import Objection, { Transaction } from 'objection';
 import { BaseModel } from './base';
 import * as moment from 'moment';
 import { toDec } from '../common/common';
+import { isNil } from 'lodash';
 
 /**
  * MarketPrice represents a market's historic price
@@ -70,46 +71,13 @@ export default class MarketPrice extends BaseModel {
   }
 
   /**
-   * Find the recent price before a given date
-   * @param network The target network name
-   * @param marketAddress The target market ID
-   * @param baseAddress The base address of a target asset
-   * @param provider The provider address
-   * @param before The target date
-   * @param txn Optional transaction object
-   */
-  static async findRecentBefore(
-    network: string,
-    marketAddress: string,
-    baseAddress: string,
-    provider: string,
-    before: string,
-    txn?: Transaction,
-  ): Promise<MarketPrice> {
-    return this.query(txn)
-      .where((q) => {
-        if (network) q.where({ network });
-      })
-      .where((q) => {
-        if (marketAddress) q.where('marketAddress', 'ilike', marketAddress);
-      })
-      .where((q) => {
-        if (baseAddress) q.where('baseAddress', 'ilike', baseAddress);
-      })
-      .where((q) => {
-        if (provider) q.where('provider', 'ilike', provider);
-      })
-      .where('createdAt', '<', before)
-      .orderBy('createdAt', 'DESC')
-      .first();
-  }
-
-  /**
    * Find the recent price
    * @param network The target network name
    * @param marketAddress The target market ID
    * @param baseAddress The base address of a target asset
    * @param provider The provider address
+   * @param lid The liquidity ID
+   * @param excludeAfter Exclude records created after this time
    * @param txn Optional transaction object
    */
   static async findRecent(
@@ -117,6 +85,8 @@ export default class MarketPrice extends BaseModel {
     marketAddress?: string,
     baseAddress?: string,
     provider?: string,
+    lid?: number,
+    excludeAfter?: string,
     txn?: Transaction,
   ): Promise<MarketPrice> {
     return this.query(txn)
@@ -131,6 +101,12 @@ export default class MarketPrice extends BaseModel {
       })
       .where((q) => {
         if (provider) q.where('provider', 'ilike', provider);
+      })
+      .where((q) => {
+        if (!isNil(lid)) q.where({ lid });
+      })
+      .where((q) => {
+        if (excludeAfter) q.where('createdAt', '<', excludeAfter);
       })
       .orderBy('createdAt', 'DESC')
       .first();
@@ -141,6 +117,7 @@ export default class MarketPrice extends BaseModel {
    * @param network The network name
    * @param marketAddress The market ID
    * @param provider The provider address
+   * @param lid The liquidity ID
    * @param hours The price change period in hours
    * @param txn Optional transaction object
    */
@@ -148,13 +125,14 @@ export default class MarketPrice extends BaseModel {
     network: string,
     marketAddress: string,
     provider: string,
+    lid: number,
     hours: number,
     txn?: Transaction,
   ): Promise<number> {
     const timeAgo = moment().subtract(hours, 'h').toISOString();
-    const priceHourAgo = await MarketPrice.findRecentBefore(network, marketAddress, undefined, provider, timeAgo, txn);
+    const priceHourAgo = await MarketPrice.findRecent(network, marketAddress, undefined, provider, lid, timeAgo, txn);
     if (!priceHourAgo) return Promise.resolve(0);
-    const currentPrice = await MarketPrice.findRecent(network, marketAddress, undefined, provider, txn);
+    const currentPrice = await MarketPrice.findRecent(network, marketAddress, undefined, provider, lid, undefined, txn);
     return Promise.resolve(
       toDec(currentPrice.price).sub(priceHourAgo.price).div(toDec(priceHourAgo.price)).mul(100).toNumber(),
     );
@@ -174,9 +152,25 @@ export default class MarketPrice extends BaseModel {
     txn?: Transaction,
   ): Promise<number> {
     const timeAgo = moment().subtract(hours, 'h').toISOString();
-    const priceHourAgo = await MarketPrice.findRecentBefore(network, undefined, baseAddress, undefined, timeAgo, txn);
+    const priceHourAgo = await MarketPrice.findRecent(
+      network,
+      undefined,
+      baseAddress,
+      undefined,
+      undefined,
+      timeAgo,
+      txn,
+    );
     if (!priceHourAgo) return Promise.resolve(0);
-    const currentPrice = await MarketPrice.findRecent(network, undefined, baseAddress, undefined, txn);
+    const currentPrice = await MarketPrice.findRecent(
+      network,
+      undefined,
+      baseAddress,
+      undefined,
+      undefined,
+      undefined,
+      txn,
+    );
     return Promise.resolve(
       toDec(currentPrice.price).sub(priceHourAgo.price).div(toDec(priceHourAgo.price)).mul(100).toNumber(),
     );

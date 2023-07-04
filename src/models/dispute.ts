@@ -14,8 +14,6 @@ export default class Dispute extends BaseModel {
   creator: string = undefined;
   // The defendant of the dispute
   defendant: string = undefined;
-  // The amount paid as deposit
-  deposit: string = undefined;
   // The market ID joined
   marketAddress: string = undefined;
   // The order index
@@ -28,8 +26,8 @@ export default class Dispute extends BaseModel {
   numMediatorsDrafted: number = undefined;
   // Indicates the creator's preferred outcome
   wantRelease: boolean = undefined;
-  // Indicates whether this dispute is an appeal
-  appeal: boolean = undefined;
+  // Indicates whether this dispute was re-disputed
+  redispute: boolean = undefined;
   // The evidence submission expiry time
   evidenceEndAt: string = undefined;
   // The vote commit end time
@@ -38,8 +36,6 @@ export default class Dispute extends BaseModel {
   revealEndAt: string = undefined;
   // The voting end time
   predictEndAt: string = undefined;
-  // The time after which appeal is no longer possible
-  appealEndAt: string = undefined;
   // Indicates whether the dispute has been executed
   executed: boolean = undefined;
   // Indicates whether the dispute outcome was release or cancelled
@@ -54,8 +50,6 @@ export default class Dispute extends BaseModel {
   notifiedOnCommitEndAt: boolean = undefined;
   // Notification marker for `revealEndAt`
   notifiedOnRevealEndAt: boolean = undefined;
-  // Notification marker for `appealEndAt`
-  notifiedOnAppealEndAt: boolean = undefined;
 
   /** Not persisted */
 
@@ -261,27 +255,6 @@ export default class Dispute extends BaseModel {
       .limit(limit);
   }
 
-  /**
-   * Get disputes that have passed their appealEndAt date but have not had
-   * notifications sent.
-   * @param limit The number of disputes to return
-   * @param txn Optional transaction object
-   */
-  static getByAfterAppealEndAt(limit = 100, txn?: Transaction) {
-    return this.query(txn)
-      .whereNotDeleted()
-      .where('appealEndAt', 'is not', null)
-      .where('appealEndAt', '<=', 'now()')
-      .where({
-        notifiedOnAppealEndAt: false,
-        orderReleased: false,
-        executed: false,
-        released: false,
-        abandoned: false,
-      })
-      .limit(limit);
-  }
-
   static makeSelectList(select = []) {
     select = select.filter((x) => Object.keys(new Dispute()).includes(x));
     select = select.length
@@ -298,7 +271,7 @@ export default class Dispute extends BaseModel {
    * @param defendant Indicate to return dispute by the given defendant
    * @param orderId The order ID
    * @param disputeId The dispute ID
-   * @param appeal Indicate to filter only appeals
+   * @param redispute Indicate to filter by re-dispute status
    * @param executed Indicate to filter by executed disputes
    * @param released Indicate to filter by released disputes
    * @param abandoned Indicate to filter by abandoned disputes
@@ -315,7 +288,7 @@ export default class Dispute extends BaseModel {
     defendant?: string,
     orderId?: number,
     disputeId?: number,
-    appeal?: boolean,
+    redispute?: boolean,
     executed?: boolean,
     released?: boolean,
     abandoned?: boolean,
@@ -336,7 +309,7 @@ export default class Dispute extends BaseModel {
     if (defendant) q = q.where('defendant', 'ILIKE', defendant);
     if (orderId) q = q.where('orderId', orderId);
     if (disputeId) q = q.where('disputeId', disputeId);
-    if (appeal !== undefined) q = q.where('appeal', appeal);
+    if (redispute !== undefined) q = q.where('redispute', redispute);
     if (executed !== undefined) q = q.where('executed', executed);
     if (released !== undefined) q = q.where('released', released);
     if (abandoned !== undefined) q = q.where('abandoned', abandoned);
@@ -354,7 +327,7 @@ export default class Dispute extends BaseModel {
    * @param defendant Indicate to return dispute by the given defendant
    * @param orderId The order ID
    * @param disputeId The dispute ID
-   * @param appeal Indicate to filter only appeals
+   * @param redispute Indicate to filter by re-dispute status
    * @param executed Indicate to filter by executed disputes
    * @param released Indicate to filter by released disputes
    * @param abandoned Indicate to filter by abandoned disputes
@@ -368,7 +341,7 @@ export default class Dispute extends BaseModel {
     defendant?: string,
     orderId?: number,
     disputeId?: number,
-    appeal?: boolean,
+    redispute?: boolean,
     executed?: boolean,
     released?: boolean,
     abandoned?: boolean,
@@ -381,7 +354,7 @@ export default class Dispute extends BaseModel {
     if (defendant) q = q.where('defendant', 'ILIKE', defendant);
     if (orderId) q = q.where('orderId', orderId);
     if (disputeId) q = q.where('disputeId', disputeId);
-    if (appeal !== undefined) q = q.where('appeal', appeal);
+    if (redispute !== undefined) q = q.where('redispute', redispute);
     if (executed !== undefined) q = q.where('executed', executed);
     if (released !== undefined) q = q.where('released', released);
     if (abandoned !== undefined) q = q.where('abandoned', abandoned);

@@ -11,6 +11,7 @@ import Reveal from '../../models/reveal';
 import Draft from '../../models/draft';
 import Liquidity from '../../models/liquidity';
 import MineTask, { MineTaskType } from '../../models/mine_task';
+import Meta from '../../models/meta';
 
 const MarketCoreContract = jest.fn().mockImplementation(() => {
   return {};
@@ -29,15 +30,13 @@ describe('DisputeManagerHandler', () => {
   const db = DBService.getForTest();
   const net = 'net';
   const userAddr = '0xUser';
+  const marketAddress = '0xMarket';
   let handler: DisputeManagerHandler;
   const marketCoreContract = new MarketCoreContract();
   const contracts = {
     marketCore: marketCoreContract,
   };
-  const cfg = {
-    disputeCost: '100',
-    maxMediatorPerDispute: '3',
-  };
+  const cfg = {};
 
   afterEach(async () => {
     await db.truncateTables();
@@ -62,13 +61,11 @@ describe('DisputeManagerHandler', () => {
     describe('with no previous existing dispute for the order', () => {
       it('should create dispute with correct fields', async () => {
         const orderId = toBN(1);
-        const marketAddress = '0xMarket';
         const disputeId = toBN(1);
 
         let market = await Market.create({
           network: net,
           address: marketAddress,
-          numMediators: 3,
           totalSwaps: 2,
         });
 
@@ -89,6 +86,13 @@ describe('DisputeManagerHandler', () => {
           quote: 'QUOTE',
         });
 
+        await Meta.update(
+          Meta.makeMediatorPoolKey(net, 0),
+          JSON.stringify({
+            numDraftees: 3,
+          }),
+        );
+
         await expect(
           handler.onDisputeCreated(orderId, '0xProvider', disputeId, true, {} as any),
         ).resolves.toBeUndefined();
@@ -98,8 +102,7 @@ describe('DisputeManagerHandler', () => {
         expect(dispute).toBeDefined();
         expect(dispute.wantRelease).toBeTruthy();
         expect(dispute.defendant).toEqual('0xTaker');
-        expect(dispute.deposit).toEqual('0');
-        expect(dispute.appeal).toBeFalsy();
+        expect(dispute.redispute).toBeFalsy();
         expect(dispute.numMediators).toEqual(3);
 
         // expect notification to have been sent
@@ -142,7 +145,6 @@ describe('DisputeManagerHandler', () => {
         let market = await Market.create({
           network: net,
           address: marketAddress,
-          numMediators: 3,
           openDisputes: 1,
           totalDisputes: 1,
         });
@@ -171,7 +173,12 @@ describe('DisputeManagerHandler', () => {
           quote: 'QUOTE',
         });
 
-        cfg.maxMediatorPerDispute = '20';
+        await Meta.update(
+          Meta.makeMediatorPoolKey(net, 0),
+          JSON.stringify({
+            numDraftees: 3,
+          }),
+        );
 
         await expect(handler.onDisputeCreated(orderId, '0xTaker', disputeId, true, {} as any)).resolves.toBeUndefined();
 
@@ -180,9 +187,8 @@ describe('DisputeManagerHandler', () => {
         expect(dispute).toBeDefined();
         expect(dispute.wantRelease).toBeTruthy();
         expect(dispute.defendant).toEqual('0xProvider');
-        expect(dispute.deposit).toEqual('100');
-        expect(dispute.appeal).toBeTruthy();
-        expect(dispute.numMediators).toEqual(6);
+        expect(dispute.redispute).toBeTruthy();
+        expect(dispute.numMediators).toEqual(3);
 
         // expect notification to have been sent
         swap.market = market;
@@ -209,7 +215,7 @@ describe('DisputeManagerHandler', () => {
           orderId: orderId.toNumber(),
           disputeId: disputeId.toNumber(),
         };
-        expect(await MineTask.count(q)).toEqual(6);
+        expect(await MineTask.count(q)).toEqual(3);
       });
     });
   });
@@ -255,7 +261,6 @@ describe('DisputeManagerHandler', () => {
     const disputeId = toBN(1);
     let market: Market;
     let swap: Swap;
-    let dispute: Dispute;
     let liquidity: Liquidity;
     const numMediators = 3;
     let executeTask: MineTask;
@@ -264,7 +269,6 @@ describe('DisputeManagerHandler', () => {
       market = await Market.create({
         network: net,
         address: marketAddress,
-        numMediators,
         openDisputes: 1,
         totalDisputes: 1,
       });
@@ -276,7 +280,7 @@ describe('DisputeManagerHandler', () => {
         openDisputes: 1,
       });
 
-      dispute = await Dispute.create({
+      await Dispute.create({
         network: net,
         marketAddress,
         orderId: orderId.toNumber(),

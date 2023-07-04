@@ -16,7 +16,6 @@ import MineTask, { MineTaskType } from '../../models/mine_task';
 import * as _ from 'lodash';
 import Offer from '../../models/offers';
 import MarketBadge, { BadgeScope } from '../../models/market_badge';
-import { toLower } from 'lodash';
 import { includesStr, isEqualStr } from '../../common/common';
 
 export class CoreHandler extends Handler {
@@ -105,9 +104,19 @@ export class CoreHandler extends Handler {
       return this.onSwapOrderPaid(orderId, disputeFrom, event, txn);
     });
 
-    this.on('TransferredToFeePool', async (token: string, amount: BigNumber, event: Event, txn?: Transaction) => {
-      return this.onTransferredToFeePool(token, amount, event, txn);
-    });
+    this.on(
+      'TransferredToFeePool',
+      async (
+        token: string,
+        amount: BigNumber,
+        convAsset: string,
+        convAmount: BigNumber,
+        event: Event,
+        txn?: Transaction,
+      ) => {
+        return this.onTransferredToFeePool(token, amount, convAsset, convAmount, event, txn);
+      },
+    );
 
     this.on(
       'ProtocolFeeUpdated',
@@ -680,13 +689,22 @@ export class CoreHandler extends Handler {
   }
 
   /**
-   * Some fee was sent to the fee sharer contract
-   * @param token The token address whose fee was transferred
+   * Fee earned on a token was converted and transferred to the fee pool
+   * @param token The token address whose fee was converted and transferred
    * @param amount The amount that was transferred
+   * @param convAsset The asset the fee was converted to
+   * @param convAmount The amount after conversion
    * @param event The event object
    * @param txn The transaction object
    */
-  async onTransferredToFeePool(token: string, amount: BigNumber, event: Event, txn?: Transaction) {
+  async onTransferredToFeePool(
+    token: string,
+    amount: BigNumber,
+    convAsset: string,
+    convAmount: BigNumber,
+    event: Event,
+    txn?: Transaction,
+  ) {
     // Add a task for the future
     const block = await event.getBlock();
     const mineAt = block.timestamp + parseInt(await Meta.getContractParam(this.network, 'transferToFeePoolInterval'));
@@ -694,8 +712,7 @@ export class CoreHandler extends Handler {
       {
         type: MineTaskType.FeeTransfer,
         network: this.network,
-        transferredToken: token,
-        transferredAmount: amount.toString(),
+        token,
         mineAt: moment.unix(mineAt).toISOString(),
       },
       txn,

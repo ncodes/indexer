@@ -4,10 +4,9 @@ import { MailerService } from '../../services/mailer/mailer.service';
 import User from '../../models/user';
 import Notification, { NotificationType } from '../../models/notification';
 import { Logger } from '@nestjs/common';
-import { shortenAddr } from '../../common/utils/helpers';
 import Market from '../../models/market';
 import { pow10D, toFixed } from '../../network/common';
-import { isEqualStr, toDec } from '../../common/common';
+import { isEqualStr, shortenAddr, toDec } from '../../common/common';
 import * as moment from 'moment-timezone';
 
 // noinspection JSUnusedGlobalSymbols
@@ -627,7 +626,7 @@ export class NotifierConsumer {
    * Notify user of a new ticket that joined their market
    * @param job The job data
    */
-  async notifyNewTicketJoinedMarket(job: NotifyJob<NewTicketJoinedMarketNotification>) {
+  async notifyNewTicketJoinedPool(job: NotifyJob<NewTicketJoinedPoolNotification>) {
     const { user } = job;
     const { market } = job.data;
     const locals: any = {
@@ -706,7 +705,7 @@ export class NotifierConsumer {
       ...job,
       ...job.data,
       userAddrShort: shortenAddr(job.recipient),
-      title: !dispute.appeal ? 'Order Disputed' : `Order Was Redisputed`,
+      title: !dispute.redispute ? 'Order Disputed' : `Order Was Redisputed`,
       btnValue: 'View Order',
       creatorShort: shortenAddr(dispute.creator),
       orderLink: `${job.appUrl}/order/${swap.orderId}`,
@@ -960,40 +959,6 @@ export class NotifierConsumer {
 
     await Notification.create({
       type: NotificationType.RevealPhaseEnded,
-      network: job.network,
-      userId: job.user.id,
-      title: subject,
-      body: note,
-    });
-
-    // Send email
-    await this.mailer.send(template, subject, user.email, locals);
-  }
-
-  /**
-   * Notify order dispute participants of the end of appeal phase
-   * @param job The job data
-   */
-  async notifyAppealPhaseEnded(job: NotifyJob<AppealPhaseEndedNotification>) {
-    const { user } = job;
-    const { swap } = job.data;
-    const locals: any = {
-      ...job,
-      ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
-      asset: 'P2P',
-      title: 'Appeal Window Closed',
-      orderLink: `${job.appUrl}/order/${swap.orderId}`,
-      btnValue: 'View Order',
-      btnLink: `${job.appUrl}/order/${swap.orderId}`,
-    };
-
-    const template = `dispute/appeal-phase-ended`;
-    const subject = await this.mailer.render(`${template}.subject`, locals);
-    const note = await this.mailer.render(`${template}.note`, locals);
-
-    await Notification.create({
-      type: NotificationType.AppealPhaseEnded,
       network: job.network,
       userId: job.user.id,
       title: subject,

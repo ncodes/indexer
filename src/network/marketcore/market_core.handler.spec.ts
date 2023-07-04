@@ -3,11 +3,9 @@ import { DBService } from '../../db/DBService';
 import Market, { AssetType } from '../../models/market';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import LiquidityProvider from '../../models/market_provider';
-import InvitedMediator from '../../models/invited_mediators';
 import * as moment from 'moment';
 import PermittedTrader from '../../models/permitted_trader';
 import { NotificationID } from '../../jobs/mailer/NotifierService';
-import { BigNumber } from 'ethers';
 import MarketBadge, { BadgeScope } from '../../models/market_badge';
 import { toBN } from '../common';
 import { TokenLists } from '../../common/token_list';
@@ -87,15 +85,6 @@ describe('MarketCoreHandler', () => {
 
     describe('new ERC20/ERC20 market', function () {
       it('should create market', async () => {
-        mockGetMarket.mockResolvedValue({
-          perms: {
-            put: true,
-            swap: true,
-            mediate: true,
-          },
-          mediatorBond: BigNumber.from('1000'),
-        });
-
         await expect(
           handler.onNewMarket(
             marketAddress,
@@ -104,8 +93,10 @@ describe('MarketCoreHandler', () => {
             quoteAsset,
             AssetType.ERC20,
             AssetType.ERC20,
-            BigNumber.from(1),
-            BigNumber.from(10),
+            true,
+            true,
+            toBN(1),
+            toBN(1),
             { transactionHash: txHash } as any,
           ),
         ).resolves.toBeUndefined();
@@ -124,27 +115,15 @@ describe('MarketCoreHandler', () => {
         expect(market.commission).toEqual(1);
         expect(market.pair).toEqual(`${base}${quote}`);
         expect(market.txHash).toEqual(txHash);
-        expect(market.numMediators).toEqual(10);
         expect(market.permPut).toEqual(true);
         expect(market.permSwap).toEqual(true);
-        expect(market.permMediate).toEqual(true);
-        expect(market.mediatorBond).toEqual('1000');
+        expect(market.mediatorPoolId).toEqual(1);
       });
     });
 
     describe('new ERC20/SYNTH market', function () {
       it('should create market and fetch synthetic asset symbol and decimal from internal list', async () => {
         TokenLists.synthetic.tokens = [{ address: quoteAsset, symbol: quote, decimals: 10 }];
-
-        mockGetMarket.mockResolvedValue({
-          perms: {
-            put: true,
-            swap: true,
-            mediate: true,
-          },
-          mediatorBond: BigNumber.from('1000'),
-        });
-
         await expect(
           handler.onNewMarket(
             marketAddress,
@@ -153,8 +132,10 @@ describe('MarketCoreHandler', () => {
             quoteAsset,
             AssetType.ERC20,
             AssetType.SYNTH,
-            BigNumber.from(1),
-            BigNumber.from(10),
+            true,
+            true,
+            toBN(1),
+            toBN(1),
             { transactionHash: txHash } as any,
           ),
         ).resolves.toBeUndefined();
@@ -174,15 +155,6 @@ describe('MarketCoreHandler', () => {
       describe('when SYNTH asset is known in the token list', function () {
         it('should create market and use defaults for synthetic-related fields', async () => {
           TokenLists.synthetic.tokens = [];
-
-          mockGetMarket.mockResolvedValue({
-            perms: {
-              put: true,
-              swap: true,
-              mediate: true,
-            },
-            mediatorBond: BigNumber.from('1000'),
-          });
           await expect(
             handler.onNewMarket(
               marketAddress,
@@ -191,8 +163,10 @@ describe('MarketCoreHandler', () => {
               quoteAsset,
               AssetType.ERC20,
               AssetType.SYNTH,
-              BigNumber.from(1),
-              BigNumber.from(10),
+              true,
+              true,
+              toBN(1),
+              toBN(1),
               { transactionHash: txHash } as any,
             ),
           ).resolves.toBeUndefined();
@@ -210,15 +184,6 @@ describe('MarketCoreHandler', () => {
 
     describe('new ERC20/ERC721 market', function () {
       it('should create market but not set decimal for ERC271 asset', async () => {
-        mockGetMarket.mockResolvedValue({
-          perms: {
-            put: true,
-            swap: true,
-            mediate: true,
-          },
-          mediatorBond: BigNumber.from('1000'),
-        });
-
         await expect(
           handler.onNewMarket(
             marketAddress,
@@ -227,8 +192,10 @@ describe('MarketCoreHandler', () => {
             quoteAsset,
             AssetType.ERC20,
             AssetType.ERC721,
-            BigNumber.from(1),
-            BigNumber.from(10),
+            true,
+            true,
+            toBN(1),
+            toBN(1),
             { transactionHash: txHash } as any,
           ),
         ).resolves.toBeUndefined();
@@ -243,15 +210,6 @@ describe('MarketCoreHandler', () => {
 
     describe('new ERC20/ERC1155 market', function () {
       it('should create market but not set symbol and decimal for ERC271 asset', async () => {
-        mockGetMarket.mockResolvedValue({
-          perms: {
-            put: true,
-            swap: true,
-            mediate: true,
-          },
-          mediatorBond: BigNumber.from('1000'),
-        });
-
         await expect(
           handler.onNewMarket(
             marketAddress,
@@ -260,8 +218,10 @@ describe('MarketCoreHandler', () => {
             quoteAsset,
             AssetType.ERC20,
             AssetType.ERC1155,
-            BigNumber.from(1),
-            BigNumber.from(10),
+            true,
+            true,
+            toBN(1),
+            toBN(1),
             { transactionHash: txHash } as any,
           ),
         ).resolves.toBeUndefined();
@@ -438,148 +398,6 @@ describe('MarketCoreHandler', () => {
     });
   });
 
-  describe('.onInvitedMediator', () => {
-    let market: Market;
-
-    beforeEach(async () => {
-      market = await Market.create({
-        network: net,
-        address: marketAddress,
-        manager: userAddr,
-      });
-    });
-
-    it('should create invitation', async () => {
-      await handler.onInvitedMediator(marketAddress, userAddr, {} as any);
-      const invite = await InvitedMediator.findInviteByNetworkMarketIDAndAddress(net, marketAddress, userAddr);
-      expect(invite).toBeDefined();
-      expect(invite.network).toEqual(net);
-      expect(invite.address).toEqual(userAddr);
-      expect(invite.accepted).toBeFalsy();
-
-      // expect notification to have been sent
-      expect(mockNotify).toHaveBeenCalledWith(NotificationID.MediatorInviteReceived, net, userAddr, { market });
-    });
-
-    it(
-      'should undo soft delete and set `accepted` to false when existing' + ' entry was previously soft-deleted',
-      async () => {
-        let invite = await InvitedMediator.create({
-          network: net,
-          marketAddress: marketAddress,
-          address: userAddr,
-          accepted: true,
-          deletedAt: moment().toISOString(),
-        });
-        await handler.onInvitedMediator(marketAddress, userAddr, {} as any);
-        invite = await InvitedMediator.find({ id: invite.id });
-        expect(invite.accepted).toBeFalsy();
-        expect(invite.deletedAt).toBeNull();
-
-        // expect notification to have been sent
-        expect(mockNotify).toHaveBeenCalledWith(NotificationID.MediatorInviteReceived, net, userAddr, { market });
-      },
-    );
-  });
-
-  describe('.onUnInvitedMediator', () => {
-    it('should soft delete unaccepted invitation', async () => {
-      let invite = await InvitedMediator.create({
-        network: net,
-        marketAddress: marketAddress,
-        address: userAddr,
-      });
-      await handler.onUnInvitedMediator(invite.marketAddress, invite.address, {} as any);
-      invite = await InvitedMediator.query()
-        .where({
-          network: net,
-          marketAddress: marketAddress,
-          address: userAddr,
-        })
-        .first();
-      expect(invite).toBeDefined();
-      expect(invite.deletedAt).toBeDefined();
-      expect(invite.accepted).toBeFalsy();
-    });
-
-    it('should not soft delete accepted invitation', async () => {
-      let invite = await InvitedMediator.create({
-        network: net,
-        marketAddress: marketAddress,
-        address: userAddr,
-        accepted: true,
-      });
-      await handler.onUnInvitedMediator(invite.marketAddress, invite.address, {} as any);
-      invite = await InvitedMediator.query()
-        .where({
-          network: net,
-          marketAddress: marketAddress,
-          address: userAddr,
-        })
-        .first();
-      expect(invite).toBeDefined();
-      expect(invite.deletedAt).toBeNull();
-      expect(invite.accepted).toBeTruthy();
-    });
-  });
-
-  describe('.onAcceptedMediatorInvite', () => {
-    it('should mark invitation as `accepted`', async () => {
-      const market = await Market.create({ creator: creator, address: marketAddress });
-
-      let invite = await InvitedMediator.create({
-        network: net,
-        marketAddress: marketAddress,
-        address: userAddr,
-      });
-
-      await handler.onAcceptedMediatorInvite(marketAddress, invite.address, {} as any);
-      invite = await InvitedMediator.query()
-        .where({
-          network: net,
-          marketAddress: marketAddress,
-          address: userAddr,
-        })
-        .first();
-      expect(invite.accepted).toBeTruthy();
-
-      // expect notification to have been sent
-      expect(mockNotify).toHaveBeenCalledWith(NotificationID.MediatorInviteAccepted, net, creator, {
-        market,
-        invitee: userAddr,
-      });
-    });
-  });
-
-  describe('.onRevokedMediator', () => {
-    it('should soft delete invitation', async () => {
-      const market = await Market.create({
-        network: net,
-        address: marketAddress,
-        manager: userAddr,
-      });
-
-      let invite = await InvitedMediator.create({
-        network: net,
-        marketAddress: marketAddress,
-        address: userAddr,
-      });
-
-      await handler.onRevokedMediator(invite.marketAddress, invite.address, {} as any);
-      invite = await InvitedMediator.query()
-        .where({
-          network: net,
-          marketAddress: marketAddress,
-          address: userAddr,
-        })
-        .first();
-      expect(invite.deletedAt).toBeDefined();
-
-      // expect notification to have been sent
-      expect(mockNotify).toHaveBeenCalledWith(NotificationID.MediatorRevoked, net, userAddr, { market });
-    });
-  });
-
   describe('.onAllowedSwap', () => {
     let market: Market;
 
@@ -658,13 +476,12 @@ describe('MarketCoreHandler', () => {
     it('should update market correctly', async () => {
       const mkt = await Market.create({ network: net, address: marketAddress });
       await expect(
-        handler.onUpdatedDisputeDurations(marketAddress, toBN(1), toBN(2), toBN(3), toBN(4), null),
+        handler.onUpdatedDisputeDurations(marketAddress, toBN(1), toBN(2), toBN(3), null),
       ).resolves.toBeUndefined();
       const updMkt = await Market.getById(mkt.id);
       expect(updMkt.disputeDelayTime).toEqual(1);
       expect(updMkt.evidenceDur).toEqual(2);
       expect(updMkt.predictDur).toEqual(3);
-      expect(updMkt.appealDur).toEqual(4);
     });
   });
 
@@ -678,19 +495,6 @@ describe('MarketCoreHandler', () => {
       await expect(handler.onUpdatedMarketManager(marketAddress, '0xNewManager', null)).resolves.toBeUndefined();
       const updMkt = await Market.getById(mkt.id);
       expect(updMkt.manager).toEqual('0xNewManager');
-    });
-  });
-
-  describe('.onUpdatedDisputeCost', function () {
-    it('should update market correctly', async () => {
-      const mkt = await Market.create({
-        network: net,
-        address: marketAddress,
-        disputeCost: '1',
-      });
-      await expect(handler.onUpdatedDisputeCost(marketAddress, toBN(2), null)).resolves.toBeUndefined();
-      const updMkt = await Market.getById(mkt.id);
-      expect(updMkt.disputeCost).toEqual('2');
     });
   });
 });

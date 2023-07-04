@@ -16,12 +16,9 @@ export enum ProtocolFeeBeneficiary {
   Operator = 'operator_fee_bp',
 }
 
-export enum ProtocolParams {
-  NFTDiscountBP = 'nft_discount_bp',
-}
-
 export enum MetaKeys {
   ContractsParams = 'contractsParams',
+  MediatorPool = 'mediatorPool',
 }
 
 /**
@@ -95,6 +92,26 @@ export default class Meta extends BaseModel {
    */
   static makeNetKey(network: string, keyName) {
     return `${network}:${keyName}`;
+  }
+
+  /**
+   * Make mediator pool key
+   * @param network The name of the network
+   * @param poolId The pool id
+   */
+  static makeMediatorPoolKey(network: string, poolId: number) {
+    return this.makeNetKey(network, `${MetaKeys.MediatorPool}:${poolId}`);
+  }
+
+  /**
+   * Get JSON value
+   * @param key The target key
+   * @param txn The transaction object
+   */
+  static getJSON<T>(key: string, txn?: Transaction): Promise<T> {
+    return this.get(key, txn).then((rec) => {
+      return rec ? JSON.parse(rec.value) : null;
+    });
   }
 
   /**

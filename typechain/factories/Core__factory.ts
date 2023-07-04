@@ -120,6 +120,30 @@ const _abi = [
         name: "offerId",
         type: "uint256",
       },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "price",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256[]",
+        name: "ids",
+        type: "uint256[]",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "deadline",
+        type: "uint256",
+      },
     ],
     name: "NewOffer",
     type: "event",
@@ -367,31 +391,6 @@ const _abi = [
       {
         indexed: true,
         internalType: "address",
-        name: "marketId",
-        type: "address",
-      },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "provider",
-        type: "address",
-      },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "manager",
-        type: "address",
-      },
-    ],
-    name: "RemoveLiquidityManager",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "address",
         name: "mid",
         type: "address",
       },
@@ -411,6 +410,12 @@ const _abi = [
         indexed: false,
         internalType: "address",
         name: "recipient",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "releaser",
         type: "address",
       },
       {
@@ -470,9 +475,9 @@ const _abi = [
       },
       {
         indexed: false,
-        internalType: "uint256[6]",
+        internalType: "uint256[7]",
         name: "numTypeInfo",
-        type: "uint256[6]",
+        type: "uint256[7]",
       },
       {
         indexed: false,
@@ -497,6 +502,12 @@ const _abi = [
         indexed: true,
         internalType: "uint256",
         name: "orderID",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "disputeFrom",
         type: "uint256",
       },
     ],
@@ -831,6 +842,12 @@ const _abi = [
         name: "manager",
         type: "address",
       },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "oldManager",
+        type: "address",
+      },
     ],
     name: "UpdatedLiquidityManager",
     type: "event",
@@ -1068,19 +1085,6 @@ const _abi = [
     type: "event",
   },
   {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: "address",
-        name: "addr",
-        type: "address",
-      },
-    ],
-    name: "UpdatedRewardPool",
-    type: "event",
-  },
-  {
     inputs: [
       {
         internalType: "uint256",
@@ -1180,19 +1184,6 @@ const _abi = [
       },
     ],
     name: "cancelOrderByManagerSig",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "marketId",
-        type: "address",
-      },
-    ],
-    name: "clearLiquidityManager",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -1536,17 +1527,7 @@ const _abi = [
           },
           {
             internalType: "uint256",
-            name: "numMediators",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "mediatorBond",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "disputeCost",
+            name: "poolId",
             type: "uint256",
           },
           {
@@ -1564,11 +1545,6 @@ const _abi = [
               {
                 internalType: "uint256",
                 name: "predictDur",
-                type: "uint256",
-              },
-              {
-                internalType: "uint256",
-                name: "appealDur",
                 type: "uint256",
               },
             ],
@@ -1630,11 +1606,6 @@ const _abi = [
               {
                 internalType: "bool",
                 name: "swap",
-                type: "bool",
-              },
-              {
-                internalType: "bool",
-                name: "mediate",
                 type: "bool",
               },
               {
@@ -2501,19 +2472,6 @@ const _abi = [
     inputs: [
       {
         internalType: "address",
-        name: "addr",
-        type: "address",
-      },
-    ],
-    name: "setRewardPool",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
         name: "marketId",
         type: "address",
       },
@@ -2701,11 +2659,6 @@ const _abi = [
       {
         internalType: "contract IBadge",
         name: "badge",
-        type: "address",
-      },
-      {
-        internalType: "contract IRewardPool",
-        name: "rewardPool",
         type: "address",
       },
       {

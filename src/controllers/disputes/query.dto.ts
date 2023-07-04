@@ -7,7 +7,7 @@ import { toBoolean } from 'underscore.string';
 
 export class ListQueryDTO {
   @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
-  @IsNotEmpty({ message: makeValidatorMsg('network is required', 'network') })
+  @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
   public net?: string;
 
   @IsOptional()
@@ -32,9 +32,9 @@ export class ListQueryDTO {
   public disputeId?: number;
 
   @Transform(({ value }) => toBoolean(value))
-  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'appeal') })
+  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'redispute') })
   @IsOptional()
-  public appeal?: boolean;
+  public redispute?: boolean;
 
   @Transform(({ value }) => toBoolean(value))
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'executed') })

@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Query, ValidationPipe } from '@nestjs/common';
 import { ok, throw404 } from '../../common/responses/responses';
 import Ticket from '../../models/ticket';
 import { TicketsService } from './tickets.service';
@@ -12,48 +12,47 @@ export class TicketsController {
   /**
    * Get a ticket
    * @param q The query object
-   *  - @param [network] The network name.
-   *  - @param [owner] The owner of the ticket
-   *  - @param [index] The ticket ID
-   *  - @param [noMerge] Prevent merge of contract ticket with DB ticket object
-   *  - @param [select] Select what fields to return
+   * @param q.net The network name.
+   * @param [q.owner] The owner of the ticket
+   * @param [q.index] The ticket ID
+   * @param [q.select] Select what fields to return
    */
   @Get(':owner/:index')
   async get(@Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO) {
     const ticket = await Ticket.getByNetworkOwnerAndIndex(q.net, q.owner, q.index, q.select);
     if (!ticket) throw404('ticket not found');
-    await this.tickSrv.extendTicket(ticket, q.noMerge, q.select);
+    await this.tickSrv.extendTicket(ticket, q.select);
     return ok().data(ticket).build();
   }
 
   /**
    * List tickets
    * @param q The query object
-   *  - [marketAddress] Filter by the market the ticket joined
-   *  - [disputeId] Filter by the dispute the ticket was drafted to
-   *  - [orderId] Filter by the order the ticket's current dispute belongs to
-   *  - [owner] Filter by owner address
-   *  - [delegate] Filter by delegate address
-   *  - [joined] Filter by joined status of the ticket
-   *  - [matured] Filter by maturity status
-   *  - [drafted] Filter by drafted status of the ticket
-   *  - [expired] Filter by expired status
-   *  - [cancelled] Filter by cancelled status
-   *  - [count] Return count information only
-   *  - [slashed] Filter by slashed status
-   *  - [noMerge] Prevent merge of contract ticket with DB ticket object
-   *  - [limit] Limit the number of records returned
-   *  - [offset] Set query offset (for pagination)
-   *  - [select] Select specific fields from the query
+   * @param q.net The network name
+   * @param [q.marketAddress] Filter by the market the ticket joined
+   * @param [q.disputeId] Filter by the dispute the ticket was drafted to
+   * @param [q.orderId] Filter by the order the ticket's current dispute belongs to
+   * @param [q.owner] Filter by owner address
+   * @param [q.delegate] Filter by delegate address
+   * @param [q.joined] Filter by joined status of the ticket
+   * @param [q.matured] Filter by maturity status
+   * @param [q.drafted] Filter by drafted status of the ticket
+   * @param [q.expired] Filter by expired status
+   * @param [q.cancelled] Filter by cancelled status
+   * @param [q.count] Return count information only
+   * @param [q.slashed] Filter by slashed status
+   * @param [q.noMerge] Prevent merge of contract ticket with DB ticket object
+   * @param [q.limit] Limit the number of records returned
+   * @param [q.offset] Set query offset (for pagination)
+   * @param [q.select] Select specific fields from the query
    */
   @Get()
   async list(@Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
     if (!q.count) {
       const result = await Ticket.searchTickets(
         q.net,
-        q.marketAddress,
+        q.poolId,
         q.owner,
-        q.delegate,
         q.orderId,
         q.disputeId,
         q.joined,
@@ -62,12 +61,12 @@ export class TicketsController {
         q.expired,
         q.cancelled,
         q.slashed,
-        q.limit || 25,
+        Math.min(q.limit || 25, 100),
         q.offset,
         q.select,
       );
       for (const ticket of result) {
-        await this.tickSrv.extendTicket(ticket, q.noMerge, q.select);
+        await this.tickSrv.extendTicket(ticket, q.select);
       }
       return ok().data(result).build();
     } else {
@@ -75,9 +74,8 @@ export class TicketsController {
         .data({
           count: await Ticket.countTickets(
             q.net,
-            q.marketAddress,
+            q.poolId,
             q.owner,
-            q.delegate,
             q.orderId,
             q.disputeId,
             q.joined,

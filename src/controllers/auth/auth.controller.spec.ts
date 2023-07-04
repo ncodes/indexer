@@ -13,10 +13,15 @@ import User from '../../models/user';
 import { AuthController } from './auth.controller';
 import { ErrorMessages } from '../../common/responses/responses';
 import { sha1 } from '../../common/common';
+import { RedisService } from '../../services/redis.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
   return { get: mockCfgGet };
+});
+
+const RedisServiceMock = jest.fn().mockImplementation(() => {
+  return {};
 });
 
 export function makeMsg(address: string, email: string, timestamp: string) {
@@ -57,10 +62,12 @@ describe('AuthController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [AuthController],
-      providers: [ConfigService],
+      providers: [ConfigService, RedisService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
+      .overrideProvider(RedisService)
+      .useValue(new RedisServiceMock())
       .compile();
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());
@@ -193,7 +200,7 @@ describe('AuthController', () => {
           expect(res.body.data.user.address.toLowerCase()).toEqual(wallet.address.toLowerCase());
         });
 
-      const session = await Session.getBySignature(sig);
+      const session = await Session.getBySignature(sha1(sig));
       expect(session).toBeDefined();
     });
 

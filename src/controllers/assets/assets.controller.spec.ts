@@ -135,6 +135,7 @@ describe('AssetsController', () => {
         await MarketPrice.create({
           baseAddress,
           price: '200',
+          createdAt: moment().toISOString(),
         });
         await request(app.getHttpServer())
           .get(`/v1/assets/featured`)

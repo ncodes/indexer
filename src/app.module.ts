@@ -17,32 +17,11 @@ import { NetworkModule } from './network/network.module';
 import { MiscModule } from './controllers/misc/misc.module';
 import { NotificationsModule } from './controllers/notifications/notifications.module';
 import { SwapsModule } from './controllers/swaps/swaps.module';
-import { shortenAddr } from './common/utils/helpers';
 import { TicketsModule } from './controllers/tickets/tickets.module';
 import { DisputesModule } from './controllers/disputes/disputes.module';
 import { UsersModule } from './controllers/users/users.module';
 import { AssetsModule } from './controllers/assets/assets.module';
 import { TasksModule } from './controllers/tasks/tasks.module';
-
-Handlebars.registerHelper('uppercase', (aString) => {
-  return aString.toUpperCase();
-});
-
-Handlebars.registerHelper('shorten', (aString) => {
-  return shortenAddr(aString);
-});
-
-Handlebars.registerHelper('gt', function (v1, v2, options) {
-  'use strict';
-  if (v1 > v2) {
-    return options.fn(this);
-  }
-  return options.inverse(this);
-});
-
-Handlebars.registerHelper('ifEquals', function (arg1, arg2, options) {
-  return arg1 === arg2 ? options.fn(this) : options.inverse(this);
-});
 
 /**
  * Returns the configurations to be loaded.

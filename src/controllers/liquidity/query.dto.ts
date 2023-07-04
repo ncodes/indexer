@@ -21,11 +21,6 @@ export class ListQueryDTO {
   public amount?: string;
 
   @Transform(({ value }) => toBoolean(value))
-  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'noMerge') })
-  @IsOptional()
-  public noMerge: boolean;
-
-  @Transform(({ value }) => toBoolean(value))
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'count') })
   @IsOptional()
   public count?: boolean;

@@ -10,14 +10,10 @@ export class AuthDTO {
     Object.assign(this, init);
   }
 
-  @IsNotEmpty({
-    message: makeValidatorMsg('signature is required', 'sig'),
-  })
+  @IsNotEmpty({ message: makeValidatorMsg('signature is required', 'sig') })
   sig: string;
 
-  @IsNotEmpty({
-    message: makeValidatorMsg('message is required', 'msg'),
-  })
+  @IsNotEmpty({ message: makeValidatorMsg('message is required', 'msg') })
   msg: string;
 }
 
@@ -29,13 +25,9 @@ export class GetAuthorizerDTO {
     Object.assign(this, init);
   }
 
-  @IsNotEmpty({
-    message: makeValidatorMsg('signature is required', 'sig'),
-  })
+  @IsNotEmpty({ message: makeValidatorMsg('signature is required', 'sig') })
   sig: string;
 
-  @IsNotEmpty({
-    message: makeValidatorMsg('message is required', 'msg'),
-  })
+  @IsNotEmpty({ message: makeValidatorMsg('message is required', 'msg') })
   msg: string;
 }

@@ -15,16 +15,12 @@ export class AssetsController {
   async getFeaturedAssetsStats() {
     const res: AssetStat[] = [];
     for (const fa of FeaturedAssets) {
-      const data: AssetStat = {
-        symbol: fa.symbol,
-        volume24h: '0',
-        price24h: 0,
-      };
+      const data: AssetStat = { symbol: fa.symbol, volume24h: '0', price24h: 0 };
       res.push(data);
 
       // Get and add all volumes from all supported network deployments
       for (const c of fa.contracts) {
-        const volume = await Swap.getVolume(undefined, undefined, c.addr, undefined, 1440);
+        const volume = await Swap.getVolume(undefined, undefined, c.addr, undefined, undefined, 1440);
         data.volume24h = toDec(volume).add(data.volume24h).toString();
       }
 
@@ -56,7 +52,7 @@ export class AssetsController {
       network: liq.network,
     };
 
-    const volume = await Swap.getVolume(undefined, undefined, address, undefined, 1440);
+    const volume = await Swap.getVolume(undefined, undefined, address, undefined, undefined, 1440);
     data.volume24h = toDec(volume).add(data.volume24h).toString();
     data.price24h = await MarketPrice.priceChangeByBaseAddress(undefined, address, 24);
     data.lowestPrice24h = await Liquidity.getLowestPrice(undefined, undefined, address, 24);

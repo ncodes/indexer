@@ -5,3 +5,11 @@ export default class HTTPResponseError extends Error {
     this.response = response;
   }
 }
+
+export const checkFetchStatus = (response) => {
+  if (response.ok) {
+    return response;
+  } else {
+    throw new HTTPResponseError(response);
+  }
+};

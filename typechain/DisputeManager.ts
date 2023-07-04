@@ -28,133 +28,76 @@ import type {
 
 export interface DisputeManagerInterface extends utils.Interface {
   functions: {
-    "appealDur()": FunctionFragment;
     "commitVote(uint256,bytes32)": FunctionFragment;
     "core()": FunctionFragment;
-    "countMediatorWindowsScores(address)": FunctionFragment;
     "createDispute(uint256,bool)": FunctionFragment;
-    "disputeCost()": FunctionFragment;
-    "disputeFeesBalance(uint256,uint256)": FunctionFragment;
     "disputes(uint256,uint256)": FunctionFragment;
     "draftMediator(uint256)": FunctionFragment;
     "evidenceDur()": FunctionFragment;
     "executeDecision(uint256,uint256)": FunctionFragment;
     "marketCore()": FunctionFragment;
-    "maxMediatorPerDispute()": FunctionFragment;
     "mediatorMgr()": FunctionFragment;
-    "mediatorRewardBalanceOf(address,bool)": FunctionFragment;
-    "mediatorScorer()": FunctionFragment;
-    "mediatorStat(address,address)": FunctionFragment;
-    "mediatorWindowsScores(address,uint256,uint256)": FunctionFragment;
     "owner()": FunctionFragment;
     "predictDur()": FunctionFragment;
     "predictions(uint256,uint256,address)": FunctionFragment;
-    "redeemWindowRewardDur()": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "revealVote(uint256,string,bytes32)": FunctionFragment;
     "rewardBalanceOf(address)": FunctionFragment;
-    "rewardPool()": FunctionFragment;
-    "rewardWindowAlloc()": FunctionFragment;
-    "rewardWindowDur()": FunctionFragment;
-    "rewardWindows(uint256)": FunctionFragment;
-    "rewardWindowsLen()": FunctionFragment;
     "rewards(address)": FunctionFragment;
     "seenCommits(bytes32)": FunctionFragment;
-    "setAppealDur(uint256)": FunctionFragment;
-    "setDisputeCost(uint256)": FunctionFragment;
+    "setCore(address)": FunctionFragment;
     "setEvidenceDur(uint256)": FunctionFragment;
     "setMarketCore(address)": FunctionFragment;
-    "setMaxMediatorPerDispute(uint256)": FunctionFragment;
-    "setMediationRewardParams(uint256,uint256,uint256)": FunctionFragment;
     "setMediatorManager(address)": FunctionFragment;
-    "setMediatorScorer(address)": FunctionFragment;
-    "setOrderCore(address)": FunctionFragment;
     "setPredictDur(uint256)": FunctionFragment;
-    "setRewardPool(address)": FunctionFragment;
     "setSharedSlashPortion(uint256)": FunctionFragment;
     "sharedSlashPortionBP()": FunctionFragment;
     "token()": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
     "undraftMediator(uint256,uint256)": FunctionFragment;
-    "withdrawMediatorReward()": FunctionFragment;
     "withdrawReward()": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
-      | "appealDur"
       | "commitVote"
       | "core"
-      | "countMediatorWindowsScores"
       | "createDispute"
-      | "disputeCost"
-      | "disputeFeesBalance"
       | "disputes"
       | "draftMediator"
       | "evidenceDur"
       | "executeDecision"
       | "marketCore"
-      | "maxMediatorPerDispute"
       | "mediatorMgr"
-      | "mediatorRewardBalanceOf"
-      | "mediatorScorer"
-      | "mediatorStat"
-      | "mediatorWindowsScores"
       | "owner"
       | "predictDur"
       | "predictions"
-      | "redeemWindowRewardDur"
       | "renounceOwnership"
       | "revealVote"
       | "rewardBalanceOf"
-      | "rewardPool"
-      | "rewardWindowAlloc"
-      | "rewardWindowDur"
-      | "rewardWindows"
-      | "rewardWindowsLen"
       | "rewards"
       | "seenCommits"
-      | "setAppealDur"
-      | "setDisputeCost"
+      | "setCore"
       | "setEvidenceDur"
       | "setMarketCore"
-      | "setMaxMediatorPerDispute"
-      | "setMediationRewardParams"
       | "setMediatorManager"
-      | "setMediatorScorer"
-      | "setOrderCore"
       | "setPredictDur"
-      | "setRewardPool"
       | "setSharedSlashPortion"
       | "sharedSlashPortionBP"
       | "token"
       | "transferOwnership"
       | "undraftMediator"
-      | "withdrawMediatorReward"
       | "withdrawReward"
   ): FunctionFragment;
 
-  encodeFunctionData(functionFragment: "appealDur", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "commitVote",
     values: [BigNumberish, BytesLike]
   ): string;
   encodeFunctionData(functionFragment: "core", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "countMediatorWindowsScores",
-    values: [string]
-  ): string;
-  encodeFunctionData(
     functionFragment: "createDispute",
     values: [BigNumberish, boolean]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "disputeCost",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "disputeFeesBalance",
-    values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "disputes",
@@ -177,28 +120,8 @@ export interface DisputeManagerInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "maxMediatorPerDispute",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "mediatorMgr",
     values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "mediatorRewardBalanceOf",
-    values: [string, boolean]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "mediatorScorer",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "mediatorStat",
-    values: [string, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "mediatorWindowsScores",
-    values: [string, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
@@ -208,10 +131,6 @@ export interface DisputeManagerInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "predictions",
     values: [BigNumberish, BigNumberish, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "redeemWindowRewardDur",
-    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -225,39 +144,12 @@ export interface DisputeManagerInterface extends utils.Interface {
     functionFragment: "rewardBalanceOf",
     values: [string]
   ): string;
-  encodeFunctionData(
-    functionFragment: "rewardPool",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "rewardWindowAlloc",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "rewardWindowDur",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "rewardWindows",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "rewardWindowsLen",
-    values?: undefined
-  ): string;
   encodeFunctionData(functionFragment: "rewards", values: [string]): string;
   encodeFunctionData(
     functionFragment: "seenCommits",
     values: [BytesLike]
   ): string;
-  encodeFunctionData(
-    functionFragment: "setAppealDur",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setDisputeCost",
-    values: [BigNumberish]
-  ): string;
+  encodeFunctionData(functionFragment: "setCore", values: [string]): string;
   encodeFunctionData(
     functionFragment: "setEvidenceDur",
     values: [BigNumberish]
@@ -267,32 +159,12 @@ export interface DisputeManagerInterface extends utils.Interface {
     values: [string]
   ): string;
   encodeFunctionData(
-    functionFragment: "setMaxMediatorPerDispute",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setMediationRewardParams",
-    values: [BigNumberish, BigNumberish, BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "setMediatorManager",
-    values: [string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setMediatorScorer",
-    values: [string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setOrderCore",
     values: [string]
   ): string;
   encodeFunctionData(
     functionFragment: "setPredictDur",
     values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setRewardPool",
-    values: [string]
   ): string;
   encodeFunctionData(
     functionFragment: "setSharedSlashPortion",
@@ -312,31 +184,14 @@ export interface DisputeManagerInterface extends utils.Interface {
     values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "withdrawMediatorReward",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "withdrawReward",
     values?: undefined
   ): string;
 
-  decodeFunctionResult(functionFragment: "appealDur", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "commitVote", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "core", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "countMediatorWindowsScores",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "createDispute",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "disputeCost",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "disputeFeesBalance",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "disputes", data: BytesLike): Result;
@@ -354,37 +209,13 @@ export interface DisputeManagerInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "marketCore", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "maxMediatorPerDispute",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "mediatorMgr",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "mediatorRewardBalanceOf",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "mediatorScorer",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "mediatorStat",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "mediatorWindowsScores",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "predictDur", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "predictions",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "redeemWindowRewardDur",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -396,36 +227,12 @@ export interface DisputeManagerInterface extends utils.Interface {
     functionFragment: "rewardBalanceOf",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "rewardPool", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "rewardWindowAlloc",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "rewardWindowDur",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "rewardWindows",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "rewardWindowsLen",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "rewards", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "seenCommits",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "setAppealDur",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setDisputeCost",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "setCore", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "setEvidenceDur",
     data: BytesLike
@@ -435,31 +242,11 @@ export interface DisputeManagerInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "setMaxMediatorPerDispute",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setMediationRewardParams",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "setMediatorManager",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "setMediatorScorer",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setOrderCore",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "setPredictDur",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setRewardPool",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -480,10 +267,6 @@ export interface DisputeManagerInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "withdrawMediatorReward",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "withdrawReward",
     data: BytesLike
   ): Result;
@@ -492,22 +275,16 @@ export interface DisputeManagerInterface extends utils.Interface {
     "Committed(address,uint256,uint256,address,bytes32)": EventFragment;
     "DecisionExecuted(address,uint256,uint256,address,bool,bytes1)": EventFragment;
     "DisputeCreated(uint256,address,uint256,bool)": EventFragment;
-    "Drafted(address,address,uint256)": EventFragment;
-    "DraftedMediator(address,uint256,address,uint256,address)": EventFragment;
+    "Drafted(address,address,uint256,uint256,uint256,address)": EventFragment;
+    "DraftedMediator(address,uint256,uint256,uint256,address,address)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "Revealed(address,uint256,uint256,address,bytes1)": EventFragment;
-    "Undrafted(address,address,uint256)": EventFragment;
-    "UpdatedAppealDur(uint256)": EventFragment;
-    "UpdatedDisputeCost(uint256)": EventFragment;
+    "Undrafted(address,uint256,bool,address)": EventFragment;
+    "UpdatedCore(address)": EventFragment;
     "UpdatedEvidenceDur(uint256)": EventFragment;
     "UpdatedMarketCore(address)": EventFragment;
-    "UpdatedMaxMediatorPerDispute(uint256)": EventFragment;
-    "UpdatedMediationRewardParams(uint256,uint256,uint256)": EventFragment;
     "UpdatedMediatorManager(address)": EventFragment;
-    "UpdatedMediatorScorer(address)": EventFragment;
-    "UpdatedOrderCore(address)": EventFragment;
     "UpdatedPredictDur(uint256)": EventFragment;
-    "UpdatedRewardPool(address)": EventFragment;
     "UpdatedSharedSlashPortion(uint256)": EventFragment;
     "WithdrawnMediatorReward(address,uint256)": EventFragment;
     "WithdrawnReward(address,uint256)": EventFragment;
@@ -521,32 +298,22 @@ export interface DisputeManagerInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Revealed"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Undrafted"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedAppealDur"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedDisputeCost"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "UpdatedCore"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "UpdatedEvidenceDur"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "UpdatedMarketCore"): EventFragment;
-  getEvent(
-    nameOrSignatureOrTopic: "UpdatedMaxMediatorPerDispute"
-  ): EventFragment;
-  getEvent(
-    nameOrSignatureOrTopic: "UpdatedMediationRewardParams"
-  ): EventFragment;
   getEvent(nameOrSignatureOrTopic: "UpdatedMediatorManager"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedMediatorScorer"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedOrderCore"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "UpdatedPredictDur"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedRewardPool"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "UpdatedSharedSlashPortion"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "WithdrawnMediatorReward"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "WithdrawnReward"): EventFragment;
 }
 
 export interface CommittedEventObject {
-  marketID: string;
-  orderID: BigNumber;
+  marketId: string;
+  orderId: BigNumber;
   disputeId: BigNumber;
   committer: string;
-  _hash: string;
+  hash: string;
 }
 export type CommittedEvent = TypedEvent<
   [string, BigNumber, BigNumber, string, string],
@@ -556,9 +323,9 @@ export type CommittedEvent = TypedEvent<
 export type CommittedEventFilter = TypedEventFilter<CommittedEvent>;
 
 export interface DecisionExecutedEventObject {
-  marketID: string;
-  orderID: BigNumber;
-  disputeID: BigNumber;
+  marketId: string;
+  orderId: BigNumber;
+  disputeId: BigNumber;
   executor: string;
   abandoned: boolean;
   winningVote: string;
@@ -572,7 +339,7 @@ export type DecisionExecutedEventFilter =
   TypedEventFilter<DecisionExecutedEvent>;
 
 export interface DisputeCreatedEventObject {
-  orderID: BigNumber;
+  orderId: BigNumber;
   creator: string;
   index: BigNumber;
   wantRelease: boolean;
@@ -585,26 +352,30 @@ export type DisputeCreatedEvent = TypedEvent<
 export type DisputeCreatedEventFilter = TypedEventFilter<DisputeCreatedEvent>;
 
 export interface DraftedEventObject {
-  marketID: string;
+  marketId: string;
   owner: string;
-  ticketID: BigNumber;
+  ticketId: BigNumber;
+  orderID: BigNumber;
+  disputeID: BigNumber;
+  drafter: string;
 }
 export type DraftedEvent = TypedEvent<
-  [string, string, BigNumber],
+  [string, string, BigNumber, BigNumber, BigNumber, string],
   DraftedEventObject
 >;
 
 export type DraftedEventFilter = TypedEventFilter<DraftedEvent>;
 
 export interface DraftedMediatorEventObject {
-  marketID: string;
-  orderID: BigNumber;
+  marketId: string;
+  poolId: BigNumber;
+  orderId: BigNumber;
+  ticketId: BigNumber;
   mediator: string;
-  ticketID: BigNumber;
   drafter: string;
 }
 export type DraftedMediatorEvent = TypedEvent<
-  [string, BigNumber, string, BigNumber, string],
+  [string, BigNumber, BigNumber, BigNumber, string, string],
   DraftedMediatorEventObject
 >;
 
@@ -623,11 +394,11 @@ export type OwnershipTransferredEventFilter =
   TypedEventFilter<OwnershipTransferredEvent>;
 
 export interface RevealedEventObject {
-  marketID: string;
-  orderID: BigNumber;
+  marketId: string;
+  orderId: BigNumber;
   disputeId: BigNumber;
   revealer: string;
-  _vote: string;
+  vote: string;
 }
 export type RevealedEvent = TypedEvent<
   [string, BigNumber, BigNumber, string, string],
@@ -637,38 +408,24 @@ export type RevealedEvent = TypedEvent<
 export type RevealedEventFilter = TypedEventFilter<RevealedEvent>;
 
 export interface UndraftedEventObject {
-  marketID: string;
   owner: string;
-  ticketID: BigNumber;
+  ticketId: BigNumber;
+  slashed: boolean;
+  undrafter: string;
 }
 export type UndraftedEvent = TypedEvent<
-  [string, string, BigNumber],
+  [string, BigNumber, boolean, string],
   UndraftedEventObject
 >;
 
 export type UndraftedEventFilter = TypedEventFilter<UndraftedEvent>;
 
-export interface UpdatedAppealDurEventObject {
-  val: BigNumber;
+export interface UpdatedCoreEventObject {
+  addr: string;
 }
-export type UpdatedAppealDurEvent = TypedEvent<
-  [BigNumber],
-  UpdatedAppealDurEventObject
->;
+export type UpdatedCoreEvent = TypedEvent<[string], UpdatedCoreEventObject>;
 
-export type UpdatedAppealDurEventFilter =
-  TypedEventFilter<UpdatedAppealDurEvent>;
-
-export interface UpdatedDisputeCostEventObject {
-  val: BigNumber;
-}
-export type UpdatedDisputeCostEvent = TypedEvent<
-  [BigNumber],
-  UpdatedDisputeCostEventObject
->;
-
-export type UpdatedDisputeCostEventFilter =
-  TypedEventFilter<UpdatedDisputeCostEvent>;
+export type UpdatedCoreEventFilter = TypedEventFilter<UpdatedCoreEvent>;
 
 export interface UpdatedEvidenceDurEventObject {
   val: BigNumber;
@@ -692,30 +449,6 @@ export type UpdatedMarketCoreEvent = TypedEvent<
 export type UpdatedMarketCoreEventFilter =
   TypedEventFilter<UpdatedMarketCoreEvent>;
 
-export interface UpdatedMaxMediatorPerDisputeEventObject {
-  val: BigNumber;
-}
-export type UpdatedMaxMediatorPerDisputeEvent = TypedEvent<
-  [BigNumber],
-  UpdatedMaxMediatorPerDisputeEventObject
->;
-
-export type UpdatedMaxMediatorPerDisputeEventFilter =
-  TypedEventFilter<UpdatedMaxMediatorPerDisputeEvent>;
-
-export interface UpdatedMediationRewardParamsEventObject {
-  rewardWindowAlloc: BigNumber;
-  rewardWindowDur: BigNumber;
-  redeemWindowRewardDur: BigNumber;
-}
-export type UpdatedMediationRewardParamsEvent = TypedEvent<
-  [BigNumber, BigNumber, BigNumber],
-  UpdatedMediationRewardParamsEventObject
->;
-
-export type UpdatedMediationRewardParamsEventFilter =
-  TypedEventFilter<UpdatedMediationRewardParamsEvent>;
-
 export interface UpdatedMediatorManagerEventObject {
   addr: string;
 }
@@ -727,28 +460,6 @@ export type UpdatedMediatorManagerEvent = TypedEvent<
 export type UpdatedMediatorManagerEventFilter =
   TypedEventFilter<UpdatedMediatorManagerEvent>;
 
-export interface UpdatedMediatorScorerEventObject {
-  addr: string;
-}
-export type UpdatedMediatorScorerEvent = TypedEvent<
-  [string],
-  UpdatedMediatorScorerEventObject
->;
-
-export type UpdatedMediatorScorerEventFilter =
-  TypedEventFilter<UpdatedMediatorScorerEvent>;
-
-export interface UpdatedOrderCoreEventObject {
-  addr: string;
-}
-export type UpdatedOrderCoreEvent = TypedEvent<
-  [string],
-  UpdatedOrderCoreEventObject
->;
-
-export type UpdatedOrderCoreEventFilter =
-  TypedEventFilter<UpdatedOrderCoreEvent>;
-
 export interface UpdatedPredictDurEventObject {
   val: BigNumber;
 }
@@ -759,17 +470,6 @@ export type UpdatedPredictDurEvent = TypedEvent<
 
 export type UpdatedPredictDurEventFilter =
   TypedEventFilter<UpdatedPredictDurEvent>;
-
-export interface UpdatedRewardPoolEventObject {
-  addr: string;
-}
-export type UpdatedRewardPoolEvent = TypedEvent<
-  [string],
-  UpdatedRewardPoolEventObject
->;
-
-export type UpdatedRewardPoolEventFilter =
-  TypedEventFilter<UpdatedRewardPoolEvent>;
 
 export interface UpdatedSharedSlashPortionEventObject {
   val: BigNumber;
@@ -832,34 +532,19 @@ export interface DisputeManager extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    appealDur(overrides?: CallOverrides): Promise<[BigNumber]>;
-
     commitVote(
-      orderID: BigNumberish,
+      orderId: BigNumberish,
       _hash: BytesLike,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
     core(overrides?: CallOverrides): Promise<[string]>;
 
-    countMediatorWindowsScores(
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
     createDispute(
-      orderID: BigNumberish,
+      orderId: BigNumberish,
       wantRelease: boolean,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
-
-    disputeCost(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    disputeFeesBalance(
-      arg0: BigNumberish,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
 
     disputes(
       arg0: BigNumberish,
@@ -867,8 +552,6 @@ export interface DisputeManager extends BaseContract {
       overrides?: CallOverrides
     ): Promise<
       [
-        BigNumber,
-        BigNumber,
         BigNumber,
         BigNumber,
         BigNumber,
@@ -884,13 +567,11 @@ export interface DisputeManager extends BaseContract {
       ] & {
         commitEndAt: BigNumber;
         predictEndAt: BigNumber;
-        appealEndAt: BigNumber;
         evidenceEndAt: BigNumber;
         nRelease: BigNumber;
         nCancel: BigNumber;
         undrafted: BigNumber;
-        rewardWindow: BigNumber;
-        marketID: string;
+        marketId: string;
         creator: string;
         defendant: string;
         executed: boolean;
@@ -900,44 +581,21 @@ export interface DisputeManager extends BaseContract {
     >;
 
     draftMediator(
-      orderID: BigNumberish,
+      orderId: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
     evidenceDur(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     executeDecision(
-      orderID: BigNumberish,
+      orderId: BigNumberish,
       dispIdx: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
     marketCore(overrides?: CallOverrides): Promise<[string]>;
 
-    maxMediatorPerDispute(overrides?: CallOverrides): Promise<[BigNumber]>;
-
     mediatorMgr(overrides?: CallOverrides): Promise<[string]>;
-
-    mediatorRewardBalanceOf(
-      addr: string,
-      onlyRedeemable: boolean,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    mediatorScorer(overrides?: CallOverrides): Promise<[string]>;
-
-    mediatorStat(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber, BigNumber] & { wins: BigNumber; losses: BigNumber }>;
-
-    mediatorWindowsScores(
-      arg0: string,
-      arg1: BigNumberish,
-      arg2: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
@@ -956,14 +614,12 @@ export interface DisputeManager extends BaseContract {
       }
     >;
 
-    redeemWindowRewardDur(overrides?: CallOverrides): Promise<[BigNumber]>;
-
     renounceOwnership(
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
     revealVote(
-      orderID: BigNumberish,
+      orderId: BigNumberish,
       vote: string,
       _hash: BytesLike,
       overrides?: Overrides & { from?: string }
@@ -974,48 +630,12 @@ export interface DisputeManager extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
-    rewardPool(overrides?: CallOverrides): Promise<[string]>;
-
-    rewardWindowAlloc(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    rewardWindowDur(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    rewardWindows(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<
-      [
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber
-      ] & {
-        alloc: BigNumber;
-        totalScore: BigNumber;
-        drafted: BigNumber;
-        undrafted: BigNumber;
-        endAt: BigNumber;
-        numDispute: BigNumber;
-        redeemAt: BigNumber;
-      }
-    >;
-
-    rewardWindowsLen(overrides?: CallOverrides): Promise<[BigNumber]>;
-
     rewards(arg0: string, overrides?: CallOverrides): Promise<[BigNumber]>;
 
     seenCommits(arg0: BytesLike, overrides?: CallOverrides): Promise<[boolean]>;
 
-    setAppealDur(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setDisputeCost(
-      val: BigNumberish,
+    setCore(
+      addr: string,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
@@ -1029,40 +649,13 @@ export interface DisputeManager extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
-    setMaxMediatorPerDispute(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setMediationRewardParams(
-      _rewardWindowAlloc: BigNumberish,
-      _rewardWindowDur: BigNumberish,
-      _redeemWindowRewardDur: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
     setMediatorManager(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setMediatorScorer(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setOrderCore(
       addr: string,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
     setPredictDur(
       val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setRewardPool(
-      addr: string,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
@@ -1081,12 +674,8 @@ export interface DisputeManager extends BaseContract {
     ): Promise<ContractTransaction>;
 
     undraftMediator(
-      orderID: BigNumberish,
+      orderId: BigNumberish,
       dispIdx: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    withdrawMediatorReward(
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
@@ -1095,34 +684,19 @@ export interface DisputeManager extends BaseContract {
     ): Promise<ContractTransaction>;
   };
 
-  appealDur(overrides?: CallOverrides): Promise<BigNumber>;
-
   commitVote(
-    orderID: BigNumberish,
+    orderId: BigNumberish,
     _hash: BytesLike,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
   core(overrides?: CallOverrides): Promise<string>;
 
-  countMediatorWindowsScores(
-    addr: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
   createDispute(
-    orderID: BigNumberish,
+    orderId: BigNumberish,
     wantRelease: boolean,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
-
-  disputeCost(overrides?: CallOverrides): Promise<BigNumber>;
-
-  disputeFeesBalance(
-    arg0: BigNumberish,
-    arg1: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
 
   disputes(
     arg0: BigNumberish,
@@ -1130,8 +704,6 @@ export interface DisputeManager extends BaseContract {
     overrides?: CallOverrides
   ): Promise<
     [
-      BigNumber,
-      BigNumber,
       BigNumber,
       BigNumber,
       BigNumber,
@@ -1147,13 +719,11 @@ export interface DisputeManager extends BaseContract {
     ] & {
       commitEndAt: BigNumber;
       predictEndAt: BigNumber;
-      appealEndAt: BigNumber;
       evidenceEndAt: BigNumber;
       nRelease: BigNumber;
       nCancel: BigNumber;
       undrafted: BigNumber;
-      rewardWindow: BigNumber;
-      marketID: string;
+      marketId: string;
       creator: string;
       defendant: string;
       executed: boolean;
@@ -1163,44 +733,21 @@ export interface DisputeManager extends BaseContract {
   >;
 
   draftMediator(
-    orderID: BigNumberish,
+    orderId: BigNumberish,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
   evidenceDur(overrides?: CallOverrides): Promise<BigNumber>;
 
   executeDecision(
-    orderID: BigNumberish,
+    orderId: BigNumberish,
     dispIdx: BigNumberish,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
   marketCore(overrides?: CallOverrides): Promise<string>;
 
-  maxMediatorPerDispute(overrides?: CallOverrides): Promise<BigNumber>;
-
   mediatorMgr(overrides?: CallOverrides): Promise<string>;
-
-  mediatorRewardBalanceOf(
-    addr: string,
-    onlyRedeemable: boolean,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  mediatorScorer(overrides?: CallOverrides): Promise<string>;
-
-  mediatorStat(
-    arg0: string,
-    arg1: string,
-    overrides?: CallOverrides
-  ): Promise<[BigNumber, BigNumber] & { wins: BigNumber; losses: BigNumber }>;
-
-  mediatorWindowsScores(
-    arg0: string,
-    arg1: BigNumberish,
-    arg2: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
 
   owner(overrides?: CallOverrides): Promise<string>;
 
@@ -1219,14 +766,12 @@ export interface DisputeManager extends BaseContract {
     }
   >;
 
-  redeemWindowRewardDur(overrides?: CallOverrides): Promise<BigNumber>;
-
   renounceOwnership(
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
   revealVote(
-    orderID: BigNumberish,
+    orderId: BigNumberish,
     vote: string,
     _hash: BytesLike,
     overrides?: Overrides & { from?: string }
@@ -1234,48 +779,12 @@ export interface DisputeManager extends BaseContract {
 
   rewardBalanceOf(addr: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-  rewardPool(overrides?: CallOverrides): Promise<string>;
-
-  rewardWindowAlloc(overrides?: CallOverrides): Promise<BigNumber>;
-
-  rewardWindowDur(overrides?: CallOverrides): Promise<BigNumber>;
-
-  rewardWindows(
-    arg0: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<
-    [
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber
-    ] & {
-      alloc: BigNumber;
-      totalScore: BigNumber;
-      drafted: BigNumber;
-      undrafted: BigNumber;
-      endAt: BigNumber;
-      numDispute: BigNumber;
-      redeemAt: BigNumber;
-    }
-  >;
-
-  rewardWindowsLen(overrides?: CallOverrides): Promise<BigNumber>;
-
   rewards(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
   seenCommits(arg0: BytesLike, overrides?: CallOverrides): Promise<boolean>;
 
-  setAppealDur(
-    val: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setDisputeCost(
-    val: BigNumberish,
+  setCore(
+    addr: string,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
@@ -1289,40 +798,13 @@ export interface DisputeManager extends BaseContract {
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
-  setMaxMediatorPerDispute(
-    val: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setMediationRewardParams(
-    _rewardWindowAlloc: BigNumberish,
-    _rewardWindowDur: BigNumberish,
-    _redeemWindowRewardDur: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
   setMediatorManager(
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setMediatorScorer(
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setOrderCore(
     addr: string,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
   setPredictDur(
     val: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setRewardPool(
-    addr: string,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
@@ -1341,12 +823,8 @@ export interface DisputeManager extends BaseContract {
   ): Promise<ContractTransaction>;
 
   undraftMediator(
-    orderID: BigNumberish,
+    orderId: BigNumberish,
     dispIdx: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  withdrawMediatorReward(
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
@@ -1355,34 +833,19 @@ export interface DisputeManager extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    appealDur(overrides?: CallOverrides): Promise<BigNumber>;
-
     commitVote(
-      orderID: BigNumberish,
+      orderId: BigNumberish,
       _hash: BytesLike,
       overrides?: CallOverrides
     ): Promise<void>;
 
     core(overrides?: CallOverrides): Promise<string>;
 
-    countMediatorWindowsScores(
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     createDispute(
-      orderID: BigNumberish,
+      orderId: BigNumberish,
       wantRelease: boolean,
       overrides?: CallOverrides
     ): Promise<void>;
-
-    disputeCost(overrides?: CallOverrides): Promise<BigNumber>;
-
-    disputeFeesBalance(
-      arg0: BigNumberish,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
 
     disputes(
       arg0: BigNumberish,
@@ -1390,8 +853,6 @@ export interface DisputeManager extends BaseContract {
       overrides?: CallOverrides
     ): Promise<
       [
-        BigNumber,
-        BigNumber,
         BigNumber,
         BigNumber,
         BigNumber,
@@ -1407,13 +868,11 @@ export interface DisputeManager extends BaseContract {
       ] & {
         commitEndAt: BigNumber;
         predictEndAt: BigNumber;
-        appealEndAt: BigNumber;
         evidenceEndAt: BigNumber;
         nRelease: BigNumber;
         nCancel: BigNumber;
         undrafted: BigNumber;
-        rewardWindow: BigNumber;
-        marketID: string;
+        marketId: string;
         creator: string;
         defendant: string;
         executed: boolean;
@@ -1423,44 +882,21 @@ export interface DisputeManager extends BaseContract {
     >;
 
     draftMediator(
-      orderID: BigNumberish,
+      orderId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
     evidenceDur(overrides?: CallOverrides): Promise<BigNumber>;
 
     executeDecision(
-      orderID: BigNumberish,
+      orderId: BigNumberish,
       dispIdx: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
     marketCore(overrides?: CallOverrides): Promise<string>;
 
-    maxMediatorPerDispute(overrides?: CallOverrides): Promise<BigNumber>;
-
     mediatorMgr(overrides?: CallOverrides): Promise<string>;
-
-    mediatorRewardBalanceOf(
-      addr: string,
-      onlyRedeemable: boolean,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    mediatorScorer(overrides?: CallOverrides): Promise<string>;
-
-    mediatorStat(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber, BigNumber] & { wins: BigNumber; losses: BigNumber }>;
-
-    mediatorWindowsScores(
-      arg0: string,
-      arg1: BigNumberish,
-      arg2: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
@@ -1479,12 +915,10 @@ export interface DisputeManager extends BaseContract {
       }
     >;
 
-    redeemWindowRewardDur(overrides?: CallOverrides): Promise<BigNumber>;
-
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
     revealVote(
-      orderID: BigNumberish,
+      orderId: BigNumberish,
       vote: string,
       _hash: BytesLike,
       overrides?: CallOverrides
@@ -1495,70 +929,19 @@ export interface DisputeManager extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    rewardPool(overrides?: CallOverrides): Promise<string>;
-
-    rewardWindowAlloc(overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewardWindowDur(overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewardWindows(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<
-      [
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber
-      ] & {
-        alloc: BigNumber;
-        totalScore: BigNumber;
-        drafted: BigNumber;
-        undrafted: BigNumber;
-        endAt: BigNumber;
-        numDispute: BigNumber;
-        redeemAt: BigNumber;
-      }
-    >;
-
-    rewardWindowsLen(overrides?: CallOverrides): Promise<BigNumber>;
-
     rewards(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     seenCommits(arg0: BytesLike, overrides?: CallOverrides): Promise<boolean>;
 
-    setAppealDur(val: BigNumberish, overrides?: CallOverrides): Promise<void>;
-
-    setDisputeCost(val: BigNumberish, overrides?: CallOverrides): Promise<void>;
+    setCore(addr: string, overrides?: CallOverrides): Promise<void>;
 
     setEvidenceDur(val: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
     setMarketCore(addr: string, overrides?: CallOverrides): Promise<void>;
 
-    setMaxMediatorPerDispute(
-      val: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setMediationRewardParams(
-      _rewardWindowAlloc: BigNumberish,
-      _rewardWindowDur: BigNumberish,
-      _redeemWindowRewardDur: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
     setMediatorManager(addr: string, overrides?: CallOverrides): Promise<void>;
 
-    setMediatorScorer(addr: string, overrides?: CallOverrides): Promise<void>;
-
-    setOrderCore(addr: string, overrides?: CallOverrides): Promise<void>;
-
     setPredictDur(val: BigNumberish, overrides?: CallOverrides): Promise<void>;
-
-    setRewardPool(addr: string, overrides?: CallOverrides): Promise<void>;
 
     setSharedSlashPortion(
       val: BigNumberish,
@@ -1575,81 +958,91 @@ export interface DisputeManager extends BaseContract {
     ): Promise<void>;
 
     undraftMediator(
-      orderID: BigNumberish,
+      orderId: BigNumberish,
       dispIdx: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
-
-    withdrawMediatorReward(overrides?: CallOverrides): Promise<void>;
 
     withdrawReward(overrides?: CallOverrides): Promise<void>;
   };
 
   filters: {
     "Committed(address,uint256,uint256,address,bytes32)"(
-      marketID?: string | null,
-      orderID?: BigNumberish | null,
+      marketId?: null,
+      orderId?: null,
       disputeId?: null,
-      committer?: string | null,
-      _hash?: null
+      committer?: null,
+      hash?: null
     ): CommittedEventFilter;
     Committed(
-      marketID?: string | null,
-      orderID?: BigNumberish | null,
+      marketId?: null,
+      orderId?: null,
       disputeId?: null,
-      committer?: string | null,
-      _hash?: null
+      committer?: null,
+      hash?: null
     ): CommittedEventFilter;
 
     "DecisionExecuted(address,uint256,uint256,address,bool,bytes1)"(
-      marketID?: string | null,
-      orderID?: BigNumberish | null,
-      disputeID?: null,
-      executor?: string | null,
+      marketId?: null,
+      orderId?: null,
+      disputeId?: null,
+      executor?: null,
       abandoned?: null,
       winningVote?: null
     ): DecisionExecutedEventFilter;
     DecisionExecuted(
-      marketID?: string | null,
-      orderID?: BigNumberish | null,
-      disputeID?: null,
-      executor?: string | null,
+      marketId?: null,
+      orderId?: null,
+      disputeId?: null,
+      executor?: null,
       abandoned?: null,
       winningVote?: null
     ): DecisionExecutedEventFilter;
 
     "DisputeCreated(uint256,address,uint256,bool)"(
-      orderID?: BigNumberish | null,
-      creator?: string | null,
+      orderId?: null,
+      creator?: null,
       index?: null,
       wantRelease?: null
     ): DisputeCreatedEventFilter;
     DisputeCreated(
-      orderID?: BigNumberish | null,
-      creator?: string | null,
+      orderId?: null,
+      creator?: null,
       index?: null,
       wantRelease?: null
     ): DisputeCreatedEventFilter;
 
-    "Drafted(address,address,uint256)"(
-      marketID?: null,
+    "Drafted(address,address,uint256,uint256,uint256,address)"(
+      marketId?: null,
       owner?: null,
-      ticketID?: null
+      ticketId?: null,
+      orderID?: null,
+      disputeID?: null,
+      drafter?: null
     ): DraftedEventFilter;
-    Drafted(marketID?: null, owner?: null, ticketID?: null): DraftedEventFilter;
+    Drafted(
+      marketId?: null,
+      owner?: null,
+      ticketId?: null,
+      orderID?: null,
+      disputeID?: null,
+      drafter?: null
+    ): DraftedEventFilter;
 
-    "DraftedMediator(address,uint256,address,uint256,address)"(
-      marketID?: string | null,
-      orderID?: BigNumberish | null,
-      mediator?: string | null,
-      ticketID?: null,
+    "DraftedMediator(address,uint256,uint256,uint256,address,address)"(
+      marketId?: null,
+      poolId?: null,
+      orderId?: null,
+      ticketId?: null,
+      mediator?: null,
       drafter?: null
     ): DraftedMediatorEventFilter;
     DraftedMediator(
-      marketID?: string | null,
-      orderID?: BigNumberish | null,
-      mediator?: string | null,
-      ticketID?: null,
+      marketId?: null,
+      poolId?: null,
+      orderId?: null,
+      ticketId?: null,
+      mediator?: null,
       drafter?: null
     ): DraftedMediatorEventFilter;
 
@@ -1663,36 +1056,35 @@ export interface DisputeManager extends BaseContract {
     ): OwnershipTransferredEventFilter;
 
     "Revealed(address,uint256,uint256,address,bytes1)"(
-      marketID?: string | null,
-      orderID?: BigNumberish | null,
+      marketId?: null,
+      orderId?: null,
       disputeId?: null,
-      revealer?: string | null,
-      _vote?: null
+      revealer?: null,
+      vote?: null
     ): RevealedEventFilter;
     Revealed(
-      marketID?: string | null,
-      orderID?: BigNumberish | null,
+      marketId?: null,
+      orderId?: null,
       disputeId?: null,
-      revealer?: string | null,
-      _vote?: null
+      revealer?: null,
+      vote?: null
     ): RevealedEventFilter;
 
-    "Undrafted(address,address,uint256)"(
-      marketID?: string | null,
-      owner?: string | null,
-      ticketID?: BigNumberish | null
+    "Undrafted(address,uint256,bool,address)"(
+      owner?: null,
+      ticketId?: null,
+      slashed?: null,
+      undrafter?: null
     ): UndraftedEventFilter;
     Undrafted(
-      marketID?: string | null,
-      owner?: string | null,
-      ticketID?: BigNumberish | null
+      owner?: null,
+      ticketId?: null,
+      slashed?: null,
+      undrafter?: null
     ): UndraftedEventFilter;
 
-    "UpdatedAppealDur(uint256)"(val?: null): UpdatedAppealDurEventFilter;
-    UpdatedAppealDur(val?: null): UpdatedAppealDurEventFilter;
-
-    "UpdatedDisputeCost(uint256)"(val?: null): UpdatedDisputeCostEventFilter;
-    UpdatedDisputeCost(val?: null): UpdatedDisputeCostEventFilter;
+    "UpdatedCore(address)"(addr?: null): UpdatedCoreEventFilter;
+    UpdatedCore(addr?: null): UpdatedCoreEventFilter;
 
     "UpdatedEvidenceDur(uint256)"(val?: null): UpdatedEvidenceDurEventFilter;
     UpdatedEvidenceDur(val?: null): UpdatedEvidenceDurEventFilter;
@@ -1700,42 +1092,13 @@ export interface DisputeManager extends BaseContract {
     "UpdatedMarketCore(address)"(addr?: null): UpdatedMarketCoreEventFilter;
     UpdatedMarketCore(addr?: null): UpdatedMarketCoreEventFilter;
 
-    "UpdatedMaxMediatorPerDispute(uint256)"(
-      val?: null
-    ): UpdatedMaxMediatorPerDisputeEventFilter;
-    UpdatedMaxMediatorPerDispute(
-      val?: null
-    ): UpdatedMaxMediatorPerDisputeEventFilter;
-
-    "UpdatedMediationRewardParams(uint256,uint256,uint256)"(
-      rewardWindowAlloc?: null,
-      rewardWindowDur?: null,
-      redeemWindowRewardDur?: null
-    ): UpdatedMediationRewardParamsEventFilter;
-    UpdatedMediationRewardParams(
-      rewardWindowAlloc?: null,
-      rewardWindowDur?: null,
-      redeemWindowRewardDur?: null
-    ): UpdatedMediationRewardParamsEventFilter;
-
     "UpdatedMediatorManager(address)"(
       addr?: null
     ): UpdatedMediatorManagerEventFilter;
     UpdatedMediatorManager(addr?: null): UpdatedMediatorManagerEventFilter;
 
-    "UpdatedMediatorScorer(address)"(
-      addr?: null
-    ): UpdatedMediatorScorerEventFilter;
-    UpdatedMediatorScorer(addr?: null): UpdatedMediatorScorerEventFilter;
-
-    "UpdatedOrderCore(address)"(addr?: null): UpdatedOrderCoreEventFilter;
-    UpdatedOrderCore(addr?: null): UpdatedOrderCoreEventFilter;
-
     "UpdatedPredictDur(uint256)"(val?: null): UpdatedPredictDurEventFilter;
     UpdatedPredictDur(val?: null): UpdatedPredictDurEventFilter;
-
-    "UpdatedRewardPool(address)"(addr?: null): UpdatedRewardPoolEventFilter;
-    UpdatedRewardPool(addr?: null): UpdatedRewardPoolEventFilter;
 
     "UpdatedSharedSlashPortion(uint256)"(
       val?: null
@@ -1743,52 +1106,34 @@ export interface DisputeManager extends BaseContract {
     UpdatedSharedSlashPortion(val?: null): UpdatedSharedSlashPortionEventFilter;
 
     "WithdrawnMediatorReward(address,uint256)"(
-      claimer?: string | null,
+      claimer?: null,
       amount?: null
     ): WithdrawnMediatorRewardEventFilter;
     WithdrawnMediatorReward(
-      claimer?: string | null,
+      claimer?: null,
       amount?: null
     ): WithdrawnMediatorRewardEventFilter;
 
     "WithdrawnReward(address,uint256)"(
-      claimer?: string | null,
+      claimer?: null,
       amount?: null
     ): WithdrawnRewardEventFilter;
-    WithdrawnReward(
-      claimer?: string | null,
-      amount?: null
-    ): WithdrawnRewardEventFilter;
+    WithdrawnReward(claimer?: null, amount?: null): WithdrawnRewardEventFilter;
   };
 
   estimateGas: {
-    appealDur(overrides?: CallOverrides): Promise<BigNumber>;
-
     commitVote(
-      orderID: BigNumberish,
+      orderId: BigNumberish,
       _hash: BytesLike,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
     core(overrides?: CallOverrides): Promise<BigNumber>;
 
-    countMediatorWindowsScores(
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     createDispute(
-      orderID: BigNumberish,
+      orderId: BigNumberish,
       wantRelease: boolean,
       overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    disputeCost(overrides?: CallOverrides): Promise<BigNumber>;
-
-    disputeFeesBalance(
-      arg0: BigNumberish,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     disputes(
@@ -1798,44 +1143,21 @@ export interface DisputeManager extends BaseContract {
     ): Promise<BigNumber>;
 
     draftMediator(
-      orderID: BigNumberish,
+      orderId: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
     evidenceDur(overrides?: CallOverrides): Promise<BigNumber>;
 
     executeDecision(
-      orderID: BigNumberish,
+      orderId: BigNumberish,
       dispIdx: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
     marketCore(overrides?: CallOverrides): Promise<BigNumber>;
 
-    maxMediatorPerDispute(overrides?: CallOverrides): Promise<BigNumber>;
-
     mediatorMgr(overrides?: CallOverrides): Promise<BigNumber>;
-
-    mediatorRewardBalanceOf(
-      addr: string,
-      onlyRedeemable: boolean,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    mediatorScorer(overrides?: CallOverrides): Promise<BigNumber>;
-
-    mediatorStat(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    mediatorWindowsScores(
-      arg0: string,
-      arg1: BigNumberish,
-      arg2: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -1848,14 +1170,12 @@ export interface DisputeManager extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    redeemWindowRewardDur(overrides?: CallOverrides): Promise<BigNumber>;
-
     renounceOwnership(
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
     revealVote(
-      orderID: BigNumberish,
+      orderId: BigNumberish,
       vote: string,
       _hash: BytesLike,
       overrides?: Overrides & { from?: string }
@@ -1866,30 +1186,12 @@ export interface DisputeManager extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    rewardPool(overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewardWindowAlloc(overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewardWindowDur(overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewardWindows(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    rewardWindowsLen(overrides?: CallOverrides): Promise<BigNumber>;
-
     rewards(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     seenCommits(arg0: BytesLike, overrides?: CallOverrides): Promise<BigNumber>;
 
-    setAppealDur(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setDisputeCost(
-      val: BigNumberish,
+    setCore(
+      addr: string,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
@@ -1903,40 +1205,13 @@ export interface DisputeManager extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
-    setMaxMediatorPerDispute(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setMediationRewardParams(
-      _rewardWindowAlloc: BigNumberish,
-      _rewardWindowDur: BigNumberish,
-      _redeemWindowRewardDur: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
     setMediatorManager(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setMediatorScorer(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setOrderCore(
       addr: string,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
     setPredictDur(
       val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setRewardPool(
-      addr: string,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
@@ -1955,12 +1230,8 @@ export interface DisputeManager extends BaseContract {
     ): Promise<BigNumber>;
 
     undraftMediator(
-      orderID: BigNumberish,
+      orderId: BigNumberish,
       dispIdx: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    withdrawMediatorReward(
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
@@ -1970,33 +1241,18 @@ export interface DisputeManager extends BaseContract {
   };
 
   populateTransaction: {
-    appealDur(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     commitVote(
-      orderID: BigNumberish,
+      orderId: BigNumberish,
       _hash: BytesLike,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
     core(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    countMediatorWindowsScores(
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     createDispute(
-      orderID: BigNumberish,
+      orderId: BigNumberish,
       wantRelease: boolean,
       overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    disputeCost(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    disputeFeesBalance(
-      arg0: BigNumberish,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     disputes(
@@ -2006,46 +1262,21 @@ export interface DisputeManager extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     draftMediator(
-      orderID: BigNumberish,
+      orderId: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
     evidenceDur(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     executeDecision(
-      orderID: BigNumberish,
+      orderId: BigNumberish,
       dispIdx: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
     marketCore(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    maxMediatorPerDispute(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     mediatorMgr(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    mediatorRewardBalanceOf(
-      addr: string,
-      onlyRedeemable: boolean,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    mediatorScorer(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    mediatorStat(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    mediatorWindowsScores(
-      arg0: string,
-      arg1: BigNumberish,
-      arg2: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -2058,16 +1289,12 @@ export interface DisputeManager extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    redeemWindowRewardDur(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     renounceOwnership(
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
     revealVote(
-      orderID: BigNumberish,
+      orderId: BigNumberish,
       vote: string,
       _hash: BytesLike,
       overrides?: Overrides & { from?: string }
@@ -2077,19 +1304,6 @@ export interface DisputeManager extends BaseContract {
       addr: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
-
-    rewardPool(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    rewardWindowAlloc(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    rewardWindowDur(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    rewardWindows(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    rewardWindowsLen(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     rewards(
       arg0: string,
@@ -2101,13 +1315,8 @@ export interface DisputeManager extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    setAppealDur(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setDisputeCost(
-      val: BigNumberish,
+    setCore(
+      addr: string,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
@@ -2121,40 +1330,13 @@ export interface DisputeManager extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
-    setMaxMediatorPerDispute(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setMediationRewardParams(
-      _rewardWindowAlloc: BigNumberish,
-      _rewardWindowDur: BigNumberish,
-      _redeemWindowRewardDur: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
     setMediatorManager(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setMediatorScorer(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setOrderCore(
       addr: string,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
     setPredictDur(
       val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setRewardPool(
-      addr: string,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
@@ -2175,12 +1357,8 @@ export interface DisputeManager extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     undraftMediator(
-      orderID: BigNumberish,
+      orderId: BigNumberish,
       dispIdx: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    withdrawMediatorReward(
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 

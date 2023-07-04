@@ -9,7 +9,6 @@ import Swap from '../../../models/swap';
 import Draft from '../../../models/draft';
 import Reveal from '../../../models/reveal';
 import OnRevealPeriodEnd from './on_reveal_period_end';
-import { commify, formatUnits } from 'ethers/lib/utils';
 import { ConfigService } from '../../../config/config.service';
 import Meta, { MetaKeys } from '../../../models/meta';
 import Market from '../../../models/market';
@@ -124,7 +123,6 @@ describe('OnRevealPeriodEnd', () => {
           orderId,
           numMediators: 3,
           revealEndAt: now.subtract(1, 'h').toISOString(),
-          appealEndAt: now.add(1, 'h').toISOString(),
         });
       });
 
@@ -145,8 +143,6 @@ describe('OnRevealPeriodEnd', () => {
           nCancel: 0,
           majority: 2,
           participant: true,
-          cost: commify(formatUnits(disputeCost, 18)),
-          appealPhaseHoursLeft: moment(dispute.appealEndAt).fromNow(false),
         };
         expect(mockNotify).toHaveBeenNthCalledWith(1, NotificationID.RevealPhaseEnded, net, provider, payload);
         expect(mockNotify).toHaveBeenNthCalledWith(2, NotificationID.RevealPhaseEnded, net, taker, payload);
@@ -174,7 +170,6 @@ describe('OnRevealPeriodEnd', () => {
           orderId,
           numMediators: 3,
           revealEndAt: now.subtract(1, 'h').toISOString(),
-          appealEndAt: now.add(1, 'h').toISOString(),
         });
         await Reveal.create({ network: net, orderId, disputeId, vote: '0x30' });
         await Reveal.create({ network: net, orderId, disputeId, vote: '0x30' });
@@ -191,8 +186,6 @@ describe('OnRevealPeriodEnd', () => {
           nCancel: 2,
           majority: 2,
           participant: true,
-          cost: commify(formatUnits(disputeCost, 18)),
-          appealPhaseHoursLeft: moment(dispute.appealEndAt).fromNow(false),
         };
         expect(mockNotify).toHaveBeenNthCalledWith(1, NotificationID.RevealPhaseEnded, net, provider, payload);
       });
@@ -217,7 +210,6 @@ describe('OnRevealPeriodEnd', () => {
           orderId,
           numMediators: 3,
           revealEndAt: now.subtract(1, 'h').toISOString(),
-          appealEndAt: now.add(1, 'h').toISOString(),
         });
         await Reveal.create({ network: net, orderId, disputeId, vote: '0x31' });
         await Reveal.create({ network: net, orderId, disputeId, vote: '0x31' });
@@ -234,8 +226,6 @@ describe('OnRevealPeriodEnd', () => {
           nCancel: 0,
           majority: 2,
           participant: true,
-          cost: commify(formatUnits(disputeCost, 18)),
-          appealPhaseHoursLeft: moment(dispute.appealEndAt).fromNow(false),
         };
         expect(mockNotify).toHaveBeenNthCalledWith(1, NotificationID.RevealPhaseEnded, net, provider, payload);
       });

@@ -9,19 +9,17 @@ export class RedisService {
   private client: redis.RedisClientType;
 
   constructor(private cfg: ConfigService) {
-    const opt = {
-      url: cfg.get('app.redis.url'),
-      tls: { rejectUnauthorized: false },
-    };
+    const opt = { url: cfg.get('app.redis.url'), tls: { rejectUnauthorized: false } };
     if (isLocal() || isDevMode()) delete opt.tls;
     this.client = redis.createClient(opt);
     this.client.on('error', (e) => {
       this.logger.error('Failed to connect to redis', e.message);
     });
+    this.client.connect().catch(this.logger.error);
   }
 
-  close() {
-    this.client.quit();
+  async close() {
+    await this.client.quit();
   }
 
   /**
@@ -61,10 +59,13 @@ export class RedisService {
    * @param key The target key
    */
   exist(key: string): Promise<boolean> {
-    return new Promise((res, rej) => {
-      this.client.exists(key).then((ex) => {
-        return res(ex === 1);
-      });
+    return new Promise(async (res, rej) => {
+      this.client
+        .exists(key)
+        .then((ex) => {
+          return res(ex === 1);
+        })
+        .catch(rej);
     });
   }
 }

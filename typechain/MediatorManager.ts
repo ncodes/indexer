@@ -27,51 +27,66 @@ import type {
 } from "./common";
 
 export declare namespace Structs {
-  export type MediatorTicketStruct = {
+  export type TicketStruct = {
     owner: string;
     idx: BigNumberish;
+    poolId: BigNumberish;
     bond: BigNumberish;
     matureAt: BigNumberish;
-    market: string;
-    marketIdx: BigNumberish;
+    poolIdx: BigNumberish;
     cancelAt: BigNumberish;
-    leaveAt: BigNumberish;
-    drafted: boolean;
-    slashed: BigNumberish;
     joinBy: BigNumberish;
+    drafted: boolean;
+    joined: boolean;
   };
 
-  export type MediatorTicketStructOutput = [
+  export type TicketStructOutput = [
     string,
     BigNumber,
     BigNumber,
     BigNumber,
-    string,
+    BigNumber,
     BigNumber,
     BigNumber,
     BigNumber,
     boolean,
-    BigNumber,
-    BigNumber
+    boolean
   ] & {
     owner: string;
     idx: BigNumber;
+    poolId: BigNumber;
     bond: BigNumber;
     matureAt: BigNumber;
-    market: string;
-    marketIdx: BigNumber;
+    poolIdx: BigNumber;
     cancelAt: BigNumber;
-    leaveAt: BigNumber;
-    drafted: boolean;
-    slashed: BigNumber;
     joinBy: BigNumber;
+    drafted: boolean;
+    joined: boolean;
   };
 
-  export type DelegateTicketStruct = { owner: string; id: BigNumberish };
+  export type TicketPoolStruct = {
+    reqBond: BigNumberish;
+    draftReward: BigNumberish;
+    winReward: BigNumberish;
+    noVoteSlashBP: BigNumberish;
+    loseVoteSlashBP: BigNumberish;
+    numDraftees: BigNumberish;
+  };
 
-  export type DelegateTicketStructOutput = [string, BigNumber] & {
-    owner: string;
-    id: BigNumber;
+  export type TicketPoolStructOutput = [
+    BigNumber,
+    BigNumber,
+    BigNumber,
+    BigNumber,
+    BigNumber,
+    BigNumber
+  ] & {
+    reqBond: BigNumber;
+    draftReward: BigNumber;
+    winReward: BigNumber;
+    noVoteSlashBP: BigNumber;
+    loseVoteSlashBP: BigNumber;
+    numDraftees: BigNumber;
   };
 }
 
@@ -79,49 +94,31 @@ export interface MediatorManagerInterface extends utils.Interface {
   functions: {
     "baseTicketPrice()": FunctionFragment;
     "cancelTicket(uint256)": FunctionFragment;
-    "countDelegateTickets(address)": FunctionFragment;
-    "countDelegates(address,uint256)": FunctionFragment;
-    "delegate(uint256,address)": FunctionFragment;
-    "delegateTickets(address,uint256)": FunctionFragment;
-    "delegates(address,uint256,address)": FunctionFragment;
     "disputeManager()": FunctionFragment;
     "draft(address,uint256,uint256)": FunctionFragment;
     "drainTicket(uint256)": FunctionFragment;
-    "getDelegateTickets(address)": FunctionFragment;
     "getTicket(address,uint256)": FunctionFragment;
+    "getTicketPool(uint256)": FunctionFragment;
     "getTicketPrice()": FunctionFragment;
-    "isDelegate(address,uint256,address)": FunctionFragment;
-    "joinMarket(address,uint256)": FunctionFragment;
-    "joined(address,address)": FunctionFragment;
-    "leaveMarket(uint256)": FunctionFragment;
-    "loseVoteSlashBP()": FunctionFragment;
+    "join(uint256)": FunctionFragment;
     "marketCore()": FunctionFragment;
-    "marketTickets(address,uint256)": FunctionFragment;
-    "maxDelegation()": FunctionFragment;
-    "maxTicketsPerMarket()": FunctionFragment;
-    "mediatorCount(address)": FunctionFragment;
     "minInactiveWindowBeforeReset()": FunctionFragment;
-    "minTicketTenureDur()": FunctionFragment;
-    "noVoteSlashBP()": FunctionFragment;
     "numWindows()": FunctionFragment;
     "owner()": FunctionFragment;
+    "poolExists(uint256)": FunctionFragment;
+    "poolTickets(uint256,uint256)": FunctionFragment;
+    "pools(uint256)": FunctionFragment;
     "priceSupplyDeltaBP()": FunctionFragment;
     "purchaseTicket(uint256)": FunctionFragment;
     "randomness()": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
-    "rewardPool()": FunctionFragment;
     "setDisputeManager(address)": FunctionFragment;
     "setMarketCore(address)": FunctionFragment;
-    "setMaxDelegation(uint256)": FunctionFragment;
-    "setMaxTicketPerMarket(uint256)": FunctionFragment;
-    "setMinTicketTenureDuration(uint256)": FunctionFragment;
     "setRandomnessProvider(address)": FunctionFragment;
-    "setRewardPool(address)": FunctionFragment;
     "setTicketCancelDuration(uint256)": FunctionFragment;
     "setTicketExpireDuration(uint256)": FunctionFragment;
+    "setTicketMarketParams(uint256,uint256,uint256,uint256,uint256,uint256,uint256)": FunctionFragment;
     "setTicketMatureDuration(uint256)": FunctionFragment;
-    "setTicketParams(uint256,uint256,uint256,uint256,uint256,uint256,uint256)": FunctionFragment;
-    "setVoteSlashBP(uint256,uint256)": FunctionFragment;
     "soldOutBP()": FunctionFragment;
     "ticketCancelDur()": FunctionFragment;
     "ticketExpireDur()": FunctionFragment;
@@ -131,10 +128,9 @@ export interface MediatorManagerInterface extends utils.Interface {
     "tickets(address,uint256)": FunctionFragment;
     "ticketsPerWindow()": FunctionFragment;
     "token()": FunctionFragment;
-    "totalJoined(address)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
-    "undelegate(uint256,address)": FunctionFragment;
     "undraft(address,uint256,bool,bool)": FunctionFragment;
+    "updateTicketPool(uint256,uint256,uint256,uint256,uint256,uint256,uint256)": FunctionFragment;
     "windowDur()": FunctionFragment;
     "windows(uint256)": FunctionFragment;
   };
@@ -143,49 +139,31 @@ export interface MediatorManagerInterface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "baseTicketPrice"
       | "cancelTicket"
-      | "countDelegateTickets"
-      | "countDelegates"
-      | "delegate"
-      | "delegateTickets"
-      | "delegates"
       | "disputeManager"
       | "draft"
       | "drainTicket"
-      | "getDelegateTickets"
       | "getTicket"
+      | "getTicketPool"
       | "getTicketPrice"
-      | "isDelegate"
-      | "joinMarket"
-      | "joined"
-      | "leaveMarket"
-      | "loseVoteSlashBP"
+      | "join"
       | "marketCore"
-      | "marketTickets"
-      | "maxDelegation"
-      | "maxTicketsPerMarket"
-      | "mediatorCount"
       | "minInactiveWindowBeforeReset"
-      | "minTicketTenureDur"
-      | "noVoteSlashBP"
       | "numWindows"
       | "owner"
+      | "poolExists"
+      | "poolTickets"
+      | "pools"
       | "priceSupplyDeltaBP"
       | "purchaseTicket"
       | "randomness"
       | "renounceOwnership"
-      | "rewardPool"
       | "setDisputeManager"
       | "setMarketCore"
-      | "setMaxDelegation"
-      | "setMaxTicketPerMarket"
-      | "setMinTicketTenureDuration"
       | "setRandomnessProvider"
-      | "setRewardPool"
       | "setTicketCancelDuration"
       | "setTicketExpireDuration"
+      | "setTicketMarketParams"
       | "setTicketMatureDuration"
-      | "setTicketParams"
-      | "setVoteSlashBP"
       | "soldOutBP"
       | "ticketCancelDur"
       | "ticketExpireDur"
@@ -195,10 +173,9 @@ export interface MediatorManagerInterface extends utils.Interface {
       | "tickets"
       | "ticketsPerWindow"
       | "token"
-      | "totalJoined"
       | "transferOwnership"
-      | "undelegate"
       | "undraft"
+      | "updateTicketPool"
       | "windowDur"
       | "windows"
   ): FunctionFragment;
@@ -210,26 +187,6 @@ export interface MediatorManagerInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "cancelTicket",
     values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "countDelegateTickets",
-    values: [string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "countDelegates",
-    values: [string, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "delegate",
-    values: [BigNumberish, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "delegateTickets",
-    values: [string, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "delegates",
-    values: [string, BigNumberish, string]
   ): string;
   encodeFunctionData(
     functionFragment: "disputeManager",
@@ -244,67 +201,24 @@ export interface MediatorManagerInterface extends utils.Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "getDelegateTickets",
-    values: [string]
-  ): string;
-  encodeFunctionData(
     functionFragment: "getTicket",
     values: [string, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getTicketPool",
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getTicketPrice",
     values?: undefined
   ): string;
-  encodeFunctionData(
-    functionFragment: "isDelegate",
-    values: [string, BigNumberish, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "joinMarket",
-    values: [string, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "joined",
-    values: [string, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "leaveMarket",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "loseVoteSlashBP",
-    values?: undefined
-  ): string;
+  encodeFunctionData(functionFragment: "join", values: [BigNumberish]): string;
   encodeFunctionData(
     functionFragment: "marketCore",
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "marketTickets",
-    values: [string, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "maxDelegation",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "maxTicketsPerMarket",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "mediatorCount",
-    values: [string]
-  ): string;
-  encodeFunctionData(
     functionFragment: "minInactiveWindowBeforeReset",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "minTicketTenureDur",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "noVoteSlashBP",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -312,6 +226,15 @@ export interface MediatorManagerInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "poolExists",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "poolTickets",
+    values: [BigNumberish, BigNumberish]
+  ): string;
+  encodeFunctionData(functionFragment: "pools", values: [BigNumberish]): string;
   encodeFunctionData(
     functionFragment: "priceSupplyDeltaBP",
     values?: undefined
@@ -329,10 +252,6 @@ export interface MediatorManagerInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "rewardPool",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "setDisputeManager",
     values: [string]
   ): string;
@@ -341,23 +260,7 @@ export interface MediatorManagerInterface extends utils.Interface {
     values: [string]
   ): string;
   encodeFunctionData(
-    functionFragment: "setMaxDelegation",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setMaxTicketPerMarket",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setMinTicketTenureDuration",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "setRandomnessProvider",
-    values: [string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setRewardPool",
     values: [string]
   ): string;
   encodeFunctionData(
@@ -369,11 +272,7 @@ export interface MediatorManagerInterface extends utils.Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "setTicketMatureDuration",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setTicketParams",
+    functionFragment: "setTicketMarketParams",
     values: [
       BigNumberish,
       BigNumberish,
@@ -385,8 +284,8 @@ export interface MediatorManagerInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
-    functionFragment: "setVoteSlashBP",
-    values: [BigNumberish, BigNumberish]
+    functionFragment: "setTicketMatureDuration",
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "soldOutBP", values?: undefined): string;
   encodeFunctionData(
@@ -418,18 +317,25 @@ export interface MediatorManagerInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "token", values?: undefined): string;
-  encodeFunctionData(functionFragment: "totalJoined", values: [string]): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
     values: [string]
   ): string;
   encodeFunctionData(
-    functionFragment: "undelegate",
-    values: [BigNumberish, string]
-  ): string;
-  encodeFunctionData(
     functionFragment: "undraft",
     values: [string, BigNumberish, boolean, boolean]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "updateTicketPool",
+    values: [
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish
+    ]
   ): string;
   encodeFunctionData(functionFragment: "windowDur", values?: undefined): string;
   encodeFunctionData(
@@ -446,20 +352,6 @@ export interface MediatorManagerInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "countDelegateTickets",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "countDelegates",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "delegate", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "delegateTickets",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "delegates", data: BytesLike): Result;
-  decodeFunctionResult(
     functionFragment: "disputeManager",
     data: BytesLike
   ): Result;
@@ -468,57 +360,29 @@ export interface MediatorManagerInterface extends utils.Interface {
     functionFragment: "drainTicket",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "getTicket", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "getDelegateTickets",
+    functionFragment: "getTicketPool",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "getTicket", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getTicketPrice",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "isDelegate", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "joinMarket", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "joined", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "leaveMarket",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "loseVoteSlashBP",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "join", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "marketCore", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "marketTickets",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "maxDelegation",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "maxTicketsPerMarket",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "mediatorCount",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "minInactiveWindowBeforeReset",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "minTicketTenureDur",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "noVoteSlashBP",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "numWindows", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "poolExists", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "poolTickets",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "pools", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "priceSupplyDeltaBP",
     data: BytesLike
@@ -532,7 +396,6 @@ export interface MediatorManagerInterface extends utils.Interface {
     functionFragment: "renounceOwnership",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "rewardPool", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "setDisputeManager",
     data: BytesLike
@@ -542,23 +405,7 @@ export interface MediatorManagerInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "setMaxDelegation",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setMaxTicketPerMarket",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setMinTicketTenureDuration",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "setRandomnessProvider",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setRewardPool",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -570,15 +417,11 @@ export interface MediatorManagerInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "setTicketMarketParams",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "setTicketMatureDuration",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setTicketParams",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setVoteSlashBP",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "soldOutBP", data: BytesLike): Result;
@@ -606,64 +449,47 @@ export interface MediatorManagerInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "token", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "totalJoined",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "undelegate", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "undraft", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "updateTicketPool",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "windowDur", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "windows", data: BytesLike): Result;
 
   events: {
-    "DelegatedAccount(address,uint256,address)": EventFragment;
-    "Drafted(address,address,uint256,uint256,uint256)": EventFragment;
-    "JoinedMarket(address,address,uint256)": EventFragment;
-    "LeftMarket(address,address,uint256)": EventFragment;
+    "Drafted(address,address,uint256,uint256,uint256,address)": EventFragment;
+    "JoinedPool(address,uint256,uint256)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "TicketCancelled(address,uint256)": EventFragment;
     "TicketDrained(address,uint256,uint256)": EventFragment;
-    "TicketPurchased(address,uint256,uint256,uint256,uint256)": EventFragment;
-    "TicketSlashed(address,uint256,address,uint256,bool,bool)": EventFragment;
-    "UndelegatedAccount(address,uint256,address)": EventFragment;
-    "Undrafted(address,address,uint256,bool)": EventFragment;
+    "TicketPurchased(address,uint256,uint256,uint256,uint256,uint256)": EventFragment;
+    "TicketSlashed(address,uint256,uint256,bool,bool)": EventFragment;
+    "Undrafted(address,uint256,bool,address)": EventFragment;
     "UpdatedDisputeManager(address)": EventFragment;
     "UpdatedMarketCore(address)": EventFragment;
-    "UpdatedMaxDelegation(uint256)": EventFragment;
-    "UpdatedMaxTicketPerMarket(uint256)": EventFragment;
-    "UpdatedMinTicketTenureDuration(uint256)": EventFragment;
     "UpdatedRandomnessProvider(address)": EventFragment;
-    "UpdatedRewardPool(address)": EventFragment;
     "UpdatedTicketCancelDuration(uint256)": EventFragment;
     "UpdatedTicketExpireDuration(uint256)": EventFragment;
     "UpdatedTicketMatureDuration(uint256)": EventFragment;
     "UpdatedTicketParams(uint256,uint256,uint256,uint256,uint256,uint256,uint256)": EventFragment;
-    "UpdatedVoteSlashBP(uint256,uint256)": EventFragment;
+    "UpdatedTicketPool(uint256,uint256,uint256,uint256,uint256,uint256,uint256)": EventFragment;
   };
 
-  getEvent(nameOrSignatureOrTopic: "DelegatedAccount"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Drafted"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "JoinedMarket"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "LeftMarket"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "JoinedPool"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "TicketCancelled"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "TicketDrained"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "TicketPurchased"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "TicketSlashed"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UndelegatedAccount"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Undrafted"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "UpdatedDisputeManager"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "UpdatedMarketCore"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedMaxDelegation"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedMaxTicketPerMarket"): EventFragment;
-  getEvent(
-    nameOrSignatureOrTopic: "UpdatedMinTicketTenureDuration"
-  ): EventFragment;
   getEvent(nameOrSignatureOrTopic: "UpdatedRandomnessProvider"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedRewardPool"): EventFragment;
   getEvent(
     nameOrSignatureOrTopic: "UpdatedTicketCancelDuration"
   ): EventFragment;
@@ -674,59 +500,35 @@ export interface MediatorManagerInterface extends utils.Interface {
     nameOrSignatureOrTopic: "UpdatedTicketMatureDuration"
   ): EventFragment;
   getEvent(nameOrSignatureOrTopic: "UpdatedTicketParams"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedVoteSlashBP"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "UpdatedTicketPool"): EventFragment;
 }
-
-export interface DelegatedAccountEventObject {
-  owner: string;
-  idx: BigNumber;
-  acct: string;
-}
-export type DelegatedAccountEvent = TypedEvent<
-  [string, BigNumber, string],
-  DelegatedAccountEventObject
->;
-
-export type DelegatedAccountEventFilter =
-  TypedEventFilter<DelegatedAccountEvent>;
 
 export interface DraftedEventObject {
-  marketID: string;
+  marketId: string;
   owner: string;
-  ticketID: BigNumber;
+  ticketId: BigNumber;
   orderID: BigNumber;
   disputeID: BigNumber;
+  drafter: string;
 }
 export type DraftedEvent = TypedEvent<
-  [string, string, BigNumber, BigNumber, BigNumber],
+  [string, string, BigNumber, BigNumber, BigNumber, string],
   DraftedEventObject
 >;
 
 export type DraftedEventFilter = TypedEventFilter<DraftedEvent>;
 
-export interface JoinedMarketEventObject {
-  sender: string;
-  marketID: string;
-  id: BigNumber;
-}
-export type JoinedMarketEvent = TypedEvent<
-  [string, string, BigNumber],
-  JoinedMarketEventObject
->;
-
-export type JoinedMarketEventFilter = TypedEventFilter<JoinedMarketEvent>;
-
-export interface LeftMarketEventObject {
+export interface JoinedPoolEventObject {
   owner: string;
-  marketID: string;
-  ticketID: BigNumber;
+  poolId: BigNumber;
+  ticketId: BigNumber;
 }
-export type LeftMarketEvent = TypedEvent<
-  [string, string, BigNumber],
-  LeftMarketEventObject
+export type JoinedPoolEvent = TypedEvent<
+  [string, BigNumber, BigNumber],
+  JoinedPoolEventObject
 >;
 
-export type LeftMarketEventFilter = TypedEventFilter<LeftMarketEvent>;
+export type JoinedPoolEventFilter = TypedEventFilter<JoinedPoolEvent>;
 
 export interface OwnershipTransferredEventObject {
   previousOwner: string;
@@ -741,7 +543,7 @@ export type OwnershipTransferredEventFilter =
   TypedEventFilter<OwnershipTransferredEvent>;
 
 export interface TicketCancelledEventObject {
-  addr: string;
+  owner: string;
   id: BigNumber;
 }
 export type TicketCancelledEvent = TypedEvent<
@@ -752,7 +554,7 @@ export type TicketCancelledEvent = TypedEvent<
 export type TicketCancelledEventFilter = TypedEventFilter<TicketCancelledEvent>;
 
 export interface TicketDrainedEventObject {
-  addr: string;
+  owner: string;
   id: BigNumber;
   amount: BigNumber;
 }
@@ -764,14 +566,15 @@ export type TicketDrainedEvent = TypedEvent<
 export type TicketDrainedEventFilter = TypedEventFilter<TicketDrainedEvent>;
 
 export interface TicketPurchasedEventObject {
-  sender: string;
+  owner: string;
   id: BigNumber;
+  poolId: BigNumber;
   amount: BigNumber;
   matureAt: BigNumber;
   joinBy: BigNumber;
 }
 export type TicketPurchasedEvent = TypedEvent<
-  [string, BigNumber, BigNumber, BigNumber, BigNumber],
+  [string, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber],
   TicketPurchasedEventObject
 >;
 
@@ -779,40 +582,26 @@ export type TicketPurchasedEventFilter = TypedEventFilter<TicketPurchasedEvent>;
 
 export interface TicketSlashedEventObject {
   owner: string;
-  ticketID: BigNumber;
-  marketID: string;
+  ticketId: BigNumber;
   amount: BigNumber;
   voted: boolean;
   winSide: boolean;
 }
 export type TicketSlashedEvent = TypedEvent<
-  [string, BigNumber, string, BigNumber, boolean, boolean],
+  [string, BigNumber, BigNumber, boolean, boolean],
   TicketSlashedEventObject
 >;
 
 export type TicketSlashedEventFilter = TypedEventFilter<TicketSlashedEvent>;
 
-export interface UndelegatedAccountEventObject {
-  owner: string;
-  idx: BigNumber;
-  acct: string;
-}
-export type UndelegatedAccountEvent = TypedEvent<
-  [string, BigNumber, string],
-  UndelegatedAccountEventObject
->;
-
-export type UndelegatedAccountEventFilter =
-  TypedEventFilter<UndelegatedAccountEvent>;
-
 export interface UndraftedEventObject {
-  marketID: string;
   owner: string;
-  ticketID: BigNumber;
+  ticketId: BigNumber;
   slashed: boolean;
+  undrafter: string;
 }
 export type UndraftedEvent = TypedEvent<
-  [string, string, BigNumber, boolean],
+  [string, BigNumber, boolean, string],
   UndraftedEventObject
 >;
 
@@ -840,39 +629,6 @@ export type UpdatedMarketCoreEvent = TypedEvent<
 export type UpdatedMarketCoreEventFilter =
   TypedEventFilter<UpdatedMarketCoreEvent>;
 
-export interface UpdatedMaxDelegationEventObject {
-  val: BigNumber;
-}
-export type UpdatedMaxDelegationEvent = TypedEvent<
-  [BigNumber],
-  UpdatedMaxDelegationEventObject
->;
-
-export type UpdatedMaxDelegationEventFilter =
-  TypedEventFilter<UpdatedMaxDelegationEvent>;
-
-export interface UpdatedMaxTicketPerMarketEventObject {
-  val: BigNumber;
-}
-export type UpdatedMaxTicketPerMarketEvent = TypedEvent<
-  [BigNumber],
-  UpdatedMaxTicketPerMarketEventObject
->;
-
-export type UpdatedMaxTicketPerMarketEventFilter =
-  TypedEventFilter<UpdatedMaxTicketPerMarketEvent>;
-
-export interface UpdatedMinTicketTenureDurationEventObject {
-  val: BigNumber;
-}
-export type UpdatedMinTicketTenureDurationEvent = TypedEvent<
-  [BigNumber],
-  UpdatedMinTicketTenureDurationEventObject
->;
-
-export type UpdatedMinTicketTenureDurationEventFilter =
-  TypedEventFilter<UpdatedMinTicketTenureDurationEvent>;
-
 export interface UpdatedRandomnessProviderEventObject {
   val: string;
 }
@@ -883,17 +639,6 @@ export type UpdatedRandomnessProviderEvent = TypedEvent<
 
 export type UpdatedRandomnessProviderEventFilter =
   TypedEventFilter<UpdatedRandomnessProviderEvent>;
-
-export interface UpdatedRewardPoolEventObject {
-  val: string;
-}
-export type UpdatedRewardPoolEvent = TypedEvent<
-  [string],
-  UpdatedRewardPoolEventObject
->;
-
-export type UpdatedRewardPoolEventFilter =
-  TypedEventFilter<UpdatedRewardPoolEvent>;
 
 export interface UpdatedTicketCancelDurationEventObject {
   val: BigNumber;
@@ -945,17 +690,22 @@ export type UpdatedTicketParamsEvent = TypedEvent<
 export type UpdatedTicketParamsEventFilter =
   TypedEventFilter<UpdatedTicketParamsEvent>;
 
-export interface UpdatedVoteSlashBPEventObject {
-  noVote: BigNumber;
-  loseVote: BigNumber;
+export interface UpdatedTicketPoolEventObject {
+  poolId: BigNumber;
+  reqBond: BigNumber;
+  draftReward: BigNumber;
+  winReward: BigNumber;
+  noVoteSlashBP: BigNumber;
+  loseVoteSlashBP: BigNumber;
+  numDraftees: BigNumber;
 }
-export type UpdatedVoteSlashBPEvent = TypedEvent<
-  [BigNumber, BigNumber],
-  UpdatedVoteSlashBPEventObject
+export type UpdatedTicketPoolEvent = TypedEvent<
+  [BigNumber, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber],
+  UpdatedTicketPoolEventObject
 >;
 
-export type UpdatedVoteSlashBPEventFilter =
-  TypedEventFilter<UpdatedVoteSlashBPEvent>;
+export type UpdatedTicketPoolEventFilter =
+  TypedEventFilter<UpdatedTicketPoolEvent>;
 
 export interface MediatorManager extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -991,40 +741,10 @@ export interface MediatorManager extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
-    countDelegateTickets(
-      acct: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    countDelegates(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    delegate(
-      id: BigNumberish,
-      acct: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    delegateTickets(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string, BigNumber] & { owner: string; id: BigNumber }>;
-
-    delegates(
-      arg0: string,
-      arg1: BigNumberish,
-      arg2: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
     disputeManager(overrides?: CallOverrides): Promise<[string]>;
 
     draft(
-      marketID: string,
+      marketId: string,
       orderID: BigNumberish,
       disputeID: BigNumberish,
       overrides?: Overrides & { from?: string }
@@ -1035,78 +755,63 @@ export interface MediatorManager extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
-    getDelegateTickets(
-      acct: string,
-      overrides?: CallOverrides
-    ): Promise<[Structs.DelegateTicketStructOutput[]]>;
-
     getTicket(
       owner: string,
       id: BigNumberish,
       overrides?: CallOverrides
-    ): Promise<[Structs.MediatorTicketStructOutput]>;
+    ): Promise<[Structs.TicketStructOutput]>;
+
+    getTicketPool(
+      poolId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<[Structs.TicketPoolStructOutput]>;
 
     getTicketPrice(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    isDelegate(
-      ticketOwner: string,
-      id: BigNumberish,
-      acct: string,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
-
-    joinMarket(
-      marketID: string,
-      ticketID: BigNumberish,
+    join(
+      ticketId: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
-
-    joined(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    leaveMarket(
-      ticketID: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    loseVoteSlashBP(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     marketCore(overrides?: CallOverrides): Promise<[string]>;
-
-    marketTickets(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string, BigNumber] & { owner: string; idx: BigNumber }>;
-
-    maxDelegation(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    maxTicketsPerMarket(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    mediatorCount(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
 
     minInactiveWindowBeforeReset(
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
-    minTicketTenureDur(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    noVoteSlashBP(overrides?: CallOverrides): Promise<[BigNumber]>;
-
     numWindows(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
+    poolExists(
+      poolId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<[boolean]>;
+
+    poolTickets(
+      arg0: BigNumberish,
+      arg1: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<[string, BigNumber] & { owner: string; idx: BigNumber }>;
+
+    pools(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<
+      [BigNumber, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber] & {
+        reqBond: BigNumber;
+        draftReward: BigNumber;
+        winReward: BigNumber;
+        noVoteSlashBP: BigNumber;
+        loseVoteSlashBP: BigNumber;
+        numDraftees: BigNumber;
+      }
+    >;
+
     priceSupplyDeltaBP(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     purchaseTicket(
-      amount: BigNumberish,
+      poolId: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
@@ -1115,8 +820,6 @@ export interface MediatorManager extends BaseContract {
     renounceOwnership(
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
-
-    rewardPool(overrides?: CallOverrides): Promise<[string]>;
 
     setDisputeManager(
       _disputeManager: string,
@@ -1128,28 +831,8 @@ export interface MediatorManager extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
-    setMaxDelegation(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setMaxTicketPerMarket(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setMinTicketTenureDuration(
-      dur: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
     setRandomnessProvider(
       provider: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setRewardPool(
-      addr: string,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
@@ -1163,12 +846,7 @@ export interface MediatorManager extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
-    setTicketMatureDuration(
-      dur: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setTicketParams(
+    setTicketMarketParams(
       _baseTicketPrice: BigNumberish,
       _windowDur: BigNumberish,
       _ticketsPerWindow: BigNumberish,
@@ -1179,9 +857,8 @@ export interface MediatorManager extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
-    setVoteSlashBP(
-      noVote: BigNumberish,
-      loseVote: BigNumberish,
+    setTicketMatureDuration(
+      dur: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
@@ -1207,25 +884,23 @@ export interface MediatorManager extends BaseContract {
         BigNumber,
         BigNumber,
         BigNumber,
-        string,
+        BigNumber,
         BigNumber,
         BigNumber,
         BigNumber,
         boolean,
-        BigNumber,
-        BigNumber
+        boolean
       ] & {
         owner: string;
         idx: BigNumber;
+        poolId: BigNumber;
         bond: BigNumber;
         matureAt: BigNumber;
-        market: string;
-        marketIdx: BigNumber;
+        poolIdx: BigNumber;
         cancelAt: BigNumber;
-        leaveAt: BigNumber;
-        drafted: boolean;
-        slashed: BigNumber;
         joinBy: BigNumber;
+        drafted: boolean;
+        joined: boolean;
       }
     >;
 
@@ -1233,27 +908,27 @@ export interface MediatorManager extends BaseContract {
 
     token(overrides?: CallOverrides): Promise<[string]>;
 
-    totalJoined(
-      marketID: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
     transferOwnership(
       newOwner: string,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
-    undelegate(
-      id: BigNumberish,
-      acct: string,
+    undraft(
+      ticketOwner: string,
+      ticketId: BigNumberish,
+      voted: boolean,
+      winSide: boolean,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
-    undraft(
-      ticketOwner: string,
-      ticketID: BigNumberish,
-      voted: boolean,
-      winSide: boolean,
+    updateTicketPool(
+      poolId: BigNumberish,
+      reqBond: BigNumberish,
+      draftReward: BigNumberish,
+      winReward: BigNumberish,
+      noVoteSlashBP: BigNumberish,
+      loseVoteSlashBP: BigNumberish,
+      numDraftees: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
@@ -1279,40 +954,10 @@ export interface MediatorManager extends BaseContract {
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
-  countDelegateTickets(
-    acct: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  countDelegates(
-    arg0: string,
-    arg1: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  delegate(
-    id: BigNumberish,
-    acct: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  delegateTickets(
-    arg0: string,
-    arg1: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<[string, BigNumber] & { owner: string; id: BigNumber }>;
-
-  delegates(
-    arg0: string,
-    arg1: BigNumberish,
-    arg2: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
   disputeManager(overrides?: CallOverrides): Promise<string>;
 
   draft(
-    marketID: string,
+    marketId: string,
     orderID: BigNumberish,
     disputeID: BigNumberish,
     overrides?: Overrides & { from?: string }
@@ -1323,73 +968,58 @@ export interface MediatorManager extends BaseContract {
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
-  getDelegateTickets(
-    acct: string,
-    overrides?: CallOverrides
-  ): Promise<Structs.DelegateTicketStructOutput[]>;
-
   getTicket(
     owner: string,
     id: BigNumberish,
     overrides?: CallOverrides
-  ): Promise<Structs.MediatorTicketStructOutput>;
+  ): Promise<Structs.TicketStructOutput>;
+
+  getTicketPool(
+    poolId: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<Structs.TicketPoolStructOutput>;
 
   getTicketPrice(overrides?: CallOverrides): Promise<BigNumber>;
 
-  isDelegate(
-    ticketOwner: string,
-    id: BigNumberish,
-    acct: string,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
-
-  joinMarket(
-    marketID: string,
-    ticketID: BigNumberish,
+  join(
+    ticketId: BigNumberish,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
-
-  joined(
-    arg0: string,
-    arg1: string,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  leaveMarket(
-    ticketID: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  loseVoteSlashBP(overrides?: CallOverrides): Promise<BigNumber>;
 
   marketCore(overrides?: CallOverrides): Promise<string>;
 
-  marketTickets(
-    arg0: string,
-    arg1: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<[string, BigNumber] & { owner: string; idx: BigNumber }>;
-
-  maxDelegation(overrides?: CallOverrides): Promise<BigNumber>;
-
-  maxTicketsPerMarket(overrides?: CallOverrides): Promise<BigNumber>;
-
-  mediatorCount(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
   minInactiveWindowBeforeReset(overrides?: CallOverrides): Promise<BigNumber>;
-
-  minTicketTenureDur(overrides?: CallOverrides): Promise<BigNumber>;
-
-  noVoteSlashBP(overrides?: CallOverrides): Promise<BigNumber>;
 
   numWindows(overrides?: CallOverrides): Promise<BigNumber>;
 
   owner(overrides?: CallOverrides): Promise<string>;
 
+  poolExists(poolId: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
+
+  poolTickets(
+    arg0: BigNumberish,
+    arg1: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<[string, BigNumber] & { owner: string; idx: BigNumber }>;
+
+  pools(
+    arg0: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<
+    [BigNumber, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber] & {
+      reqBond: BigNumber;
+      draftReward: BigNumber;
+      winReward: BigNumber;
+      noVoteSlashBP: BigNumber;
+      loseVoteSlashBP: BigNumber;
+      numDraftees: BigNumber;
+    }
+  >;
+
   priceSupplyDeltaBP(overrides?: CallOverrides): Promise<BigNumber>;
 
   purchaseTicket(
-    amount: BigNumberish,
+    poolId: BigNumberish,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
@@ -1398,8 +1028,6 @@ export interface MediatorManager extends BaseContract {
   renounceOwnership(
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
-
-  rewardPool(overrides?: CallOverrides): Promise<string>;
 
   setDisputeManager(
     _disputeManager: string,
@@ -1411,28 +1039,8 @@ export interface MediatorManager extends BaseContract {
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
-  setMaxDelegation(
-    val: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setMaxTicketPerMarket(
-    val: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setMinTicketTenureDuration(
-    dur: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
   setRandomnessProvider(
     provider: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setRewardPool(
-    addr: string,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
@@ -1446,12 +1054,7 @@ export interface MediatorManager extends BaseContract {
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
-  setTicketMatureDuration(
-    dur: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setTicketParams(
+  setTicketMarketParams(
     _baseTicketPrice: BigNumberish,
     _windowDur: BigNumberish,
     _ticketsPerWindow: BigNumberish,
@@ -1462,9 +1065,8 @@ export interface MediatorManager extends BaseContract {
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
-  setVoteSlashBP(
-    noVote: BigNumberish,
-    loseVote: BigNumberish,
+  setTicketMatureDuration(
+    dur: BigNumberish,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
@@ -1490,25 +1092,23 @@ export interface MediatorManager extends BaseContract {
       BigNumber,
       BigNumber,
       BigNumber,
-      string,
+      BigNumber,
       BigNumber,
       BigNumber,
       BigNumber,
       boolean,
-      BigNumber,
-      BigNumber
+      boolean
     ] & {
       owner: string;
       idx: BigNumber;
+      poolId: BigNumber;
       bond: BigNumber;
       matureAt: BigNumber;
-      market: string;
-      marketIdx: BigNumber;
+      poolIdx: BigNumber;
       cancelAt: BigNumber;
-      leaveAt: BigNumber;
-      drafted: boolean;
-      slashed: BigNumber;
       joinBy: BigNumber;
+      drafted: boolean;
+      joined: boolean;
     }
   >;
 
@@ -1516,24 +1116,27 @@ export interface MediatorManager extends BaseContract {
 
   token(overrides?: CallOverrides): Promise<string>;
 
-  totalJoined(marketID: string, overrides?: CallOverrides): Promise<BigNumber>;
-
   transferOwnership(
     newOwner: string,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
-  undelegate(
-    id: BigNumberish,
-    acct: string,
+  undraft(
+    ticketOwner: string,
+    ticketId: BigNumberish,
+    voted: boolean,
+    winSide: boolean,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
-  undraft(
-    ticketOwner: string,
-    ticketID: BigNumberish,
-    voted: boolean,
-    winSide: boolean,
+  updateTicketPool(
+    poolId: BigNumberish,
+    reqBond: BigNumberish,
+    draftReward: BigNumberish,
+    winReward: BigNumberish,
+    noVoteSlashBP: BigNumberish,
+    loseVoteSlashBP: BigNumberish,
+    numDraftees: BigNumberish,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
@@ -1556,122 +1159,75 @@ export interface MediatorManager extends BaseContract {
 
     cancelTicket(id: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
-    countDelegateTickets(
-      acct: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    countDelegates(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    delegate(
-      id: BigNumberish,
-      acct: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    delegateTickets(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string, BigNumber] & { owner: string; id: BigNumber }>;
-
-    delegates(
-      arg0: string,
-      arg1: BigNumberish,
-      arg2: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     disputeManager(overrides?: CallOverrides): Promise<string>;
 
     draft(
-      marketID: string,
+      marketId: string,
       orderID: BigNumberish,
       disputeID: BigNumberish,
       overrides?: CallOverrides
-    ): Promise<Structs.MediatorTicketStructOutput>;
+    ): Promise<Structs.TicketStructOutput>;
 
     drainTicket(id: BigNumberish, overrides?: CallOverrides): Promise<void>;
-
-    getDelegateTickets(
-      acct: string,
-      overrides?: CallOverrides
-    ): Promise<Structs.DelegateTicketStructOutput[]>;
 
     getTicket(
       owner: string,
       id: BigNumberish,
       overrides?: CallOverrides
-    ): Promise<Structs.MediatorTicketStructOutput>;
+    ): Promise<Structs.TicketStructOutput>;
+
+    getTicketPool(
+      poolId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<Structs.TicketPoolStructOutput>;
 
     getTicketPrice(overrides?: CallOverrides): Promise<BigNumber>;
 
-    isDelegate(
-      ticketOwner: string,
-      id: BigNumberish,
-      acct: string,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    joinMarket(
-      marketID: string,
-      ticketID: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    joined(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    leaveMarket(
-      ticketID: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    loseVoteSlashBP(overrides?: CallOverrides): Promise<BigNumber>;
+    join(ticketId: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
     marketCore(overrides?: CallOverrides): Promise<string>;
 
-    marketTickets(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string, BigNumber] & { owner: string; idx: BigNumber }>;
-
-    maxDelegation(overrides?: CallOverrides): Promise<BigNumber>;
-
-    maxTicketsPerMarket(overrides?: CallOverrides): Promise<BigNumber>;
-
-    mediatorCount(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
     minInactiveWindowBeforeReset(overrides?: CallOverrides): Promise<BigNumber>;
-
-    minTicketTenureDur(overrides?: CallOverrides): Promise<BigNumber>;
-
-    noVoteSlashBP(overrides?: CallOverrides): Promise<BigNumber>;
 
     numWindows(overrides?: CallOverrides): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
+    poolExists(
+      poolId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
+    poolTickets(
+      arg0: BigNumberish,
+      arg1: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<[string, BigNumber] & { owner: string; idx: BigNumber }>;
+
+    pools(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<
+      [BigNumber, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber] & {
+        reqBond: BigNumber;
+        draftReward: BigNumber;
+        winReward: BigNumber;
+        noVoteSlashBP: BigNumber;
+        loseVoteSlashBP: BigNumber;
+        numDraftees: BigNumber;
+      }
+    >;
+
     priceSupplyDeltaBP(overrides?: CallOverrides): Promise<BigNumber>;
 
     purchaseTicket(
-      amount: BigNumberish,
+      poolId: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
     randomness(overrides?: CallOverrides): Promise<string>;
 
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
-
-    rewardPool(overrides?: CallOverrides): Promise<string>;
 
     setDisputeManager(
       _disputeManager: string,
@@ -1683,27 +1239,10 @@ export interface MediatorManager extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    setMaxDelegation(
-      val: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setMaxTicketPerMarket(
-      val: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setMinTicketTenureDuration(
-      dur: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
     setRandomnessProvider(
       provider: string,
       overrides?: CallOverrides
     ): Promise<void>;
-
-    setRewardPool(addr: string, overrides?: CallOverrides): Promise<void>;
 
     setTicketCancelDuration(
       dur: BigNumberish,
@@ -1715,12 +1254,7 @@ export interface MediatorManager extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    setTicketMatureDuration(
-      dur: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setTicketParams(
+    setTicketMarketParams(
       _baseTicketPrice: BigNumberish,
       _windowDur: BigNumberish,
       _ticketsPerWindow: BigNumberish,
@@ -1731,9 +1265,8 @@ export interface MediatorManager extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    setVoteSlashBP(
-      noVote: BigNumberish,
-      loseVote: BigNumberish,
+    setTicketMatureDuration(
+      dur: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1759,25 +1292,23 @@ export interface MediatorManager extends BaseContract {
         BigNumber,
         BigNumber,
         BigNumber,
-        string,
+        BigNumber,
         BigNumber,
         BigNumber,
         BigNumber,
         boolean,
-        BigNumber,
-        BigNumber
+        boolean
       ] & {
         owner: string;
         idx: BigNumber;
+        poolId: BigNumber;
         bond: BigNumber;
         matureAt: BigNumber;
-        market: string;
-        marketIdx: BigNumber;
+        poolIdx: BigNumber;
         cancelAt: BigNumber;
-        leaveAt: BigNumber;
-        drafted: boolean;
-        slashed: BigNumber;
         joinBy: BigNumber;
+        drafted: boolean;
+        joined: boolean;
       }
     >;
 
@@ -1785,29 +1316,29 @@ export interface MediatorManager extends BaseContract {
 
     token(overrides?: CallOverrides): Promise<string>;
 
-    totalJoined(
-      marketID: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     transferOwnership(
       newOwner: string,
       overrides?: CallOverrides
     ): Promise<void>;
 
-    undelegate(
-      id: BigNumberish,
-      acct: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
     undraft(
       ticketOwner: string,
-      ticketID: BigNumberish,
+      ticketId: BigNumberish,
       voted: boolean,
       winSide: boolean,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    updateTicketPool(
+      poolId: BigNumberish,
+      reqBond: BigNumberish,
+      draftReward: BigNumberish,
+      winReward: BigNumberish,
+      noVoteSlashBP: BigNumberish,
+      loseVoteSlashBP: BigNumberish,
+      numDraftees: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     windowDur(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -1825,53 +1356,33 @@ export interface MediatorManager extends BaseContract {
   };
 
   filters: {
-    "DelegatedAccount(address,uint256,address)"(
+    "Drafted(address,address,uint256,uint256,uint256,address)"(
+      marketId?: null,
       owner?: null,
-      idx?: null,
-      acct?: null
-    ): DelegatedAccountEventFilter;
-    DelegatedAccount(
-      owner?: null,
-      idx?: null,
-      acct?: null
-    ): DelegatedAccountEventFilter;
-
-    "Drafted(address,address,uint256,uint256,uint256)"(
-      marketID?: null,
-      owner?: null,
-      ticketID?: null,
+      ticketId?: null,
       orderID?: null,
-      disputeID?: null
+      disputeID?: null,
+      drafter?: null
     ): DraftedEventFilter;
     Drafted(
-      marketID?: null,
+      marketId?: null,
       owner?: null,
-      ticketID?: null,
+      ticketId?: null,
       orderID?: null,
-      disputeID?: null
+      disputeID?: null,
+      drafter?: null
     ): DraftedEventFilter;
 
-    "JoinedMarket(address,address,uint256)"(
-      sender?: string | null,
-      marketID?: string | null,
-      id?: null
-    ): JoinedMarketEventFilter;
-    JoinedMarket(
-      sender?: string | null,
-      marketID?: string | null,
-      id?: null
-    ): JoinedMarketEventFilter;
-
-    "LeftMarket(address,address,uint256)"(
-      owner?: string | null,
-      marketID?: string | null,
-      ticketID?: null
-    ): LeftMarketEventFilter;
-    LeftMarket(
-      owner?: string | null,
-      marketID?: string | null,
-      ticketID?: null
-    ): LeftMarketEventFilter;
+    "JoinedPool(address,uint256,uint256)"(
+      owner?: null,
+      poolId?: null,
+      ticketId?: null
+    ): JoinedPoolEventFilter;
+    JoinedPool(
+      owner?: null,
+      poolId?: null,
+      ticketId?: null
+    ): JoinedPoolEventFilter;
 
     "OwnershipTransferred(address,address)"(
       previousOwner?: string | null,
@@ -1883,79 +1394,65 @@ export interface MediatorManager extends BaseContract {
     ): OwnershipTransferredEventFilter;
 
     "TicketCancelled(address,uint256)"(
-      addr?: string | null,
+      owner?: null,
       id?: null
     ): TicketCancelledEventFilter;
-    TicketCancelled(
-      addr?: string | null,
-      id?: null
-    ): TicketCancelledEventFilter;
+    TicketCancelled(owner?: null, id?: null): TicketCancelledEventFilter;
 
     "TicketDrained(address,uint256,uint256)"(
-      addr?: string | null,
+      owner?: null,
       id?: null,
       amount?: null
     ): TicketDrainedEventFilter;
     TicketDrained(
-      addr?: string | null,
+      owner?: null,
       id?: null,
       amount?: null
     ): TicketDrainedEventFilter;
 
-    "TicketPurchased(address,uint256,uint256,uint256,uint256)"(
-      sender?: string | null,
+    "TicketPurchased(address,uint256,uint256,uint256,uint256,uint256)"(
+      owner?: null,
       id?: null,
+      poolId?: null,
       amount?: null,
       matureAt?: null,
       joinBy?: null
     ): TicketPurchasedEventFilter;
     TicketPurchased(
-      sender?: string | null,
+      owner?: null,
       id?: null,
+      poolId?: null,
       amount?: null,
       matureAt?: null,
       joinBy?: null
     ): TicketPurchasedEventFilter;
 
-    "TicketSlashed(address,uint256,address,uint256,bool,bool)"(
-      owner?: string | null,
-      ticketID?: BigNumberish | null,
-      marketID?: string | null,
+    "TicketSlashed(address,uint256,uint256,bool,bool)"(
+      owner?: null,
+      ticketId?: null,
       amount?: null,
       voted?: null,
       winSide?: null
     ): TicketSlashedEventFilter;
     TicketSlashed(
-      owner?: string | null,
-      ticketID?: BigNumberish | null,
-      marketID?: string | null,
+      owner?: null,
+      ticketId?: null,
       amount?: null,
       voted?: null,
       winSide?: null
     ): TicketSlashedEventFilter;
 
-    "UndelegatedAccount(address,uint256,address)"(
+    "Undrafted(address,uint256,bool,address)"(
       owner?: null,
-      idx?: null,
-      acct?: null
-    ): UndelegatedAccountEventFilter;
-    UndelegatedAccount(
-      owner?: null,
-      idx?: null,
-      acct?: null
-    ): UndelegatedAccountEventFilter;
-
-    "Undrafted(address,address,uint256,bool)"(
-      marketID?: string | null,
-      owner?: string | null,
-      ticketID?: BigNumberish | null,
-      slashed?: null
+      ticketId?: null,
+      slashed?: null,
+      undrafter?: null
     ): UndraftedEventFilter;
     Undrafted(
-      marketID?: string | null,
-      owner?: string | null,
-      ticketID?: BigNumberish | null,
-      slashed?: null
+      owner?: null,
+      ticketId?: null,
+      slashed?: null,
+      undrafter?: null
     ): UndraftedEventFilter;
 
     "UpdatedDisputeManager(address)"(
@@ -1966,30 +1463,10 @@ export interface MediatorManager extends BaseContract {
     "UpdatedMarketCore(address)"(val?: null): UpdatedMarketCoreEventFilter;
     UpdatedMarketCore(val?: null): UpdatedMarketCoreEventFilter;
 
-    "UpdatedMaxDelegation(uint256)"(
-      val?: null
-    ): UpdatedMaxDelegationEventFilter;
-    UpdatedMaxDelegation(val?: null): UpdatedMaxDelegationEventFilter;
-
-    "UpdatedMaxTicketPerMarket(uint256)"(
-      val?: null
-    ): UpdatedMaxTicketPerMarketEventFilter;
-    UpdatedMaxTicketPerMarket(val?: null): UpdatedMaxTicketPerMarketEventFilter;
-
-    "UpdatedMinTicketTenureDuration(uint256)"(
-      val?: null
-    ): UpdatedMinTicketTenureDurationEventFilter;
-    UpdatedMinTicketTenureDuration(
-      val?: null
-    ): UpdatedMinTicketTenureDurationEventFilter;
-
     "UpdatedRandomnessProvider(address)"(
       val?: null
     ): UpdatedRandomnessProviderEventFilter;
     UpdatedRandomnessProvider(val?: null): UpdatedRandomnessProviderEventFilter;
-
-    "UpdatedRewardPool(address)"(val?: null): UpdatedRewardPoolEventFilter;
-    UpdatedRewardPool(val?: null): UpdatedRewardPoolEventFilter;
 
     "UpdatedTicketCancelDuration(uint256)"(
       val?: null
@@ -2031,14 +1508,24 @@ export interface MediatorManager extends BaseContract {
       soldOutBP?: null
     ): UpdatedTicketParamsEventFilter;
 
-    "UpdatedVoteSlashBP(uint256,uint256)"(
-      noVote?: null,
-      loseVote?: null
-    ): UpdatedVoteSlashBPEventFilter;
-    UpdatedVoteSlashBP(
-      noVote?: null,
-      loseVote?: null
-    ): UpdatedVoteSlashBPEventFilter;
+    "UpdatedTicketPool(uint256,uint256,uint256,uint256,uint256,uint256,uint256)"(
+      poolId?: null,
+      reqBond?: null,
+      draftReward?: null,
+      winReward?: null,
+      noVoteSlashBP?: null,
+      loseVoteSlashBP?: null,
+      numDraftees?: null
+    ): UpdatedTicketPoolEventFilter;
+    UpdatedTicketPool(
+      poolId?: null,
+      reqBond?: null,
+      draftReward?: null,
+      winReward?: null,
+      noVoteSlashBP?: null,
+      loseVoteSlashBP?: null,
+      numDraftees?: null
+    ): UpdatedTicketPoolEventFilter;
   };
 
   estimateGas: {
@@ -2049,40 +1536,10 @@ export interface MediatorManager extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
-    countDelegateTickets(
-      acct: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    countDelegates(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    delegate(
-      id: BigNumberish,
-      acct: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    delegateTickets(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    delegates(
-      arg0: string,
-      arg1: BigNumberish,
-      arg2: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     disputeManager(overrides?: CallOverrides): Promise<BigNumber>;
 
     draft(
-      marketID: string,
+      marketId: string,
       orderID: BigNumberish,
       disputeID: BigNumberish,
       overrides?: Overrides & { from?: string }
@@ -2093,73 +1550,49 @@ export interface MediatorManager extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
-    getDelegateTickets(
-      acct: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     getTicket(
       owner: string,
       id: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getTicketPool(
+      poolId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     getTicketPrice(overrides?: CallOverrides): Promise<BigNumber>;
 
-    isDelegate(
-      ticketOwner: string,
-      id: BigNumberish,
-      acct: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    joinMarket(
-      marketID: string,
-      ticketID: BigNumberish,
+    join(
+      ticketId: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
-
-    joined(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    leaveMarket(
-      ticketID: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    loseVoteSlashBP(overrides?: CallOverrides): Promise<BigNumber>;
 
     marketCore(overrides?: CallOverrides): Promise<BigNumber>;
 
-    marketTickets(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    maxDelegation(overrides?: CallOverrides): Promise<BigNumber>;
-
-    maxTicketsPerMarket(overrides?: CallOverrides): Promise<BigNumber>;
-
-    mediatorCount(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
     minInactiveWindowBeforeReset(overrides?: CallOverrides): Promise<BigNumber>;
-
-    minTicketTenureDur(overrides?: CallOverrides): Promise<BigNumber>;
-
-    noVoteSlashBP(overrides?: CallOverrides): Promise<BigNumber>;
 
     numWindows(overrides?: CallOverrides): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
+    poolExists(
+      poolId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    poolTickets(
+      arg0: BigNumberish,
+      arg1: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    pools(arg0: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
+
     priceSupplyDeltaBP(overrides?: CallOverrides): Promise<BigNumber>;
 
     purchaseTicket(
-      amount: BigNumberish,
+      poolId: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
@@ -2168,8 +1601,6 @@ export interface MediatorManager extends BaseContract {
     renounceOwnership(
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
-
-    rewardPool(overrides?: CallOverrides): Promise<BigNumber>;
 
     setDisputeManager(
       _disputeManager: string,
@@ -2181,28 +1612,8 @@ export interface MediatorManager extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
-    setMaxDelegation(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setMaxTicketPerMarket(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setMinTicketTenureDuration(
-      dur: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
     setRandomnessProvider(
       provider: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setRewardPool(
-      addr: string,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
@@ -2216,12 +1627,7 @@ export interface MediatorManager extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
-    setTicketMatureDuration(
-      dur: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setTicketParams(
+    setTicketMarketParams(
       _baseTicketPrice: BigNumberish,
       _windowDur: BigNumberish,
       _ticketsPerWindow: BigNumberish,
@@ -2232,9 +1638,8 @@ export interface MediatorManager extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
-    setVoteSlashBP(
-      noVote: BigNumberish,
-      loseVote: BigNumberish,
+    setTicketMatureDuration(
+      dur: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
@@ -2260,27 +1665,27 @@ export interface MediatorManager extends BaseContract {
 
     token(overrides?: CallOverrides): Promise<BigNumber>;
 
-    totalJoined(
-      marketID: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     transferOwnership(
       newOwner: string,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
-    undelegate(
-      id: BigNumberish,
-      acct: string,
+    undraft(
+      ticketOwner: string,
+      ticketId: BigNumberish,
+      voted: boolean,
+      winSide: boolean,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
-    undraft(
-      ticketOwner: string,
-      ticketID: BigNumberish,
-      voted: boolean,
-      winSide: boolean,
+    updateTicketPool(
+      poolId: BigNumberish,
+      reqBond: BigNumberish,
+      draftReward: BigNumberish,
+      winReward: BigNumberish,
+      noVoteSlashBP: BigNumberish,
+      loseVoteSlashBP: BigNumberish,
+      numDraftees: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
@@ -2297,40 +1702,10 @@ export interface MediatorManager extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
-    countDelegateTickets(
-      acct: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    countDelegates(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    delegate(
-      id: BigNumberish,
-      acct: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    delegateTickets(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    delegates(
-      arg0: string,
-      arg1: BigNumberish,
-      arg2: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     disputeManager(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     draft(
-      marketID: string,
+      marketId: string,
       orderID: BigNumberish,
       disputeID: BigNumberish,
       overrides?: Overrides & { from?: string }
@@ -2341,84 +1716,56 @@ export interface MediatorManager extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
-    getDelegateTickets(
-      acct: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     getTicket(
       owner: string,
       id: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    getTicketPool(
+      poolId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     getTicketPrice(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    isDelegate(
-      ticketOwner: string,
-      id: BigNumberish,
-      acct: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    joinMarket(
-      marketID: string,
-      ticketID: BigNumberish,
+    join(
+      ticketId: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
-
-    joined(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    leaveMarket(
-      ticketID: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    loseVoteSlashBP(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     marketCore(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    marketTickets(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    maxDelegation(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    maxTicketsPerMarket(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    mediatorCount(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
 
     minInactiveWindowBeforeReset(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    minTicketTenureDur(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    noVoteSlashBP(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     numWindows(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    poolExists(
+      poolId: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    poolTickets(
+      arg0: BigNumberish,
+      arg1: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    pools(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     priceSupplyDeltaBP(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     purchaseTicket(
-      amount: BigNumberish,
+      poolId: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
@@ -2427,8 +1774,6 @@ export interface MediatorManager extends BaseContract {
     renounceOwnership(
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
-
-    rewardPool(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     setDisputeManager(
       _disputeManager: string,
@@ -2440,28 +1785,8 @@ export interface MediatorManager extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
-    setMaxDelegation(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setMaxTicketPerMarket(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setMinTicketTenureDuration(
-      dur: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
     setRandomnessProvider(
       provider: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setRewardPool(
-      addr: string,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
@@ -2475,12 +1800,7 @@ export interface MediatorManager extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
-    setTicketMatureDuration(
-      dur: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setTicketParams(
+    setTicketMarketParams(
       _baseTicketPrice: BigNumberish,
       _windowDur: BigNumberish,
       _ticketsPerWindow: BigNumberish,
@@ -2491,9 +1811,8 @@ export interface MediatorManager extends BaseContract {
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
-    setVoteSlashBP(
-      noVote: BigNumberish,
-      loseVote: BigNumberish,
+    setTicketMatureDuration(
+      dur: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
@@ -2519,27 +1838,27 @@ export interface MediatorManager extends BaseContract {
 
     token(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    totalJoined(
-      marketID: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     transferOwnership(
       newOwner: string,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
-    undelegate(
-      id: BigNumberish,
-      acct: string,
+    undraft(
+      ticketOwner: string,
+      ticketId: BigNumberish,
+      voted: boolean,
+      winSide: boolean,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 
-    undraft(
-      ticketOwner: string,
-      ticketID: BigNumberish,
-      voted: boolean,
-      winSide: boolean,
+    updateTicketPool(
+      poolId: BigNumberish,
+      reqBond: BigNumberish,
+      draftReward: BigNumberish,
+      winReward: BigNumberish,
+      noVoteSlashBP: BigNumberish,
+      loseVoteSlashBP: BigNumberish,
+      numDraftees: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 

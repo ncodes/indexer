@@ -1,48 +1,29 @@
-import {
-  Controller,
-  Get,
-  Param,
-  ParseIntPipe,
-  Query,
-  UseGuards,
-  ValidationPipe,
-} from '@nestjs/common';
-import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
-import { HasKeyGuard } from '../../guards/has_token.guard';
+import { Controller, Get, Param, ParseIntPipe, Query, ValidationPipe } from '@nestjs/common';
 import Swap from '../../models/swap';
 import { ErrorTypes, ok, throw404 } from '../../common/responses/responses';
 import Market from '../../models/market';
-import { MarketsService } from '../markets/markets.service';
+import { MarketService } from '../markets/market.service';
 import Liquidity from '../../models/liquidity';
 import { LiquidityService } from '../liquidity/liquidity.service';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
-import { GetQueryDTO, ListQueryDTO } from './query.dto';
-import SwapsService from './swaps.service';
+import { GetParticipantsDTO, GetQueryDTO, ListQueryDTO } from './query.dto';
+import SwapService from './swap.service';
 
-@UseGuards(BeAuthenticatedGuard)
-@UseGuards(HasKeyGuard)
 @Controller('v1/swaps')
 export class SwapsController {
-  constructor(
-    private marketSrv: MarketsService,
-    private liqSrv: LiquidityService,
-    private swapSrv: SwapsService,
-  ) {}
+  constructor(private marketSrv: MarketService, private liqSrv: LiquidityService, private swapSrv: SwapService) {}
 
   /**
    * Get a swap
    * @param orderId The order ID
    * @param q The query object
-   *  - [network] The network name.
-   *  - [orderId] The order ID
-   *  - [noMerge] Prevent merge of contract liquidity with DB liquidity object
-   *  - [select] Select fields to return
+   * @param q.net The network name.
+   * @param [q.orderId] The order ID
+   * @param [q.noMerge] Prevent merge of contract liquidity with DB liquidity object
+   * @param [q.select] Select fields to return
    */
   @Get(':orderId')
-  async get(
-    @Param('orderId', ParseIntPipe) orderId: number,
-    @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO,
-  ) {
+  async get(@Param('orderId', ParseIntPipe) orderId: number, @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO) {
     // Get swap
     const swap = await Swap.get(q.net, orderId, q.select);
     if (!swap) throw404('swap not found');
@@ -50,19 +31,13 @@ export class SwapsController {
     // Get market
     const market = await Market.getMarket(q.net, swap.marketAddress, q.select);
     if (!market) return throw404('market not found');
-    await this.marketSrv.extendMarket(market, q.noMerge);
+    await this.marketSrv.extendMarket(market, q.select);
     swap.market = market;
 
     // Get liquidity
-    const liquidity = await Liquidity.getLiquidity(
-      q.net,
-      swap.marketAddress,
-      swap.provider,
-      undefined,
-      q.select,
-    );
+    const liquidity = await Liquidity.getLiquidity(q.net, swap.marketAddress, swap.provider, undefined, q.select);
     if (!liquidity) return throw404('liquidity not found');
-    await this.liqSrv.extendLiquidity(liquidity, q.noMerge, q.select, true);
+    await this.liqSrv.extendLiquidity(liquidity, q.select);
     swap.liquidity = liquidity;
 
     return ok().data(swap).build<Swap>();
@@ -71,41 +46,28 @@ export class SwapsController {
   /**
    * List all swaps on a network
    * @param q The query object
-   *  - [network] The network name.
-   *  - [marketAddress] The market ID (optional)
-   *  - [address] The address involved as a provider or taker (optional)
-   *  - [noMerge] Prevent merge of contract liquidity with DB liquidity object
-   *  - [limit] The number of result to return (optional)
-   *  - [offset] The query offset (optional)
-   *  - [select] Select fields to return
+   * @param q.net The network name.
+   * @param [q.marketAddress] The market ID (optional)
+   * @param [q.address] The address involved as a provider or taker (optional)
+   * @param [q.noMerge] Prevent merge of contract liquidity with DB liquidity object
+   * @param [q.limit] The number of result to return (optional)
+   * @param [q.offset] The query offset (optional)
+   * @param [q.select] Select fields to return
    * @returns
    */
   @Get()
   async list(@Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
-    const swaps = await Swap.searchSwaps(
-      q.net,
-      q.marketAddress,
-      q.address,
-      q.limit || 25,
-      q.offset,
-      q.select,
-    );
+    const swaps = await Swap.searchSwaps(q.net, q.marketAddress, q.address, q.limit || 25, q.offset, q.select);
 
     for (const swap of swaps) {
       const market = await Market.getMarket(q.net, swap.marketAddress, q.select);
       if (!market) return throw404('market not found');
-      await this.marketSrv.extendMarket(market, q.noMerge, q.select);
+      await this.marketSrv.extendMarket(market, q.select);
       swap.market = market;
 
-      const liquidity = await Liquidity.getLiquidity(
-        q.net,
-        swap.marketAddress,
-        swap.provider,
-        undefined,
-        q.select,
-      );
+      const liquidity = await Liquidity.getLiquidity(q.net, swap.marketAddress, swap.provider, undefined, q.select);
       if (!liquidity) return throw404('liquidity not found');
-      await this.liqSrv.extendLiquidity(liquidity, q.noMerge, q.select, true);
+      await this.liqSrv.extendLiquidity(liquidity, q.select);
       swap.liquidity = liquidity;
     }
 
@@ -114,18 +76,19 @@ export class SwapsController {
 
   /**
    * List participants of a swap
-   * @param id The swap ID
-   * @param addAppealedDisputeDraftees If true, appealed disputes draftees
-   * are added as participants.
+   * @param orderId The order ID
+   * @param q The query object
+   * @param q.net The network name
+   * @param [q.includeRedispute] Include redispute draftees
    */
-  @Get(':id/participants')
+  @Get(':orderId/participants')
   async listParticipants(
-    @Param('id') id: string,
-    @Query('addAppealedDisputeDraftees') addAppealedDisputeDraftees: boolean,
+    @Param('orderId', ParseIntPipe) orderId: number,
+    @Query(new ValidationPipe(ValPipeOpt)) q: GetParticipantsDTO,
   ) {
-    const swap = await Swap.getById(id);
+    const swap = await Swap.getByNetworkAndOrderId(q.net, orderId);
     if (!swap) throw404('swap not found', ErrorTypes.InvalidRequest, 'id');
-    const participant = await this.swapSrv.getParticipants(swap, addAppealedDisputeDraftees);
-    return ok().data(participant).build<Swap>();
+    const participant = await this.swapSrv.getParticipants(swap, q.includeRedispute);
+    return ok().data(participant).build<string[]>();
   }
 }

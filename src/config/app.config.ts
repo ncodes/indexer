@@ -15,19 +15,11 @@ function getContractsParams(network: string) {
     soldOutBP: process.env[`${network}_MM_SOLD_OUT_BP`],
     ticketMatureDur: process.env[`${network}_MM_TICKET_MATURE_DUR`],
     ticketCancelDur: process.env[`${network}_MM_TICKET_CANCEL_DUR`],
-    minTicketTenureDur: process.env[`${network}_MM_MIN_TICKET_TENURE_DUR`],
     ticketExpireDur: process.env[`${network}_MM_TICKET_EXPIRE_DUR`],
-    maxMediators: process.env[`${network}_MM_MAX_MEDIATORS`],
     noVoteSlashBP: process.env[`${network}_MM_NO_VOTE_SLASH_BP`],
     loseVoteSlashBP: process.env[`${network}_MM_LOSE_VOTE_SLASH_BP`],
-    rewardWindowAlloc: process.env[`${network}_DM_REWARD_WINDOW_ALLOC`],
-    rewardWindowDur: process.env[`${network}_DM_REWARD_WINDOW_DUR`],
-    redeemWindowRewardDur: process.env[`${network}_DM_REDEEM_WINDOW_REWARD_DUR`],
-    appealDur: process.env[`${network}_DM_APPEAL_DUR`],
     evidenceDur: process.env[`${network}_DM_EVIDENCE_DUR`],
     predictDur: process.env[`${network}_DM_PREDICT_DUR`],
-    disputeCost: process.env[`${network}_DM_DISPUTE_COST`],
-    maxMediatorPerDispute: process.env[`${network}_DM_MAX_MEDIATOR_PER_DISPUTE`],
     operatorBond: process.env[`${network}_OP_OPERATOR_BOND`],
   };
 }
@@ -72,6 +64,13 @@ export default () => ({
     aws: {
       smtpUsername: process.env.AWS_SMTP_USERNAME,
       smtpPassword: process.env.AWS_SMTP_PASSWORD,
+    },
+    discord: {
+      notifBotClientId: process.env.DISCORD_NOTIF_BOT_CLIENT_ID,
+      notifBotClientSecret: process.env.DISCORD_NOTIF_BOT_CLIENT_SECRET,
+      notifBotRedirectUri: process.env.DISCORD_NOTIF_BOT_REDIRECT_URI,
+      notifBotToken: process.env.DISCORD_NOTIF_BOT_TOKEN,
+      notificationGuildId: process.env.DISCORD_NOTIF_GUILD_ID,
     },
     telegram: {
       apiId: process.env.TG_API_ID,

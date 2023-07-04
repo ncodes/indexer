@@ -7,7 +7,7 @@ import { toBoolean } from 'underscore.string';
 
 export class GetQueryDTO {
   @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
-  @IsNotEmpty({ message: makeValidatorMsg('network is required', 'network') })
+  @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
   public net?: string;
 
   @IsOptional()
@@ -18,11 +18,6 @@ export class GetQueryDTO {
   @IsOptional()
   public index?: number;
 
-  @Transform(({ value }) => toBoolean(value))
-  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'noMerge') })
-  @IsOptional()
-  public noMerge?: boolean;
-
   @Transform(({ value }) => (value as string).split(','))
   @IsOptional()
   public select?: string[];
@@ -31,17 +26,16 @@ export class GetQueryDTO {
 // tslint:disable-next-line:max-classes-per-file
 export class ListQueryDTO {
   @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
-  @IsNotEmpty({ message: makeValidatorMsg('network is required', 'network') })
+  @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
   public net?: string;
 
+  @Transform(({ value }) => toNumber(value))
+  @IsNumber(undefined, { message: makeValidatorMsg('must be a number', 'poolId') })
   @IsOptional()
-  public marketAddress?: string;
+  public poolId?: number;
 
   @IsOptional()
   public owner?: string;
-
-  @IsOptional()
-  public delegate?: string;
 
   @Transform(({ value }) => toNumber(value))
   @IsNumber(undefined, { message: makeValidatorMsg('must be a number', 'orderId') })
@@ -84,11 +78,6 @@ export class ListQueryDTO {
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'slashed') })
   @IsOptional()
   public slashed?: boolean;
-
-  @Transform(({ value }) => toBoolean(value))
-  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'noMerge') })
-  @IsOptional()
-  public noMerge?: boolean;
 
   @Transform(({ value }) => toBoolean(value))
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'count') })

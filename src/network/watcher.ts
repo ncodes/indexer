@@ -1,10 +1,9 @@
 import { Logger } from '@nestjs/common';
 import { Contract, ethers, providers } from 'ethers';
 import Meta from '../models/meta';
-import { shortenAddr } from '../common/utils/helpers';
 import * as sortArray from 'sort-array';
 import { Handler } from './handler';
-import { isDevMode, isTestMode } from '../common/common';
+import { isDevMode, isTestMode, shortenAddr } from '../common/common';
 import Event from '../models/events';
 import * as defer from 'defer-promise';
 

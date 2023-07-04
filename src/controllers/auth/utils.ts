@@ -53,7 +53,7 @@ export async function makeSession(
  * @param ignoreEmail Indicate to ignore email in the message
  * @returns
  */
-export function parseSignature(msg: string, sig: string, ignoreEmail = false): SignatureData {
+export function parseWalletSignature(msg: string, sig: string, ignoreEmail = false): SignatureData {
   const rawMsg = Buffer.from(msg, 'hex');
   const hashMsg = utils.hashMessage(rawMsg.toString('utf-8'));
   const digest = utils.arrayify(hashMsg);
@@ -84,4 +84,20 @@ export function parseSignature(msg: string, sig: string, ignoreEmail = false): S
     address: recoveredAddress.toLowerCase(),
     email,
   };
+}
+
+/**
+ * Verify an OAuth state token
+ * @param token The token to be verified
+ * @param jwtSecret The JWT secret
+ */
+export function verifyOAuthStateToken(token: string, jwtSecret: string): Promise<boolean> {
+  return new Promise((resolve, reject) => {
+    let valid = false;
+    jwt.verify(token, jwtSecret, (err, decoded) => {
+      if (err) return;
+      valid = true;
+    });
+    resolve(valid);
+  });
 }

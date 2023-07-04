@@ -9,13 +9,13 @@ import { Roles } from '../../common/roles';
 import * as request from 'supertest';
 import NetworkService from '../../network/network.service';
 import { makeSession } from '../auth/utils';
-import { MarketsService } from '../markets/markets.service';
+import { MarketService } from '../markets/market.service';
 import { SwapsController } from './swaps.controller';
 import { LiquidityService } from '../liquidity/liquidity.service';
 import Swap from '../../models/swap';
 import Market from '../../models/market';
 import Liquidity from '../../models/liquidity';
-import SwapsService from './swaps.service';
+import SwapService from './swap.service';
 import { randStr } from '../../common/common';
 
 const mockCfgGet = jest.fn();
@@ -59,7 +59,7 @@ describe('SwapsController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [SwapsController],
-      providers: [ConfigService, NetworkService, MarketsService, LiquidityService, SwapsService],
+      providers: [ConfigService, NetworkService, MarketService, LiquidityService, SwapService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
@@ -81,19 +81,6 @@ describe('SwapsController', () => {
   });
 
   describe('.get', () => {
-    it('should return 401 when not authorized', async () => {
-      await request(app.getHttpServer())
-        .get(`/v1/swaps/0`)
-        .send({})
-        .expect(401)
-        .expect({
-          error: {
-            type: 'authentication_error',
-            message: 'authorization header is required',
-          },
-        });
-    });
-
     it('should return 400 when network is unknown', async () => {
       await request(app.getHttpServer())
         .get(`/v1/swaps/0`)
@@ -142,7 +129,7 @@ describe('SwapsController', () => {
         orderId: 1,
         marketAddress: market.address,
       });
-      jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue();
+      jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
       await request(app.getHttpServer())
         .get(`/v1/swaps/1`)
         .query({ net })
@@ -163,7 +150,7 @@ describe('SwapsController', () => {
         orderId: 1,
         marketAddress: market.address,
       });
-      jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue();
+      jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
       await request(app.getHttpServer())
         .get(`/v1/swaps/1`)
         .query({ net })
@@ -190,7 +177,7 @@ describe('SwapsController', () => {
         marketAddress: market.address,
         provider: '0xProvider',
       });
-      jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue();
+      jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
       jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(null);
       await request(app.getHttpServer())
         .get(`/v1/swaps/1`)
@@ -205,19 +192,6 @@ describe('SwapsController', () => {
   });
 
   describe('.list', () => {
-    it('should return 401 when not authorized', async () => {
-      await request(app.getHttpServer())
-        .get(`/v1/swaps`)
-        .send({})
-        .expect(401)
-        .expect({
-          error: {
-            type: 'authentication_error',
-            message: 'authorization header is required',
-          },
-        });
-    });
-
     it('should return 400 when network is unknown', async () => {
       await request(app.getHttpServer())
         .get(`/v1/swaps`)
@@ -264,7 +238,7 @@ describe('SwapsController', () => {
           provider: '0xProvider2',
         });
 
-        jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue();
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
         jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(null);
 
         await request(app.getHttpServer())
@@ -319,7 +293,7 @@ describe('SwapsController', () => {
           provider: '0xProvider',
         });
 
-        jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue();
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
         jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(null);
 
         await request(app.getHttpServer())
@@ -364,7 +338,7 @@ describe('SwapsController', () => {
           provider: '0xProvider',
         });
 
-        jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue();
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
         jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(null);
 
         await request(app.getHttpServer())
@@ -384,6 +358,64 @@ describe('SwapsController', () => {
             expect(res.body.meta.queryCount).toEqual('2');
           });
       });
+    });
+  });
+
+  describe('.listParticipants', () => {
+    it('should return 400 when network is provided but unknown', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/swaps/0/participants`)
+        .query({})
+        .expect(400)
+        .expect({
+          error: {
+            message: 'network is required',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 400 when network is provided but unknown', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/swaps/0/participants`)
+        .query({ net: 'unknown' })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'network is unknown',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 404 when swap order was not found', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/swaps/0/participants`)
+        .query({ net })
+        .expect(404)
+        .expect({
+          error: {
+            param: 'id',
+            type: 'invalid_request_error',
+            message: 'swap not found',
+          },
+        });
+    });
+
+    it('should return list of participants', async () => {
+      await Swap.create({ network: net, orderId: 1 });
+      const getParticipants = jest.spyOn(app.get(SwapService), 'getParticipants').mockResolvedValue(null);
+      getParticipants.mockResolvedValue(['0xParticipant1', '0xParticipant2']);
+      await request(app.getHttpServer())
+        .get(`/v1/swaps/1/participants`)
+        .query({ net })
+        .set('Authorization', 'bearer ' + token)
+        .expect(200)
+        .expect({
+          data: ['0xParticipant1', '0xParticipant2'],
+        });
     });
   });
 });

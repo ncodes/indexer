@@ -3,7 +3,6 @@ import { Handler } from '../handler';
 import Swap from '../../models/swap';
 import { Transaction } from 'objection';
 import Dispute from '../../models/dispute';
-import { toBN } from '../common';
 import Market from '../../models/market';
 import Commit from '../../models/commit';
 import Reveal from '../../models/reveal';
@@ -14,6 +13,7 @@ import * as _ from 'lodash';
 import { isEqualStr, toDec } from '../../common/common';
 import Liquidity from '../../models/liquidity';
 import MineTask, { MineTaskType } from '../../models/mine_task';
+import Meta from '../../models/meta';
 
 export class DisputeManagerHandler extends Handler {
   constructor(
@@ -108,6 +108,16 @@ export class DisputeManagerHandler extends Handler {
     txn?: Transaction,
   ) {
     const swap = await Swap.get(this.network, orderId.toNumber(), undefined, txn);
+    const { provider, marketAddress, taker, network } = swap;
+
+    // Calculate number of mediators required
+    const market = await Market.getMarket(this.network, swap.marketAddress, undefined, txn);
+
+    // Get pool info
+    const poolParamKey = Meta.makeMediatorPoolKey(this.network, market.mediatorPoolId);
+    const poolInfo = await Meta.getJSON<PoolParams>(poolParamKey, txn);
+
+    // Get number of disputes (and re-disputes)
     const numDisp = await Dispute.countByNetworkAndMarketIdAndOrderId(
       swap.network,
       swap.marketAddress,
@@ -115,43 +125,33 @@ export class DisputeManagerHandler extends Handler {
       txn,
     );
 
-    // Calculate number of mediators required
-    const market = await Market.getMarket(this.network, swap.marketAddress, undefined, txn);
-    const maxMediatorPerDispute = parseInt(await this.getParam('maxMediatorPerDispute'));
-    const numMediators = market.permMediate
-      ? market.numMediators
-      : Math.min(market.numMediators * (numDisp + 1), maxMediatorPerDispute);
-
-    // Create dispute
-    const appeal = numDisp > 0;
+    // Create a dispute
+    const redispute = numDisp > 0;
     const dispute = await Dispute.create(
       {
         network: this.network,
         creator,
-        defendant: swap.provider === creator ? swap.taker : swap.provider,
-        marketAddress: swap.marketAddress,
-        orderId: swap.orderId,
+        defendant: provider === creator ? taker : provider,
+        marketAddress: marketAddress,
+        orderId: orderId.toNumber(),
         disputeId: disputeId.toNumber(),
         wantRelease,
-        appeal,
-        deposit: toBN(await this.getParam('disputeCost'))
-          .mul(numDisp)
-          .toString(),
-        numMediators,
+        redispute,
+        numMediators: poolInfo.numDraftees,
       },
       txn,
     );
 
     // Create mediator draft task(s)
-    Array(numMediators)
+    Array(poolInfo.numDraftees)
       .fill(0)
       .map(async () => {
         await MineTask.create(
           {
             type: MineTaskType.Draft,
-            network: swap.network,
-            marketAddress: swap.marketAddress,
-            orderId: swap.orderId,
+            network: network,
+            marketAddress: marketAddress,
+            orderId: orderId.toNumber(),
             disputeId: disputeId.toNumber(),
           },
           txn,
@@ -159,33 +159,26 @@ export class DisputeManagerHandler extends Handler {
       });
 
     // Update market
-    let totalDisputes = !appeal ? market.totalDisputes + 1 : market.totalDisputes;
+    let totalDisputes = !redispute ? market.totalDisputes + 1 : market.totalDisputes;
     await Market.updateById(
       market.id,
       {
-        openDisputes: !appeal ? market.openDisputes + 1 : market.openDisputes,
+        openDisputes: !redispute ? market.openDisputes + 1 : market.openDisputes,
         totalDisputes,
-        disputeRate: !appeal ? toDec(totalDisputes).div(market.totalSwaps).mul(100).toNumber() : market.disputeRate,
+        disputeRate: !redispute ? toDec(totalDisputes).div(market.totalSwaps).mul(100).toNumber() : market.disputeRate,
       },
       txn,
     );
 
     // Update liquidity
-    const liquidity = await Liquidity.getLiquidity(
-      swap.network,
-      swap.marketAddress,
-      swap.provider,
-      undefined,
-      undefined,
-      txn,
-    );
-    totalDisputes = !appeal ? liquidity.totalDisputes + 1 : liquidity.totalDisputes;
+    const liquidity = await Liquidity.getLiquidity(network, marketAddress, provider, undefined, undefined, txn);
+    totalDisputes = !redispute ? liquidity.totalDisputes + 1 : liquidity.totalDisputes;
     await Liquidity.updateById(
       liquidity.id,
       {
-        openDisputes: !appeal ? liquidity.openDisputes + 1 : liquidity.openDisputes,
+        openDisputes: !redispute ? liquidity.openDisputes + 1 : liquidity.openDisputes,
         totalDisputes,
-        disputeRate: !appeal
+        disputeRate: !redispute
           ? toDec(totalDisputes).div(liquidity.totalSwaps).mul(100).toNumber()
           : liquidity.disputeRate,
       },

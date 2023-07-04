@@ -12,7 +12,7 @@ import { MetadataService } from '../../services/metadata/metadata.service';
 import { makeSession } from '../auth/utils';
 import { LiquidityController } from './liquidity.controller';
 import { LiquidityService } from './liquidity.service';
-import { MarketsService } from '../markets/markets.service';
+import { MarketService } from '../markets/market.service';
 import Liquidity from '../../models/liquidity';
 import { ConfigService } from '../../config/config.service';
 import { randStr } from '../../common/common';
@@ -66,7 +66,7 @@ describe('LiquidityController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [LiquidityController],
-      providers: [ConfigService, NetworkService, LiquidityService, MarketsService, MetadataService],
+      providers: [ConfigService, NetworkService, LiquidityService, MarketService, MetadataService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())

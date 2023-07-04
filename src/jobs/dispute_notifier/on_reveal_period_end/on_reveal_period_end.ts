@@ -81,8 +81,6 @@ export default class OnRevealPeriodEnd extends Base {
         nRelease,
         nCancel,
         majority,
-        cost: commify(formatUnits(await this.cfgSrv.getContractParam(swap.network, 'disputeCost'), 18)), // TODO: the market is where dispute cost is stored
-        appealPhaseHoursLeft: moment(dispute.appealEndAt).fromNow(false),
       });
     }
 

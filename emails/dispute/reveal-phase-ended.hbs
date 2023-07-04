@@ -6,24 +6,14 @@
       The outcome of dispute #{{disputeId}} has been revealed.
       {{#isnt outcome 'Stalled'}}
         The mediator{{pluralStr}} voted to <b style="display: inline; color:white; padding:2px 5px; border-radius: 3px; background-color: #{{#eq outcome 'release'}}56d66b{{else}}DC2929FF{{/eq}};">{{outcome}}</b> the order.
-        {{#if participant}}
-          <br><br>
-          An order participant who opposes the ruling can re-appeal within the allowed window, otherwise the ruling will be executed.
-        {{/if}}
       {{else}}
-        The mediator{{pluralStr}} {{pluralWhereWasStr}} unable to reach a consensus. The dispute must be re-appealed.
+        The mediator{{pluralStr}} {{pluralWhereWasStr}} unable to reach a consensus. The order must be re-disputed.
       {{/isnt}}
       <br /><br />
       <div class="alert" {{> alertStyle }}>
-        {{#isnt outcome 'Stalled'}}
-          <div style="padding: 5px 10px; ">{{> badgeInfo label='INFO' }} <b>Re-appeal window ends:</b> {{appealPhaseHoursLeft}}</div>
-          {{#if participant}}
-            <div style="padding: 5px 10px; border-top: 1px dashed #f7f7f7">{{> badgeInfo label='INFO' }} <b>Re-appeal Cost:</b> {{cost}} {{asset}}</div>
-          {{/if}}
-        {{else}}
-          <div style="padding: 5px 10px; ">{{> badgeInfo label='INFO' }} Proceed to the <a href="{{orderLink}}">order</a> to re-appeal</div>
-          <div style="padding: 5px 10px; border-top: 1px dashed #f7f7f7">{{> badgeInfo label='INFO' }} <b>Re-appeal Cost:</b> 0 {{asset}}</div>
-        {{/isnt}}
+        {{#eq outcome 'Stalled'}}
+          <div style="padding: 5px 10px; ">{{> badgeInfo label='INFO' }} Proceed to the <a href="{{orderLink}}">order</a> to re-dispute</div>
+        {{/eq}}
       </div>
       <br>
       {{> primaryButton this }}

@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  HttpException,
-  HttpStatus,
-  ValidationPipeOptions,
-} from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, ValidationPipeOptions } from '@nestjs/common';
 import validator from 'validator';
 
 /**

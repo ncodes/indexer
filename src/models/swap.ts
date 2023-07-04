@@ -1,4 +1,4 @@
-import { randStr } from '../common/common';
+import { notify, randStr } from '../common/common';
 import Objection, { Model, raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 import * as moment from 'moment';
@@ -177,6 +177,24 @@ export default class Swap extends BaseModel {
   }
 
   /**
+   * find a record by order ID
+   * @param network the network
+   * @param orderId the order ID
+   * @param txn Optional transaction object
+   */
+  static getByNetworkAndOrderId(network?: string, orderId?: number, txn?: Transaction) {
+    return this.query(txn)
+      .where((q) => {
+        if (network) return q.where({ network });
+      })
+      .where((q) => {
+        if (orderId) return q.where({ orderId });
+      })
+      .whereNotDeleted()
+      .first();
+  }
+
+  /**
    * find a record by swap ID
    * @param id the swap ID
    * @param txn Optional transaction object
@@ -244,18 +262,20 @@ export default class Swap extends BaseModel {
   }
 
   /**
-   * count by network and market
+   * count swaps associated with a liquidity
    * @param network The network name
    * @param marketAddress The market ID
    * @param provider The provider address
+   * @param lid The liquidity ID
    * @param instant? Filter by instant swap
    * @param minutesAgo? Filter between now and some minutes ago
    * @param txn? Optional transaction object
    */
-  static countByNetworkAndMarketAndProvider(
+  static countLiquiditySwaps(
     network: string,
     marketAddress: string,
     provider: string,
+    lid?: number,
     instant?: boolean,
     minutesAgo?: number,
     txn?: Objection.Transaction,
@@ -263,6 +283,7 @@ export default class Swap extends BaseModel {
     return new Promise<string>((resolve, reject) => {
       let q = this.query(txn).where({ network }).where('marketAddress', 'ilike', marketAddress);
       if (provider) q = q.where('provider', 'ilike', provider);
+      if (!_.isNil(lid)) q = q.where('lid', lid);
       if (instant !== undefined) q = q.where({ instant });
       if (minutesAgo) q = q.where('createdAt', '>=', moment().subtract(minutesAgo, 'minutes').toISOString());
       q.count('id')
@@ -281,16 +302,18 @@ export default class Swap extends BaseModel {
    * @param marketAddress The base asset address
    * @param baseAddress The base address
    * @param provider The provider address
+   * @param lid The liquidity ID
    * @param timeAgo The number of minutes ago to use as the start time
    * @param instant? Filter by instant swap
    * @param txn? Optional transaction object
    */
   static getVolume(
     network: string,
-    marketAddress: string,
-    baseAddress: string,
-    provider: string,
-    timeAgo: number,
+    marketAddress?: string,
+    baseAddress?: string,
+    provider?: string,
+    lid?: number,
+    timeAgo?: number,
     instant?: boolean,
     txn?: Objection.Transaction,
   ) {
@@ -310,9 +333,12 @@ export default class Swap extends BaseModel {
           if (provider !== undefined) return q.where('provider', 'ilike', provider);
         })
         .where((q) => {
+          if (!_.isNil(lid)) return q.where('lid', lid);
+        })
+        .where((q) => {
           if (instant !== undefined) return q.where('instant', instant);
         })
-        .where('createdAt', '>=', moment().subtract(timeAgo, 'm').toISOString())
+        .where('createdAt', '>=', moment().subtract(timeAgo, 'minutes').toISOString())
         .then((res: any) => {
           return resolve(res[0].total || '0');
         })

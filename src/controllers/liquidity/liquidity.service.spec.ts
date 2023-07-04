@@ -1,36 +1,21 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import NetworkService from '../../network/network.service';
-import { MetadataService } from '../../services/metadata/metadata.service';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { DBService } from '../../db/DBService';
 import { LiquidityService } from './liquidity.service';
-import { MarketsService } from '../markets/markets.service';
-import Liquidity from '../../models/liquidity';
 import Market from '../../models/market';
-
-const mockCfgGet = jest.fn();
-const ConfigServiceMock = jest.fn().mockImplementation(() => {
-  return { get: mockCfgGet };
-});
-
-const mockGetCore = jest.fn();
-const NetworkServiceMock = jest.fn().mockImplementation(() => {
-  return { getCore: mockGetCore };
-});
-
-const mockGetLogo = jest.fn();
-const MetadataServiceMock = jest.fn().mockImplementation(() => {
-  return {
-    getLogo: mockGetLogo,
-  };
-});
+import Liquidity from '../../models/liquidity';
+import { MarketService } from '../markets/market.service';
+import Swap from '../../models/swap';
+import * as moment from 'moment';
+import MarketPrice from '../../models/market_price';
 
 describe('LiquidityService', () => {
   let module: TestingModule;
   let service: LiquidityService;
   const db = DBService.getForTest();
-  const net = 'net1';
-  let cfgObj = {};
+  const net = 'etheruem';
+  const marketAddress = '0xMarket';
+  const provider = '0xProvider';
 
   afterEach(async () => {
     await db.truncateTables();
@@ -46,73 +31,120 @@ describe('LiquidityService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    mockCfgGet.mockReset();
-    mockGetCore.mockReset();
-    mockGetLogo.mockReset();
-
-    cfgObj = {};
-    mockCfgGet.mockReset().mockImplementation((args) => {
-      return cfgObj[args];
-    });
 
     module = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
-      providers: [LiquidityService, MarketsService, NetworkService, MetadataService, ConfigService],
-    })
-      .overrideProvider(ConfigService)
-      .useValue(new ConfigServiceMock())
-      .overrideProvider(NetworkService)
-      .useValue(new NetworkServiceMock())
-      .overrideProvider(MetadataService)
-      .useValue(new MetadataServiceMock())
-      .compile();
+      providers: [LiquidityService, MarketService],
+    }).compile();
 
     service = module.get<LiquidityService>(LiquidityService);
   });
 
   describe('.extendLiquidity', () => {
-    describe('when noMerge=false', () => {
-      describe('when noMerge=true', () => {
-        it('should not attempt to merge contract market object with db object', async () => {
-          const market = await Market.create({
-            address: '0x123',
-            network: net,
-          });
-          const liquidity: Liquidity = new Liquidity({
-            network: net,
-            marketAddress: market.address,
-            provider: '0xProvider',
-          });
+    let market: Market;
+    let liquidity: Liquidity;
 
-          jest.spyOn(module.get(MarketsService), 'extendMarket').mockResolvedValue();
+    beforeEach(async () => {
+      market = await Market.create({
+        address: marketAddress,
+        network: net,
+      });
+      liquidity = await Liquidity.create({
+        network: net,
+        marketAddress: market.address,
+        provider,
+      });
+    });
 
-          await service.extendLiquidity(liquidity, true);
-          expect(liquidity.network).toEqual(net);
-          expect(liquidity.marketAddress).toEqual('0x123');
-          expect(liquidity.provider).toEqual('0xProvider');
-          expect(liquidity.market).toBeDefined();
-          expect(liquidity.market.id).toEqual(market.id);
-        });
+    it(`should revert with error if select=['market'] and liquidity market is unknown`, async () => {
+      liquidity.marketAddress = '0xMarketUnknown';
+      await expect(service.extendLiquidity(liquidity, ['market'])).rejects.toThrow('market not found');
+    });
+
+    it(`should return correct value when select=['market']`, async () => {
+      const extendMarketMock = jest.spyOn(module.get(MarketService), 'extendMarket');
+      await expect(service.extendLiquidity(liquidity, ['market'])).resolves.toBeUndefined();
+      expect(extendMarketMock).toHaveBeenCalled();
+      expect(liquidity.market).toBeDefined();
+    });
+
+    it(`should return correct value when select=['totalSwaps24h']`, async () => {
+      await Swap.create({ network: net, marketAddress, provider, lid: 0 });
+      await Swap.create({ network: net, marketAddress, provider, lid: 1 });
+      await Swap.create({
+        network: net,
+        marketAddress,
+        provider,
+        lid: 1,
+        createdAt: moment().subtract(86400, 's').toISOString(),
+      });
+      await expect(service.extendLiquidity(liquidity, ['totalSwaps24h'])).resolves.toBeUndefined();
+      expect(liquidity.totalSwaps24h).toBe('2');
+
+      liquidity = await Liquidity.updateById(liquidity.id, { lid: 1 });
+      await expect(service.extendLiquidity(liquidity, ['totalSwaps24h'])).resolves.toBeUndefined();
+      expect(liquidity.totalSwaps24h).toBe('1');
+    });
+
+    it(`should return correct value when select=['volume24h']`, async () => {
+      await Swap.create({ network: net, marketAddress, provider, lid: 0, amount: '5' });
+      await Swap.create({ network: net, marketAddress, provider, lid: 1, amount: '2' });
+      await Swap.create({
+        network: net,
+        marketAddress,
+        provider,
+        lid: 1,
+        amount: '10',
+        createdAt: moment().subtract(86400, 's').toISOString(),
+      });
+      await expect(service.extendLiquidity(liquidity, ['volume24h'])).resolves.toBeUndefined();
+      expect(liquidity.volume24h).toBe('7');
+
+      liquidity = await Liquidity.updateById(liquidity.id, { lid: 1 });
+      await expect(service.extendLiquidity(liquidity, ['volume24h'])).resolves.toBeUndefined();
+      expect(liquidity.volume24h).toBe('2');
+    });
+
+    it(`should return correct value when select=['priceChange']`, async () => {
+      const now = moment();
+      await MarketPrice.create({
+        network: net,
+        marketAddress,
+        provider,
+        price: '2',
+        createdAt: now.clone().subtract(86400, 's').toISOString(),
+      });
+      await MarketPrice.create({
+        network: net,
+        marketAddress,
+        provider,
+        lid: 1,
+        price: '3',
+        createdAt: now.clone().subtract(86401, 's').toISOString(),
+      });
+      await MarketPrice.create({
+        network: net,
+        marketAddress,
+        provider,
+        price: '4',
+        createdAt: now.clone().toISOString(),
       });
 
-      describe('liquidity market was not found', () => {
-        it(
-          'should attempt to merge contract market object into the given' + ' market object',
-          async () => {
-            const liquidity: Liquidity = new Liquidity({
-              network: net,
-              marketAddress: '0x123',
-              provider: '0xProvider',
-            });
+      await expect(service.extendLiquidity(liquidity, ['priceChange'])).resolves.toBeUndefined();
+      expect(liquidity.priceChange).toBe(100);
 
-            jest.spyOn(module.get(MarketsService), 'extendMarket').mockResolvedValue();
-
-            await expect(service.extendLiquidity(liquidity, true)).rejects.toEqual(
-              new Error('market not found'),
-            );
-          },
-        );
+      await MarketPrice.create({
+        network: net,
+        marketAddress,
+        provider,
+        lid: 1,
+        price: '4',
+        createdAt: now.clone().toISOString(),
       });
+
+      liquidity = await Liquidity.updateById(liquidity.id, { lid: 1 });
+      await expect(service.extendLiquidity(liquidity, ['priceChange'])).resolves.toBeUndefined();
+      expect(liquidity.priceChange).toBe(33.333333333333336);
     });
   });
 });

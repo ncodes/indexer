@@ -9,7 +9,7 @@ import { Roles } from '../../common/roles';
 import * as request from 'supertest';
 import NetworkService from '../../network/network.service';
 import { makeSession } from '../auth/utils';
-import { MarketsService } from '../markets/markets.service';
+import { MarketService } from '../markets/market.service';
 import { TicketsController } from './tickets.controller';
 import { TicketsService } from './tickets.service';
 import Ticket from '../../models/ticket';
@@ -31,6 +31,8 @@ describe('TicketsController', () => {
   let app: INestApplication;
   const db = DBService.getForTest();
   let cfgObj = {};
+  const marketAddress = '0xMarket';
+  const owner = '0xOwner';
 
   afterEach(async () => {
     await db.truncateTables();
@@ -58,7 +60,7 @@ describe('TicketsController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [TicketsController],
-      providers: [ConfigService, NetworkService, MarketsService, TicketsService],
+      providers: [ConfigService, NetworkService, MarketService, TicketsService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
@@ -83,13 +85,12 @@ describe('TicketsController', () => {
     it('should return 400 when network is unknown', async () => {
       await request(app.getHttpServer())
         .get(`/v1/tickets/0xOwner/0`)
-        .set('Authorization', 'bearer ' + token)
         .send({})
         .expect(400)
         .expect({
           error: {
             message: 'network is required',
-            param: 'network',
+            param: 'net',
             type: 'invalid_request_error',
           },
         });
@@ -97,8 +98,7 @@ describe('TicketsController', () => {
 
     it('should return 404 when ticket was not found', async () => {
       await request(app.getHttpServer())
-        .get(`/v1/tickets/0xOwner/0`)
-        .set('Authorization', 'bearer ' + token)
+        .get(`/v1/tickets/${owner}/0`)
         .query({ net })
         .expect(404)
         .expect({
@@ -115,7 +115,6 @@ describe('TicketsController', () => {
       const mockTicket = jest.spyOn(app.get(TicketsService), 'extendTicket');
       await request(app.getHttpServer())
         .get(`/v1/tickets/${ticket.owner}/${ticket.index}`)
-        .set('Authorization', 'bearer ' + token)
         .query({ net })
         .expect(200)
         .expect((res) => {
@@ -129,13 +128,12 @@ describe('TicketsController', () => {
     it('should return 400 when network is unknown', async () => {
       await request(app.getHttpServer())
         .get(`/v1/tickets`)
-        .set('Authorization', 'bearer ' + token)
         .send({})
         .expect(400)
         .expect({
           error: {
             message: 'network is required',
-            param: 'network',
+            param: 'net',
             type: 'invalid_request_error',
           },
         });
@@ -143,14 +141,13 @@ describe('TicketsController', () => {
 
     describe('query: count=true', () => {
       it('should return correct count', async () => {
-        const ticket = await Ticket.create({
+        await Ticket.create({
           network: net,
-          owner: '0xOwner',
+          owner,
           index: 0,
         });
         await request(app.getHttpServer())
           .get(`/v1/tickets`)
-          .set('Authorization', 'bearer ' + token)
           .query({ net, count: true })
           .send({})
           .expect(200)
@@ -158,26 +155,16 @@ describe('TicketsController', () => {
       });
     });
 
-    describe('query: mid=0xMarket2', () => {
+    describe('query: poolId=2', () => {
       it('should return correct ticket list', async () => {
         const mockTicket = jest.spyOn(app.get(TicketsService), 'extendTicket');
-        jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue();
 
-        await Market.create({ network: net, address: '0xMarket2' });
-        await Ticket.create({
-          network: net,
-          owner: '0xOwner',
-          marketAddress: '0xMarket',
-        });
-        const ticket = await Ticket.create({
-          network: net,
-          marketAddress: '0xMarket2',
-        });
+        await Ticket.create({ network: net, owner, poolId: 1 });
+        const ticket = await Ticket.create({ network: net, poolId: 2 });
+
         await request(app.getHttpServer())
           .get(`/v1/tickets`)
-          .set('Authorization', 'bearer ' + token)
-          .query({ net, marketAddress: '0xMarket2' })
-          .send({})
+          .query({ net, poolId: 2 })
           .expect(200)
           .expect((res) => {
             expect(res.body.data).toHaveLength(1);
@@ -187,71 +174,19 @@ describe('TicketsController', () => {
       });
     });
 
-    describe('query: owner=0xOwner', () => {
+    describe('query: owner', () => {
       it('should return correct ticket list', async () => {
         const mockTicket = jest.spyOn(app.get(TicketsService), 'extendTicket');
 
-        const ticket = await Ticket.create({ network: net, owner: '0xOwner' });
-        await Ticket.create({ network: net, marketAddress: '0xMarket2' });
+        const ticket = await Ticket.create({ network: net, owner });
+        await Ticket.create({ network: net });
         await request(app.getHttpServer())
           .get(`/v1/tickets`)
-          .set('Authorization', 'bearer ' + token)
-          .query({ net, owner: '0xOwner' })
-          .send({})
+          .query({ net, owner })
           .expect(200)
           .expect((res) => {
             expect(res.body.data).toHaveLength(1);
             expect(res.body.data[0].id).toEqual(ticket.id);
-            expect(mockTicket).toBeCalled();
-          });
-      });
-    });
-
-    describe('query: delegate=0xDelegate', () => {
-      it('should return correct ticket list', async () => {
-        const mockTicket = jest.spyOn(app.get(TicketsService), 'extendTicket');
-
-        const ticket = await Ticket.create({
-          network: net,
-          delegate: '0xDelegate',
-        });
-        await Ticket.create({ network: net, marketAddress: '0xMarket2' });
-        await request(app.getHttpServer())
-          .get(`/v1/tickets`)
-          .set('Authorization', 'bearer ' + token)
-          .query({ net, delegate: '0xDelegate' })
-          .send({})
-          .expect(200)
-          .expect((res) => {
-            expect(res.body.data).toHaveLength(1);
-            expect(res.body.data[0].id).toEqual(ticket.id);
-            expect(mockTicket).toBeCalled();
-          });
-      });
-    });
-
-    describe('query: owner=0xOwner, delegate=0xDelegate', () => {
-      it('should return correct ticket list', async () => {
-        const mockTicket = jest.spyOn(app.get(TicketsService), 'extendTicket');
-
-        const ticket = await Ticket.create({
-          network: net,
-          delegate: '0xAccount',
-        });
-        const ticket2 = await Ticket.create({
-          network: net,
-          owner: '0xAccount',
-        });
-        await request(app.getHttpServer())
-          .get(`/v1/tickets`)
-          .set('Authorization', 'bearer ' + token)
-          .query({ net, owner: '0xAccount', delegate: '0xAccount' })
-          .send({})
-          .expect(200)
-          .expect((res) => {
-            expect(res.body.data).toHaveLength(2);
-            expect(res.body.data[0].id).toEqual(ticket2.id);
-            expect(res.body.data[1].id).toEqual(ticket.id);
             expect(mockTicket).toBeCalled();
           });
       });
@@ -265,7 +200,6 @@ describe('TicketsController', () => {
         await Ticket.create({ network: net, orderId: 2 });
         await request(app.getHttpServer())
           .get(`/v1/tickets`)
-          .set('Authorization', 'bearer ' + token)
           .query({ net, orderId: 1 })
           .send({})
           .expect(200)
@@ -285,7 +219,6 @@ describe('TicketsController', () => {
         await Ticket.create({ network: net, disputeId: 2 });
         await request(app.getHttpServer())
           .get(`/v1/tickets`)
-          .set('Authorization', 'bearer ' + token)
           .query({ net, disputeId: 1 })
           .send({})
           .expect(200)
@@ -300,20 +233,14 @@ describe('TicketsController', () => {
     describe('query: joined is set', () => {
       it('should return correct ticket list when joined=true', async () => {
         const mockTicket = jest.spyOn(app.get(TicketsService), 'extendTicket');
-        jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue();
 
-        await Market.create({ network: net, address: '0xMarket' });
-        const ticket = await Ticket.create({
-          network: net,
-          marketAddress: '0xMarket',
-        });
+        await Market.create({ network: net, address: marketAddress });
+        const ticket = await Ticket.create({ network: net, joined: true });
         await Ticket.create({ network: net });
 
         await request(app.getHttpServer())
           .get(`/v1/tickets`)
-          .set('Authorization', 'bearer ' + token)
           .query({ net, joined: 'true' })
-          .send({})
           .expect(200)
           .expect((res) => {
             expect(res.body.data).toHaveLength(1);
@@ -324,17 +251,14 @@ describe('TicketsController', () => {
 
       it('should return correct ticket list when joined=false', async () => {
         const mockTicket = jest.spyOn(app.get(TicketsService), 'extendTicket');
-        jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue();
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
 
-        await Market.create({ network: net, address: '0xMarket' });
-        await Ticket.create({ network: net, marketAddress: '0xMarket' });
-        const ticket = await Ticket.create({ network: net });
+        await Ticket.create({ network: net, joined: true });
+        const ticket = await Ticket.create({ network: net, joined: false });
 
         await request(app.getHttpServer())
           .get(`/v1/tickets`)
-          .set('Authorization', 'bearer ' + token)
-          .query({ net, joined: 'false' })
-          .send({})
+          .query({ net, joined: false })
           .expect(200)
           .expect((res) => {
             expect(res.body.data).toHaveLength(1);
@@ -357,7 +281,6 @@ describe('TicketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/tickets`)
-          .set('Authorization', 'bearer ' + token)
           .query({ net, matured: true })
           .send({})
           .expect(200)
@@ -380,7 +303,6 @@ describe('TicketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/tickets`)
-          .set('Authorization', 'bearer ' + token)
           .query({ net, matured: false })
           .send({})
           .expect(200)
@@ -400,7 +322,6 @@ describe('TicketsController', () => {
         await Ticket.create({ network: net });
         await request(app.getHttpServer())
           .get(`/v1/tickets`)
-          .set('Authorization', 'bearer ' + token)
           .query({ net, drafted: 'true' })
           .send({})
           .expect(200)
@@ -418,7 +339,6 @@ describe('TicketsController', () => {
         await Ticket.create({ network: net });
         await request(app.getHttpServer())
           .get(`/v1/tickets`)
-          .set('Authorization', 'bearer ' + token)
           .query({ net, drafted: 'false' })
           .send({})
           .expect(200)
@@ -430,33 +350,29 @@ describe('TicketsController', () => {
     });
 
     describe('query: expired is set', () => {
-      it(
-        'should return correct ticket list when ticket has no market and' + ' past join time',
-        async () => {
-          const mockTicket = jest.spyOn(app.get(TicketsService), 'extendTicket');
-          jest.spyOn(app.get(MarketsService), 'extendMarket').mockResolvedValue();
+      it('should return correct ticket list when ticket has no market and' + ' past join time', async () => {
+        const mockTicket = jest.spyOn(app.get(TicketsService), 'extendTicket');
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
 
-          await Market.create({ network: net, address: '0xMarket' });
-          const now = moment();
-          const ticket = await Ticket.create({
-            network: net,
-            joinBy: now.subtract(1, 'h').toISOString(),
+        await Market.create({ network: net, address: '0xMarket' });
+        const now = moment();
+        const ticket = await Ticket.create({
+          network: net,
+          joinBy: now.subtract(1, 'h').toISOString(),
+        });
+        await Ticket.create({ network: net });
+
+        await request(app.getHttpServer())
+          .get(`/v1/tickets`)
+          .query({ net, expired: 'true' })
+          .send({})
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(ticket.id);
+            expect(mockTicket).toBeCalled();
           });
-          await Ticket.create({ network: net });
-
-          await request(app.getHttpServer())
-            .get(`/v1/tickets`)
-            .set('Authorization', 'bearer ' + token)
-            .query({ net, expired: 'true' })
-            .send({})
-            .expect(200)
-            .expect((res) => {
-              expect(res.body.data).toHaveLength(1);
-              expect(res.body.data[0].id).toEqual(ticket.id);
-              expect(mockTicket).toBeCalled();
-            });
-        },
-      );
+      });
 
       it('should return correct ticket list when ticket has been drained', async () => {
         const mockTicket = jest.spyOn(app.get(TicketsService), 'extendTicket');
@@ -466,7 +382,6 @@ describe('TicketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/tickets`)
-          .set('Authorization', 'bearer ' + token)
           .query({ net, expired: 'true' })
           .send({})
           .expect(200)
@@ -491,7 +406,6 @@ describe('TicketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/tickets`)
-          .set('Authorization', 'bearer ' + token)
           .query({ net, cancelled: 'true' })
           .send({})
           .expect(200)
@@ -513,7 +427,6 @@ describe('TicketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/tickets`)
-          .set('Authorization', 'bearer ' + token)
           .query({ net, slashed: 'true' })
           .send({})
           .expect(200)
@@ -534,7 +447,6 @@ describe('TicketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/tickets`)
-          .set('Authorization', 'bearer ' + token)
           .query({ net, limit: 1 })
           .send({})
           .expect(200)
@@ -555,7 +467,6 @@ describe('TicketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/tickets`)
-          .set('Authorization', 'bearer ' + token)
           .query({ net, limit: 1, offset: 1 })
           .send({})
           .expect(200)

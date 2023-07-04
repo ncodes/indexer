@@ -10,11 +10,6 @@ export class GetQueryDTO {
   @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
   public net?: string;
 
-  @Transform(({ value }) => toBoolean(value))
-  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'noMerge') })
-  @IsOptional()
-  public noMerge: boolean;
-
   @Transform(({ value }) => (value as string).split(','))
   @IsOptional()
   public select?: string[];
@@ -38,18 +33,6 @@ export class ListQueryDTO {
   @IsOptional()
   public query?: string;
 
-  @Transform(({ value }) => toNumber(value))
-  @IsNumber(undefined, { message: makeValidatorMsg('must be a number', 'minJoinedMediators') })
-  @IsOptional()
-  public minJoinedMediators?: number;
-
-  @IsNumberString(
-    { no_symbols: true },
-    { message: makeValidatorMsg('must be number', 'minMediatorBond') },
-  )
-  @IsOptional()
-  public minMediatorBond?: string;
-
   @Transform(({ value }) => toBoolean(value))
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'noPermSwap') })
   @IsOptional()
@@ -59,11 +42,6 @@ export class ListQueryDTO {
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'onlyInstant') })
   @IsOptional()
   public onlyInstant?: boolean;
-
-  @Transform(({ value }) => toBoolean(value))
-  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'onlyPermMediate') })
-  @IsOptional()
-  public onlyPermMediate?: boolean;
 
   @Transform(({ value }) => toBoolean(value))
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'noMerge') })

@@ -6,13 +6,12 @@ exports.up = function (knex) {
       table.string('network');
       table.string('owner');
       table.integer('index');
-      table.string('marketAddress');
+      table.integer('poolId');
       table.integer('orderId');
       table.integer('disputeId');
       table.string('bond');
       table.string('txHash');
-      table.string('delegate');
-      table.boolean('delegated').defaultTo(false);
+      table.boolean('joined').defaultTo(false);
       table.boolean('drained').defaultTo(false);
       table.boolean('drafted').defaultTo(false);
       table.boolean('slashed').defaultTo(false);

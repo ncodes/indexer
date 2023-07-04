@@ -4,7 +4,7 @@ import { MetadataService } from '../../services/metadata/metadata.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DBService } from '../../db/DBService';
 import { TicketsService } from './tickets.service';
-import { MarketsService } from '../markets/markets.service';
+import { MarketService } from '../markets/market.service';
 import Ticket from '../../models/ticket';
 import Market from '../../models/market';
 import * as moment from 'moment';
@@ -58,7 +58,7 @@ describe('TicketsService', () => {
 
     module = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
-      providers: [ConfigService, TicketsService, MarketsService, NetworkService],
+      providers: [ConfigService, TicketsService, MarketService, NetworkService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
@@ -72,160 +72,71 @@ describe('TicketsService', () => {
   });
 
   describe('.extendTicket', () => {
-    describe('when ticket.marketAddress is set', () => {
-      it('should return error when market was not found', async () => {
-        const ticket = await Ticket.create({
-          network: net,
-          owner: '0xOwner',
-          index: 0,
-          marketAddress: '0xMarket',
-        });
+    let ticket: Ticket;
 
-        await expect(service.extendTicket(ticket, false, undefined, false)).rejects.toEqual(
-          new Error('market not found'),
-        );
-      });
-
-      it('should append market to ticket if when market exist', async () => {
-        const market = await Market.create({
-          network: net,
-          address: '0xMarket',
-        });
-        const ticket = await Ticket.create({
-          network: net,
-          owner: '0xOwner',
-          index: 0,
-          marketAddress: market.address,
-        });
-
-        jest.spyOn(module.get(MarketsService), 'extendMarket').mockResolvedValue();
-
-        await expect(
-          service.extendTicket(ticket, false, undefined, false),
-        ).resolves.toBeUndefined();
-
-        expect(ticket.market).toBeDefined();
-        expect(ticket.market.id).toEqual(market.id);
+    beforeEach(async () => {
+      ticket = await Ticket.create({
+        network: net,
+        owner: '0xOwner',
+        index: 0,
       });
     });
 
-    describe('when ticket.marketAddress is set bot `noMarket` is true', () => {
-      it('should append market to ticket if when market exist', async () => {
-        const market = await Market.create({
-          network: net,
-          address: '0xMarket',
-        });
-        const ticket = await Ticket.create({
-          network: net,
-          owner: '0xOwner',
-          index: 0,
-          marketAddress: market.address,
-        });
-        jest.spyOn(module.get(MarketsService), 'extendMarket').mockResolvedValue();
-        await expect(service.extendTicket(ticket, false, undefined, true)).resolves.toBeUndefined();
-        expect(ticket.market).toBeUndefined();
-      });
+    it('should extend ticket correctly when select=[matured]', async () => {
+      await service.extendTicket(ticket, []);
+      expect(ticket.matured).toBeFalsy();
+
+      ticket.matureAt = moment().add(1, 'day').toISOString();
+      await service.extendTicket(ticket, ['matured']);
+      expect(ticket.matured).toEqual(false);
+
+      ticket.matureAt = moment().subtract(1, 'day').toISOString();
+      await service.extendTicket(ticket, ['matured']);
+      expect(ticket.matured).toEqual(true);
     });
 
-    describe('when `matureAt` is set to a past date', () => {
-      it('should set `matured` = true', async () => {
-        const market = await Market.create({
-          network: net,
-          address: '0xMarket',
-        });
-        const ticket = await Ticket.create({
-          network: net,
-          owner: '0xOwner',
-          index: 0,
-          marketAddress: market.address,
-          matureAt: moment().subtract('1', 'hour').toISOString(),
-        });
-        jest.spyOn(module.get(MarketsService), 'extendMarket').mockResolvedValue();
-        await expect(
-          service.extendTicket(ticket, false, undefined, false),
-        ).resolves.toBeUndefined();
-        expect(ticket.matured).toBeTruthy();
-      });
+    it('should extend ticket correctly when select=[expired]', async () => {
+      await service.extendTicket(ticket, []);
+      expect(ticket.expired).toBeFalsy();
+
+      ticket.joinBy = moment().add(1, 'day').toISOString();
+      await service.extendTicket(ticket, ['expired']);
+      expect(ticket.expired).toBeFalsy();
+
+      ticket.joinBy = moment().subtract(1, 'day').toISOString();
+      await service.extendTicket(ticket, ['expired']);
+      expect(ticket.expired).toBeTruthy();
+
+      ticket.joinBy = undefined;
+      ticket.drained = true;
+      await service.extendTicket(ticket, ['expired']);
+      expect(ticket.expired).toBeTruthy();
     });
 
-    describe('when `joinBy` is set to a past date and `marketAddress` is set', () => {
-      it('should set `expired` = true', async () => {
-        const ticket = await Ticket.create({
-          network: net,
-          owner: '0xOwner',
-          index: 0,
-          joinBy: moment().subtract('1', 'hour').toISOString(),
-        });
-        jest.spyOn(module.get(MarketsService), 'extendMarket').mockResolvedValue();
-        await expect(
-          service.extendTicket(ticket, false, undefined, false),
-        ).resolves.toBeUndefined();
-        expect(ticket.expired).toBeTruthy();
-      });
+    it('should extend ticket correctly when select=[cancelling]', async () => {
+      await service.extendTicket(ticket, []);
+      expect(ticket.cancelling).toBeFalsy();
+
+      ticket.cancelAt = moment().add(1, 'day').toISOString();
+      await service.extendTicket(ticket, ['cancelling']);
+      expect(ticket.cancelling).toBeTruthy();
+
+      ticket.cancelAt = moment().subtract(1, 'day').toISOString();
+      await service.extendTicket(ticket, ['cancelling']);
+      expect(ticket.cancelling).toBeFalsy();
     });
 
-    describe('when `drained` is true', () => {
-      it('should set `expired` = true', async () => {
-        const ticket = await Ticket.create({
-          network: net,
-          owner: '0xOwner',
-          index: 0,
-          drained: true,
-        });
-        jest.spyOn(module.get(MarketsService), 'extendMarket').mockResolvedValue();
-        await expect(
-          service.extendTicket(ticket, false, undefined, false),
-        ).resolves.toBeUndefined();
-        expect(ticket.expired).toBeTruthy();
-      });
-    });
+    it('should extend ticket correctly when select=[cancelled]', async () => {
+      await service.extendTicket(ticket, []);
+      expect(ticket.cancelled).toBeFalsy();
 
-    describe('when `cancelAt` is set to a past date', () => {
-      it('should set `cancelled` = true', async () => {
-        const ticket = await Ticket.create({
-          network: net,
-          owner: '0xOwner',
-          index: 0,
-          cancelAt: moment().subtract('1', 'hour').toISOString(),
-        });
-        jest.spyOn(module.get(MarketsService), 'extendMarket').mockResolvedValue();
-        await expect(
-          service.extendTicket(ticket, false, undefined, false),
-        ).resolves.toBeUndefined();
-        expect(ticket.cancelled).toBeTruthy();
-      });
-    });
+      ticket.cancelAt = moment().add(1, 'day').toISOString();
+      await service.extendTicket(ticket, ['cancelled']);
+      expect(ticket.cancelled).toBeFalsy();
 
-    describe('when `cancelAt` is set to a future date', () => {
-      it('should set `cancelling` = true', async () => {
-        const ticket = await Ticket.create({
-          network: net,
-          owner: '0xOwner',
-          index: 0,
-          cancelAt: moment().add('1', 'hour').toISOString(),
-        });
-        jest.spyOn(module.get(MarketsService), 'extendMarket').mockResolvedValue();
-        await expect(
-          service.extendTicket(ticket, false, undefined, false),
-        ).resolves.toBeUndefined();
-        expect(ticket.cancelling).toBeTruthy();
-      });
-    });
-
-    describe('when `leaveAt` is set to a past date', () => {
-      it('should set `canLeave` = true', async () => {
-        const ticket = await Ticket.create({
-          network: net,
-          owner: '0xOwner',
-          index: 0,
-          leaveAt: moment().subtract('1', 'hour').toISOString(),
-        });
-        jest.spyOn(module.get(MarketsService), 'extendMarket').mockResolvedValue();
-        await expect(
-          service.extendTicket(ticket, false, undefined, false),
-        ).resolves.toBeUndefined();
-        expect(ticket.canLeave).toBeTruthy();
-      });
+      ticket.cancelAt = moment().subtract(1, 'day').toISOString();
+      await service.extendTicket(ticket, ['cancelled']);
+      expect(ticket.cancelled).toBeTruthy();
     });
   });
 });

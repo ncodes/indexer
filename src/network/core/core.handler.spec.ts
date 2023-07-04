@@ -1062,22 +1062,20 @@ describe('CoreHandler', () => {
   describe('.onTransferredToFeePool', () => {
     it('should create mine task', async () => {
       const token = '0xToken';
+      const convToken = '0xConvToken';
+      const convAmount = toBN(100);
       const amount = toBN(10);
       const now = moment().unix();
       await expect(
-        handler.onTransferredToFeePool(token, amount, {
+        handler.onTransferredToFeePool(token, amount, convToken, convAmount, {
           getBlock: jest.fn().mockResolvedValue({ timestamp: now }),
         } as any),
       ).resolves.toBeUndefined();
 
-      const mineTasks = await MineTask.findAll({
-        type: MineTaskType.FeeTransfer,
-        transferredToken: token,
-      });
+      const mineTasks = await MineTask.findAll({ type: MineTaskType.FeeTransfer, token });
       expect(mineTasks).toHaveLength(1);
       expect(moment(mineTasks[0].mineAt).isAfter(moment.unix(now))).toBeTruthy();
-      expect(mineTasks[0].transferredToken).toEqual(token);
-      expect(mineTasks[0].transferredAmount).toEqual(amount.toString());
+      expect(mineTasks[0].token).toEqual(token);
     });
   });
 

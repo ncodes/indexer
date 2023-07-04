@@ -1,7 +1,6 @@
 import { randStr } from '../common/common';
-import Objection, { Model, QueryBuilderType, raw, Transaction } from 'objection';
+import Objection, { QueryBuilderType, raw, Transaction } from 'objection';
 import { BaseModel } from './base';
-import InvitedMediator from './invited_mediators';
 import * as _ from 'lodash';
 
 export enum AssetType {
@@ -60,12 +59,8 @@ export default class Market extends BaseModel {
   completionRate: number = undefined;
   // The transaction hash
   txHash: string = undefined;
-  // The minimum number of mediators required in a dispute
-  numMediators: number = undefined;
-  // The number of mediators joined
-  numMediatorsJoined: number = undefined;
-  // The total bond of joined mediators
-  totalJoinedMediatorsBond: string = undefined;
+  // The mediator pool ID
+  mediatorPoolId: number = undefined;
   // The number of active disputes
   openDisputes: number = undefined;
   // The number of disputes ever created (excluding appeals)
@@ -78,22 +73,14 @@ export default class Market extends BaseModel {
   permPut: boolean = undefined;
   // Indicates the swap operation is permissioned
   permSwap: boolean = undefined;
-  // Indicates the mediation operation is permissioned
-  permMediate: boolean = undefined;
-  // The minimum mediator bond
-  mediatorBond: string = undefined;
   // Number of seconds before dispute can be started
   disputeDelayTime: number;
   // Number of seconds within which evidence must be shared
   evidenceDur: number;
   // Number of seconds for votes to be committed and revealed
   predictDur: number;
-  // Number of seconds within which an appeal must be created after prediction phase
-  appealDur: number;
   // The market manager
   manager: string;
-  // The cost of starting a dispute (in P2P)
-  disputeCost: string;
 
   // *** Non-persisted fields **//
   numDisputes: number; // (include appeals)
@@ -129,16 +116,7 @@ export default class Market extends BaseModel {
   }
 
   static get relationMappings() {
-    return {
-      invitedMediators: {
-        relation: Model.HasManyRelation,
-        modelClass: InvitedMediator,
-        join: {
-          from: 'markets.address',
-          to: 'invited_mediators.marketAddress',
-        },
-      },
-    };
+    return {};
   }
 
   getBaseAsset(): Asset {
@@ -329,10 +307,7 @@ export default class Market extends BaseModel {
    * @param quoteAsset The quote asset address (optional)
    * @param queryStr The query string (optional)
    * @param noPermSwap Indicate to ignore market with permissioned swap enabled (optional)
-   * @param onlyPermMediate Indicate to include only market with permissioned mediation enabled (optional)
    * @param onlyInstant Indicate to include only market where base and quote asset are on-chain.
-   * @param minMediatorBond Indicate to only return market with a specific minimum mediator bond (optional)
-   * @param minJoinedMediators Indicate to only return market with a specific minimum number of joined mediators (optional)
    * @param countOnly Indicates whether to return count only.
    * @param limit The number of records to return.
    * @param offset The offset value
@@ -346,10 +321,7 @@ export default class Market extends BaseModel {
     quoteAsset: string,
     queryStr: string,
     noPermSwap = false,
-    onlyPermMediate = false,
     onlyInstant: boolean,
-    minMediatorBond: string,
-    minJoinedMediators: number,
     countOnly: boolean,
     limit: number,
     offset: number,
@@ -363,10 +335,7 @@ export default class Market extends BaseModel {
     if (baseAsset) query = query.where('baseAddress', 'ilike', baseAsset);
     if (quoteAsset) query = query.where('quoteAddress', 'ilike', quoteAsset);
     if (noPermSwap) query = query.where('permSwap', false);
-    if (onlyPermMediate) query = query.where('permMediate', true);
     if (onlyInstant !== undefined) query = query.where('instant', onlyInstant);
-    if (minMediatorBond) query = query.where(raw(`cast(?? as numeric)`, 'mediatorBond'), '>=', minMediatorBond);
-    if (minJoinedMediators) query = query.where('numMediatorsJoined', '>=', minJoinedMediators);
     if (queryStr)
       query = query.where((q) => {
         this.makeSearchQuery(q, queryStr);
@@ -385,9 +354,7 @@ export default class Market extends BaseModel {
       .whereNotDeleted()
       .orderBy('amountSwapped', 'DESC') // prefer high volume
       .orderBy('totalSwaps', 'DESC') // prefer high swap transactions
-      .orderBy('completionRate', 'DESC') // prefer high release rate (without dispute)
-      .orderBy('totalJoinedMediatorsBond', 'DESC') // prefer high mediator bond
-      .orderBy('numMediatorsJoined', 'DESC'); // prefer high number of mediators
+      .orderBy('completionRate', 'DESC'); // prefer high release rate (without dispute)
   }
 
   /**

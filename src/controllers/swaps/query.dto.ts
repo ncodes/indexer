@@ -51,3 +51,15 @@ export class ListQueryDTO {
   @IsOptional()
   public offset?: number;
 }
+
+// tslint:disable-next-line:max-classes-per-file
+export class GetParticipantsDTO {
+  @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
+  @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
+  public net?: string;
+
+  @Transform(({ value }) => toBoolean(value))
+  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'includeRedispute') })
+  @IsOptional()
+  public includeRedispute?: boolean;
+}

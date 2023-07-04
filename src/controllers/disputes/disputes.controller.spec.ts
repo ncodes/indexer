@@ -6,13 +6,13 @@ import { NoopLogger } from '../../common/loggers/noop_logger';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import User from '../../models/user';
 import { Roles } from '../../common/roles';
-import * as request from 'supertest';
 import NetworkService from '../../network/network.service';
 import { makeSession } from '../auth/utils';
-import { MarketsService } from '../markets/markets.service';
+import * as request from 'supertest';
+import { MarketService } from '../markets/market.service';
 import { DisputesController } from './disputes.controller';
-import Dispute from '../../models/dispute';
 import { randStr } from '../../common/common';
+import Dispute from '../../models/dispute';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -55,7 +55,7 @@ describe('DisputesController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [DisputesController],
-      providers: [ConfigService, NetworkService, MarketsService],
+      providers: [ConfigService, NetworkService, MarketService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
@@ -86,7 +86,7 @@ describe('DisputesController', () => {
         .expect({
           error: {
             message: 'network is required',
-            param: 'network',
+            param: 'net',
             type: 'invalid_request_error',
           },
         });
@@ -108,19 +108,19 @@ describe('DisputesController', () => {
     describe('query: marketAddress is set', () => {
       it('should return correctly', async () => {
         await Dispute.create({ network: net });
-        const market = await Dispute.create({
+        const dispute = await Dispute.create({
           network: net,
           marketAddress: '0xMarket',
         });
         await request(app.getHttpServer())
           .get(`/v1/disputes`)
           .set('Authorization', 'bearer ' + token)
-          .query({ net, marketAddress: market.marketAddress })
+          .query({ net, marketAddress: dispute.marketAddress })
           .send({})
           .expect(200)
           .expect((res) => {
             expect(res.body.data).toHaveLength(1);
-            expect(res.body.data[0].id).toEqual(market.id);
+            expect(res.body.data[0].id).toEqual(dispute.id);
           });
       });
     });
@@ -128,19 +128,19 @@ describe('DisputesController', () => {
     describe('query: creator is set', () => {
       it('should return correctly', async () => {
         await Dispute.create({ network: net });
-        const market = await Dispute.create({
+        const dispute = await Dispute.create({
           network: net,
           creator: '0xCreator',
         });
         await request(app.getHttpServer())
           .get(`/v1/disputes`)
           .set('Authorization', 'bearer ' + token)
-          .query({ net, creator: market.creator })
+          .query({ net, creator: dispute.creator })
           .send({})
           .expect(200)
           .expect((res) => {
             expect(res.body.data).toHaveLength(1);
-            expect(res.body.data[0].id).toEqual(market.id);
+            expect(res.body.data[0].id).toEqual(dispute.id);
           });
       });
     });
@@ -148,19 +148,19 @@ describe('DisputesController', () => {
     describe('query: defendant is set', () => {
       it('should return correctly', async () => {
         await Dispute.create({ network: net });
-        const market = await Dispute.create({
+        const dispute = await Dispute.create({
           network: net,
           defendant: '0xDefendant',
         });
         await request(app.getHttpServer())
           .get(`/v1/disputes`)
           .set('Authorization', 'bearer ' + token)
-          .query({ net, defendant: market.defendant })
+          .query({ net, defendant: dispute.defendant })
           .send({})
           .expect(200)
           .expect((res) => {
             expect(res.body.data).toHaveLength(1);
-            expect(res.body.data[0].id).toEqual(market.id);
+            expect(res.body.data[0].id).toEqual(dispute.id);
           });
       });
     });
@@ -168,16 +168,16 @@ describe('DisputesController', () => {
     describe('query: orderId is set', () => {
       it('should return correctly', async () => {
         await Dispute.create({ network: net });
-        const market = await Dispute.create({ network: net, orderId: 1 });
+        const dispute = await Dispute.create({ network: net, orderId: 1 });
         await request(app.getHttpServer())
           .get(`/v1/disputes`)
           .set('Authorization', 'bearer ' + token)
-          .query({ net, orderId: market.orderId })
+          .query({ net, orderId: dispute.orderId })
           .send({})
           .expect(200)
           .expect((res) => {
             expect(res.body.data).toHaveLength(1);
-            expect(res.body.data[0].id).toEqual(market.id);
+            expect(res.body.data[0].id).toEqual(dispute.id);
           });
       });
     });
@@ -185,33 +185,33 @@ describe('DisputesController', () => {
     describe('query: disputeId is set', () => {
       it('should return correctly', async () => {
         await Dispute.create({ network: net });
-        const market = await Dispute.create({ network: net, disputeId: 1 });
+        const dispute = await Dispute.create({ network: net, disputeId: 1 });
         await request(app.getHttpServer())
           .get(`/v1/disputes`)
           .set('Authorization', 'bearer ' + token)
-          .query({ net, disputeId: market.disputeId })
+          .query({ net, disputeId: dispute.disputeId })
           .send({})
           .expect(200)
           .expect((res) => {
             expect(res.body.data).toHaveLength(1);
-            expect(res.body.data[0].id).toEqual(market.id);
+            expect(res.body.data[0].id).toEqual(dispute.id);
           });
       });
     });
 
-    describe('query: appeal is set', () => {
+    describe('query: redispute is set', () => {
       it('should return correct result', async () => {
         await Dispute.create({ network: net });
-        const market = await Dispute.create({ network: net, appeal: true });
+        const dispute = await Dispute.create({ network: net, redispute: true });
         await request(app.getHttpServer())
           .get(`/v1/disputes`)
           .set('Authorization', 'bearer ' + token)
-          .query({ net, appeal: market.appeal })
+          .query({ net, redispute: dispute.redispute })
           .send({})
           .expect(200)
           .expect((res) => {
             expect(res.body.data).toHaveLength(1);
-            expect(res.body.data[0].id).toEqual(market.id);
+            expect(res.body.data[0].id).toEqual(dispute.id);
           });
       });
     });
@@ -219,16 +219,16 @@ describe('DisputesController', () => {
     describe('query: executed is set', () => {
       it('should return correct result', async () => {
         await Dispute.create({ network: net });
-        const market = await Dispute.create({ network: net, executed: true });
+        const dispute = await Dispute.create({ network: net, executed: true });
         await request(app.getHttpServer())
           .get(`/v1/disputes`)
           .set('Authorization', 'bearer ' + token)
-          .query({ net, executed: market.executed })
+          .query({ net, executed: dispute.executed })
           .send({})
           .expect(200)
           .expect((res) => {
             expect(res.body.data).toHaveLength(1);
-            expect(res.body.data[0].id).toEqual(market.id);
+            expect(res.body.data[0].id).toEqual(dispute.id);
           });
       });
     });
@@ -236,16 +236,16 @@ describe('DisputesController', () => {
     describe('query: released is set', () => {
       it('should return correct result', async () => {
         await Dispute.create({ network: net });
-        const market = await Dispute.create({ network: net, released: true });
+        const dispute = await Dispute.create({ network: net, released: true });
         await request(app.getHttpServer())
           .get(`/v1/disputes`)
           .set('Authorization', 'bearer ' + token)
-          .query({ net, released: market.released })
+          .query({ net, released: dispute.released })
           .send({})
           .expect(200)
           .expect((res) => {
             expect(res.body.data).toHaveLength(1);
-            expect(res.body.data[0].id).toEqual(market.id);
+            expect(res.body.data[0].id).toEqual(dispute.id);
           });
       });
     });
@@ -253,16 +253,16 @@ describe('DisputesController', () => {
     describe('query: abandoned is set', () => {
       it('should return correct result', async () => {
         await Dispute.create({ network: net });
-        const market = await Dispute.create({ network: net, abandoned: true });
+        const dispute = await Dispute.create({ network: net, abandoned: true });
         await request(app.getHttpServer())
           .get(`/v1/disputes`)
           .set('Authorization', 'bearer ' + token)
-          .query({ net, abandoned: market.abandoned })
+          .query({ net, abandoned: dispute.abandoned })
           .send({})
           .expect(200)
           .expect((res) => {
             expect(res.body.data).toHaveLength(1);
-            expect(res.body.data[0].id).toEqual(market.id);
+            expect(res.body.data[0].id).toEqual(dispute.id);
           });
       });
     });
@@ -270,19 +270,19 @@ describe('DisputesController', () => {
     describe('query: orderReleased is set', () => {
       it('should return correct result', async () => {
         await Dispute.create({ network: net });
-        const market = await Dispute.create({
+        const dispute = await Dispute.create({
           network: net,
           orderReleased: true,
         });
         await request(app.getHttpServer())
           .get(`/v1/disputes`)
           .set('Authorization', 'bearer ' + token)
-          .query({ net, orderReleased: market.orderReleased })
+          .query({ net, orderReleased: dispute.orderReleased })
           .send({})
           .expect(200)
           .expect((res) => {
             expect(res.body.data).toHaveLength(1);
-            expect(res.body.data[0].id).toEqual(market.id);
+            expect(res.body.data[0].id).toEqual(dispute.id);
           });
       });
     });

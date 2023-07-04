@@ -1771,9 +1771,7 @@ declare global {
     soldOutBP: number;
     ticketMatureDur: number;
     ticketCancelDur: number;
-    minTicketTenureDur: number;
     ticketExpireDur: number;
-    maxMediators: number;
     noVoteSlashBP: number;
     loseVoteSlashBP: number;
 
@@ -1870,7 +1868,7 @@ declare global {
     provider: string;
   }
 
-  interface NewTicketJoinedMarketNotification {
+  interface NewTicketJoinedPoolNotification {
     market: Market;
     owner: string;
     numTickets: string;
@@ -1932,15 +1930,6 @@ declare global {
     appealPhaseHoursLeft: string;
   }
 
-  interface AppealPhaseEndedNotification {
-    swap: Swap;
-    disputeId: number;
-    drafted: boolean;
-    nRelease: number;
-    nCancel: number;
-    majority: number;
-  }
-
   interface DisputeExecutedNotification {
     swap: Swap;
     dispute: Dispute;
@@ -1955,5 +1944,15 @@ declare global {
 
   interface NewUpdatedOfferNotification extends BaseOfferNotification {
     updated: boolean;
+  }
+
+  interface PoolParams {
+    poolId: number;
+    reqBond: string;
+    draftReward: string;
+    winReward: string;
+    noVoteSlashBP: string;
+    loseVoteSlashBP: string;
+    numDraftees: number;
   }
 }

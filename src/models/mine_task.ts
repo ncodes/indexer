@@ -27,10 +27,8 @@ export default class MineTask extends BaseModel {
   disputeId: number = undefined;
   // Indicate the task has been completed
   completed: boolean = undefined;
-  // Address of token transferred (for type=fee_transfer)
-  transferredToken: string = undefined;
-  // Amount of token transferred (for type=fee_transfer)
-  transferredAmount: string = undefined;
+  // Address of token whose fee to transfer (for type=fee_transfer)
+  token: string = undefined;
   // The time in the future this task can be mined
   mineAt: string = undefined;
 
@@ -88,13 +86,7 @@ export default class MineTask extends BaseModel {
    * @param offset The query offset (optional)
    * @param txn Optional transaction object
    */
-  static searchTasks(
-    network: string,
-    type?: MineTaskType,
-    limit?: number,
-    offset?: number,
-    txn?: Transaction,
-  ) {
+  static searchTasks(network: string, type?: MineTaskType, limit?: number, offset?: number, txn?: Transaction) {
     let q = this.query(txn)
       .select('*', raw('count(*) over() as' + ' "__queryCount"'))
       .whereNotDeleted()
@@ -209,18 +201,11 @@ export default class MineTask extends BaseModel {
   /**
    * Mark a single undraft task as completed
    * @param network The network name
-   * @param marketAddress The market ID
    * @param orderId The order index
    * @param disputeId The dispute index
    * @param txn Optional transaction object
    */
-  static completeOneUndraftTask(
-    network: string,
-    marketAddress: string,
-    orderId: number,
-    disputeId: number,
-    txn?: Transaction,
-  ) {
+  static completeOneUndraftTask(network: string, orderId: number, disputeId: number, txn?: Transaction) {
     return this.query(txn)
       .where(
         'id',
@@ -234,7 +219,6 @@ export default class MineTask extends BaseModel {
             disputeId,
             completed: false,
           })
-          .where('marketAddress', 'ilike', marketAddress)
           .limit(1),
       )
       .patch({

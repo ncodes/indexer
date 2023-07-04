@@ -27,7 +27,6 @@ export enum NotificationType {
   EvidencePhaseEnded = 'dispute:evidence-phase-ended',
   CommitPhaseEnded = 'dispute:commit-phase-ended',
   RevealPhaseEnded = 'dispute:reveal-phase-ended',
-  AppealPhaseEnded = 'dispute:appeal-phase-ended',
   DisputeExecuted = 'dispute:executed',
   NewOffer = 'offer:new',
   OfferUpdated = 'offer:updated',

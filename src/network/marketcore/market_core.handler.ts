@@ -6,7 +6,6 @@ import * as erc721ABI from '../../../abi/ERC721.json';
 import Market from '../../models/market';
 import { Handler } from '../handler';
 import LiquidityProvider from '../../models/market_provider';
-import InvitedMediator from '../../models/invited_mediators';
 import PermittedTrader from '../../models/permitted_trader';
 import { NotifierService, NotificationID } from '../../jobs/mailer/NotifierService';
 import NetworkService from '../network.service';
@@ -40,12 +39,27 @@ export class MarketCoreHandler extends Handler {
         quote: string,
         baseType: number,
         quoteType: number,
+        permPut: boolean,
+        permSwap: boolean,
         commission: BigNumber,
-        numMediators: BigNumber,
+        mediatorPoolId: BigNumber,
         event: Event,
         txn: Transaction,
       ) => {
-        return this.onNewMarket(id, owner, base, quote, baseType, quoteType, commission, numMediators, event, txn);
+        return this.onNewMarket(
+          id,
+          owner,
+          base,
+          quote,
+          baseType,
+          quoteType,
+          permPut,
+          permSwap,
+          commission,
+          mediatorPoolId,
+          event,
+          txn,
+        );
       },
     );
 
@@ -55,22 +69,6 @@ export class MarketCoreHandler extends Handler {
 
     this.on('RevokedPut', async (id: string, address: string, event: Event, txn: Transaction) => {
       return this.onMarketPutRevoked(id, address, event, txn);
-    });
-
-    this.on('InvitedMediator', async (id: string, address: string, event: Event) => {
-      return this.onInvitedMediator(id, address, event);
-    });
-
-    this.on('UnInvitedMediator', async (id: string, address: string, event: Event) => {
-      return this.onUnInvitedMediator(id, address, event);
-    });
-
-    this.on('AcceptedMediatorInvite', async (id: string, address: string, event: Event) => {
-      return this.onAcceptedMediatorInvite(id, address, event);
-    });
-
-    this.on('RevokedMediator', async (id: string, address: string, event: Event) => {
-      return this.onRevokedMediator(id, address, event);
     });
 
     this.on('AllowedSwap', async (id: string, address: string, event: Event) => {
@@ -118,20 +116,15 @@ export class MarketCoreHandler extends Handler {
         disputeDelayTime: BigNumber,
         evidenceDur: BigNumber,
         predictDur: BigNumber,
-        appealDur: BigNumber,
         event: Event,
         txn: Transaction,
       ) => {
-        return this.onUpdatedDisputeDurations(id, disputeDelayTime, evidenceDur, predictDur, appealDur, event, txn);
+        return this.onUpdatedDisputeDurations(id, disputeDelayTime, evidenceDur, predictDur, event, txn);
       },
     );
 
     this.on('UpdatedMarketManager', async (id: string, managerAddr: string, event: Event, txn?: Transaction) => {
       return this.onUpdatedMarketManager(id, managerAddr, event, txn);
-    });
-
-    this.on('UpdatedDisputeCost', async (id: string, newCost: BigNumber, event: Event, txn?: Transaction) => {
-      return this.onUpdatedDisputeCost(id, newCost, event, txn);
     });
   }
 
@@ -234,8 +227,10 @@ export class MarketCoreHandler extends Handler {
    * @param quoteAsset The quote asset of the market
    * @param baseType Indicates the type of the base asset
    * @param quoteType Indicates the type of the quote asset
+   * @param permPut Indicates if the market enabled PUT permission
+   * @param permSwap Indicates if the market enabled SWAP permission
    * @param commission The market creator commission base point
-   * @param numMediators The number of mediators
+   * @param mediatorPoolId The mediator pool ID
    * @param event The event object
    * @param txn The db transaction object
    */
@@ -246,8 +241,10 @@ export class MarketCoreHandler extends Handler {
     quoteAsset: string,
     baseType: number,
     quoteType: number,
+    permPut: boolean,
+    permSwap: boolean,
     commission: BigNumber,
-    numMediators: BigNumber,
+    mediatorPoolId: BigNumber,
     event: Event,
     txn?: Transaction,
   ) {
@@ -294,8 +291,6 @@ export class MarketCoreHandler extends Handler {
       quoteDecimals = token ? token.decimals : 18;
     }
 
-    const market = await this.contracts.marketCore.getMarket(id, { blockTag: event.blockNumber });
-
     await Market.create(
       {
         address: id,
@@ -313,11 +308,9 @@ export class MarketCoreHandler extends Handler {
         network: this.network,
         commission: commission.toNumber(),
         txHash: event.transactionHash,
-        numMediators: numMediators.toNumber(),
-        permPut: market.perms.put,
-        permSwap: market.perms.swap,
-        permMediate: market.perms.mediate,
-        mediatorBond: market.mediatorBond.toString(),
+        mediatorPoolId: mediatorPoolId.toNumber(),
+        permPut: permPut,
+        permSwap: permSwap,
       },
       txn,
     );
@@ -371,81 +364,6 @@ export class MarketCoreHandler extends Handler {
   }
 
   /**
-   * New mediator invited into a market
-   * @param marketAddress The market ID
-   * @param address The address of the invited mediator
-   * @param event The event object
-   * @param txn The db transaction object
-   */
-  async onInvitedMediator(marketAddress: string, address: string, event: Event, txn?: Transaction) {
-    const invite = await InvitedMediator.findInviteByNetworkMarketIDAndAddress(
-      this.network,
-      marketAddress,
-      address,
-      txn,
-    );
-
-    if (!invite) {
-      await InvitedMediator.create(
-        {
-          network: this.network,
-          marketAddress,
-          address,
-        },
-        txn,
-      );
-    }
-
-    const market = await Market.getMarket(this.network, marketAddress, [], txn);
-    await this.notifSrv.notify(NotificationID.MediatorInviteReceived, this.network, address, { market });
-  }
-
-  /**
-   * New mediator uninvited into a market
-   * @param id The market ID
-   * @param address The address of the uninvited mediator
-   * @param event The event object
-   * @param txn The db transaction object
-   */
-  async onUnInvitedMediator(id: string, address: string, event: Event, txn?: Transaction) {
-    const invite = await InvitedMediator.findInviteByNetworkMarketIDAndAddress(this.network, id, address, txn);
-    if (!invite.accepted) await InvitedMediator.remove(this.network, id, address, txn);
-  }
-
-  /**
-   * Invited mediator accepted an invitation
-   * @param marketAddress The market ID
-   * @param address The address of the uninvited mediator
-   * @param event The event object
-   * @param txn The db transaction object
-   */
-  async onAcceptedMediatorInvite(marketAddress: string, address: string, event: Event, txn?: Transaction) {
-    await InvitedMediator.updateInvite(this.network, marketAddress, address, { accepted: true }, txn);
-
-    // Notify market creator
-    const market = await Market.getByAddress(marketAddress, txn);
-    await this.notifSrv.notify(NotificationID.MediatorInviteAccepted, this.network, market.creator, {
-      market,
-      invitee: address,
-    });
-  }
-
-  /**
-   * Mediator invite has been revoked.
-   * @param marketAddress The market ID
-   * @param address The address of the revoked mediator
-   * @param event The event object
-   * @param txn The db transaction object
-   */
-  async onRevokedMediator(marketAddress: string, address: string, event: Event, txn?: Transaction) {
-    await InvitedMediator.remove(this.network, marketAddress, address, txn);
-
-    // Notify mediator
-    const market = await Market.getMarket(this.network, marketAddress, [], txn);
-    await this.notifSrv.notify(NotificationID.MediatorRevoked, this.network, address, { market });
-  }
-
-  /**
    * An address was approved for swapping
    * @param marketAddress The market ID
    * @param address The address of that was approved
@@ -492,7 +410,6 @@ export class MarketCoreHandler extends Handler {
    * @param disputeDelayTime Number of seconds before dispute can be started
    * @param evidenceDur Number of seconds within which evidence must be shared
    * @param predictDur Number of seconds for votes to be committed and revealed
-   * @param appealDur Number of seconds within which an appeal must be created after prediction phase
    * @param event The event object
    * @param txn The db transaction object
    */
@@ -501,7 +418,6 @@ export class MarketCoreHandler extends Handler {
     disputeDelayTime: BigNumber,
     evidenceDur: BigNumber,
     predictDur: BigNumber,
-    appealDur: BigNumber,
     event: Event,
     txn?: Transaction,
   ) {
@@ -512,7 +428,6 @@ export class MarketCoreHandler extends Handler {
         disputeDelayTime: disputeDelayTime.toNumber(),
         evidenceDur: evidenceDur.toNumber(),
         predictDur: predictDur.toNumber(),
-        appealDur: appealDur.toNumber(),
       },
       txn,
     );
@@ -527,16 +442,5 @@ export class MarketCoreHandler extends Handler {
    */
   async onUpdatedMarketManager(id: string, managerAddr: string, event: Event, txn?: Transaction) {
     await Market.updateByNetworkAddress(this.network, id, { manager: managerAddr }, txn);
-  }
-
-  /**
-   * Updated dispute cost
-   * @param id The market ID
-   * @param newCost The new dispute cost
-   * @param event The event object
-   * @param txn The db transaction object
-   */
-  async onUpdatedDisputeCost(id: string, newCost: BigNumber, event: Event, txn?: Transaction) {
-    await Market.updateByNetworkAddress(this.network, id, { disputeCost: newCost.toString() }, txn);
   }
 }

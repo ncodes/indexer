@@ -5,7 +5,6 @@ import { LiquidityService } from './liquidity.service';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ListQueryDTO } from './query.dto';
 import { ConfigService } from '../../config/config.service';
-import Meta from '../../models/meta';
 
 @Controller('v1/liquidities')
 export class LiquidityController {
@@ -14,15 +13,14 @@ export class LiquidityController {
   /**
    * List liquidities on a network
    * @param q The query object
-   *  - [network] The network name.
-   *  - [marketAddress] The market ID (optional)
-   *  - [amount] Limit result to liquidity where amount is between their swap amount limit
-   *  - [provider] The provider address (optional)
-   *  - [noMerge] Prevent merge of contract liquidity with DB liquidity object
-   *  - [count] Returns the count of matching result
-   *  - [limit] The number of result to return (optional)
-   *  - [offset] The query offset (optional)
-   *  - [select] Select extend fields to return
+   * @param q.network The network name.
+   * @param [q.marketAddress] The market ID
+   * @param [q.amount] Limit result to liquidity where amount is between their swap amount limit
+   * @param [q.provider] The provider address
+   * @param [q.count] Returns the count of matching result
+   * @param [q.limit] The number of result to return
+   * @param [q.offset] The query offset
+   * @param [q.select] Select extend fields to return
    * @returns
    */
   @Get()
@@ -41,7 +39,7 @@ export class LiquidityController {
         undefined,
       );
       for (const liquidity of liquidities) {
-        await this.liqSrv.extendLiquidity(liquidity, q.noMerge, q.select);
+        await this.liqSrv.extendLiquidity(liquidity, q.select);
       }
       return ok().data(liquidities).build();
     } else {

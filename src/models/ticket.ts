@@ -3,6 +3,7 @@ import Objection, { raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 import Market from './market';
 import * as _ from 'lodash';
+import { isNil } from 'lodash';
 
 /**
  * Ticket represents a mediation ticket
@@ -18,16 +19,12 @@ export default class Ticket extends BaseModel {
   owner: string = undefined;
   // The index of the ticket
   index: number = undefined;
-  // The market ID joined
-  marketAddress: string = undefined;
   // The swap order ID drafted to
   orderId: number = undefined;
+  // The pool ID
+  poolId: number = undefined;
   // The dispute ID
   disputeId: number = undefined;
-  // The address of the delegate
-  delegate: string = undefined;
-  // Indicates whether the ticket is a delegate ticket
-  delegated: boolean = undefined;
   // The amount held as bond
   bond: string = undefined;
   // When the ticket becomes matured
@@ -36,14 +33,14 @@ export default class Ticket extends BaseModel {
   joinBy: string = undefined;
   // The transaction hash
   txHash: string = undefined;
+  // Indicate whether the ticket has been joined to its pool
+  joined: boolean = undefined;
   // Indicates the ticket bond has been drained (ticket becomes expired)
   drained: boolean = undefined;
   // Indicate whether the ticket has been drafted
   drafted: boolean = undefined;
   // Indicate whether the ticket has been slashed
   slashed: boolean = undefined;
-  // The time when the ticket can leave the market
-  leaveAt: string = undefined;
   // The time when the ticket is considered cancelled
   cancelAt: string = undefined;
   // The time the ticket was drained
@@ -58,7 +55,6 @@ export default class Ticket extends BaseModel {
   expired: boolean;
   cancelling: boolean;
   cancelled: boolean;
-  canLeave: boolean;
 
   constructor(init?: Partial<Ticket>) {
     super();
@@ -146,16 +142,16 @@ export default class Ticket extends BaseModel {
   }
 
   /**
-   * count returns the count of record matching q
+   * count results matching a network and pool ID
    * @param network The network name
-   * @param marketAddress The marker ID
+   * @param poolId The mediator pool ID
    * @param txn Optional transaction object
    */
-  static countByNetworkAndMarket(network: string, marketAddress: string, txn?: Transaction) {
+  static countByNetworkAndPool(network: string, poolId: number, txn?: Transaction) {
     return new Promise<string>((resolve, reject) => {
       this.query(txn)
         .where({ network })
-        .where('marketAddress', 'ilike', marketAddress)
+        .where('poolId', poolId)
         .count('id')
         .whereNotDeleted()
         .first()
@@ -168,18 +164,15 @@ export default class Ticket extends BaseModel {
 
   static makeSelectList(select = []) {
     select = select.filter((x) => Object.keys(new Ticket()).includes(x));
-    select = select.length
-      ? _.uniq(select.concat(['id', 'marketAddress', 'network', 'owner', 'index', 'orderId']))
-      : ['*'];
+    select = select.length ? _.uniq(select.concat(['id', 'poolId', 'network', 'owner', 'index', 'orderId'])) : ['*'];
     return select;
   }
 
   /**
    * searchTickets finds tickets
    * @param network The network name
-   * @param marketAddress The market ID (optional)
+   * @param poolId The mediator pool ID
    * @param owner Indicate to return ticket with matching owner
-   * @param delegate Indicate to return ticket with matching delegate
    * @param orderId The order ID
    * @param disputeId The dispute ID
    * @param joined Indicate to return tickets (un)joined  to a market
@@ -195,9 +188,8 @@ export default class Ticket extends BaseModel {
    */
   static searchTickets(
     network: string,
-    marketAddress?: string,
+    poolId?: number,
     owner?: string,
-    delegate?: string,
     orderId?: number,
     disputeId?: number,
     joined?: boolean,
@@ -216,24 +208,16 @@ export default class Ticket extends BaseModel {
       .select(...select, raw('count(*) over() as' + ' "__queryCount"'))
       .whereNotDeleted()
       .where({ network });
-    if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
-    q = q.where((q) => {
-      if (owner && !delegate) q = q.where('owner', 'ILIKE', owner);
-      if (delegate && !owner) q = q.where('delegate', 'ILIKE', delegate);
-      if (owner && delegate) q.where('owner', 'ILIKE', owner).orWhere('delegate', 'ILIKE', delegate);
-    });
+    if (!isNil(poolId)) q = q.where('poolId', poolId);
+    if (owner) q = q.where('owner', 'ILIKE', owner);
     if (orderId !== undefined) q = q.where('orderId', orderId);
     if (disputeId !== undefined) q = q.where('disputeId', disputeId);
-    if (joined !== undefined) {
-      q = q.where((q) => {
-        if (joined) q.orWhere('marketAddress', 'is not', null);
-        else q.orWhere('marketAddress', 'is', null);
-      });
-    }
+    if (joined !== undefined) q = q.where('joined', joined);
     if (drafted !== undefined) q = q.where('drafted', drafted);
     if (expired) {
       q = q.where((q) => {
-        q.where('marketAddress', 'is', null)
+        return q
+          .where('joined', false)
           .where('joinBy', 'is not', null)
           .where('joinBy', '<', 'now()')
           .orWhere('drained', true);
@@ -252,9 +236,8 @@ export default class Ticket extends BaseModel {
   /**
    * countTickets count tickets
    * @param network The network name
-   * @param marketAddress The market ID (optional)
+   * @param poolId The mediator pool ID
    * @param owner Indicate to return ticket with matching owner
-   * @param delegate Indicate to return ticket with matching delegate
    * @param orderId The order ID
    * @param disputeId The dispute ID
    * @param joined Indicate to return tickets (un)joined  to a market
@@ -267,9 +250,8 @@ export default class Ticket extends BaseModel {
    */
   static countTickets(
     network: string,
-    marketAddress?: string,
+    poolId?: number,
     owner?: string,
-    delegate?: string,
     orderId?: number,
     disputeId?: number,
     joined?: boolean,
@@ -281,24 +263,16 @@ export default class Ticket extends BaseModel {
     txn?: Transaction,
   ): Promise<Ticket[]> {
     let q = this.query(txn).whereNotDeleted().where({ network });
-    if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
-    q = q.where((q) => {
-      if (owner && !delegate) q = q.where('owner', 'ILIKE', owner);
-      if (delegate && !owner) q = q.where('delegate', 'ILIKE', delegate);
-      if (owner && delegate) q.where('owner', 'ILIKE', owner).orWhere('delegate', 'ILIKE', delegate);
-    });
+    if (!isNil(poolId)) q = q.where('poolId', poolId);
+    if (owner) q = q.where('owner', 'ILIKE', owner);
     if (orderId !== undefined) q = q.where('orderId', orderId);
     if (disputeId !== undefined) q = q.where('disputeId', disputeId);
-    if (joined !== undefined) {
-      q = q.where((q) => {
-        if (joined) q.orWhere('marketAddress', 'is not', null);
-        else q.orWhere('marketAddress', 'is', null);
-      });
-    }
+    if (joined !== undefined) q = q.where('joined', joined);
     if (drafted !== undefined) q = q.where('drafted', drafted);
     if (expired) {
       q = q.where((q) => {
-        q.where('marketAddress', null)
+        return q
+          .where('joined', false)
           .where('joinBy', 'is not', null)
           .where('joinBy', '<', 'now()')
           .orWhere('drained', true);
@@ -313,22 +287,5 @@ export default class Ticket extends BaseModel {
       .count('id')
       .first()
       .then((res: any) => res.count);
-  }
-
-  /**
-   * Remove a delegate ticket
-   * @param network The network name
-   * @param owner The ticket owner address
-   * @param ticketIdx The ticket index
-   * @param delegate The invited address
-   * @param txn Optional transaction object
-   */
-  static removeDelegate(network: string, owner: string, ticketIdx: number, delegate: string, txn?: Transaction) {
-    return this.query(txn)
-      .where('network', network)
-      .where('owner', 'ilike', owner)
-      .where('index', ticketIdx)
-      .where('delegate', 'ilike', delegate)
-      .delete();
   }
 }

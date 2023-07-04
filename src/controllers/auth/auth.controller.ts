@@ -1,22 +1,13 @@
-import { Body, Controller, Get, Post, Query, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { transaction } from 'objection';
 import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
-import {
-  ErrBadSignature,
-  ErrorMessages,
-  ErrorTypes,
-  ok,
-  throw400,
-  throw401,
-  throw404,
-} from '../../common/responses/responses';
+import { ErrBadSignature, ErrorMessages, ErrorTypes, ok, throw400, throw404 } from '../../common/responses/responses';
 import { Roles } from '../../common/roles';
 import User from '../../models/user';
 import { AuthDTO, GetAuthorizerDTO } from './dto';
-import { hasSeenSignature, makeSession, parseSignature } from './utils';
+import { hasSeenSignature, makeSession, parseWalletSignature } from './utils';
 import { isEmail } from 'class-validator';
-import { sha1 } from '../../common/common';
 
 /**
  * AuthController handles all authentication functionalities.
@@ -28,6 +19,8 @@ export class AuthController {
   /**
    * Authenticate signature and generate session token
    * @param body The response body
+   * @param body.msg The message that was signed
+   * @param body.sig The signature derived from the message
    * @returns
    */
   @Post('')
@@ -40,7 +33,7 @@ export class AuthController {
 
     let sigData: SignatureData;
     try {
-      sigData = parseSignature(body.msg, body.sig);
+      sigData = parseWalletSignature(body.msg, body.sig);
     } catch (error) {
       throw ErrBadSignature;
     }
@@ -54,14 +47,9 @@ export class AuthController {
     let user: User;
     await transaction(User, async (User) => {
       user = await User.getByAddress(sigData.address);
-
-      if (!user) {
-        user = await User.create({ address: sigData.address, email: sigData.email, role: Roles.User });
-      } else {
-        user = await User.updateById(user.id, { email: user.email !== sigData.email ? sigData.email : user.email });
-      }
-
-      // Create session token
+      user = !user
+        ? await User.create({ address: sigData.address, email: sigData.email, role: Roles.User })
+        : await User.updateById(user.id, { email: user.email !== sigData.email ? sigData.email : user.email });
       token = await makeSession(user, body.sig, this.cfgSrv.get('auth.jwtExpMin'), this.cfgSrv.get('auth.jwtSecret'));
     });
 
@@ -71,6 +59,8 @@ export class AuthController {
   /**
    * Get the user that signed a signature
    * @param body The response body
+   * @param body.msg The message that was signed
+   * @param body.sig The signature derived from the message
    * @returns
    */
   @Get('/user')
@@ -81,9 +71,9 @@ export class AuthController {
     let sigInfo: SignatureData;
 
     try {
-      sigInfo = parseSignature(body.msg, body.sig, true);
+      sigInfo = parseWalletSignature(body.msg, body.sig, true);
     } catch (error) {
-      throw401('signature is invalid or expired', ErrorTypes.Auth, 'sig');
+      throw ErrBadSignature;
     }
 
     const user = await User.getByAddress(sigInfo.address);

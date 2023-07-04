@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DBService } from '../../db/DBService';
-import SwapsService from './swaps.service';
+import SwapService from './swap.service';
 import Swap from '../../models/swap';
 import User from '../../models/user';
 import Dispute from '../../models/dispute';
@@ -8,7 +8,7 @@ import Draft from '../../models/draft';
 
 describe('SwapsService', () => {
   let module: TestingModule;
-  let service: SwapsService;
+  let service: SwapService;
   const db = DBService.getForTest();
   const net = 'ethereum';
 
@@ -28,10 +28,10 @@ describe('SwapsService', () => {
     jest.clearAllMocks();
 
     module = await Test.createTestingModule({
-      providers: [SwapsService],
+      providers: [SwapService],
     }).compile();
 
-    service = module.get<SwapsService>(SwapsService);
+    service = module.get<SwapService>(SwapService);
   });
 
   describe('.getParticipants', () => {
@@ -111,7 +111,7 @@ describe('SwapsService', () => {
       });
     });
 
-    describe('when swap has an appealed dispute and addAppealedDisputeDraftees=true', () => {
+    describe('when swap has an appealed dispute and includeAllDisputes=true', () => {
       it('should return correct participants', async () => {
         const user1 = await User.create({ address: '0xTaker', id: 'user1' });
         const user2 = await User.create({ address: '0xProvider', id: 'user2' });

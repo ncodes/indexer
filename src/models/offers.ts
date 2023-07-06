@@ -1,6 +1,7 @@
 import { randStr } from '../common/common';
 import Objection, { raw, Transaction } from 'objection';
 import { BaseModel } from './base';
+import { uniq } from 'lodash';
 
 /**
  * Offer represents an offer request for a liquidity
@@ -96,6 +97,23 @@ export default class Offer extends BaseModel {
   }
 
   /**
+   * Find an offer by its network name and on-chain ID
+   * @param network The network name
+   * @param id The on-chain id
+   * @param select The fields to be selected
+   * @param txn Optional transaction object
+   */
+  static getByNetworkAndOfferId(network: string, id: number, select = [], txn?: Transaction) {
+    select = this.makeSelectList(select);
+    return this.query(txn)
+      .whereNotDeleted()
+      .select(...select)
+      .where('network', network)
+      .where('offerId', id)
+      .first();
+  }
+
+  /**
    * updateByOfferId updates a record by on-chain offer ID
    * @param id The on-chain offer id
    * @param udp The fields to be updated
@@ -104,5 +122,59 @@ export default class Offer extends BaseModel {
   static async updateByOfferId(id: number, udp: Partial<Offer>, txn?: Transaction) {
     await this.query(txn).whereNotDeleted().where('offerId', id).patch(udp);
     return this.query(txn).whereNotDeleted().where('offerId', id).first();
+  }
+
+  static makeSelectList(select = []) {
+    select = select.filter((x) => Object.keys(new Offer()).includes(x));
+    select = select.length
+      ? uniq(select.concat(['id', 'marketAddress', 'network', 'creator', 'offerId', 'provider', 'lid']))
+      : ['*'];
+    return select;
+  }
+
+  /**
+   * search for offers
+   * @param network The network name
+   * @param creator The market creator address
+   * @param marketAddress The market address to filter by
+   * @param provider The provider address to filter by
+   * @param lid The liquidity ID to filter by
+   * @param countOnly Indicates whether to return count only.
+   * @param limit The number of records to return.
+   * @param offset The offset value
+   * @param select Select specific fields
+   * @param txn Optional transaction object
+   */
+  static search(
+    network?: string,
+    creator?: string,
+    marketAddress?: string,
+    provider?: string,
+    lid?: number,
+    countOnly?: boolean,
+    limit?: number,
+    offset?: number,
+    select = [],
+    txn?: Objection.Transaction,
+  ) {
+    select = this.makeSelectList(select);
+    let query = this.query(txn);
+    query = !countOnly ? query.select(...select, raw('count(*) over() as' + ' "__queryCount"')) : query;
+    if (network) query = query.where('network', 'ilike', network);
+    if (creator) query = query.where('creator', 'ilike', creator);
+    if (provider) query = query.where('provider', 'ilike', provider);
+    if (lid) query = query.where('lid', lid);
+    if (marketAddress) query = query.where('marketAddress', 'ilike', marketAddress);
+    if (countOnly) {
+      return query
+        .count('id')
+        .first()
+        .then((res: any) => {
+          return res.count;
+        });
+    }
+    if (offset) query = query.offset(offset);
+    if (limit) query = query.limit(limit);
+    return query.whereNotDeleted().orderBy('updatedAt', 'DESC');
   }
 }

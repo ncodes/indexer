@@ -2,7 +2,6 @@ import { Logger, MiddlewareConsumer, Module, NestModule, RequestMethod } from '@
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import Handlebars from 'handlebars';
 import { ThrottlerStorageRedisService } from 'nestjs-throttler-storage-redis';
 import { JsonBodyMiddleware } from './common/middlewares/body.middleware';
 import AppConfig from './config/app.config';
@@ -22,6 +21,8 @@ import { DisputesModule } from './controllers/disputes/disputes.module';
 import { UsersModule } from './controllers/users/users.module';
 import { AssetsModule } from './controllers/assets/assets.module';
 import { TasksModule } from './controllers/tasks/tasks.module';
+import { OffersModule } from './controllers/offers/offers.module';
+import { BadgesModule } from './controllers/badges/badges.module';
 
 /**
  * Returns the configurations to be loaded.
@@ -65,6 +66,8 @@ function getProviders() {
     AuthModule,
     NetworkModule,
     MarketsModule,
+    OffersModule,
+    BadgesModule,
     LiquidityModule,
     MiscModule,
     NotificationsModule,

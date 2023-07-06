@@ -7,20 +7,32 @@ import { AllExceptionsFilter } from '../../common/interceptors/exception_filter'
 import * as request from 'supertest';
 import { AssetsController } from './assets.controller';
 import { setFeaturedAssets } from '../../common/featured_assets';
-import { SupportedNetworks } from '../../network/common';
 import Swap from '../../models/swap';
 import * as moment from 'moment';
 import MarketPrice from '../../models/market_price';
 import Liquidity from '../../models/liquidity';
+import { MetadataService } from '../../services/metadata/metadata.service';
+import NetworkService from '../../network/network.service';
+import { NotifierService } from '../../jobs/mailer/NotifierService';
+import { TokenLists } from '../../common/token_list';
+import AssetRegistry from '../../models/asset_registry';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
   return { get: mockCfgGet };
 });
 
+const NotifierServiceMock = jest.fn().mockImplementation(() => {
+  return {};
+});
+
 describe('AssetsController', () => {
   let app: INestApplication;
   const db = DBService.getForTest();
+  const net = 'ethereum';
+  const net2 = 'bsc';
+  const baseAddress = '0xBase';
+  const baseAddress2 = '0xBase2';
   let cfgObj = {};
 
   afterEach(async () => {
@@ -48,10 +60,10 @@ describe('AssetsController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [AssetsController],
-      providers: [ConfigService],
+      providers: [ConfigService, MetadataService, NetworkService, NotifierService],
     })
-      .overrideProvider(ConfigService)
-      .useValue(new ConfigServiceMock())
+      .overrideProvider(NotifierService)
+      .useValue(new NotifierServiceMock())
       .compile();
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());
@@ -60,15 +72,14 @@ describe('AssetsController', () => {
   });
 
   describe('.getFeaturedAssetsStats', () => {
-    const baseAddress = '0x0B306BF915C4d645ff596e518fAf3F9669b97016';
-    const baseAddress2 = '0x0B306BF915C4d645ff596e518fAf3F9669b97017';
     beforeEach(() => {
       setFeaturedAssets([
         {
           symbol: 'BTC',
+          dominantColor: '#000000',
           contracts: [
-            { net: SupportedNetworks.Ethereum, addr: baseAddress },
-            { net: SupportedNetworks.Ethereum, addr: baseAddress2 },
+            { net, addr: baseAddress, primary: true },
+            { net: net2, addr: baseAddress2 },
           ],
         },
       ]);
@@ -95,14 +106,10 @@ describe('AssetsController', () => {
 
     describe('with volume spread across multiple networks', () => {
       it('should return 200 and correct 24h volume', async () => {
-        await Swap.create({ network: 'net1', baseAddress, amount: '100' });
+        await Swap.create({ network: net, baseAddress, amount: '100' });
+        await Swap.create({ network: net2, baseAddress: baseAddress2, amount: '100' });
         await Swap.create({
-          network: 'net1',
-          baseAddress: baseAddress2,
-          amount: '100',
-        });
-        await Swap.create({
-          network: 'net2',
+          network: net2,
           baseAddress: baseAddress2,
           amount: '100',
           createdAt: moment().subtract(24, 'h').toISOString(),
@@ -126,17 +133,14 @@ describe('AssetsController', () => {
 
     describe('check 24h price change', () => {
       it('should return 200 and correct 24h price change', async () => {
-        await Swap.create({ network: 'net1', baseAddress, amount: '100' });
+        await Swap.create({ network: net, baseAddress, amount: '100' });
         await MarketPrice.create({
+          network: net,
           baseAddress,
           price: '100',
           createdAt: moment().subtract(24, 'h').toISOString(),
         });
-        await MarketPrice.create({
-          baseAddress,
-          price: '200',
-          createdAt: moment().toISOString(),
-        });
+        await MarketPrice.create({ network: net, baseAddress, price: '200', createdAt: moment().toISOString() });
         await request(app.getHttpServer())
           .get(`/v1/assets/featured`)
           .expect(200)
@@ -156,18 +160,20 @@ describe('AssetsController', () => {
 
     describe('check highest and lowest prices', () => {
       it('should return 200 and correct 24h lowest and highest price', async () => {
-        await Swap.create({ network: 'net1', baseAddress, amount: '100' });
+        await Swap.create({ network: net, baseAddress, amount: '100' });
         await MarketPrice.create({
+          network: net,
           baseAddress,
           price: '100',
           createdAt: moment().subtract(24, 'h').toISOString(),
         });
         await MarketPrice.create({
+          network: net,
           baseAddress,
           price: '200',
         });
-        await Liquidity.create({ baseAddress, price: '100', amount: '100' });
-        await Liquidity.create({ baseAddress, price: '50', amount: '100' });
+        await Liquidity.create({ network: net, baseAddress, price: '100', amount: '100' });
+        await Liquidity.create({ network: net, baseAddress, price: '50', amount: '100' });
         await request(app.getHttpServer())
           .get(`/v1/assets/featured`)
           .expect(200)
@@ -187,34 +193,65 @@ describe('AssetsController', () => {
   });
 
   describe('.getAssetStats', () => {
-    it('should return 404 when asset is unknown', async () => {
+    it('should return 500 when failure to get token info from metadata service', async () => {
+      jest.spyOn(app.get(MetadataService), 'getTokenInfo').mockRejectedValue(new Error('error'));
       await request(app.getHttpServer())
-        .get(`/v1/assets/abc`)
-        .expect(404)
-        .expect({
-          error: { param: 'address', message: 'unknown asset' },
-        });
+        .get(`/v1/assets/net1/abc`)
+        .expect(500)
+        .expect({ error: { type: 'api_error', message: 'server error' } });
     });
 
     it('should return 404 when asset is unknown', async () => {
-      await Liquidity.create({
-        baseAddress: '0xBaseAddress',
-        base: 'XYZ',
-        network: 'ethereum',
-      });
+      jest.spyOn(app.get(MetadataService), 'getTokenInfo').mockResolvedValue(undefined);
       await request(app.getHttpServer())
-        .get(`/v1/assets/0xBaseAddress`)
+        .get(`/v1/assets/net1/0xBaseAddress`)
+        .expect(404)
+        .expect({ error: { message: 'token not found' } });
+    });
+
+    it('should return 200 and correct stats', async () => {
+      await Swap.create({ network: net, baseAddress, amount: '100' });
+      await MarketPrice.create({
+        network: net,
+        baseAddress,
+        price: '1',
+        createdAt: moment().subtract(1, 'd').toISOString(),
+      });
+      await MarketPrice.create({ network: net, baseAddress, price: '2' });
+
+      TokenLists[net].tokens = [{ address: baseAddress, symbol: 'ABC' }];
+      await request(app.getHttpServer())
+        .get(`/v1/assets/${net}/${baseAddress}`)
         .expect(200)
         .expect({
           data: {
-            address: '0xBaseAddress',
-            symbol: 'XYZ',
-            volume24h: '0',
-            price24h: 0,
+            address: baseAddress,
+            symbol: 'ABC',
+            volume24h: '100',
+            price24h: 100,
             network: 'ethereum',
             lowestPrice24h: '0',
             highestPrice24h: '0',
           },
+        });
+    });
+  });
+
+  describe('.getRegistry', function () {
+    it('should return 404 when registry info was not found', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/assets/registry/${net}/${baseAddress}`)
+        .expect(404)
+        .expect({ error: { message: 'registry info not found' } });
+    });
+
+    it('should return 200 when registry info exist', async () => {
+      const assetReg = await AssetRegistry.create({ network: net, address: baseAddress, curRate: '10' });
+      await request(app.getHttpServer())
+        .get(`/v1/assets/registry/${net}/${baseAddress}`)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data.id).toEqual(assetReg.id);
         });
     });
   });

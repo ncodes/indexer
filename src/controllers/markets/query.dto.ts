@@ -69,34 +69,6 @@ export class ListQueryDTO {
 }
 
 // tslint:disable-next-line:max-classes-per-file
-export class ListInvitedMediatorsQueryDTO {
-  @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
-  @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
-  public net?: string;
-
-  @IsOptional()
-  public marketAddress?: string;
-
-  @IsOptional()
-  public query?: string;
-
-  @Transform(({ value }) => toBoolean(value))
-  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'accepted') })
-  @IsOptional()
-  public accepted: boolean;
-
-  @Transform(({ value }) => toNumber(value))
-  @IsNumber(undefined, { message: makeValidatorMsg('must be a number', 'limit') })
-  @IsOptional()
-  public limit?: number;
-
-  @Transform(({ value }) => toNumber(value))
-  @IsNumber(undefined, { message: makeValidatorMsg('must be a number', 'offset') })
-  @IsOptional()
-  public offset?: number;
-}
-
-// tslint:disable-next-line:max-classes-per-file
 export class ListPermittedTradersQueryDTO {
   @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
   @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })

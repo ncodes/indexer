@@ -276,6 +276,7 @@ export default class Dispute extends BaseModel {
    * @param released Indicate to filter by released disputes
    * @param abandoned Indicate to filter by abandoned disputes
    * @param orderReleased Indicate to filter by dispute with released swap order
+   * @param countOnly Indicate to return count only
    * @param limit The number of records to return (optional).
    * @param offset The query offset (optional)
    * @param select Select specific fields (optional)
@@ -293,17 +294,16 @@ export default class Dispute extends BaseModel {
     released?: boolean,
     abandoned?: boolean,
     orderReleased?: boolean,
+    countOnly?: boolean,
     limit?: number,
     offset?: number,
     select = [],
     txn?: Transaction,
   ) {
     select = this.makeSelectList(select);
-    let q = this.query(txn)
-      .select(...select, raw('count(*) over() as' + ' "__queryCount"'))
-      .withGraphFetched('draftees')
-      .whereNotDeleted()
-      .where({ network });
+    let q = this.query(txn);
+    q = !countOnly ? q.select(...select, raw('count(*) over() as' + ' "__queryCount"')) : q;
+    q = q.withGraphFetched('draftees').whereNotDeleted().where({ network });
     if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
     if (creator) q = q.where('creator', 'ILIKE', creator);
     if (defendant) q = q.where('defendant', 'ILIKE', defendant);
@@ -314,54 +314,16 @@ export default class Dispute extends BaseModel {
     if (released !== undefined) q = q.where('released', released);
     if (abandoned !== undefined) q = q.where('abandoned', abandoned);
     if (orderReleased !== undefined) q = q.where('orderReleased', orderReleased);
+    if (countOnly) {
+      return q
+        .count('id')
+        .first()
+        .then((res: any) => {
+          return res.count;
+        });
+    }
     if (offset) q = q.offset(offset);
     if (limit) q = q.limit(limit);
     return q.orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
-  }
-
-  /**
-   * countTickets count disputes
-   * @param network The network name
-   * @param marketAddress The market ID (optional)
-   * @param creator Indicate to return dispute by the given dispute creator
-   * @param defendant Indicate to return dispute by the given defendant
-   * @param orderId The order ID
-   * @param disputeId The dispute ID
-   * @param redispute Indicate to filter by re-dispute status
-   * @param executed Indicate to filter by executed disputes
-   * @param released Indicate to filter by released disputes
-   * @param abandoned Indicate to filter by abandoned disputes
-   * @param orderReleased Indicate to filter by dispute with released swap order
-   * @param txn Optional transaction object
-   */
-  static countDisputes(
-    network: string,
-    marketAddress?: string,
-    creator?: string,
-    defendant?: string,
-    orderId?: number,
-    disputeId?: number,
-    redispute?: boolean,
-    executed?: boolean,
-    released?: boolean,
-    abandoned?: boolean,
-    orderReleased?: boolean,
-    txn?: Transaction,
-  ): Promise<Dispute[]> {
-    let q = this.query(txn).whereNotDeleted().where({ network });
-    if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
-    if (creator) q = q.where('creator', 'ILIKE', creator);
-    if (defendant) q = q.where('defendant', 'ILIKE', defendant);
-    if (orderId) q = q.where('orderId', orderId);
-    if (disputeId) q = q.where('disputeId', disputeId);
-    if (redispute !== undefined) q = q.where('redispute', redispute);
-    if (executed !== undefined) q = q.where('executed', executed);
-    if (released !== undefined) q = q.where('released', released);
-    if (abandoned !== undefined) q = q.where('abandoned', abandoned);
-    if (orderReleased !== undefined) q = q.where('orderReleased', orderReleased);
-    return q
-      .count('id')
-      .first()
-      .then((res: any) => res.count);
   }
 }

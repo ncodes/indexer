@@ -329,7 +329,8 @@ export default class Market extends BaseModel {
     txn?: Objection.Transaction,
   ) {
     select = this.makeSelectList(select);
-    let query = this.query(txn).select(...select, raw('count(*) over() as' + ' "__queryCount"'));
+    let query = this.query(txn);
+    query = !countOnly ? query.select(...select, raw('count(*) over() as' + ' "__queryCount"')) : query;
     if (network) query = query.where('network', 'ilike', network);
     if (creator) query = query.where('creator', 'ilike', creator);
     if (baseAsset) query = query.where('baseAddress', 'ilike', baseAsset);

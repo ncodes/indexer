@@ -80,6 +80,16 @@ export default class AssetRegistry extends BaseModel {
   }
 
   /**
+   * Find a record by ID
+   * @param network The network name
+   * @param address The asset address
+   * @param txn Optional transaction object
+   */
+  static getByNetworkAndAddress(network: string, address: string, txn?: Transaction) {
+    return this.query(txn).whereNotDeleted().where('network', network).where('address', 'ilike', address).first();
+  }
+
+  /**
    * Delete a record
    * @param network The network name
    * @param address The address of the target record

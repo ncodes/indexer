@@ -27,45 +27,28 @@ export class DisputesController {
    */
   @Get()
   async list(@Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
-    if (!q.count) {
-      return ok()
-        .data(
-          await Dispute.searchDisputes(
-            q.net,
-            q.marketAddress,
-            q.creator,
-            q.defendant,
-            q.orderId,
-            q.disputeId,
-            q.redispute,
-            q.executed,
-            q.released,
-            q.abandoned,
-            q.orderReleased,
-            Math.min(q.limit || 25, 100),
-            q.offset,
-            q.select,
-          ),
-        )
-        .build();
-    } else {
-      return ok()
-        .data({
-          count: await Dispute.countDisputes(
-            q.net,
-            q.marketAddress,
-            q.creator,
-            q.defendant,
-            q.orderId,
-            q.disputeId,
-            q.redispute,
-            q.executed,
-            q.released,
-            q.abandoned,
-            q.orderReleased,
-          ),
-        })
-        .build();
+    const result = await Dispute.searchDisputes(
+      q.net,
+      q.marketAddress,
+      q.creator,
+      q.defendant,
+      q.orderId,
+      q.disputeId,
+      q.redispute,
+      q.executed,
+      q.released,
+      q.abandoned,
+      q.orderReleased,
+      q.count,
+      Math.min(q.limit || 25, 100),
+      q.offset,
+      q.select,
+    );
+
+    if (q.count) {
+      return ok().data({ count: result }).build();
     }
+
+    return ok().data(result).build();
   }
 }

@@ -1,6 +1,7 @@
 import { BaseModel } from './base';
-import Objection, { Transaction } from 'objection';
+import Objection, { raw, Transaction } from 'objection';
 import { randStr } from '../common/common';
+import { uniq } from 'lodash';
 
 /**
  * BadgeGrant represents a granted badge
@@ -12,9 +13,9 @@ export default class BadgeGrant extends BaseModel {
   badge: string = undefined;
   // The path part of a badge
   path: string = undefined;
-  // The issuer address
+  // The recipient of the badge
   grantee: string = undefined;
-  // The co-issuer address
+  // The expiration date of the badge
   expireAt: string = undefined;
   // The issued badge metadata
   metadata: { [key: string]: string } = undefined;
@@ -81,15 +82,17 @@ export default class BadgeGrant extends BaseModel {
    */
   static updateById(id: string, udp: Partial<BadgeGrant>, txn?: Transaction): Promise<BadgeGrant> {
     return new Promise((resolve, reject) => {
-      this.query(txn)
-        .whereNotDeleted()
-        .patchAndFetchById(id, udp)
-        .execute()
-        .then(resolve)
-        .catch(reject);
+      this.query(txn).whereNotDeleted().patchAndFetchById(id, udp).execute().then(resolve).catch(reject);
     });
   }
 
+  /**
+   * Deletes a record by its network, badge, and path
+   * @param network The network name
+   * @param badge The badge name
+   * @param path The path part of the badge
+   * @param txn Optional transaction object
+   */
   static deleteByNetAndBadgeAndPath(
     network: string,
     badge: string,
@@ -109,5 +112,54 @@ export default class BadgeGrant extends BaseModel {
         .then(resolve)
         .catch(reject);
     });
+  }
+
+  static makeSelectList(select = []) {
+    select = select.filter((x) => Object.keys(new BadgeGrant()).includes(x));
+    select = select.length ? uniq(select.concat(['id', 'badge', 'path'])) : ['*'];
+    return select;
+  }
+
+  /**
+   * search for badges
+   * @param network The network name
+   * @param badge The badge to filter by
+   * @param path The path to filter by
+   * @param grantee The grantee address to filter by
+   * @param countOnly Indicates whether to return count only.
+   * @param limit The number of records to return.
+   * @param offset The offset value
+   * @param select Select specific fields
+   * @param txn Optional transaction object
+   */
+  static search(
+    network?: string,
+    badge?: string,
+    path?: string,
+    grantee?: string,
+    countOnly?: boolean,
+    limit?: number,
+    offset?: number,
+    select = [],
+    txn?: Objection.Transaction,
+  ) {
+    select = this.makeSelectList(select);
+    let query = this.query(txn);
+    query = !countOnly ? query.select(...select, raw('count(*) over() as' + ' "__queryCount"')) : query;
+    if (network) query = query.where('network', 'ilike', network);
+    if (badge) query = query.where('badge', badge);
+    if (path) query = query.where('path', path);
+    if (grantee) query = query.where('grantee', 'ilike', grantee);
+    if (countOnly) {
+      return query
+        .count('id')
+        .first()
+        .then((res: any) => {
+          return res.count;
+        });
+    }
+    if (offset) query = query.offset(offset);
+    if (limit) query = query.limit(limit);
+    return query.whereNotDeleted().orderBy('updatedAt', 'DESC');
   }
 }

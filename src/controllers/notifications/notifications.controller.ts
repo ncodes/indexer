@@ -14,22 +14,15 @@ export class NotificationsController {
   /**
    * @param req The request object
    * @param q The query object
-   *  - [network] The network name.
-   *  - [read] Whether to return read or unread notification
-   *  - [count] Indicates whether to return count information only
-   *  - [limit] The number of result to return (optional)
-   *  - [offset] The query offset (optional)
+   * @param q.network The network name.
+   * @param [q.read] Whether to return read or unread notification
+   * @param [q.count] Indicates whether to return count information only
+   * @param [q.limit] The number of result to return (optional)
+   * @param [q.offset] The query offset (optional)
    */
   @Get()
   async list(@Req() req: Request, @Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
-    const res = await Notification.getRecent(
-      q.net,
-      q.count,
-      req.user.id,
-      q.read,
-      q.limit,
-      q.offset,
-    );
+    const res = await Notification.getRecent(q.net, q.count, req.user.id, q.read, q.limit, q.offset);
 
     if (q.count) {
       return ok().data({ count: res }).build<CountResponse>();

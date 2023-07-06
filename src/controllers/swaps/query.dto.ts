@@ -10,11 +10,6 @@ export class GetQueryDTO {
   @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
   public net?: string;
 
-  @Transform(({ value }) => toBoolean(value))
-  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'noMerge') })
-  @IsOptional()
-  public noMerge?: boolean;
-
   @Transform(({ value }) => (value as string).split(','))
   @IsOptional()
   public select?: string[];
@@ -31,11 +26,6 @@ export class ListQueryDTO {
 
   @IsOptional()
   public address?: string;
-
-  @Transform(({ value }) => toBoolean(value))
-  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'noMerge') })
-  @IsOptional()
-  public noMerge?: boolean;
 
   @Transform(({ value }) => (value as string).split(','))
   @IsOptional()

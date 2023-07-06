@@ -1,6 +1,7 @@
 import { BaseModel } from './base';
-import Objection, { Transaction } from 'objection';
+import Objection, { raw, Transaction } from 'objection';
 import { randStr } from '../common/common';
+import { uniq } from 'lodash';
 
 /**
  * Badge represents a badge
@@ -74,20 +75,6 @@ export default class Badge extends BaseModel {
   }
 
   /**
-   * Find a record by issuer address
-   * @param address The issuer's address
-   * @param badge The issuer's badge
-   * @param txn Optional transaction object
-   */
-  static getByIssuerAndBadge(address: string, badge: string, txn?: Transaction) {
-    return this.query(txn)
-      .whereNotDeleted()
-      .where('issuer', 'ilike', address)
-      .where({ badge })
-      .first();
-  }
-
-  /**
    * Updates a record by ID
    * @param id the record id
    * @param udp the fields to be updated
@@ -95,17 +82,12 @@ export default class Badge extends BaseModel {
    */
   static updateById(id: string, udp: Partial<Badge>, txn?: Transaction): Promise<Badge> {
     return new Promise((resolve, reject) => {
-      this.query(txn)
-        .whereNotDeleted()
-        .patchAndFetchById(id, udp)
-        .execute()
-        .then(resolve)
-        .catch(reject);
+      this.query(txn).whereNotDeleted().patchAndFetchById(id, udp).execute().then(resolve).catch(reject);
     });
   }
 
   /**
-   * Updates a record after finding it by its issuer address and badge
+   * Updates a record by its issuer address, badge or path
    * @param network The network to limit search to
    * @param address The issuer's address
    * @param badge The issuer's badge
@@ -137,5 +119,57 @@ export default class Badge extends BaseModel {
         .then(resolve)
         .catch(reject);
     });
+  }
+
+  static makeSelectList(select = []) {
+    select = select.filter((x) => Object.keys(new Badge()).includes(x));
+    select = select.length ? uniq(select.concat(['id', 'badge', 'path'])) : ['*'];
+    return select;
+  }
+
+  /**
+   * search for badges
+   * @param network The network name
+   * @param issuer The issuer address to filter by
+   * @param coIssuer The co-issuer address to filter by
+   * @param badge The badge to filter by
+   * @param path The path to filter by
+   * @param countOnly Indicates whether to return count only.
+   * @param limit The number of records to return.
+   * @param offset The offset value
+   * @param select Select specific fields
+   * @param txn Optional transaction object
+   */
+  static search(
+    network?: string,
+    issuer?: string,
+    coIssuer?: string,
+    badge?: string,
+    path?: string,
+    countOnly?: boolean,
+    limit?: number,
+    offset?: number,
+    select = [],
+    txn?: Objection.Transaction,
+  ) {
+    select = this.makeSelectList(select);
+    let query = this.query(txn);
+    query = !countOnly ? query.select(...select, raw('count(*) over() as' + ' "__queryCount"')) : query;
+    if (network) query = query.where('network', 'ilike', network);
+    if (issuer) query = query.where('issuer', 'ilike', issuer);
+    if (coIssuer) query = query.where('coIssuer', 'ilike', coIssuer);
+    if (badge) query = query.where('badge', badge);
+    if (path) query = query.where('path', path);
+    if (countOnly) {
+      return query
+        .count('id')
+        .first()
+        .then((res: any) => {
+          return res.count;
+        });
+    }
+    if (offset) query = query.offset(offset);
+    if (limit) query = query.limit(limit);
+    return query.whereNotDeleted().orderBy('updatedAt', 'DESC');
   }
 }

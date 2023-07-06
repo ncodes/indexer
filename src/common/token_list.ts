@@ -31,6 +31,7 @@ export const TokenLists: { [key in ListName]: TokenList.TokenData } = {
  */
 export function getTokenLogo(network: string, address: string) {
   const netList = TokenLists[network];
+  if (!netList) return null;
   const token = _.find(netList.tokens, (x) => x.address === address);
   return !token ? null : token.logoURI;
 }
@@ -42,6 +43,7 @@ export function getTokenLogo(network: string, address: string) {
  */
 export function getTokenInfo(network: string, address: string): TokenList.Token {
   const netList = TokenLists[network];
+  if (!netList) return;
   return _.find(netList.tokens, (x) => x.address === address);
 }
 

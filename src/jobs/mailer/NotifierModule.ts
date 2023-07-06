@@ -3,6 +3,7 @@ import { NotifierConsumer } from './NotifierConsumer';
 import { NotifierService } from './NotifierService';
 import { MailerService } from '../../services/mailer/mailer.service';
 import { BullModule } from '@nestjs/bull';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -10,7 +11,7 @@ import { BullModule } from '@nestjs/bull';
       name: 'notifier',
     }),
   ],
-  providers: [NotifierConsumer, NotifierService, MailerService],
+  providers: [NotifierConsumer, NotifierService, MailerService, ConfigService],
   exports: [MailerService, NotifierService],
 })
 export class NotifierModule {}

@@ -19,7 +19,6 @@ export class SwapsController {
    * @param q The query object
    * @param q.net The network name.
    * @param [q.orderId] The order ID
-   * @param [q.noMerge] Prevent merge of contract liquidity with DB liquidity object
    * @param [q.select] Select fields to return
    */
   @Get(':orderId')
@@ -49,7 +48,6 @@ export class SwapsController {
    * @param q.net The network name.
    * @param [q.marketAddress] The market ID (optional)
    * @param [q.address] The address involved as a provider or taker (optional)
-   * @param [q.noMerge] Prevent merge of contract liquidity with DB liquidity object
    * @param [q.limit] The number of result to return (optional)
    * @param [q.offset] The query offset (optional)
    * @param [q.select] Select fields to return

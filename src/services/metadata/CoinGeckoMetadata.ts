@@ -1,5 +1,4 @@
 // tslint:disable-next-line:max-classes-per-file
-// @ts-ignore
 import { CoinGeckoConfig, getChainID } from '../../network/common';
 import axios from 'axios';
 

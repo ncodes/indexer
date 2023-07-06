@@ -29,7 +29,9 @@ export class FeePoolHandler extends Handler {
    * @param amount The amount transferred
    * @param event The event object
    */
-  async onRewardAdded(token: string, amount: BigNumber, event: Event) {}
+  async onRewardAdded(token: string, amount: BigNumber, event: Event) {
+    //
+  }
 
   /**
    * An account withdrew some reward
@@ -38,7 +40,9 @@ export class FeePoolHandler extends Handler {
    * @param amount The amount of reward withdrawn
    * @param event The event object
    */
-  async onRewardWithdrawn(token: string, account: string, amount: BigNumber, event: Event) {}
+  async onRewardWithdrawn(token: string, account: string, amount: BigNumber, event: Event) {
+    //
+  }
 
   /**
    * An erroneously sent token was recovered
@@ -46,5 +50,7 @@ export class FeePoolHandler extends Handler {
    * @param amount The amount recovered
    * @param event The event object
    */
-  async onRecovered(token: string, amount: BigNumber, event: Event) {}
+  async onRecovered(token: string, amount: BigNumber, event: Event) {
+    //
+  }
 }

@@ -86,12 +86,7 @@ export default class Commit extends BaseModel {
    */
   static updateById(id: string, udp: Partial<Commit>, txn?: Transaction): Promise<Commit> {
     return new Promise((resolve, reject) => {
-      this.query(txn)
-        .whereNotDeleted()
-        .patchAndFetchById(id, udp)
-        .execute()
-        .then(resolve)
-        .catch(reject);
+      this.query(txn).whereNotDeleted().patchAndFetchById(id, udp).execute().then(resolve).catch(reject);
     });
   }
 }

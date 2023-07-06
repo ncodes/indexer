@@ -84,12 +84,7 @@ export default class LiquidityProvider extends BaseModel {
    */
   static getByAddress(email: string, txn?: Transaction): Promise<LiquidityProvider> {
     return new Promise((resolve, reject) => {
-      this.query(txn)
-        .where('address', 'ILIKE', email)
-        .whereNotDeleted()
-        .first()
-        .then(resolve)
-        .catch(reject);
+      this.query(txn).where('address', 'ILIKE', email).whereNotDeleted().first().then(resolve).catch(reject);
     });
   }
 
@@ -110,18 +105,9 @@ export default class LiquidityProvider extends BaseModel {
    * @param udp the fields to be updated
    * @param txn Optional transaction object
    */
-  static updateById(
-    id: string,
-    udp: Partial<LiquidityProvider>,
-    txn?: Transaction,
-  ): Promise<LiquidityProvider> {
+  static updateById(id: string, udp: Partial<LiquidityProvider>, txn?: Transaction): Promise<LiquidityProvider> {
     return new Promise((resolve, reject) => {
-      this.query(txn)
-        .whereNotDeleted()
-        .patchAndFetchById(id, udp)
-        .execute()
-        .then(resolve)
-        .catch(reject);
+      this.query(txn).whereNotDeleted().patchAndFetchById(id, udp).execute().then(resolve).catch(reject);
     });
   }
 
@@ -168,9 +154,7 @@ export default class LiquidityProvider extends BaseModel {
    * @param offset The offset value
    */
   static search(network: string, marketAddress: string, limit: number, offset: number) {
-    let q = this.query()
-      .select(raw('*, count(*) over() as "__queryCount"'))
-      .where('network', 'ILIKE', network);
+    let q = this.query().select(raw('*, count(*) over() as "__queryCount"')).where('network', 'ILIKE', network);
     if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
     if (offset) q = q.offset(offset);
     if (limit) q = q.limit(limit);

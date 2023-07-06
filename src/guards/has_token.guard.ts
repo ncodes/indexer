@@ -17,11 +17,7 @@ export class HasKeyGuard implements CanActivate {
 
       if (!auth) {
         return rej(
-          error()
-            .type(ErrorTypes.Auth)
-            .status(HttpStatus.UNAUTHORIZED)
-            .msg('authorization header is required')
-            .build(),
+          error().type(ErrorTypes.Auth).status(HttpStatus.UNAUTHORIZED).msg('authorization header is required').build(),
         );
       }
 

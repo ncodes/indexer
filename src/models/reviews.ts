@@ -169,13 +169,7 @@ export default class Review extends BaseModel {
    * @param offset The query offset (optional)
    * @param txn Optional transaction object
    */
-  static searchReviews(
-    network: string,
-    reviewedAddress?: string,
-    limit?: number,
-    offset?: number,
-    txn?: Transaction,
-  ) {
+  static searchReviews(network: string, reviewedAddress?: string, limit?: number, offset?: number, txn?: Transaction) {
     let q = this.query(txn)
       .select('*', raw('count(*) over() as' + ' "__queryCount"'))
       .whereNotDeleted()
@@ -192,11 +186,7 @@ export default class Review extends BaseModel {
    * @param reviewedAddress The reviewed address
    * @param txn Optional transaction object
    */
-  static countReviews(
-    network: string,
-    reviewedAddress?: string,
-    txn?: Transaction,
-  ): Promise<Review[]> {
+  static countReviews(network: string, reviewedAddress?: string, txn?: Transaction): Promise<Review[]> {
     let q = this.query(txn).whereNotDeleted().where({ network });
     if (reviewedAddress) q = q.where('reviewed', 'ILIKE', reviewedAddress);
     return q

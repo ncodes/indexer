@@ -24,7 +24,7 @@ export class MarketsController {
    */
   @Get(':mid')
   async get(@Param('mid') marketAddress: string, @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO) {
-    const market = await Market.getMarket(q.net, marketAddress, q.select);
+    const market = await Market.getMarket(q.net, marketAddress, q.select, 'badges');
     if (!market) throw404('market not found');
     await this.marketSrv.extendMarket(market, q.select);
     return ok().data(market).build();

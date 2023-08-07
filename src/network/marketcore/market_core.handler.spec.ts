@@ -253,16 +253,8 @@ describe('MarketCoreHandler', () => {
         scope: BadgeScope.SWAP,
       });
 
-      await MarketBadge.create({
-        network: net,
-        marketAddress,
-        badge: 'badge2',
-        path: 'path2',
-        scope: BadgeScope.MEDIATE,
-      });
-
       await expect(
-        handler.onUpdatedMarketBadges(marketAddress, [['badge2', 'path2']], [['badge2', 'path3']], [['', '']], null),
+        handler.onUpdatedMarketBadges(marketAddress, [['badge2', 'path2']], [['badge2', 'path3']], null),
       ).resolves.toBeUndefined();
 
       const updPut = await MarketBadge.find({ marketAddress, scope: BadgeScope.PUT });
@@ -276,9 +268,6 @@ describe('MarketCoreHandler', () => {
       expect(updSwap.badge).toEqual('badge2');
       expect(updSwap.path).not.toEqual(swap.path);
       expect(updSwap.path).toEqual('path3');
-
-      const updMediate = await MarketBadge.find({ marketAddress, scope: BadgeScope.MEDIATE });
-      expect(updMediate).toBeUndefined();
     });
   });
 

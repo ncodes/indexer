@@ -7,21 +7,25 @@ import { isDevMode, isProdMode } from '../../common/common';
 import { CoinGeckoMetadata } from './CoinGeckoMetadata';
 
 // tslint:disable-next-line:max-classes-per-file
-abstract class MetadataSource {
-  abstract getTokenInfo(symbolOrNetwork: string, contract: string): Promise<TokenMetadata>;
+export abstract class MetadataSource {
+  abstract getTokenInfo(network: string, symbolOrContract: string): Promise<TokenMetadata>;
 }
 
 @Injectable()
 export class MetadataService {
   private source: MetadataSource;
 
+  /**
+   * Initialize the service
+   * @param cfg The config service
+   * @param netSrv The network service
+   */
   constructor(private cfg: ConfigService, private netSrv: NetworkService) {
-    switch (cfg.get('app.tokenMetadataSource')) {
-      case 'coingecko':
-        this.source = new CoinGeckoMetadata();
-        break;
-      case 'coinmarketcap':
-        this.source = new CoinMarketCapMetadata(cfg.get('app.cmc.key'));
+    const metaSource = cfg.get('app.tokenMetadataSource');
+    if (metaSource === 'coingecko') {
+      this.source = new CoinGeckoMetadata();
+    } else if (metaSource === 'coinmarketcap') {
+      this.source = new CoinMarketCapMetadata(cfg.get('app.cmc.key'));
     }
   }
 

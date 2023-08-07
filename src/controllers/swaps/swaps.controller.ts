@@ -28,7 +28,7 @@ export class SwapsController {
     if (!swap) throw404('swap not found');
 
     // Get market
-    const market = await Market.getMarket(q.net, swap.marketAddress, q.select);
+    const market = await Market.getMarket(q.net, swap.marketAddress, q.select, undefined);
     if (!market) return throw404('market not found');
     await this.marketSrv.extendMarket(market, q.select);
     swap.market = market;
@@ -58,7 +58,7 @@ export class SwapsController {
     const swaps = await Swap.searchSwaps(q.net, q.marketAddress, q.address, q.limit || 25, q.offset, q.select);
 
     for (const swap of swaps) {
-      const market = await Market.getMarket(q.net, swap.marketAddress, q.select);
+      const market = await Market.getMarket(q.net, swap.marketAddress, q.select, undefined);
       if (!market) return throw404('market not found');
       await this.marketSrv.extendMarket(market, q.select);
       swap.market = market;

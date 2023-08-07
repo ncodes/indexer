@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import Ticket from '../../models/ticket';
 import * as moment from 'moment';
+import * as _ from 'lodash';
 
 @Injectable()
 export class TicketsService {
@@ -11,6 +12,8 @@ export class TicketsService {
    * @returns
    */
   async extendTicket(ticket: Ticket, select = []) {
+    select = select && _.filter(select, (s) => !_.isEmpty(s));
+
     try {
       const { joined, joinBy, drained, cancelAt } = ticket;
       const now = moment();

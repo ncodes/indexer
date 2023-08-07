@@ -52,8 +52,8 @@ export class DBService {
    * @returns
    */
   destroy() {
-    return this.knex.destroy().then(() => {
-      this.dbManager.closeKnex();
+    return this.knex.destroy().then(async () => {
+      await this.dbManager.closeKnex();
     });
   }
 }

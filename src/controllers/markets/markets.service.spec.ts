@@ -10,6 +10,8 @@ import Swap from '../../models/swap';
 import { TokenLists } from '../../common/token_list';
 import Liquidity from '../../models/liquidity';
 import MarketPrice from '../../models/market_price';
+import { pow10 } from '../../network/common';
+import * as _ from 'lodash';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -24,13 +26,6 @@ const NetworkServiceMock = jest.fn().mockImplementation(() => {
         markets: mockMarkets,
       },
     }),
-  };
-});
-
-const mockGetLogo = jest.fn();
-const MetadataServiceMock = jest.fn().mockImplementation(() => {
-  return {
-    getLogo: mockGetLogo,
   };
 });
 
@@ -60,7 +55,6 @@ describe('MarketsService', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     mockCfgGet.mockReset();
-    mockGetLogo.mockReset();
 
     cfgObj = {};
     mockCfgGet.mockReset().mockImplementation((args) => {
@@ -75,8 +69,6 @@ describe('MarketsService', () => {
       .useValue(new ConfigServiceMock())
       .overrideProvider(NetworkService)
       .useValue(new NetworkServiceMock())
-      .overrideProvider(MetadataService)
-      .useValue(new MetadataServiceMock())
       .compile();
 
     service = module.get<MarketService>(MarketService);
@@ -112,10 +104,34 @@ describe('MarketsService', () => {
       expect(market.totalLiquidity).toBe('25');
     });
 
+    it(`should return correct value when select=['lowestPrice']`, async () => {
+      await Liquidity.create({ marketAddress, network: net, amount: '1', price: pow10(18).mul(200).toString() });
+      const lowest = await Liquidity.create({
+        marketAddress,
+        network: net,
+        amount: '1',
+        price: pow10(18).mul(100).toString(),
+      });
+      await Liquidity.create({ marketAddress, network: net, amount: '1', price: pow10(18).mul(300).toString() });
+
+      jest
+        .spyOn(module.get(MetadataService), 'getTokenInfo')
+        .mockResolvedValue({ decimals: 18, price: 5, network: net, logoURI: '', name: '' });
+
+      await service.extendMarket(market, ['lowestPrice']);
+      expect(market.lowestPrice).toBe(lowest.price);
+      expect(market.lowestPriceUsd).toEqual(500);
+    });
+
     it(`should return correct value when select=['lowestPrice24h', 'highestPrice24h']`, async () => {
       await Liquidity.create({ marketAddress, network: net, amount: '1', price: '2' });
       await Liquidity.create({ marketAddress, network: net, amount: '1', price: '1' });
       await Liquidity.create({ marketAddress, network: net, amount: '1', price: '3' });
+
+      jest
+        .spyOn(module.get(MetadataService), 'getTokenInfo')
+        .mockResolvedValue({ decimals: 18, price: 5, network: net, logoURI: '', name: '' });
+
       await service.extendMarket(market, ['lowestPrice24h', 'highestPrice24h']);
       expect(market.lowestPrice24h).toBe('1');
       expect(market.highestPrice24h).toBe('3');
@@ -175,12 +191,24 @@ describe('MarketsService', () => {
       expect(market.priceChange).toBe(100);
     });
 
-    it(`should return correct value when select=['baseLogo or quoteLogo']`, async () => {
-      TokenLists[net].tokens.push({ address: base, logoURI: 'logo_url' });
-      TokenLists[net].tokens.push({ address: quote, logoURI: 'logo_url_quote' });
-      await service.extendMarket(market, ['baseLogo', 'quoteLogo']);
-      expect(market.baseLogo).toBe('logo_url');
-      expect(market.quoteLogo).toBe('logo_url_quote');
+    describe(`select=['baseLogo or quoteLogo']`, () => {
+      it(`should return correct value when token was found in local list`, async () => {
+        TokenLists[net].tokens.push({ address: base, logoURI: 'logo_url' });
+        TokenLists[net].tokens.push({ address: quote, logoURI: 'logo_url_quote' });
+        await service.extendMarket(market, ['baseLogo', 'quoteLogo']);
+        expect(market.baseLogo).toBe('logo_url');
+        expect(market.quoteLogo).toBe('logo_url_quote');
+      });
+
+      it(`should return correct value from metadata source if token does not exist in local list`, async () => {
+        const copy = _.clone(TokenLists[net].tokens);
+        TokenLists[net].tokens = [];
+        jest.spyOn(module.get(MetadataService), 'getTokenLogo').mockResolvedValue('logo_url');
+        await service.extendMarket(market, ['baseLogo', 'quoteLogo']);
+        expect(market.baseLogo).toBe('logo_url');
+        expect(market.quoteLogo).toBe('logo_url');
+        TokenLists[net].tokens = copy;
+      });
     });
   });
 });

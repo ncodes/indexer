@@ -1,7 +1,8 @@
 import * as _ from 'lodash';
 import axios from 'axios';
+import { MetadataSource } from './metadata.service';
 
-export class CoinMarketCapMetadata {
+export class CoinMarketCapMetadata implements MetadataSource {
   constructor(private key: string) {}
 
   async getPrice(id: number) {
@@ -14,17 +15,16 @@ export class CoinMarketCapMetadata {
   /**
    * Get logo url of contract
    * @param network The asset network
-   * @param contract The asset contract address or symbol
+   * @param symbolOrContract The asset contract address or symbol
    * @returns
    */
-  async getTokenInfo(network: string, contract: string): Promise<TokenMetadata> {
-    let url = `https://pro-api.coinmarketcap.com/v2/cryptocurrency/info?CMC_PRO_API_KEY=${this.key}&address=${contract}`;
-    const isSymbol = contract.substr(0, 2).toLowerCase() !== '0x';
-    if (isSymbol) {
-      url = `https://pro-api.coinmarketcap.com/v2/cryptocurrency/info?CMC_PRO_API_KEY=${this.key}&symbol=${contract}`;
-    }
+  async getTokenInfo(network: string, symbolOrContract: string): Promise<TokenMetadata> {
+    const partUrl = `https://pro-api.coinmarketcap.com/v2/cryptocurrency/info?CMC_PRO_API_KEY=${this.key}`;
+    let url = `${partUrl}&address=${symbolOrContract}`;
+    const isSymbol = !symbolOrContract.toLowerCase().startsWith('0x');
+    url = isSymbol ? `${partUrl}&symbol=${symbolOrContract}` : url;
     const resp = await axios.get(url);
-    const info = _.values(!isSymbol ? resp.data.data : resp.data.data[contract.toUpperCase()])[0];
+    const info = _.values(!isSymbol ? resp.data.data : resp.data.data[symbolOrContract.toUpperCase()])[0];
     const price = await this.getPrice(info.id);
     return Promise.resolve({
       network: network ? network : info?.platform?.slug,

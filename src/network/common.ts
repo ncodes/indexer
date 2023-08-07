@@ -30,6 +30,7 @@ export const CoinGeckoConfig = {
     ETH: 'ethereum',
     BNB: 'binancecoin',
     MATIC: 'matic-network',
+    BTC: 'bitcoin',
   },
 };
 

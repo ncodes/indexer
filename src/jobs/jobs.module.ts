@@ -25,7 +25,7 @@ import { ConfigService } from '../config/config.service';
   ],
   providers: [
     ConfigService,
-    ExchangeRateCacher,
+    // ExchangeRateCacher,
     OnEvidencePeriodEnd,
     OnCommitPeriodEnd,
     OnEvidencePeriodEnd,

@@ -5,6 +5,7 @@ import { NoopLogger } from '../../common/loggers/noop_logger';
 import { DBService } from '../../db/DBService';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
 import ExchangeRateCacher from './exchange_rate_cacher';
+import { MetadataModule } from '../../services/metadata/metadata.module';
 
 const mockUpdateCache = jest.fn();
 const ExchangeRateServiceMock = jest.fn().mockImplementation(() => {

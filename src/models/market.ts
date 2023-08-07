@@ -1,7 +1,8 @@
 import { randStr } from '../common/common';
-import Objection, { QueryBuilderType, raw, Transaction } from 'objection';
+import Objection, { Model, QueryBuilderType, raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 import * as _ from 'lodash';
+import MarketBadge from './market_badge';
 
 export enum AssetType {
   SYNTH,
@@ -81,19 +82,24 @@ export default class Market extends BaseModel {
   predictDur: number;
   // The market manager
   manager: string;
+  // Total liquidity in this market
+  totalLiquidity: string;
 
   // *** Non-persisted fields **//
-  numDisputes: number; // (include appeals)
+  numDisputes: number;
   baseLogo: string;
   quoteLogo: string;
   numProviders: string;
-  totalLiquidity: string;
   lowestPrice: string;
+  lowestPriceUsd: number;
   lowestPrice24h: string;
   highestPrice24h: string;
   priceChange: number;
   totalSwaps24h: string;
   volume24h: string;
+
+  // *** Relations ***//
+  badges: MarketBadge[];
 
   constructor(init?: Partial<Market>) {
     super();
@@ -116,7 +122,16 @@ export default class Market extends BaseModel {
   }
 
   static get relationMappings() {
-    return {};
+    return {
+      badges: {
+        relation: Model.HasManyRelation,
+        modelClass: MarketBadge,
+        join: {
+          from: 'markets.address',
+          to: 'market_badges.marketAddress',
+        },
+      },
+    };
   }
 
   getBaseAsset(): Asset {
@@ -254,15 +269,23 @@ export default class Market extends BaseModel {
    * @param network The network name
    * @param marketAddress The record id
    * @param select Select specific fields (optional)
-   * @param txn Optional transaction object
+   * @param relations Indicate the relations to fetch
+   * @param txn? Optional transaction object
    */
-  static getMarket(network: string, marketAddress: string, select = [], txn?: Transaction) {
+  static getMarket(
+    network: string,
+    marketAddress: string,
+    select = [],
+    relations: string = undefined,
+    txn?: Objection.Transaction,
+  ) {
     select = this.makeSelectList(select);
     return this.query(txn)
       .select(...select)
       .where('network', 'ilike', network)
       .where('address', 'ilike', marketAddress)
       .whereNotDeleted()
+      .withGraphFetched(relations)
       .first();
   }
 
@@ -355,7 +378,8 @@ export default class Market extends BaseModel {
       .whereNotDeleted()
       .orderBy('amountSwapped', 'DESC') // prefer high volume
       .orderBy('totalSwaps', 'DESC') // prefer high swap transactions
-      .orderBy('completionRate', 'DESC'); // prefer high release rate (without dispute)
+      .orderBy('completionRate', 'DESC') // prefer high release rate (without dispute)
+      .withGraphFetched('[badges]');
   }
 
   /**

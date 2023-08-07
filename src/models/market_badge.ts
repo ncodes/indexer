@@ -6,7 +6,6 @@ import { randStr } from '../common/common';
 export enum BadgeScope {
   PUT = 'put',
   SWAP = 'swap',
-  MEDIATE = 'mediate',
 }
 
 /**

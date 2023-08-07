@@ -97,15 +97,8 @@ export class MarketCoreHandler extends Handler {
 
     this.on(
       'UpdatedMarketBadges',
-      async (
-        id: string,
-        put: [string, string][],
-        swap: [string, string][],
-        mediate: [string, string][],
-        event: Event,
-        txn: Transaction,
-      ) => {
-        return this.onUpdatedMarketBadges(id, put, swap, mediate, event, txn);
+      async (id: string, put: [string, string][], swap: [string, string][], event: Event, txn: Transaction) => {
+        return this.onUpdatedMarketBadges(id, put, swap, event, txn);
       },
     );
 
@@ -133,7 +126,6 @@ export class MarketCoreHandler extends Handler {
    * @param id The market ID
    * @param put The PUT badges
    * @param swap The SWAP badges
-   * @param mediate The MEDIATE badges
    * @param event The event object
    * @param txn The db transaction object
    */
@@ -141,7 +133,6 @@ export class MarketCoreHandler extends Handler {
     id: string,
     put: [string, string][],
     swap: [string, string][],
-    mediate: [string, string][],
     event: Event,
     txn?: Transaction,
   ) {
@@ -168,19 +159,6 @@ export class MarketCoreHandler extends Handler {
           badge: badge[0],
           path: badge[1],
           scope: BadgeScope.SWAP,
-        },
-        txn,
-      );
-    }
-    for (const badge of mediate) {
-      if (badge[0] == '' && badge[1] == '') continue;
-      await MarketBadge.create(
-        {
-          network: this.network,
-          marketAddress: id,
-          badge: badge[0],
-          path: badge[1],
-          scope: BadgeScope.MEDIATE,
         },
         txn,
       );
@@ -339,7 +317,7 @@ export class MarketCoreHandler extends Handler {
     await Liquidity.updateAllForProvider(this.network, marketAddress, address, { swapDisabled: false }, txn);
 
     // Notify approved user
-    const market = await Market.getMarket(this.network, marketAddress, [], txn);
+    const market = await Market.getMarket(this.network, marketAddress, [], undefined, txn);
     await this.notifSrv.notify(NotificationID.PutApproved, this.network, address, {
       market,
     });
@@ -359,7 +337,7 @@ export class MarketCoreHandler extends Handler {
     await Liquidity.updateAllForProvider(this.network, marketAddress, address, { swapDisabled: true }, txn);
 
     // Notify revoked user
-    const market = await Market.getMarket(this.network, marketAddress, [], txn);
+    const market = await Market.getMarket(this.network, marketAddress, [], undefined, txn);
     await this.notifSrv.notify(NotificationID.PutRevoked, this.network, address, { market });
   }
 
@@ -374,7 +352,7 @@ export class MarketCoreHandler extends Handler {
     await PermittedTrader.create({ network: this.network, marketAddress, address }, txn);
 
     // Notify approved user
-    const market = await Market.getMarket(this.network, marketAddress, [], txn);
+    const market = await Market.getMarket(this.network, marketAddress, [], undefined, txn);
     await this.notifSrv.notify(NotificationID.SwapApproved, this.network, address, { market });
   }
 
@@ -389,7 +367,7 @@ export class MarketCoreHandler extends Handler {
     await PermittedTrader.remove(this.network, marketAddress, address, txn);
 
     // Notify revoked user
-    const market = await Market.getMarket(this.network, marketAddress, [], txn);
+    const market = await Market.getMarket(this.network, marketAddress, [], undefined, txn);
     await this.notifSrv.notify(NotificationID.SwapRevoked, this.network, address, { market });
   }
 

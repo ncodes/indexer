@@ -4,6 +4,7 @@ import Liquidity from '../../models/liquidity';
 import { MarketService } from '../markets/market.service';
 import Swap from '../../models/swap';
 import MarketPrice from '../../models/market_price';
+import * as _ from 'lodash';
 
 @Injectable()
 export class LiquidityService {
@@ -16,12 +17,13 @@ export class LiquidityService {
    * @returns
    */
   async extendLiquidity(liq: Liquidity, select = []) {
+    select = select && _.filter(select, (s) => !_.isEmpty(s));
     try {
       const { marketAddress, network: net, provider } = liq;
 
       let market: Market;
       if (select.includes(`market`) || !select.length) {
-        market = await Market.getMarket(net, marketAddress, select);
+        market = await Market.getMarket(net, marketAddress, select, undefined);
         if (!market) return Promise.reject(new Error('market not found'));
         await this.marketSrv.extendMarket(market, select);
         liq.market = market;

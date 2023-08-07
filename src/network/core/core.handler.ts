@@ -4,7 +4,7 @@ import { Transaction } from 'objection';
 import Liquidity from '../../models/liquidity';
 import MarketPrice from '../../models/market_price';
 import { Handler } from '../handler';
-import { NotifierService, NotificationID } from '../../jobs/mailer/NotifierService';
+import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierService';
 import Swap from '../../models/swap';
 import Meta, { FeeName, ProtocolFeeBeneficiary } from '../../models/meta';
 import NetworkService from '../network.service';
@@ -15,7 +15,6 @@ import Dispute from '../../models/dispute';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 import * as _ from 'lodash';
 import Offer from '../../models/offers';
-import MarketBadge, { BadgeScope } from '../../models/market_badge';
 import { includesStr, isEqualStr } from '../../common/common';
 
 export class CoreHandler extends Handler {
@@ -1054,7 +1053,7 @@ export class CoreHandler extends Handler {
   ) {
     if (isEqualStr(manager, oldManager)) return;
 
-    await Liquidity.updateAllForProvider(this.network, marketAddress, provider, { manager }, txn);
+    await Liquidity.update(this.network, marketAddress, provider, undefined, { manager }, txn);
 
     // Notify the old manager
     const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
@@ -1308,7 +1307,7 @@ export class CoreHandler extends Handler {
   }
 
   /**
-   * Liquidity swap `badges were updated
+   * Liquidity swap badges were updated
    * @param marketAddress The market ID
    * @param provider The liquidity provider's address
    * @param lid The liquidity ID
@@ -1324,22 +1323,14 @@ export class CoreHandler extends Handler {
     event: Event,
     txn?: Transaction,
   ) {
-    await MarketBadge.deleteByMarketAndProvider(this.network, marketAddress, provider, lid.toNumber(), txn);
-    for (const badge of badges) {
-      if (badge[0] == '' && badge[1] == '') continue;
-      await MarketBadge.create(
-        {
-          network: this.network,
-          marketAddress,
-          provider,
-          lid: lid.toNumber(),
-          badge: badge[0],
-          path: badge[1],
-          scope: BadgeScope.SWAP,
-        },
-        txn,
-      );
-    }
+    await Liquidity.update(
+      this.network,
+      marketAddress,
+      provider,
+      lid.toNumber(),
+      { requiredSwapBadges: badges.map((b) => b.join('/').replace(/\/$/, '')) },
+      txn,
+    );
   }
 
   /**

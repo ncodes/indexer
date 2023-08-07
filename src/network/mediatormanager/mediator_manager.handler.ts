@@ -7,7 +7,7 @@ import * as moment from 'moment';
 import { toBN } from '../common';
 import TicketSlash from '../../models/ticket_slash';
 import NetworkService from '../network.service';
-import { NotifierService, NotificationID } from '../../jobs/mailer/NotifierService';
+import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierService';
 import { commify, formatEther } from 'ethers/lib/utils';
 import Draft from '../../models/draft';
 import Dispute from '../../models/dispute';

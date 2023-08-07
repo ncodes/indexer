@@ -13,7 +13,6 @@ import Dispute from '../../models/dispute';
 import * as moment from 'moment';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 import Offer from '../../models/offers';
-import MarketBadge from '../../models/market_badge';
 
 const mockGetOrder = jest.fn();
 const mockGetOffer = jest.fn();
@@ -1004,7 +1003,9 @@ describe('CoreHandler', () => {
         await handler.onOrderCancelled(orderId, canceller, false, {} as any);
 
         // Swap should be marked as cancelled
+        market = await Market.getById(market.id);
         swap = await Swap.getById(swap.id);
+        swap.market = market;
         liq = await Liquidity.getById(liq.id);
 
         // Should send notification to counterparty
@@ -1361,6 +1362,13 @@ describe('CoreHandler', () => {
   describe('.onUpdatedLiquiditySwapBadges', function () {
     it("should update liquidity provider's badges", async () => {
       const lid = toBN(0);
+      let liq = await Liquidity.create({
+        network: net,
+        marketAddress,
+        provider,
+        lid: lid.toNumber(),
+      });
+
       await expect(
         handler.onUpdatedLiquiditySwapBadges(
           marketAddress,
@@ -1373,12 +1381,9 @@ describe('CoreHandler', () => {
           {} as any,
         ),
       ).resolves.toBeUndefined();
-      let badges = await MarketBadge.findAll({ marketAddress, provider, lid: lid.toNumber() });
-      expect(badges).toHaveLength(2);
-      expect(badges[0].badge).toEqual('badge1');
-      expect(badges[0].path).toEqual('path1');
-      expect(badges[1].badge).toEqual('badge2');
-      expect(badges[1].path).toEqual('path2');
+
+      liq = await Liquidity.getById(liq.id);
+      expect(liq.requiredSwapBadges).toEqual(['badge1/path1', 'badge2/path2']);
 
       // Update again
       await expect(
@@ -1393,12 +1398,8 @@ describe('CoreHandler', () => {
           {} as any,
         ),
       ).resolves.toBeUndefined();
-      badges = await MarketBadge.findAll({ marketAddress, provider, lid: lid.toNumber() });
-      expect(badges).toHaveLength(2);
-      expect(badges[0].badge).toEqual('badge3');
-      expect(badges[0].path).toEqual('path3');
-      expect(badges[1].badge).toEqual('badge4');
-      expect(badges[1].path).toEqual('path4');
+      liq = await Liquidity.getById(liq.id);
+      expect(liq.requiredSwapBadges).toEqual(['badge3/path3', 'badge4/path4']);
     });
   });
 

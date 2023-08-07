@@ -16,6 +16,7 @@ import Ticket from '../../models/ticket';
 import Market from '../../models/market';
 import * as moment from 'moment';
 import { randStr } from '../../common/common';
+import { MetadataService } from '../../services/metadata/metadata.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -60,7 +61,7 @@ describe('TicketsController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [TicketsController],
-      providers: [ConfigService, NetworkService, MarketService, TicketsService],
+      providers: [ConfigService, NetworkService, MarketService, MetadataService, TicketsService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())

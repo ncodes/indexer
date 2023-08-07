@@ -1,8 +1,7 @@
 import { randStr } from '../common/common';
-import Objection, { Model, QueryBuilderType, raw, Transaction } from 'objection';
+import Objection, { QueryBuilderType, raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 import * as _ from 'lodash';
-import MarketBadge from './market_badge';
 
 export enum AssetType {
   SYNTH,
@@ -84,6 +83,10 @@ export default class Market extends BaseModel {
   manager: string;
   // Total liquidity in this market
   totalLiquidity: string;
+  // The list of required badges to put liquidity
+  requiredPutBadges: string[] = undefined;
+  // The list of required badges to swap
+  requiredSwapBadges: string[] = undefined;
 
   // *** Non-persisted fields **//
   numDisputes: number;
@@ -98,9 +101,6 @@ export default class Market extends BaseModel {
   totalSwaps24h: string;
   volume24h: string;
 
-  // *** Relations ***//
-  badges: MarketBadge[];
-
   constructor(init?: Partial<Market>) {
     super();
     Object.assign(this, init);
@@ -109,6 +109,22 @@ export default class Market extends BaseModel {
   $beforeInsert() {
     super.$beforeInsert();
     this.id = 'market_' + randStr(24);
+    this.requiredSwapBadges = this.requiredSwapBadges
+      ? (JSON.stringify(this.requiredSwapBadges) as any)
+      : this.requiredSwapBadges;
+    this.requiredPutBadges = this.requiredPutBadges
+      ? (JSON.stringify(this.requiredPutBadges) as any)
+      : this.requiredPutBadges;
+  }
+
+  $beforeUpdate() {
+    super.$beforeUpdate();
+    this.requiredSwapBadges = this.requiredSwapBadges
+      ? (JSON.stringify(this.requiredSwapBadges) as any)
+      : this.requiredSwapBadges;
+    this.requiredPutBadges = this.requiredPutBadges
+      ? (JSON.stringify(this.requiredPutBadges) as any)
+      : this.requiredPutBadges;
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
@@ -122,16 +138,7 @@ export default class Market extends BaseModel {
   }
 
   static get relationMappings() {
-    return {
-      badges: {
-        relation: Model.HasManyRelation,
-        modelClass: MarketBadge,
-        join: {
-          from: 'markets.address',
-          to: 'market_badges.marketAddress',
-        },
-      },
-    };
+    return {};
   }
 
   getBaseAsset(): Asset {
@@ -335,7 +342,8 @@ export default class Market extends BaseModel {
    * @param limit The number of records to return.
    * @param offset The offset value
    * @param select Select specific fields (optional)
-   * @param txn??????? Optional transaction object
+   * @param relations The relationships to fetch (optional)
+   * @param txn???????? Optional transaction object
    */
   static search(
     network: string,
@@ -349,6 +357,7 @@ export default class Market extends BaseModel {
     limit: number,
     offset: number,
     select = [],
+    relations: string = undefined,
     txn?: Objection.Transaction,
   ) {
     select = this.makeSelectList(select);
@@ -379,7 +388,7 @@ export default class Market extends BaseModel {
       .orderBy('amountSwapped', 'DESC') // prefer high volume
       .orderBy('totalSwaps', 'DESC') // prefer high swap transactions
       .orderBy('completionRate', 'DESC') // prefer high release rate (without dispute)
-      .withGraphFetched('[badges]');
+      .withGraphFetched(relations);
   }
 
   /**

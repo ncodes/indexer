@@ -2,7 +2,6 @@
 import { CoinGeckoConfig, getChainID } from '../../network/common';
 import axios from 'axios';
 import { MetadataSource } from './metadata.service';
-import { notify } from '../../common/common';
 
 export class CoinGeckoMetadata implements MetadataSource {
   private url = 'https://api.coingecko.com/api/v3';

@@ -7,9 +7,8 @@ import Market from '../../models/market';
 import { Handler } from '../handler';
 import LiquidityProvider from '../../models/market_provider';
 import PermittedTrader from '../../models/permitted_trader';
-import { NotifierService, NotificationID } from '../../jobs/mailer/NotifierService';
+import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierService';
 import NetworkService from '../network.service';
-import MarketBadge, { BadgeScope } from '../../models/market_badge';
 import { findInSynthetic } from '../../common/token_list';
 import Liquidity from '../../models/liquidity';
 
@@ -136,33 +135,15 @@ export class MarketCoreHandler extends Handler {
     event: Event,
     txn?: Transaction,
   ) {
-    await MarketBadge.deleteByMarketAddress(this.network, id, txn);
-    for (const badge of put) {
-      if (badge[0] == '' && badge[1] == '') continue;
-      await MarketBadge.create(
-        {
-          network: this.network,
-          marketAddress: id,
-          badge: badge[0],
-          path: badge[1],
-          scope: BadgeScope.PUT,
-        },
-        txn,
-      );
-    }
-    for (const badge of swap) {
-      if (badge[0] == '' && badge[1] == '') continue;
-      await MarketBadge.create(
-        {
-          network: this.network,
-          marketAddress: id,
-          badge: badge[0],
-          path: badge[1],
-          scope: BadgeScope.SWAP,
-        },
-        txn,
-      );
-    }
+    await Market.updateByNetworkAddress(
+      this.network,
+      id,
+      {
+        requiredPutBadges: put.map((b) => b.join('/').replace(/\/$/, '')),
+        requiredSwapBadges: swap.map((b) => b.join('/').replace(/\/$/, '')),
+      },
+      txn,
+    );
   }
 
   /**
@@ -314,7 +295,7 @@ export class MarketCoreHandler extends Handler {
     );
 
     // Enable any existing liquidity created by the user
-    await Liquidity.updateAllForProvider(this.network, marketAddress, address, { swapDisabled: false }, txn);
+    await Liquidity.update(this.network, marketAddress, address, undefined, { swapDisabled: false }, txn);
 
     // Notify approved user
     const market = await Market.getMarket(this.network, marketAddress, [], undefined, txn);
@@ -334,7 +315,7 @@ export class MarketCoreHandler extends Handler {
     await LiquidityProvider.remove(this.network, marketAddress, address, txn);
 
     // Disable all liquidity created by the revoked user
-    await Liquidity.updateAllForProvider(this.network, marketAddress, address, { swapDisabled: true }, txn);
+    await Liquidity.update(this.network, marketAddress, address, undefined, { swapDisabled: true }, txn);
 
     // Notify revoked user
     const market = await Market.getMarket(this.network, marketAddress, [], undefined, txn);

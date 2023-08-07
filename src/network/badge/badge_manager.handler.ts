@@ -4,7 +4,6 @@ import { Transaction } from 'objection';
 import Badge from '../../models/badge';
 import BadgeGrant from '../../models/badge_grant';
 import * as moment from 'moment';
-import * as console from 'console';
 
 export class BadgeManagerHandler extends Handler {
   constructor(private provider: providers.JsonRpcProvider, public network: string, private contracts: JointContracts) {

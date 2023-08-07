@@ -12,8 +12,9 @@ import { randStr } from '../../common/common';
 import { OfferService } from './offer.service';
 import { OfferController } from './offers.controller';
 import Offer from '../../models/offers';
+import * as moment from 'moment';
 
-describe('MarketsController', () => {
+describe('OffersController', () => {
   let app: INestApplication;
   const db = DBService.getForTest();
 
@@ -194,7 +195,7 @@ describe('MarketsController', () => {
     it('should return 200 and correct data when [query=limit] is set', async () => {
       await Offer.create({ network: net, lid: 2 });
       await Offer.create({ network: net, provider: '0xProvider', lid: 1 });
-      const offer = await Offer.create({ network: net, provider: '0xProvider', lid: 3 });
+      await Offer.create({ network: net, provider: '0xProvider', lid: 3 });
       await request(app.getHttpServer())
         .get(`/v1/offers`)
         .query({ net, limit: 2 })
@@ -205,9 +206,20 @@ describe('MarketsController', () => {
     });
 
     it('should return 200 and correct data when [query=limit,offset] is set', async () => {
-      await Offer.create({ network: net, lid: 2 });
-      const offer = await Offer.create({ network: net, provider: '0xProvider', lid: 1 });
-      const offer2 = await Offer.create({ network: net, provider: '0xProvider', lid: 3 });
+      const now = moment();
+      await Offer.create({ network: net, lid: 2, updatedAt: now.toISOString() });
+      const offer = await Offer.create({
+        network: net,
+        provider: '0xProvider',
+        lid: 1,
+        updatedAt: now.add(1, 's').toISOString(),
+      });
+      const offer2 = await Offer.create({
+        network: net,
+        provider: '0xProvider',
+        lid: 3,
+        updatedAt: now.add(2, 's').toISOString(),
+      });
       await request(app.getHttpServer())
         .get(`/v1/offers`)
         .query({ net, limit: 1, offset: 0 })

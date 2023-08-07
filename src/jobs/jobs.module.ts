@@ -3,7 +3,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService as NestConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ExchangeRateServiceModule } from '../services/exchange_rate.service';
-import ExchangeRateCacher from './exchange_rate_cacher/exchange_rate_cacher';
 import { NotifierModule } from './mailer/NotifierModule';
 import OnEvidencePeriodEnd from './dispute_notifier/on_evidence_period_end/on_evidence_period_end';
 import OnCommitPeriodEnd from './dispute_notifier/on_commit_period_end/on_commit_period_end';

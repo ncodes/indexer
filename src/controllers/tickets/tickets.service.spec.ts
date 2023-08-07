@@ -6,17 +6,11 @@ import { DBService } from '../../db/DBService';
 import { TicketsService } from './tickets.service';
 import { MarketService } from '../markets/market.service';
 import Ticket from '../../models/ticket';
-import Market from '../../models/market';
 import * as moment from 'moment';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
   return { get: mockCfgGet };
-});
-
-const mockGetMarketCore = jest.fn();
-const NetworkServiceMock = jest.fn().mockImplementation(() => {
-  return { getMarketCore: mockGetMarketCore };
 });
 
 const mockGetLogo = jest.fn();
@@ -48,7 +42,6 @@ describe('TicketsService', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     mockCfgGet.mockReset();
-    mockGetMarketCore.mockReset();
     mockGetLogo.mockReset();
 
     cfgObj = {};
@@ -58,13 +51,11 @@ describe('TicketsService', () => {
 
     module = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
-      providers: [ConfigService, TicketsService, MarketService, NetworkService],
+      providers: [ConfigService, MetadataService, TicketsService, MarketService, NetworkService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
       .overrideProvider(NetworkService)
-      .useValue(new NetworkServiceMock())
-      .overrideProvider(MetadataService)
       .useValue(new MetadataServiceMock())
       .compile();
 

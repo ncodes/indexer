@@ -1,9 +1,8 @@
-import { randStr } from '../common/common';
-import Objection, { Transaction } from 'objection';
-import { BaseModel } from './base';
-import * as moment from 'moment';
-import { toDec } from '../common/common';
-import { isNil } from 'lodash';
+import { randStr, toDec } from "../common/common";
+import Objection, { Transaction } from "objection";
+import { BaseModel } from "./base";
+import * as moment from "moment";
+import { isNil } from "lodash";
 
 /**
  * MarketPrice represents a market's historic price

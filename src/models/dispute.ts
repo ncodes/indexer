@@ -1,8 +1,8 @@
-import { randStr } from '../common/common';
-import Objection, { Model, raw, Transaction } from 'objection';
-import { BaseModel } from './base';
-import * as _ from 'lodash';
-import Draft from './draft';
+import { randStr } from "../common/common";
+import Objection, { Model, raw, Transaction } from "objection";
+import { BaseModel } from "./base";
+import * as _ from "lodash";
+import Draft from "./draft";
 
 /**
  * Dispute represents a swap dispute

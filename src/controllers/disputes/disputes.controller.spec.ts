@@ -13,6 +13,7 @@ import { MarketService } from '../markets/market.service';
 import { DisputesController } from './disputes.controller';
 import { randStr } from '../../common/common';
 import Dispute from '../../models/dispute';
+import { MetadataService } from '../../services/metadata/metadata.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -55,7 +56,7 @@ describe('DisputesController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [DisputesController],
-      providers: [ConfigService, NetworkService, MarketService],
+      providers: [ConfigService, NetworkService, MarketService, MetadataService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())

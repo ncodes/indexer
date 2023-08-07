@@ -1,9 +1,9 @@
-import { CanActivate, ExecutionContext, HttpStatus, Injectable } from '@nestjs/common';
-import * as basicAuth from 'basic-auth';
-import express from 'express';
-import { error, ErrorTypes } from '../common/responses/responses';
-import { ConfigService } from '@nestjs/config';
-import { notPermitted } from './be_authenticated.guard';
+import { CanActivate, ExecutionContext, HttpStatus, Injectable } from "@nestjs/common";
+import * as basicAuth from "basic-auth";
+import express from "express";
+import { error, ErrorTypes } from "../common/responses/responses";
+import { ConfigService } from "@nestjs/config";
+import { notPermitted } from "./be_authenticated.guard";
 
 /**
  * IsBasicAdmin checks for basic authorization header represents the root admin.

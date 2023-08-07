@@ -6,8 +6,8 @@ import Swap from '../../models/swap';
 import { getTokenLogo } from '../../common/token_list';
 import * as _ from 'lodash';
 import { MetadataService } from '../../services/metadata/metadata.service';
-import { pow10D, toFixed } from '../../network/common';
-import { notify, toDec } from '../../common/common';
+import { pow10D } from '../../network/common';
+import { toDec } from '../../common/common';
 
 @Injectable()
 export class MarketService {

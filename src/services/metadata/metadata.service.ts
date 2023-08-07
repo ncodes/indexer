@@ -1,10 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import NetworkService from '../../network/network.service';
-import { isValidNetwork } from '../../network/common';
-import { CoinMarketCapMetadata } from './CoinMarketCapMetadata';
-import { isDevMode, isProdMode } from '../../common/common';
-import { CoinGeckoMetadata } from './CoinGeckoMetadata';
+import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import NetworkService from "../../network/network.service";
+import { isValidNetwork } from "../../network/common";
+import { CoinMarketCapMetadata } from "./CoinMarketCapMetadata";
+import { isDevMode, isProdMode } from "../../common/common";
+import { CoinGeckoMetadata } from "./CoinGeckoMetadata";
 
 // tslint:disable-next-line:max-classes-per-file
 export abstract class MetadataSource {

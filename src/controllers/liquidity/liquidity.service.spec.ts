@@ -8,12 +8,17 @@ import { MarketService } from '../markets/market.service';
 import Swap from '../../models/swap';
 import * as moment from 'moment';
 import MarketPrice from '../../models/market_price';
+import { MetadataService } from '../../services/metadata/metadata.service';
+
+const MetadataServiceMock = jest.fn().mockImplementation(() => {
+  return {};
+});
 
 describe('LiquidityService', () => {
   let module: TestingModule;
   let service: LiquidityService;
   const db = DBService.getForTest();
-  const net = 'etheruem';
+  const net = 'ethereum';
   const marketAddress = '0xMarket';
   const provider = '0xProvider';
 
@@ -34,8 +39,11 @@ describe('LiquidityService', () => {
 
     module = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
-      providers: [LiquidityService, MarketService],
-    }).compile();
+      providers: [LiquidityService, MarketService, MetadataService],
+    })
+      .overrideProvider(MetadataService)
+      .useValue(new MetadataServiceMock())
+      .compile();
 
     service = module.get<LiquidityService>(LiquidityService);
   });

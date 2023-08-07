@@ -13,6 +13,7 @@ import { BadgeService } from './badge.service';
 import { BadgesController } from './badges.controller';
 import Badge from '../../models/badge';
 import BadgeGrant from '../../models/badge_grant';
+import * as moment from 'moment/moment';
 
 describe('BadgesController', () => {
   let app: INestApplication;
@@ -275,8 +276,13 @@ describe('BadgesController', () => {
     });
 
     it('should return 200 and correct count when [query=limit,offset] is set', async () => {
-      const grant = await BadgeGrant.create({ network: net, grantee: '0xGrantee' });
-      const grant2 = await BadgeGrant.create({ network: net, grantee: '0xGrantee2' });
+      const now = moment();
+      const grant = await BadgeGrant.create({ network: net, grantee: '0xGrantee', updatedAt: now.toISOString() });
+      const grant2 = await BadgeGrant.create({
+        network: net,
+        grantee: '0xGrantee2',
+        updatedAt: now.add(1, 's').toISOString(),
+      });
       await request(app.getHttpServer())
         .get(`/v1/badges/granted`)
         .query({ net, limit: 1, offset: 0 })

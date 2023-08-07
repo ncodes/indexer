@@ -2,7 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { NoopLogger } from '../../../common/loggers/noop_logger';
 import { DBService } from '../../../db/DBService';
-import { NotifierService, NotificationID } from '../../mailer/NotifierService';
+import { NotificationID, NotifierService } from '../../mailer/NotifierService';
 import Dispute from '../../../models/dispute';
 import * as moment from 'moment';
 import Swap from '../../../models/swap';

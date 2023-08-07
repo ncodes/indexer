@@ -2,7 +2,6 @@ import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { DBService } from '../../db/DBService';
-import { MetadataModule } from './metadata.module';
 import { CoinMarketCapMetadata } from './CoinMarketCapMetadata';
 import { CoinGeckoMetadata } from './CoinGeckoMetadata';
 import { isLocal } from '../../common/common';
@@ -25,7 +24,7 @@ if (process.env.TEST_EXTERNAL_API == 'true' || isLocal()) {
       await db.truncateTables();
 
       const module: TestingModule = await Test.createTestingModule({
-        imports: [MetadataModule],
+        imports: [],
         providers: [],
       }).compile();
 

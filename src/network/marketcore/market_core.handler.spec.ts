@@ -6,7 +6,6 @@ import LiquidityProvider from '../../models/market_provider';
 import * as moment from 'moment';
 import PermittedTrader from '../../models/permitted_trader';
 import { NotificationID } from '../../jobs/mailer/NotifierService';
-import MarketBadge, { BadgeScope } from '../../models/market_badge';
 import { toBN } from '../common';
 import { TokenLists } from '../../common/token_list';
 import Liquidity from '../../models/liquidity';
@@ -31,8 +30,6 @@ describe('MarketCoreHandler', () => {
   const db = DBService.getForTest();
   const net = 'net';
   const marketAddress = '0xMarket';
-  const badge = 'badge';
-  const path = 'path';
   const txHash = '0xTxHash';
   const creator = '0xCreator';
   const userAddr = '0xUser';
@@ -237,37 +234,28 @@ describe('MarketCoreHandler', () => {
 
   describe('.onUpdatedMarketBadges', function () {
     it('should correctly update existing market badges', async () => {
-      const put = await MarketBadge.create({
+      let market = await Market.create({
         network: net,
-        marketAddress,
-        badge,
-        path,
-        scope: BadgeScope.PUT,
-      });
-
-      const swap = await MarketBadge.create({
-        network: net,
-        marketAddress,
-        badge,
-        path: '',
-        scope: BadgeScope.SWAP,
+        address: marketAddress,
+        requiredSwapBadges: ['badge/path', 'badge2'],
+        requiredPutBadges: ['badge3/path', 'badge4'],
       });
 
       await expect(
-        handler.onUpdatedMarketBadges(marketAddress, [['badge2', 'path2']], [['badge2', 'path3']], null),
+        handler.onUpdatedMarketBadges(
+          marketAddress,
+          [['badge2', 'path2']],
+          [
+            ['badge2', 'path3'],
+            ['badgeX', ''],
+          ],
+          null,
+        ),
       ).resolves.toBeUndefined();
 
-      const updPut = await MarketBadge.find({ marketAddress, scope: BadgeScope.PUT });
-      expect(updPut.badge).not.toEqual(put.badge);
-      expect(updPut.badge).toEqual('badge2');
-      expect(updPut.path).not.toEqual(put.path);
-      expect(updPut.path).toEqual('path2');
-
-      const updSwap = await MarketBadge.find({ marketAddress, scope: BadgeScope.SWAP });
-      expect(updSwap.badge).not.toEqual(swap.badge);
-      expect(updSwap.badge).toEqual('badge2');
-      expect(updSwap.path).not.toEqual(swap.path);
-      expect(updSwap.path).toEqual('path3');
+      market = await Market.getById(market.id);
+      expect(market.requiredPutBadges).toEqual(['badge2/path2']);
+      expect(market.requiredSwapBadges).toEqual(['badge2/path3', 'badgeX']);
     });
   });
 

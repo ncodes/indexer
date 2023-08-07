@@ -1,7 +1,7 @@
-import { randStr } from '../common/common';
-import Objection, { Transaction } from 'objection';
-import { Roles } from '../common/roles';
-import { BaseModel } from './base';
+import { randStr } from "../common/common";
+import Objection, { Transaction } from "objection";
+import { Roles } from "../common/roles";
+import { BaseModel } from "./base";
 
 /**
  * User represents a user model

@@ -1,13 +1,13 @@
-import { Process, Processor } from '@nestjs/bull';
-import { Job } from 'bull';
-import { MailerService } from '../../services/mailer/mailer.service';
-import User from '../../models/user';
-import Notification, { NotificationType } from '../../models/notification';
-import { Logger } from '@nestjs/common';
-import Market from '../../models/market';
-import { pow10D, toFixed } from '../../network/common';
-import { isEqualStr, shortenAddr, toDec } from '../../common/common';
-import * as moment from 'moment-timezone';
+import { Process, Processor } from "@nestjs/bull";
+import { Job } from "bull";
+import { MailerService } from "../../services/mailer/mailer.service";
+import User from "../../models/user";
+import Notification, { NotificationType } from "../../models/notification";
+import { Logger } from "@nestjs/common";
+import Market from "../../models/market";
+import { pow10D, toFixed } from "../../network/common";
+import { isEqualStr, shortenAddr, toDec } from "../../common/common";
+import * as moment from "moment-timezone";
 
 // noinspection JSUnusedGlobalSymbols
 @Processor('notifier')

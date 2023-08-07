@@ -6,7 +6,7 @@ import Dispute from '../../models/dispute';
 import Market from '../../models/market';
 import Commit from '../../models/commit';
 import Reveal from '../../models/reveal';
-import { NotifierService, NotificationID } from '../../jobs/mailer/NotifierService';
+import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierService';
 import NetworkService from '../network.service';
 import Draft from '../../models/draft';
 import * as _ from 'lodash';

@@ -1,12 +1,11 @@
-import { notify, randStr } from '../common/common';
-import Objection, { Model, raw, Transaction } from 'objection';
-import { BaseModel } from './base';
-import * as moment from 'moment';
-import { toDec } from '../common/common';
-import Market from './market';
-import Liquidity from './liquidity';
-import * as _ from 'lodash';
-import { toBN } from '../network/common';
+import { randStr, toDec } from "../common/common";
+import Objection, { Model, raw, Transaction } from "objection";
+import { BaseModel } from "./base";
+import * as moment from "moment";
+import Market from "./market";
+import Liquidity from "./liquidity";
+import * as _ from "lodash";
+import { toBN } from "../network/common";
 
 /**
  * Swap represents a swap operation

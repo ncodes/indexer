@@ -1,10 +1,9 @@
-import { randStr } from '../common/common';
-import Objection, { raw, Transaction } from 'objection';
-import { BaseModel } from './base';
-import Market from './market';
-import * as _ from 'lodash';
-import * as moment from 'moment';
-import { BigNumber } from 'ethers';
+import { randStr } from "../common/common";
+import Objection, { raw, Transaction } from "objection";
+import { BaseModel } from "./base";
+import Market from "./market";
+import * as _ from "lodash";
+import * as moment from "moment";
 
 /**
  * Liquidity represents a liquidity model
@@ -70,6 +69,8 @@ export default class Liquidity extends BaseModel {
   disputeRate: number = undefined;
   // The satisfactory rate from reviews
   satisfactoryRate: number = undefined;
+  // The list of required badges to swap
+  requiredSwapBadges: string[] = undefined;
 
   /** Not Persisted */
   market: Market;
@@ -88,6 +89,9 @@ export default class Liquidity extends BaseModel {
     this.ids = this.ids ? (JSON.stringify(this.ids) as any) : this.ids;
     this.wantOrIds = this.wantOrIds ? (JSON.stringify(this.wantOrIds) as any) : this.wantOrIds;
     this.wantAndIds = this.wantAndIds ? (JSON.stringify(this.wantAndIds) as any) : this.wantAndIds;
+    this.requiredSwapBadges = this.requiredSwapBadges
+      ? (JSON.stringify(this.requiredSwapBadges) as any)
+      : this.requiredSwapBadges;
   }
 
   $beforeUpdate() {
@@ -95,6 +99,9 @@ export default class Liquidity extends BaseModel {
     this.ids = JSON.stringify(this.ids) as any;
     this.wantOrIds = JSON.stringify(this.wantOrIds) as any;
     this.wantAndIds = JSON.stringify(this.wantAndIds) as any;
+    this.requiredSwapBadges = this.requiredSwapBadges
+      ? (JSON.stringify(this.requiredSwapBadges) as any)
+      : this.requiredSwapBadges;
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
@@ -170,21 +177,26 @@ export default class Liquidity extends BaseModel {
    * @param network The network name
    * @param marketAddress The market address
    * @param provider The provider address
+   * @param lid The liquidity ID (optional)
    * @param upd The update object
-   * @param txn Optional transaction object
+   * @param txn? Optional transaction object
    */
-  static updateAllForProvider(
+  static update(
     network: string,
     marketAddress: string,
     provider: string,
+    lid: number = undefined,
     upd: Partial<Liquidity>,
-    txn?: Transaction,
+    txn?: Objection.Transaction,
   ) {
     return this.query(txn)
       .whereNotDeleted()
       .where({ network })
       .where('marketAddress', 'ILIKE', marketAddress)
       .where('provider', 'ILIKE', provider)
+      .where((q) => {
+        if (lid != undefined) return q.where('lid', lid);
+      })
       .patch(upd);
   }
 
@@ -276,17 +288,6 @@ export default class Liquidity extends BaseModel {
   static find(q: Partial<Liquidity>, txn?: Transaction): Promise<Liquidity> {
     return new Promise((resolve, reject) => {
       this.query(txn).where(q).whereNotDeleted().first().then(resolve).catch(reject);
-    });
-  }
-
-  /**
-   * find all records
-   * @param q the query parameter
-   * @param txn Optional transaction object
-   */
-  static findAll(q: Partial<Liquidity>, txn?: Transaction): Promise<Liquidity[]> {
-    return new Promise((resolve, reject) => {
-      this.query(txn).where(q).whereNotDeleted().then(resolve).catch(reject);
     });
   }
 
@@ -415,40 +416,6 @@ export default class Liquidity extends BaseModel {
           return resolve(liq.price);
         })
         .catch(reject);
-    });
-  }
-
-  /**
-   * Get the total amount of liquidity associated with a market
-   * @param net The network name
-   * @param mid The market ID
-   * @param txn Optional transaction object
-   * @returns
-   */
-  static getTotalMarketLiquidity(net: string, mid: string, txn?: Transaction) {
-    return new Promise<string>((resolve, reject) => {
-      this.query(txn)
-        .select(raw('sum(cast(?? as numeric))', 'amount').as('total'))
-        .where('marketAddress', 'ILIKE', mid)
-        .where('amount', '>', 0)
-        .where({ network: net })
-        .whereNotDeleted()
-        .then((res: any) => {
-          return resolve(res[0].total || '0');
-        })
-        .catch(reject);
-    });
-  }
-
-  /**
-   * Update records by provider address
-   * @param provider The provider address
-   * @param udp The update to be applied
-   * @param txn Optional transaction object
-   */
-  static updateByProvider(provider: string, udp: Partial<Liquidity>, txn?: Transaction): Promise<number> {
-    return new Promise((resolve, reject) => {
-      this.query(txn).whereNotDeleted().where('provider', 'ilike', provider).patch(udp).then(resolve).catch(reject);
     });
   }
 }

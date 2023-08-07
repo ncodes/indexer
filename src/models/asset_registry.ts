@@ -1,6 +1,6 @@
-import { BaseModel } from './base';
-import Objection, { Transaction } from 'objection';
-import { randStr } from '../common/common';
+import { BaseModel } from "./base";
+import Objection, { Transaction } from "objection";
+import { randStr } from "../common/common";
 
 /**
  * AssetRegistry contains information about an asset

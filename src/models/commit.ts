@@ -1,6 +1,6 @@
-import Objection, { Transaction } from 'objection';
-import { BaseModel } from './base';
-import { randStr } from '../common/common';
+import Objection, { Transaction } from "objection";
+import { BaseModel } from "./base";
+import { randStr } from "../common/common";
 
 /**
  * Commit represents a commit on a dispute

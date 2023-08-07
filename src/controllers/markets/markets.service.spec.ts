@@ -12,6 +12,7 @@ import Liquidity from '../../models/liquidity';
 import MarketPrice from '../../models/market_price';
 import { pow10 } from '../../network/common';
 import * as _ from 'lodash';
+import { NotifierService } from '../../jobs/mailer/NotifierService';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -63,12 +64,14 @@ describe('MarketsService', () => {
 
     module = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
-      providers: [MarketService, NetworkService, MetadataService, ConfigService],
+      providers: [MarketService, NetworkService, MetadataService, NotifierService, ConfigService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
-      .overrideProvider(NetworkService)
+      .overrideProvider(NetworkServiceMock)
       .useValue(new NetworkServiceMock())
+      .overrideProvider(NotifierService)
+      .useValue(new (jest.fn())())
       .compile();
 
     service = module.get<MarketService>(MarketService);

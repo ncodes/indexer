@@ -466,7 +466,14 @@ export class CoreHandler extends Handler {
     );
 
     // Update market
-    market = await Market.updateById(market.id, { totalSwaps: market.totalSwaps + 1 }, txn);
+    market = await Market.updateById(
+      market.id,
+      {
+        totalLiquidity: toBN(market.totalLiquidity).sub(swap.amount).toString(),
+        totalSwaps: market.totalSwaps + 1,
+      },
+      txn,
+    );
     swap.market = market;
 
     // Send notification
@@ -561,6 +568,7 @@ export class CoreHandler extends Handler {
           lastSwapAt: now,
           amountSwapped: toBN(market.amountSwapped).add(amount).toString(),
           totalSwaps: market.totalSwaps + 1,
+          totalLiquidity: toBN(market.totalLiquidity).sub(amount).toString(),
         },
         txn,
       );
@@ -641,17 +649,25 @@ export class CoreHandler extends Handler {
     let swap = await Swap.get(this.network, orderId.toNumber(), undefined, txn);
     swap = await Swap.updateById(swap.id, { cancelled: true, byDispute }, txn);
 
-    // Reduce open order count and liquidity
+    // Update liquidity
     let liq = await Liquidity.getLiquidity(this.network, swap.marketAddress, swap.provider, swap.lid, undefined, txn);
     liq = await Liquidity.updateById(liq.id, {
       openOrders: liq.openOrders - 1,
       amount: toBN(liq.amount).add(swap.amount).toString(),
     });
 
+    // Update market
+    let market = await Market.getMarket(this.network, swap.marketAddress, undefined, undefined, txn);
+    market = await Market.updateById(
+      market.id,
+      { totalLiquidity: toBN(market.totalLiquidity).add(swap.amount).toString() },
+      txn,
+    );
+
     // Send notification.
     // Send to either taker or provider if one of them is the canceller.
     // or send to both if neither is the canceller
-    const market = await Market.getMarket(this.network, swap.marketAddress, undefined, undefined, txn);
+    swap.market = market;
     const notifData = { market, liq, swap };
     if (includesStr([swap.provider, swap.taker], canceller)) {
       const recipient = swap.provider === canceller ? swap.taker : swap.provider;
@@ -883,11 +899,9 @@ export class CoreHandler extends Handler {
     event: Event,
     txn?: Transaction,
   ) {
-    // Get existing liquidity by the provider
     const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
-
-    // Create the liquidity if not existing
     const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
+
     if (!liq) {
       await Liquidity.create(
         {
@@ -911,11 +925,17 @@ export class CoreHandler extends Handler {
         },
         txn,
       );
+
+      await Market.updateById(market.id, { totalLiquidity: toBN(market.totalLiquidity).add(amount).toString() }, txn);
     } else {
       const ch: Partial<Liquidity> = {};
+      const mktCh: Partial<Market> = {};
+
       if (liq.amount !== amount.toString()) {
-        if (deduct) ch.amount = toBN(liq.amount).sub(amount).toString();
-        else ch.amount = toBN(liq.amount).add(amount).toString();
+        ch.amount = deduct ? toBN(liq.amount).sub(amount).toString() : toBN(liq.amount).add(amount).toString();
+        mktCh.totalLiquidity = deduct
+          ? toBN(market.totalLiquidity).sub(amount).toString()
+          : toBN(market.totalLiquidity).add(amount).toString();
       }
 
       if (liq.target != target) ch.target = target;
@@ -931,6 +951,7 @@ export class CoreHandler extends Handler {
       if (!_.isEqual(liq.wantOrIds, _wantOrIds)) ch.wantOrIds = _wantOrIds;
 
       await Liquidity.updateById(liq.id, ch, txn);
+      await Market.updateById(market.id, mktCh, txn);
     }
 
     // Add new market price entry, if quote is not NFT - since price is not

@@ -95,15 +95,6 @@ describe('MarketsService', () => {
       expect(market.numProviders).toBe('2');
     });
 
-    it(`should return correct value when select=['totalLiquidity']`, async () => {
-      await service.extendMarket(market, ['totalLiquidity']);
-      expect(market.totalLiquidity).toBe('0');
-      await Liquidity.create({ marketAddress: marketAddress, network: net, amount: '10' });
-      await Liquidity.create({ marketAddress: marketAddress, network: net, amount: '15' });
-      await service.extendMarket(market, ['totalLiquidity']);
-      expect(market.totalLiquidity).toBe('25');
-    });
-
     it(`should return correct value when select=['lowestPrice']`, async () => {
       await Liquidity.create({ marketAddress, network: net, amount: '1', price: pow10(18).mul(200).toString() });
       const lowest = await Liquidity.create({

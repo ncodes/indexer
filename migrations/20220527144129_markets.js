@@ -31,6 +31,7 @@ exports.up = function (knex) {
       table.integer('disputeDelayTime');
       table.integer('evidenceDur');
       table.integer('predictDur');
+      table.string('totalLiquidity').defaultTo(0);
       table.string('manager');
       table.string('txHash');
       table.timestamp('lastSwapAt');

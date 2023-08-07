@@ -27,10 +27,6 @@ export class MarketService {
         market.numProviders = await Liquidity.countProvidersInMarket(net, address);
       }
 
-      if (select.includes(`totalLiquidity`) || !select.length) {
-        market.totalLiquidity = await Liquidity.getTotalMarketLiquidity(net, address);
-      }
-
       market.lowestPrice = await Liquidity.getLowestPrice(net, address, undefined);
       if (select.includes(`lowestPrice24h`) || !select.length) {
         market.lowestPrice24h = await Liquidity.getLowestPrice(net, address, undefined, 24);

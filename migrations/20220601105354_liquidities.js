@@ -37,6 +37,8 @@ exports.up = function (knex) {
       table.float('satisfactoryRate').defaultTo(0);
       table.jsonb('requiredSwapBadges').defaultTo([]);
       table.float('avgFinalizeDur').defaultTo(0);
+      table.float('avgPaymentDur').defaultTo(0);
+      table.float('avgReleaseDur').defaultTo(0);
       table.timestamp('lastSwapAt');
       table.timestamp('createdAt');
       table.timestamp('updatedAt');

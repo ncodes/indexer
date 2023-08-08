@@ -73,12 +73,18 @@ export default class Liquidity extends BaseModel {
   requiredSwapBadges: string[] = undefined;
   // The average number of seconds within which swaps are finalized
   avgFinalizeDur: number;
+  // The average number of seconds within which swaps are marked as paid
+  avgPaymentDur: number;
+  // The average number of seconds within which swaps are marked as released
+  avgReleaseDur: number;
 
   /** Not Persisted */
-  market: Market;
   totalSwaps24h: string;
   volume24h: string;
   priceChange: number;
+
+  /** Relations */
+  market: Market;
 
   constructor(init?: Partial<Liquidity>) {
     super();

@@ -819,6 +819,7 @@ describe('CoreHandler', () => {
           lid: lid.toNumber(),
           taker,
           createdAt: now.clone().subtract('1', 'day').toISOString(),
+          paidAt: now.clone().subtract('1', 'day').toISOString(),
         });
 
         await Dispute.create({
@@ -871,6 +872,7 @@ describe('CoreHandler', () => {
         expect(liqUpd.amountSwapped).toEqual(toBN(liq.amountSwapped).add(amount).toString());
         expect(liqUpd.totalSwaps).toEqual(1);
         expect(liqUpd.avgFinalizeDur).toBeGreaterThan(0);
+        expect(liqUpd.avgReleaseDur).toBeGreaterThan(0);
 
         // should not update completion rate since swap was disputed
         expect(liq.completionRate).toEqual(0);
@@ -880,6 +882,7 @@ describe('CoreHandler', () => {
         expect(marketUpd.amountSwapped).toEqual(toBN(market.amountSwapped).add(amount).toString());
         expect(marketUpd.totalSwaps).toEqual(market.totalSwaps);
         expect(marketUpd.avgFinalizeDur).toBeGreaterThan(0);
+        expect(marketUpd.avgReleaseDur).toBeGreaterThan(0);
 
         // should not update completion rate since swap was disputed
         expect(market.completionRate).toEqual(0);
@@ -1043,12 +1046,20 @@ describe('CoreHandler', () => {
         quoteType: AssetType.SYNTH,
       });
 
+      let liq = await Liquidity.create({
+        network: net,
+        marketAddress,
+        provider,
+        lid: 0,
+      });
+
       const orderId = toBN(1);
       const amount = powOf(10, 18);
       await Swap.create({
         network: net,
         marketAddress,
         orderId: orderId.toNumber(),
+        lid: liq.lid,
         amount: amount.toString(),
         provider,
         taker,
@@ -1061,7 +1072,15 @@ describe('CoreHandler', () => {
       let swap = await Swap.find({ marketAddress: market.address });
       expect(swap).toBeDefined();
       expect(swap.paid).toBeTruthy();
+      expect(swap.payer).toEqual(taker);
+      expect(swap.paidAt).toBeDefined();
       expect(moment(swap.disputeFrom).unix()).toEqual(disputeFrom);
+
+      liq = await Liquidity.getById(liq.id);
+      expect(liq.avgPaymentDur).toBeGreaterThan(0);
+
+      market = await Market.getById(market.id);
+      expect(market.avgPaymentDur).toBeGreaterThan(0);
 
       swap.market = market;
       expect(mockNotify).toHaveBeenCalledWith(NotificationID.SwapOrderPaid, net, provider, {
@@ -1073,6 +1092,7 @@ describe('CoreHandler', () => {
       market = await Market.updateById(market.id, { baseType: AssetType.SYNTH, quoteType: AssetType.ERC20 });
       await handler.onSwapOrderPaid(orderId, toBN(disputeFrom), {} as any);
       swap = await Swap.find({ marketAddress: market.address });
+      market = await Market.getById(market.id);
       swap.market = market;
       expect(mockNotify).toHaveBeenCalledWith(NotificationID.SwapOrderPaid, net, taker, {
         swap,

@@ -25,6 +25,7 @@ exports.up = function (knex) {
       table.boolean('released').defaultTo(false);
       table.boolean('byDispute').defaultTo(false);
       table.string('finalizer');
+      table.string('payer');
       table.string('protocolFee');
       table.string('marketCreatorFee');
       table.string('txHash');
@@ -33,6 +34,7 @@ exports.up = function (knex) {
       table.timestamp('createdAt');
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');
+      table.timestamp('paidAt');
       table.timestamp('finalizedAt');
     }),
   ]);

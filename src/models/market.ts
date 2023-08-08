@@ -89,6 +89,10 @@ export default class Market extends BaseModel {
   requiredSwapBadges: string[] = undefined;
   // The average number of seconds within which swaps are finalized
   avgFinalizeDur: number;
+  // The average number of seconds within which swaps are marked as paid
+  avgPaymentDur: number;
+  // The average number of seconds within which swaps are marked as released
+  avgReleaseDur: number;
 
   // *** Non-persisted fields **//
   numDisputes: number;

@@ -41,6 +41,8 @@ export default class Swap extends BaseModel {
   instant?: boolean = undefined;
   // Indicates whether the swap was marked as paid.
   paid?: boolean = undefined;
+  // The address that marked the swap as paid
+  payer?: string = undefined;
   // Indicates whether the swap was cancelled
   cancelled?: boolean = undefined;
   // Indicates whether the swap was released
@@ -67,6 +69,8 @@ export default class Swap extends BaseModel {
   txHash?: string = undefined;
   // The timestamp when the swap was finalized
   finalizedAt?: string = undefined;
+  // The timestamp when the swap was marked as paid
+  paidAt?: string = undefined;
 
   market: Market;
   liquidity: Liquidity;
@@ -348,7 +352,7 @@ export default class Swap extends BaseModel {
   }
 
   /**
-   * Get the average duration of a swap
+   * Get the average finalization duration
    * @param network The network name
    * @param marketAddress The market ID
    * @param provider The provider address
@@ -376,6 +380,93 @@ export default class Swap extends BaseModel {
         })
         .where((q) => {
           if (!_.isNil(lid)) return q.where('lid', lid);
+        })
+        .whereNotDeleted()
+        .then((res: any) => {
+          return resolve(parseFloat(res[0].seconds || '0'));
+        })
+        .catch(reject);
+    });
+  }
+
+  /**
+   * Get the average payment duration
+   * @param network The network name
+   * @param marketAddress The market ID
+   * @param provider The provider address
+   * @param lid The liquidity ID
+   * @param payer The payer address
+   * @param txn Optional transaction object
+   */
+  static getAvgPaymentDuration(
+    network: string,
+    marketAddress?: string,
+    provider?: string,
+    lid?: number,
+    payer?: string,
+    txn?: Objection.Transaction,
+  ) {
+    return new Promise<number>((resolve, reject) => {
+      this.query(txn)
+        .select(raw('avg(extract(epoch from (?? - ??)))', ['paidAt', 'createdAt']).as('seconds'))
+        .where((q) => {
+          if (network) return q.where('network', network);
+        })
+        .where((q) => {
+          if (marketAddress) return q.where('marketAddress', 'ilike', marketAddress);
+        })
+        .where((q) => {
+          if (provider !== undefined) return q.where('provider', 'ilike', provider);
+        })
+        .where((q) => {
+          if (!_.isNil(lid)) return q.where('lid', lid);
+        })
+        .where((q) => {
+          if (payer !== undefined) return q.where('payer', 'ilike', payer);
+        })
+        .whereNotDeleted()
+        .then((res: any) => {
+          return resolve(parseFloat(res[0].seconds || '0'));
+        })
+        .catch(reject);
+    });
+  }
+
+  /**
+   * Get the average release duration
+   * @param network The network name
+   * @param marketAddress The market ID
+   * @param provider The provider address
+   * @param lid The liquidity ID
+   * @param finalizer The finalizer address
+   * @param txn Optional transaction object
+   */
+  static getAvgReleaseDuration(
+    network: string,
+    marketAddress?: string,
+    provider?: string,
+    lid?: number,
+    finalizer?: string,
+    txn?: Objection.Transaction,
+  ) {
+    return new Promise<number>((resolve, reject) => {
+      this.query(txn)
+        .select(raw('avg(extract(epoch from (?? - ??)))', ['finalizedAt', 'paidAt']).as('seconds'))
+        .where({ released: true })
+        .where((q) => {
+          if (network) return q.where('network', network);
+        })
+        .where((q) => {
+          if (marketAddress) return q.where('marketAddress', 'ilike', marketAddress);
+        })
+        .where((q) => {
+          if (provider !== undefined) return q.where('provider', 'ilike', provider);
+        })
+        .where((q) => {
+          if (!_.isNil(lid)) return q.where('lid', lid);
+        })
+        .where((q) => {
+          if (finalizer !== undefined) return q.where('finalizer', 'ilike', finalizer);
         })
         .whereNotDeleted()
         .then((res: any) => {

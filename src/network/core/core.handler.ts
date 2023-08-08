@@ -612,6 +612,14 @@ export class CoreHandler extends Handler {
           amountSwapped: toBN(liq.amountSwapped).add(amount).toString(),
           completionRate: dispute ? liq.completionRate : newCompletionRate,
           avgFinalizeDur: await Swap.getAvgFinalizeDuration(this.network, marketAddress, provider, lid.toNumber(), txn),
+          avgReleaseDur: await Swap.getAvgReleaseDuration(
+            this.network,
+            marketAddress,
+            provider,
+            lid.toNumber(),
+            undefined,
+            txn,
+          ),
         },
         txn,
       );
@@ -626,6 +634,14 @@ export class CoreHandler extends Handler {
           amountSwapped: toBN(market.amountSwapped).add(amount).toString(),
           completionRate: dispute ? market.completionRate : newCompletionRate,
           avgFinalizeDur: await Swap.getAvgFinalizeDuration(this.network, marketAddress, undefined, undefined, txn),
+          avgReleaseDur: await Swap.getAvgReleaseDuration(
+            this.network,
+            marketAddress,
+            undefined,
+            undefined,
+            undefined,
+            txn,
+          ),
         },
         txn,
       );
@@ -710,18 +726,49 @@ export class CoreHandler extends Handler {
    * @param txn The transaction object
    */
   async onSwapOrderPaid(orderId: BigNumber, disputeFrom: BigNumber, event: Event, txn?: Transaction) {
+    let swap = await Swap.get(this.network, orderId.toNumber(), undefined, txn);
+
     // Update the order
-    await Swap.updateByOrderId(
-      this.network,
-      orderId.toNumber(),
-      { paid: true, disputeFrom: moment.unix(disputeFrom.toNumber()).toISOString() },
+    swap = await Swap.updateById(
+      swap.id,
+      {
+        paid: true,
+        payer: swap.getPayer(),
+        paidAt: moment().toISOString(),
+        disputeFrom: moment.unix(disputeFrom.toNumber()).toISOString(),
+      },
       txn,
     );
 
+    // Update liquidity
+    const { marketAddress, provider, lid } = swap;
+    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, txn);
+    await Liquidity.updateById(
+      liq.id,
+      { avgPaymentDur: await Swap.getAvgPaymentDuration(this.network, marketAddress, provider, lid, undefined, txn) },
+      txn,
+    );
+
+    // Update market
+    let market = await Market.getMarket(this.network, swap.marketAddress, undefined, undefined, txn);
+    market = await Market.updateById(
+      market.id,
+      {
+        avgPaymentDur: await Swap.getAvgPaymentDuration(
+          this.network,
+          market.address,
+          undefined,
+          undefined,
+          undefined,
+          txn,
+        ),
+      },
+      txn,
+    );
+    swap.market = market;
+
     // Send notification
-    const swap = await Swap.get(this.network, orderId.toNumber(), undefined, txn);
-    const market = await Market.getMarket(this.network, swap.marketAddress, undefined, undefined, txn);
-    const recipient = swap.getPayer() == swap.provider ? swap.taker : swap.provider;
+    const recipient = swap.payer == swap.provider ? swap.taker : swap.provider;
     await this.notifSrv.notify(NotificationID.SwapOrderPaid, this.network, recipient, {
       swap,
       market,

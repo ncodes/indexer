@@ -1,9 +1,9 @@
-import { randStr } from "../common/common";
-import Objection, { raw, Transaction } from "objection";
-import { BaseModel } from "./base";
-import Market from "./market";
-import * as _ from "lodash";
-import { isNil } from "lodash";
+import { randStr } from '../common/common';
+import Objection, { raw, Transaction } from 'objection';
+import { BaseModel } from './base';
+import Market from './market';
+import * as _ from 'lodash';
+import { isNil } from 'lodash';
 
 /**
  * Ticket represents a mediation ticket

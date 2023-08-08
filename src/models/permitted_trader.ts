@@ -1,6 +1,6 @@
-import { randStr } from "../common/common";
-import Objection, { raw, Transaction } from "objection";
-import { BaseModel } from "./base";
+import { randStr } from '../common/common';
+import Objection, { raw, Transaction } from 'objection';
+import { BaseModel } from './base';
 
 /**
  * PermittedTrader represents a permitted trader

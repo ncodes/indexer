@@ -1,6 +1,6 @@
-import { randStr } from "../common/common";
-import Objection, { Transaction } from "objection";
-import { BaseModel } from "./base";
+import { randStr } from '../common/common';
+import Objection, { Transaction } from 'objection';
+import { BaseModel } from './base';
 
 /**
  * TicketSlash represents a ticket slash event

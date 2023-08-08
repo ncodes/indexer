@@ -1,7 +1,7 @@
-import { randStr } from "../common/common";
-import Objection, { raw, Transaction } from "objection";
-import { BaseModel } from "./base";
-import { uniq } from "lodash";
+import { randStr } from '../common/common';
+import Objection, { raw, Transaction } from 'objection';
+import { BaseModel } from './base';
+import { uniq } from 'lodash';
 
 /**
  * Offer represents an offer request for a liquidity

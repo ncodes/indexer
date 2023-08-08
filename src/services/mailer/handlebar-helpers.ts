@@ -1,5 +1,5 @@
-import * as handlebars from "handlebars";
-import * as HandlebarHelpers from "handlebars-helpers";
+import * as handlebars from 'handlebars';
+import * as HandlebarHelpers from 'handlebars-helpers';
 
 // primaryButton is the component for primary buttons
 handlebars.registerPartial(
@@ -28,7 +28,7 @@ handlebars.registerPartial(
 );
 
 // printTokenIDs prints NFT token IDs as a comma separated list
-handlebars.registerPartial('printTokenIDs', (context: { ids: number[] }, options) => {
+handlebars.registerPartial('printTokenIDs', (context: { ids: number[] }) => {
   return context.ids.map((id) => `#${id}`).join(', ');
 });
 

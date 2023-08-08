@@ -1,7 +1,7 @@
-import { BaseModel } from "./base";
-import Objection, { raw, Transaction } from "objection";
-import { randStr } from "../common/common";
-import { uniq } from "lodash";
+import { BaseModel } from './base';
+import Objection, { raw, Transaction } from 'objection';
+import { randStr } from '../common/common';
+import { uniq } from 'lodash';
 
 /**
  * BadgeGrant represents a granted badge

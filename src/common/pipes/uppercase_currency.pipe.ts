@@ -1,4 +1,4 @@
-import { Injectable, PipeTransform } from "@nestjs/common";
+import { Injectable, PipeTransform } from '@nestjs/common';
 
 /**
  * Convert body fields to upper case.

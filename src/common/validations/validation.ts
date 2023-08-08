@@ -1,5 +1,5 @@
-import { HttpStatus } from "@nestjs/common";
-import { error, ErrorTypes } from "../responses/responses";
+import { HttpStatus } from '@nestjs/common';
+import { error, ErrorTypes } from '../responses/responses';
 
 /**
  * makeValidatorMsg creates a class-validator decorator message

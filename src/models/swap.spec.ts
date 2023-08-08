@@ -1,9 +1,12 @@
 import { DBService } from '../db/DBService';
 import Swap from './swap';
+import * as moment from 'moment';
 
 describe('MarketPrice', () => {
   const db = DBService.getForTest();
   const net = 'net1';
+  const market = '0xMarket';
+  const provider = '0xProvider';
 
   afterEach(async () => {
     await db.truncateTables();
@@ -21,30 +24,69 @@ describe('MarketPrice', () => {
     it('should return correct rate', async () => {
       await Swap.create({
         network: net,
-        marketAddress: '0xMarket',
-        provider: '0xProvider',
+        marketAddress: market,
+        provider: provider,
         released: true,
       });
       await Swap.create({
         network: net,
-        marketAddress: '0xMarket',
-        provider: '0xProvider',
+        marketAddress: market,
+        provider: provider,
         released: true,
         byDispute: true,
       });
       await Swap.create({
         network: net,
-        marketAddress: '0xMarket',
-        provider: '0xProvider',
+        marketAddress: market,
+        provider: provider,
       });
       await Swap.create({
         network: net,
-        marketAddress: '0xMarket',
+        marketAddress: market,
         provider: '0xProvider2',
         released: true,
       });
-      expect(await Swap.getCompletionRate(net, '0xMarket', '0xProvider')).toEqual(33.33);
-      expect(await Swap.getCompletionRate(net, '0xMarket', undefined)).toEqual(50);
+      expect(await Swap.getCompletionRate(net, market, provider)).toEqual(33.33);
+      expect(await Swap.getCompletionRate(net, market, undefined)).toEqual(50);
+    });
+  });
+
+  describe('.getAvgDuration', function () {
+    it('should return correct value', async () => {
+      const now = moment();
+      await Swap.create({
+        network: net,
+        marketAddress: market,
+        createdAt: now.clone().subtract(5, 's').toISOString(),
+        finalizedAt: now.toISOString(),
+      });
+      await Swap.create({
+        network: net,
+        marketAddress: market,
+        provider,
+        lid: 0,
+        createdAt: now.clone().subtract(3, 's').toISOString(),
+        finalizedAt: now.toISOString(),
+      });
+      await Swap.create({
+        network: net,
+        marketAddress: market,
+        provider,
+        lid: 1,
+        createdAt: now.clone().subtract(6, 's').toISOString(),
+        finalizedAt: now.toISOString(),
+      });
+      await Swap.create({
+        network: net,
+        marketAddress: market,
+        provider,
+        lid: 1,
+        createdAt: now.clone().subtract(8, 's').toISOString(),
+        finalizedAt: now.toISOString(),
+      });
+      expect(await Swap.getAvgFinalizeDuration(net, market, undefined)).toEqual(5.5);
+      expect(await Swap.getAvgFinalizeDuration(net, market, provider)).toEqual(5.666666666666667);
+      expect(await Swap.getAvgFinalizeDuration(net, market, provider, 1)).toEqual(7);
     });
   });
 });

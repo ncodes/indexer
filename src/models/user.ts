@@ -94,16 +94,6 @@ export default class User extends BaseModel {
   }
 
   /**
-   * findAll finds all users
-   * @param q the query parameter
-   */
-  static findAll(q: Partial<User>): Promise<User[]> {
-    return new Promise((resolve, reject) => {
-      this.query().where(q).whereNotDeleted().then(resolve).catch(reject);
-    });
-  }
-
-  /**
    * count returns the count of record matching q
    * @param q the query parameter
    */
@@ -126,13 +116,7 @@ export default class User extends BaseModel {
    * @param id the user id
    * @param udp the fields to be updated
    */
-  static updateById(id: string, udp: Partial<User>): Promise<User> {
-    return new Promise((resolve, reject) => {
-      this.query().whereNotDeleted().patchAndFetchById(id, udp).execute().then(resolve).catch(reject);
-    });
-  }
-
-  isAdmin() {
-    return this.role === Roles.Admin;
+  static updateById(id: string, udp: Partial<User>) {
+    return this.query().whereNotDeleted().patchAndFetchById(id, udp);
   }
 }

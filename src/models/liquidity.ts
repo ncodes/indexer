@@ -71,6 +71,8 @@ export default class Liquidity extends BaseModel {
   satisfactoryRate: number = undefined;
   // The list of required badges to swap
   requiredSwapBadges: string[] = undefined;
+  // The average number of seconds within which swaps are finalized
+  avgFinalizeDur: number;
 
   /** Not Persisted */
   market: Market;
@@ -166,7 +168,7 @@ export default class Liquidity extends BaseModel {
       .where((q) => {
         if (mid) q = q.where('marketAddress', 'ILIKE', mid);
         if (provider) q = q.where('provider', 'ILIKE', provider);
-        if (lid) q = q.where('lid', lid);
+        if (!_.isNil(lid)) q = q.where('lid', lid);
         return q;
       })
       .first();

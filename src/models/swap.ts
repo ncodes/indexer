@@ -65,6 +65,8 @@ export default class Swap extends BaseModel {
   disputeFrom?: string = undefined;
   // The transaction hash where the swap was created
   txHash?: string = undefined;
+  // The timestamp when the swap was finalized
+  finalizedAt?: string = undefined;
 
   market: Market;
   liquidity: Liquidity;
@@ -346,6 +348,44 @@ export default class Swap extends BaseModel {
   }
 
   /**
+   * Get the average duration of a swap
+   * @param network The network name
+   * @param marketAddress The market ID
+   * @param provider The provider address
+   * @param lid The liquidity ID
+   * @param txn Optional transaction object
+   */
+  static getAvgFinalizeDuration(
+    network: string,
+    marketAddress?: string,
+    provider?: string,
+    lid?: number,
+    txn?: Objection.Transaction,
+  ) {
+    return new Promise<number>((resolve, reject) => {
+      this.query(txn)
+        .select(raw('avg(extract(epoch from (?? - ??)))', ['finalizedAt', 'createdAt']).as('seconds'))
+        .where((q) => {
+          if (network) return q.where('network', network);
+        })
+        .where((q) => {
+          if (marketAddress) return q.where('marketAddress', 'ilike', marketAddress);
+        })
+        .where((q) => {
+          if (provider !== undefined) return q.where('provider', 'ilike', provider);
+        })
+        .where((q) => {
+          if (!_.isNil(lid)) return q.where('lid', lid);
+        })
+        .whereNotDeleted()
+        .then((res: any) => {
+          return resolve(parseFloat(res[0].seconds || '0'));
+        })
+        .catch(reject);
+    });
+  }
+
+  /**
    * Count number of released, cancelled or disputed swaps
    * @param network The network name
    * @param marketAddress The market ID
@@ -355,7 +395,7 @@ export default class Swap extends BaseModel {
    * @param disputed Indicate to return count for disputed swaps
    * @param txn
    */
-  static countByState(
+  static countByStatus(
     network: string,
     marketAddress: string,
     provider: string,
@@ -393,8 +433,8 @@ export default class Swap extends BaseModel {
     provider: string,
     txn?: Objection.Transaction,
   ) {
-    const nReleased = await Swap.countByState(network, marketAddress, provider, true, undefined, false, txn);
-    const nSwaps = await Swap.countByState(network, marketAddress, provider, undefined, undefined, undefined, txn);
+    const nReleased = await Swap.countByStatus(network, marketAddress, provider, true, undefined, false, txn);
+    const nSwaps = await Swap.countByStatus(network, marketAddress, provider, undefined, undefined, undefined, txn);
     return Promise.resolve(toDec(nReleased).div(nSwaps).mul(100).toDP(2).toNumber());
   }
 

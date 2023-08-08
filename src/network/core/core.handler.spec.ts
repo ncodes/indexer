@@ -802,19 +802,23 @@ describe('CoreHandler', () => {
       });
     });
 
-    describe('when orderId is set', () => {
+    describe('when orderId is set (interactive swap)', () => {
       let swap: Swap;
       let dispute: Dispute;
       const orderId = toBN(1);
+      let now: moment.Moment;
 
       beforeEach(async () => {
+        now = moment();
         swap = await Swap.create({
           network: net,
           marketAddress: market.address,
           orderId: orderId.toNumber() - 1,
           amount: powOf(10, 18).toString(),
           provider,
+          lid: lid.toNumber(),
           taker,
+          createdAt: now.clone().subtract('1', 'day').toISOString(),
         });
 
         await Dispute.create({
@@ -859,12 +863,14 @@ describe('CoreHandler', () => {
         expect(swap.released).toBeTruthy();
         expect(swap.finalizer).toEqual(provider);
         expect(swap.byDispute).toBeTruthy();
+        expect(swap.finalizedAt).toBeDefined();
 
-        const liqUpd = await Liquidity.getLiquidity(net, marketAddress, provider);
+        const liqUpd = await Liquidity.getLiquidity(net, marketAddress, provider, lid.toNumber());
         expect(liqUpd.openOrders).toEqual(1);
         expect(liqUpd.lastSwapAt).toBeDefined();
         expect(liqUpd.amountSwapped).toEqual(toBN(liq.amountSwapped).add(amount).toString());
         expect(liqUpd.totalSwaps).toEqual(1);
+        expect(liqUpd.avgFinalizeDur).toBeGreaterThan(0);
 
         // should not update completion rate since swap was disputed
         expect(liq.completionRate).toEqual(0);
@@ -873,6 +879,7 @@ describe('CoreHandler', () => {
         expect(marketUpd.lastSwapAt).toBeDefined();
         expect(marketUpd.amountSwapped).toEqual(toBN(market.amountSwapped).add(amount).toString());
         expect(marketUpd.totalSwaps).toEqual(market.totalSwaps);
+        expect(marketUpd.avgFinalizeDur).toBeGreaterThan(0);
 
         // should not update completion rate since swap was disputed
         expect(market.completionRate).toEqual(0);
@@ -928,6 +935,7 @@ describe('CoreHandler', () => {
 
   describe('.onOrderCancelled', () => {
     const lid = 0;
+    let now: moment.Moment;
     const orderId = toBN(1);
     const amount = powOf(10, 18);
     const liqAmt = powOf(990, 18);
@@ -936,6 +944,8 @@ describe('CoreHandler', () => {
     let swap: Swap;
 
     beforeEach(async () => {
+      now = moment();
+
       market = await Market.create({
         network: net,
         address: marketAddress,
@@ -961,6 +971,7 @@ describe('CoreHandler', () => {
         provider: provider,
         taker: taker,
         lid,
+        createdAt: now.clone().subtract(1, 'day').toISOString(),
       });
     });
 
@@ -973,14 +984,18 @@ describe('CoreHandler', () => {
       expect(swap).toBeDefined();
       expect(swap.cancelled).toBeTruthy();
       expect(swap.byDispute).toBeFalsy();
+      expect(swap.finalizer).toEqual(taker);
+      expect(swap.finalizedAt).toBeDefined();
 
       // decrement open orders by 1 and add swap amount back to liquidity amount
       liq = await Liquidity.getById(liq.id);
       expect(liq.openOrders).toEqual(0);
       expect(liq.amount).toEqual(liqAmt.add(amount).toString());
+      expect(liq.avgFinalizeDur).toBeGreaterThan(0);
 
       market = await Market.getById(market.id);
       expect(market.totalLiquidity).toEqual(liqAmt.add(amount).toString());
+      expect(market.avgFinalizeDur).toBeGreaterThan(0);
 
       // Should send notification to counterparty
       let notifData = { market, liq, swap };

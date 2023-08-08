@@ -416,11 +416,11 @@ export class CoreHandler extends Handler {
     event: Event,
     txn?: Transaction,
   ) {
-    let market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
-    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, undefined, undefined, txn);
-
     const [orderId, lid, , price, offerId, operator, cancelAt] = numTypeInfo;
     let amount = numTypeInfo[2];
+
+    let market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
+    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
 
     // If quote is NFT, use the whole amount of the liquidity
     amount = Market.isNFT(market.quoteType) ? toBN(liq.amount) : amount;
@@ -579,10 +579,20 @@ export class CoreHandler extends Handler {
         liq,
       });
     } else {
+      const now = moment();
       let swap = await Swap.get(this.network, orderId.toNumber() - 1, undefined, txn);
 
-      // Update the swap record
-      swap = await Swap.updateById(swap.id, { released: true, finalizer: releaser, byDispute }, txn);
+      // Update the swap
+      swap = await Swap.updateById(
+        swap.id,
+        {
+          released: true,
+          byDispute,
+          finalizer: releaser,
+          finalizedAt: now.toISOString(),
+        },
+        txn,
+      );
 
       // Mark the last dispute as `orderReleased` if there is any
       const { marketAddress, provider } = swap;
@@ -592,31 +602,30 @@ export class CoreHandler extends Handler {
       }
 
       // Update liquidity
-      let liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, undefined, undefined, txn);
-      const now = moment();
+      let liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
+      let newCompletionRate = await Swap.getCompletionRate(this.network, marketAddress, provider, txn);
       liq = await Liquidity.updateById(
         liq.id,
         {
           openOrders: liq.openOrders - 1,
           lastSwapAt: now.toISOString(),
           amountSwapped: toBN(liq.amountSwapped).add(amount).toString(),
-          completionRate: dispute
-            ? liq.completionRate
-            : await Swap.getCompletionRate(this.network, marketAddress, provider, txn),
+          completionRate: dispute ? liq.completionRate : newCompletionRate,
+          avgFinalizeDur: await Swap.getAvgFinalizeDuration(this.network, marketAddress, provider, lid.toNumber(), txn),
         },
         txn,
       );
 
       // Update market
       let market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
+      newCompletionRate = await Swap.getCompletionRate(this.network, marketAddress, undefined, txn);
       market = await Market.updateById(
         market.id,
         {
           lastSwapAt: now.toISOString(),
           amountSwapped: toBN(market.amountSwapped).add(amount).toString(),
-          completionRate: dispute
-            ? market.completionRate
-            : await Swap.getCompletionRate(this.network, marketAddress, undefined, txn),
+          completionRate: dispute ? market.completionRate : newCompletionRate,
+          avgFinalizeDur: await Swap.getAvgFinalizeDuration(this.network, marketAddress, undefined, undefined, txn),
         },
         txn,
       );
@@ -644,22 +653,38 @@ export class CoreHandler extends Handler {
    * @param txn The transaction object
    */
   async onOrderCancelled(orderId: BigNumber, canceller: string, byDispute: boolean, event: Event, txn?: Transaction) {
+    const now = moment();
+
     // Mark swap order as `cancelled`
     let swap = await Swap.get(this.network, orderId.toNumber(), undefined, txn);
-    swap = await Swap.updateById(swap.id, { cancelled: true, byDispute }, txn);
+    swap = await Swap.updateById(
+      swap.id,
+      {
+        cancelled: true,
+        byDispute,
+        finalizer: canceller,
+        finalizedAt: now.toISOString(),
+      },
+      txn,
+    );
 
     // Update liquidity
-    let liq = await Liquidity.getLiquidity(this.network, swap.marketAddress, swap.provider, swap.lid, undefined, txn);
+    const { marketAddress, provider, lid } = swap;
+    let liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, txn);
     liq = await Liquidity.updateById(liq.id, {
       openOrders: liq.openOrders - 1,
       amount: toBN(liq.amount).add(swap.amount).toString(),
+      avgFinalizeDur: await Swap.getAvgFinalizeDuration(this.network, marketAddress, provider, lid, txn),
     });
 
     // Update market
-    let market = await Market.getMarket(this.network, swap.marketAddress, undefined, undefined, txn);
+    let market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
     market = await Market.updateById(
       market.id,
-      { totalLiquidity: toBN(market.totalLiquidity).add(swap.amount).toString() },
+      {
+        totalLiquidity: toBN(market.totalLiquidity).add(swap.amount).toString(),
+        avgFinalizeDur: await Swap.getAvgFinalizeDuration(this.network, marketAddress, undefined, undefined, txn),
+      },
       txn,
     );
 

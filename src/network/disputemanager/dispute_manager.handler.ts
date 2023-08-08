@@ -108,7 +108,7 @@ export class DisputeManagerHandler extends Handler {
     txn?: Transaction,
   ) {
     const swap = await Swap.get(this.network, orderId.toNumber(), undefined, txn);
-    const { provider, marketAddress, taker, network } = swap;
+    const { provider, marketAddress, taker, network, lid } = swap;
 
     // Calculate number of mediators required
     const market = await Market.getMarket(this.network, swap.marketAddress, undefined, undefined, txn);
@@ -171,7 +171,7 @@ export class DisputeManagerHandler extends Handler {
     );
 
     // Update liquidity
-    const liquidity = await Liquidity.getLiquidity(network, marketAddress, provider, undefined, undefined, txn);
+    const liquidity = await Liquidity.getLiquidity(network, marketAddress, provider, lid, undefined, txn);
     totalDisputes = !redispute ? liquidity.totalDisputes + 1 : liquidity.totalDisputes;
     await Liquidity.updateById(
       liquidity.id,
@@ -298,7 +298,7 @@ export class DisputeManagerHandler extends Handler {
       swap.network,
       swap.marketAddress,
       swap.provider,
-      undefined,
+      swap.lid,
       undefined,
       txn,
     );

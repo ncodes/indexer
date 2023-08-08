@@ -87,6 +87,8 @@ export default class Market extends BaseModel {
   requiredPutBadges: string[] = undefined;
   // The list of required badges to swap
   requiredSwapBadges: string[] = undefined;
+  // The average number of seconds within which swaps are finalized
+  avgFinalizeDur: number;
 
   // *** Non-persisted fields **//
   numDisputes: number;

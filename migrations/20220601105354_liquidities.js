@@ -36,6 +36,7 @@ exports.up = function (knex) {
       table.float('disputeRate').defaultTo(0);
       table.float('satisfactoryRate').defaultTo(0);
       table.jsonb('requiredSwapBadges').defaultTo([]);
+      table.float('avgFinalizeDur').defaultTo(0);
       table.timestamp('lastSwapAt');
       table.timestamp('createdAt');
       table.timestamp('updatedAt');

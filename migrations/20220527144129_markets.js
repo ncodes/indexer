@@ -32,6 +32,7 @@ exports.up = function (knex) {
       table.integer('evidenceDur');
       table.integer('predictDur');
       table.string('totalLiquidity').defaultTo(0);
+      table.float('avgFinalizeDur').defaultTo(0);
       table.jsonb('requiredPutBadges').defaultTo([]);
       table.jsonb('requiredSwapBadges').defaultTo([]);
       table.string('manager');

@@ -34,9 +34,9 @@ export class ListQueryDTO {
   public query?: string;
 
   @Transform(({ value }) => toBoolean(value))
-  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'noPermSwap') })
+  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'permSwap') })
   @IsOptional()
-  public noPermSwap?: boolean;
+  public permSwap?: boolean;
 
   @Transform(({ value }) => toBoolean(value))
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'onlyInstant') })

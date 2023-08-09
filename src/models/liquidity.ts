@@ -243,7 +243,7 @@ export default class Liquidity extends BaseModel {
   ) {
     select = this.makeSelectList(select);
     let q = this.query(txn)
-      .select(...select, raw('count(*) over() as' + ' "__queryCount"'))
+      .select(...select, raw('count(*) over() as' + ' "$queryCount"'))
       .whereNotDeleted()
       .where({ network, paused: false })
       .where('amount', '>', '0');

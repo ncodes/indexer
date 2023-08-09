@@ -171,7 +171,7 @@ export default class Review extends BaseModel {
    */
   static searchReviews(network: string, reviewedAddress?: string, limit?: number, offset?: number, txn?: Transaction) {
     let q = this.query(txn)
-      .select('*', raw('count(*) over() as' + ' "__queryCount"'))
+      .select('*', raw('count(*) over() as' + ' "$queryCount"'))
       .whereNotDeleted()
       .where({ network });
     if (reviewedAddress) q = q.where('reviewed', 'ILIKE', reviewedAddress);

@@ -342,7 +342,7 @@ export default class Market extends BaseModel {
    * @param baseAsset The base asset address (optional)
    * @param quoteAsset The quote asset address (optional)
    * @param queryStr The query string (optional)
-   * @param noPermSwap Indicate to ignore market with permissioned swap enabled (optional)
+   * @param permSwap Indicate to ignore market with permissioned swap enabled (optional)
    * @param onlyInstant Indicate to include only market where base and quote asset are on-chain.
    * @param countOnly Indicates whether to return count only.
    * @param limit The number of records to return.
@@ -357,7 +357,7 @@ export default class Market extends BaseModel {
     baseAsset: string,
     quoteAsset: string,
     queryStr: string,
-    noPermSwap = false,
+    permSwap: boolean,
     onlyInstant: boolean,
     countOnly: boolean,
     limit: number,
@@ -368,12 +368,12 @@ export default class Market extends BaseModel {
   ) {
     select = this.makeSelectList(select);
     let query = this.query(txn);
-    query = !countOnly ? query.select(...select, raw('count(*) over() as' + ' "__queryCount"')) : query;
+    query = !countOnly ? query.select(...select, raw('count(*) over() as' + ' "$queryCount"')) : query;
     if (network) query = query.where('network', 'ilike', network);
     if (creator) query = query.where('creator', 'ilike', creator);
     if (baseAsset) query = query.where('baseAddress', 'ilike', baseAsset);
     if (quoteAsset) query = query.where('quoteAddress', 'ilike', quoteAsset);
-    if (noPermSwap) query = query.where('permSwap', false);
+    if (permSwap !== undefined) query = query.where('permSwap', permSwap);
     if (onlyInstant !== undefined) query = query.where('instant', onlyInstant);
     if (queryStr)
       query = query.where((q) => {

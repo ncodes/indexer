@@ -550,7 +550,7 @@ export default class Swap extends BaseModel {
   ) {
     select = this.makeSelectList(select);
     let q = this.query(txn)
-      .select(...select, raw('count(*) over() as' + ' "__queryCount"'))
+      .select(...select, raw('count(*) over() as' + ' "$queryCount"'))
       .whereNotDeleted()
       .where({ network });
     if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);

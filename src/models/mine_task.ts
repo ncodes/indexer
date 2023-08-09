@@ -88,7 +88,7 @@ export default class MineTask extends BaseModel {
    */
   static searchTasks(network: string, type?: MineTaskType, limit?: number, offset?: number, txn?: Transaction) {
     let q = this.query(txn)
-      .select('*', raw('count(*) over() as' + ' "__queryCount"'))
+      .select('*', raw('count(*) over() as' + ' "$queryCount"'))
       .whereNotDeleted()
       .where({ network, completed: false });
     if (type) q = q.where({ type });

@@ -302,7 +302,7 @@ export default class Dispute extends BaseModel {
   ) {
     select = this.makeSelectList(select);
     let q = this.query(txn);
-    q = !countOnly ? q.select(...select, raw('count(*) over() as' + ' "__queryCount"')) : q;
+    q = !countOnly ? q.select(...select, raw('count(*) over() as' + ' "$queryCount"')) : q;
     q = q.withGraphFetched('draftees').whereNotDeleted().where({ network });
     if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
     if (creator) q = q.where('creator', 'ILIKE', creator);

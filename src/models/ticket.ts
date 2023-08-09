@@ -205,7 +205,7 @@ export default class Ticket extends BaseModel {
   ) {
     select = this.makeSelectList(select);
     let q = this.query(txn)
-      .select(...select, raw('count(*) over() as' + ' "__queryCount"'))
+      .select(...select, raw('count(*) over() as' + ' "$queryCount"'))
       .whereNotDeleted()
       .where({ network });
     if (!isNil(poolId)) q = q.where('poolId', poolId);

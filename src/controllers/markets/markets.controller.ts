@@ -37,7 +37,7 @@ export class MarketsController {
    * @param [q.creator] Filter the result by creator address (optional)
    * @param [q.base] The base asset address (optional)
    * @param [q.quote] The base asset address (optional)
-   * @param [q.noPermSwap] Indicate to ignore market with permissioned swap enabled (optional)
+   * @param [q.permSwap] Indicate to either return permissioned or non-permissioned markets (optional)
    * @param [q.onlyInstant] Indicate to only return market where base and quote asset are on-chain (instant swap) (optional)
    * @param [q.query] The query string
    * @param [q.count] Returns the count of markets only
@@ -54,7 +54,7 @@ export class MarketsController {
       q.base,
       q.quote,
       q.query,
-      q.noPermSwap,
+      q.permSwap,
       q.onlyInstant,
       q.count,
       q.limit || 25,

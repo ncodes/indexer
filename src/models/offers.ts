@@ -159,7 +159,7 @@ export default class Offer extends BaseModel {
   ) {
     select = this.makeSelectList(select);
     let query = this.query(txn);
-    query = !countOnly ? query.select(...select, raw('count(*) over() as' + ' "__queryCount"')) : query;
+    query = !countOnly ? query.select(...select, raw('count(*) over() as' + ' "$queryCount"')) : query;
     if (network) query = query.where('network', 'ilike', network);
     if (creator) query = query.where('creator', 'ilike', creator);
     if (provider) query = query.where('provider', 'ilike', provider);

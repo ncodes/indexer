@@ -154,7 +154,7 @@ export default class Badge extends BaseModel {
   ) {
     select = this.makeSelectList(select);
     let query = this.query(txn);
-    query = !countOnly ? query.select(...select, raw('count(*) over() as' + ' "__queryCount"')) : query;
+    query = !countOnly ? query.select(...select, raw('count(*) over() as' + ' "$queryCount"')) : query;
     if (network) query = query.where('network', 'ilike', network);
     if (issuer) query = query.where('issuer', 'ilike', issuer);
     if (coIssuer) query = query.where('coIssuer', 'ilike', coIssuer);

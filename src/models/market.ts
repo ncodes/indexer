@@ -348,14 +348,15 @@ export default class Market extends BaseModel {
    * @param queryStr The query string
    * @param price Filter by price (if it starts with >, it means equal or greater than, if it starts with <, it means equal or less than)
    * @param availableLiquidity Filter by available liquidity (if it starts with >, it means equal or greater than, if it starts with <, it means equal or less than)
+   * @param reqPutBadges A list of PUT badges to filter by
    * @param permSwap Indicate to ignore market with permissioned swap enabled
-   * @param onlyInstant Indicate to include only market where base and quote asset are on-chain.
+   * @param instant Indicate to include only market where base and quote asset are on-chain.
    * @param countOnly Indicates whether to return count only.
    * @param limit The number of records to return.
    * @param offset The offset value
    * @param select Select specific fields
    * @param relations The relationships to fetch
-   * @param txn?????????? Optional transaction object
+   * @param txn? Optional transaction object
    */
   static search(
     network: string,
@@ -365,8 +366,9 @@ export default class Market extends BaseModel {
     queryStr: string,
     price: string,
     availableLiquidity: string,
+    reqPutBadges: string[],
     permSwap: boolean,
-    onlyInstant: boolean,
+    instant: boolean,
     countOnly: boolean,
     limit: number,
     offset: number,
@@ -382,7 +384,7 @@ export default class Market extends BaseModel {
     if (baseAsset) query = query.where('baseAddress', 'ilike', baseAsset);
     if (quoteAsset) query = query.where('quoteAddress', 'ilike', quoteAsset);
     if (permSwap !== undefined) query = query.where('permSwap', permSwap);
-    if (onlyInstant !== undefined) query = query.where('instant', onlyInstant);
+    if (instant !== undefined) query = query.where('instant', instant);
     if (queryStr) {
       query = query.where((q) => {
         this.makeSearchQuery(q, queryStr);
@@ -397,6 +399,16 @@ export default class Market extends BaseModel {
       const operator = availableLiquidity.startsWith('>') ? '>=' : '<=';
       const availableLiquidityValue = availableLiquidity.replace('>', '').replace('<', '');
       query = query.where(raw('"totalLiquidity"'), operator, availableLiquidityValue);
+    }
+    if (!_.isEmpty(reqPutBadges)) {
+      query = query.whereRaw(
+        `EXISTS (
+      SELECT 1
+      FROM jsonb_array_elements_text("requiredPutBadges") badge
+      WHERE badge ILIKE ANY (?::text[])
+      )`,
+        [reqPutBadges],
+      );
     }
     if (countOnly) {
       return query

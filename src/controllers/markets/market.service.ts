@@ -84,8 +84,6 @@ export class MarketService {
       if (select.includes(`totalLiquidity`) || !select.length) {
         market.totalLiquidityUsd = await this.metadataSrv.tryToUsd(net, market.totalLiquidity, market.baseAddress);
       }
-
-      return Promise.resolve();
     } catch (error) {
       return Promise.reject(error);
     }

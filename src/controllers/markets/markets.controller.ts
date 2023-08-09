@@ -7,13 +7,13 @@ import PermittedTrader from '../../models/permitted_trader';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { GetQueryDTO, ListPermittedProviderQueryDTO, ListPermittedTradersQueryDTO, ListQueryDTO } from './query.dto';
 import LiquidityProvider from '../../models/market_provider';
-import * as console from 'console';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('v1/markets')
 export class MarketsController {
   private logger = new Logger(MarketsController.name);
 
-  constructor(private marketSrv: MarketService) {}
+  constructor(private marketSrv: MarketService, private cfgSrv: ConfigService) {}
 
   /**
    * Get a market
@@ -39,7 +39,8 @@ export class MarketsController {
    * @param [q.base] The base asset address (optional)
    * @param [q.quote] The base asset address (optional)
    * @param [q.permSwap] Indicate to either return permissioned or non-permissioned markets (optional)
-   * @param [q.onlyInstant] Indicate to only return market where base and quote asset are on-chain (instant swap) (optional)
+   * @param [q.instant] Indicate to only return market where base and quote asset are on-chain (instant swap) (optional)
+   * @param [q.merchantLp] Indicate to only return market where base and quote asset are on-chain (instant swap) (optional)
    * @param [q.query] Filter by a query string
    * @param [q.price] Filter by price (if it starts with '>', it means equal or greater than or if it starts with '<', it means equal or less than)
    * @param [q.liquidity] Filter by liquidity (if it starts with '>', it means equal or greater than or if it starts with '<', it means equal or less than)
@@ -51,6 +52,12 @@ export class MarketsController {
    */
   @Get()
   async list(@Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
+    const reqPutBadges = [];
+
+    if (q.merchantLp) {
+      reqPutBadges.push(this.cfgSrv.get('app.badges.merchant'));
+    }
+
     const result = await Market.search(
       q.net,
       q.creator,
@@ -59,8 +66,9 @@ export class MarketsController {
       q.query,
       q.price,
       q.liquidity,
+      reqPutBadges,
       q.permSwap,
-      q.onlyInstant,
+      q.instant,
       q.count,
       q.limit || 25,
       q.offset,
@@ -83,7 +91,7 @@ export class MarketsController {
       }
     }
 
-    return ok().data(markets).build();
+    return ok().data(result).build();
   }
 
   /**

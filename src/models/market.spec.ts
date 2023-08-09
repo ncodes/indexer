@@ -40,6 +40,7 @@ describe('MarketPrice', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
       );
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt.id);
@@ -51,6 +52,7 @@ describe('MarketPrice', () => {
       const res = await Market.search(
         undefined,
         '0xCreator',
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -82,6 +84,7 @@ describe('MarketPrice', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
       );
       expect(res).toHaveLength(2);
     });
@@ -94,6 +97,7 @@ describe('MarketPrice', () => {
         undefined,
         undefined,
         '0xQuote',
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -123,6 +127,7 @@ describe('MarketPrice', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
       );
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt.id);
@@ -132,6 +137,7 @@ describe('MarketPrice', () => {
       const mkt = await Market.create({ permSwap: false });
       const mkt2 = await Market.create({ permSwap: true });
       let res = await Market.search(
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -149,6 +155,7 @@ describe('MarketPrice', () => {
       expect(res[0].id).toEqual(mkt.id);
 
       res = await Market.search(
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -178,14 +185,16 @@ describe('MarketPrice', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
       );
       expect(res).toHaveLength(2);
     });
 
-    it('should return correct result when `onlyInstant` is set', async () => {
+    it('should return correct result when `instant` is set', async () => {
       const mkt = await Market.create({ instant: true });
       const mkt2 = await Market.create({ instant: false });
       let res = await Market.search(
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -203,6 +212,7 @@ describe('MarketPrice', () => {
       expect(res[0].id).toEqual(mkt.id);
 
       res = await Market.search(
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -233,6 +243,7 @@ describe('MarketPrice', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         true,
         undefined,
         undefined,
@@ -254,6 +265,7 @@ describe('MarketPrice', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         1,
         undefined,
       );
@@ -261,6 +273,7 @@ describe('MarketPrice', () => {
       expect(res[0].id).toEqual(mkt.id);
 
       res = await Market.search(
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -291,6 +304,7 @@ describe('MarketPrice', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         1,
         0,
       );
@@ -308,11 +322,69 @@ describe('MarketPrice', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         1,
         1,
       );
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt2.id);
+    });
+
+    it('should return correct result when `reqPutBadges` is set', async () => {
+      const mkt = await Market.create({ requiredPutBadges: ['merchant'] });
+      const mkt2 = await Market.create({ requiredPutBadges: ['bitcoiner'] });
+      let res = await Market.search(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        ['merchant'],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      );
+      expect(res).toHaveLength(1);
+      expect(res[0].id).toEqual(mkt.id);
+
+      res = await Market.search(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        ['bitcoiner'],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      );
+      expect(res).toHaveLength(1);
+      expect(res[0].id).toEqual(mkt2.id);
+
+      res = await Market.search(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        ['bitcoiner', 'merchant'],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      );
+      expect(res).toHaveLength(2);
     });
   });
 });

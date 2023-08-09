@@ -46,14 +46,19 @@ export class ListQueryDTO {
   public liquidity?: string;
 
   @Transform(({ value }) => toBoolean(value))
+  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'merchantsOnly') })
+  @IsOptional()
+  public merchantLp?: boolean;
+
+  @Transform(({ value }) => toBoolean(value))
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'permSwap') })
   @IsOptional()
   public permSwap?: boolean;
 
   @Transform(({ value }) => toBoolean(value))
-  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'onlyInstant') })
+  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'instant') })
   @IsOptional()
-  public onlyInstant?: boolean;
+  public instant?: boolean;
 
   @Transform(({ value }) => toBoolean(value))
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'noMerge') })

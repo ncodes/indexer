@@ -1,3 +1,5 @@
+import * as process from 'process';
+
 function getContractsParams(network: string) {
   network = network.toUpperCase();
   return {
@@ -84,6 +86,9 @@ export default () => ({
     contractsParams: {
       localhost: getContractsParams('localhost'),
       ethereum: getContractsParams('ethereum'),
+    },
+    badges: {
+      merchant: process.env.MERCHANT_BADGE,
     },
   },
 });

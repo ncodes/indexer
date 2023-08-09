@@ -55,7 +55,7 @@ describe('MarketsController', () => {
     mockCfgGet.mockReset();
     mockGetMarketCore.mockReset();
 
-    cfgObj = { 'auth.jwtSecret': 'secret_secret' };
+    cfgObj = { 'auth.jwtSecret': 'secret_secret', 'app.badges.merchant': 'merchant' };
     mockCfgGet.mockReset().mockImplementation((args) => {
       return cfgObj[args];
     });
@@ -247,7 +247,7 @@ describe('MarketsController', () => {
       });
     });
 
-    describe('filter by onlyInstant', () => {
+    describe('filter by instant', () => {
       it('should 200 and correct market', async () => {
         const m1 = await Market.create({
           network: net,
@@ -271,7 +271,7 @@ describe('MarketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
-          .query({ net, onlyInstant: true })
+          .query({ net, instant: true })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -282,7 +282,7 @@ describe('MarketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
-          .query({ net, onlyInstant: false })
+          .query({ net, instant: false })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -708,6 +708,25 @@ describe('MarketsController', () => {
               param: 'liquidity',
               type: 'invalid_request_error',
             },
+          });
+      });
+    });
+
+    describe('filter by merchantLp', () => {
+      it('should 200 and correct market', async () => {
+        const market = await Market.create({ network: net, requiredPutBadges: ['merchant'] });
+        await Market.create({ network: net });
+
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
+
+        await request(app.getHttpServer())
+          .get(`/v1/markets`)
+          .query({ net, merchantLp: true })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(market.id);
           });
       });
     });

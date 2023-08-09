@@ -18,11 +18,11 @@ exports.up = function (knex) {
       table.string('quote');
       table.string('quoteAddress');
       table.integer('quoteType').defaultTo(0);
-      table.string('price');
-      table.string('amount');
-      table.string('amountSwapped').defaultTo(0);
-      table.string('minSwap');
-      table.string('maxSwap');
+      table.decimal('price', null).defaultTo(0);
+      table.decimal('amount', null).defaultTo(0);
+      table.decimal('amountSwapped', null).defaultTo(0);
+      table.decimal('minSwap', null);
+      table.decimal('maxSwap', null);
       table.string('manager');
       table.jsonb('ids').defaultTo([]);
       table.jsonb('wantOrIds').defaultTo([]);

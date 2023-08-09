@@ -9,7 +9,7 @@ exports.up = function (knex) {
       table.string('quoteAddress');
       table.string('provider');
       table.integer('lid');
-      table.string('price');
+      table.decimal('price', null);
       table.timestamp('createdAt');
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');

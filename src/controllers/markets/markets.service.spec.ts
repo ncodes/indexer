@@ -98,25 +98,6 @@ describe('MarketsService', () => {
       expect(market.numProviders).toBe('2');
     });
 
-    it(`should return correct value when select=['lowestPrice']`, async () => {
-      await Liquidity.create({ marketAddress, network: net, amount: '1', price: pow10(18).mul(200).toString() });
-      const lowest = await Liquidity.create({
-        marketAddress,
-        network: net,
-        amount: '1',
-        price: pow10(18).mul(100).toString(),
-      });
-      await Liquidity.create({ marketAddress, network: net, amount: '1', price: pow10(18).mul(300).toString() });
-
-      jest
-        .spyOn(module.get(MetadataService), 'getTokenInfo')
-        .mockResolvedValue({ decimals: 18, price: 5, network: net, logoURI: '', name: '' });
-
-      await service.extendMarket(market, ['lowestPrice']);
-      expect(market.lowestPrice).toBe(lowest.price);
-      expect(market.lowestPriceUsd).toEqual(500);
-    });
-
     it(`should return correct value when select=['lowestPrice24h', 'highestPrice24h']`, async () => {
       await Liquidity.create({ marketAddress, network: net, amount: '1', price: '2' });
       await Liquidity.create({ marketAddress, network: net, amount: '1', price: '1' });

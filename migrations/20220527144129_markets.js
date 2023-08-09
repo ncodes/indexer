@@ -25,14 +25,14 @@ exports.up = function (knex) {
       table.integer('commission').defaultTo(0);
       table.float('completionRate').defaultTo(0);
       table.float('disputeRate').defaultTo(0);
-      table.string('amountSwapped').defaultTo(0);
+      table.decimal('amountSwapped', null).defaultTo(0);
       table.boolean('permPut').defaultTo(false);
       table.boolean('permSwap').defaultTo(false);
       table.integer('disputeDelayTime');
       table.integer('evidenceDur');
       table.integer('predictDur');
-      table.string('totalLiquidity').defaultTo(0);
-      table.string('lowestPrice').defaultTo(0);
+      table.decimal('totalLiquidity', null).defaultTo(0);
+      table.decimal('lowestPrice', null).defaultTo(0);
       table.float('avgFinalizeDur').defaultTo(0);
       table.float('avgPaymentDur').defaultTo(0);
       table.float('avgReleaseDur').defaultTo(0);

@@ -340,20 +340,21 @@ export default class Market extends BaseModel {
   }
 
   /**
-   * search for markets
-   * @param network The network name (optional)
-   * @param creator The market creator address (optional)
-   * @param baseAsset The base asset address (optional)
-   * @param quoteAsset The quote asset address (optional)
-   * @param queryStr The query string (optional)
-   * @param permSwap Indicate to ignore market with permissioned swap enabled (optional)
+   * Search for markets (all fields are optional)
+   * @param network The network name
+   * @param creator The market creator address
+   * @param baseAsset The base asset address
+   * @param quoteAsset The quote asset address
+   * @param queryStr The query string
+   * @param price Filter by price (if it starts with >, it means equal or greater than, if it starts with <, it means equal or less than)
+   * @param permSwap Indicate to ignore market with permissioned swap enabled
    * @param onlyInstant Indicate to include only market where base and quote asset are on-chain.
    * @param countOnly Indicates whether to return count only.
    * @param limit The number of records to return.
    * @param offset The offset value
-   * @param select Select specific fields (optional)
-   * @param relations The relationships to fetch (optional)
-   * @param txn???????? Optional transaction object
+   * @param select Select specific fields
+   * @param relations The relationships to fetch
+   * @param txn????????? Optional transaction object
    */
   static search(
     network: string,
@@ -361,6 +362,7 @@ export default class Market extends BaseModel {
     baseAsset: string,
     quoteAsset: string,
     queryStr: string,
+    price: string,
     permSwap: boolean,
     onlyInstant: boolean,
     countOnly: boolean,
@@ -379,10 +381,16 @@ export default class Market extends BaseModel {
     if (quoteAsset) query = query.where('quoteAddress', 'ilike', quoteAsset);
     if (permSwap !== undefined) query = query.where('permSwap', permSwap);
     if (onlyInstant !== undefined) query = query.where('instant', onlyInstant);
-    if (queryStr)
+    if (queryStr) {
       query = query.where((q) => {
         this.makeSearchQuery(q, queryStr);
       });
+    }
+    if (price) {
+      const operator = price.startsWith('>') ? '>=' : '<=';
+      const priceValue = price.replace('>', '').replace('<', '');
+      query = query.where(raw('"lowestPrice"::numeric'), operator, priceValue);
+    }
     if (countOnly) {
       return query
         .count('id')

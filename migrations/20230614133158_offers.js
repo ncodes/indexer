@@ -13,8 +13,8 @@ exports.up = function (knex) {
       table.integer('lid');
       table.integer('offerId');
       table.string('creator');
-      table.string('amount');
-      table.string('price');
+      table.decimal('amount', null);
+      table.decimal('price', null);
       table.jsonb('ids').defaultTo([]);
       table.boolean('accepted').defaultTo(false);
       table.boolean('cancelled').defaultTo(false);

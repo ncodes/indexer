@@ -13,8 +13,8 @@ exports.up = function (knex) {
       table.integer('lid');
       table.string('provider');
       table.string('taker');
-      table.string('amount');
-      table.string('price');
+      table.decimal('amount', null).defaultTo(0);
+      table.decimal('price', null).defaultTo(0);
       table.jsonb('providerIds').defaultTo([]);
       table.jsonb('takerIds').defaultTo([]);
       table.integer('offerId');
@@ -26,8 +26,8 @@ exports.up = function (knex) {
       table.boolean('byDispute').defaultTo(false);
       table.string('finalizer');
       table.string('payer');
-      table.string('protocolFee');
-      table.string('marketCreatorFee');
+      table.decimal('protocolFee', null).defaultTo(0);
+      table.decimal('marketCreatorFee', null).defaultTo(0);
       table.string('txHash');
       table.timestamp('disputeFrom');
       table.timestamp('cancelAt');

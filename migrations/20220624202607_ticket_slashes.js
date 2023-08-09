@@ -10,7 +10,7 @@ exports.up = function (knex) {
       table.string('ticketId');
       table.integer('orderId');
       table.integer('disputeId');
-      table.string('amount');
+      table.decimal('amount', null).defaultTo(0);
       table.boolean('voted').defaultTo(false);
       table.boolean('winSide').defaultTo(false);
       table.timestamp('createdAt');

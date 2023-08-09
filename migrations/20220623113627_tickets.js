@@ -9,7 +9,7 @@ exports.up = function (knex) {
       table.integer('poolId');
       table.integer('orderId');
       table.integer('disputeId');
-      table.string('bond');
+      table.decimal('bond', null).defaultTo(0);
       table.string('txHash');
       table.boolean('joined').defaultTo(false);
       table.boolean('drained').defaultTo(false);

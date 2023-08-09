@@ -5,9 +5,9 @@ exports.up = function (knex) {
       table.string('id').primary();
       table.string('network');
       table.string('address');
-      table.string('curRate');
+      table.decimal('curRate', null);
       table.integer('feeBp');
-      table.string('feeFixed');
+      table.decimal('feeFixed', null);
       table.string('amountPerRewardPoint');
       table.boolean('verified').defaultTo(false);
       table.boolean('stable').defaultTo(false);

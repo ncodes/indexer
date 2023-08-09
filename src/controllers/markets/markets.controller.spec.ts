@@ -712,7 +712,7 @@ describe('MarketsController', () => {
       });
     });
 
-    describe('filter by merchantLp', () => {
+    describe('filter by onlyMerchantLP', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({ network: net, requiredPutBadges: ['merchant'] });
         await Market.create({ network: net });
@@ -721,7 +721,7 @@ describe('MarketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
-          .query({ net, merchantLp: true })
+          .query({ net, onlyMerchantLP: true })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {

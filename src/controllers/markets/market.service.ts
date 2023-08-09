@@ -6,8 +6,6 @@ import Swap from '../../models/swap';
 import { getTokenLogo } from '../../common/token_list';
 import * as _ from 'lodash';
 import { MetadataService } from '../../services/metadata/metadata.service';
-import { isZero, pow10, pow10D } from '../../network/common';
-import { toDec } from '../../common/common';
 
 @Injectable()
 export class MarketService {
@@ -84,6 +82,8 @@ export class MarketService {
       if (select.includes(`totalLiquidity`) || !select.length) {
         market.totalLiquidityUsd = await this.metadataSrv.tryToUsd(net, market.totalLiquidity, market.baseAddress);
       }
+
+      return Promise.resolve();
     } catch (error) {
       return Promise.reject(error);
     }

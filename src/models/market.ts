@@ -106,6 +106,9 @@ export default class Market extends BaseModel {
   priceChange: number;
   totalSwaps24h: string;
   volume24h: string;
+  amountSwappedUsd: number;
+  totalLiquidityUsd: number;
+  volume24hUsd: number;
 
   constructor(init?: Partial<Market>) {
     super();

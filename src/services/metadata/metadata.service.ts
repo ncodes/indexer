@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import NetworkService from '../../network/network.service';
-import { isValidNetwork } from '../../network/common';
+import { isValidNetwork, isZero, pow10D } from '../../network/common';
 import { CoinMarketCapMetadata } from './CoinMarketCapMetadata';
-import { isDevMode, isProdMode } from '../../common/common';
+import { isDevMode, isProdMode, toDec } from '../../common/common';
 import { CoinGeckoMetadata } from './CoinGeckoMetadata';
 
 // tslint:disable-next-line:max-classes-per-file
@@ -54,5 +54,31 @@ export class MetadataService {
       info.decimals = await this.netSrv.getERC20Contract(network, contract).decimals();
     if (isDevMode() && !info.decimals) info.decimals = 18;
     return Promise.resolve(info);
+  }
+
+  /**
+   * Convert a token amount to USD
+   * @param net The token's host network
+   * @param amount The token amount (in the lowest denomination)
+   * @param contract The token contract address
+   */
+  async toUsd(net: string, amount: string, contract: string): Promise<number> {
+    if (isZero(amount)) return 0;
+    const tokenInfo = await this.getTokenInfo(net, contract);
+    return toDec(amount).div(pow10D(tokenInfo.decimals)).mul(tokenInfo.price).toNumber();
+  }
+
+  /**
+   * Try to convert a token amount to USD or return zero on failure
+   * @param net The token's host network
+   * @param amount The token amount (in the lowest denomination)
+   * @param contract The token contract address
+   */
+  async tryToUsd(net: string, amount: string, contract: string): Promise<number> {
+    try {
+      return await this.toUsd(net, amount, contract);
+    } catch (e) {
+      return 0;
+    }
   }
 }

@@ -6,7 +6,7 @@ import Swap from '../../models/swap';
 import { getTokenLogo } from '../../common/token_list';
 import * as _ from 'lodash';
 import { MetadataService } from '../../services/metadata/metadata.service';
-import { pow10D } from '../../network/common';
+import { isZero, pow10, pow10D } from '../../network/common';
 import { toDec } from '../../common/common';
 
 @Injectable()
@@ -30,16 +30,6 @@ export class MarketService {
       market.lowestPrice = await Liquidity.getLowestPrice(net, address, undefined);
       if (select.includes(`lowestPrice24h`) || !select.length) {
         market.lowestPrice24h = await Liquidity.getLowestPrice(net, address, undefined, 24);
-      }
-
-      if (market.lowestPrice && market.lowestPrice !== '0') {
-        const quoteInfo = await this.metadataSrv.getTokenInfo(net, market.quoteAddress);
-        market.lowestPriceUsd = toDec(market.lowestPrice)
-          .div(pow10D(quoteInfo.decimals))
-          .mul(quoteInfo.price)
-          .toNumber();
-      } else {
-        market.lowestPriceUsd = 0;
       }
 
       if (select.includes(`highestPrice24h`) || !select.length) {
@@ -67,6 +57,7 @@ export class MarketService {
           1440,
           market.isInstant(),
         );
+        market.volume24hUsd = await this.metadataSrv.tryToUsd(net, market.volume24h, market.baseAddress);
       }
 
       if (select.includes(`priceChange`) || !select.length) {
@@ -82,6 +73,15 @@ export class MarketService {
         market.quoteLogo = getTokenLogo(net, quoteAddress);
         market.quoteLogo = !market.quoteLogo ? await this.metadataSrv.getTokenLogo(net, baseAddress) : market.quoteLogo;
       }
+
+      if (select.includes(`amountSwapped`) || !select.length)
+        market.amountSwappedUsd = await this.metadataSrv.tryToUsd(net, market.amountSwapped, market.baseAddress);
+
+      if (select.includes(`totalLiquidity`) || !select.length)
+        market.totalLiquidityUsd = await this.metadataSrv.tryToUsd(net, market.totalLiquidity, market.baseAddress);
+
+      if (select.includes(`lowestPrice`) || !select.length)
+        market.lowestPriceUsd = await this.metadataSrv.tryToUsd(net, market.lowestPrice, quoteAddress);
 
       return Promise.resolve();
     } catch (error) {

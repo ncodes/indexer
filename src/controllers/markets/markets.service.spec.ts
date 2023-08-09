@@ -122,10 +122,6 @@ describe('MarketsService', () => {
       await Liquidity.create({ marketAddress, network: net, amount: '1', price: '1' });
       await Liquidity.create({ marketAddress, network: net, amount: '1', price: '3' });
 
-      jest
-        .spyOn(module.get(MetadataService), 'getTokenInfo')
-        .mockResolvedValue({ decimals: 18, price: 5, network: net, logoURI: '', name: '' });
-
       await service.extendMarket(market, ['lowestPrice24h', 'highestPrice24h']);
       expect(market.lowestPrice24h).toBe('1');
       expect(market.highestPrice24h).toBe('3');
@@ -142,23 +138,29 @@ describe('MarketsService', () => {
       await Swap.create({
         network: net,
         marketAddress,
-        amount: '1',
+        amount: pow10(18).mul(1).toString(),
         createdAt: moment().subtract(86399, 'seconds').toISOString(),
       });
       await Swap.create({
         network: net,
         marketAddress,
-        amount: '4',
+        amount: pow10(18).mul(4).toString(),
         createdAt: moment().subtract(86400, 'seconds').toISOString(),
       });
       await Swap.create({
         network: net,
         marketAddress,
-        amount: '2',
+        amount: pow10(18).mul(2).toString(),
         createdAt: moment().subtract(86300, 'seconds').toISOString(),
       });
+
+      jest
+        .spyOn(module.get(MetadataService), 'getTokenInfo')
+        .mockResolvedValue({ decimals: 18, price: 5, network: net, logoURI: '', name: '' });
+
       await service.extendMarket(market, ['volume24h']);
-      expect(market.volume24h).toBe('3');
+      expect(market.volume24h).toBe(pow10(18).mul(3).toString());
+      expect(market.volume24hUsd).toBe(15);
     });
 
     it(`should return correct value when select=['priceChange']`, async () => {
@@ -203,6 +205,24 @@ describe('MarketsService', () => {
         expect(market.quoteLogo).toBe('logo_url');
         TokenLists[net].tokens = copy;
       });
+    });
+
+    it(`should return correct value when select=['amountSwapped']`, async () => {
+      market.amountSwapped = pow10(18).mul(100).toString();
+      jest
+        .spyOn(module.get(MetadataService), 'getTokenInfo')
+        .mockResolvedValue({ decimals: 18, price: 5, network: net, logoURI: '', name: '' });
+      await service.extendMarket(market, ['amountSwapped']);
+      expect(market.amountSwappedUsd).toBe(500);
+    });
+
+    it(`should return correct value when select=['totalLiquidity']`, async () => {
+      market.totalLiquidity = pow10(18).mul(100).toString();
+      jest
+        .spyOn(module.get(MetadataService), 'getTokenInfo')
+        .mockResolvedValue({ decimals: 18, price: 5, network: net, logoURI: '', name: '' });
+      await service.extendMarket(market, ['totalLiquidity']);
+      expect(market.totalLiquidityUsd).toBe(500);
     });
   });
 });

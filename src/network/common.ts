@@ -99,3 +99,8 @@ export function toFixed(n: Decimal, places?: number): string {
   if (n2.div(n.toFixed(0)).eq(1)) return n.toFixed(2);
   return n.toFixed();
 }
+
+// isZero checks if amt is zero or undefined
+export function isZero(amt: BigNumberish) {
+  return !amt || toDec(amt).eq(0);
+}

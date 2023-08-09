@@ -422,8 +422,8 @@ export class CoreHandler extends Handler {
     let market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
     const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
 
-    // If quote is NFT, use the whole amount of the liquidity
-    amount = Market.isNFT(market.quoteType) ? toBN(liq.amount) : amount;
+    // If base or quote is NFT, use the whole amount of the liquidity
+    amount = Market.isNFT(market.baseType) || Market.isNFT(market.quoteType) ? toBN(liq.amount) : amount;
 
     // Create swap
     let swap: Partial<Swap> = {
@@ -519,8 +519,8 @@ export class CoreHandler extends Handler {
       let market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
       let liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
 
-      // If quote is NFT, use the whole amount of the liquidity
-      amount = Market.isNFT(market.quoteType) ? toBN(liq.amount) : amount;
+      // If base or quote is NFT, use the whole amount of the liquidity
+      amount = Market.isNFT(market.baseType) || Market.isNFT(market.quoteType) ? toBN(liq.amount) : amount;
 
       let swap: Partial<Swap> = {
         network: this.network,
@@ -866,13 +866,9 @@ export class CoreHandler extends Handler {
     event: Event,
     txn?: Transaction,
   ) {
-    // Get existing liquidity by the provider
     const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
-
-    // Get market
     const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
 
-    // Create the liquidity if it doesn't exist
     if (!liq) {
       await Liquidity.create(
         {
@@ -884,14 +880,23 @@ export class CoreHandler extends Handler {
           lid: lid.toNumber(),
           base: market.base,
           baseAddress: market.baseAddress,
+          baseType: market.baseType,
           quote: market.quote,
-          ids: ids.map((id) => id.toNumber()),
           quoteAddress: market.quoteAddress,
+          quoteType: market.quoteType,
+          ids: ids.map((id) => id.toNumber()),
           price: price.toString(),
+          amount: ids.length.toString(),
           wantAndIds: wantAndIds.map((id) => id.toNumber()),
           wantOrIds: wantOrIds.map((id) => id.toNumber()),
           timeToPay: timeToPay.toNumber(),
         },
+        txn,
+      );
+
+      await Market.updateById(
+        market.id,
+        { lowestPrice: await Liquidity.getLowestPrice(this.network, marketAddress, undefined, undefined, txn) },
         txn,
       );
     } else {
@@ -901,6 +906,7 @@ export class CoreHandler extends Handler {
       if (!_.isEqual(liq.ids, _ids)) {
         if (deduct) upd.ids = _.difference(liq.ids, _ids);
         else upd.ids = _.union(liq.ids, _ids);
+        upd.amount = upd.ids.length.toString();
       }
 
       if (liq.target != target) upd.target = target;
@@ -915,6 +921,11 @@ export class CoreHandler extends Handler {
       if (!_.isEqual(liq.wantOrIds, _wantOrIds)) upd.wantOrIds = _wantOrIds;
 
       await Liquidity.updateById(liq.id, upd, txn);
+      await Market.updateById(
+        market.id,
+        { lowestPrice: await Liquidity.getLowestPrice(this.network, marketAddress, undefined, undefined, txn) },
+        txn,
+      );
     }
 
     // Add new market price entry, if quote is not NFT - since price is not
@@ -984,8 +995,10 @@ export class CoreHandler extends Handler {
           lid: lid.toNumber(),
           base: market.base,
           baseAddress: market.baseAddress,
+          baseType: market.baseType,
           quote: market.quote,
           quoteAddress: market.quoteAddress,
+          quoteType: market.quoteType,
           amount: amount.toString(),
           price: price.toString(),
           wantAndIds: wantAndIds.map((id) => id.toNumber()),
@@ -997,7 +1010,14 @@ export class CoreHandler extends Handler {
         txn,
       );
 
-      await Market.updateById(market.id, { totalLiquidity: toBN(market.totalLiquidity).add(amount).toString() }, txn);
+      await Market.updateById(
+        market.id,
+        {
+          totalLiquidity: toBN(market.totalLiquidity).add(amount).toString(),
+          lowestPrice: await Liquidity.getLowestPrice(this.network, marketAddress, undefined, undefined, txn),
+        },
+        txn,
+      );
     } else {
       const ch: Partial<Liquidity> = {};
       const mktCh: Partial<Market> = {};
@@ -1022,6 +1042,8 @@ export class CoreHandler extends Handler {
       if (!_.isEqual(liq.wantOrIds, _wantOrIds)) ch.wantOrIds = _wantOrIds;
 
       await Liquidity.updateById(liq.id, ch, txn);
+
+      mktCh.lowestPrice = await Liquidity.getLowestPrice(this.network, marketAddress, undefined, undefined, txn);
       await Market.updateById(market.id, mktCh, txn);
     }
 
@@ -1062,11 +1084,9 @@ export class CoreHandler extends Handler {
     event: Event,
     txn?: Transaction,
   ) {
-    // Get local liquidity
     const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
-    if (!liq) throw new Error('liquidity not found');
 
-    // Update liquidity price
+    // Update liquidity
     await Liquidity.updateById(liq.id, { price: price.toString() }, txn);
 
     // Add new market price entry
@@ -1082,6 +1102,11 @@ export class CoreHandler extends Handler {
       },
       txn,
     );
+
+    // Update market
+    await Market.updateByNetworkAddress(this.network, marketAddress, {
+      lowestPrice: await Liquidity.getLowestPrice(this.network, marketAddress, undefined, undefined, txn),
+    });
   }
 
   /**

@@ -115,12 +115,12 @@ class OKBuilder {
     if (_.isArray(data)) {
       (data as any[]).forEach((d) => {
         const keys = _.filter(_.keys(d), (k) => {
-          return k.substr(0, 2) === '__';
+          return k.startsWith('$');
         });
 
         if (!this._data.meta) this._data.meta = {};
         keys.forEach((k) => {
-          this._data.meta[k.substr(2)] = d[k];
+          this._data.meta[k.substring(1)] = d[k];
           delete d[k];
         });
 

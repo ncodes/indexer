@@ -18,6 +18,7 @@ import Liquidity from '../../models/liquidity';
 import SwapService from './swap.service';
 import { randStr } from '../../common/common';
 import { MetadataService } from '../../services/metadata/metadata.service';
+import * as console from 'console';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {

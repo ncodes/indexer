@@ -1,7 +1,7 @@
 import { randStr } from '../common/common';
 import Objection, { raw, Transaction } from 'objection';
 import { BaseModel } from './base';
-import Market from './market';
+import Market, { AssetType } from './market';
 import * as _ from 'lodash';
 import * as moment from 'moment';
 
@@ -21,10 +21,14 @@ export default class Liquidity extends BaseModel {
   base: string = undefined;
   // The base asset address
   baseAddress: string = undefined;
+  // Indicates the type of the base asset
+  baseType: AssetType = undefined;
   // The quote asset symbol
   quote: string = undefined;
   // The quote asset address
   quoteAddress: string = undefined;
+  // Indicates the type of quote asset
+  quoteType: AssetType = undefined;
   // The liquidity amount
   amount: string = undefined;
   // The all-time amount of liquidity swapped
@@ -367,16 +371,11 @@ export default class Liquidity extends BaseModel {
       const timeAgo = moment().subtract(withinHours, 'h').toISOString();
       this.query(txn)
         .where((q) => {
-          if (net) return q.where({ network: net });
-        })
-        .where((q) => {
-          if (mid) return q.where('marketAddress', 'ILIKE', mid);
-        })
-        .where((q) => {
-          if (baseAddress) return q.where('baseAddress', 'ILIKE', baseAddress);
-        })
-        .where((q) => {
-          if (withinHours) return q.where('createdAt', '>', timeAgo);
+          if (net) q = q.where({ network: net });
+          if (mid) q = q.where('marketAddress', 'ILIKE', mid);
+          if (baseAddress) q = q.where('baseAddress', 'ILIKE', baseAddress);
+          if (withinHours) q = q.where('createdAt', '>', timeAgo);
+          return q;
         })
         .where('amount', '>', 0)
         .orderByRaw('cast(price as numeric) asc')

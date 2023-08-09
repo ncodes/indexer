@@ -32,7 +32,7 @@ export default class Market extends BaseModel {
   // Indicates the type of the base asset
   baseType: AssetType = undefined;
   // The base asset decimals (if applicable)
-  baseDecimals: number;
+  baseDecimals: number = undefined;
   // The quote asset symbol
   quote: string = undefined;
   // The quote asset token address
@@ -44,9 +44,9 @@ export default class Market extends BaseModel {
   // Indicates whether this is an instant market
   instant: boolean = undefined;
   // Indicates that liquidities can have zero price
-  allowZeroPrice: boolean;
+  allowZeroPrice: boolean = undefined;
   // Indicates that all liquidity can be accessed only via offer
-  offerOnly: boolean;
+  offerOnly: boolean = undefined;
   // The base/asset pair name
   pair: string = undefined;
   // The market's commission
@@ -74,32 +74,33 @@ export default class Market extends BaseModel {
   // Indicates the swap operation is permissioned
   permSwap: boolean = undefined;
   // Number of seconds before dispute can be started
-  disputeDelayTime: number;
+  disputeDelayTime: number = undefined;
   // Number of seconds within which evidence must be shared
-  evidenceDur: number;
+  evidenceDur: number = undefined;
   // Number of seconds for votes to be committed and revealed
-  predictDur: number;
+  predictDur: number = undefined;
   // The market manager
-  manager: string;
+  manager: string = undefined;
   // Total liquidity in this market
-  totalLiquidity: string;
+  totalLiquidity: string = undefined;
   // The list of required badges to put liquidity
   requiredPutBadges: string[] = undefined;
   // The list of required badges to swap
   requiredSwapBadges: string[] = undefined;
   // The average number of seconds within which swaps are finalized
-  avgFinalizeDur: number;
+  avgFinalizeDur: number = undefined;
   // The average number of seconds within which swaps are marked as paid
-  avgPaymentDur: number;
+  avgPaymentDur: number = undefined;
   // The average number of seconds within which swaps are marked as released
-  avgReleaseDur: number;
+  avgReleaseDur: number = undefined;
+  // The lowest price in the market
+  lowestPrice: string = undefined;
 
   // *** Non-persisted fields **//
   numDisputes: number;
   baseLogo: string;
   quoteLogo: string;
   numProviders: string;
-  lowestPrice: string;
   lowestPriceUsd: number;
   lowestPrice24h: string;
   highestPrice24h: string;

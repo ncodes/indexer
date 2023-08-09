@@ -14,8 +14,10 @@ exports.up = function (knex) {
       table.string('target');
       table.string('base');
       table.string('baseAddress');
+      table.integer('baseType').defaultTo(0);
       table.string('quote');
       table.string('quoteAddress');
+      table.integer('quoteType').defaultTo(0);
       table.string('price');
       table.string('amount');
       table.string('amountSwapped').defaultTo(0);

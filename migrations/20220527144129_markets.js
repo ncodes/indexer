@@ -32,6 +32,7 @@ exports.up = function (knex) {
       table.integer('evidenceDur');
       table.integer('predictDur');
       table.string('totalLiquidity').defaultTo(0);
+      table.string('lowestPrice').defaultTo(0);
       table.float('avgFinalizeDur').defaultTo(0);
       table.float('avgPaymentDur').defaultTo(0);
       table.float('avgReleaseDur').defaultTo(0);

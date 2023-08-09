@@ -199,31 +199,50 @@ describe('MarketsController', () => {
       });
     });
 
-    describe('filter by noPermSwap', () => {
+    describe('filter by permSwap', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({
-          network: net,
-          address: '0x123',
-          creator: '0xCreator',
-          permSwap: false,
-        });
-        await Market.create({
           network: net,
           address: '0xXYZ',
           creator: '0xCreator',
           permSwap: true,
+        });
+        const market2 = await Market.create({
+          network: net,
+          address: '0x123',
+          creator: '0xCreator',
+          permSwap: false,
         });
 
         jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
-          .query({ net, noPermSwap: true })
+          .query({ net, permSwap: true })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
             expect(res.body.data).toHaveLength(1);
             expect(res.body.data[0].id).toEqual(market.id);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/markets`)
+          .query({ net, permSwap: false })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(market2.id);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/markets`)
+          .query({ net })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(2);
           });
       });
     });

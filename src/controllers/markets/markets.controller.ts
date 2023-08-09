@@ -7,6 +7,7 @@ import PermittedTrader from '../../models/permitted_trader';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { GetQueryDTO, ListPermittedProviderQueryDTO, ListPermittedTradersQueryDTO, ListQueryDTO } from './query.dto';
 import LiquidityProvider from '../../models/market_provider';
+import * as console from 'console';
 
 @Controller('v1/markets')
 export class MarketsController {

@@ -27,9 +27,12 @@ export class MarketService {
         market.numProviders = await Liquidity.countProvidersInMarket(net, address);
       }
 
-      market.lowestPrice = await Liquidity.getLowestPrice(net, address, undefined);
       if (select.includes(`lowestPrice24h`) || !select.length) {
         market.lowestPrice24h = await Liquidity.getLowestPrice(net, address, undefined, 24);
+      }
+
+      if (select.includes(`lowestPrice`) || !select.length) {
+        market.lowestPriceUsd = await this.metadataSrv.tryToUsd(net, market.lowestPrice, quoteAddress);
       }
 
       if (select.includes(`highestPrice24h`) || !select.length) {
@@ -74,14 +77,13 @@ export class MarketService {
         market.quoteLogo = !market.quoteLogo ? await this.metadataSrv.getTokenLogo(net, baseAddress) : market.quoteLogo;
       }
 
-      if (select.includes(`amountSwapped`) || !select.length)
+      if (select.includes(`amountSwapped`) || !select.length) {
         market.amountSwappedUsd = await this.metadataSrv.tryToUsd(net, market.amountSwapped, market.baseAddress);
+      }
 
-      if (select.includes(`totalLiquidity`) || !select.length)
+      if (select.includes(`totalLiquidity`) || !select.length) {
         market.totalLiquidityUsd = await this.metadataSrv.tryToUsd(net, market.totalLiquidity, market.baseAddress);
-
-      if (select.includes(`lowestPrice`) || !select.length)
-        market.lowestPriceUsd = await this.metadataSrv.tryToUsd(net, market.lowestPrice, quoteAddress);
+      }
 
       return Promise.resolve();
     } catch (error) {

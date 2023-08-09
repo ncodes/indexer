@@ -347,6 +347,7 @@ export default class Market extends BaseModel {
    * @param quoteAsset The quote asset address
    * @param queryStr The query string
    * @param price Filter by price (if it starts with >, it means equal or greater than, if it starts with <, it means equal or less than)
+   * @param availableLiquidity Filter by available liquidity (if it starts with >, it means equal or greater than, if it starts with <, it means equal or less than)
    * @param permSwap Indicate to ignore market with permissioned swap enabled
    * @param onlyInstant Indicate to include only market where base and quote asset are on-chain.
    * @param countOnly Indicates whether to return count only.
@@ -354,7 +355,7 @@ export default class Market extends BaseModel {
    * @param offset The offset value
    * @param select Select specific fields
    * @param relations The relationships to fetch
-   * @param txn????????? Optional transaction object
+   * @param txn?????????? Optional transaction object
    */
   static search(
     network: string,
@@ -363,6 +364,7 @@ export default class Market extends BaseModel {
     quoteAsset: string,
     queryStr: string,
     price: string,
+    availableLiquidity: string,
     permSwap: boolean,
     onlyInstant: boolean,
     countOnly: boolean,
@@ -389,7 +391,12 @@ export default class Market extends BaseModel {
     if (price) {
       const operator = price.startsWith('>') ? '>=' : '<=';
       const priceValue = price.replace('>', '').replace('<', '');
-      query = query.where(raw('"lowestPrice"::numeric'), operator, priceValue);
+      query = query.where(raw('"lowestPrice"'), operator, priceValue);
+    }
+    if (availableLiquidity) {
+      const operator = availableLiquidity.startsWith('>') ? '>=' : '<=';
+      const availableLiquidityValue = availableLiquidity.replace('>', '').replace('<', '');
+      query = query.where(raw('"totalLiquidity"'), operator, availableLiquidityValue);
     }
     if (countOnly) {
       return query

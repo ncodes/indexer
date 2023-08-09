@@ -39,6 +39,12 @@ export class ListQueryDTO {
   @IsOptional()
   public price?: string;
 
+  @Matches(/^[<>]?[0-9]+$/, {
+    message: makeValidatorMsg(`must be a number (optionally preceded by '>' or '<')`, 'liquidity'),
+  })
+  @IsOptional()
+  public liquidity?: string;
+
   @Transform(({ value }) => toBoolean(value))
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'permSwap') })
   @IsOptional()

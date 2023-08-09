@@ -40,8 +40,9 @@ export class MarketsController {
    * @param [q.quote] The base asset address (optional)
    * @param [q.permSwap] Indicate to either return permissioned or non-permissioned markets (optional)
    * @param [q.onlyInstant] Indicate to only return market where base and quote asset are on-chain (instant swap) (optional)
-   * @param [q.query] The query string
-   * @param [q.price] The price to filter (if starts with '>', it means equal or greater than, if starts with '<', it means equal or less than)
+   * @param [q.query] Filter by a query string
+   * @param [q.price] Filter by price (if it starts with '>', it means equal or greater than or if it starts with '<', it means equal or less than)
+   * @param [q.liquidity] Filter by liquidity (if it starts with '>', it means equal or greater than or if it starts with '<', it means equal or less than)
    * @param [q.count] Returns the count of markets only
    * @param [q.limit] The number of result to return (optional)
    * @param [q.offset] The query offset
@@ -57,6 +58,7 @@ export class MarketsController {
       q.quote,
       q.query,
       q.price,
+      q.liquidity,
       q.permSwap,
       q.onlyInstant,
       q.count,

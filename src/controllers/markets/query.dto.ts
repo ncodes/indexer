@@ -25,6 +25,9 @@ export class ListQueryDTO {
   public creator?: string;
 
   @IsOptional()
+  public address?: string;
+
+  @IsOptional()
   public base?: string;
 
   @IsOptional()
@@ -69,6 +72,19 @@ export class ListQueryDTO {
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'permSwap') })
   @IsOptional()
   public permSwap?: boolean;
+
+  @Transform(({ value }) => toBoolean(value))
+  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'permPut') })
+  @IsOptional()
+  public permPut?: boolean;
+
+  @Transform(({ value }) => (value as string).split(',').map((v) => v.replaceAll('%', '').trim().replace(/\/$/g, '%')))
+  @IsOptional()
+  putBadges?: string[];
+
+  @Transform(({ value }) => (value as string).split(',').map((v) => v.replaceAll('%', '').trim().replace(/\/$/g, '%')))
+  @IsOptional()
+  swapBadges?: string[];
 
   @Transform(({ value }) => toBoolean(value))
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'instant') })

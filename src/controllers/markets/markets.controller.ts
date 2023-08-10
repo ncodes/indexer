@@ -35,20 +35,23 @@ export class MarketsController {
    * List markets
    * @param q The query object
    * @param [q.network] The network name
-   * @param [q.creator] Filter the result by creator address (optional)
-   * @param [q.base] The base asset address (optional)
-   * @param [q.quote] The base asset address (optional)
-   * @param [q.permSwap] Indicate to either return permissioned or non-permissioned markets (optional)
-   * @param [q.instant] Indicate to only return market where base and quote asset are on-chain (instant swap) (optional)
-   * @param [q.merchantLp] Indicate to only return market where LPs require merchant badge (optional)
-   * @param [q.kycLp] Indicate to only return market where LPs require KYC badge (optional)
-   * @param [q.kycTaker] Indicate to only return market where takers require KYC badge (optional)
-   * @param [q.offer] Indicate to return offer-only markets (optional)
+   * @param [q.creator] Filter the result by creator address
+   * @param [q.address] Filter the result by market address
+   * @param [q.base] The base asset address
+   * @param [q.quote] The base asset address
+   * @param [q.permSwap] Indicate to either return permissioned or non-permissioned markets
+   * @param [q.instant] Indicate to only return market where base and quote asset are on-chain (instant swap)
+   * @param [q.merchantLp] Indicate to only return market where LPs require merchant badge
+   * @param [q.kycLp] Indicate to only return market where LPs require KYC badge
+   * @param [q.kycTaker] Indicate to only return market where takers require KYC badge
+   * @param [q.offer] Indicate to return offer-only markets
+   * @param [q.putBadges] Indicate to return markets that require LPs to have these badges
+   * @param [q.swapBadges] Indicate to return markets that require takers to have these badges
    * @param [q.query] Filter by a query string
    * @param [q.price] Filter by price (if it starts with '>', it means equal or greater than or if it starts with '<', it means equal or less than)
    * @param [q.liquidity] Filter by liquidity (if it starts with '>', it means equal or greater than or if it starts with '<', it means equal or less than)
    * @param [q.count] Returns the count of markets only
-   * @param [q.limit] The number of result to return (optional)
+   * @param [q.limit] The number of result to return
    * @param [q.offset] The query offset
    * @param [q.select] Select fields to return
    * @returns
@@ -70,9 +73,18 @@ export class MarketsController {
       reqSwapBadges.push(this.cfgSrv.get('app.badges.kyc'));
     }
 
+    if (q.putBadges && q.putBadges.length) {
+      reqPutBadges.push(...q.putBadges);
+    }
+
+    if (q.swapBadges && q.swapBadges.length) {
+      reqSwapBadges.push(...q.swapBadges);
+    }
+
     const result = await Market.search(
       q.net,
       q.creator,
+      q.address,
       q.base,
       q.quote,
       q.query,
@@ -82,6 +94,7 @@ export class MarketsController {
       reqSwapBadges,
       q.offer,
       q.permSwap,
+      q.permPut,
       q.instant,
       q.count,
       q.limit || 25,
@@ -113,7 +126,7 @@ export class MarketsController {
    * @param marketAddress The market ID
    * @param q The query object
    * @param [q.network] - The network name
-   * @param [q.limit] - Limit the result (optional)
+   * @param [q.limit] - Limit the result
    * @param [q.offset] - The query offset
    */
   @Get('/:mid/permitted_takers')
@@ -131,7 +144,7 @@ export class MarketsController {
    * @param marketAddress The market ID
    * @param q The query object
    * @param [q.network] The network name
-   * @param [q.limit] Limit the result (optional)
+   * @param [q.limit] Limit the result
    * @param [q.count] If set, only count is returned
    * @param [q.offset] The query offset
    */

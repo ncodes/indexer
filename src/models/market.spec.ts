@@ -43,6 +43,8 @@ describe('MarketPrice', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
+        undefined,
       );
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt.id);
@@ -67,6 +69,34 @@ describe('MarketPrice', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
+        undefined,
+      );
+      expect(res).toHaveLength(1);
+      expect(res[0].id).toEqual(mkt.id);
+    });
+
+    it('should return correct result when `address` is set', async () => {
+      const mkt = await Market.create({ address: '0xAddress' });
+      await Market.create({ address: '0xAddress2' });
+      const res = await Market.search(
+        undefined,
+        undefined,
+        '0xAddress',
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
       );
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt.id);
@@ -78,7 +108,9 @@ describe('MarketPrice', () => {
       const res = await Market.search(
         undefined,
         undefined,
+        undefined,
         '0xBase',
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -102,7 +134,9 @@ describe('MarketPrice', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         '0xQuote',
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -127,7 +161,9 @@ describe('MarketPrice', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         'BTC',
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -143,10 +179,81 @@ describe('MarketPrice', () => {
       expect(res[0].id).toEqual(mkt.id);
     });
 
-    it('should return correct result when `noPermSwap` is set', async () => {
+    it('should return correct result when `permSwap` is set', async () => {
       const mkt = await Market.create({ permSwap: false });
       const mkt2 = await Market.create({ permSwap: true });
       let res = await Market.search(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        false,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      );
+      expect(res).toHaveLength(1);
+      expect(res[0].id).toEqual(mkt.id);
+
+      res = await Market.search(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        true,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      );
+      expect(res).toHaveLength(1);
+      expect(res[0].id).toEqual(mkt2.id);
+
+      res = await Market.search(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      );
+      expect(res).toHaveLength(2);
+    });
+
+    it('should return correct result when `permPut` is set', async () => {
+      const mkt = await Market.create({ permPut: false });
+      const mkt2 = await Market.create({ permPut: true });
+      let res = await Market.search(
+        undefined,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -167,6 +274,8 @@ describe('MarketPrice', () => {
       expect(res[0].id).toEqual(mkt.id);
 
       res = await Market.search(
+        undefined,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -202,6 +311,8 @@ describe('MarketPrice', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
+        undefined,
       );
       expect(res).toHaveLength(2);
     });
@@ -210,6 +321,8 @@ describe('MarketPrice', () => {
       const mkt = await Market.create({ instant: true });
       const mkt2 = await Market.create({ instant: false });
       let res = await Market.search(
+        undefined,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -230,6 +343,8 @@ describe('MarketPrice', () => {
       expect(res[0].id).toEqual(mkt.id);
 
       res = await Market.search(
+        undefined,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -266,6 +381,8 @@ describe('MarketPrice', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
+        undefined,
         true,
         undefined,
         undefined,
@@ -290,6 +407,8 @@ describe('MarketPrice', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
+        undefined,
         1,
         undefined,
       );
@@ -297,6 +416,8 @@ describe('MarketPrice', () => {
       expect(res[0].id).toEqual(mkt.id);
 
       res = await Market.search(
+        undefined,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -333,6 +454,8 @@ describe('MarketPrice', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
+        undefined,
         1,
         0,
       );
@@ -340,6 +463,8 @@ describe('MarketPrice', () => {
       expect(res[0].id).toEqual(mkt.id);
 
       res = await Market.search(
+        undefined,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -372,7 +497,9 @@ describe('MarketPrice', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         ['merchant'],
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -392,7 +519,9 @@ describe('MarketPrice', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         ['bitcoiner'],
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -412,7 +541,9 @@ describe('MarketPrice', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         ['bitcoiner', 'merchant'],
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -434,7 +565,9 @@ describe('MarketPrice', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         ['merchant'],
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -454,7 +587,9 @@ describe('MarketPrice', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         ['bitcoiner'],
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -474,7 +609,9 @@ describe('MarketPrice', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         ['bitcoiner', 'merchant'],
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -499,7 +636,9 @@ describe('MarketPrice', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         true,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -519,7 +658,9 @@ describe('MarketPrice', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         false,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -530,6 +671,8 @@ describe('MarketPrice', () => {
       expect(res[0].id).toEqual(mkt2.id);
 
       res = await Market.search(
+        undefined,
+        undefined,
         undefined,
         undefined,
         undefined,

@@ -69,9 +69,9 @@ export default class Market extends BaseModel {
   totalSwaps: number = undefined;
   // The dispute rate of this market
   disputeRate: number = undefined;
-  // Indicates the liquidity providers are permissioned
+  // Indicates the liquidity providers are permissioned or not
   permPut: boolean = undefined;
-  // Indicates the swap operation is permissioned
+  // Indicates the swap operation is permissioned or not
   permSwap: boolean = undefined;
   // Number of seconds before dispute can be started
   disputeDelayTime: number = undefined;
@@ -343,6 +343,7 @@ export default class Market extends BaseModel {
    * Search for markets (all fields are optional)
    * @param network The network name
    * @param creator The market creator address
+   * @param address The market address
    * @param baseAsset The base asset address
    * @param quoteAsset The quote asset address
    * @param queryStr The query string
@@ -351,18 +352,20 @@ export default class Market extends BaseModel {
    * @param reqPutBadges A list of PUT badges to filter by
    * @param reqSwapBadges A list of SWAP badges to filter by
    * @param offer Indicate to filter by offer type
-   * @param permSwap Indicate to ignore market with permissioned swap enabled
+   * @param permSwap If set, markets are filtered by whether they are permissioned for swap or not
+   * @param permPut  If set, markets are filtered by whether they are permissioned for put or not
    * @param instant Indicate to include only market where base and quote asset are on-chain.
    * @param countOnly Indicates whether to return count only.
    * @param limit The number of records to return.
    * @param offset The offset value
    * @param select Select specific fields
    * @param relations The relationships to fetch
-   * @param txn??? Optional transaction object
+   * @param txn????? Optional transaction object
    */
   static search(
     network: string,
     creator: string,
+    address: string,
     baseAsset: string,
     quoteAsset: string,
     queryStr: string,
@@ -372,6 +375,7 @@ export default class Market extends BaseModel {
     reqSwapBadges: string[],
     offer: boolean,
     permSwap: boolean,
+    permPut: boolean,
     instant: boolean,
     countOnly: boolean,
     limit: number,
@@ -389,11 +393,15 @@ export default class Market extends BaseModel {
 
     if (creator) query = query.where('creator', 'ilike', creator);
 
+    if (address) query = query.where('address', 'ilike', address);
+
     if (baseAsset) query = query.where('baseAddress', 'ilike', baseAsset);
 
     if (quoteAsset) query = query.where('quoteAddress', 'ilike', quoteAsset);
 
     if (permSwap !== undefined) query = query.where('permSwap', permSwap);
+
+    if (permPut !== undefined) query = query.where('permPut', permPut);
 
     if (instant !== undefined) query = query.where('instant', instant);
 

@@ -89,6 +89,7 @@ export default () => ({
     },
     badges: {
       merchant: process.env.MERCHANT_BADGE,
+      kyc: process.env.KYC_BADGE,
     },
   },
 });

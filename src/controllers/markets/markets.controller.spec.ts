@@ -55,7 +55,12 @@ describe('MarketsController', () => {
     mockCfgGet.mockReset();
     mockGetMarketCore.mockReset();
 
-    cfgObj = { 'auth.jwtSecret': 'secret_secret', 'app.badges.merchant': 'merchant' };
+    cfgObj = {
+      'auth.jwtSecret': 'secret_secret',
+      'app.badges.merchant': 'merchant',
+      'app.badges.kyc': 'kyc',
+    };
+
     mockCfgGet.mockReset().mockImplementation((args) => {
       return cfgObj[args];
     });
@@ -712,7 +717,7 @@ describe('MarketsController', () => {
       });
     });
 
-    describe('filter by onlyMerchantLP', () => {
+    describe('filter by onlyMerchantLp', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({ network: net, requiredPutBadges: ['merchant'] });
         await Market.create({ network: net });
@@ -721,7 +726,26 @@ describe('MarketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
-          .query({ net, onlyMerchantLP: true })
+          .query({ net, onlyMerchantLp: true })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(market.id);
+          });
+      });
+    });
+
+    describe('filter by onlyKycLp', () => {
+      it('should 200 and correct market', async () => {
+        const market = await Market.create({ network: net, requiredPutBadges: ['kyc'] });
+        await Market.create({ network: net });
+
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
+
+        await request(app.getHttpServer())
+          .get(`/v1/markets`)
+          .query({ net, onlyKycLp: true })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {

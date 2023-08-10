@@ -40,9 +40,10 @@ export class MarketsController {
    * @param [q.quote] The base asset address (optional)
    * @param [q.permSwap] Indicate to either return permissioned or non-permissioned markets (optional)
    * @param [q.instant] Indicate to only return market where base and quote asset are on-chain (instant swap) (optional)
-   * @param [q.onlyMerchantLp] Indicate to only return market where LPs require merchant badge (optional)
-   * @param [q.onlyKycLp] Indicate to only return market where LPs require KYC badge (optional)
-   * @param [q.onlyKycTaker] Indicate to only return market where takers require KYC badge (optional)
+   * @param [q.merchantLp] Indicate to only return market where LPs require merchant badge (optional)
+   * @param [q.kycLp] Indicate to only return market where LPs require KYC badge (optional)
+   * @param [q.kycTaker] Indicate to only return market where takers require KYC badge (optional)
+   * @param [q.offer] Indicate to return offer-only markets (optional)
    * @param [q.query] Filter by a query string
    * @param [q.price] Filter by price (if it starts with '>', it means equal or greater than or if it starts with '<', it means equal or less than)
    * @param [q.liquidity] Filter by liquidity (if it starts with '>', it means equal or greater than or if it starts with '<', it means equal or less than)
@@ -57,15 +58,15 @@ export class MarketsController {
     const reqPutBadges = [];
     const reqSwapBadges = [];
 
-    if (q.onlyMerchantLp) {
+    if (q.merchantLp) {
       reqPutBadges.push(this.cfgSrv.get('app.badges.merchant'));
     }
 
-    if (q.onlyKycLp) {
+    if (q.kycLp) {
       reqPutBadges.push(this.cfgSrv.get('app.badges.kyc'));
     }
 
-    if (q.onlyKycTaker) {
+    if (q.kycTaker) {
       reqSwapBadges.push(this.cfgSrv.get('app.badges.kyc'));
     }
 
@@ -79,6 +80,7 @@ export class MarketsController {
       q.liquidity,
       reqPutBadges,
       reqSwapBadges,
+      q.offer,
       q.permSwap,
       q.instant,
       q.count,

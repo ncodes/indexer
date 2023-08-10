@@ -350,6 +350,7 @@ export default class Market extends BaseModel {
    * @param availableLiquidity Filter by available liquidity (if it starts with >, it means equal or greater than, if it starts with <, it means equal or less than)
    * @param reqPutBadges A list of PUT badges to filter by
    * @param reqSwapBadges A list of SWAP badges to filter by
+   * @param offer Indicate to filter by offer type
    * @param permSwap Indicate to ignore market with permissioned swap enabled
    * @param instant Indicate to include only market where base and quote asset are on-chain.
    * @param countOnly Indicates whether to return count only.
@@ -357,7 +358,7 @@ export default class Market extends BaseModel {
    * @param offset The offset value
    * @param select Select specific fields
    * @param relations The relationships to fetch
-   * @param txn?? Optional transaction object
+   * @param txn??? Optional transaction object
    */
   static search(
     network: string,
@@ -369,6 +370,7 @@ export default class Market extends BaseModel {
     availableLiquidity: string,
     reqPutBadges: string[],
     reqSwapBadges: string[],
+    offer: boolean,
     permSwap: boolean,
     instant: boolean,
     countOnly: boolean,
@@ -380,28 +382,39 @@ export default class Market extends BaseModel {
   ) {
     select = this.makeSelectList(select);
     let query = this.query(txn);
+
     query = !countOnly ? query.select(...select, raw('count(*) over() as' + ' "$queryCount"')) : query;
+
     if (network) query = query.where('network', 'ilike', network);
+
     if (creator) query = query.where('creator', 'ilike', creator);
+
     if (baseAsset) query = query.where('baseAddress', 'ilike', baseAsset);
+
     if (quoteAsset) query = query.where('quoteAddress', 'ilike', quoteAsset);
+
     if (permSwap !== undefined) query = query.where('permSwap', permSwap);
+
     if (instant !== undefined) query = query.where('instant', instant);
+
     if (queryStr) {
       query = query.where((q) => {
         this.makeSearchQuery(q, queryStr);
       });
     }
+
     if (price) {
       const operator = price.startsWith('>') ? '>=' : '<=';
       const priceValue = price.replace('>', '').replace('<', '');
       query = query.where(raw('"lowestPrice"'), operator, priceValue);
     }
+
     if (availableLiquidity) {
       const operator = availableLiquidity.startsWith('>') ? '>=' : '<=';
       const availableLiquidityValue = availableLiquidity.replace('>', '').replace('<', '');
       query = query.where(raw('"totalLiquidity"'), operator, availableLiquidityValue);
     }
+
     if (!_.isEmpty(reqPutBadges)) {
       query = query.whereRaw(
         `EXISTS (
@@ -412,6 +425,7 @@ export default class Market extends BaseModel {
         [reqPutBadges],
       );
     }
+
     if (!_.isEmpty(reqSwapBadges)) {
       query = query.whereRaw(
         `EXISTS (
@@ -422,6 +436,11 @@ export default class Market extends BaseModel {
         [reqSwapBadges],
       );
     }
+
+    if (offer !== undefined) {
+      query = query.where('offerOnly', offer);
+    }
+
     if (countOnly) {
       return query
         .count('id')
@@ -430,8 +449,11 @@ export default class Market extends BaseModel {
           return res.count;
         });
     }
+
     if (offset) query = query.offset(offset);
+
     if (limit) query = query.limit(limit);
+
     return query
       .whereNotDeleted()
       .orderBy('amountSwapped', 'DESC') // prefer high volume

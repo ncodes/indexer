@@ -717,7 +717,7 @@ describe('MarketsController', () => {
       });
     });
 
-    describe('filter by onlyMerchantLp', () => {
+    describe('filter by merchantLp', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({ network: net, requiredPutBadges: ['merchant'] });
         await Market.create({ network: net });
@@ -726,7 +726,7 @@ describe('MarketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
-          .query({ net, onlyMerchantLp: true })
+          .query({ net, merchantLp: true })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -736,7 +736,7 @@ describe('MarketsController', () => {
       });
     });
 
-    describe('filter by onlyKycLp', () => {
+    describe('filter by kycLp', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({ network: net, requiredPutBadges: ['kyc'] });
         await Market.create({ network: net });
@@ -745,7 +745,7 @@ describe('MarketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
-          .query({ net, onlyKycLp: true })
+          .query({ net, kycLp: true })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -755,7 +755,7 @@ describe('MarketsController', () => {
       });
     });
 
-    describe('filter by onlyKycTaker', () => {
+    describe('filter by kycTaker', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({ network: net, requiredSwapBadges: ['kyc'] });
         await Market.create({ network: net });
@@ -764,7 +764,7 @@ describe('MarketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
-          .query({ net, onlyKycTaker: true })
+          .query({ net, kycTaker: true })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {

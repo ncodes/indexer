@@ -46,19 +46,24 @@ export class ListQueryDTO {
   public liquidity?: string;
 
   @Transform(({ value }) => toBoolean(value))
-  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'onlyMerchantLp') })
+  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'merchantLp') })
   @IsOptional()
-  public onlyMerchantLp?: boolean;
+  public merchantLp?: boolean;
 
   @Transform(({ value }) => toBoolean(value))
-  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'onlyKycLp') })
+  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'kycLp') })
   @IsOptional()
-  public onlyKycLp?: boolean;
+  public kycLp?: boolean;
 
   @Transform(({ value }) => toBoolean(value))
-  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'onlyKycTaker') })
+  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'kycTaker') })
   @IsOptional()
-  public onlyKycTaker?: boolean;
+  public kycTaker?: boolean;
+
+  @Transform(({ value }) => toBoolean(value))
+  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'offer') })
+  @IsOptional()
+  public offer?: boolean;
 
   @Transform(({ value }) => toBoolean(value))
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'permSwap') })

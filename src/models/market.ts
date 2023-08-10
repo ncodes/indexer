@@ -470,6 +470,7 @@ export default class Market extends BaseModel {
       .orderBy('amountSwapped', 'DESC') // prefer high volume
       .orderBy('totalSwaps', 'DESC') // prefer high swap transactions
       .orderBy('completionRate', 'DESC') // prefer high release rate (without dispute)
+      .orderBy('updatedAt', 'DESC')
       .withGraphFetched(relations);
   }
 

@@ -14,8 +14,9 @@ export class LiquidityController {
    * List liquidities on a network
    * @param q The query object
    * @param q.network The network name.
-   * @param [q.marketAddress] The market ID
-   * @param [q.amount] Limit result to liquidity where amount is between their swap amount limit
+   * @param [q.market] The market ID
+   * @param [q.amount] Filter by minimum swap amount (if it starts with '>', it means equal or greater than or if it starts with '<', it means equal or less than)
+   * @param [q.price] Filter by price (if it starts with '>', it means equal or greater than or if it starts with '<', it means equal or less than)
    * @param [q.provider] The provider address
    * @param [q.count] Returns the count of matching result
    * @param [q.limit] The number of result to return
@@ -29,10 +30,11 @@ export class LiquidityController {
     if (!q.count) {
       const liquidities = await Liquidity.search(
         q.net,
-        q.marketAddress,
+        q.market,
         q.provider,
         maxOpenDisputes,
         q.amount,
+        q.price,
         q.limit || 25,
         q.offset,
         q.select,
@@ -45,7 +47,7 @@ export class LiquidityController {
     } else {
       return ok()
         .data({
-          count: await Liquidity.countLiquidities(q.net, q.marketAddress, q.provider, maxOpenDisputes),
+          count: await Liquidity.countLiquidities(q.net, q.market, q.provider, maxOpenDisputes),
         })
         .build();
     }

@@ -86,6 +86,7 @@ export default class Liquidity extends BaseModel {
   totalSwaps24h: string;
   volume24h: string;
   priceChange: number;
+  priceUsd: number;
 
   /** Relations */
   market: Market;
@@ -225,14 +226,15 @@ export default class Liquidity extends BaseModel {
   /**
    * getLiquidities finds liquidities
    * @param network The network name
-   * @param marketAddress??? The market ID (optional)
-   * @param provider??? Filter by provider address (optional)
-   * @param maxOpenDisputes??? Allow only records with lower open disputes
-   * @param amount Filter by swap amount within min and max swap amount
-   * @param limit??? The number of records to return (optional).
-   * @param offset??? The query offset (optional)
+   * @param marketAddress????? The market ID (optional)
+   * @param provider????? Filter by provider address (optional)
+   * @param maxOpenDisputes????? Allow only records with lower open disputes
+   * @param amount Filter by swap amount within min. and max. swap amount
+   * @param price?
+   * @param limit????? The number of records to return (optional).
+   * @param offset????? The query offset (optional)
    * @param select Select specific fields (optional)
-   * @param txn??? Optional transaction object
+   * @param txn????? Optional transaction object
    */
   static search(
     network: string,
@@ -240,31 +242,58 @@ export default class Liquidity extends BaseModel {
     provider?: string,
     maxOpenDisputes?: number,
     amount: string = undefined,
+    price?: string,
     limit?: number,
     offset?: number,
     select = [],
     txn?: Objection.Transaction,
   ) {
     select = this.makeSelectList(select);
+
     let q = this.query(txn)
       .select(...select, raw('count(*) over() as' + ' "$queryCount"'))
       .whereNotDeleted()
       .where({ network, paused: false })
       .where('amount', '>', '0');
-    if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
-    if (provider) q = q.where('provider', 'ILIKE', provider);
-    if (maxOpenDisputes) q = q.where('openDisputes', '<', maxOpenDisputes);
-    if (amount)
-      q = q
-        .where(raw(`cast(?? as numeric)`, 'minSwap'), '<=', amount)
-        .where(raw(`cast(?? as numeric)`, 'maxSwap'), '>=', amount);
-    if (offset) q = q.offset(offset);
-    if (limit) q = q.limit(limit);
+
+    if (marketAddress) {
+      q = q.where('marketAddress', 'ILIKE', marketAddress);
+    }
+
+    if (provider) {
+      q = q.where('provider', 'ILIKE', provider);
+    }
+
+    if (maxOpenDisputes) {
+      q = q.where('openDisputes', '<', maxOpenDisputes);
+    }
+
+    if (amount) {
+      const operator = amount.startsWith('>') ? '>=' : '<=';
+      const amountValue = amount.replace('>', '').replace('<', '');
+      q = q.where('minSwap', operator, amountValue);
+    }
+
+    if (price) {
+      const operator = price.startsWith('>') ? '>=' : '<=';
+      const amountValue = price.replace('>', '').replace('<', '');
+      q = q.where('price', operator, amountValue);
+    }
+
+    if (offset) {
+      q = q.offset(offset);
+    }
+
+    if (limit) {
+      q = q.limit(limit);
+    }
+
     return q
       .orderBy('amountSwapped', 'DESC')
       .orderBy('totalSwaps', 'DESC')
       .orderBy('completionRate', 'DESC')
-      .orderBy('satisfactoryRate', 'DESC');
+      .orderBy('satisfactoryRate', 'DESC')
+      .orderBy('updatedAt', 'DESC');
   }
 
   /**

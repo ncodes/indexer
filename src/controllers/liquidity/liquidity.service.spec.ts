@@ -10,8 +10,11 @@ import * as moment from 'moment';
 import MarketPrice from '../../models/market_price';
 import { MetadataService } from '../../services/metadata/metadata.service';
 
+const mockTryToUsd = jest.fn();
 const MetadataServiceMock = jest.fn().mockImplementation(() => {
-  return {};
+  return {
+    tryToUsd: mockTryToUsd,
+  };
 });
 
 describe('LiquidityService', () => {
@@ -62,18 +65,6 @@ describe('LiquidityService', () => {
         marketAddress: market.address,
         provider,
       });
-    });
-
-    it(`should revert with error if select=['market'] and liquidity market is unknown`, async () => {
-      liquidity.marketAddress = '0xMarketUnknown';
-      await expect(service.extendLiquidity(liquidity, ['market'])).rejects.toThrow('market not found');
-    });
-
-    it(`should return correct value when select=['market']`, async () => {
-      const extendMarketMock = jest.spyOn(module.get(MarketService), 'extendMarket');
-      await expect(service.extendLiquidity(liquidity, ['market'])).resolves.toBeUndefined();
-      expect(extendMarketMock).toHaveBeenCalled();
-      expect(liquidity.market).toBeDefined();
     });
 
     it(`should return correct value when select=['totalSwaps24h']`, async () => {
@@ -153,6 +144,14 @@ describe('LiquidityService', () => {
       liquidity = await Liquidity.updateById(liquidity.id, { lid: 1 });
       await expect(service.extendLiquidity(liquidity, ['priceChange'])).resolves.toBeUndefined();
       expect(liquidity.priceChange).toBe(33.333333333333336);
+    });
+
+    it(`should return correct value when select=['priceUsd']`, async () => {
+      mockTryToUsd.mockResolvedValue('100');
+      await Swap.create({ network: net, price: '100' });
+      liquidity = await Liquidity.updateById(liquidity.id, { price: '100' });
+      await expect(service.extendLiquidity(liquidity, ['priceUsd'])).resolves.toBeUndefined();
+      expect(liquidity.priceUsd).toBe('100');
     });
   });
 });

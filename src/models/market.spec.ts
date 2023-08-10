@@ -1,15 +1,9 @@
 import { DBService } from '../db/DBService';
-import Swap from './swap';
-import * as moment from 'moment';
 import Market from './market';
 
-describe('MarketPrice', () => {
+describe('Market', () => {
   const db = DBService.getForTest();
   const net = 'net1';
-  const market = '0xMarket';
-  const provider = '0xProvider';
-  const payer = '0xPayer';
-  const finalizer = '0xFinalizer';
 
   afterEach(async () => {
     await db.truncateTables();

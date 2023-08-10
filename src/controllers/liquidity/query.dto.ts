@@ -1,4 +1,4 @@
-import { IsBoolean, IsIn, IsNotEmpty, IsNumber, IsNumberString, IsOptional } from 'class-validator';
+import { IsBoolean, IsIn, IsNotEmpty, IsNumber, IsNumberString, IsOptional, Matches } from 'class-validator';
 import { makeValidatorMsg } from '../../common/validations/validation';
 import { getNetworks } from '../../network/common';
 import { Transform } from 'class-transformer';
@@ -11,14 +11,22 @@ export class ListQueryDTO {
   public net?: string;
 
   @IsOptional()
-  public marketAddress?: string;
+  public market?: string;
 
   @IsOptional()
   public provider?: string;
 
-  @IsNumberString({ no_symbols: true }, { message: makeValidatorMsg('must be numeric', 'amount') })
+  @Matches(/^[<>]?[0-9]+$/, {
+    message: makeValidatorMsg(`must be a number (optionally preceded by '>' or '<')`, 'amount'),
+  })
   @IsOptional()
   public amount?: string;
+
+  @Matches(/^[<>]?[0-9]+$/, {
+    message: makeValidatorMsg(`must be a number (optionally preceded by '>' or '<')`, 'price'),
+  })
+  @IsOptional()
+  public price?: string;
 
   @Transform(({ value }) => toBoolean(value))
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'count') })

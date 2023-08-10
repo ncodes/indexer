@@ -5,10 +5,12 @@ import { MarketService } from '../markets/market.service';
 import Swap from '../../models/swap';
 import MarketPrice from '../../models/market_price';
 import * as _ from 'lodash';
+import { MetadataService } from '../../services/metadata/metadata.service';
+import { isZero } from '../../network/common';
 
 @Injectable()
 export class LiquidityService {
-  constructor(private marketSrv: MarketService) {}
+  constructor(private marketSrv: MarketService, private metadataSrv: MetadataService) {}
 
   /**
    * Extend liquidity with peripheral and derived data
@@ -19,15 +21,7 @@ export class LiquidityService {
   async extendLiquidity(liq: Liquidity, select = []) {
     select = select && _.filter(select, (s) => !_.isEmpty(s));
     try {
-      const { marketAddress, network: net, provider } = liq;
-
-      let market: Market;
-      if (select.includes(`market`) || !select.length) {
-        market = await Market.getMarket(net, marketAddress, select, undefined);
-        if (!market) return Promise.reject(new Error('market not found'));
-        await this.marketSrv.extendMarket(market, select);
-        liq.market = market;
-      }
+      const { marketAddress, network: net, provider, quoteAddress } = liq;
 
       if (select.includes(`totalSwaps24h`) || !select.length) {
         liq.totalSwaps24h = await Swap.countLiquiditySwaps(net, marketAddress, provider, liq.lid, undefined, 1440);
@@ -39,6 +33,10 @@ export class LiquidityService {
 
       if (select.includes(`priceChange`) || !select.length) {
         liq.priceChange = await MarketPrice.priceChange(net, marketAddress, provider, liq.lid, 24);
+      }
+
+      if ((select.includes(`priceUsd`) && !isZero(liq.price)) || !select.length) {
+        liq.priceUsd = await this.metadataSrv.tryToUsd(net, liq.price, quoteAddress);
       }
     } catch (e) {
       return Promise.reject(e);

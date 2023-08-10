@@ -316,17 +316,20 @@ describe('MarketsController', () => {
           baseType: AssetType.ERC20,
           quoteType: AssetType.ERC20,
           instant: true,
+          updatedAt: moment().subtract(3, 's').toISOString(),
         });
         const m2 = await Market.create({
           network: net,
           baseType: AssetType.ERC20,
           quoteType: AssetType.ERC20,
           instant: true,
+          updatedAt: moment().subtract(2, 's').toISOString(),
         });
         const m3 = await Market.create({
           network: net,
           baseType: AssetType.ERC20,
           quoteType: AssetType.SYNTH,
+          updatedAt: moment().subtract(1, 's').toISOString(),
         });
 
         jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
@@ -338,8 +341,8 @@ describe('MarketsController', () => {
           .expect(200)
           .expect((res) => {
             expect(res.body.data).toHaveLength(2);
-            expect(res.body.data[0].id).toEqual(m1.id);
-            expect(res.body.data[1].id).toEqual(m2.id);
+            expect(res.body.data[0].id).toEqual(m2.id);
+            expect(res.body.data[1].id).toEqual(m1.id);
           });
 
         await request(app.getHttpServer())
@@ -874,8 +877,12 @@ describe('MarketsController', () => {
         const market = await Market.create({
           network: net,
           quoteAddress: '0xQuoteAddress',
+          updatedAt: moment().subtract(2, 's').toISOString(),
         });
-        await Market.create({ network: net });
+        await Market.create({
+          network: net,
+          updatedAt: moment().subtract(3, 's').toISOString(),
+        });
 
         jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
 
@@ -896,8 +903,12 @@ describe('MarketsController', () => {
         await Market.create({
           network: net,
           quoteAddress: '0xQuoteAddress',
+          updatedAt: moment().subtract(2, 's').toISOString(),
         });
-        const market = await Market.create({ network: net });
+        const market = await Market.create({
+          network: net,
+          updatedAt: moment().subtract(3, 's').toISOString(),
+        });
 
         jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
 

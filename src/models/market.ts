@@ -464,6 +464,9 @@ export default class Market extends BaseModel {
 
     return query
       .whereNotDeleted()
+      .orderBy('avgFinalizeDur', 'ASC') // prefer low finalize duration
+      .orderBy('avgPaymentDur', 'ASC') // prefer low payment duration
+      .orderBy('avgReleaseDur', 'ASC') // prefer low release duration
       .orderBy('amountSwapped', 'DESC') // prefer high volume
       .orderBy('totalSwaps', 'DESC') // prefer high swap transactions
       .orderBy('completionRate', 'DESC') // prefer high release rate (without dispute)

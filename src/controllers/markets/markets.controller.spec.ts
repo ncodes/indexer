@@ -755,6 +755,25 @@ describe('MarketsController', () => {
       });
     });
 
+    describe('filter by onlyKycTaker', () => {
+      it('should 200 and correct market', async () => {
+        const market = await Market.create({ network: net, requiredSwapBadges: ['kyc'] });
+        await Market.create({ network: net });
+
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
+
+        await request(app.getHttpServer())
+          .get(`/v1/markets`)
+          .query({ net, onlyKycTaker: true })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(market.id);
+          });
+      });
+    });
+
     describe('limit=1', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({

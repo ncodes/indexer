@@ -349,6 +349,7 @@ export default class Market extends BaseModel {
    * @param price Filter by price (if it starts with >, it means equal or greater than, if it starts with <, it means equal or less than)
    * @param availableLiquidity Filter by available liquidity (if it starts with >, it means equal or greater than, if it starts with <, it means equal or less than)
    * @param reqPutBadges A list of PUT badges to filter by
+   * @param reqSwapBadges A list of SWAP badges to filter by
    * @param permSwap Indicate to ignore market with permissioned swap enabled
    * @param instant Indicate to include only market where base and quote asset are on-chain.
    * @param countOnly Indicates whether to return count only.
@@ -356,7 +357,7 @@ export default class Market extends BaseModel {
    * @param offset The offset value
    * @param select Select specific fields
    * @param relations The relationships to fetch
-   * @param txn? Optional transaction object
+   * @param txn?? Optional transaction object
    */
   static search(
     network: string,
@@ -367,6 +368,7 @@ export default class Market extends BaseModel {
     price: string,
     availableLiquidity: string,
     reqPutBadges: string[],
+    reqSwapBadges: string[],
     permSwap: boolean,
     instant: boolean,
     countOnly: boolean,
@@ -408,6 +410,16 @@ export default class Market extends BaseModel {
       WHERE badge ILIKE ANY (?::text[])
       )`,
         [reqPutBadges],
+      );
+    }
+    if (!_.isEmpty(reqSwapBadges)) {
+      query = query.whereRaw(
+        `EXISTS (
+      SELECT 1
+      FROM jsonb_array_elements_text("requiredSwapBadges") badge
+      WHERE badge ILIKE ANY (?::text[])
+      )`,
+        [reqSwapBadges],
       );
     }
     if (countOnly) {

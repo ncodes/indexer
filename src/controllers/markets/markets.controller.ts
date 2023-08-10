@@ -42,6 +42,7 @@ export class MarketsController {
    * @param [q.instant] Indicate to only return market where base and quote asset are on-chain (instant swap) (optional)
    * @param [q.onlyMerchantLp] Indicate to only return market where LPs require merchant badge (optional)
    * @param [q.onlyKycLp] Indicate to only return market where LPs require KYC badge (optional)
+   * @param [q.onlyKycTaker] Indicate to only return market where takers require KYC badge (optional)
    * @param [q.query] Filter by a query string
    * @param [q.price] Filter by price (if it starts with '>', it means equal or greater than or if it starts with '<', it means equal or less than)
    * @param [q.liquidity] Filter by liquidity (if it starts with '>', it means equal or greater than or if it starts with '<', it means equal or less than)
@@ -54,6 +55,7 @@ export class MarketsController {
   @Get()
   async list(@Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
     const reqPutBadges = [];
+    const reqSwapBadges = [];
 
     if (q.onlyMerchantLp) {
       reqPutBadges.push(this.cfgSrv.get('app.badges.merchant'));
@@ -61,6 +63,10 @@ export class MarketsController {
 
     if (q.onlyKycLp) {
       reqPutBadges.push(this.cfgSrv.get('app.badges.kyc'));
+    }
+
+    if (q.onlyKycTaker) {
+      reqSwapBadges.push(this.cfgSrv.get('app.badges.kyc'));
     }
 
     const result = await Market.search(
@@ -72,6 +78,7 @@ export class MarketsController {
       q.price,
       q.liquidity,
       reqPutBadges,
+      reqSwapBadges,
       q.permSwap,
       q.instant,
       q.count,

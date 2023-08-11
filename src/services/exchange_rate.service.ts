@@ -20,10 +20,17 @@ export class ExchangeRateService {
    */
   async updateCache(): Promise<Rates> {
     try {
-      const resp = await axios.get(
-        `https://openexchangerates.org/api/latest.json?app_id=${this.cfgSrv.get('app.openexchangerate.key')}`,
-      );
-      this.rates = resp.data.rates;
+      if (this.cfgSrv.get('app.exchangeRateSource') == 'openexchangerates') {
+        const key = this.cfgSrv.get('app.openexchangerates.key');
+        const url = `https://openexchangerates.org/api/latest.json?app_id=${key}`;
+        const resp = await axios.get(url);
+        this.rates = resp.data.rates;
+      } else if (this.cfgSrv.get('app.exchangeRateSource') == 'fastforex') {
+        const key = this.cfgSrv.get('app.fastforex.key');
+        const url = `https://api.fastforex.io/fetch-all?api_key=${key}`;
+        const resp = await axios.get(url);
+        this.rates = resp.data.results;
+      }
       return Promise.resolve(this.rates);
     } catch (error) {
       return Promise.reject(error);
@@ -32,7 +39,7 @@ export class ExchangeRateService {
 
   /**
    * Get the rate of a symbol
-   * @param symbol The symbol (e.g USD, NGN)
+   * @param symbol The symbol (ex: USD, NGN)
    */
   async get(symbol: string): Promise<Decimal> {
     if (!this.rates) await this.updateCache();

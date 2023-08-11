@@ -14,6 +14,7 @@ exports.up = function (knex) {
       table.string('provider');
       table.string('taker');
       table.decimal('amount', null).defaultTo(0);
+      table.decimal('valueUsd', null).defaultTo(0);
       table.decimal('price', null).defaultTo(0);
       table.jsonb('providerIds').defaultTo([]);
       table.jsonb('takerIds').defaultTo([]);

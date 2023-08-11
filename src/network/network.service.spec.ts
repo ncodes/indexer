@@ -3,6 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { NotifierService } from '../jobs/mailer/NotifierService';
 import { DBService } from '../db/DBService';
 import NetworkService from './network.service';
+import { MetadataService } from '../services/metadata/metadata.service';
+import { ExchangeRateService } from '../services/exchange_rate.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -44,7 +46,7 @@ describe('NetworkService', () => {
 
     module = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
-      providers: [NetworkService, NotifierService, ConfigService],
+      providers: [NetworkService, NotifierService, ConfigService, MetadataService, ExchangeRateService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())

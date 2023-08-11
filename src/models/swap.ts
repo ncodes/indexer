@@ -35,6 +35,8 @@ export default class Swap extends BaseModel {
   offerId?: number = undefined;
   // The output amount of the swap
   amount?: string = undefined;
+  // The value of the swap in USD
+  valueUsd?: string = undefined;
   // The price of 1 unit of output asset
   price?: string = undefined;
   // Indicates whether the order is an instance swap

@@ -14,7 +14,6 @@ export class MiscController {
   constructor(
     private cfgSrv: ConfigService,
     private metadataSrv: MetadataService,
-    private netSrv: NetworkService,
     private exRateSvr: ExchangeRateService,
   ) {}
 

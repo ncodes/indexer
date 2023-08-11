@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { AssetsController } from './assets.controller';
-import NetworkService from '../../network/network.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { NotifierModule } from '../../jobs/mailer/NotifierModule';
+import { NetworkModule } from '../../network/network.module';
 
 @Module({
-  imports: [NotifierModule],
+  imports: [NotifierModule, NetworkModule],
   controllers: [AssetsController],
-  providers: [MetadataService, NetworkService],
+  providers: [MetadataService],
 })
 export class AssetsModule {}

@@ -54,14 +54,18 @@ export default () => ({
     rootAdminPass: process.env.ROOT_ADMIN_PASS,
     disableNotifications: process.env.DISABLE_NOTIFICATIONS,
     tokenMetadataSource: process.env.TOKEN_METADATA_SOURCE,
+    exchangeRateSource: process.env.EXCHANGE_RATE_SOURCE,
     redis: {
       url: process.env.REDIS_URL,
     },
     cmc: {
       key: process.env.COINMARKETCAP_KEY,
     },
-    openexchangerate: {
-      key: process.env.OPENEXRATE_KEY,
+    openexchangerates: {
+      key: process.env.OPENEXRATES_KEY,
+    },
+    fastforex: {
+      key: process.env.FASTFOREX_KEY,
     },
     aws: {
       smtpUsername: process.env.AWS_SMTP_USERNAME,

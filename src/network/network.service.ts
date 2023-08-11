@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Contract, providers } from 'ethers';
 import * as coreABI from '../../abi/Core.json';
@@ -38,6 +38,8 @@ import {
   TokenPool,
 } from '../../typechain';
 import Meta, { MetaKeys } from '../models/meta';
+import { MetadataService } from '../services/metadata/metadata.service';
+import { ExchangeRateService } from '../services/exchange_rate.service';
 
 interface ContractInfo {
   [key: string]: JointContracts;
@@ -53,7 +55,13 @@ export default class NetworkService {
   private contracts: ContractInfo = {};
   private providers: JsonRpcProviders = {};
 
-  constructor(public cfgSrv: ConfigService, private notifSrv: NotifierService) {
+  constructor(
+    public cfgSrv: ConfigService,
+    private notifSrv: NotifierService,
+    @Inject(forwardRef(() => MetadataService))
+    private metadataSrv: MetadataService,
+    private exrSrv: ExchangeRateService,
+  ) {
     if (isTestMode()) return;
     this.watch().catch(this.logger.error);
   }
@@ -176,7 +184,7 @@ export default class NetworkService {
       new MarketCoreHandler(this, this.notifSrv, prov, network, this.contracts[network]),
       new MediatorManagerHandler(this, this.notifSrv, prov, network, this.contracts[network]),
       new DisputeManagerHandler(this, this.notifSrv, prov, network, this.contracts[network]),
-      new CoreHandler(this, this.notifSrv, prov, network, this.contracts[network]),
+      new CoreHandler(this, this.notifSrv, this.metadataSrv, this.exrSrv, prov, network, this.contracts[network]),
       new BadgeManagerHandler(prov, network, this.contracts[network]),
       // new TokenPoolHandler(prov, network, this.contracts[network]),
       new LPPoolHandler(prov, network, this.contracts[network]),

@@ -13,6 +13,7 @@ import MarketPrice from '../../models/market_price';
 import { pow10 } from '../../network/common';
 import * as _ from 'lodash';
 import { NotifierService } from '../../jobs/mailer/NotifierService';
+import { ExchangeRateService } from '../../services/exchange_rate.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -64,7 +65,7 @@ describe('MarketsService', () => {
 
     module = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
-      providers: [MarketService, NetworkService, MetadataService, NotifierService, ConfigService],
+      providers: [MarketService, NetworkService, MetadataService, NotifierService, ConfigService, ExchangeRateService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())

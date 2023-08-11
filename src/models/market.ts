@@ -229,6 +229,13 @@ export default class Market extends BaseModel {
   }
 
   /**
+   * Checks if the market is an instant swap market with NFT base and quote assets
+   */
+  isNFTOnly() {
+    return Market.isNFT(this.baseType) && Market.isNFT(this.quoteType);
+  }
+
+  /**
    * Check if an asset pair type represents an instant market
    * @param baseType The base asset type
    * @param quoteType The quote asset type

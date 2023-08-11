@@ -4,7 +4,7 @@ import { CoreHandler } from './core.handler';
 import { constants } from 'ethers';
 import Liquidity from '../../models/liquidity';
 import Market, { AssetType } from '../../models/market';
-import { powOf, toBN } from '../common';
+import { pow10, powOf, toBN } from '../common';
 import MarketPrice from '../../models/market_price';
 import { NotificationID } from '../../jobs/mailer/NotifierService';
 import Meta, { FeeName, MetaKeys, ProtocolFeeBeneficiary } from '../../models/meta';
@@ -13,6 +13,7 @@ import Dispute from '../../models/dispute';
 import * as moment from 'moment';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 import Offer from '../../models/offers';
+import { toDec } from '../../common/common';
 
 const mockGetOrder = jest.fn();
 const mockGetOffer = jest.fn();
@@ -26,6 +27,21 @@ const CoreContract = jest.fn().mockImplementation(() => {
 const mockNotify = jest.fn();
 const MockNotifierService = jest.fn().mockImplementation(() => {
   return { notify: mockNotify };
+});
+
+const mockTryToUsd = jest.fn();
+const MockMetadataService = jest.fn().mockImplementation(() => {
+  return {
+    tryToUsd: mockTryToUsd,
+  };
+});
+
+// mock exchange rate service and the get method
+const mockGet = jest.fn();
+const MockExchangeRateService = jest.fn().mockImplementation(() => {
+  return {
+    get: mockGet,
+  };
 });
 
 const mockComputeSwapFees = jest.fn();
@@ -64,7 +80,15 @@ describe('CoreHandler', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    handler = new CoreHandler(new MockNetworkService(), new MockNotifierService(), null, net, contracts);
+    handler = new CoreHandler(
+      new MockNetworkService(),
+      new MockNotifierService(),
+      new MockMetadataService(),
+      new MockExchangeRateService(),
+      null,
+      net,
+      contracts,
+    );
     handler.logger = new NoopLogger() as any;
     handler.computeSwapFees = mockComputeSwapFees;
 
@@ -604,6 +628,97 @@ describe('CoreHandler', () => {
     });
   });
 
+  describe('.computeSwapUsdValue', () => {
+    describe('instant market', () => {
+      it('should calculate correctly for NFT/*', async () => {
+        const market = await Market.create({
+          network: net,
+          baseType: AssetType.ERC721,
+          quoteType: AssetType.ERC20,
+          baseAddress: baseAddress,
+          quoteAddress: quoteAddress,
+        });
+        mockTryToUsd.mockResolvedValue(5.6);
+        const amount = pow10(18).mul(10);
+        const price = pow10(18).mul(2);
+        const value = await handler.computeSwapUsdValue(market, amount, price);
+        expect(mockTryToUsd).toHaveBeenCalledWith(net, price.toString(), quoteAddress);
+        expect(value).toEqual('5.6');
+      });
+
+      it('should calculate correctly for ERC20/*', async () => {
+        const market = await Market.create({
+          network: net,
+          baseType: AssetType.ERC20,
+          quoteType: AssetType.ERC20,
+          baseAddress: baseAddress,
+          quoteAddress: quoteAddress,
+        });
+        mockTryToUsd.mockResolvedValue(5.6);
+        const amount = pow10(18).mul(10);
+        const price = pow10(18).mul(2);
+        const value = await handler.computeSwapUsdValue(market, amount, price);
+        expect(mockTryToUsd).toHaveBeenCalledWith(net, amount.toString(), baseAddress);
+        expect(value).toEqual('5.6');
+      });
+    });
+
+    describe('interactive market', () => {
+      it('should calculate correctly for NFT/SYNTH', async () => {
+        const market = await Market.create({
+          network: net,
+          baseType: AssetType.ERC721,
+          quoteType: AssetType.SYNTH,
+          baseAddress: baseAddress,
+          quoteAddress: quoteAddress,
+          baseDecimals: 18,
+          base: 'BASE',
+        });
+        mockGet.mockResolvedValue(toDec(400));
+        const amount = pow10(18).mul(10);
+        const price = pow10(18).mul(2);
+        const value = await handler.computeSwapUsdValue(market, amount, price);
+        expect(value).toEqual('0.005');
+        expect(mockGet).toHaveBeenCalledWith('BASE');
+      });
+
+      it('should calculate correctly for ERC20/SYNTH', async () => {
+        const market = await Market.create({
+          network: net,
+          baseType: AssetType.ERC20,
+          quoteType: AssetType.SYNTH,
+          baseAddress: baseAddress,
+          quoteAddress: quoteAddress,
+          baseDecimals: 18,
+        });
+        mockTryToUsd.mockResolvedValue(5.6);
+        const amount = pow10(18).mul(10);
+        const price = pow10(18).mul(2);
+        const value = await handler.computeSwapUsdValue(market, amount, price);
+        expect(mockTryToUsd).toHaveBeenCalledWith(net, amount.toString(), baseAddress);
+        expect(value).toEqual('5.6');
+      });
+
+      it('should calculate correctly for SYNTH/*', async () => {
+        const market = await Market.create({
+          network: net,
+          baseType: AssetType.SYNTH,
+          quoteType: AssetType.ERC20,
+          baseAddress: baseAddress,
+          quoteAddress: quoteAddress,
+          baseDecimals: 18,
+          base: 'BASE',
+        });
+        mockGet.mockResolvedValue(toDec(400));
+        const amount = pow10(18).mul(10);
+        const price = pow10(18).mul(2);
+        const value = await handler.computeSwapUsdValue(market, amount, price);
+        expect(value).toEqual('0.025');
+        expect(mockGet).toHaveBeenCalledWith('BASE');
+      });
+    });
+  });
+
   describe('.onSwapOrder', () => {
     const lid = toBN(0);
     const liqAmt = powOf(200, 18);
@@ -762,8 +877,16 @@ describe('CoreHandler', () => {
     });
 
     describe('when orderId is unset (instant swap)', () => {
+      beforeEach(async () => {
+        await Market.updateById(market.id, {
+          baseType: AssetType.ERC20,
+          quoteType: AssetType.ERC20,
+        });
+      });
+
       it('should create instant swap correctly and send notification to liquidity provider', async () => {
         mockComputeSwapFees.mockResolvedValue({ protocolFee: 2, marketCreatorFee: 3 });
+        mockTryToUsd.mockResolvedValue(0.5);
 
         const numTypeInfo = [toBN(0), lid, toBN('1000000000000000000'), toBN(1), toBN(1), toBN(1)];
         const [, , amount, price, offerId, operator] = numTypeInfo;
@@ -791,6 +914,7 @@ describe('CoreHandler', () => {
         expect(swap.quoteAddress).toEqual(market.quoteAddress);
         expect(swap.orderId).toEqual(null);
         expect(swap.amount).toEqual(amount.toString());
+        expect(swap.valueUsd).toEqual('0.5');
         expect(swap.price).toEqual(price.toString());
         expect(swap.instant).toBeTruthy();
         expect(swap.paid).toBeTruthy();
@@ -824,8 +948,10 @@ describe('CoreHandler', () => {
 
       describe('when quote is NFT', () => {
         it('should set swap amount to liquidity amount', async () => {
-          await Market.updateById(market.id, { quoteType: AssetType.ERC721 });
+          mockTryToUsd.mockResolvedValue(0.5);
           mockComputeSwapFees.mockResolvedValue({ protocolFee: 2, marketCreatorFee: 3 });
+
+          await Market.updateById(market.id, { quoteType: AssetType.ERC721 });
           const numTypeInfo = [toBN(0), lid, toBN('1000000000000000000'), toBN(1), toBN(1), toBN(1)];
           await handler.onSwap(
             marketAddress,
@@ -846,8 +972,10 @@ describe('CoreHandler', () => {
 
       describe('when base is NFT', () => {
         it('should set swap amount to liquidity amount', async () => {
-          await Market.updateById(market.id, { baseType: AssetType.ERC721 });
+          mockTryToUsd.mockResolvedValue(0.5);
           mockComputeSwapFees.mockResolvedValue({ protocolFee: 2, marketCreatorFee: 3 });
+
+          await Market.updateById(market.id, { baseType: AssetType.ERC721 });
           const numTypeInfo = [toBN(0), lid, toBN('1000000000000000000'), toBN(1), toBN(1), toBN(1)];
           await handler.onSwap(
             marketAddress,
@@ -874,6 +1002,9 @@ describe('CoreHandler', () => {
       let now: moment.Moment;
 
       beforeEach(async () => {
+        mockGet.mockResolvedValue(toDec(0));
+        mockTryToUsd.mockResolvedValue(6.5);
+
         now = moment();
         swap = await Swap.create({
           network: net,
@@ -930,6 +1061,7 @@ describe('CoreHandler', () => {
         expect(swap.finalizer).toEqual(provider);
         expect(swap.byDispute).toBeTruthy();
         expect(swap.finalizedAt).toBeDefined();
+        expect(swap.valueUsd).toEqual('6.5');
 
         const liqUpd = await Liquidity.getLiquidity(net, marketAddress, provider, lid.toNumber());
         expect(liqUpd.openOrders).toEqual(1);
@@ -1244,22 +1376,22 @@ describe('CoreHandler', () => {
         handler.onNewOffer(marketAddress, provider, lid, taker, offerId, amount, price, ids, deadline, {} as any),
       ).resolves.toBeUndefined();
 
-      // const offer = await Offer.getByOfferId(offerId.sub(1).toNumber());
-      // expect(offer.network).toEqual(net);
-      // expect(offer.marketAddress).toEqual(marketAddress);
-      // expect(offer.provider).toEqual(provider);
-      // expect(offer.lid).toEqual(lid.toNumber());
-      // expect(offer.creator).toEqual(taker);
-      // expect(offer.amount).toEqual(amount.toString());
-      // expect(offer.price).toEqual(price.toString());
-      // expect(offer.ids).toEqual(ids.map((id) => id.toNumber()));
-      // expect(moment(offer.deadline).toISOString()).toEqual(moment.unix(deadline.toNumber()).toISOString());
-      //
-      // expect(mockNotify).toHaveBeenCalledWith(NotificationID.NewOffer, net, provider, {
-      //   offer,
-      //   market,
-      //   liq,
-      // });
+      const offer = await Offer.getByOfferId(offerId.sub(1).toNumber());
+      expect(offer.network).toEqual(net);
+      expect(offer.marketAddress).toEqual(marketAddress);
+      expect(offer.provider).toEqual(provider);
+      expect(offer.lid).toEqual(lid.toNumber());
+      expect(offer.creator).toEqual(taker);
+      expect(offer.amount).toEqual(amount.toString());
+      expect(offer.price).toEqual(price.toString());
+      expect(offer.ids).toEqual(ids.map((id) => id.toNumber()));
+      expect(moment(offer.deadline).toISOString()).toEqual(moment.unix(deadline.toNumber()).toISOString());
+
+      expect(mockNotify).toHaveBeenCalledWith(NotificationID.NewOffer, net, provider, {
+        offer,
+        market,
+        liq,
+      });
     });
   });
 

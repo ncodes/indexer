@@ -10,12 +10,14 @@ import Meta, { FeeName, ProtocolFeeBeneficiary } from '../../models/meta';
 import NetworkService from '../network.service';
 import Market from '../../models/market';
 import * as moment from 'moment';
-import { toBN } from '../common';
+import { pow10D, toBN } from '../common';
 import Dispute from '../../models/dispute';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 import * as _ from 'lodash';
 import Offer from '../../models/offers';
-import { includesStr, isEqualStr } from '../../common/common';
+import { includesStr, isEqualStr, toDec } from '../../common/common';
+import { MetadataService } from '../../services/metadata/metadata.service';
+import { ExchangeRateService } from '../../services/exchange_rate.service';
 
 export class CoreHandler extends Handler {
   logger = new Logger(CoreHandler.name);
@@ -23,6 +25,8 @@ export class CoreHandler extends Handler {
   constructor(
     private netSrv: NetworkService,
     private notifSrv: NotifierService,
+    private metadataSrv: MetadataService,
+    private exrSrv: ExchangeRateService,
     private provider: providers.JsonRpcProvider,
     public network: string,
     private contracts: JointContracts,
@@ -394,6 +398,42 @@ export class CoreHandler extends Handler {
   }
 
   /**
+   * Compute the USD value of a swap
+   * @param market The market object
+   * @param amount The swap amount
+   * @param price The swap price
+   */
+  async computeSwapUsdValue(market: Market, amount: BigNumber, price: BigNumber) {
+    const { baseType, base, quoteAddress, baseAddress, baseDecimals } = market;
+
+    if (market.isInstant()) {
+      const value = Market.isNFT(baseType)
+        ? await this.metadataSrv.tryToUsd(this.network, price.toString(), quoteAddress)
+        : await this.metadataSrv.tryToUsd(this.network, amount.toString(), baseAddress);
+      return value.toString();
+    }
+
+    // ex: NFT/SYNTH
+    if (Market.isNFT(baseType)) {
+      const rate = await this.exrSrv.get(base);
+      const toUsdRate = rate ? toDec(1).div(rate) : toDec(0);
+      const priceHD = toDec(price.toString()).div(pow10D(baseDecimals));
+      return priceHD.mul(toUsdRate).toFixed();
+    }
+
+    // ex: ERC20/SYNTH
+    if (Market.isERC20(baseType)) {
+      return (await this.metadataSrv.tryToUsd(this.network, amount.toString(), baseAddress)).toString();
+    }
+
+    // SYNTH/*
+    const rate = await this.exrSrv.get(base);
+    const toUsdRate = rate ? toDec(1).div(rate) : toDec(0);
+    const priceHD = toDec(amount.toString()).div(pow10D(baseDecimals));
+    return priceHD.mul(toUsdRate).toFixed();
+  }
+
+  /**
    * Handle new swap order
    * @param marketAddress The market ID
    * @param provider The liquidity provider's address
@@ -490,7 +530,7 @@ export class CoreHandler extends Handler {
    * @param marketAddress The market ID
    * @param provider The liquidity provider's address
    * @param swapper The order creator (taker)
-   * @param recipient An alternative recipient of the swapper's base asset
+   * @param _recipient An alternative recipient of the swapper's base asset
    * @param releaser The releaser of the order
    * @param numTypeInfo List of integer parameters
    * @param byDispute Indicates whether the order was released by dispute
@@ -503,7 +543,7 @@ export class CoreHandler extends Handler {
     marketAddress: string,
     provider: string,
     swapper: string,
-    recipient: string,
+    _recipient: string,
     releaser: string,
     numTypeInfo: BigNumber[],
     byDispute: boolean,
@@ -522,6 +562,10 @@ export class CoreHandler extends Handler {
       // If base or quote is NFT, use the whole amount of the liquidity
       amount = Market.isNFT(market.baseType) || Market.isNFT(market.quoteType) ? toBN(liq.amount) : amount;
 
+      // Compute USD value of the swap
+      const valueUsd = await this.computeSwapUsdValue(market, amount, price);
+
+      // Get USD equivalent of the swap value
       let swap: Partial<Swap> = {
         network: this.network,
         lid: lid.toNumber(),
@@ -534,6 +578,7 @@ export class CoreHandler extends Handler {
         quoteAddress: market.quoteAddress,
         orderId: !orderId.isZero() ? orderId.toNumber() - 1 : undefined,
         amount: amount.toString(),
+        valueUsd,
         price: price.toString(),
         instant: orderId.isZero(),
         paid: orderId.isZero(),
@@ -581,11 +626,17 @@ export class CoreHandler extends Handler {
     } else {
       const now = moment();
       let swap = await Swap.get(this.network, orderId.toNumber() - 1, undefined, txn);
+      const { marketAddress, provider } = swap;
+      let market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
+
+      // Compute USD value of the swap
+      const valueUsd = await this.computeSwapUsdValue(market, toBN(swap.amount), price);
 
       // Update the swap
       swap = await Swap.updateById(
         swap.id,
         {
+          valueUsd,
           released: true,
           byDispute,
           finalizer: releaser,
@@ -595,7 +646,6 @@ export class CoreHandler extends Handler {
       );
 
       // Mark the last dispute as `orderReleased` if there is any
-      const { marketAddress, provider } = swap;
       const dispute = await Dispute.getRecentOfOrder(this.network, marketAddress, orderId.toNumber() - 1, txn);
       if (dispute && !dispute.orderReleased) {
         await Dispute.updateById(dispute.id, { orderReleased: true }, txn);
@@ -625,7 +675,6 @@ export class CoreHandler extends Handler {
       );
 
       // Update market
-      let market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
       newCompletionRate = await Swap.getCompletionRate(this.network, marketAddress, undefined, txn);
       market = await Market.updateById(
         market.id,

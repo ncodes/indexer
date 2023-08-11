@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import NetworkService from '../../network/network.service';
 import { isValidNetwork, isZero, pow10D } from '../../network/common';
@@ -20,7 +20,11 @@ export class MetadataService {
    * @param cfg The config service
    * @param netSrv The network service
    */
-  constructor(private cfg: ConfigService, private netSrv: NetworkService) {
+  constructor(
+    private cfg: ConfigService,
+    @Inject(forwardRef(() => NetworkService))
+    private netSrv: NetworkService,
+  ) {
     const metaSource = cfg.get('app.tokenMetadataSource');
     if (metaSource === 'coingecko') {
       this.source = new CoinGeckoMetadata();

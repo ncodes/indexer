@@ -8,6 +8,7 @@ import OnEvidencePeriodEnd from './dispute_notifier/on_evidence_period_end/on_ev
 import OnCommitPeriodEnd from './dispute_notifier/on_commit_period_end/on_commit_period_end';
 import OnRevealPeriodEnd from './dispute_notifier/on_reveal_period_end/on_reveal_period_end';
 import { ConfigService } from '../config/config.service';
+import ExchangeRateFetcher from './exchange_rate_cacher/exchange_rate_fetcher';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { ConfigService } from '../config/config.service';
   ],
   providers: [
     ConfigService,
-    // ExchangeRateCacher,
+    ExchangeRateFetcher,
     OnEvidencePeriodEnd,
     OnCommitPeriodEnd,
     OnEvidencePeriodEnd,

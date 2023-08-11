@@ -4,7 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { DBService } from '../../db/DBService';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
-import ExchangeRateCacher from './exchange_rate_cacher';
+import ExchangeRateFetcher from './exchange_rate_fetcher';
 
 const mockUpdateCache = jest.fn();
 const ExchangeRateServiceMock = jest.fn().mockImplementation(() => {
@@ -14,7 +14,7 @@ const ExchangeRateServiceMock = jest.fn().mockImplementation(() => {
 describe('ExchangeRateCacher', () => {
   let app: INestApplication;
   const db = DBService.getForTest();
-  let job: ExchangeRateCacher;
+  let job: ExchangeRateFetcher;
 
   afterEach(async () => {
     await db.truncateTables();
@@ -31,7 +31,7 @@ describe('ExchangeRateCacher', () => {
     mockUpdateCache.mockReset();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ConfigService, ExchangeRateCacher, ExchangeRateService],
+      providers: [ConfigService, ExchangeRateFetcher, ExchangeRateService],
     })
       .overrideProvider(ExchangeRateService)
       .useValue(new ExchangeRateServiceMock())
@@ -39,7 +39,7 @@ describe('ExchangeRateCacher', () => {
 
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());
-    job = app.get<ExchangeRateCacher>(ExchangeRateCacher);
+    job = app.get<ExchangeRateFetcher>(ExchangeRateFetcher);
     await app.init();
   });
 

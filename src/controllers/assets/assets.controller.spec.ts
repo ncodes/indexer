@@ -16,6 +16,7 @@ import NetworkService from '../../network/network.service';
 import { NotifierService } from '../../jobs/mailer/NotifierService';
 import { TokenLists } from '../../common/token_list';
 import AssetRegistry from '../../models/asset_registry';
+import { ExchangeRateService } from '../../services/exchange_rate.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -60,7 +61,7 @@ describe('AssetsController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [AssetsController],
-      providers: [ConfigService, MetadataService, NetworkService, NotifierService],
+      providers: [ConfigService, MetadataService, NetworkService, NotifierService, ExchangeRateService],
     })
       .overrideProvider(NotifierService)
       .useValue(new NotifierServiceMock())

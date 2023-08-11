@@ -18,6 +18,7 @@ import { ConfigService } from '../../config/config.service';
 import { randStr } from '../../common/common';
 import Meta, { MetaKeys } from '../../models/meta';
 import * as moment from 'moment';
+import BadgeGrant from '../../models/badge_grant';
 
 const mockCfgGet = jest.fn();
 const mockGetContractParam = jest.fn();
@@ -59,7 +60,7 @@ describe('LiquidityController', () => {
     mockGetContractParam.mockReset();
     mockGetMarketCore.mockReset();
 
-    cfgObj = { 'auth.jwtSecret': 'secret_secret' };
+    cfgObj = { 'auth.jwtSecret': 'secret_secret', 'app.badges.kyc': 'kyc' };
     mockCfgGet.mockReset().mockImplementation((args) => {
       return cfgObj[args];
     });
@@ -443,6 +444,114 @@ describe('LiquidityController', () => {
           .expect(200)
           .expect((res) => {
             expect(res.body.data.count).toEqual('1');
+          });
+      });
+    });
+
+    describe('kycLp is set', () => {
+      it('should return 200', async () => {
+        await BadgeGrant.create({ grantee: '0xProvider', badge: 'kyc', network: net });
+        const liq = await Liquidity.create({
+          network: net,
+          provider: '0xProvider',
+          amount: '10',
+          marketAddress: '0x123',
+        });
+
+        const mockExtendLiquidity = jest
+          .spyOn(app.get(LiquidityService), 'extendLiquidity')
+          .mockResolvedValue(undefined);
+
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities`)
+          .query({ net, kycLp: true })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(liq.id);
+            expect(mockExtendLiquidity).toHaveBeenCalled();
+          });
+      });
+    });
+
+    describe('kycTaker is set', () => {
+      it('should return 200 ', async () => {
+        const liq = await Liquidity.create({
+          network: net,
+          provider: '0xProvider',
+          amount: '10',
+          marketAddress: '0x123',
+          requiredSwapBadges: ['kyc'],
+        });
+        await Liquidity.create({
+          network: net,
+          provider: '0xProvider2',
+          amount: '10',
+          marketAddress: '0x123',
+        });
+
+        const mockExtendLiquidity = jest
+          .spyOn(app.get(LiquidityService), 'extendLiquidity')
+          .mockResolvedValue(undefined);
+
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities`)
+          .query({ net, kycTaker: true })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(liq.id);
+            expect(mockExtendLiquidity).toHaveBeenCalled();
+          });
+      });
+    });
+
+    describe('swapBadges is set', () => {
+      it('should return 200 ', async () => {
+        const liq = await Liquidity.create({
+          network: net,
+          provider: '0xProvider',
+          amount: '10',
+          marketAddress: '0x123',
+          requiredSwapBadges: ['kyc'],
+          updatedAt: moment().subtract(1, 'day').toISOString(),
+        });
+        const liq2 = await Liquidity.create({
+          network: net,
+          provider: '0xProvider2',
+          amount: '10',
+          marketAddress: '0x123',
+          requiredSwapBadges: ['kyc/usa'],
+          updatedAt: moment().subtract(2, 'day').toISOString(),
+        });
+
+        const mockExtendLiquidity = jest
+          .spyOn(app.get(LiquidityService), 'extendLiquidity')
+          .mockResolvedValue(undefined);
+
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities`)
+          .query({ net, swapBadges: ['kyc'] })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(liq.id);
+            expect(mockExtendLiquidity).toHaveBeenCalled();
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities`)
+          .query({ net, swapBadges: ['kyc/'] })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(2);
+            expect(res.body.data[0].id).toEqual(liq.id);
+            expect(res.body.data[1].id).toEqual(liq2.id);
+            expect(mockExtendLiquidity).toHaveBeenCalled();
           });
       });
     });

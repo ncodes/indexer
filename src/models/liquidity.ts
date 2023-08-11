@@ -226,15 +226,17 @@ export default class Liquidity extends BaseModel {
   /**
    * getLiquidities finds liquidities
    * @param network The network name
-   * @param marketAddress????? The market ID (optional)
-   * @param provider????? Filter by provider address (optional)
-   * @param maxOpenDisputes????? Allow only records with lower open disputes
-   * @param amount Filter by swap amount within min. and max. swap amount
-   * @param price?
-   * @param limit????? The number of records to return (optional).
-   * @param offset????? The query offset (optional)
+   * @param marketAddress? The market ID (optional)
+   * @param provider? Filter by provider address (optional)
+   * @param maxOpenDisputes? Allow only records with lower open disputes
+   * @param amount Filter by swap amount
+   * @param price? Filter by price
+   * @param reqLpBadges? Filter by badges liquidity providers must have been granted
+   * @param reqSwapBadges
+   * @param limit? The number of records to return (optional).
+   * @param offset? The query offset (optional)
    * @param select Select specific fields (optional)
-   * @param txn????? Optional transaction object
+   * @param txn? Optional transaction object
    */
   static search(
     network: string,
@@ -243,41 +245,76 @@ export default class Liquidity extends BaseModel {
     maxOpenDisputes?: number,
     amount: string = undefined,
     price?: string,
+    reqLpBadges?: string[],
+    reqSwapBadges?: string[],
     limit?: number,
     offset?: number,
     select = [],
     txn?: Objection.Transaction,
   ) {
     select = this.makeSelectList(select);
+    let q = this.query(txn);
 
-    let q = this.query(txn)
+    if (!_.isEmpty(reqLpBadges)) {
+      q = q.from((sub) => {
+        return sub
+          .from('liquidities')
+          .select('liquidities.*')
+          .innerJoin('badge_grants', 'badge_grants.grantee', 'ILIKE', 'liquidities.provider')
+          .where('badge_grants.network', network)
+          .where((q) => {
+            return q
+              .whereRaw(`badge_grants.badge ILIKE ANY (?)`, [reqLpBadges])
+              .orWhereRaw(`badge_grants.path ILIKE ANY (?)`, [reqLpBadges]);
+          })
+          .where((q) => {
+            return q.whereNull('badge_grants.expireAt').orWhere('badge_grants.expireAt', '>', moment().toISOString());
+          })
+          .as('s');
+      });
+    }
+
+    q = q
+      .alias('s')
       .select(...select, raw('count(*) over() as' + ' "$queryCount"'))
       .whereNotDeleted()
-      .where({ network, paused: false })
-      .where('amount', '>', '0');
+      .where('s.network', network)
+      .where('s.paused', false)
+      .where('s.amount', '>', '0');
 
     if (marketAddress) {
-      q = q.where('marketAddress', 'ILIKE', marketAddress);
+      q = q.where('s.marketAddress', 'ILIKE', marketAddress);
     }
 
     if (provider) {
-      q = q.where('provider', 'ILIKE', provider);
+      q = q.where('s.provider', 'ILIKE', provider);
     }
 
     if (maxOpenDisputes) {
-      q = q.where('openDisputes', '<', maxOpenDisputes);
+      q = q.where('s.openDisputes', '<', maxOpenDisputes);
     }
 
     if (amount) {
       const operator = amount.startsWith('>') ? '>=' : '<=';
       const amountValue = amount.replace('>', '').replace('<', '');
-      q = q.where('minSwap', operator, amountValue);
+      q = q.where('s.minSwap', operator, amountValue);
     }
 
     if (price) {
       const operator = price.startsWith('>') ? '>=' : '<=';
       const amountValue = price.replace('>', '').replace('<', '');
-      q = q.where('price', operator, amountValue);
+      q = q.where('s.price', operator, amountValue);
+    }
+
+    if (!_.isEmpty(reqSwapBadges)) {
+      q = q.whereRaw(
+        `EXISTS (
+      SELECT 1
+      FROM jsonb_array_elements_text("requiredSwapBadges") badge
+      WHERE badge ILIKE ANY (?)
+      )`,
+        [reqSwapBadges],
+      );
     }
 
     if (offset) {
@@ -289,11 +326,11 @@ export default class Liquidity extends BaseModel {
     }
 
     return q
-      .orderBy('amountSwapped', 'DESC')
-      .orderBy('totalSwaps', 'DESC')
-      .orderBy('completionRate', 'DESC')
-      .orderBy('satisfactoryRate', 'DESC')
-      .orderBy('updatedAt', 'DESC');
+      .orderBy('s.amountSwapped', 'DESC')
+      .orderBy('s.totalSwaps', 'DESC')
+      .orderBy('s.completionRate', 'DESC')
+      .orderBy('s.satisfactoryRate', 'DESC')
+      .orderBy('s.updatedAt', 'DESC');
   }
 
   /**

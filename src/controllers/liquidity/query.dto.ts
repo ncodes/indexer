@@ -29,6 +29,20 @@ export class ListQueryDTO {
   public price?: string;
 
   @Transform(({ value }) => toBoolean(value))
+  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'kycLp') })
+  @IsOptional()
+  public kycLp?: boolean;
+
+  @Transform(({ value }) => toBoolean(value))
+  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'kycTaker') })
+  @IsOptional()
+  public kycTaker?: boolean;
+
+  @Transform(({ value }) => (value as string).split(',').map((v) => v.replaceAll('%', '').trim().replace(/\/$/g, '%')))
+  @IsOptional()
+  swapBadges?: string[];
+
+  @Transform(({ value }) => toBoolean(value))
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'count') })
   @IsOptional()
   public count?: boolean;

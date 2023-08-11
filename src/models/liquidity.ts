@@ -326,10 +326,13 @@ export default class Liquidity extends BaseModel {
     }
 
     return q
-      .orderBy('s.amountSwapped', 'DESC')
-      .orderBy('s.totalSwaps', 'DESC')
-      .orderBy('s.completionRate', 'DESC')
-      .orderBy('s.satisfactoryRate', 'DESC')
+      .orderBy('avgFinalizeDur', 'ASC') // prefer low finalize duration
+      .orderBy('avgPaymentDur', 'ASC') // prefer low payment duration
+      .orderBy('avgReleaseDur', 'ASC') // prefer low release duration
+      .orderBy('s.amountSwapped', 'DESC') // prefer higher volume
+      .orderBy('s.totalSwaps', 'DESC') // prefer higher number of swaps
+      .orderBy('s.completionRate', 'DESC') // prefer higher completion rate
+      .orderBy('s.satisfactoryRate', 'DESC') // prefer higher satisfactory rate
       .orderBy('s.updatedAt', 'DESC');
   }
 

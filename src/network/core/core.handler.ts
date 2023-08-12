@@ -18,6 +18,7 @@ import Offer from '../../models/offers';
 import { includesStr, isEqualStr, toDec } from '../../common/common';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
+import OfferEvent, { OfferEventAction } from '../../models/offer_event';
 
 export class CoreHandler extends Handler {
   logger = new Logger(CoreHandler.name);
@@ -438,7 +439,7 @@ export class CoreHandler extends Handler {
    * @param marketAddress The market ID
    * @param provider The liquidity provider's address
    * @param swapper The order creator (taker)
-   * @param recipient An alternative recipient of the swapper's base asset
+   * @param _recipient An alternative recipient of the swapper's base asset
    * @param numTypeInfo List of integer parameters
    * @param idsFromProvider List of NFT IDs from the LP
    * @param idsFromTaker List of NFT IDs from the swapper
@@ -449,7 +450,7 @@ export class CoreHandler extends Handler {
     marketAddress: string,
     provider: string,
     swapper: string,
-    recipient: string,
+    _recipient: string,
     numTypeInfo: BigNumber[],
     idsFromProvider: BigNumber[],
     idsFromTaker: BigNumber[],
@@ -827,17 +828,17 @@ export class CoreHandler extends Handler {
   /**
    * Fee earned on a token was converted and transferred to the fee pool
    * @param token The token address whose fee was converted and transferred
-   * @param amount The amount that was transferred
-   * @param convAsset The asset the fee was converted to
-   * @param convAmount The amount after conversion
+   * @param _amount The amount that was transferred
+   * @param _convAsset The asset the fee was converted to
+   * @param _convAmount The amount after conversion
    * @param event The event object
    * @param txn The transaction object
    */
   async onTransferredToFeePool(
     token: string,
-    amount: BigNumber,
-    convAsset: string,
-    convAmount: BigNumber,
+    _amount: BigNumber,
+    _convAsset: string,
+    _convAmount: BigNumber,
     event: Event,
     txn?: Transaction,
   ) {
@@ -863,7 +864,7 @@ export class CoreHandler extends Handler {
    * @param fixedSynthSwapFee The new fee for SYNTH/SYNTH swap (in P2P)
    * @param fixedNFTSwapFee The new fee for NFT/NFT swap (in P2P)
    * @param instantNFTSwapFeeBp The new fee for NFT/ERC20 swap in basis point
-   * @param event The event object
+   * @param _event The event object
    * @param txn The transaction object
    */
   async onProtocolFeeUpdated(
@@ -873,7 +874,7 @@ export class CoreHandler extends Handler {
     fixedSynthSwapFee: BigNumber,
     fixedNFTSwapFee: BigNumber,
     instantNFTSwapFeeBp: BigNumber,
-    event: Event,
+    _event: Event,
     txn?: Transaction,
   ) {
     await Meta.update(Meta.makeNetKey(this.network, FeeName.InstantSwapFeeBp), instantSwapFeeBp.toString(), txn);
@@ -897,7 +898,7 @@ export class CoreHandler extends Handler {
    * @param wantOrIds A list of OR IDs wanted
    * @param wantAndIds A list of AND IDs wanted
    * @param timeToPay The number of seconds within which payment must be received
-   * @param event The event object
+   * @param _event The event object
    * @param txn The transaction object
    */
   async onUpdatedNonFungibleLiquidity(
@@ -912,7 +913,7 @@ export class CoreHandler extends Handler {
     wantOrIds: BigNumber[],
     wantAndIds: BigNumber[],
     timeToPay: BigNumber,
-    event: Event,
+    _event: Event,
     txn?: Transaction,
   ) {
     const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
@@ -1010,7 +1011,7 @@ export class CoreHandler extends Handler {
    * @param minSwap The minimum amount of swap
    * @param maxSwap The maximum amount of swap
    * @param timeToPay The number of seconds within which payment must be received
-   * @param event The event object
+   * @param _event The event object
    * @param txn The transaction object
    */
   async onUpdatedFungibleLiquidity(
@@ -1027,7 +1028,7 @@ export class CoreHandler extends Handler {
     minSwap: BigNumber,
     maxSwap: BigNumber,
     timeToPay: BigNumber,
-    event: Event,
+    _event: Event,
     txn?: Transaction,
   ) {
     const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
@@ -1118,19 +1119,19 @@ export class CoreHandler extends Handler {
    * A market manager updated a liquidity's price
    * @param marketAddress The market ID
    * @param provider The liquidity provider's address
-   * @param manager The liquidity manager's address
+   * @param _manager The liquidity manager's address
    * @param lid The liquidity ID
    * @param price The updated price
-   * @param event The event object
+   * @param _event The event object
    * @param txn The transaction object
    */
   async onUpdatedPrice(
     marketAddress: string,
     provider: string,
-    manager: string,
+    _manager: string,
     lid: BigNumber,
     price: BigNumber,
-    event: Event,
+    _event: Event,
     txn?: Transaction,
   ) {
     const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
@@ -1164,7 +1165,7 @@ export class CoreHandler extends Handler {
    * @param provider The liquidity provider's address
    * @param lid The liquidity ID
    * @param paused Indicates whether the liquidity has been paused or un-paused
-   * @param event The event object
+   * @param _event The event object
    * @param txn The transaction object
    */
   async onTogglePause(
@@ -1172,7 +1173,7 @@ export class CoreHandler extends Handler {
     provider: string,
     lid: BigNumber,
     paused: boolean,
-    event: Event,
+    _event: Event,
     txn?: Transaction,
   ) {
     const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
@@ -1186,7 +1187,7 @@ export class CoreHandler extends Handler {
    * @param provider The liquidity provider's address
    * @param manager The new liquidity manager's address
    * @param oldManager The old liquidity manager's address
-   * @param event The event object
+   * @param _event The event object
    * @param txn The transaction object
    */
   async onUpdatedLiquidityManager(
@@ -1194,7 +1195,7 @@ export class CoreHandler extends Handler {
     provider: string,
     manager: string,
     oldManager: string,
-    event: Event,
+    _event: Event,
     txn?: Transaction,
   ) {
     if (isEqualStr(manager, oldManager)) return;
@@ -1217,14 +1218,14 @@ export class CoreHandler extends Handler {
    * @param inventor The inventor's share of the protocol fee (in basis points)
    * @param shared The community's share of the protocol fee (in basis points)
    * @param operator The operator's share of the protocol fee (in basis points)
-   * @param event The event object
+   * @param _event The event object
    * @param txn The transaction object
    */
   async onProtocolFeeSplitUpdated(
     inventor: BigNumber,
     shared: BigNumber,
     operator: BigNumber,
-    event: Event,
+    _event: Event,
     txn?: Transaction,
   ) {
     await Meta.update(Meta.makeNetKey(this.network, ProtocolFeeBeneficiary.Inventor), inventor.toString(), txn);
@@ -1253,7 +1254,7 @@ export class CoreHandler extends Handler {
    * @param price The offer price
    * @param ids The offered NFT IDs
    * @param deadline The offer deadline
-   * @param event The event object
+   * @param _event The event object
    * @param txn The transaction object
    */
   async onNewOffer(
@@ -1266,7 +1267,7 @@ export class CoreHandler extends Handler {
     price: BigNumber,
     ids: BigNumber[],
     deadline: BigNumber,
-    event: Event,
+    _event: Event,
     txn?: Transaction,
   ) {
     // Save the offer
@@ -1282,6 +1283,19 @@ export class CoreHandler extends Handler {
         price: price.toString(),
         ids: ids.map((id) => id.toNumber()),
         deadline: moment.unix(deadline.toNumber()).toISOString(),
+      },
+      txn,
+    );
+
+    await OfferEvent.create(
+      {
+        network: this.network,
+        offerId: offer.offerId,
+        creator: offerer,
+        amount: offer.amount,
+        price: offer.price,
+        ids: offer.ids,
+        action: OfferEventAction.Create,
       },
       txn,
     );
@@ -1305,7 +1319,7 @@ export class CoreHandler extends Handler {
    * @param price The updated price
    * @param ids The updated offered NFT IDs
    * @param deadline The updated deadline
-   * @param event The event object
+   * @param _event The event object
    * @param txn The transaction object
    */
   async onOfferUpdated(
@@ -1315,7 +1329,7 @@ export class CoreHandler extends Handler {
     price: BigNumber,
     ids: BigNumber[],
     deadline: BigNumber,
-    event: Event,
+    _event: Event,
     txn?: Transaction,
   ) {
     const offer = await Offer.updateByOfferId(
@@ -1326,6 +1340,19 @@ export class CoreHandler extends Handler {
         ids: ids.map((id) => id.toNumber()),
         accepted: false,
         deadline: moment.unix(deadline.toNumber()).toISOString(),
+      },
+      txn,
+    );
+
+    await OfferEvent.create(
+      {
+        network: this.network,
+        offerId: offer.offerId,
+        creator: offerer,
+        amount: offer.amount,
+        price: offer.price,
+        ids: offer.ids,
+        action: OfferEventAction.Update,
       },
       txn,
     );
@@ -1352,13 +1379,23 @@ export class CoreHandler extends Handler {
    * @param txn The transaction object
    */
   async onOfferAccepted(offerId: BigNumber, acceptor: string, execAt: number, event: Event, txn?: Transaction) {
-    let offer = await Offer.getByOfferId(offerId.toNumber(), txn);
+    let offer = await Offer.getByNetworkAndOfferId(this.network, offerId.toNumber(), undefined, txn);
     if (!offer) throw new Error('Offer not found');
 
     // Update the offer
     offer = await Offer.updateByOfferId(
       offerId.toNumber(),
       { accepted: true, execAt: moment.unix(execAt).toISOString() },
+      txn,
+    );
+
+    await OfferEvent.create(
+      {
+        network: this.network,
+        offerId: offer.offerId,
+        creator: acceptor,
+        action: OfferEventAction.Accept,
+      },
       txn,
     );
 
@@ -1378,11 +1415,11 @@ export class CoreHandler extends Handler {
    * Offer was unaccepted
    * @param offerId The offer ID
    * @param unacceptor The offer unacceptor's address
-   * @param event The event object
+   * @param _event The event object
    * @param txn The transaction object
    */
-  async onOfferUnaccepted(offerId: BigNumber, unacceptor: string, event: Event, txn?: Transaction) {
-    let offer = await Offer.getByOfferId(offerId.toNumber(), txn);
+  async onOfferUnaccepted(offerId: BigNumber, unacceptor: string, _event: Event, txn?: Transaction) {
+    let offer = await Offer.getByNetworkAndOfferId(this.network, offerId.toNumber(), undefined, txn);
     if (!offer) throw new Error('Offer not found');
 
     // Update the offer
@@ -1391,6 +1428,16 @@ export class CoreHandler extends Handler {
     const { marketAddress, provider, lid } = offer;
     const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
     const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, txn);
+
+    await OfferEvent.create(
+      {
+        network: this.network,
+        offerId: offer.offerId,
+        creator: unacceptor,
+        action: OfferEventAction.Unaccept,
+      },
+      txn,
+    );
 
     // Send notification
     await this.notifSrv.notify(NotificationID.OfferUnaccepted, this.network, offer.creator, {
@@ -1404,15 +1451,25 @@ export class CoreHandler extends Handler {
    * Offer was cancelled
    * @param offerId The offer ID
    * @param canceller The offer canceller's address
-   * @param event The event object
+   * @param _event The event object
    * @param txn The transaction object
    */
-  async onOfferCancelled(offerId: BigNumber, canceller: string, event: Event, txn?: Transaction) {
-    let offer = await Offer.getByOfferId(offerId.toNumber(), txn);
+  async onOfferCancelled(offerId: BigNumber, canceller: string, _event: Event, txn?: Transaction) {
+    let offer = await Offer.getByNetworkAndOfferId(this.network, offerId.toNumber(), undefined, txn);
     if (!offer) throw new Error('Offer not found');
 
     // Update the offer
     offer = await Offer.updateByOfferId(offerId.toNumber(), { cancelled: true }, txn);
+
+    await OfferEvent.create(
+      {
+        network: this.network,
+        offerId: offer.offerId,
+        creator: canceller,
+        action: OfferEventAction.Cancel,
+      },
+      txn,
+    );
 
     const { marketAddress, provider, lid } = offer;
     const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
@@ -1430,15 +1487,25 @@ export class CoreHandler extends Handler {
    * Offer was unaccepted
    * @param offerId The offer ID
    * @param executor The offer executor's address
-   * @param event The event object
+   * @param _event The event object
    * @param txn The transaction object
    */
-  async onOfferExecuted(offerId: BigNumber, executor: string, event: Event, txn?: Transaction) {
-    let offer = await Offer.getByOfferId(offerId.toNumber(), txn);
+  async onOfferExecuted(offerId: BigNumber, executor: string, _event: Event, txn?: Transaction) {
+    let offer = await Offer.getByNetworkAndOfferId(this.network, offerId.toNumber(), undefined, txn);
     if (!offer) throw new Error('Offer not found');
 
     // Update the offer
     offer = await Offer.updateByOfferId(offerId.toNumber(), { executed: true }, txn);
+
+    await OfferEvent.create(
+      {
+        network: this.network,
+        offerId: offer.offerId,
+        creator: executor,
+        action: OfferEventAction.Execute,
+      },
+      txn,
+    );
 
     const { marketAddress, provider, lid } = offer;
     const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
@@ -1458,7 +1525,7 @@ export class CoreHandler extends Handler {
    * @param provider The liquidity provider's address
    * @param lid The liquidity ID
    * @param badges The updated badges
-   * @param event The event object
+   * @param _event The event object
    * @param txn The transaction object
    */
   async onUpdatedLiquiditySwapBadges(
@@ -1466,7 +1533,7 @@ export class CoreHandler extends Handler {
     provider: string,
     lid: BigNumber,
     badges: [string, string][],
-    event: Event,
+    _event: Event,
     txn?: Transaction,
   ) {
     await Liquidity.update(

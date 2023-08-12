@@ -14,6 +14,7 @@ import * as moment from 'moment';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 import Offer from '../../models/offers';
 import { toDec } from '../../common/common';
+import OfferEvent, { OfferEventAction } from '../../models/offer_event';
 
 const mockGetOrder = jest.fn();
 const mockGetOffer = jest.fn();
@@ -1387,6 +1388,15 @@ describe('CoreHandler', () => {
       expect(offer.ids).toEqual(ids.map((id) => id.toNumber()));
       expect(moment(offer.deadline).toISOString()).toEqual(moment.unix(deadline.toNumber()).toISOString());
 
+      const offerEvents = await OfferEvent.getByOfferId(offer.offerId);
+      expect(offerEvents).toHaveLength(1);
+      expect(offerEvents[0].network).toEqual(offer.network);
+      expect(offerEvents[0].creator).toEqual(offer.creator);
+      expect(offerEvents[0].action).toEqual(OfferEventAction.Create);
+      expect(offerEvents[0].amount).toEqual(offer.amount.toString());
+      expect(offerEvents[0].price).toEqual(offer.price.toString());
+      expect(offerEvents[0].ids).toEqual(offer.ids);
+
       expect(mockNotify).toHaveBeenCalledWith(NotificationID.NewOffer, net, provider, {
         offer,
         market,
@@ -1415,11 +1425,12 @@ describe('CoreHandler', () => {
         offerId: 1,
         lid: liq.lid,
         provider,
+        creator: taker,
       });
 
       const deadline = moment().add(1, 'day').unix();
       await expect(
-        handler.onOfferUpdated(toBN(1), userAddr, toBN(2), toBN(3), [toBN(4)], toBN(deadline), {} as any),
+        handler.onOfferUpdated(toBN(1), taker, toBN(2), toBN(3), [toBN(4)], toBN(deadline), {} as any),
       ).resolves.toBeUndefined();
 
       offer = await Offer.getByOfferId(offer.offerId);
@@ -1428,6 +1439,15 @@ describe('CoreHandler', () => {
       expect(offer.price).toEqual('3');
       expect(offer.ids).toEqual([4]);
       expect(moment(offer.deadline).toISOString()).toEqual(moment.unix(deadline).toISOString());
+
+      const offerEvents = await OfferEvent.getByOfferId(offer.offerId);
+      expect(offerEvents).toHaveLength(1);
+      expect(offerEvents[0].network).toEqual(offer.network);
+      expect(offerEvents[0].creator).toEqual(offer.creator);
+      expect(offerEvents[0].action).toEqual(OfferEventAction.Update);
+      expect(offerEvents[0].amount).toEqual(offer.amount.toString());
+      expect(offerEvents[0].price).toEqual(offer.price.toString());
+      expect(offerEvents[0].ids).toEqual(offer.ids);
 
       expect(mockNotify).toHaveBeenCalledWith(NotificationID.OfferUpdated, net, provider, {
         updated: true,
@@ -1469,6 +1489,12 @@ describe('CoreHandler', () => {
       expect(offer.accepted).toBeTruthy();
       expect(moment(offer.execAt).toISOString()).toEqual(moment.unix(execAt).toISOString());
 
+      const offerEvents = await OfferEvent.getByOfferId(offer.offerId);
+      expect(offerEvents).toHaveLength(1);
+      expect(offerEvents[0].network).toEqual(offer.network);
+      expect(offerEvents[0].creator).toEqual(provider);
+      expect(offerEvents[0].action).toEqual(OfferEventAction.Accept);
+
       expect(mockNotify).toHaveBeenCalledWith(NotificationID.OfferAccepted, net, userAddr, {
         offer,
         liq,
@@ -1497,14 +1523,20 @@ describe('CoreHandler', () => {
         offerId: 1,
         lid: liq.lid,
         provider,
-        creator: userAddr,
+        creator: taker,
       });
 
-      await expect(handler.onOfferCancelled(toBN(1), userAddr, {} as any)).resolves.toBeUndefined();
+      await expect(handler.onOfferCancelled(toBN(1), taker, {} as any)).resolves.toBeUndefined();
 
       offer = await Offer.getByOfferId(offer.offerId);
       expect(offer).toBeDefined();
       expect(offer.cancelled).toBeTruthy();
+
+      const offerEvents = await OfferEvent.getByOfferId(offer.offerId);
+      expect(offerEvents).toHaveLength(1);
+      expect(offerEvents[0].network).toEqual(offer.network);
+      expect(offerEvents[0].creator).toEqual(taker);
+      expect(offerEvents[0].action).toEqual(OfferEventAction.Cancel);
 
       expect(mockNotify).toHaveBeenCalledWith(NotificationID.OfferCancelled, net, provider, {
         offer,
@@ -1534,19 +1566,25 @@ describe('CoreHandler', () => {
         offerId: 1,
         provider,
         lid: liq.lid,
-        creator: userAddr,
+        creator: taker,
         accepted: true,
         execAt: moment().toISOString(),
       });
 
-      await expect(handler.onOfferUnaccepted(toBN(1), userAddr, {} as any)).resolves.toBeUndefined();
+      await expect(handler.onOfferUnaccepted(toBN(1), taker, {} as any)).resolves.toBeUndefined();
 
       offer = await Offer.getByOfferId(offer.offerId);
       expect(offer).toBeDefined();
       expect(offer.accepted).toBeFalsy();
       expect(offer.execAt).toBeNull();
 
-      expect(mockNotify).toHaveBeenCalledWith(NotificationID.OfferUnaccepted, net, userAddr, {
+      const offerEvents = await OfferEvent.getByOfferId(offer.offerId);
+      expect(offerEvents).toHaveLength(1);
+      expect(offerEvents[0].network).toEqual(offer.network);
+      expect(offerEvents[0].creator).toEqual(taker);
+      expect(offerEvents[0].action).toEqual(OfferEventAction.Unaccept);
+
+      expect(mockNotify).toHaveBeenCalledWith(NotificationID.OfferUnaccepted, net, taker, {
         offer,
         liq,
         market,
@@ -1574,14 +1612,20 @@ describe('CoreHandler', () => {
         offerId: 1,
         lid: liq.lid,
         provider,
-        creator: userAddr,
+        creator: taker,
       });
 
-      await expect(handler.onOfferExecuted(toBN(1), userAddr, {} as any)).resolves.toBeUndefined();
+      await expect(handler.onOfferExecuted(toBN(1), taker, {} as any)).resolves.toBeUndefined();
 
       offer = await Offer.getByOfferId(offer.offerId);
       expect(offer).toBeDefined();
       expect(offer.executed).toBeTruthy();
+
+      const offerEvents = await OfferEvent.getByOfferId(offer.offerId);
+      expect(offerEvents).toHaveLength(1);
+      expect(offerEvents[0].network).toEqual(offer.network);
+      expect(offerEvents[0].creator).toEqual(taker);
+      expect(offerEvents[0].action).toEqual(OfferEventAction.Execute);
 
       expect(mockNotify).toHaveBeenCalledWith(NotificationID.OfferExecuted, net, provider, {
         offer,

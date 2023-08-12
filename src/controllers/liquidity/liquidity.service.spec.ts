@@ -86,14 +86,14 @@ describe('LiquidityService', () => {
     });
 
     it(`should return correct value when select=['volume24h']`, async () => {
-      await Swap.create({ network: net, marketAddress, provider, lid: 0, amount: '5' });
-      await Swap.create({ network: net, marketAddress, provider, lid: 1, amount: '2' });
+      await Swap.create({ network: net, marketAddress, provider, lid: 0, valueUsd: '5' });
+      await Swap.create({ network: net, marketAddress, provider, lid: 1, valueUsd: '2' });
       await Swap.create({
         network: net,
         marketAddress,
         provider,
         lid: 1,
-        amount: '10',
+        valueUsd: '10',
         createdAt: moment().subtract(86400, 's').toISOString(),
       });
       await expect(service.extendLiquidity(liquidity, ['volume24h'])).resolves.toBeUndefined();

@@ -558,7 +558,7 @@ export default class Swap extends BaseModel {
    * @param select Select specific fields (optional)
    * @param txn Optional transaction object
    */
-  static searchSwaps(
+  static search(
     network: string,
     marketAddress?: string,
     providerOrTaker?: string,

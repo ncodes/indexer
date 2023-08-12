@@ -55,7 +55,7 @@ export class SwapsController {
    */
   @Get()
   async list(@Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
-    const swaps = await Swap.searchSwaps(q.net, q.marketAddress, q.address, q.limit || 25, q.offset, q.select);
+    const swaps = await Swap.search(q.net, q.marketAddress, q.address, q.limit || 25, q.offset, q.select);
 
     for (const swap of swaps) {
       const market = await Market.getMarket(q.net, swap.marketAddress, q.select, undefined);

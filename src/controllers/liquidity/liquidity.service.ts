@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import Market from '../../models/market';
 import Liquidity from '../../models/liquidity';
-import { MarketService } from '../markets/market.service';
 import Swap from '../../models/swap';
 import MarketPrice from '../../models/market_price';
 import * as _ from 'lodash';
@@ -10,7 +8,7 @@ import { isZero } from '../../network/common';
 
 @Injectable()
 export class LiquidityService {
-  constructor(private marketSrv: MarketService, private metadataSrv: MetadataService) {}
+  constructor(private metadataSrv: MetadataService) {}
 
   /**
    * Extend liquidity with peripheral and derived data
@@ -28,7 +26,7 @@ export class LiquidityService {
       }
 
       if (select.includes(`volume24h`) || !select.length) {
-        liq.volume24h = await Swap.getVolume(net, marketAddress, undefined, provider, liq.lid, 1400, undefined);
+        liq.volume24h = await Swap.getVolume(net, marketAddress, undefined, provider, liq.lid, 1400, undefined, true);
       }
 
       if (select.includes(`priceChange`) || !select.length) {

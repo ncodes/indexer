@@ -15,7 +15,6 @@ export class GetQueryDTO {
   public select?: string[];
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class ListQueryDTO {
   @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
   @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
@@ -116,7 +115,6 @@ export class ListQueryDTO {
   public offset?: number;
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class ListPermittedTradersQueryDTO {
   @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
   @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
@@ -133,7 +131,17 @@ export class ListPermittedTradersQueryDTO {
   public offset?: number;
 }
 
-// tslint:disable-next-line:max-classes-per-file
+export class GetTopMarketsQueryDTO {
+  @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
+  @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
+  public net?: string;
+
+  @Transform(({ value }) => toNumber(value))
+  @IsNumber(undefined, { message: makeValidatorMsg('must be a number', 'limit') })
+  @IsOptional()
+  public limit?: number;
+}
+
 export class ListPermittedProviderQueryDTO {
   @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
   @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })

@@ -15,7 +15,7 @@ export default class ExchangeRateFetcher extends Base {
     this.schedule();
   }
 
-  @Cron('*/30 * * * * *')
+  @Cron('*/120 * * * * *')
   schedule() {
     this.process().catch((e) => this.logger.error(e.message || 'failed to get exchange rate'));
   }

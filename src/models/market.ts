@@ -109,7 +109,6 @@ export default class Market extends BaseModel {
   volume24h: string;
   amountSwappedUsd: number;
   totalLiquidityUsd: number;
-  volume24hUsd: number;
 
   constructor(init?: Partial<Market>) {
     super();
@@ -151,24 +150,6 @@ export default class Market extends BaseModel {
     return {};
   }
 
-  getBaseAsset(): Asset {
-    return {
-      asset: this.base,
-      type: this.baseType,
-    };
-  }
-
-  getQuoteAsset(): Asset {
-    return {
-      asset: this.quote,
-      type: this.quoteType,
-    };
-  }
-
-  static isOnchain(assetType: AssetType) {
-    return this.isERC20(assetType) || this.isNFT(assetType);
-  }
-
   /**
    * Checks if the market is an instant swap market
    */
@@ -184,36 +165,12 @@ export default class Market extends BaseModel {
     );
   }
 
-  hasERC20() {
-    return Market.isERC20(this.baseType) || Market.isERC20(this.quoteType);
-  }
-
-  isBaseSynth() {
-    return Market.isSynth(this.baseType);
-  }
-
-  isQuoteSynth() {
-    return Market.isSynth(this.quoteType);
-  }
-
-  isBase(t: AssetType) {
-    return this.baseType == t;
-  }
-
-  isQuote(t: AssetType) {
-    return this.quoteType == t;
-  }
-
   static isERC20(assetType: AssetType) {
     return assetType == AssetType.ERC20;
   }
 
   static isERC721(assetType: AssetType) {
     return assetType == AssetType.ERC721;
-  }
-
-  static isERC1155(assetType: AssetType) {
-    return assetType == AssetType.ERC1155;
   }
 
   static isSynth(assetType: AssetType) {
@@ -226,13 +183,6 @@ export default class Market extends BaseModel {
 
   static isNFT(assetType: AssetType) {
     return assetType == AssetType.ERC721 || assetType == AssetType.ERC1155;
-  }
-
-  /**
-   * Checks if the market is an instant swap market with NFT base and quote assets
-   */
-  isNFTOnly() {
-    return Market.isNFT(this.baseType) && Market.isNFT(this.quoteType);
   }
 
   /**
@@ -294,7 +244,7 @@ export default class Market extends BaseModel {
    * @param marketAddress The record id
    * @param select Select specific fields (optional)
    * @param relations Indicate the relations to fetch
-   * @param txn? Optional transaction object
+   * @param txn Optional transaction object
    */
   static getMarket(
     network: string,
@@ -367,9 +317,9 @@ export default class Market extends BaseModel {
    * @param offset The offset value
    * @param select Select specific fields
    * @param relations The relationships to fetch
-   * @param txn????? Optional transaction object
+   * @param txn Optional transaction object
    */
-  static search(
+  static async search(
     network: string,
     creator: string,
     address: string,
@@ -457,12 +407,8 @@ export default class Market extends BaseModel {
     }
 
     if (countOnly) {
-      return query
-        .count('id')
-        .first()
-        .then((res: any) => {
-          return res.count;
-        });
+      const res = await query.count('id').first();
+      return res.count;
     }
 
     if (offset) query = query.offset(offset);

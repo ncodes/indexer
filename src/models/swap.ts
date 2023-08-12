@@ -5,7 +5,6 @@ import * as moment from 'moment';
 import Market from './market';
 import Liquidity from './liquidity';
 import * as _ from 'lodash';
-import { toBN } from '../network/common';
 
 /**
  * Swap represents a swap operation
@@ -91,16 +90,16 @@ export default class Swap extends BaseModel {
         relation: Model.BelongsToOneRelation,
         modelClass: Market,
         join: {
-          from: 'swaps.marketAddress',
-          to: 'markets.address',
+          from: ['swaps.network', 'swaps.marketAddress'],
+          to: ['markets.network', 'markets.address'],
         },
       },
       liquidity: {
         relation: Model.BelongsToOneRelation,
         modelClass: Liquidity,
         join: {
-          from: 'swaps.lid',
-          to: 'liquidity.lid',
+          from: ['swaps.network', 'swap.provider', 'swaps.lid'],
+          to: ['liquidity.network', 'liquidity.provider', 'liquidity.lid'],
         },
       },
     };
@@ -118,19 +117,6 @@ export default class Swap extends BaseModel {
     object.object = 'swap';
     delete object.deletedAt;
     return object;
-  }
-
-  // getPair returns the pair symbol in the format BASE/QUOTE
-  getPair() {
-    return `${this.base}/${this.quote}`.toUpperCase();
-  }
-
-  // getCost returns the cost of the swap.
-  // @throws if the cost is not monetary (i.e. if the swap is for NFTs)
-  getCost() {
-    if (!this.amount && this.price) return toBN(this.price);
-    if (this.amount && this.price) return toBN(this.amount).mul(this.price);
-    throw new Error('cost is not monetary');
   }
 
   /**
@@ -258,25 +244,14 @@ export default class Swap extends BaseModel {
   }
 
   /**
-   * updateByOrderId updates a swap by order ID
-   * @param network The net work name
-   * @param orderId The order ID
-   * @param udp the fields to be updated
-   * @param txn Optional transaction object
-   */
-  static updateByOrderId(network: string, orderId: number, udp: Partial<Swap>, txn?: Transaction) {
-    return this.query(txn).where('network', network).where({ orderId }).whereNotDeleted().patch(udp);
-  }
-
-  /**
    * count swaps associated with a liquidity
    * @param network The network name
    * @param marketAddress The market ID
    * @param provider The provider address
    * @param lid The liquidity ID
-   * @param instant? Filter by instant swap
-   * @param minutesAgo? Filter between now and some minutes ago
-   * @param txn? Optional transaction object
+   * @param instant Filter by instant swap
+   * @param minutesAgo Filter by minutes ago
+   * @param txn Optional transaction object
    */
   static countLiquiditySwaps(
     network: string,
@@ -311,8 +286,9 @@ export default class Swap extends BaseModel {
    * @param provider The provider address
    * @param lid The liquidity ID
    * @param timeAgo The number of minutes ago to use as the start time
-   * @param instant? Filter by instant swap
-   * @param txn? Optional transaction object
+   * @param instant Filter by instant swap
+   * @param usd Return volume in USD
+   * @param txn Optional transaction object
    */
   static getVolume(
     network: string,
@@ -322,32 +298,73 @@ export default class Swap extends BaseModel {
     lid?: number,
     timeAgo?: number,
     instant?: boolean,
+    usd?: boolean,
     txn?: Objection.Transaction,
   ) {
     return new Promise<string>((resolve, reject) => {
       this.query(txn)
-        .select(raw('sum(cast(?? as numeric))', 'amount').as('total'))
+        .select(raw('sum(cast(?? as numeric))', !usd ? 'amount' : 'valueUsd').as('total'))
         .where((q) => {
-          if (network) return q.where('network', network);
+          if (network) q = q.where('network', network);
+          if (marketAddress) q = q.where('marketAddress', 'ilike', marketAddress);
+          if (baseAddress) q = q.where('baseAddress', 'ilike', baseAddress);
+          if (provider !== undefined) q = q.where('provider', 'ilike', provider);
+          if (!_.isNil(lid)) q = q.where('lid', lid);
+          if (instant !== undefined) q = q.where('instant', instant);
+          if (timeAgo) q = q.where('createdAt', '>=', moment().subtract(timeAgo, 'minutes').toISOString());
+          return q;
         })
-        .where((q) => {
-          if (marketAddress) return q.where('marketAddress', 'ilike', marketAddress);
-        })
-        .where((q) => {
-          if (baseAddress) return q.where('baseAddress', 'ilike', baseAddress);
-        })
-        .where((q) => {
-          if (provider !== undefined) return q.where('provider', 'ilike', provider);
-        })
-        .where((q) => {
-          if (!_.isNil(lid)) return q.where('lid', lid);
-        })
-        .where((q) => {
-          if (instant !== undefined) return q.where('instant', instant);
-        })
-        .where('createdAt', '>=', moment().subtract(timeAgo, 'minutes').toISOString())
         .then((res: any) => {
           return resolve(res[0].total || '0');
+        })
+        .catch(reject);
+    });
+  }
+
+  /**
+   * Get top markets by USD volume
+   * @param network The network name.
+   * @param baseAddress The base address
+   * @param provider The provider address
+   * @param lid The liquidity ID
+   * @param timeAgo The number of minutes ago to use as the start time (default: 1440)
+   * @param instant Filter by instant swap
+   * @param limit The number of records to return
+   * @param txn Optional transaction object
+   */
+  static getTopMarketBy24hUSDVolume(
+    network: string,
+    baseAddress?: string,
+    provider?: string,
+    lid?: number,
+    timeAgo = 1440,
+    instant?: boolean,
+    limit = 10,
+    txn?: Objection.Transaction,
+  ) {
+    return new Promise<Market[]>((resolve, reject) => {
+      this.query(txn)
+        .select('network', 'marketAddress', raw('sum(cast(?? as numeric))', 'valueUsd').as('total'))
+        .where((q) => {
+          if (network) q = q.where('network', network);
+          if (baseAddress) q = q.where('baseAddress', 'ilike', baseAddress);
+          if (provider !== undefined) q = q.where('provider', 'ilike', provider);
+          if (!_.isNil(lid)) q = q.where('lid', lid);
+          if (instant !== undefined) q = q.where('instant', instant);
+          if (timeAgo) q = q.where('createdAt', '>=', moment().subtract(timeAgo, 'minutes').toISOString());
+          return q;
+        })
+        .groupBy('marketAddress', 'network')
+        .orderBy('total', 'DESC')
+        .limit(limit)
+        .withGraphFetched('market')
+        .then(async (swaps) => {
+          return resolve(
+            swaps.map((swap: Swap & { total: string }) => {
+              swap.market.volume24h = swap.total;
+              return swap.market;
+            }),
+          );
         })
         .catch(reject);
     });

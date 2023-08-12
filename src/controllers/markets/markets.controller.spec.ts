@@ -17,6 +17,7 @@ import PermittedTrader from '../../models/permitted_trader';
 import LiquidityProvider from '../../models/market_provider';
 import * as moment from 'moment';
 import { randStr } from '../../common/common';
+import Swap from '../../models/swap';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -91,13 +92,99 @@ describe('MarketsController', () => {
     token = await makeSession(u, randStr(), '5', mockCfgGet('auth.jwtSecret'));
   });
 
+  describe('.top', () => {
+    it('should return 400 when network was not provided', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/markets/top`)
+        .set('Authorization', 'bearer ' + token)
+        .query({})
+        .expect(400)
+        .expect({
+          error: {
+            message: 'network is required',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 400 when network is unknown', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/markets/top`)
+        .set('Authorization', 'bearer ' + token)
+        .query({ net: 'net1' })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'network is unknown',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 200 and with correct results', async () => {
+      await Market.create({ network: net, address: '0x123' });
+      await Market.create({ network: net, address: '0xXYZ' });
+      await Swap.create({ network: net, marketAddress: '0x123', valueUsd: '10' });
+      await Swap.create({ network: net, marketAddress: '0xXYZ', valueUsd: '5' });
+      const mockExtendMarket = jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
+      await request(app.getHttpServer())
+        .get(`/v1/markets/top`)
+        .set('Authorization', 'bearer ' + token)
+        .query({ net })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data).toHaveLength(2);
+          expect(res.body.data[0].address).toEqual('0x123');
+          expect(res.body.data[0].volume24h).toEqual('10');
+          expect(res.body.data[1].address).toEqual('0xXYZ');
+          expect(res.body.data[1].volume24h).toEqual('5');
+          expect(mockExtendMarket).toBeCalledTimes(2);
+        });
+    });
+
+    it('should return 200 and with correct results when limit=1', async () => {
+      await Market.create({ network: net, address: '0x123' });
+      await Market.create({ network: net, address: '0xXYZ' });
+      await Swap.create({ network: net, marketAddress: '0x123', valueUsd: '10' });
+      await Swap.create({ network: net, marketAddress: '0xXYZ', valueUsd: '5' });
+      const mockExtendMarket = jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
+      await request(app.getHttpServer())
+        .get(`/v1/markets/top`)
+        .set('Authorization', 'bearer ' + token)
+        .query({ net, limit: 1 })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data).toHaveLength(1);
+          expect(res.body.data[0].address).toEqual('0x123');
+          expect(res.body.data[0].volume24h).toEqual('10');
+          expect(mockExtendMarket).toBeCalledTimes(1);
+        });
+    });
+  });
+
   describe('.get', () => {
+    it('should return 400 when network was not provided', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/markets/0x123`)
+        .set('Authorization', 'bearer ' + token)
+        .query({})
+        .expect(400)
+        .expect({
+          error: {
+            message: 'network is required',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
     it('should return 400 when network is unknown', async () => {
       await request(app.getHttpServer())
         .get(`/v1/markets/0x123`)
         .set('Authorization', 'bearer ' + token)
         .query({ net: 'net1' })
-        .send({})
         .expect(400)
         .expect({
           error: {
@@ -113,7 +200,6 @@ describe('MarketsController', () => {
         .get(`/v1/markets/0x123`)
         .set('Authorization', 'bearer ' + token)
         .query({ net })
-        .send({})
         .expect(404)
         .expect({
           error: { message: 'market not found' },
@@ -128,7 +214,6 @@ describe('MarketsController', () => {
       await request(app.getHttpServer())
         .get(`/v1/markets/${market.address}`)
         .set('Authorization', 'bearer ' + token)
-        .send({})
         .query({ net })
         .expect(200)
         .expect((res) => {
@@ -144,7 +229,6 @@ describe('MarketsController', () => {
       await request(app.getHttpServer())
         .get(`/v1/markets`)
         .set('Authorization', 'bearer ' + token)
-        .send({})
         .query({ net: 'net1' })
         .expect(400)
         .expect({
@@ -930,7 +1014,6 @@ describe('MarketsController', () => {
       await request(app.getHttpServer())
         .get(`/v1/markets/0x123/permitted_takers`)
         .set('Authorization', 'bearer ' + token)
-        .send({})
         .query({ net: 'net1' })
         .expect(400)
         .expect({
@@ -953,7 +1036,6 @@ describe('MarketsController', () => {
         await request(app.getHttpServer())
           .get(`/v1/markets/${mid}/permitted_takers`)
           .set('Authorization', 'bearer ' + token)
-          .send({})
           .query({ net })
           .expect(200)
           .expect((res) => {
@@ -974,7 +1056,6 @@ describe('MarketsController', () => {
         await request(app.getHttpServer())
           .get(`/v1/markets/${mid}/permitted_takers`)
           .set('Authorization', 'bearer ' + token)
-          .send({})
           .query({ net, limit: 1 })
           .expect(200)
           .expect((res) => {
@@ -995,7 +1076,6 @@ describe('MarketsController', () => {
         await request(app.getHttpServer())
           .get(`/v1/markets/${mid}/permitted_takers`)
           .set('Authorization', 'bearer ' + token)
-          .send({})
           .query({ net, limit: 1, offset: 1 })
           .expect(200)
           .expect((res) => {

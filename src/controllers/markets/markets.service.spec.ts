@@ -120,19 +120,19 @@ describe('MarketsService', () => {
       await Swap.create({
         network: net,
         marketAddress,
-        amount: pow10(18).mul(1).toString(),
+        valueUsd: '1',
         createdAt: moment().subtract(86399, 'seconds').toISOString(),
       });
       await Swap.create({
         network: net,
         marketAddress,
-        amount: pow10(18).mul(4).toString(),
+        valueUsd: '4',
         createdAt: moment().subtract(86400, 'seconds').toISOString(),
       });
       await Swap.create({
         network: net,
         marketAddress,
-        amount: pow10(18).mul(2).toString(),
+        valueUsd: '2',
         createdAt: moment().subtract(86300, 'seconds').toISOString(),
       });
 
@@ -141,8 +141,7 @@ describe('MarketsService', () => {
         .mockResolvedValue({ decimals: 18, price: 5, network: net, logoURI: '', name: '' });
 
       await service.extendMarket(market, ['volume24h']);
-      expect(market.volume24h).toBe(pow10(18).mul(3).toString());
-      expect(market.volume24hUsd).toBe(15);
+      expect(market.volume24h).toBe('3');
     });
 
     it(`should return correct value when select=['priceChange']`, async () => {

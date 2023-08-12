@@ -57,8 +57,8 @@ export class MarketService {
           undefined,
           1440,
           market.isInstant(),
+          true,
         );
-        market.volume24hUsd = await this.metadataSrv.tryToUsd(net, market.volume24h, market.baseAddress);
       }
 
       if (select.includes(`priceChange`) || !select.length) {

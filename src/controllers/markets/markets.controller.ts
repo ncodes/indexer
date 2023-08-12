@@ -1,19 +1,43 @@
-import { Controller, Get, Logger, Param, Query, ValidationPipe } from '@nestjs/common';
-import { ok, throw400, throw404, throw500 } from '../../common/responses/responses';
+import { Controller, Get, Param, Query, ValidationPipe } from '@nestjs/common';
+import { ok, throw404 } from '../../common/responses/responses';
 import Market from '../../models/market';
-import { isValidNetwork } from '../../network/common';
 import { MarketService } from './market.service';
 import PermittedTrader from '../../models/permitted_trader';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
-import { GetQueryDTO, ListPermittedProviderQueryDTO, ListPermittedTradersQueryDTO, ListQueryDTO } from './query.dto';
+import {
+  GetQueryDTO,
+  GetTopMarketsQueryDTO,
+  ListPermittedProviderQueryDTO,
+  ListPermittedTradersQueryDTO,
+  ListQueryDTO,
+} from './query.dto';
 import LiquidityProvider from '../../models/market_provider';
 import { ConfigService } from '@nestjs/config';
+import Swap from '../../models/swap';
 
 @Controller('v1/markets')
 export class MarketsController {
-  private logger = new Logger(MarketsController.name);
-
   constructor(private marketSrv: MarketService, private cfgSrv: ConfigService) {}
+
+  // Get top markets
+  @Get('/top')
+  async top(@Query(new ValidationPipe(ValPipeOpt)) q: GetTopMarketsQueryDTO) {
+    const markets = await Swap.getTopMarketBy24hUSDVolume(
+      q.net,
+      undefined,
+      undefined,
+      undefined,
+      1440,
+      undefined,
+      q.limit || 10,
+    );
+
+    for (const m of markets) {
+      await this.marketSrv.extendMarket(m, undefined);
+    }
+
+    return ok().data(markets).build();
+  }
 
   /**
    * Get a market
@@ -109,13 +133,7 @@ export class MarketsController {
 
     const markets = result as Market[];
     for (const m of markets) {
-      try {
-        await this.marketSrv.extendMarket(m, q.select);
-      } catch (error) {
-        this.logger.error(error, null, 'list()');
-        if (error.message.indexOf('invalid arrayify value') !== -1) throw404('market not found');
-        else throw500('failed to get market');
-      }
+      await this.marketSrv.extendMarket(m, q.select);
     }
 
     return ok().data(result).build();
@@ -134,7 +152,6 @@ export class MarketsController {
     @Param('mid') marketAddress: string,
     @Query(new ValidationPipe(ValPipeOpt)) q: ListPermittedTradersQueryDTO,
   ) {
-    if (!isValidNetwork(q.net)) throw400('unknown network');
     const res = await PermittedTrader.searchByNetworkMarketID(q.net, marketAddress, q.limit, q.offset);
     return ok().data(res).build();
   }

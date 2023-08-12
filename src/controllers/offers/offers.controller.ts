@@ -4,6 +4,7 @@ import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common
 import { GetParamDTO, GetQueryDTO, ListQueryDTO } from './query.dto';
 import Offer from '../../models/offers';
 import { ok, throw404 } from '../../common/responses/responses';
+import OfferEvent from '../../models/offer_event';
 
 @Controller('v1/offers')
 export class OfferController {
@@ -12,8 +13,25 @@ export class OfferController {
   constructor(private offerSrv: OfferService) {}
 
   /**
+   * Get offer events by offer ID
+   * @param params The url parameters
+   * @param params.offerId The offer ID
+   * @param q The query object
+   * @param q.net The network name
+   */
+  @Get(':offerId/events')
+  async events(
+    @Param(new ValidationPipe(ValPipeOpt)) params: GetParamDTO,
+    @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO,
+  ) {
+    const events = await OfferEvent.getByNetworkAndOfferId(q.net, params.offerId);
+    return ok().data(events).build();
+  }
+
+  /**
    * Get offer by ID
    * @param params The url parameters
+   * @param params.offerId The offer ID
    * @param q The query object
    * @param q.net The network name
    * @param [q.select] Select fields to return

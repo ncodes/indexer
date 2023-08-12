@@ -13,6 +13,7 @@ import { OfferService } from './offer.service';
 import { OfferController } from './offers.controller';
 import Offer from '../../models/offers';
 import * as moment from 'moment';
+import OfferEvent from '../../models/offer_event';
 
 describe('OffersController', () => {
   let app: INestApplication;
@@ -50,6 +51,63 @@ describe('OffersController', () => {
   beforeEach(async () => {
     u = await User.create({ role: Roles.User });
     token = await makeSession(u, randStr(), '5', 'secret');
+  });
+
+  describe('.events', () => {
+    it('should return 400 when network was not provided', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/offers/O/events`)
+        .query({})
+        .expect(400)
+        .expect({
+          error: {
+            message: 'network is required',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 400 when network is unknown', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/offers/O/events`)
+        .query({ net: 'net1' })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'network is unknown',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 400 when offer ID is invalid', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/offers/O/events`)
+        .query({ net })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'must be a number',
+            param: 'offerId',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 200 and correct result', async () => {
+      const event = await OfferEvent.create({ network: net, offerId: 1 });
+      await OfferEvent.create({ network: 'other', offerId: 1 });
+      await request(app.getHttpServer())
+        .get(`/v1/offers/1/events`)
+        .query({ net })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data).toHaveLength(1);
+          expect(res.body.data[0].id).toEqual(event.id);
+        });
+    });
   });
 
   describe('.get', () => {

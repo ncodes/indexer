@@ -82,8 +82,13 @@ export default class OfferEvent extends BaseModel {
     return this.query(txn).whereNotDeleted().findById(id);
   }
 
-  // Get by offer ID
-  static getByOfferId(offerId: number, txn?: Transaction) {
-    return this.query(txn).whereNotDeleted().where({ offerId });
+  /**
+   * getByOfferId finds a record
+   * @param network The network name
+   * @param offerId The on-chain offer ID
+   * @param txn Optional transaction object
+   */
+  static getByNetworkAndOfferId(network: string, offerId: number, txn?: Objection.Transaction) {
+    return this.query(txn).whereNotDeleted().where({ network, offerId });
   }
 }

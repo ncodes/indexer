@@ -1388,7 +1388,7 @@ describe('CoreHandler', () => {
       expect(offer.ids).toEqual(ids.map((id) => id.toNumber()));
       expect(moment(offer.deadline).toISOString()).toEqual(moment.unix(deadline.toNumber()).toISOString());
 
-      const offerEvents = await OfferEvent.getByOfferId(offer.offerId);
+      const offerEvents = await OfferEvent.getByNetworkAndOfferId(net, offer.offerId);
       expect(offerEvents).toHaveLength(1);
       expect(offerEvents[0].network).toEqual(offer.network);
       expect(offerEvents[0].creator).toEqual(offer.creator);
@@ -1440,7 +1440,7 @@ describe('CoreHandler', () => {
       expect(offer.ids).toEqual([4]);
       expect(moment(offer.deadline).toISOString()).toEqual(moment.unix(deadline).toISOString());
 
-      const offerEvents = await OfferEvent.getByOfferId(offer.offerId);
+      const offerEvents = await OfferEvent.getByNetworkAndOfferId(net, offer.offerId);
       expect(offerEvents).toHaveLength(1);
       expect(offerEvents[0].network).toEqual(offer.network);
       expect(offerEvents[0].creator).toEqual(offer.creator);
@@ -1489,7 +1489,7 @@ describe('CoreHandler', () => {
       expect(offer.accepted).toBeTruthy();
       expect(moment(offer.execAt).toISOString()).toEqual(moment.unix(execAt).toISOString());
 
-      const offerEvents = await OfferEvent.getByOfferId(offer.offerId);
+      const offerEvents = await OfferEvent.getByNetworkAndOfferId(net, offer.offerId);
       expect(offerEvents).toHaveLength(1);
       expect(offerEvents[0].network).toEqual(offer.network);
       expect(offerEvents[0].creator).toEqual(provider);
@@ -1532,7 +1532,7 @@ describe('CoreHandler', () => {
       expect(offer).toBeDefined();
       expect(offer.cancelled).toBeTruthy();
 
-      const offerEvents = await OfferEvent.getByOfferId(offer.offerId);
+      const offerEvents = await OfferEvent.getByNetworkAndOfferId(net, offer.offerId);
       expect(offerEvents).toHaveLength(1);
       expect(offerEvents[0].network).toEqual(offer.network);
       expect(offerEvents[0].creator).toEqual(taker);
@@ -1578,7 +1578,7 @@ describe('CoreHandler', () => {
       expect(offer.accepted).toBeFalsy();
       expect(offer.execAt).toBeNull();
 
-      const offerEvents = await OfferEvent.getByOfferId(offer.offerId);
+      const offerEvents = await OfferEvent.getByNetworkAndOfferId(net, offer.offerId);
       expect(offerEvents).toHaveLength(1);
       expect(offerEvents[0].network).toEqual(offer.network);
       expect(offerEvents[0].creator).toEqual(taker);
@@ -1621,7 +1621,7 @@ describe('CoreHandler', () => {
       expect(offer).toBeDefined();
       expect(offer.executed).toBeTruthy();
 
-      const offerEvents = await OfferEvent.getByOfferId(offer.offerId);
+      const offerEvents = await OfferEvent.getByNetworkAndOfferId(net, offer.offerId);
       expect(offerEvents).toHaveLength(1);
       expect(offerEvents[0].network).toEqual(offer.network);
       expect(offerEvents[0].creator).toEqual(taker);

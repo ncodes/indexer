@@ -17,15 +17,35 @@ import Market from '../../models/market';
 import * as moment from 'moment';
 import { randStr } from '../../common/common';
 import { MetadataService } from '../../services/metadata/metadata.service';
+import { toBN } from '../../network/common';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
   return { get: mockCfgGet };
 });
 
-const mockGetMarketCore = jest.fn();
+const mockGetTicketPrice = jest.fn();
+const mockTicketSupply = jest.fn();
+const mockTicketSold = jest.fn();
 const NetworkServiceMock = jest.fn().mockImplementation(() => {
-  return { getMarketCore: mockGetMarketCore };
+  return {
+    getContracts: jest.fn().mockImplementation(() => {
+      return {
+        mediatorMgr: {
+          getTicketPrice: mockGetTicketPrice,
+          ticketSupply: mockTicketSupply,
+          ticketSold: mockTicketSold,
+        },
+      };
+    }),
+  };
+});
+
+const mockTryToUsd = jest.fn();
+const MetadataServiceMock = jest.fn().mockImplementation(() => {
+  return {
+    tryToUsd: mockTryToUsd,
+  };
 });
 
 describe('TicketsController', () => {
@@ -50,10 +70,10 @@ describe('TicketsController', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    mockCfgGet.mockReset();
-    mockGetMarketCore.mockReset();
 
     cfgObj = { 'auth.jwtSecret': 'secret_secret' };
+    cfgObj[`app.networks.${net}.p2pTokenAddr`] = '0xP2PToken';
+
     mockCfgGet.mockReset().mockImplementation((args) => {
       return cfgObj[args];
     });
@@ -67,6 +87,8 @@ describe('TicketsController', () => {
       .useValue(new ConfigServiceMock())
       .overrideProvider(NetworkService)
       .useValue(new NetworkServiceMock())
+      .overrideProvider(MetadataService)
+      .useValue(new MetadataServiceMock())
       .compile();
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());
@@ -83,7 +105,7 @@ describe('TicketsController', () => {
   });
 
   describe('.get', () => {
-    it('should return 400 when network is unknown', async () => {
+    it('should return 400 when network was not provided', async () => {
       await request(app.getHttpServer())
         .get(`/v1/tickets/0xOwner/0`)
         .send({})
@@ -477,6 +499,91 @@ describe('TicketsController', () => {
             expect(mockTicket).toBeCalled();
           });
       });
+    });
+  });
+
+  describe('.stats', () => {
+    it('should return 400 when network was not provided', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/tickets/stats`)
+        .send({})
+        .expect(400)
+        .expect({
+          error: {
+            message: 'network is required',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 400 when network is unknown', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/tickets/stats`)
+        .query({ net: 'unknown' })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'network is unknown',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return correct values', async () => {
+      await Ticket.create({ network: net, bond: '10', owner: '0xOwner' });
+      await Ticket.create({ network: net, bond: '15', owner: '0xOwner2' });
+
+      mockGetTicketPrice.mockResolvedValue(toBN(100));
+      mockTicketSupply.mockResolvedValue(toBN(1000));
+      mockTicketSold.mockResolvedValue(toBN(25));
+      mockTryToUsd.mockResolvedValue(123);
+
+      await request(app.getHttpServer())
+        .get(`/v1/tickets/stats`)
+        .query({ net })
+        .expect(200)
+        .expect({
+          data: {
+            totalBonds: '25',
+            totalBondsUsd: 123,
+            price: '100',
+            priceUsd: 123,
+            ticketSupply: 1000,
+            ticketAvailable: 975,
+          },
+        });
+    });
+
+    it('should return correct values if "owner" is set', async () => {
+      await Ticket.create({ network: net, bond: '10', owner: '0xOwner' });
+      await Ticket.create({ network: net, bond: '15', owner: '0xOwner2' });
+
+      mockGetTicketPrice.mockResolvedValue(toBN(100));
+      mockTicketSupply.mockResolvedValue(toBN(1000));
+      mockTicketSold.mockResolvedValue(toBN(25));
+      mockTryToUsd.mockResolvedValue(123);
+
+      await request(app.getHttpServer())
+        .get(`/v1/tickets/stats`)
+        .query({ net, owner: '0xOwner' })
+        .expect(200)
+        .expect({
+          data: {
+            totalBonds: '25',
+            totalBondsUsd: 123,
+            price: '100',
+            priceUsd: 123,
+            ticketSupply: 1000,
+            ticketAvailable: 975,
+            owner: {
+              totalBonds: '10',
+              totalBondsUsd: 123,
+              total: '1',
+            },
+          },
+        });
     });
   });
 });

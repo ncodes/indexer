@@ -3,11 +3,33 @@ import { ok, throw404 } from '../../common/responses/responses';
 import Ticket from '../../models/ticket';
 import { TicketsService } from './tickets.service';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
-import { GetQueryDTO, ListQueryDTO } from './query.dto';
+import { GetQueryDTO, ListQueryDTO, StatsQueryDTO } from './query.dto';
+import NetworkService from '../../network/network.service';
+import { MetadataService } from '../../services/metadata/metadata.service';
+import { ConfigService } from '@nestjs/config';
+
+interface StatsResponse {
+  totalBonds: string;
+  totalBondsUsd: number;
+  price: string;
+  priceUsd: number;
+  ticketSupply: number;
+  ticketAvailable: number;
+  owner?: {
+    totalBonds?: string;
+    totalBondsUsd?: number;
+    total?: string;
+  };
+}
 
 @Controller('v1/tickets')
 export class TicketsController {
-  constructor(private tickSrv: TicketsService) {}
+  constructor(
+    private tickSrv: TicketsService,
+    private netSrv: NetworkService,
+    private metadataSrv: MetadataService,
+    private cfgSrv: ConfigService,
+  ) {}
 
   /**
    * Get a ticket
@@ -88,5 +110,45 @@ export class TicketsController {
         })
         .build();
     }
+  }
+
+  /**
+   * Get ticket stats
+   * @param q The query object
+   * @param q.net The network name
+   * @param [q.owner] Filter by owner address
+   */
+  @Get('stats')
+  async stats(@Query(new ValidationPipe(ValPipeOpt)) q: StatsQueryDTO) {
+    const totalBonds = await Ticket.getTotalBonds(q.net, undefined, undefined);
+    const price = await this.netSrv.getContracts(q.net).mediatorMgr.getTicketPrice();
+    const ticketSupply = await this.netSrv.getContracts(q.net).mediatorMgr.ticketSupply();
+    const ticketSold = await this.netSrv.getContracts(q.net).mediatorMgr.ticketSold();
+
+    const p2pAddress = this.cfgSrv.get(`app.networks.${q.net}.p2pTokenAddr`);
+    const ownerInfo: { totalBonds?: string; totalBondsUsd?: number; total?: string } = {};
+    if (q.owner) {
+      ownerInfo.totalBonds = await Ticket.getTotalBonds(q.net, undefined, q.owner);
+      ownerInfo.total = await Ticket.countTickets(q.net, undefined, q.owner);
+      ownerInfo.totalBondsUsd = await this.metadataSrv.tryToUsd(q.net, ownerInfo.totalBonds.toString(), p2pAddress);
+    }
+
+    const totalBondsUsd = await this.metadataSrv.tryToUsd(q.net, totalBonds?.toString(), p2pAddress);
+    const priceUsd = await this.metadataSrv.tryToUsd(q.net, price?.toString(), p2pAddress);
+
+    const resp: StatsResponse = {
+      totalBonds,
+      totalBondsUsd,
+      price: price?.toString(),
+      priceUsd,
+      ticketSupply: ticketSupply?.toNumber(),
+      ticketAvailable: ticketSupply?.sub(ticketSold).toNumber(),
+    };
+
+    if (q.owner) {
+      resp.owner = ownerInfo;
+    }
+
+    return ok().data(resp).build();
   }
 }

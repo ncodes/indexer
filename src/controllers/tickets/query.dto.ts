@@ -98,3 +98,13 @@ export class ListQueryDTO {
   @IsOptional()
   public select?: string[];
 }
+
+// tslint:disable-next-line:max-classes-per-file
+export class StatsQueryDTO {
+  @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
+  @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
+  public net?: string;
+
+  @IsOptional()
+  public owner?: string;
+}

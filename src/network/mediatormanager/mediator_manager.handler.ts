@@ -192,11 +192,11 @@ export class MediatorManagerHandler extends Handler {
    * A ticket was drained
    * @param owner The ticket owner
    * @param id The unique id of the ticket
-   * @param amount The amount drained from the ticket
-   * @param event The event object
+   * @param _amount The amount drained from the ticket
+   * @param _event The event object
    * @param txn The database transaction handle
    */
-  async onTicketDrained(owner: string, id: BigNumber, amount: BigNumber, event: ethers.Event, txn?: Transaction) {
+  async onTicketDrained(owner: string, id: BigNumber, _amount: BigNumber, _event: ethers.Event, txn?: Transaction) {
     const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, id.toNumber(), undefined, txn);
     await Ticket.updateById(ticket.id, { bond: '0', drained: true, drainedAt: moment().toISOString() }, txn);
   }
@@ -206,10 +206,10 @@ export class MediatorManagerHandler extends Handler {
    * @param owner The ticket owner
    * @param poolId The pool ID of the ticket
    * @param ticketId The unique id of the ticket
-   * @param event The event object
+   * @param _event The event object
    * @param txn The database transaction handle
    */
-  async onJoinedPool(owner: string, poolId: BigNumber, ticketId: BigNumber, event: ethers.Event, txn?: Transaction) {
+  async onJoinedPool(owner: string, poolId: BigNumber, ticketId: BigNumber, _event: ethers.Event, txn?: Transaction) {
     const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, ticketId.toNumber(), undefined, txn);
     await Ticket.updateById(ticket.id, { poolId: poolId.toNumber(), joined: true }, txn);
   }
@@ -221,7 +221,7 @@ export class MediatorManagerHandler extends Handler {
    * @param ticketId The unique id of the ticket
    * @param orderId The ID of the order ticket was drafted to
    * @param disputeId The dispute ID
-   * @param drafter The address if the drafter
+   * @param _drafter The address if the drafter
    * @param event The event object
    * @param txn The database transaction handle
    */
@@ -231,7 +231,7 @@ export class MediatorManagerHandler extends Handler {
     ticketId: BigNumber,
     orderId: BigNumber,
     disputeId: BigNumber,
-    drafter: string,
+    _drafter: string,
     event: ethers.Event,
     txn?: Transaction,
   ) {
@@ -331,16 +331,16 @@ export class MediatorManagerHandler extends Handler {
    * @param owner The ticket owner
    * @param ticketId The unique id of the ticket
    * @param slashed Indicates whether the ticket was slashed
-   * @param undrafter The address of the caller
-   * @param event The event object
+   * @param _undrafter The address of the caller
+   * @param _event The event object
    * @param txn The database transaction handle
    */
   async onUndrafted(
     owner: string,
     ticketId: BigNumber,
     slashed: boolean,
-    undrafter: string,
-    event: ethers.Event,
+    _undrafter: string,
+    _event: ethers.Event,
     txn?: Transaction,
   ) {
     const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, ticketId.toNumber(), undefined, txn);
@@ -368,7 +368,7 @@ export class MediatorManagerHandler extends Handler {
    * A ticket was slashed
    * @param owner The ticket owner
    * @param ticketId The unique id of the ticket
-   * @param marketAddress The ID of the market the ticket joined
+   * @param _marketAddress The ID of the market the ticket joined
    * @param amount The amount that was slashed
    * @param voted Indicates whether the ticket voted
    * @param winSide Indicates whether the ticker was on the winning side
@@ -378,7 +378,7 @@ export class MediatorManagerHandler extends Handler {
   async onTicketSlashed(
     owner: string,
     ticketId: BigNumber,
-    marketAddress: string,
+    _marketAddress: string,
     amount: BigNumber,
     voted: boolean,
     winSide: boolean,
@@ -435,7 +435,7 @@ export class MediatorManagerHandler extends Handler {
    * @param noVoteSlashBP The slash BP for tickets that did not vote
    * @param loseVoteSlashBP The slash BP for tickets that voted for the losing side
    * @param numDraftees The number of draftees
-   * @param event The event object
+   * @param _event The event object
    * @param txn The database transaction handle
    */
   async onUpdatedTicketPool(
@@ -446,7 +446,7 @@ export class MediatorManagerHandler extends Handler {
     noVoteSlashBP: BigNumber,
     loseVoteSlashBP: BigNumber,
     numDraftees: BigNumber,
-    event: ethers.Event,
+    _event: ethers.Event,
     txn?: Transaction,
   ) {
     await Meta.update(

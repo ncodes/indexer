@@ -69,7 +69,7 @@ export default class NetworkService {
   /**
    * Watch events on different networks
    */
-  async watch() {
+  private async watch() {
     await this.watchNetwork(SupportedNetworks.Localhost);
     // await this.watchNetwork(SupportedNetworks.Ethereum);
   }
@@ -105,7 +105,7 @@ export default class NetworkService {
    * Load initial contracts params for a given network
    * @param network The network name
    */
-  async loadInitialContractParams(network: string) {
+  private async loadInitialContractParams(network: string) {
     const contractsParams = this.cfgSrv.get(`app.contractsParams.${network}`);
     const key = Meta.makeNetKey(network, MetaKeys.ContractsParams);
     const params = await Meta.get(key);
@@ -118,7 +118,7 @@ export default class NetworkService {
    * Connect and watch contracts on the Ethereum mainnet.
    * @param network The name of the network
    */
-  async watchNetwork(network: string) {
+  private async watchNetwork(network: string) {
     this.contracts[network] = {};
     const prov = new providers.JsonRpcProvider(this.cfgSrv.get(`app.networks.${network}.rpcUrl`));
     this.providers[network] = prov;

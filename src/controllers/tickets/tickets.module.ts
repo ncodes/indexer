@@ -8,6 +8,6 @@ import { MetadataService } from '../../services/metadata/metadata.service';
 @Module({
   imports: [NetworkModule],
   controllers: [TicketsController],
-  providers: [TicketsService, MetadataService, MarketService],
+  providers: [TicketsService, MetadataService, MarketService, MetadataService],
 })
 export class TicketsModule {}

@@ -131,6 +131,17 @@ export default class Ticket extends BaseModel {
     return q.first();
   }
 
+  // Get total bonds of tickets. Optionally filter by network, poolId, owner
+  static async getTotalBonds(network?: string, poolId?: number, owner?: string, drained?: boolean, txn?: Transaction) {
+    let q = this.query(txn).sum('bond as total').whereNotDeleted();
+    if (network) q = q.where({ network });
+    if (poolId) q = q.where({ poolId });
+    if (owner) q = q.where('owner', 'ilike', owner);
+    if (drained !== undefined) q = q.where({ drained });
+    const res = (await q.first()) as Ticket & { total: string };
+    return res.total || '0';
+  }
+
   /**
    * updateById updates a notification by ID
    * @param id the notification id
@@ -139,27 +150,6 @@ export default class Ticket extends BaseModel {
    */
   static updateById(id: string, udp: Partial<Ticket>, txn?: Transaction) {
     return this.query(txn).whereNotDeleted().patchAndFetchById(id, udp).execute();
-  }
-
-  /**
-   * count results matching a network and pool ID
-   * @param network The network name
-   * @param poolId The mediator pool ID
-   * @param txn Optional transaction object
-   */
-  static countByNetworkAndPool(network: string, poolId: number, txn?: Transaction) {
-    return new Promise<string>((resolve, reject) => {
-      this.query(txn)
-        .where({ network })
-        .where('poolId', poolId)
-        .count('id')
-        .whereNotDeleted()
-        .first()
-        .then((res: any) => {
-          return resolve(res.count);
-        })
-        .catch(reject);
-    });
   }
 
   static makeSelectList(select = []) {
@@ -248,7 +238,7 @@ export default class Ticket extends BaseModel {
    * @param slashed Indicate to return only slashed tickets
    * @param txn Optional transaction object
    */
-  static countTickets(
+  static async countTickets(
     network: string,
     poolId?: number,
     owner?: string,
@@ -261,7 +251,7 @@ export default class Ticket extends BaseModel {
     cancelled?: boolean,
     slashed?: boolean,
     txn?: Transaction,
-  ): Promise<Ticket[]> {
+  ): Promise<string> {
     let q = this.query(txn).whereNotDeleted().where({ network });
     if (!isNil(poolId)) q = q.where('poolId', poolId);
     if (owner) q = q.where('owner', 'ILIKE', owner);
@@ -283,9 +273,7 @@ export default class Ticket extends BaseModel {
       q = q.where('matureAt', 'is not', null).where('matureAt', matured ? '<' : '>', 'now()');
     }
     if (slashed) q = q.where('slashed', slashed);
-    return q
-      .count('id')
-      .first()
-      .then((res: any) => res.count);
+    const res = await q.count('id').first();
+    return res.count;
   }
 }

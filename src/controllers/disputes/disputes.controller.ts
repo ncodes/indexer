@@ -27,7 +27,7 @@ export class DisputesController {
    */
   @Get()
   async list(@Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
-    const result = await Dispute.searchDisputes(
+    const result = await Dispute.search(
       q.net,
       q.marketAddress,
       q.creator,

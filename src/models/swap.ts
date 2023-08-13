@@ -98,8 +98,8 @@ export default class Swap extends BaseModel {
         relation: Model.BelongsToOneRelation,
         modelClass: Liquidity,
         join: {
-          from: ['swaps.network', 'swap.provider', 'swaps.lid'],
-          to: ['liquidity.network', 'liquidity.provider', 'liquidity.lid'],
+          from: ['swaps.network', 'swaps.provider', 'swaps.lid'],
+          to: ['liquidities.network', 'liquidities.provider', 'liquidities.lid'],
         },
       },
     };

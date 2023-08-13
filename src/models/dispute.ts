@@ -3,6 +3,7 @@ import Objection, { Model, raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 import * as _ from 'lodash';
 import Draft from './draft';
+import Swap from './swap';
 
 /**
  * Dispute represents a swap dispute
@@ -51,9 +52,9 @@ export default class Dispute extends BaseModel {
   // Notification marker for `revealEndAt`
   notifiedOnRevealEndAt: boolean = undefined;
 
-  /** Not persisted */
-
+  /** Relations */
   draftees: Draft[];
+  swap: Swap;
 
   constructor(init?: Partial<Dispute>) {
     super();
@@ -82,8 +83,16 @@ export default class Dispute extends BaseModel {
         relation: Model.HasManyRelation,
         modelClass: Draft,
         join: {
-          to: 'disputes.id',
           from: 'drafts.disputeId',
+          to: 'disputes.id',
+        },
+      },
+      swap: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: Swap,
+        join: {
+          from: ['disputes.network', 'disputes.orderId'],
+          to: ['swaps.network', 'swaps.orderId'],
         },
       },
     };
@@ -282,7 +291,7 @@ export default class Dispute extends BaseModel {
    * @param select Select specific fields (optional)
    * @param txn Optional transaction object
    */
-  static searchDisputes(
+  static async search(
     network: string,
     marketAddress?: string,
     creator?: string,
@@ -303,7 +312,7 @@ export default class Dispute extends BaseModel {
     select = this.makeSelectList(select);
     let q = this.query(txn);
     q = !countOnly ? q.select(...select, raw('count(*) over() as' + ' "$queryCount"')) : q;
-    q = q.withGraphFetched('draftees').whereNotDeleted().where({ network });
+    q = q.withGraphFetched('[draftees,swap]').whereNotDeleted().where({ network });
     if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
     if (creator) q = q.where('creator', 'ILIKE', creator);
     if (defendant) q = q.where('defendant', 'ILIKE', defendant);
@@ -315,12 +324,8 @@ export default class Dispute extends BaseModel {
     if (abandoned !== undefined) q = q.where('abandoned', abandoned);
     if (orderReleased !== undefined) q = q.where('orderReleased', orderReleased);
     if (countOnly) {
-      return q
-        .count('id')
-        .first()
-        .then((res: any) => {
-          return res.count;
-        });
+      const res = await q.count('id').first();
+      return res.count;
     }
     if (offset) q = q.offset(offset);
     if (limit) q = q.limit(limit);

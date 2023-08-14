@@ -24,7 +24,7 @@ export class OfferController {
     @Param(new ValidationPipe(ValPipeOpt)) params: GetParamDTO,
     @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO,
   ) {
-    const events = await OfferEvent.getByNetworkAndOfferId(q.net, params.offerId);
+    const events = await OfferEvent.getByNetworkAndOfferId(q.net, params.offerId, q.limit || 25, q.offset);
     return ok().data(events).build();
   }
 

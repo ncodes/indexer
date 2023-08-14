@@ -1,19 +1,61 @@
-import { Controller, Get, Query, ValidationPipe } from '@nestjs/common';
-import { ok } from '../../common/responses/responses';
+import { Controller, Get, Param, Query, ValidationPipe } from '@nestjs/common';
+import { ok, throw404 } from '../../common/responses/responses';
 import Liquidity from '../../models/liquidity';
 import { LiquidityService } from './liquidity.service';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
-import { ListQueryDTO } from './query.dto';
+import { GetParamDTO, GetQueryDTO, ListQueryDTO } from './query.dto';
 import { ConfigService } from '../../config/config.service';
+import LiquidityEvent from '../../models/liquidity_event';
 
 @Controller('v1/liquidities')
 export class LiquidityController {
   constructor(private liqSrv: LiquidityService, private cfgSrv: ConfigService) {}
 
   /**
+   * Get a liquidity
+   * @param p The param object
+   * @param p.mid The market ID
+   * @param p.provider The provider address
+   * @param p.lid The liquidity ID
+   * @param q The query object
+   * @param q.net The network name
+   * @param [q.select] Select fields to return
+   */
+  @Get('/:mid/:provider/:lid')
+  async get(
+    @Param(new ValidationPipe(ValPipeOpt)) p: GetParamDTO,
+    @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO,
+  ) {
+    const liquidity = await Liquidity.getLiquidity(q.net, p.mid, p.provider, p.lid, q.select);
+    if (!liquidity) return throw404('liquidity not found');
+    await this.liqSrv.extendLiquidity(liquidity, q.select);
+    return ok().data(liquidity).build<Liquidity>();
+  }
+
+  /**
+   * Get liquidity events
+   * @param p The param object
+   * @param p.mid The market ID
+   * @param p.provider The provider address
+   * @param p.lid The liquidity ID
+   * @param q The query object
+   * @param q.net The network name
+   * @param [q.limit] The number of result to return
+   * @param [q.offset] The query offset
+   */
+  @Get('/:mid/:provider/:lid/events')
+  async events(
+    @Param(new ValidationPipe(ValPipeOpt)) p: GetParamDTO,
+    @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO,
+  ) {
+    const events = await LiquidityEvent.search(q.net, p.mid, p.provider, p.lid, q.limit || 25, q.offset);
+    return ok().data(events).build<Liquidity>();
+  }
+
+  /**
    * List liquidities on a network
    * @param q The query object
-   * @param q.network The network name.
+   * @param q.network The network name
    * @param [q.market] The market ID
    * @param [q.amount] Filter by minimum swap amount (if it starts with '>', it means equal or greater than or if it starts with '<', it means equal or less than)
    * @param [q.price] Filter by price (if it starts with '>', it means equal or greater than or if it starts with '<', it means equal or less than)

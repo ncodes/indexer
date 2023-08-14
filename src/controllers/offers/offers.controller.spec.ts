@@ -97,11 +97,55 @@ describe('OffersController', () => {
     });
 
     it('should return 200 and correct result', async () => {
-      const event = await OfferEvent.create({ network: net, offerId: 1 });
-      await OfferEvent.create({ network: 'other', offerId: 1 });
+      const event = await OfferEvent.create({
+        network: net,
+        offerId: 1,
+        createdAt: moment().subtract(1, 's').toISOString(),
+      });
+      const event2 = await OfferEvent.create({
+        network: net,
+        offerId: 1,
+        createdAt: moment().toISOString(),
+      });
+      await OfferEvent.create({ network: 'other', offerId: 1, createdAt: moment().subtract(1, 's').toISOString() });
+      await OfferEvent.create({ network: 'other', offerId: 1, createdAt: moment().toISOString() });
       await request(app.getHttpServer())
         .get(`/v1/offers/1/events`)
         .query({ net })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data).toHaveLength(2);
+          expect(res.body.data[0].id).toEqual(event2.id);
+          expect(res.body.data[1].id).toEqual(event.id);
+        });
+    });
+
+    it('should return 200 and correct result when limit and offset are set', async () => {
+      const event = await OfferEvent.create({
+        network: net,
+        offerId: 1,
+        createdAt: moment().subtract(1, 's').toISOString(),
+      });
+      const event2 = await OfferEvent.create({
+        network: net,
+        offerId: 1,
+        createdAt: moment().toISOString(),
+      });
+      await OfferEvent.create({ network: 'other', offerId: 1, createdAt: moment().subtract(1, 's').toISOString() });
+      await OfferEvent.create({ network: 'other', offerId: 1, createdAt: moment().toISOString() });
+
+      await request(app.getHttpServer())
+        .get(`/v1/offers/1/events`)
+        .query({ net, limit: 1 })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data).toHaveLength(1);
+          expect(res.body.data[0].id).toEqual(event2.id);
+        });
+
+      await request(app.getHttpServer())
+        .get(`/v1/offers/1/events`)
+        .query({ net, limit: 1, offset: 1 })
         .expect(200)
         .expect((res) => {
           expect(res.body.data).toHaveLength(1);

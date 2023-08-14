@@ -152,13 +152,13 @@ export default class Liquidity extends BaseModel {
     return this.query(txn).whereNotDeleted().findById(id);
   }
 
-  /**
-   * getByBaseAddress finds a record by base address
-   * @param address The base address
-   * @param txn Optional transaction object
-   */
-  static getByBaseAddress(address: string, txn?: Transaction) {
-    return this.query(txn).where({ baseAddress: address }).whereNotDeleted().first();
+  // Get liquidities by optionally network, market and provider
+  static async getLiquidities(network: string, marketAddress?: string, provider?: string, txn?: Transaction) {
+    let q = this.query(txn);
+    if (network) q = q.where({ network });
+    if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
+    if (provider) q = q.where('provider', 'ILIKE', provider);
+    return q.orderBy('createdAt', 'DESC');
   }
 
   /**
@@ -192,7 +192,7 @@ export default class Liquidity extends BaseModel {
    * @param provider The provider address
    * @param lid The liquidity ID (optional)
    * @param upd The update object
-   * @param txn? Optional transaction object
+   * @param txn Optional transaction object
    */
   static update(
     network: string,
@@ -226,17 +226,17 @@ export default class Liquidity extends BaseModel {
   /**
    * getLiquidities finds liquidities
    * @param network The network name
-   * @param marketAddress? The market ID (optional)
-   * @param provider? Filter by provider address (optional)
-   * @param maxOpenDisputes? Allow only records with lower open disputes
+   * @param marketAddress The market ID (optional)
+   * @param provider Filter by provider address (optional)
+   * @param maxOpenDisputes Allow only records with lower open disputes
    * @param amount Filter by swap amount
-   * @param price? Filter by price
-   * @param reqLpBadges? Filter by badges liquidity providers must have been granted
+   * @param price Filter by price
+   * @param reqLpBadges Filter by badges liquidity providers must have been granted
    * @param reqSwapBadges
-   * @param limit? The number of records to return (optional).
-   * @param offset? The query offset (optional)
+   * @param limit The number of records to return (optional).
+   * @param offset The query offset (optional)
    * @param select Select specific fields (optional)
-   * @param txn? Optional transaction object
+   * @param txn Optional transaction object
    */
   static search(
     network: string,
@@ -344,21 +344,19 @@ export default class Liquidity extends BaseModel {
    * @param maxOpenDisputes Allow only records with lower open disputes
    * @param txn Optional transaction object
    */
-  static countLiquidities(
+  static async countLiquidities(
     network: string,
     marketAddress?: string,
     provider?: string,
     maxOpenDisputes?: number,
     txn?: Transaction,
-  ): Promise<Liquidity[]> {
+  ): Promise<string> {
     let q = this.query(txn).whereNotDeleted().where({ network, paused: false });
     if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
     if (provider) q = q.where('provider', 'ILIKE', provider);
     if (maxOpenDisputes) q = q.where('openDisputes', '<', maxOpenDisputes);
-    return q
-      .count('id')
-      .first()
-      .then((res: any) => res.count);
+    const res = await q.count('id').first();
+    return res.count || '0';
   }
 
   /**

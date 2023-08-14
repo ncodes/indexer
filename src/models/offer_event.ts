@@ -1,9 +1,8 @@
 import { randStr } from '../common/common';
-import Objection, { raw, Transaction } from 'objection';
+import Objection, { Transaction } from 'objection';
 import { BaseModel } from './base';
-import { uniq } from 'lodash';
 
-export enum OfferEventAction {
+export enum OfferEvents {
   Create = 'create',
   Update = 'update',
   Accept = 'accept',
@@ -29,7 +28,7 @@ export default class OfferEvent extends BaseModel {
   // The NFT IDs to offer for the liquidity
   ids: number[] = undefined;
   // The offer event action
-  action: OfferEventAction = undefined;
+  action: OfferEvents = undefined;
 
   constructor(init?: Partial<OfferEvent>) {
     super();
@@ -83,12 +82,23 @@ export default class OfferEvent extends BaseModel {
   }
 
   /**
-   * getByOfferId finds a record
+   * Finds a record by network and offer ID
    * @param network The network name
    * @param offerId The on-chain offer ID
+   * @param limit The limit of records to return
+   * @param offset The offset of records to return
    * @param txn Optional transaction object
    */
-  static getByNetworkAndOfferId(network: string, offerId: number, txn?: Objection.Transaction) {
-    return this.query(txn).whereNotDeleted().where({ network, offerId });
+  static getByNetworkAndOfferId(
+    network: string,
+    offerId: number,
+    limit?: number,
+    offset?: number,
+    txn?: Objection.Transaction,
+  ) {
+    let q = this.query(txn).whereNotDeleted().where({ network, offerId });
+    if (offset) q = q.offset(offset);
+    if (limit) q = q.limit(limit);
+    return q.orderBy('createdAt', 'desc');
   }
 }

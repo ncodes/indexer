@@ -18,7 +18,8 @@ import Offer from '../../models/offers';
 import { includesStr, isEqualStr, toDec } from '../../common/common';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
-import OfferEvent, { OfferEventAction } from '../../models/offer_event';
+import OfferEvent, { OfferEvents } from '../../models/offer_event';
+import LiquidityEvent, { LiquidityEvents } from '../../models/liquidity_event';
 
 export class CoreHandler extends Handler {
   logger = new Logger(CoreHandler.name);
@@ -514,9 +515,23 @@ export class CoreHandler extends Handler {
       },
       txn,
     );
-    swap.market = market;
+
+    // Create liquidity event
+    await LiquidityEvent.create(
+      {
+        network: this.network,
+        marketAddress,
+        provider,
+        lid: lid.toNumber(),
+        creator: swapper,
+        orderId: orderId.toNumber(),
+        action: LiquidityEvents.Swap,
+      },
+      txn,
+    );
 
     // Send notification
+    swap.market = market;
     await this.notifSrv.notify(NotificationID.NewInteractiveSwap, this.network, provider, <SwapOrderNotificationData>{
       marketAddress,
       provider,
@@ -614,6 +629,20 @@ export class CoreHandler extends Handler {
           amountSwapped: toBN(market.amountSwapped).add(amount).toString(),
           totalSwaps: market.totalSwaps + 1,
           totalLiquidity: toBN(market.totalLiquidity).sub(amount).toString(),
+        },
+        txn,
+      );
+
+      // Create liquidity event
+      await LiquidityEvent.create(
+        {
+          network: this.network,
+          marketAddress,
+          provider,
+          lid: lid.toNumber(),
+          creator: swapper,
+          orderId: orderId.toNumber(),
+          action: LiquidityEvents.Swap,
         },
         txn,
       );
@@ -1031,18 +1060,25 @@ export class CoreHandler extends Handler {
     _event: Event,
     txn?: Transaction,
   ) {
-    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
+    let liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
     const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
+    const common = {
+      network: this.network,
+      marketAddress,
+      provider,
+      lid: lid.toNumber(),
+      creator: provider,
+    };
 
     if (!liq) {
-      await Liquidity.create(
+      liq = await Liquidity.create(
         {
           network: this.network,
-          provider,
           marketAddress,
+          provider,
+          lid: lid.toNumber(),
           target,
           paused,
-          lid: lid.toNumber(),
           base: market.base,
           baseAddress: market.baseAddress,
           baseType: market.baseType,
@@ -1065,6 +1101,21 @@ export class CoreHandler extends Handler {
         {
           totalLiquidity: toBN(market.totalLiquidity).add(amount).toString(),
           lowestPrice: await Liquidity.getLowestPrice(this.network, marketAddress, undefined, undefined, txn),
+        },
+        txn,
+      );
+
+      await LiquidityEvent.create(
+        {
+          ...common,
+          action: LiquidityEvents.Add,
+          amount: liq.amount,
+          price: liq.price,
+          minSwap: liq.minSwap,
+          maxSwap: liq.maxSwap,
+          target: liq.target,
+          timeToPay: liq.timeToPay,
+          paused: liq.paused,
         },
         txn,
       );
@@ -1095,6 +1146,42 @@ export class CoreHandler extends Handler {
 
       mktCh.lowestPrice = await Liquidity.getLowestPrice(this.network, marketAddress, undefined, undefined, txn);
       await Market.updateById(market.id, mktCh, txn);
+
+      if (liq.amount != ch.amount) {
+        const action = deduct ? LiquidityEvents.Remove : LiquidityEvents.Add;
+        await LiquidityEvent.create({ ...common, amount: amount.toString(), action }, txn);
+      }
+
+      if (liq.price != ch.price) {
+        await LiquidityEvent.create({ ...common, price: ch.price, action: LiquidityEvents.PriceUpdate }, txn);
+      }
+
+      if (liq.paused != ch.paused) {
+        await LiquidityEvent.create({ ...common, paused: ch.paused, action: LiquidityEvents.Pause }, txn);
+      }
+
+      if (liq.target != ch.target) {
+        await LiquidityEvent.create({ ...common, target: ch.target, action: LiquidityEvents.TargetUpdate }, txn);
+      }
+
+      if (liq.timeToPay != ch.timeToPay) {
+        await LiquidityEvent.create(
+          { ...common, timeToPay: ch.timeToPay, action: LiquidityEvents.TimeToPayUpdate },
+          txn,
+        );
+      }
+
+      if (liq.minSwap != ch.minSwap || liq.maxSwap != ch.maxSwap) {
+        await LiquidityEvent.create(
+          {
+            ...common,
+            minSwap: ch.minSwap || liq.minSwap,
+            maxSwap: ch.maxSwap || liq.maxSwap,
+            action: LiquidityEvents.SwapLimitUpdate,
+          },
+          txn,
+        );
+      }
     }
 
     // Add new market price entry, if quote is not NFT - since price is not
@@ -1119,7 +1206,7 @@ export class CoreHandler extends Handler {
    * A market manager updated a liquidity's price
    * @param marketAddress The market ID
    * @param provider The liquidity provider's address
-   * @param _manager The liquidity manager's address
+   * @param manager The liquidity manager's address
    * @param lid The liquidity ID
    * @param price The updated price
    * @param _event The event object
@@ -1128,7 +1215,7 @@ export class CoreHandler extends Handler {
   async onUpdatedPrice(
     marketAddress: string,
     provider: string,
-    _manager: string,
+    manager: string,
     lid: BigNumber,
     price: BigNumber,
     _event: Event,
@@ -1157,6 +1244,22 @@ export class CoreHandler extends Handler {
     await Market.updateByNetworkAddress(this.network, marketAddress, {
       lowestPrice: await Liquidity.getLowestPrice(this.network, marketAddress, undefined, undefined, txn),
     });
+
+    // Add liquidity event
+    if (liq.price != price.toString()) {
+      await LiquidityEvent.create(
+        {
+          network: this.network,
+          marketAddress,
+          provider,
+          lid: lid.toNumber(),
+          creator: manager,
+          price: price.toString(),
+          action: LiquidityEvents.PriceUpdate,
+        },
+        txn,
+      );
+    }
   }
 
   /**
@@ -1177,8 +1280,24 @@ export class CoreHandler extends Handler {
     txn?: Transaction,
   ) {
     const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
+
     await Liquidity.updateById(liq.id, { paused });
-    return;
+
+    // Add liquidity event
+    if (liq.paused != paused) {
+      await LiquidityEvent.create(
+        {
+          network: this.network,
+          marketAddress,
+          provider,
+          lid: lid.toNumber(),
+          creator: provider,
+          paused,
+          action: LiquidityEvents.Pause,
+        },
+        txn,
+      );
+    }
   }
 
   /**
@@ -1200,7 +1319,22 @@ export class CoreHandler extends Handler {
   ) {
     if (isEqualStr(manager, oldManager)) return;
 
-    await Liquidity.update(this.network, marketAddress, provider, undefined, { manager }, txn);
+    const liquidities = await Liquidity.getLiquidities(this.network, marketAddress, provider, txn);
+    for (const liq of liquidities) {
+      await Liquidity.updateById(liq.id, { manager }, txn);
+      await LiquidityEvent.create(
+        {
+          network: this.network,
+          marketAddress,
+          provider,
+          lid: liq.lid,
+          creator: provider,
+          manager,
+          action: LiquidityEvents.ManagerUpdate,
+        },
+        txn,
+      );
+    }
 
     // Notify the old manager
     const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
@@ -1295,13 +1429,26 @@ export class CoreHandler extends Handler {
         amount: offer.amount,
         price: offer.price,
         ids: offer.ids,
-        action: OfferEventAction.Create,
+        action: OfferEvents.Create,
+      },
+      txn,
+    );
+
+    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
+    await LiquidityEvent.create(
+      {
+        network: this.network,
+        marketAddress,
+        provider,
+        lid: lid.toNumber(),
+        creator: offerer,
+        offerId: offer.offerId,
+        action: LiquidityEvents.Offer,
       },
       txn,
     );
 
     const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
-    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
 
     // Send notification
     await this.notifSrv.notify(NotificationID.NewOffer, this.network, provider, {
@@ -1352,7 +1499,7 @@ export class CoreHandler extends Handler {
         amount: offer.amount,
         price: offer.price,
         ids: offer.ids,
-        action: OfferEventAction.Update,
+        action: OfferEvents.Update,
       },
       txn,
     );
@@ -1394,7 +1541,7 @@ export class CoreHandler extends Handler {
         network: this.network,
         offerId: offer.offerId,
         creator: acceptor,
-        action: OfferEventAction.Accept,
+        action: OfferEvents.Accept,
       },
       txn,
     );
@@ -1434,7 +1581,7 @@ export class CoreHandler extends Handler {
         network: this.network,
         offerId: offer.offerId,
         creator: unacceptor,
-        action: OfferEventAction.Unaccept,
+        action: OfferEvents.Unaccept,
       },
       txn,
     );
@@ -1466,7 +1613,7 @@ export class CoreHandler extends Handler {
         network: this.network,
         offerId: offer.offerId,
         creator: canceller,
-        action: OfferEventAction.Cancel,
+        action: OfferEvents.Cancel,
       },
       txn,
     );
@@ -1502,7 +1649,7 @@ export class CoreHandler extends Handler {
         network: this.network,
         offerId: offer.offerId,
         creator: executor,
-        action: OfferEventAction.Execute,
+        action: OfferEvents.Execute,
       },
       txn,
     );

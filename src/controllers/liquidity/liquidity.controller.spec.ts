@@ -19,6 +19,9 @@ import { randStr } from '../../common/common';
 import Meta, { MetaKeys } from '../../models/meta';
 import * as moment from 'moment';
 import BadgeGrant from '../../models/badge_grant';
+import LiquidityEvent from '../../models/liquidity_event';
+import Offer from '../../models/offers';
+import Swap from '../../models/swap';
 
 const mockCfgGet = jest.fn();
 const mockGetContractParam = jest.fn();
@@ -96,6 +99,173 @@ describe('LiquidityController', () => {
   beforeEach(async () => {
     u = await User.create({ role: Roles.User });
     token = await makeSession(u, randStr(), '5', mockCfgGet('auth.jwtSecret'));
+  });
+
+  describe('.get', () => {
+    it('should return 400 when network is unknown', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/liquidities/0xMarket/0xProvider/0`)
+        .query({})
+        .set('Authorization', 'bearer ' + token)
+        .expect(400)
+        .expect({
+          error: {
+            message: 'network is required',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 400 when network is unknown', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/liquidities/0xMarket/0xProvider/0`)
+        .query({ net: 'net1' })
+        .set('Authorization', 'bearer ' + token)
+        .expect(400)
+        .expect({
+          error: {
+            message: 'network is unknown',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 404 when liquidity was not found', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/liquidities/0xMarket/0xProvider/0`)
+        .query({ net })
+        .set('Authorization', 'bearer ' + token)
+        .expect(404)
+        .expect({
+          error: { message: 'liquidity not found' },
+        });
+    });
+
+    it('should return 404 when liquidity was not found', async () => {
+      const liq = await Liquidity.create({
+        network: net,
+        provider: '0xProvider',
+        marketAddress: '0xMarket',
+        lid: 0,
+      });
+
+      const mockExtendLiquidity = jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(undefined);
+
+      await request(app.getHttpServer())
+        .get(`/v1/liquidities/0xMarket/0xProvider/0`)
+        .query({ net })
+        .set('Authorization', 'bearer ' + token)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data.id).toEqual(liq.id);
+          expect(mockExtendLiquidity).toHaveBeenCalled();
+        });
+    });
+  });
+
+  describe('.events', () => {
+    it('should return 400 when network is unknown', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/liquidities/0xMarket/0xProvider/0/events`)
+        .query({})
+        .set('Authorization', 'bearer ' + token)
+        .expect(400)
+        .expect({
+          error: {
+            message: 'network is required',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 400 when network is unknown', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/liquidities/0xMarket/0xProvider/0/events`)
+        .query({ net: 'net1' })
+        .set('Authorization', 'bearer ' + token)
+        .expect(400)
+        .expect({
+          error: {
+            message: 'network is unknown',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 200 and correct result', async () => {
+      const offer = await Offer.create({ network: net, offerId: 1 });
+      const swap = await Swap.create({ network: net, orderId: 1 });
+      const event = await LiquidityEvent.create({
+        network: net,
+        marketAddress: '0xMarket',
+        provider: '0xProvider',
+        lid: 0,
+        createdAt: moment().subtract(1, 'day').toISOString(),
+      });
+      const event2 = await LiquidityEvent.create({
+        network: net,
+        marketAddress: '0xMarket',
+        provider: '0xProvider',
+        lid: 0,
+        offerId: 1,
+        orderId: 1,
+        createdAt: moment().toISOString(),
+      });
+      await request(app.getHttpServer())
+        .get(`/v1/liquidities/0xMarket/0xProvider/0/events`)
+        .query({ net })
+        .set('Authorization', 'bearer ' + token)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data).toHaveLength(2);
+          expect(res.body.data[0].id).toEqual(event2.id);
+          expect(res.body.data[1].id).toEqual(event.id);
+          expect(res.body.data[0].offer).toBeDefined();
+          expect(res.body.data[0].offer.id).toEqual(offer.id);
+          expect(res.body.data[0].swap).toBeDefined();
+          expect(res.body.data[0].swap.id).toEqual(swap.id);
+        });
+    });
+
+    it('should return 200 and correct result when limit and offset are used', async () => {
+      const event = await LiquidityEvent.create({
+        network: net,
+        marketAddress: '0xMarket',
+        provider: '0xProvider',
+        lid: 0,
+        createdAt: moment().subtract(1, 'day').toISOString(),
+      });
+      const event2 = await LiquidityEvent.create({
+        network: net,
+        marketAddress: '0xMarket',
+        provider: '0xProvider',
+        lid: 0,
+        createdAt: moment().toISOString(),
+      });
+      await request(app.getHttpServer())
+        .get(`/v1/liquidities/0xMarket/0xProvider/0/events`)
+        .query({ net, limit: 1 })
+        .set('Authorization', 'bearer ' + token)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data).toHaveLength(1);
+          expect(res.body.data[0].id).toEqual(event2.id);
+        });
+
+      await request(app.getHttpServer())
+        .get(`/v1/liquidities/0xMarket/0xProvider/0/events`)
+        .query({ net, limit: 1, offset: 1 })
+        .set('Authorization', 'bearer ' + token)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data).toHaveLength(1);
+          expect(res.body.data[0].id).toEqual(event.id);
+        });
+    });
   });
 
   describe('.list', () => {

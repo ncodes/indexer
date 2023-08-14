@@ -14,6 +14,7 @@ import Dispute from '../../models/dispute';
 import Swap from '../../models/swap';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 import Meta from '../../models/meta';
+import SwapEvent, { SwapEvents } from '../../models/swap_event';
 
 export class MediatorManagerHandler extends Handler {
   constructor(
@@ -221,7 +222,7 @@ export class MediatorManagerHandler extends Handler {
    * @param ticketId The unique id of the ticket
    * @param orderId The ID of the order ticket was drafted to
    * @param disputeId The dispute ID
-   * @param _drafter The address if the drafter
+   * @param drafter The address if the drafter
    * @param event The event object
    * @param txn The database transaction handle
    */
@@ -231,7 +232,7 @@ export class MediatorManagerHandler extends Handler {
     ticketId: BigNumber,
     orderId: BigNumber,
     disputeId: BigNumber,
-    _drafter: string,
+    drafter: string,
     event: ethers.Event,
     txn?: Transaction,
   ) {
@@ -304,6 +305,17 @@ export class MediatorManagerHandler extends Handler {
       );
     }
 
+    // Create swap event
+    await SwapEvent.create({
+      network: this.network,
+      marketAddress,
+      orderId: orderId.toNumber(),
+      creator: drafter,
+      disputeId: disputeId.toNumber(),
+      draftee: owner,
+      action: SwapEvents.Drafted,
+    });
+
     // Send notification
     await this.notifSrv.notify(NotificationID.TicketDrafted, this.network, owner, {
       owner,
@@ -313,7 +325,7 @@ export class MediatorManagerHandler extends Handler {
 
     if (fullyDrafted) {
       // Send notification to provider and taker when fully drafted
-      const swap = await Swap.get(this.network, orderId.toNumber(), undefined, txn);
+      const swap = await Swap.get(this.network, orderId.toNumber(), undefined, undefined, txn);
       const locals = { dispute, evidencePhaseHoursLeft: moment(dispute.evidenceEndAt).fromNow(true) };
       await this.notifSrv.notify(NotificationID.FullyDrafted, this.network, swap.provider, locals);
       await this.notifSrv.notify(NotificationID.FullyDrafted, this.network, swap.taker, locals);
@@ -331,7 +343,7 @@ export class MediatorManagerHandler extends Handler {
    * @param owner The ticket owner
    * @param ticketId The unique id of the ticket
    * @param slashed Indicates whether the ticket was slashed
-   * @param _undrafter The address of the caller
+   * @param undrafter The address of the caller
    * @param _event The event object
    * @param txn The database transaction handle
    */
@@ -339,11 +351,22 @@ export class MediatorManagerHandler extends Handler {
     owner: string,
     ticketId: BigNumber,
     slashed: boolean,
-    _undrafter: string,
+    undrafter: string,
     _event: ethers.Event,
     txn?: Transaction,
   ) {
     const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, ticketId.toNumber(), undefined, txn);
+
+    // Create swap event
+    const order = await Swap.get(this.network, ticket.orderId, undefined, undefined, txn);
+    await SwapEvent.create({
+      network: this.network,
+      marketAddress: order.marketAddress,
+      orderId: ticket.orderId,
+      creator: undrafter,
+      disputeId: ticket.disputeId,
+      action: SwapEvents.Undrafted,
+    });
 
     // Complete an undraft mining task
     await MineTask.completeOneUndraftTask(this.network, ticket.orderId, ticket.disputeId, txn);

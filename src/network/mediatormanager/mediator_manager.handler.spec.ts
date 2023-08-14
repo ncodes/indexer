@@ -12,6 +12,7 @@ import Dispute from '../../models/dispute';
 import Swap from '../../models/swap';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 import Meta, { MetaKeys } from '../../models/meta';
+import SwapEvent, { SwapEvents } from '../../models/swap_event';
 
 const MarketCoreContract = jest.fn().mockImplementation(() => {
   return {};
@@ -241,6 +242,15 @@ describe('MediatorManagerHandler', () => {
         unix(evidEndAt + parseInt(await Meta.getContractParam(net, 'predictDur'))).isSame(dispute.predictEndAt),
       ).toBeTruthy();
 
+      const event = await SwapEvent.find({ action: SwapEvents.Drafted });
+      expect(event).toBeDefined();
+      expect(event.network).toEqual(net);
+      expect(event.marketAddress).toEqual(marketAddress);
+      expect(event.orderId).toEqual(orderId.toNumber());
+      expect(event.draftee).toEqual(owner);
+      expect(event.disputeId).toEqual(draft.disputeIndex);
+      expect(event.creator).toEqual(drafter);
+
       expect(mockNotify).toBeCalledTimes(6);
 
       // expect notification to be sent to drafted ticket owner
@@ -404,6 +414,12 @@ describe('MediatorManagerHandler', () => {
         disputeId: 1,
       });
 
+      await Swap.create({
+        network: net,
+        marketAddress,
+        orderId: ticket.orderId,
+      });
+
       await MineTask.create({
         type: MineTaskType.Undraft,
         network: net,
@@ -440,6 +456,14 @@ describe('MediatorManagerHandler', () => {
       // expect another undraft mining task to be marked as `completed`
       numCompleted = await MineTask.count({ type: MineTaskType.Undraft, completed: true });
       expect(numCompleted).toEqual(2);
+
+      const event = await SwapEvent.find({ action: SwapEvents.Undrafted });
+      expect(event).toBeDefined();
+      expect(event.network).toEqual(net);
+      expect(event.marketAddress).toEqual(marketAddress);
+      expect(event.orderId).toEqual(23);
+      expect(event.disputeId).toEqual(1);
+      expect(event.creator).toEqual(undrafter);
     });
   });
 

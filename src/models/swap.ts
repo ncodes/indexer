@@ -221,14 +221,15 @@ export default class Swap extends BaseModel {
    * @param network The network name
    * @param orderId The order ID
    * @param select Select specific fields (optional)
+   * @param relations The relations to be fetched (optional)
    * @param txn Optional transaction object
    */
-  static get(network: string, orderId: number, select = [], txn?: Transaction) {
+  static get(network: string, orderId: number, select = [], relations = 'market', txn?: Transaction) {
     select = this.makeSelectList(select);
     return this.query(txn)
       .select(...select)
       .where({ network, orderId })
-      .withGraphFetched('market')
+      .withGraphFetched(relations)
       .whereNotDeleted()
       .first();
   }

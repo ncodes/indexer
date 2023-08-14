@@ -16,6 +16,7 @@ import Offer from '../../models/offers';
 import { toDec } from '../../common/common';
 import OfferEvent, { OfferEvents } from '../../models/offer_event';
 import LiquidityEvent, { LiquidityEvents } from '../../models/liquidity_event';
+import SwapEvent, { SwapEvents } from '../../models/swap_event';
 
 const mockGetOrder = jest.fn();
 const mockGetOffer = jest.fn();
@@ -1203,6 +1204,13 @@ describe('CoreHandler', () => {
         // should not update completion rate since swap was disputed
         expect(market.completionRate).toEqual(0);
 
+        const event = await SwapEvent.find({ action: SwapEvents.Released });
+        expect(event).toBeDefined();
+        expect(event.network).toEqual(net);
+        expect(event.marketAddress).toEqual(marketAddress);
+        expect(event.orderId).toEqual(orderId.toNumber());
+        expect(event.creator).toEqual(provider);
+
         // mark recent dispute as released
         dispute = await Dispute.getById(dispute.id);
         expect(dispute.orderReleased).toBeTruthy();
@@ -1316,6 +1324,13 @@ describe('CoreHandler', () => {
       expect(market.totalLiquidity).toEqual(liqAmt.add(amount).toString());
       expect(market.avgFinalizeDur).toBeGreaterThan(0);
 
+      const event = await SwapEvent.find({ action: SwapEvents.Cancelled });
+      expect(event).toBeDefined();
+      expect(event.network).toEqual(net);
+      expect(event.marketAddress).toEqual(marketAddress);
+      expect(event.orderId).toEqual(orderId.toNumber());
+      expect(event.creator).toEqual(taker);
+
       // Should send notification to counterparty
       let notifData = { market, liq, swap };
       expect(mockNotify).toHaveBeenCalledWith(NotificationID.SwapOrderCancelled, net, provider, notifData);
@@ -1391,6 +1406,13 @@ describe('CoreHandler', () => {
       expect(swap.payer).toEqual(taker);
       expect(swap.paidAt).toBeDefined();
       expect(moment(swap.disputeFrom).unix()).toEqual(disputeFrom);
+
+      const event = await SwapEvent.find({ action: SwapEvents.Paid });
+      expect(event).toBeDefined();
+      expect(event.network).toEqual(net);
+      expect(event.marketAddress).toEqual(marketAddress);
+      expect(event.orderId).toEqual(orderId.toNumber());
+      expect(event.creator).toEqual(swap.payer);
 
       liq = await Liquidity.getById(liq.id);
       expect(liq.avgPaymentDur).toBeGreaterThan(0);

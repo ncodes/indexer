@@ -20,6 +20,7 @@ import { MetadataService } from '../../services/metadata/metadata.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
 import OfferEvent, { OfferEvents } from '../../models/offer_event';
 import LiquidityEvent, { LiquidityEvents } from '../../models/liquidity_event';
+import SwapEvent, { SwapEvents } from '../../models/swap_event';
 
 export class CoreHandler extends Handler {
   logger = new Logger(CoreHandler.name);
@@ -655,7 +656,7 @@ export class CoreHandler extends Handler {
       });
     } else {
       const now = moment();
-      let swap = await Swap.get(this.network, orderId.toNumber() - 1, undefined, txn);
+      let swap = await Swap.get(this.network, orderId.toNumber() - 1, undefined, undefined, txn);
       const { marketAddress, provider } = swap;
       let market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
 
@@ -726,6 +727,15 @@ export class CoreHandler extends Handler {
       );
       swap.market = market;
 
+      // Create swap event
+      await SwapEvent.create({
+        network: this.network,
+        marketAddress,
+        orderId: orderId.toNumber(),
+        creator: releaser,
+        action: SwapEvents.Released,
+      });
+
       // Send notification
       // Send to either taker or provider if one of them is the finalizer.
       // or send to both if neither is the finalizer
@@ -751,7 +761,7 @@ export class CoreHandler extends Handler {
     const now = moment();
 
     // Mark swap order as `cancelled`
-    let swap = await Swap.get(this.network, orderId.toNumber(), undefined, txn);
+    let swap = await Swap.get(this.network, orderId.toNumber(), undefined, undefined, txn);
     swap = await Swap.updateById(
       swap.id,
       {
@@ -783,6 +793,15 @@ export class CoreHandler extends Handler {
       txn,
     );
 
+    // Create swap event
+    await SwapEvent.create({
+      network: this.network,
+      marketAddress,
+      orderId: orderId.toNumber(),
+      creator: canceller,
+      action: SwapEvents.Cancelled,
+    });
+
     // Send notification.
     // Send to either taker or provider if one of them is the canceller.
     // or send to both if neither is the canceller
@@ -801,11 +820,11 @@ export class CoreHandler extends Handler {
    * An order was marked as `paid`
    * @param orderId The order ID
    * @param disputeFrom The time after which the order can be disputed
-   * @param event The event object
+   * @param _event The event object
    * @param txn The transaction object
    */
-  async onSwapOrderPaid(orderId: BigNumber, disputeFrom: BigNumber, event: Event, txn?: Transaction) {
-    let swap = await Swap.get(this.network, orderId.toNumber(), undefined, txn);
+  async onSwapOrderPaid(orderId: BigNumber, disputeFrom: BigNumber, _event: Event, txn?: Transaction) {
+    let swap = await Swap.get(this.network, orderId.toNumber(), undefined, undefined, txn);
 
     // Update the order
     swap = await Swap.updateById(
@@ -845,6 +864,15 @@ export class CoreHandler extends Handler {
       txn,
     );
     swap.market = market;
+
+    // Create swap event
+    await SwapEvent.create({
+      network: this.network,
+      marketAddress,
+      orderId: orderId.toNumber(),
+      creator: swap.payer,
+      action: SwapEvents.Paid,
+    });
 
     // Send notification
     const recipient = swap.payer == swap.provider ? swap.taker : swap.provider;

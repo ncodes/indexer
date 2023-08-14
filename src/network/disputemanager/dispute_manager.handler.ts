@@ -14,6 +14,7 @@ import { isEqualStr, toDec } from '../../common/common';
 import Liquidity from '../../models/liquidity';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 import Meta from '../../models/meta';
+import SwapEvent, { SwapEvents } from '../../models/swap_event';
 
 export class DisputeManagerHandler extends Handler {
   constructor(
@@ -96,7 +97,7 @@ export class DisputeManagerHandler extends Handler {
    * @param creator The address of the dispute creator
    * @param disputeId The dispute ID
    * @param wantRelease Indicate the creator wants dispute released
-   * @param event The event object
+   * @param _event The event object
    * @param txn The transaction object
    */
   async onDisputeCreated(
@@ -104,10 +105,10 @@ export class DisputeManagerHandler extends Handler {
     creator: string,
     disputeId: BigNumber,
     wantRelease: boolean,
-    event: Event,
+    _event: Event,
     txn?: Transaction,
   ) {
-    const swap = await Swap.get(this.network, orderId.toNumber(), undefined, txn);
+    const swap = await Swap.get(this.network, orderId.toNumber(), undefined, undefined, txn);
     const { provider, marketAddress, taker, network, lid } = swap;
 
     // Calculate number of mediators required
@@ -185,6 +186,16 @@ export class DisputeManagerHandler extends Handler {
       txn,
     );
 
+    // Create swap event
+    await SwapEvent.create({
+      network: this.network,
+      marketAddress,
+      orderId: orderId.toNumber(),
+      creator: creator,
+      disputeId: disputeId.toNumber(),
+      action: SwapEvents.Disputed,
+    });
+
     // Send notification;
     const recipient = isEqualStr(swap.provider, creator) ? swap.taker : swap.provider;
     await this.notifSrv.notify(NotificationID.DisputeCreated, this.network, recipient, {
@@ -200,7 +211,7 @@ export class DisputeManagerHandler extends Handler {
    * @param disputeId The dispute ID
    * @param committer The address of the mediator
    * @param hash The hash committed
-   * @param event The event object
+   * @param _event The event object
    * @param txn The transaction object
    */
   async onCommitted(
@@ -209,7 +220,7 @@ export class DisputeManagerHandler extends Handler {
     disputeId: BigNumber,
     committer: string,
     hash: string,
-    event: Event,
+    _event: Event,
     txn?: Transaction,
   ) {
     await Commit.create(
@@ -223,6 +234,16 @@ export class DisputeManagerHandler extends Handler {
       },
       txn,
     );
+
+    // Create swap event
+    await SwapEvent.create({
+      network: this.network,
+      marketAddress,
+      orderId: orderId.toNumber(),
+      creator: committer,
+      disputeId: disputeId.toNumber(),
+      action: SwapEvents.Committed,
+    });
   }
 
   /**
@@ -232,7 +253,7 @@ export class DisputeManagerHandler extends Handler {
    * @param disputeId The dispute ID
    * @param revealer The address of the mediator
    * @param vote The revealed vote
-   * @param event The event object
+   * @param _event The event object
    * @param txn The transaction object
    */
   async onRevealed(
@@ -241,7 +262,7 @@ export class DisputeManagerHandler extends Handler {
     disputeId: BigNumber,
     revealer: string,
     vote: string,
-    event: Event,
+    _event: Event,
     txn?: Transaction,
   ) {
     await Reveal.create(
@@ -255,6 +276,17 @@ export class DisputeManagerHandler extends Handler {
       },
       txn,
     );
+
+    // Create swap event
+    await SwapEvent.create({
+      network: this.network,
+      marketAddress,
+      orderId: orderId.toNumber(),
+      creator: revealer,
+      disputeId: disputeId.toNumber(),
+      vote,
+      action: SwapEvents.Revealed,
+    });
   }
 
   /**
@@ -265,7 +297,7 @@ export class DisputeManagerHandler extends Handler {
    * @param executor The address dispute outcome executed
    * @param abandoned Indicate the dispute was abandoned
    * @param winningVote The vote that was predicted by the majority.
-   * @param event The event object
+   * @param _event The event object
    * @param txn The transaction object
    */
   async onDecisionExecuted(
@@ -275,7 +307,7 @@ export class DisputeManagerHandler extends Handler {
     executor: string,
     abandoned: boolean,
     winningVote: string,
-    event: Event,
+    _event: Event,
     txn?: Transaction,
   ) {
     let dispute = await Dispute.get(this.network, marketAddress, orderId.toNumber(), disputeId.toNumber(), txn);
@@ -293,7 +325,7 @@ export class DisputeManagerHandler extends Handler {
     await Market.updateById(market.id, { openDisputes: !stalled ? market.openDisputes - 1 : market.openDisputes }, txn);
 
     // Update liquidity
-    const swap = await Swap.get(dispute.network, dispute.orderId, [], txn);
+    const swap = await Swap.get(dispute.network, dispute.orderId, [], undefined, txn);
     const liquidity = await Liquidity.getLiquidity(
       swap.network,
       swap.marketAddress,
@@ -326,6 +358,16 @@ export class DisputeManagerHandler extends Handler {
 
     // Complete a dispute execution mining task
     await MineTask.completeOneExecutionTask(this.network, marketAddress, dispute.orderId, dispute.disputeId, txn);
+
+    // Create swap event
+    await SwapEvent.create({
+      network: this.network,
+      marketAddress,
+      orderId: orderId.toNumber(),
+      creator: executor,
+      disputeId: disputeId.toNumber(),
+      action: SwapEvents.Executed,
+    });
 
     // Collate notification recipients
     const recipients: { address: string; drafted?: boolean }[] = [];

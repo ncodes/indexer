@@ -8,6 +8,7 @@ import { LiquidityService } from '../liquidity/liquidity.service';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { GetParticipantsDTO, GetQueryDTO, ListQueryDTO } from './query.dto';
 import SwapService from './swap.service';
+import SwapEvent from '../../models/swap_event';
 
 @Controller('v1/swaps')
 export class SwapsController {
@@ -40,6 +41,13 @@ export class SwapsController {
     swap.liquidity = liquidity;
 
     return ok().data(swap).build<Swap>();
+  }
+
+  // Get swap events
+  @Get(':orderId/events')
+  async events(@Param('orderId', ParseIntPipe) orderId: number, @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO) {
+    const events = await SwapEvent.search(q.net, undefined, orderId, undefined, q.limit || 25, q.offset);
+    return ok().data(events).build<SwapEvent[]>();
   }
 
   /**

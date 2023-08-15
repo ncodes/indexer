@@ -18,7 +18,9 @@ import Liquidity from '../../models/liquidity';
 import SwapService from './swap.service';
 import { randStr } from '../../common/common';
 import { MetadataService } from '../../services/metadata/metadata.service';
-import * as console from 'console';
+import Dispute from '../../models/dispute';
+import SwapEvent from '../../models/swap_event';
+import * as moment from 'moment';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -360,6 +362,75 @@ describe('SwapsController', () => {
             expect(res.body.meta.queryCount).toEqual('2');
           });
       });
+    });
+  });
+
+  describe('.events', () => {
+    it('should return 400 when network was not provided', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/swaps/0/events`)
+        .query({})
+        .set('Authorization', 'bearer ' + token)
+        .expect(400)
+        .expect({
+          error: {
+            message: 'network is required',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 400 when network is unknown', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/swaps/0/events`)
+        .query({ net: 'net1' })
+        .set('Authorization', 'bearer ' + token)
+        .expect(400)
+        .expect({
+          error: {
+            message: 'network is unknown',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 200 and return correct value', async () => {
+      const swap = await Swap.create({ network: net, orderId: 1 });
+      const dispuste = await Dispute.create({ network: net, marketAddress: '0xMarket', orderId: 1, disputeId: 1 });
+      const event = await SwapEvent.create({
+        network: net,
+        orderId: 1,
+        marketAddress: '0xMarket',
+        disputeId: 1,
+        createdAt: moment().subtract(1, 's').toISOString(),
+      });
+      const event2 = await SwapEvent.create({
+        network: net,
+        orderId: 1,
+        marketAddress: '0xMarket',
+        disputeId: 1,
+        createdAt: moment().subtract(1, 's').toISOString(),
+      });
+      await request(app.getHttpServer())
+        .get(`/v1/swaps/0/events`)
+        .query({ net })
+        .set('Authorization', 'bearer ' + token)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data).toHaveLength(2);
+          expect(res.body.data[0].id).toEqual(event2.id);
+          expect(res.body.data[1].id).toEqual(event.id);
+          expect(res.body.data[0].swap).toBeDefined();
+          expect(res.body.data[0].dispute).toBeDefined();
+          expect(res.body.data[0].swap.id).toEqual(swap.id);
+          expect(res.body.data[0].dispute.id).toEqual(dispuste.id);
+          expect(res.body.data[1].swap).toBeDefined();
+          expect(res.body.data[1].dispute).toBeDefined();
+          expect(res.body.data[1].swap.id).toEqual(swap.id);
+          expect(res.body.data[1].dispute.id).toEqual(dispuste.id);
+        });
     });
   });
 

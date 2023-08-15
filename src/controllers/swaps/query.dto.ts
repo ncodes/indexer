@@ -13,6 +13,16 @@ export class GetQueryDTO {
   @Transform(({ value }) => (value as string).split(','))
   @IsOptional()
   public select?: string[];
+
+  @Transform(({ value }) => toNumber(value))
+  @IsNumber(undefined, { message: makeValidatorMsg('must be a number', 'limit') })
+  @IsOptional()
+  public limit?: number;
+
+  @Transform(({ value }) => toNumber(value))
+  @IsNumber(undefined, { message: makeValidatorMsg('must be a number', 'offset') })
+  @IsOptional()
+  public offset?: number;
 }
 
 // tslint:disable-next-line:max-classes-per-file

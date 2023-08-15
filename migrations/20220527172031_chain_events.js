@@ -1,6 +1,6 @@
 exports.up = function (knex) {
   return Promise.all([
-    knex.schema.createTable('events', (table) => {
+    knex.schema.createTable('chain_events', (table) => {
       table.increments('sn', { primaryKey: false });
       table.string('id').primary();
       table.string('network');
@@ -12,17 +12,11 @@ exports.up = function (knex) {
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');
 
-      table.unique([
-        'network',
-        'signature',
-        'blockNumber',
-        'txIndex',
-        'logIndex',
-      ]);
+      table.unique(['network', 'signature', 'blockNumber', 'txIndex', 'logIndex']);
     }),
   ]);
 };
 
 exports.down = function (knex) {
-  return Promise.all([knex.schema.dropTable('events')]);
+  return Promise.all([knex.schema.dropTable('chain_events')]);
 };

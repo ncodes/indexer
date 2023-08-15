@@ -4,7 +4,7 @@ import Meta from '../models/meta';
 import * as sortArray from 'sort-array';
 import { Handler } from './handler';
 import { isDevMode, isTestMode, shortenAddr } from '../common/common';
-import Event from '../models/events';
+import ChainEvent from '../models/chain_events';
 import * as defer from 'defer-promise';
 
 interface Evt {
@@ -186,10 +186,10 @@ export class Watcher {
    * @param e The target event to be emitted
    */
   async emit(e: Evt) {
-    const txn = await Event.startTransaction();
+    const txn = await ChainEvent.startTransaction();
     const args = [...e.event.args.slice(0, e.event.args.length), e.event, txn];
     try {
-      await Event.bindTransaction(txn).create({
+      await ChainEvent.bindTransaction(txn).create({
         network: this.network,
         signature: e.event.eventSignature,
         blockNumber: e.event.blockNumber,

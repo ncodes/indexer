@@ -4,7 +4,7 @@ import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common
 import { GetParamDTO, GetQueryDTO, ListQueryDTO } from './query.dto';
 import Offer from '../../models/offers';
 import { ok, throw404 } from '../../common/responses/responses';
-import OfferEvent from '../../models/offer_event';
+import Event from '../../models/event';
 
 @Controller('v1/offers')
 export class OfferController {
@@ -24,7 +24,16 @@ export class OfferController {
     @Param(new ValidationPipe(ValPipeOpt)) params: GetParamDTO,
     @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO,
   ) {
-    const events = await OfferEvent.getByNetworkAndOfferId(q.net, params.offerId, q.limit || 25, q.offset);
+    const events = await Event.search(
+      q.net,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      params.offerId,
+      q.limit || 25,
+      q.offset,
+    );
     return ok().data(events).build();
   }
 

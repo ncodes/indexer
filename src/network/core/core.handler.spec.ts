@@ -14,9 +14,7 @@ import * as moment from 'moment';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 import Offer from '../../models/offers';
 import { toDec } from '../../common/common';
-import OfferEvent, { OfferEvents } from '../../models/offer_event';
-import LiquidityEvent, { LiquidityEvents } from '../../models/liquidity_event';
-import SwapEvent, { SwapEvents } from '../../models/swap_event';
+import Event, { Events } from '../../models/event';
 
 const mockGetOrder = jest.fn();
 const mockGetOffer = jest.fn();
@@ -184,7 +182,7 @@ describe('CoreHandler', () => {
       expect(marketPrice.provider).toEqual(provider);
       expect(marketPrice.lid).toEqual(liq.lid);
 
-      const event = await LiquidityEvent.find({ network: net, action: LiquidityEvents.Add });
+      const event = await Event.find({ network: net, action: Events.LiquidityAdd });
       expect(event).toBeDefined();
       expect(event.marketAddress).toEqual(market.address);
       expect(event.lid).toEqual(liq.lid);
@@ -259,7 +257,7 @@ describe('CoreHandler', () => {
       expect(market.totalLiquidity).toEqual('110');
       expect(market.lowestPrice).toEqual('430');
 
-      const eventAdd = await LiquidityEvent.find({ network: net, action: LiquidityEvents.Add });
+      const eventAdd = await Event.find({ network: net, action: Events.LiquidityAdd });
       expect(eventAdd).toBeDefined();
       expect(eventAdd.marketAddress).toEqual(market.address);
       expect(eventAdd.lid).toEqual(liq.lid);
@@ -267,7 +265,10 @@ describe('CoreHandler', () => {
       expect(eventAdd.creator).toEqual(provider);
       expect(eventAdd.amount).toEqual('10');
 
-      const eventPriceUpdate = await LiquidityEvent.find({ network: net, action: LiquidityEvents.PriceUpdate });
+      const eventPriceUpdate = await Event.find({
+        network: net,
+        action: Events.LiquidityPriceUpdate,
+      });
       expect(eventPriceUpdate).toBeDefined();
       expect(eventPriceUpdate.marketAddress).toEqual(market.address);
       expect(eventPriceUpdate.lid).toEqual(liq.lid);
@@ -275,7 +276,7 @@ describe('CoreHandler', () => {
       expect(eventPriceUpdate.creator).toEqual(provider);
       expect(eventPriceUpdate.price).toEqual(liq.price);
 
-      const eventPause = await LiquidityEvent.find({ network: net, action: LiquidityEvents.Pause });
+      const eventPause = await Event.find({ network: net, action: Events.LiquidityPause });
       expect(eventPause).toBeDefined();
       expect(eventPause.marketAddress).toEqual(market.address);
       expect(eventPause.lid).toEqual(liq.lid);
@@ -283,7 +284,7 @@ describe('CoreHandler', () => {
       expect(eventPause.creator).toEqual(provider);
       expect(eventPause.paused).toBeTruthy();
 
-      const eventTarget = await LiquidityEvent.find({ network: net, action: LiquidityEvents.TargetUpdate });
+      const eventTarget = await Event.find({ network: net, action: Events.LiquidityTargetUpdate });
       expect(eventTarget).toBeDefined();
       expect(eventTarget.marketAddress).toEqual(market.address);
       expect(eventTarget.lid).toEqual(liq.lid);
@@ -291,7 +292,10 @@ describe('CoreHandler', () => {
       expect(eventTarget.creator).toEqual(provider);
       expect(eventTarget.target).toEqual('0xNewTarget');
 
-      const eventTimeToPay = await LiquidityEvent.find({ network: net, action: LiquidityEvents.TimeToPayUpdate });
+      const eventTimeToPay = await Event.find({
+        network: net,
+        action: Events.LiquidityTimeToPayUpdate,
+      });
       expect(eventTimeToPay).toBeDefined();
       expect(eventTimeToPay.marketAddress).toEqual(market.address);
       expect(eventTimeToPay.lid).toEqual(liq.lid);
@@ -299,7 +303,10 @@ describe('CoreHandler', () => {
       expect(eventTimeToPay.creator).toEqual(provider);
       expect(eventTimeToPay.timeToPay).toEqual(10);
 
-      const eventMinSwap = await LiquidityEvent.find({ network: net, action: LiquidityEvents.SwapLimitUpdate });
+      const eventMinSwap = await Event.find({
+        network: net,
+        action: Events.LiquiditySwapLimitUpdate,
+      });
       expect(eventMinSwap).toBeDefined();
       expect(eventMinSwap.marketAddress).toEqual(market.address);
       expect(eventMinSwap.lid).toEqual(liq.lid);
@@ -625,7 +632,10 @@ describe('CoreHandler', () => {
       expect(marketPrice.price).toEqual('100');
       expect(marketPrice.provider).toEqual(liq.provider);
 
-      const eventPriceUpdate = await LiquidityEvent.find({ network: net, action: LiquidityEvents.PriceUpdate });
+      const eventPriceUpdate = await Event.find({
+        network: net,
+        action: Events.LiquidityPriceUpdate,
+      });
       expect(eventPriceUpdate).toBeDefined();
       expect(eventPriceUpdate.marketAddress).toEqual(market.address);
       expect(eventPriceUpdate.lid).toEqual(liq.lid);
@@ -656,9 +666,9 @@ describe('CoreHandler', () => {
       expect(liq2.manager).toEqual(manager);
 
       // create event for all liquidities
-      let eventMgrUpdate = await LiquidityEvent.find({
+      let eventMgrUpdate = await Event.find({
         network: net,
-        action: LiquidityEvents.ManagerUpdate,
+        action: Events.LiquidityManagerUpdate,
         lid: liq.lid,
       });
       expect(eventMgrUpdate).toBeDefined();
@@ -668,9 +678,9 @@ describe('CoreHandler', () => {
       expect(eventMgrUpdate.creator).toEqual(provider);
       expect(eventMgrUpdate.manager).toEqual(manager);
 
-      eventMgrUpdate = await LiquidityEvent.find({
+      eventMgrUpdate = await Event.find({
         network: net,
-        action: LiquidityEvents.ManagerUpdate,
+        action: Events.LiquidityManagerUpdate,
         lid: liq2.lid,
       });
       expect(eventMgrUpdate).toBeDefined();
@@ -891,7 +901,7 @@ describe('CoreHandler', () => {
       expect(liq.amount).toEqual(liqAmt.sub(amount).toString());
       expect(liq.totalSwaps).toEqual(2);
 
-      const event = await LiquidityEvent.find({ network: net, action: LiquidityEvents.Swap });
+      const event = await Event.find({ network: net, action: Events.LiquiditySwap });
       expect(event).toBeDefined();
       expect(event.marketAddress).toEqual(market.address);
       expect(event.lid).toEqual(lid.toNumber());
@@ -1051,7 +1061,7 @@ describe('CoreHandler', () => {
         expect(market.totalSwaps).toEqual(2);
         expect(market.totalLiquidity).toEqual(liqAmt.sub(amount).toString());
 
-        const event = await LiquidityEvent.find({ network: net, action: LiquidityEvents.Swap });
+        const event = await Event.find({ network: net, action: Events.LiquiditySwap });
         expect(event).toBeDefined();
         expect(event.marketAddress).toEqual(market.address);
         expect(event.lid).toEqual(lid.toNumber());
@@ -1204,7 +1214,7 @@ describe('CoreHandler', () => {
         // should not update completion rate since swap was disputed
         expect(market.completionRate).toEqual(0);
 
-        const event = await SwapEvent.find({ action: SwapEvents.Released });
+        const event = await Event.find({ action: Events.SwapReleased });
         expect(event).toBeDefined();
         expect(event.network).toEqual(net);
         expect(event.marketAddress).toEqual(marketAddress);
@@ -1324,7 +1334,7 @@ describe('CoreHandler', () => {
       expect(market.totalLiquidity).toEqual(liqAmt.add(amount).toString());
       expect(market.avgFinalizeDur).toBeGreaterThan(0);
 
-      const event = await SwapEvent.find({ action: SwapEvents.Cancelled });
+      const event = await Event.find({ action: Events.SwapCancelled });
       expect(event).toBeDefined();
       expect(event.network).toEqual(net);
       expect(event.marketAddress).toEqual(marketAddress);
@@ -1407,7 +1417,7 @@ describe('CoreHandler', () => {
       expect(swap.paidAt).toBeDefined();
       expect(moment(swap.disputeFrom).unix()).toEqual(disputeFrom);
 
-      const event = await SwapEvent.find({ action: SwapEvents.Paid });
+      const event = await Event.find({ action: Events.SwapPaid });
       expect(event).toBeDefined();
       expect(event.network).toEqual(net);
       expect(event.marketAddress).toEqual(marketAddress);
@@ -1453,7 +1463,7 @@ describe('CoreHandler', () => {
       liq = await Liquidity.getById(liq.id);
       expect(liq.paused).toBeTruthy();
 
-      const eventPause = await LiquidityEvent.find({ network: net, action: LiquidityEvents.Pause });
+      const eventPause = await Event.find({ network: net, action: Events.LiquidityPause });
       expect(eventPause).toBeDefined();
       expect(eventPause.marketAddress).toEqual(marketAddress);
       expect(eventPause.lid).toEqual(liq.lid);
@@ -1536,16 +1546,16 @@ describe('CoreHandler', () => {
       expect(offer.ids).toEqual(ids.map((id) => id.toNumber()));
       expect(moment(offer.deadline).toISOString()).toEqual(moment.unix(deadline.toNumber()).toISOString());
 
-      const offerEvents = await OfferEvent.getByNetworkAndOfferId(net, offer.offerId);
-      expect(offerEvents).toHaveLength(1);
-      expect(offerEvents[0].network).toEqual(offer.network);
-      expect(offerEvents[0].creator).toEqual(offer.creator);
-      expect(offerEvents[0].action).toEqual(OfferEvents.Create);
-      expect(offerEvents[0].amount).toEqual(offer.amount.toString());
-      expect(offerEvents[0].price).toEqual(offer.price.toString());
-      expect(offerEvents[0].ids).toEqual(offer.ids);
+      const offerEvent = await Event.find({ network: net, offerId: offer.offerId, action: Events.OfferCreate });
+      expect(offerEvent).toBeDefined();
+      expect(offerEvent.network).toEqual(offer.network);
+      expect(offerEvent.creator).toEqual(offer.creator);
+      expect(offerEvent.action).toEqual(Events.OfferCreate);
+      expect(offerEvent.amount).toEqual(offer.amount.toString());
+      expect(offerEvent.price).toEqual(offer.price.toString());
+      expect(offerEvent.ids).toEqual(offer.ids);
 
-      const liqEventOffer = await LiquidityEvent.find({ network: net, action: LiquidityEvents.Offer });
+      const liqEventOffer = await Event.find({ network: net, action: Events.LiquidityOffer });
       expect(liqEventOffer).toBeDefined();
       expect(liqEventOffer.marketAddress).toEqual(market.address);
       expect(liqEventOffer.lid).toEqual(liq.lid);
@@ -1596,14 +1606,14 @@ describe('CoreHandler', () => {
       expect(offer.ids).toEqual([4]);
       expect(moment(offer.deadline).toISOString()).toEqual(moment.unix(deadline).toISOString());
 
-      const offerEvents = await OfferEvent.getByNetworkAndOfferId(net, offer.offerId);
-      expect(offerEvents).toHaveLength(1);
-      expect(offerEvents[0].network).toEqual(offer.network);
-      expect(offerEvents[0].creator).toEqual(offer.creator);
-      expect(offerEvents[0].action).toEqual(OfferEvents.Update);
-      expect(offerEvents[0].amount).toEqual(offer.amount.toString());
-      expect(offerEvents[0].price).toEqual(offer.price.toString());
-      expect(offerEvents[0].ids).toEqual(offer.ids);
+      const offerEvent = await Event.find({ network: net, offerId: offer.offerId, action: Events.OfferUpdate });
+      expect(offerEvent).toBeDefined();
+      expect(offerEvent.network).toEqual(offer.network);
+      expect(offerEvent.creator).toEqual(offer.creator);
+      expect(offerEvent.action).toEqual(Events.OfferUpdate);
+      expect(offerEvent.amount).toEqual(offer.amount.toString());
+      expect(offerEvent.price).toEqual(offer.price.toString());
+      expect(offerEvent.ids).toEqual(offer.ids);
 
       expect(mockNotify).toHaveBeenCalledWith(NotificationID.OfferUpdated, net, provider, {
         updated: true,
@@ -1645,11 +1655,11 @@ describe('CoreHandler', () => {
       expect(offer.accepted).toBeTruthy();
       expect(moment(offer.execAt).toISOString()).toEqual(moment.unix(execAt).toISOString());
 
-      const offerEvents = await OfferEvent.getByNetworkAndOfferId(net, offer.offerId);
-      expect(offerEvents).toHaveLength(1);
-      expect(offerEvents[0].network).toEqual(offer.network);
-      expect(offerEvents[0].creator).toEqual(provider);
-      expect(offerEvents[0].action).toEqual(OfferEvents.Accept);
+      const offerEvent = await Event.find({ network: net, offerId: offer.offerId, action: Events.OfferAccept });
+      expect(offerEvent).toBeDefined();
+      expect(offerEvent.network).toEqual(offer.network);
+      expect(offerEvent.creator).toEqual(provider);
+      expect(offerEvent.action).toEqual(Events.OfferAccept);
 
       expect(mockNotify).toHaveBeenCalledWith(NotificationID.OfferAccepted, net, userAddr, {
         offer,
@@ -1688,11 +1698,11 @@ describe('CoreHandler', () => {
       expect(offer).toBeDefined();
       expect(offer.cancelled).toBeTruthy();
 
-      const offerEvents = await OfferEvent.getByNetworkAndOfferId(net, offer.offerId);
-      expect(offerEvents).toHaveLength(1);
-      expect(offerEvents[0].network).toEqual(offer.network);
-      expect(offerEvents[0].creator).toEqual(taker);
-      expect(offerEvents[0].action).toEqual(OfferEvents.Cancel);
+      const offerEvent = await Event.find({ network: net, offerId: offer.offerId, action: Events.OfferCancel });
+      expect(offerEvent).toBeDefined();
+      expect(offerEvent.network).toEqual(offer.network);
+      expect(offerEvent.creator).toEqual(taker);
+      expect(offerEvent.action).toEqual(Events.OfferCancel);
 
       expect(mockNotify).toHaveBeenCalledWith(NotificationID.OfferCancelled, net, provider, {
         offer,
@@ -1734,11 +1744,11 @@ describe('CoreHandler', () => {
       expect(offer.accepted).toBeFalsy();
       expect(offer.execAt).toBeNull();
 
-      const offerEvents = await OfferEvent.getByNetworkAndOfferId(net, offer.offerId);
-      expect(offerEvents).toHaveLength(1);
-      expect(offerEvents[0].network).toEqual(offer.network);
-      expect(offerEvents[0].creator).toEqual(taker);
-      expect(offerEvents[0].action).toEqual(OfferEvents.Unaccept);
+      const offerEvent = await Event.find({ network: net, offerId: offer.offerId, action: Events.OfferUnaccept });
+      expect(offerEvent).toBeDefined();
+      expect(offerEvent.network).toEqual(offer.network);
+      expect(offerEvent.creator).toEqual(taker);
+      expect(offerEvent.action).toEqual(Events.OfferUnaccept);
 
       expect(mockNotify).toHaveBeenCalledWith(NotificationID.OfferUnaccepted, net, taker, {
         offer,
@@ -1777,11 +1787,11 @@ describe('CoreHandler', () => {
       expect(offer).toBeDefined();
       expect(offer.executed).toBeTruthy();
 
-      const offerEvents = await OfferEvent.getByNetworkAndOfferId(net, offer.offerId);
-      expect(offerEvents).toHaveLength(1);
-      expect(offerEvents[0].network).toEqual(offer.network);
-      expect(offerEvents[0].creator).toEqual(taker);
-      expect(offerEvents[0].action).toEqual(OfferEvents.Execute);
+      const offerEvent = await Event.find({ network: net, offerId: offer.offerId, action: Events.OfferExecute });
+      expect(offerEvent).toBeDefined();
+      expect(offerEvent.network).toEqual(offer.network);
+      expect(offerEvent.creator).toEqual(taker);
+      expect(offerEvent.action).toEqual(Events.OfferExecute);
 
       expect(mockNotify).toHaveBeenCalledWith(NotificationID.OfferExecuted, net, provider, {
         offer,

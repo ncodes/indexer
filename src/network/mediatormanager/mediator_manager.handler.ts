@@ -14,7 +14,7 @@ import Dispute from '../../models/dispute';
 import Swap from '../../models/swap';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 import Meta from '../../models/meta';
-import SwapEvent, { SwapEvents } from '../../models/swap_event';
+import Event, { Events } from '../../models/event';
 
 export class MediatorManagerHandler extends Handler {
   constructor(
@@ -306,14 +306,14 @@ export class MediatorManagerHandler extends Handler {
     }
 
     // Create swap event
-    await SwapEvent.create({
+    await Event.create({
       network: this.network,
       marketAddress,
       orderId: orderId.toNumber(),
       creator: drafter,
       disputeId: disputeId.toNumber(),
       draftee: owner,
-      action: SwapEvents.Drafted,
+      action: Events.SwapDrafted,
     });
 
     // Send notification
@@ -359,13 +359,13 @@ export class MediatorManagerHandler extends Handler {
 
     // Create swap event
     const order = await Swap.get(this.network, ticket.orderId, undefined, undefined, txn);
-    await SwapEvent.create({
+    await Event.create({
       network: this.network,
       marketAddress: order.marketAddress,
       orderId: ticket.orderId,
       creator: undrafter,
       disputeId: ticket.disputeId,
-      action: SwapEvents.Undrafted,
+      action: Events.SwapUndrafted,
     });
 
     // Complete an undraft mining task

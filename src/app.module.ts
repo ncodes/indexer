@@ -23,6 +23,7 @@ import { AssetsModule } from './controllers/assets/assets.module';
 import { TasksModule } from './controllers/tasks/tasks.module';
 import { OffersModule } from './controllers/offers/offers.module';
 import { BadgesModule } from './controllers/badges/badges.module';
+import { TimelinesModule } from './controllers/timelines/timelines.module';
 
 /**
  * Returns the configurations to be loaded.
@@ -67,6 +68,7 @@ function getProviders() {
     NetworkModule,
     MarketsModule,
     OffersModule,
+    TimelinesModule,
     BadgesModule,
     LiquidityModule,
     MiscModule,

@@ -12,7 +12,7 @@ import Draft from '../../models/draft';
 import Liquidity from '../../models/liquidity';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 import Meta from '../../models/meta';
-import SwapEvent, { SwapEvents } from '../../models/swap_event';
+import Event, { Events } from '../../models/event';
 
 const MarketCoreContract = jest.fn().mockImplementation(() => {
   return {};
@@ -135,7 +135,7 @@ describe('DisputeManagerHandler', () => {
         };
         expect(await MineTask.count(q)).toEqual(3);
 
-        const event = await SwapEvent.find({ action: SwapEvents.Disputed });
+        const event = await Event.find({ action: Events.SwapDisputed });
         expect(event).toBeDefined();
         expect(event.network).toEqual(net);
         expect(event.marketAddress).toEqual(marketAddress);
@@ -245,7 +245,7 @@ describe('DisputeManagerHandler', () => {
       expect(commit).toBeDefined();
       expect(commit.committer).toEqual('0xCommitter');
 
-      const event = await SwapEvent.find({ action: SwapEvents.Committed });
+      const event = await Event.find({ action: Events.SwapCommitted });
       expect(event).toBeDefined();
       expect(event.network).toEqual(net);
       expect(event.marketAddress).toEqual(marketAddress);
@@ -267,7 +267,7 @@ describe('DisputeManagerHandler', () => {
       const reveal = await Reveal.find({ marketAddress, orderId: orderId.toNumber() });
       expect(reveal).toBeDefined();
 
-      const event = await SwapEvent.find({ action: SwapEvents.Revealed });
+      const event = await Event.find({ action: Events.SwapRevealed });
       expect(event).toBeDefined();
       expect(event.network).toEqual(net);
       expect(event.marketAddress).toEqual(marketAddress);
@@ -353,7 +353,7 @@ describe('DisputeManagerHandler', () => {
         expect(market.openDisputes).toEqual(0);
         expect(market.totalDisputes).toEqual(1);
 
-        const event = await SwapEvent.find({ action: SwapEvents.Executed });
+        const event = await Event.find({ action: Events.SwapExecuted });
         expect(event).toBeDefined();
         expect(event.network).toEqual(net);
         expect(event.marketAddress).toEqual(marketAddress);

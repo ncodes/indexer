@@ -1,4 +1,4 @@
-import { BigNumber, ethers, Event, providers } from 'ethers';
+import { BigNumber, ethers, Event as ChainEvent, providers } from 'ethers';
 import { Handler } from '../handler';
 import Swap from '../../models/swap';
 import { Transaction } from 'objection';
@@ -14,7 +14,7 @@ import { isEqualStr, toDec } from '../../common/common';
 import Liquidity from '../../models/liquidity';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 import Meta from '../../models/meta';
-import SwapEvent, { SwapEvents } from '../../models/swap_event';
+import Event, { Events } from '../../models/event';
 
 export class DisputeManagerHandler extends Handler {
   constructor(
@@ -105,7 +105,7 @@ export class DisputeManagerHandler extends Handler {
     creator: string,
     disputeId: BigNumber,
     wantRelease: boolean,
-    _event: Event,
+    _event: ChainEvent,
     txn?: Transaction,
   ) {
     const swap = await Swap.get(this.network, orderId.toNumber(), undefined, undefined, txn);
@@ -187,13 +187,13 @@ export class DisputeManagerHandler extends Handler {
     );
 
     // Create swap event
-    await SwapEvent.create({
+    await Event.create({
       network: this.network,
       marketAddress,
       orderId: orderId.toNumber(),
       creator: creator,
       disputeId: disputeId.toNumber(),
-      action: SwapEvents.Disputed,
+      action: Events.SwapDisputed,
     });
 
     // Send notification;
@@ -220,7 +220,7 @@ export class DisputeManagerHandler extends Handler {
     disputeId: BigNumber,
     committer: string,
     hash: string,
-    _event: Event,
+    _event: ChainEvent,
     txn?: Transaction,
   ) {
     await Commit.create(
@@ -236,13 +236,13 @@ export class DisputeManagerHandler extends Handler {
     );
 
     // Create swap event
-    await SwapEvent.create({
+    await Event.create({
       network: this.network,
       marketAddress,
       orderId: orderId.toNumber(),
       creator: committer,
       disputeId: disputeId.toNumber(),
-      action: SwapEvents.Committed,
+      action: Events.SwapCommitted,
     });
   }
 
@@ -262,7 +262,7 @@ export class DisputeManagerHandler extends Handler {
     disputeId: BigNumber,
     revealer: string,
     vote: string,
-    _event: Event,
+    _event: ChainEvent,
     txn?: Transaction,
   ) {
     await Reveal.create(
@@ -278,14 +278,14 @@ export class DisputeManagerHandler extends Handler {
     );
 
     // Create swap event
-    await SwapEvent.create({
+    await Event.create({
       network: this.network,
       marketAddress,
       orderId: orderId.toNumber(),
       creator: revealer,
       disputeId: disputeId.toNumber(),
       vote,
-      action: SwapEvents.Revealed,
+      action: Events.SwapRevealed,
     });
   }
 
@@ -307,7 +307,7 @@ export class DisputeManagerHandler extends Handler {
     executor: string,
     abandoned: boolean,
     winningVote: string,
-    _event: Event,
+    _event: ChainEvent,
     txn?: Transaction,
   ) {
     let dispute = await Dispute.get(this.network, marketAddress, orderId.toNumber(), disputeId.toNumber(), txn);
@@ -360,13 +360,13 @@ export class DisputeManagerHandler extends Handler {
     await MineTask.completeOneExecutionTask(this.network, marketAddress, dispute.orderId, dispute.disputeId, txn);
 
     // Create swap event
-    await SwapEvent.create({
+    await Event.create({
       network: this.network,
       marketAddress,
       orderId: orderId.toNumber(),
       creator: executor,
       disputeId: disputeId.toNumber(),
-      action: SwapEvents.Executed,
+      action: Events.SwapExecuted,
     });
 
     // Collate notification recipients

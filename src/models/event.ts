@@ -3,38 +3,66 @@ import Objection, { Model, raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 import Offer from './offers';
 import Swap from './swap';
+import Dispute from './dispute';
+import { uniq } from 'lodash';
 
-export enum LiquidityEvents {
-  Add = 'add',
-  Remove = 'remove',
-  Swap = 'swap',
-  Offer = 'offer',
-  Pause = 'pause',
-  ManagerUpdate = 'manager_update',
-  TargetUpdate = 'target_update',
-  PriceUpdate = 'price_update',
-  SwapLimitUpdate = 'swap_limit_update',
-  TimeToPayUpdate = 'time_to_pay_update',
+export enum Events {
+  LiquidityAdd = 'liq_add',
+  LiquidityRemove = 'liq_remove',
+  LiquiditySwap = 'liq_swap',
+  LiquidityOffer = 'liq_offer',
+  LiquidityPause = 'liq_pause',
+  LiquidityManagerUpdate = 'liq_manager_update',
+  LiquidityTargetUpdate = 'liq_target_update',
+  LiquidityPriceUpdate = 'liq_price_update',
+  LiquiditySwapLimitUpdate = 'liq_swap_limit_update',
+  LiquidityTimeToPayUpdate = 'liq_time_to_pay_update',
+  SwapPaid = 'swap_paid',
+  SwapReleased = 'swap_released',
+  SwapCancelled = 'swap_cancelled',
+  SwapDisputed = 'swap_disputed',
+  SwapDrafted = 'swap_drafted',
+  SwapCommitted = 'swap_committed',
+  SwapRevealed = 'swap_revealed',
+  SwapExecuted = 'swap_executed',
+  SwapUndrafted = 'swap_undrafted',
+  OfferCreate = 'offer_create',
+  OfferUpdate = 'offer_update',
+  OfferAccept = 'offer_accept',
+  OfferUnaccept = 'offer_unaccept',
+  OfferCancel = 'offer_cancel',
+  OfferExecute = 'offer_execute',
 }
 
 /**
- * LiquidityEvent represents a liquidity event
+ * Event represents an event
  */
-export default class LiquidityEvent extends BaseModel {
+export default class Event extends BaseModel {
+  /** Common **/
+
   // The network name
   network: string = undefined;
-  // The provider address
-  provider: string = undefined;
-  // The liquidity ID
-  lid: number;
   // The market address
   marketAddress: string = undefined;
+  // The swap order ID
+  orderId: number = undefined;
+  // The offer event action
+  action: Events = undefined;
   // The creator or initiator of the liquidity event
   creator: string = undefined;
+  // The offer ID
+  offerId: number = undefined;
   // The liquidity amount
   amount: string = undefined;
   // The price of the liquidity
   price: string = undefined;
+
+  /** Liquidity Event Fields */
+
+  // The provider address
+  provider: string = undefined;
+  // The liquidity ID
+  lid: number;
   // The minimum swap amount
   minSwap: string = undefined;
   // The maximum swap amount
@@ -47,40 +75,50 @@ export default class LiquidityEvent extends BaseModel {
   manager: string = undefined;
   // Indicates that the liquidity has been paused
   paused: boolean = undefined;
-  // The offer ID
-  offerId: number = undefined;
-  // The swap order ID
-  orderId: number = undefined;
-  // The offer event action
-  action: LiquidityEvents = undefined;
+
+  /** Swap Event Fields */
+
+  // The dispute ID
+  disputeId: number = undefined;
+  // The draftee address
+  draftee: string = undefined;
+  // The revealed vote
+  vote: string = undefined;
+
+  /** Offer Event Fields */
+  // The NFT IDs to offer for the liquidity
+  ids: number[] = undefined;
 
   /** Relations */
   offer: Offer;
   swap: Swap;
+  dispute: Dispute;
 
-  constructor(init?: Partial<LiquidityEvent>) {
+  constructor(init?: Partial<Event>) {
     super();
     Object.assign(this, init);
   }
 
   $beforeInsert() {
     super.$beforeInsert();
-    this.id = 'liquidity_event_' + randStr(24);
+    this.id = 'event_' + randStr(24);
+    this.ids = this.ids ? (JSON.stringify(this.ids) as any) : this.ids;
   }
 
   $beforeUpdate() {
     super.$beforeUpdate();
+    this.ids = JSON.stringify(this.ids) as any;
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
-    const object = json as LiquidityEvent;
-    object.object = 'liquidity_event';
+    const object = json as Event;
+    object.object = 'event';
     delete object.deletedAt;
     return object;
   }
 
   static get tableName() {
-    return 'liquidity_events';
+    return 'events';
   }
 
   static get relationMappings() {
@@ -89,7 +127,7 @@ export default class LiquidityEvent extends BaseModel {
         relation: Model.BelongsToOneRelation,
         modelClass: Offer,
         join: {
-          from: ['liquidity_events.network', 'liquidity_events.offerId'],
+          from: ['events.network', 'events.offerId'],
           to: ['offers.network', 'offers.offerId'],
         },
       },
@@ -97,8 +135,16 @@ export default class LiquidityEvent extends BaseModel {
         relation: Model.BelongsToOneRelation,
         modelClass: Swap,
         join: {
-          from: ['liquidity_events.network', 'liquidity_events.orderId'],
+          from: ['events.network', 'events.orderId'],
           to: ['swaps.network', 'swaps.orderId'],
+        },
+      },
+      dispute: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: Dispute,
+        join: {
+          from: ['events.network', 'events.marketAddress', 'events.orderId', 'events.disputeId'],
+          to: ['disputes.network', 'disputes.marketAddress', 'disputes.orderId', 'disputes.orderId'],
         },
       },
     };
@@ -109,7 +155,7 @@ export default class LiquidityEvent extends BaseModel {
    * @param data The transfer info
    * @param txn Optional transaction object
    */
-  static create(data: Partial<LiquidityEvent>, txn?: Transaction): Promise<LiquidityEvent> {
+  static create(data: Partial<Event>, txn?: Transaction): Promise<Event> {
     return new Promise((resolve, reject) => {
       return this.query(txn).insertAndFetch(data).then(resolve).catch(reject);
     });
@@ -129,7 +175,7 @@ export default class LiquidityEvent extends BaseModel {
    * @param q the query parameter
    * @param txn Optional transaction object
    */
-  static find(q: Partial<LiquidityEvent>, txn?: Transaction) {
+  static find(q: Partial<Event>, txn?: Transaction) {
     return this.query(txn).where(q).whereNotDeleted().first();
   }
 
@@ -139,6 +185,8 @@ export default class LiquidityEvent extends BaseModel {
    * @param marketAddress The market address
    * @param provider The provider address
    * @param lid The liquidity ID
+   * @param orderId The swap order ID
+   * @param offerId The offer ID
    * @param limit The limit
    * @param offset The offset
    * @param txn Optional transaction object
@@ -148,6 +196,8 @@ export default class LiquidityEvent extends BaseModel {
     marketAddress?: string,
     provider?: string,
     lid?: number,
+    orderId?: number,
+    offerId?: number,
     limit?: number,
     offset?: number,
     txn?: Transaction,
@@ -160,12 +210,22 @@ export default class LiquidityEvent extends BaseModel {
         if (marketAddress) q = q.where('marketAddress', 'ilike', marketAddress);
         if (provider) q = q.where('provider', 'ilike', provider);
         if (lid) q = q.where('lid', lid);
+        if (orderId) q = q.where('orderId', orderId);
+        if (offerId) q = q.where('offerId', offerId);
         return q;
       })
-      .withGraphFetched('[offer,swap]')
+      .withGraphFetched('[offer,swap,dispute]')
       .orderBy('createdAt', 'desc');
     if (offset) q = q.offset(offset);
     if (limit) q = q.limit(limit);
     return q;
+  }
+
+  static makeSelectList(select = []) {
+    select = select.filter((x) => Object.keys(new Offer()).includes(x));
+    select = select.length
+      ? uniq(select.concat(['id', 'marketAddress', 'network', 'creator', 'offerId', 'provider', 'lid']))
+      : ['*'];
+    return select;
   }
 }

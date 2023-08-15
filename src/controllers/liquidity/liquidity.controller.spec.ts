@@ -19,7 +19,7 @@ import { randStr } from '../../common/common';
 import Meta, { MetaKeys } from '../../models/meta';
 import * as moment from 'moment';
 import BadgeGrant from '../../models/badge_grant';
-import LiquidityEvent from '../../models/liquidity_event';
+import Event from '../../models/event';
 import Offer from '../../models/offers';
 import Swap from '../../models/swap';
 
@@ -199,14 +199,14 @@ describe('LiquidityController', () => {
     it('should return 200 and correct result', async () => {
       const offer = await Offer.create({ network: net, offerId: 1 });
       const swap = await Swap.create({ network: net, orderId: 1 });
-      const event = await LiquidityEvent.create({
+      const event = await Event.create({
         network: net,
         marketAddress: '0xMarket',
         provider: '0xProvider',
         lid: 0,
         createdAt: moment().subtract(1, 'day').toISOString(),
       });
-      const event2 = await LiquidityEvent.create({
+      const event2 = await Event.create({
         network: net,
         marketAddress: '0xMarket',
         provider: '0xProvider',
@@ -232,14 +232,14 @@ describe('LiquidityController', () => {
     });
 
     it('should return 200 and correct result when limit and offset are used', async () => {
-      const event = await LiquidityEvent.create({
+      const event = await Event.create({
         network: net,
         marketAddress: '0xMarket',
         provider: '0xProvider',
         lid: 0,
         createdAt: moment().subtract(1, 'day').toISOString(),
       });
-      const event2 = await LiquidityEvent.create({
+      const event2 = await Event.create({
         network: net,
         marketAddress: '0xMarket',
         provider: '0xProvider',

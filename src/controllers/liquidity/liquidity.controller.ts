@@ -5,7 +5,7 @@ import { LiquidityService } from './liquidity.service';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { GetParamDTO, GetQueryDTO, ListQueryDTO } from './query.dto';
 import { ConfigService } from '../../config/config.service';
-import LiquidityEvent from '../../models/liquidity_event';
+import Event from '../../models/event';
 
 @Controller('v1/liquidities')
 export class LiquidityController {
@@ -48,7 +48,7 @@ export class LiquidityController {
     @Param(new ValidationPipe(ValPipeOpt)) p: GetParamDTO,
     @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO,
   ) {
-    const events = await LiquidityEvent.search(q.net, p.mid, p.provider, p.lid, q.limit || 25, q.offset);
+    const events = await Event.search(q.net, p.mid, p.provider, p.lid, undefined, undefined, q.limit || 25, q.offset);
     return ok().data(events).build<Liquidity>();
   }
 

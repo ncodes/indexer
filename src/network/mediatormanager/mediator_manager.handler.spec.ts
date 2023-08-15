@@ -12,7 +12,7 @@ import Dispute from '../../models/dispute';
 import Swap from '../../models/swap';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 import Meta, { MetaKeys } from '../../models/meta';
-import SwapEvent, { SwapEvents } from '../../models/swap_event';
+import Event, { Events } from '../../models/event';
 
 const MarketCoreContract = jest.fn().mockImplementation(() => {
   return {};
@@ -242,7 +242,7 @@ describe('MediatorManagerHandler', () => {
         unix(evidEndAt + parseInt(await Meta.getContractParam(net, 'predictDur'))).isSame(dispute.predictEndAt),
       ).toBeTruthy();
 
-      const event = await SwapEvent.find({ action: SwapEvents.Drafted });
+      const event = await Event.find({ action: Events.SwapDrafted });
       expect(event).toBeDefined();
       expect(event.network).toEqual(net);
       expect(event.marketAddress).toEqual(marketAddress);
@@ -457,7 +457,7 @@ describe('MediatorManagerHandler', () => {
       numCompleted = await MineTask.count({ type: MineTaskType.Undraft, completed: true });
       expect(numCompleted).toEqual(2);
 
-      const event = await SwapEvent.find({ action: SwapEvents.Undrafted });
+      const event = await Event.find({ action: Events.SwapUndrafted });
       expect(event).toBeDefined();
       expect(event.network).toEqual(net);
       expect(event.marketAddress).toEqual(marketAddress);

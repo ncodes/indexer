@@ -13,7 +13,7 @@ import { OfferService } from './offer.service';
 import { OfferController } from './offers.controller';
 import Offer from '../../models/offers';
 import * as moment from 'moment';
-import OfferEvent from '../../models/offer_event';
+import Event from '../../models/event';
 
 describe('OffersController', () => {
   let app: INestApplication;
@@ -97,18 +97,18 @@ describe('OffersController', () => {
     });
 
     it('should return 200 and correct result', async () => {
-      const event = await OfferEvent.create({
+      const event = await Event.create({
         network: net,
         offerId: 1,
         createdAt: moment().subtract(1, 's').toISOString(),
       });
-      const event2 = await OfferEvent.create({
+      const event2 = await Event.create({
         network: net,
         offerId: 1,
         createdAt: moment().toISOString(),
       });
-      await OfferEvent.create({ network: 'other', offerId: 1, createdAt: moment().subtract(1, 's').toISOString() });
-      await OfferEvent.create({ network: 'other', offerId: 1, createdAt: moment().toISOString() });
+      await Event.create({ network: 'other', offerId: 1, createdAt: moment().subtract(1, 's').toISOString() });
+      await Event.create({ network: 'other', offerId: 1, createdAt: moment().toISOString() });
       await request(app.getHttpServer())
         .get(`/v1/offers/1/events`)
         .query({ net })
@@ -121,18 +121,18 @@ describe('OffersController', () => {
     });
 
     it('should return 200 and correct result when limit and offset are set', async () => {
-      const event = await OfferEvent.create({
+      const event = await Event.create({
         network: net,
         offerId: 1,
         createdAt: moment().subtract(1, 's').toISOString(),
       });
-      const event2 = await OfferEvent.create({
+      const event2 = await Event.create({
         network: net,
         offerId: 1,
         createdAt: moment().toISOString(),
       });
-      await OfferEvent.create({ network: 'other', offerId: 1, createdAt: moment().subtract(1, 's').toISOString() });
-      await OfferEvent.create({ network: 'other', offerId: 1, createdAt: moment().toISOString() });
+      await Event.create({ network: 'other', offerId: 1, createdAt: moment().subtract(1, 's').toISOString() });
+      await Event.create({ network: 'other', offerId: 1, createdAt: moment().toISOString() });
 
       await request(app.getHttpServer())
         .get(`/v1/offers/1/events`)

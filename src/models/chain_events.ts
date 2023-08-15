@@ -3,33 +3,33 @@ import Objection, { Transaction } from 'objection';
 import { BaseModel } from './base';
 
 /**
- * Event represents a transaction log
+ * ChainEvent represents a contract event on the blockchain
  */
-export default class Event extends BaseModel {
+export default class ChainEvent extends BaseModel {
   network: string;
   signature: string;
   blockNumber: number;
   txIndex: number;
   logIndex: number;
 
-  constructor(init?: Partial<Event>) {
+  constructor(init?: Partial<ChainEvent>) {
     super();
     Object.assign(this, init);
   }
 
   $beforeInsert() {
     super.$beforeInsert();
-    this.id = 'event_' + randStr(24);
+    this.id = 'chain_event_' + randStr(24);
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
-    const event = super.$formatJson(json) as Event;
-    event.object = 'event';
+    const event = super.$formatJson(json) as ChainEvent;
+    event.object = 'chain_event';
     return event;
   }
 
   static get tableName() {
-    return 'events';
+    return 'chain_events';
   }
 
   static get relationMappings() {
@@ -41,7 +41,7 @@ export default class Event extends BaseModel {
    * @param data The transfer info
    * @param txn Optional transaction object
    */
-  static create(data: Partial<Event>, txn?: Transaction): Promise<Event> {
+  static create(data: Partial<ChainEvent>, txn?: Transaction): Promise<ChainEvent> {
     return new Promise((resolve, reject) => {
       return this.query(txn).insertAndFetch(data).then(resolve).catch(reject);
     });
@@ -77,7 +77,7 @@ export default class Event extends BaseModel {
    * find finds a record
    * @param q the query parameter
    */
-  static find(q: Partial<Event>): Promise<Event> {
+  static find(q: Partial<ChainEvent>): Promise<ChainEvent> {
     return new Promise((resolve, reject) => {
       this.query().where(q).whereNotDeleted().first().then(resolve).catch(reject);
     });

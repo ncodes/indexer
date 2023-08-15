@@ -19,7 +19,7 @@ import SwapService from './swap.service';
 import { randStr } from '../../common/common';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import Dispute from '../../models/dispute';
-import SwapEvent from '../../models/swap_event';
+import Event from '../../models/event';
 import * as moment from 'moment';
 
 const mockCfgGet = jest.fn();
@@ -398,15 +398,15 @@ describe('SwapsController', () => {
 
     it('should return 200 and return correct value', async () => {
       const swap = await Swap.create({ network: net, orderId: 1 });
-      const dispuste = await Dispute.create({ network: net, marketAddress: '0xMarket', orderId: 1, disputeId: 1 });
-      const event = await SwapEvent.create({
+      const dispute = await Dispute.create({ network: net, marketAddress: '0xMarket', orderId: 1, disputeId: 1 });
+      const event = await Event.create({
         network: net,
         orderId: 1,
         marketAddress: '0xMarket',
         disputeId: 1,
         createdAt: moment().subtract(1, 's').toISOString(),
       });
-      const event2 = await SwapEvent.create({
+      const event2 = await Event.create({
         network: net,
         orderId: 1,
         marketAddress: '0xMarket',
@@ -425,11 +425,11 @@ describe('SwapsController', () => {
           expect(res.body.data[0].swap).toBeDefined();
           expect(res.body.data[0].dispute).toBeDefined();
           expect(res.body.data[0].swap.id).toEqual(swap.id);
-          expect(res.body.data[0].dispute.id).toEqual(dispuste.id);
+          expect(res.body.data[0].dispute.id).toEqual(dispute.id);
           expect(res.body.data[1].swap).toBeDefined();
           expect(res.body.data[1].dispute).toBeDefined();
           expect(res.body.data[1].swap.id).toEqual(swap.id);
-          expect(res.body.data[1].dispute.id).toEqual(dispuste.id);
+          expect(res.body.data[1].dispute.id).toEqual(dispute.id);
         });
     });
   });

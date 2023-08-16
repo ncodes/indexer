@@ -22,6 +22,7 @@ import BadgeGrant from '../../models/badge_grant';
 import Event from '../../models/event';
 import Offer from '../../models/offers';
 import Swap from '../../models/swap';
+import { RedisService } from '../../services/redis.service';
 
 const mockCfgGet = jest.fn();
 const mockGetContractParam = jest.fn();
@@ -71,7 +72,7 @@ describe('LiquidityController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [LiquidityController],
-      providers: [ConfigService, NetworkService, LiquidityService, MarketService, MetadataService],
+      providers: [ConfigService, NetworkService, LiquidityService, MarketService, MetadataService, RedisService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
@@ -79,6 +80,8 @@ describe('LiquidityController', () => {
       .useValue(new MetadataServiceMock())
       .overrideProvider(NetworkService)
       .useValue(new NetworkServiceMock())
+      .overrideProvider(RedisService)
+      .useValue(new (jest.fn())())
       .compile();
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());

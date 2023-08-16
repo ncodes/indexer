@@ -5,10 +5,11 @@ import { MetadataService } from '../../services/metadata/metadata.service';
 import { NetworkModule } from '../../network/network.module';
 import { ExchangeRateServiceModule } from '../../services/exchange_rate.service';
 import { ConfigService } from '../../config/config.service';
+import { RedisService } from '../../services/redis.service';
 
 @Module({
   imports: [NotifierModule, NetworkModule, ExchangeRateServiceModule],
-  providers: [MetadataService, ConfigService],
+  providers: [MetadataService, ConfigService, RedisService],
   controllers: [MiscController],
 })
 export class MiscModule {}

@@ -21,6 +21,7 @@ import { MetadataService } from '../../services/metadata/metadata.service';
 import Dispute from '../../models/dispute';
 import Event from '../../models/event';
 import * as moment from 'moment';
+import { RedisService } from '../../services/redis.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -63,12 +64,22 @@ describe('SwapsController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [SwapsController],
-      providers: [ConfigService, MetadataService, NetworkService, MarketService, LiquidityService, SwapService],
+      providers: [
+        ConfigService,
+        MetadataService,
+        NetworkService,
+        MarketService,
+        LiquidityService,
+        SwapService,
+        RedisService,
+      ],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
       .overrideProvider(NetworkService)
       .useValue(new NetworkServiceMock())
+      .overrideProvider(RedisService)
+      .useValue(new (jest.fn())())
       .compile();
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());

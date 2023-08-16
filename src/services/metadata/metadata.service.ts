@@ -5,6 +5,8 @@ import { isValidNetwork, isZero, pow10D } from '../../network/common';
 import { CoinMarketCapMetadata } from './CoinMarketCapMetadata';
 import { isDevMode, isProdMode, toDec } from '../../common/common';
 import { CoinGeckoMetadata } from './CoinGeckoMetadata';
+import { findInLocal, findInSynthetic } from '../../common/token_list';
+import { RedisService } from '../redis.service';
 
 // tslint:disable-next-line:max-classes-per-file
 export abstract class MetadataSource {
@@ -19,13 +21,15 @@ export class MetadataService {
    * Initialize the service
    * @param cfg The config service
    * @param netSrv The network service
+   * @param redisSrv The redis service
    */
   constructor(
     private cfg: ConfigService,
     @Inject(forwardRef(() => NetworkService))
     private netSrv: NetworkService,
+    private redisSrv: RedisService,
   ) {
-    const metaSource = cfg.get('app.tokenMetadataSource');
+    const metaSource = this.cfg.get('app.tokenMetadataSource');
     if (metaSource === 'coingecko') {
       this.source = new CoinGeckoMetadata();
     } else if (metaSource === 'coinmarketcap') {
@@ -34,13 +38,27 @@ export class MetadataService {
   }
 
   /**
-   * Get an asset's logo link
+   * Get an asset's logo URL.
+   * It first checks the local index, then the synthetic index, then the external source.
    * @param symbolOrNetwork The asset symbol or network name
    * @param contract The contract address
    * @returns
    */
   async getTokenLogo(symbolOrNetwork: string, contract: string): Promise<string> {
-    const info = await this.source.getTokenInfo(symbolOrNetwork, contract);
+    let info = findInLocal(contract);
+
+    if (!info) info = findInSynthetic(contract);
+
+    if (!info) {
+      const cached = await this.redisSrv.get(`token_logo_${symbolOrNetwork}_${contract}`);
+      if (cached) return Promise.resolve(cached);
+    }
+
+    if (!info) info = await this.source.getTokenInfo(symbolOrNetwork, contract);
+
+    if (!info) return Promise.reject(new Error('token not found'));
+
+    await this.redisSrv.setWithExpire(`token_logo_${symbolOrNetwork}_${contract}`, info.logoURI, 60 * 60 * 24 * 7);
     return Promise.resolve(info.logoURI);
   }
 

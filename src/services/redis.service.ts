@@ -23,6 +23,21 @@ export class RedisService {
   }
 
   /**
+   * Get a key
+   * @param key The target key
+   */
+  async get(key: string): Promise<string> {
+    return new Promise((res, rej) => {
+      this.client
+        .get(key)
+        .then((val) => {
+          return res(val);
+        })
+        .catch(rej);
+    });
+  }
+
+  /**
    * setWithExpire sets a key that expires
    * @param key The target key
    * @param value The value stored with the key.

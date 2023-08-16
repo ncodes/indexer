@@ -5,6 +5,7 @@ import { DBService } from '../db/DBService';
 import NetworkService from './network.service';
 import { MetadataService } from '../services/metadata/metadata.service';
 import { ExchangeRateService } from '../services/exchange_rate.service';
+import { RedisService } from '../services/redis.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -46,12 +47,14 @@ describe('NetworkService', () => {
 
     module = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
-      providers: [NetworkService, NotifierService, ConfigService, MetadataService, ExchangeRateService],
+      providers: [NetworkService, NotifierService, ConfigService, MetadataService, ExchangeRateService, RedisService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
       .overrideProvider(NotifierService)
       .useValue(new MockNotifierService())
+      .overrideProvider(RedisService)
+      .useValue(new (jest.fn())())
       .compile();
 
     service = module.get<NetworkService>(NetworkService);

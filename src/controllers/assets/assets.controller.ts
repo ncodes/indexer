@@ -5,7 +5,7 @@ import { toDec } from '../../common/common';
 import { ErrServerError, ok, throw404 } from '../../common/responses/responses';
 import MarketPrice from '../../models/market_price';
 import Liquidity from '../../models/liquidity';
-import { findInLocalhost, getTokenInfo } from '../../common/token_list';
+import { findInLocal, getTokenInfo } from '../../common/token_list';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import AssetRegistry from '../../models/asset_registry';
 
@@ -46,7 +46,7 @@ export class AssetsController {
    */
   @Get(':net/:address')
   async getAssetStats(@Param('net') net: string, @Param('address') address: string) {
-    let info = findInLocalhost(address);
+    let info = findInLocal(address);
     if (!info && net) info = getTokenInfo(net, address);
     if (!info)
       info = await this.metadataSrv.getTokenInfo(net, address).catch((e) => {

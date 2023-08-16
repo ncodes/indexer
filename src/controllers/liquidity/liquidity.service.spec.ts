@@ -9,6 +9,7 @@ import Swap from '../../models/swap';
 import * as moment from 'moment';
 import MarketPrice from '../../models/market_price';
 import { MetadataService } from '../../services/metadata/metadata.service';
+import { RedisService } from '../../services/redis.service';
 
 const mockTryToUsd = jest.fn();
 const MetadataServiceMock = jest.fn().mockImplementation(() => {
@@ -42,10 +43,12 @@ describe('LiquidityService', () => {
 
     module = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
-      providers: [LiquidityService, MarketService, MetadataService],
+      providers: [LiquidityService, MarketService, MetadataService, RedisService],
     })
       .overrideProvider(MetadataService)
       .useValue(new MetadataServiceMock())
+      .overrideProvider(RedisService)
+      .useValue(new (jest.fn())())
       .compile();
 
     service = module.get<LiquidityService>(LiquidityService);

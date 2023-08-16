@@ -72,7 +72,9 @@ export class MarketService {
 
       if (select.includes(`quoteLogo`) || !select.length) {
         market.quoteLogo = getTokenLogo(net, quoteAddress);
-        market.quoteLogo = !market.quoteLogo ? await this.metadataSrv.getTokenLogo(net, baseAddress) : market.quoteLogo;
+        market.quoteLogo = !market.quoteLogo
+          ? await this.metadataSrv.getTokenLogo(net, quoteAddress)
+          : market.quoteLogo;
       }
 
       if (select.includes(`amountSwapped`) || !select.length) {

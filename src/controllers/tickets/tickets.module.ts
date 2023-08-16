@@ -4,10 +4,11 @@ import { TicketsService } from './tickets.service';
 import { NetworkModule } from '../../network/network.module';
 import { MarketService } from '../markets/market.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
+import { RedisService } from '../../services/redis.service';
 
 @Module({
   imports: [NetworkModule],
   controllers: [TicketsController],
-  providers: [TicketsService, MetadataService, MarketService, MetadataService],
+  providers: [TicketsService, MetadataService, MarketService, MetadataService, RedisService],
 })
 export class TicketsModule {}

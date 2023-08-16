@@ -58,7 +58,7 @@ export class MarketsController {
   /**
    * List markets
    * @param q The query object
-   * @param [q.network] The network name
+   * @param [q.net] The network name
    * @param [q.creator] Filter the result by creator address
    * @param [q.address] Filter the result by market address
    * @param [q.base] The base asset address

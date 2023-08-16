@@ -17,6 +17,7 @@ import { NotifierService } from '../../jobs/mailer/NotifierService';
 import { TokenLists } from '../../common/token_list';
 import AssetRegistry from '../../models/asset_registry';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
+import { RedisService } from '../../services/redis.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -61,10 +62,12 @@ describe('AssetsController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [AssetsController],
-      providers: [ConfigService, MetadataService, NetworkService, NotifierService, ExchangeRateService],
+      providers: [ConfigService, MetadataService, NetworkService, NotifierService, ExchangeRateService, RedisService],
     })
       .overrideProvider(NotifierService)
       .useValue(new NotifierServiceMock())
+      .overrideProvider(RedisService)
+      .useValue(new (jest.fn())())
       .compile();
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());

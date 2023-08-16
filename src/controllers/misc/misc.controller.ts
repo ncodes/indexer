@@ -1,5 +1,5 @@
 import { Controller, Get, Param } from '@nestjs/common';
-import { findInLocalhost, getTokenInfo, TokenLists } from '../../common/token_list';
+import { findInLocal, getTokenInfo, TokenLists } from '../../common/token_list';
 import { ok, throw400 } from '../../common/responses/responses';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import NetworkService from '../../network/network.service';
@@ -38,10 +38,10 @@ export class MiscController {
     network = network !== '-' ? network : undefined;
     if (network && !isValidNetwork(network)) throw400('network not supported');
 
-    // check if address exist in localhost network.
+    // check if address exist in local list.
     // If yes, return it with a mock USD price of $1
     // Useful for testing
-    info = findInLocalhost(address);
+    info = findInLocal(address);
 
     if (!info && network) info = getTokenInfo(network, address);
     if (!info) info = await this.metadataSrv.getTokenInfo(network, address);

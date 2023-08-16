@@ -18,6 +18,7 @@ import * as moment from 'moment';
 import { randStr } from '../../common/common';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { toBN } from '../../network/common';
+import { RedisService } from '../../services/redis.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -81,7 +82,7 @@ describe('TicketsController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [TicketsController],
-      providers: [ConfigService, NetworkService, MarketService, MetadataService, TicketsService],
+      providers: [ConfigService, NetworkService, MarketService, MetadataService, TicketsService, RedisService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
@@ -89,6 +90,8 @@ describe('TicketsController', () => {
       .useValue(new NetworkServiceMock())
       .overrideProvider(MetadataService)
       .useValue(new MetadataServiceMock())
+      .overrideProvider(RedisService)
+      .useValue(new (jest.fn())())
       .compile();
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());

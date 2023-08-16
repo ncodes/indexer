@@ -4,9 +4,10 @@ import { MetadataService } from './metadata.service';
 import { ConfigService } from '../../config/config.service';
 import { ConfigModule } from '@nestjs/config';
 import { NotifierModule } from '../../jobs/mailer/NotifierModule';
+import { RedisService } from '../redis.service';
 
 @Module({
   imports: [ConfigModule, NotifierModule],
-  providers: [ConfigService, MetadataService, NetworkService],
+  providers: [ConfigService, MetadataService, NetworkService, RedisService],
 })
 export class MetadataModule {}

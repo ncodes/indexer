@@ -5,10 +5,11 @@ import { NetworkModule } from '../../network/network.module';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { LiquidityService } from '../liquidity/liquidity.service';
 import SwapService from './swap.service';
+import { RedisService } from '../../services/redis.service';
 
 @Module({
   imports: [NetworkModule],
   controllers: [SwapsController],
-  providers: [MarketService, MetadataService, LiquidityService, SwapService],
+  providers: [MarketService, MetadataService, LiquidityService, SwapService, RedisService],
 })
 export class SwapsModule {}

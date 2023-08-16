@@ -18,6 +18,7 @@ import LiquidityProvider from '../../models/market_provider';
 import * as moment from 'moment';
 import { randStr } from '../../common/common';
 import Swap from '../../models/swap';
+import { RedisService } from '../../services/redis.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -69,7 +70,7 @@ describe('MarketsController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [MarketsController],
-      providers: [ConfigService, NetworkService, MarketService, MetadataService],
+      providers: [ConfigService, NetworkService, MarketService, MetadataService, RedisService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
@@ -77,6 +78,8 @@ describe('MarketsController', () => {
       .useValue(new MetadataServiceMock())
       .overrideProvider(NetworkService)
       .useValue(new NetworkServiceMock())
+      .overrideProvider(RedisService)
+      .useValue(new (jest.fn())())
       .compile();
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());

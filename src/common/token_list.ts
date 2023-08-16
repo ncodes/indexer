@@ -2,11 +2,11 @@ import * as ethereum from './tokenlist/ethereum.json';
 import * as polygon from './tokenlist/polygon.json';
 import * as binance from './tokenlist/binance.json';
 import * as optimism from './tokenlist/optimism.json';
-import * as localhost from './tokenlist/localhost.json';
+import * as local from './tokenlist/local.json';
 import * as synthetic from './tokenlist/synthetic.json';
 import * as _ from 'lodash';
 
-type ListName = 'ethereum' | 'polygon' | 'binance' | 'optimism' | 'localhost' | 'synthetic';
+type ListName = 'ethereum' | 'polygon' | 'binance' | 'optimism' | 'local' | 'synthetic';
 
 /**
  * TokenList contains a network categorized list
@@ -20,7 +20,7 @@ export const TokenLists: { [key in ListName]: TokenList.TokenData } = {
   polygon,
   binance,
   optimism,
-  localhost,
+  local,
   synthetic,
 };
 
@@ -51,8 +51,8 @@ export function getTokenInfo(network: string, address: string): TokenList.Token 
  * Find a given asset in the localhost token list
  * @param address The target address
  */
-export function findInLocalhost(address: string): TokenList.Token {
-  return TokenLists.localhost.tokens.find((token) => {
+export function findInLocal(address: string): TokenList.Token {
+  return TokenLists.local.tokens.find((token) => {
     return token.address.toLowerCase() === address.toLowerCase();
   });
 }

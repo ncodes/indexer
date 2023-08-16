@@ -48,7 +48,19 @@ export class LiquidityController {
     @Param(new ValidationPipe(ValPipeOpt)) p: GetParamDTO,
     @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO,
   ) {
-    const events = await Event.search(q.net, p.mid, p.provider, p.lid, undefined, undefined, q.limit || 25, q.offset);
+    const events = await Event.search(
+      q.net,
+      p.mid,
+      p.provider,
+      p.lid,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      q.limit || 25,
+      q.offset,
+    );
     return ok().data(events).build<Liquidity>();
   }
 

@@ -38,8 +38,4 @@ export class BaseModel extends softDelete(Model) {
     delete json.deletedAt;
     return json;
   }
-
-  getID() {
-    return this.id;
-  }
 }

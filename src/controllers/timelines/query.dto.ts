@@ -1,14 +1,45 @@
-import { IsBoolean, IsIn, IsNotEmpty, IsNumber, IsOptional, Matches } from 'class-validator';
-import { makeValidatorMsg } from '../../common/validations/validation';
+import {
+  IsArray,
+  IsIn,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Matches,
+  Validate,
+  ValidateNested,
+} from 'class-validator';
+import { LiquidityDescriptionValidator, makeValidatorMsg } from '../../common/validations/validation';
 import { getNetworks } from '../../network/common';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { toNumber } from 'lodash';
-import { toBoolean } from 'underscore.string';
+
+class LiquidityDTO {
+  @IsString({ message: makeValidatorMsg('must be a string', 'provider') })
+  public provider: string;
+
+  @Transform(({ value }) => toNumber(value))
+  @IsNumber(undefined, { message: makeValidatorMsg('must be a number', 'lid') })
+  public lid: number;
+}
 
 export class GetQueryDTO {
   @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
   @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
   public net?: string;
+
+  @Transform(({ value }) => JSON.parse(value as string))
+  @IsOptional()
+  public markets?: string[];
+
+  @Transform(({ value }) => JSON.parse(value as string))
+  @IsOptional()
+  public wallets?: string[];
+
+  @Validate(LiquidityDescriptionValidator)
+  @Transform(({ value }) => JSON.parse(value as string))
+  @IsOptional()
+  public liquidities?: LiquidityDTO[];
 
   @Transform(({ value }) => toNumber(value))
   @IsNumber(undefined, { message: makeValidatorMsg('must be a number', 'limit') })
@@ -16,7 +47,6 @@ export class GetQueryDTO {
   public limit?: number;
 
   @Transform(({ value }) => toNumber(value))
-  @IsNumber(undefined, { message: makeValidatorMsg('must be a number', 'offset') })
   @IsOptional()
-  public offset?: number;
+  public lastSerial?: number;
 }

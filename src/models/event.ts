@@ -187,8 +187,12 @@ export default class Event extends BaseModel {
    * @param lid The liquidity ID
    * @param orderId The swap order ID
    * @param offerId The offer ID
+   * @param marketAddresses Filter by market addresses
+   * @param walletAddresses Filter by wallet addresses
+   * @param liquidities Filter by liquidities
    * @param limit The limit
    * @param offset The offset
+   * @param lastSerial The last serial number
    * @param txn Optional transaction object
    */
   static search(
@@ -198,8 +202,12 @@ export default class Event extends BaseModel {
     lid?: number,
     orderId?: number,
     offerId?: number,
+    marketAddresses?: string[],
+    walletAddresses?: string[],
+    liquidities?: { provider: string; lid: number }[],
     limit?: number,
     offset?: number,
+    lastSerial?: number,
     txn?: Transaction,
   ) {
     let q = this.query(txn)
@@ -212,20 +220,36 @@ export default class Event extends BaseModel {
         if (lid) q = q.where('lid', lid);
         if (orderId) q = q.where('orderId', orderId);
         if (offerId) q = q.where('offerId', offerId);
+        q = q.where((q) => {
+          if (marketAddresses && marketAddresses.length) {
+            q = q.orWhere(raw(`"marketAddress" ILIKE ANY (?)`, [marketAddresses]));
+          }
+          if (walletAddresses && walletAddresses.length) {
+            q = q.orWhere((q) => {
+              return q
+                .where(raw(`creator ILIKE ANY (?)`, [walletAddresses]))
+                .orWhere(raw(`provider ILIKE ANY (?)`, [walletAddresses]));
+            });
+          }
+          if (liquidities && liquidities.length) {
+            q = q.orWhere((q) => {
+              liquidities.forEach((liq) => {
+                q = q.orWhere((q) => {
+                  return q.where('provider', liq.provider).where('lid', liq.lid);
+                });
+              });
+            });
+          }
+          return q;
+        });
         return q;
       })
       .withGraphFetched('[offer,swap,dispute]')
+      .orderBy('sn', 'desc')
       .orderBy('createdAt', 'desc');
     if (offset) q = q.offset(offset);
     if (limit) q = q.limit(limit);
+    if (lastSerial) q = q.where('sn', '<', lastSerial);
     return q;
-  }
-
-  static makeSelectList(select = []) {
-    select = select.filter((x) => Object.keys(new Offer()).includes(x));
-    select = select.length
-      ? uniq(select.concat(['id', 'marketAddress', 'network', 'creator', 'offerId', 'provider', 'lid']))
-      : ['*'];
-    return select;
   }
 }

@@ -1743,6 +1743,8 @@ declare global {
       symbol?: string;
       decimals?: number;
       logoURI?: string;
+      price?: number; // Used in dev mode only
+      isSynthetic?: boolean; // Used to identify synthetic tokens
     }
 
     interface Version {

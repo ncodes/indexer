@@ -48,7 +48,7 @@ export function getTokenInfo(network: string, address: string): TokenList.Token 
 }
 
 /**
- * Find a given asset in the localhost token list
+ * Find a given asset in the local token list
  * @param address The target address
  */
 export function findInLocal(address: string): TokenList.Token {
@@ -63,6 +63,9 @@ export function findInLocal(address: string): TokenList.Token {
  */
 export function findInSynthetic(address: string): TokenList.Token {
   return TokenLists.synthetic.tokens.find((token) => {
-    return token.address.toLowerCase() === address.toLowerCase();
+    const match = token.address.toLowerCase() === address.toLowerCase();
+    if (!match) return;
+    token.isSynthetic = true;
+    return token;
   });
 }

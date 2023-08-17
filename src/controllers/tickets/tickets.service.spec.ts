@@ -8,6 +8,7 @@ import { MarketService } from '../markets/market.service';
 import Ticket from '../../models/ticket';
 import * as moment from 'moment';
 import { RedisService } from '../../services/redis.service';
+import { ExchangeRateService } from '../../services/exchange_rate.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -52,13 +53,23 @@ describe('TicketsService', () => {
 
     module = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
-      providers: [ConfigService, MetadataService, TicketsService, MarketService, NetworkService, RedisService],
+      providers: [
+        ConfigService,
+        MetadataService,
+        TicketsService,
+        MarketService,
+        NetworkService,
+        RedisService,
+        ExchangeRateService,
+      ],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
       .overrideProvider(NetworkService)
       .useValue(new MetadataServiceMock())
       .overrideProvider(RedisService)
+      .useValue(new (jest.fn())())
+      .overrideProvider(ExchangeRateService)
       .useValue(new (jest.fn())())
       .compile();
 

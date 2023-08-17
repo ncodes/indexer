@@ -37,12 +37,6 @@ export class MiscController {
     let info: TokenList.Token;
     network = network !== '-' ? network : undefined;
     if (network && !isValidNetwork(network)) throw400('network not supported');
-
-    // check if address exist in local list.
-    // If yes, return it with a mock USD price of $1
-    // Useful for testing
-    info = findInLocal(address);
-
     if (!info && network) info = getTokenInfo(network, address);
     if (!info) info = await this.metadataSrv.getTokenInfo(network, address);
     return ok().data(info).build();

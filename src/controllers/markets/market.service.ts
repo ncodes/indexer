@@ -20,7 +20,9 @@ export class MarketService {
   async extendMarket(market: Market, select = []) {
     select = select && _.filter(select, (s) => !_.isEmpty(s));
     try {
+      let baseInfo: TokenMetadata, quoteInfo: TokenMetadata;
       const { address, network: net, baseAddress, quoteAddress } = market;
+
       if (select.includes(`numProviders`) || !select.length) {
         market.numProviders = await Liquidity.countProvidersInMarket(net, address);
       }
@@ -30,7 +32,8 @@ export class MarketService {
       }
 
       if (select.includes(`lowestPrice`) || !select.length) {
-        market.lowestPriceUsd = await this.metadataSrv.tryToUsd(net, market.lowestPrice, quoteAddress);
+        quoteInfo = await this.metadataSrv.getTokenInfo(net, quoteAddress);
+        market.lowestPriceUsd = await this.metadataSrv.tryToUsd(net, market.lowestPrice, quoteAddress, quoteInfo);
       }
 
       if (select.includes(`highestPrice24h`) || !select.length) {
@@ -66,23 +69,33 @@ export class MarketService {
       }
 
       if (select.includes(`baseLogo`) || !select.length) {
-        market.baseLogo = getTokenLogo(net, baseAddress);
-        market.baseLogo = !market.baseLogo ? await this.metadataSrv.getTokenLogo(net, baseAddress) : market.baseLogo;
+        baseInfo = await this.metadataSrv.getTokenInfo(net, baseAddress);
+        market.baseLogo = baseInfo.logoURI;
       }
 
       if (select.includes(`quoteLogo`) || !select.length) {
-        market.quoteLogo = getTokenLogo(net, quoteAddress);
-        market.quoteLogo = !market.quoteLogo
-          ? await this.metadataSrv.getTokenLogo(net, quoteAddress)
-          : market.quoteLogo;
+        quoteInfo = await this.metadataSrv.getTokenInfo(net, quoteAddress);
+        market.quoteLogo = quoteInfo.logoURI;
       }
 
       if (select.includes(`amountSwapped`) || !select.length) {
-        market.amountSwappedUsd = await this.metadataSrv.tryToUsd(net, market.amountSwapped, market.baseAddress);
+        baseInfo = await this.metadataSrv.getTokenInfo(net, baseAddress);
+        market.amountSwappedUsd = await this.metadataSrv.tryToUsd(
+          net,
+          market.amountSwapped,
+          market.baseAddress,
+          baseInfo,
+        );
       }
 
       if (select.includes(`totalLiquidity`) || !select.length) {
-        market.totalLiquidityUsd = await this.metadataSrv.tryToUsd(net, market.totalLiquidity, market.baseAddress);
+        baseInfo = await this.metadataSrv.getTokenInfo(net, baseAddress);
+        market.totalLiquidityUsd = await this.metadataSrv.tryToUsd(
+          net,
+          market.totalLiquidity,
+          market.baseAddress,
+          baseInfo,
+        );
       }
 
       return Promise.resolve();

@@ -7,11 +7,9 @@ import * as moment from 'moment';
 import { DBService } from '../../db/DBService';
 import Market from '../../models/market';
 import Swap from '../../models/swap';
-import { TokenLists } from '../../common/token_list';
 import Liquidity from '../../models/liquidity';
 import MarketPrice from '../../models/market_price';
 import { pow10 } from '../../network/common';
-import * as _ from 'lodash';
 import { NotifierService } from '../../jobs/mailer/NotifierService';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { RedisService } from '../../services/redis.service';
@@ -181,21 +179,13 @@ describe('MarketsService', () => {
 
     describe(`select=['baseLogo or quoteLogo']`, () => {
       it(`should return correct value when token was found in local list`, async () => {
-        TokenLists[net].tokens.push({ address: base, logoURI: 'logo_url' });
-        TokenLists[net].tokens.push({ address: quote, logoURI: 'logo_url_quote' });
+        jest.spyOn(module.get(MetadataService), 'getTokenInfo').mockImplementation((network, address) => {
+          return { '0xBase': { logoURI: 'logo_url' }, '0xQuote': { logoURI: 'logo_url_quote' } }[address] as any;
+        });
+
         await service.extendMarket(market, ['baseLogo', 'quoteLogo']);
         expect(market.baseLogo).toBe('logo_url');
         expect(market.quoteLogo).toBe('logo_url_quote');
-      });
-
-      it(`should return correct value from metadata source if token does not exist in local list`, async () => {
-        const copy = _.clone(TokenLists[net].tokens);
-        TokenLists[net].tokens = [];
-        jest.spyOn(module.get(MetadataService), 'getTokenLogo').mockResolvedValue('logo_url');
-        await service.extendMarket(market, ['baseLogo', 'quoteLogo']);
-        expect(market.baseLogo).toBe('logo_url');
-        expect(market.quoteLogo).toBe('logo_url');
-        TokenLists[net].tokens = copy;
       });
     });
 

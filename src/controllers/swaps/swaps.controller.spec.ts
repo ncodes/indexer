@@ -22,6 +22,7 @@ import Dispute from '../../models/dispute';
 import Event from '../../models/event';
 import * as moment from 'moment';
 import { RedisService } from '../../services/redis.service';
+import { ExchangeRateService } from '../../services/exchange_rate.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -72,6 +73,7 @@ describe('SwapsController', () => {
         LiquidityService,
         SwapService,
         RedisService,
+        ExchangeRateService,
       ],
     })
       .overrideProvider(ConfigService)
@@ -79,6 +81,8 @@ describe('SwapsController', () => {
       .overrideProvider(NetworkService)
       .useValue(new NetworkServiceMock())
       .overrideProvider(RedisService)
+      .useValue(new (jest.fn())())
+      .overrideProvider(ExchangeRateService)
       .useValue(new (jest.fn())())
       .compile();
     app = module.createNestApplication();

@@ -47,6 +47,18 @@ export class ExchangeRateService {
     if (!rate) return Promise.resolve(undefined);
     return Promise.resolve(toDec(rate));
   }
+
+  /**
+   * Like get but returns zero if symbol is not found
+   * @param symbol The symbol (ex: USD, NGN)
+   */
+  async tryGet(symbol: string): Promise<Decimal> {
+    try {
+      return await this.get(symbol);
+    } catch (error) {
+      return Promise.resolve(toDec(0));
+    }
+  }
 }
 
 // tslint:disable-next-line:max-classes-per-file

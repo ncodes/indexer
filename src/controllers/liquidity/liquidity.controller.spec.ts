@@ -23,6 +23,7 @@ import Event from '../../models/event';
 import Offer from '../../models/offers';
 import Swap from '../../models/swap';
 import { RedisService } from '../../services/redis.service';
+import { ExchangeRateService } from '../../services/exchange_rate.service';
 
 const mockCfgGet = jest.fn();
 const mockGetContractParam = jest.fn();
@@ -72,7 +73,15 @@ describe('LiquidityController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [LiquidityController],
-      providers: [ConfigService, NetworkService, LiquidityService, MarketService, MetadataService, RedisService],
+      providers: [
+        ConfigService,
+        NetworkService,
+        LiquidityService,
+        MarketService,
+        MetadataService,
+        RedisService,
+        ExchangeRateService,
+      ],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
@@ -81,6 +90,8 @@ describe('LiquidityController', () => {
       .overrideProvider(NetworkService)
       .useValue(new NetworkServiceMock())
       .overrideProvider(RedisService)
+      .useValue(new (jest.fn())())
+      .overrideProvider(ExchangeRateService)
       .useValue(new (jest.fn())())
       .compile();
     app = module.createNestApplication();

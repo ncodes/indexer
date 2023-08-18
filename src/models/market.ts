@@ -83,6 +83,8 @@ export default class Market extends BaseModel {
   manager: string = undefined;
   // Total liquidity in this market
   totalLiquidity: string = undefined;
+  // The USD equivalent of the total liquidity
+  totalLiquidityUsd: string = undefined;
   // The list of required badges to put liquidity
   requiredPutBadges: string[] = undefined;
   // The list of required badges to swap
@@ -109,7 +111,6 @@ export default class Market extends BaseModel {
   totalSwaps24h: string;
   volume24h: string;
   amountSwappedUsd: number;
-  totalLiquidityUsd: number;
 
   constructor(init?: Partial<Market>) {
     super();
@@ -308,6 +309,7 @@ export default class Market extends BaseModel {
    * @param price Filter by price (if it starts with >, it means equal or greater than, if it starts with <, it means equal or less than)
    * @param priceUsd Filter by USD price (if it starts with >, it means equal or greater than, if it starts with <, it means equal or less than)
    * @param availableLiquidity Filter by available liquidity (if it starts with >, it means equal or greater than, if it starts with <, it means equal or less than)
+   * @param availableLiquidityUsd Filter by USD available liquidity (if it starts with >, it means equal or greater than, if it starts with <, it means equal or less than)
    * @param reqPutBadges A list of PUT badges to filter by
    * @param reqSwapBadges A list of SWAP badges to filter by
    * @param offer Indicate to filter by offer type
@@ -331,6 +333,7 @@ export default class Market extends BaseModel {
     price: string,
     priceUsd: string,
     availableLiquidity: string,
+    availableLiquidityUsd: string,
     reqPutBadges: string[],
     reqSwapBadges: string[],
     offer: boolean,
@@ -387,6 +390,12 @@ export default class Market extends BaseModel {
       const operator = availableLiquidity.startsWith('>') ? '>=' : '<=';
       const availableLiquidityValue = availableLiquidity.replace('>', '').replace('<', '');
       query = query.where(raw('"totalLiquidity"'), operator, availableLiquidityValue);
+    }
+
+    if (availableLiquidityUsd) {
+      const operator = availableLiquidityUsd.startsWith('>') ? '>=' : '<=';
+      const availableLiquidityValue = availableLiquidityUsd.replace('>', '').replace('<', '');
+      query = query.where(raw('"totalLiquidityUsd"'), operator, availableLiquidityValue);
     }
 
     if (!_.isEmpty(reqPutBadges)) {

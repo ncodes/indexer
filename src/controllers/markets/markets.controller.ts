@@ -115,6 +115,7 @@ export class MarketsController {
       q.price,
       q.priceUsd,
       q.liquidity,
+      q.liquidityUsd,
       reqPutBadges,
       reqSwapBadges,
       q.offer,

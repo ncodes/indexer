@@ -197,14 +197,5 @@ describe('MarketsService', () => {
       await service.extendMarket(market, ['amountSwapped']);
       expect(market.amountSwappedUsd).toBe(500);
     });
-
-    it(`should return correct value when select=['totalLiquidity']`, async () => {
-      market.totalLiquidity = pow10(18).mul(100).toString();
-      jest
-        .spyOn(module.get(MetadataService), 'getTokenInfo')
-        .mockResolvedValue({ decimals: 18, price: 5, network: net, logoURI: '', name: '' });
-      await service.extendMarket(market, ['totalLiquidity']);
-      expect(market.totalLiquidityUsd).toBe(500);
-    });
   });
 });

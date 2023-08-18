@@ -954,6 +954,96 @@ describe('MarketsController', () => {
       });
     });
 
+    describe('filter by liquidityUsd', () => {
+      it('should 200 and correct market', async () => {
+        const market = await Market.create({ network: net, totalLiquidityUsd: '10', amountSwapped: '2' });
+        const market2 = await Market.create({ network: net, totalLiquidityUsd: '11', amountSwapped: '1' });
+
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
+
+        await request(app.getHttpServer())
+          .get(`/v1/markets`)
+          .query({ liquidityUsd: '10', net })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(market.id);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/markets`)
+          .query({ liquidityUsd: '<10', net })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(market.id);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/markets`)
+          .query({ liquidityUsd: '<11', net })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(2);
+            expect(res.body.data[0].id).toEqual(market.id);
+            expect(res.body.data[1].id).toEqual(market2.id);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/markets`)
+          .query({ liquidityUsd: '>11', net })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(market2.id);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/markets`)
+          .query({ liquidityUsd: '>12', net })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(0);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/markets`)
+          .query({ liquidityUsd: '<9', net })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(0);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/markets`)
+          .query({ liquidityUsd: '9', net })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(0);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/markets`)
+          .query({ liquidityUsd: '$9', net })
+          .set('Authorization', 'bearer ' + token)
+          .expect(400)
+          .expect({
+            error: {
+              message: "must be a number (optionally preceded by '>' or '<')",
+              param: 'liquidityUsd',
+              type: 'invalid_request_error',
+            },
+          });
+      });
+    });
+
     describe('filter by merchantLp', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({ network: net, requiredPutBadges: ['merchant'] });

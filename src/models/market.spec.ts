@@ -40,6 +40,7 @@ describe('Market', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
       )) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt.id);
@@ -51,6 +52,7 @@ describe('Market', () => {
       const res = (await Market.search(
         undefined,
         '0xCreator',
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -94,6 +96,7 @@ describe('Market', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
       )) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt.id);
@@ -107,6 +110,7 @@ describe('Market', () => {
         undefined,
         undefined,
         '0xBase',
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -147,6 +151,7 @@ describe('Market', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
       )) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt.id);
@@ -174,6 +179,7 @@ describe('Market', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
       )) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt.id);
@@ -183,6 +189,7 @@ describe('Market', () => {
       const mkt = await Market.create({ permSwap: false });
       const mkt2 = await Market.create({ permSwap: true });
       let res = (await Market.search(
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -218,6 +225,7 @@ describe('Market', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         true,
         undefined,
         undefined,
@@ -229,6 +237,7 @@ describe('Market', () => {
       expect(res[0].id).toEqual(mkt2.id);
 
       res = (await Market.search(
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -268,6 +277,7 @@ describe('Market', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         false,
         undefined,
         undefined,
@@ -291,6 +301,7 @@ describe('Market', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         true,
         undefined,
         undefined,
@@ -301,6 +312,7 @@ describe('Market', () => {
       expect(res[0].id).toEqual(mkt2.id);
 
       res = (await Market.search(
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -341,6 +353,7 @@ describe('Market', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         true,
         undefined,
         undefined,
@@ -350,6 +363,7 @@ describe('Market', () => {
       expect(res[0].id).toEqual(mkt.id);
 
       res = (await Market.search(
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -392,6 +406,7 @@ describe('Market', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         true,
         undefined,
         undefined,
@@ -419,6 +434,7 @@ describe('Market', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         1,
         undefined,
       )) as Market[];
@@ -426,6 +442,7 @@ describe('Market', () => {
       expect(res[0].id).toEqual(mkt.id);
 
       res = (await Market.search(
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -468,6 +485,7 @@ describe('Market', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         1,
         0,
       )) as Market[];
@@ -475,6 +493,7 @@ describe('Market', () => {
       expect(res[0].id).toEqual(mkt.id);
 
       res = (await Market.search(
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -512,6 +531,7 @@ describe('Market', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         ['merchant'],
         undefined,
         undefined,
@@ -535,6 +555,7 @@ describe('Market', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         ['bitcoiner'],
         undefined,
         undefined,
@@ -548,6 +569,7 @@ describe('Market', () => {
       expect(res[0].id).toEqual(mkt2.id);
 
       res = (await Market.search(
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -583,6 +605,7 @@ describe('Market', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         ['merchant'],
         undefined,
         undefined,
@@ -606,6 +629,7 @@ describe('Market', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         ['bitcoiner'],
         undefined,
         undefined,
@@ -620,6 +644,7 @@ describe('Market', () => {
       expect(res[0].id).toEqual(mkt2.id);
 
       res = (await Market.search(
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -657,6 +682,7 @@ describe('Market', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         true,
         undefined,
         undefined,
@@ -680,6 +706,7 @@ describe('Market', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         false,
         undefined,
         undefined,
@@ -692,6 +719,7 @@ describe('Market', () => {
       expect(res[0].id).toEqual(mkt2.id);
 
       res = (await Market.search(
+        undefined,
         undefined,
         undefined,
         undefined,

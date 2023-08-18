@@ -175,9 +175,12 @@ describe('CoreHandler', () => {
       expect(liq.timeToPay).toEqual(10);
 
       market = await Market.getById(market.id);
-      expect(market.totalLiquidity).toEqual('100');
       expect(market.lowestPrice).toEqual('300');
       expect(market.lowestPriceUsd).toEqual('5.6');
+      expect(mockTryToUsd).toHaveBeenNthCalledWith(1, net, market.lowestPrice, quoteAddress);
+      expect(market.totalLiquidity).toEqual('100');
+      expect(market.totalLiquidityUsd).toEqual('5.6');
+      expect(mockTryToUsd).toHaveBeenNthCalledWith(2, net, market.totalLiquidity, baseAddress);
 
       const marketPrice = await MarketPrice.find({ network: net, marketAddress });
       expect(marketPrice).toBeDefined();
@@ -262,8 +265,11 @@ describe('CoreHandler', () => {
 
       market = await Market.getById(market.id);
       expect(market.totalLiquidity).toEqual('110');
+      expect(market.totalLiquidityUsd).toEqual('5.6');
+      expect(mockTryToUsd).toHaveBeenNthCalledWith(1, net, market.totalLiquidity, baseAddress);
       expect(market.lowestPrice).toEqual('430');
       expect(market.lowestPriceUsd).toEqual('5.6');
+      expect(mockTryToUsd).toHaveBeenNthCalledWith(2, net, market.lowestPrice, quoteAddress);
 
       const eventAdd = await Event.find({ network: net, action: Events.LiquidityAdd });
       expect(eventAdd).toBeDefined();
@@ -373,8 +379,11 @@ describe('CoreHandler', () => {
 
       market = await Market.getById(market.id);
       expect(market.totalLiquidity).toEqual('90');
+      expect(market.totalLiquidityUsd).toEqual('5.6');
+      expect(mockTryToUsd).toHaveBeenNthCalledWith(1, net, market.totalLiquidity, baseAddress);
       expect(market.lowestPrice).toEqual('430');
       expect(market.lowestPriceUsd).toEqual('5.6');
+      expect(mockTryToUsd).toHaveBeenNthCalledWith(2, net, market.lowestPrice, quoteAddress);
     });
 
     describe('quote asset type is NFT', () => {
@@ -475,6 +484,7 @@ describe('CoreHandler', () => {
       market = await Market.getById(market.id);
       expect(market.lowestPrice).toEqual('300');
       expect(market.lowestPriceUsd).toEqual('5.6');
+      expect(mockTryToUsd).toHaveBeenNthCalledWith(1, net, market.lowestPrice, quoteAddress);
 
       const marketPrice = await MarketPrice.find({ network: net, marketAddress });
       expect(marketPrice).toBeDefined();
@@ -540,6 +550,7 @@ describe('CoreHandler', () => {
       market = await Market.getById(market.id);
       expect(market.lowestPrice).toEqual('10');
       expect(market.lowestPriceUsd).toEqual('5.6');
+      expect(mockTryToUsd).toHaveBeenNthCalledWith(1, net, market.lowestPrice, quoteAddress);
     });
 
     it('should update the liquidity if it already exist and deduction=true', async () => {
@@ -589,6 +600,7 @@ describe('CoreHandler', () => {
       market = await Market.getById(market.id);
       expect(market.lowestPrice).toEqual('10');
       expect(market.lowestPriceUsd).toEqual('5.6');
+      expect(mockTryToUsd).toHaveBeenNthCalledWith(1, net, market.lowestPrice, quoteAddress);
     });
 
     describe('quote is NFT', () => {
@@ -630,12 +642,16 @@ describe('CoreHandler', () => {
       let market = await Market.create({
         network: net,
         address: marketAddress,
+        baseAddress,
+        quoteAddress,
       });
 
       let liq = await Liquidity.create({
         network: net,
         lid: 0,
         marketAddress,
+        baseAddress,
+        quoteAddress,
         provider,
         amount: '10000',
         price: '200',
@@ -653,6 +669,7 @@ describe('CoreHandler', () => {
       market = await Market.getById(market.id);
       expect(market.lowestPrice).toEqual('100');
       expect(market.lowestPriceUsd).toEqual('5.6');
+      expect(mockTryToUsd).toHaveBeenNthCalledWith(1, net, market.lowestPrice, quoteAddress);
 
       const marketPrice = await MarketPrice.find({ marketAddress: liq.marketAddress });
       expect(marketPrice).toBeDefined();
@@ -892,6 +909,9 @@ describe('CoreHandler', () => {
       const cancelAt = moment().add(1, 'day');
       const numTypeInfo = [toBN(2), lid, toBN(100), toBN(1), toBN(1), toBN(1), toBN(cancelAt.unix())];
       const [orderId, , amount, , , operator] = numTypeInfo;
+
+      mockTryToUsd.mockResolvedValue(5.6);
+
       await handler.onSwapOrder(
         marketAddress,
         provider,
@@ -939,6 +959,8 @@ describe('CoreHandler', () => {
       market = await Market.getById(market.id);
       expect(market.totalSwaps).toEqual(1);
       expect(market.totalLiquidity).toEqual(liqAmt.sub(amount).toString());
+      expect(market.totalLiquidityUsd).toEqual('5.6');
+      expect(mockTryToUsd).toHaveBeenCalledWith(net, market.totalLiquidity, baseAddress);
       swap.market = market;
 
       expect(mockNotify).toHaveBeenCalledWith(NotificationID.NewInteractiveSwap, net, provider, {
@@ -1007,7 +1029,9 @@ describe('CoreHandler', () => {
       market = await Market.create({
         network: net,
         address: marketAddress,
+        baseAddress,
         base: BASE,
+        quoteAddress,
         quote: QUOTE,
         amountSwapped: powOf(1, 18).toString(),
         totalSwaps: 1,
@@ -1017,6 +1041,8 @@ describe('CoreHandler', () => {
       liq = await Liquidity.create({
         network: net,
         marketAddress,
+        baseAddress,
+        quoteAddress,
         provider: provider,
         lid: lid.toNumber(),
         price: powOf(1, 18).toString(),
@@ -1087,6 +1113,8 @@ describe('CoreHandler', () => {
         expect(market.amountSwapped).toEqual('2000000000000000000');
         expect(market.totalSwaps).toEqual(2);
         expect(market.totalLiquidity).toEqual(liqAmt.sub(amount).toString());
+        expect(market.totalLiquidityUsd).toEqual('0.5');
+        expect(mockTryToUsd).toHaveBeenNthCalledWith(2, net, market.totalLiquidity, baseAddress);
 
         const event = await Event.find({ network: net, action: Events.LiquiditySwap });
         expect(event).toBeDefined();
@@ -1315,6 +1343,8 @@ describe('CoreHandler', () => {
         address: marketAddress,
         base: BASE,
         quote: QUOTE,
+        baseAddress,
+        quoteAddress,
         totalLiquidity: liqAmt.toString(),
       });
 
@@ -1322,6 +1352,8 @@ describe('CoreHandler', () => {
         network: net,
         marketAddress,
         provider: provider,
+        baseAddress,
+        quoteAddress,
         lid,
         openOrders: 1,
         amount: liqAmt.toString(),
@@ -1340,6 +1372,8 @@ describe('CoreHandler', () => {
     });
 
     it('should mark order as cancelled and send notification to counterparty', async () => {
+      mockTryToUsd.mockResolvedValue(5.6);
+
       const byDispute = false;
       await handler.onOrderCancelled(orderId, taker, byDispute, {} as any);
 
@@ -1358,8 +1392,10 @@ describe('CoreHandler', () => {
       expect(liq.avgFinalizeDur).toBeGreaterThan(0);
 
       market = await Market.getById(market.id);
-      expect(market.totalLiquidity).toEqual(liqAmt.add(amount).toString());
       expect(market.avgFinalizeDur).toBeGreaterThan(0);
+      expect(market.totalLiquidity).toEqual(liqAmt.add(amount).toString());
+      expect(market.totalLiquidityUsd).toEqual('5.6');
+      expect(mockTryToUsd).toHaveBeenCalledWith(net, market.totalLiquidity, baseAddress);
 
       const event = await Event.find({ action: Events.SwapCancelled });
       expect(event).toBeDefined();

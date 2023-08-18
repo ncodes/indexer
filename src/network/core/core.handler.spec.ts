@@ -135,6 +135,9 @@ describe('CoreHandler', () => {
         quoteType: AssetType.SYNTH,
         quoteAddress: quoteAddress,
       });
+
+      mockTryToUsd.mockResolvedValue(5.6);
+
       await expect(
         handler.onUpdatedFungibleLiquidity(
           provider,
@@ -174,6 +177,7 @@ describe('CoreHandler', () => {
       market = await Market.getById(market.id);
       expect(market.totalLiquidity).toEqual('100');
       expect(market.lowestPrice).toEqual('300');
+      expect(market.lowestPriceUsd).toEqual('5.6');
 
       const marketPrice = await MarketPrice.find({ network: net, marketAddress });
       expect(marketPrice).toBeDefined();
@@ -222,6 +226,9 @@ describe('CoreHandler', () => {
         minSwap: '10',
         maxSwap: '30',
       });
+
+      mockTryToUsd.mockResolvedValue(5.6);
+
       await expect(
         handler.onUpdatedFungibleLiquidity(
           provider,
@@ -256,6 +263,7 @@ describe('CoreHandler', () => {
       market = await Market.getById(market.id);
       expect(market.totalLiquidity).toEqual('110');
       expect(market.lowestPrice).toEqual('430');
+      expect(market.lowestPriceUsd).toEqual('5.6');
 
       const eventAdd = await Event.find({ network: net, action: Events.LiquidityAdd });
       expect(eventAdd).toBeDefined();
@@ -337,6 +345,9 @@ describe('CoreHandler', () => {
         wantAndIds: [2],
         lid: lid,
       });
+
+      mockTryToUsd.mockResolvedValue(5.6);
+
       await expect(
         handler.onUpdatedFungibleLiquidity(
           provider,
@@ -363,6 +374,7 @@ describe('CoreHandler', () => {
       market = await Market.getById(market.id);
       expect(market.totalLiquidity).toEqual('90');
       expect(market.lowestPrice).toEqual('430');
+      expect(market.lowestPriceUsd).toEqual('5.6');
     });
 
     describe('quote asset type is NFT', () => {
@@ -423,6 +435,9 @@ describe('CoreHandler', () => {
         quoteAddress: quoteAddress,
         quoteType: AssetType.ERC20,
       });
+
+      mockTryToUsd.mockResolvedValue(5.6);
+
       await expect(
         handler.onUpdatedNonFungibleLiquidity(
           provider,
@@ -459,6 +474,7 @@ describe('CoreHandler', () => {
 
       market = await Market.getById(market.id);
       expect(market.lowestPrice).toEqual('300');
+      expect(market.lowestPriceUsd).toEqual('5.6');
 
       const marketPrice = await MarketPrice.find({ network: net, marketAddress });
       expect(marketPrice).toBeDefined();
@@ -489,6 +505,9 @@ describe('CoreHandler', () => {
         lid: lid,
         price: '12',
       });
+
+      mockTryToUsd.mockResolvedValue(5.6);
+
       await expect(
         handler.onUpdatedNonFungibleLiquidity(
           provider,
@@ -520,6 +539,7 @@ describe('CoreHandler', () => {
 
       market = await Market.getById(market.id);
       expect(market.lowestPrice).toEqual('10');
+      expect(market.lowestPriceUsd).toEqual('5.6');
     });
 
     it('should update the liquidity if it already exist and deduction=true', async () => {
@@ -542,6 +562,9 @@ describe('CoreHandler', () => {
         wantAndIds: [2],
         lid: lid,
       });
+
+      mockTryToUsd.mockResolvedValue(5.6);
+
       await expect(
         handler.onUpdatedNonFungibleLiquidity(
           provider,
@@ -565,6 +588,7 @@ describe('CoreHandler', () => {
 
       market = await Market.getById(market.id);
       expect(market.lowestPrice).toEqual('10');
+      expect(market.lowestPriceUsd).toEqual('5.6');
     });
 
     describe('quote is NFT', () => {
@@ -617,6 +641,8 @@ describe('CoreHandler', () => {
         price: '200',
       });
 
+      mockTryToUsd.mockResolvedValue(5.6);
+
       await expect(
         handler.onUpdatedPrice(marketAddress, provider, manager, toBN(liq.lid), toBN(100), {} as any),
       ).resolves.toBeUndefined();
@@ -626,6 +652,7 @@ describe('CoreHandler', () => {
 
       market = await Market.getById(market.id);
       expect(market.lowestPrice).toEqual('100');
+      expect(market.lowestPriceUsd).toEqual('5.6');
 
       const marketPrice = await MarketPrice.find({ marketAddress: liq.marketAddress });
       expect(marketPrice).toBeDefined();

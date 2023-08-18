@@ -31,11 +31,6 @@ export class MarketService {
         market.lowestPrice24h = await Liquidity.getLowestPrice(net, address, undefined, 24);
       }
 
-      if (select.includes(`lowestPrice`) || !select.length) {
-        quoteInfo = await this.metadataSrv.getTokenInfo(net, quoteAddress);
-        market.lowestPriceUsd = await this.metadataSrv.tryToUsd(net, market.lowestPrice, quoteAddress, quoteInfo);
-      }
-
       if (select.includes(`highestPrice24h`) || !select.length) {
         market.highestPrice24h = await Liquidity.getHighestPrice(net, address, undefined, 24);
       }
@@ -62,12 +57,10 @@ export class MarketService {
           market.isInstant(),
           true,
         );
-        console.log('HELLO', market.isInstant(), market.volume24h);
       }
 
       if (select.includes(`priceChange`) || !select.length) {
         market.priceChange = await MarketPrice.priceChange(net, address, undefined, undefined, 24);
-        market.priceChange = 120.3;
       }
 
       if (select.includes(`baseLogo`) || !select.length) {

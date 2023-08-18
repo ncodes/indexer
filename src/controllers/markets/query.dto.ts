@@ -42,6 +42,12 @@ export class ListQueryDTO {
   public price?: string;
 
   @Matches(/^[<>]?[0-9]+$/, {
+    message: makeValidatorMsg(`must be a number (optionally preceded by '>' or '<')`, 'priceUsd'),
+  })
+  @IsOptional()
+  public priceUsd?: string;
+
+  @Matches(/^[<>]?[0-9]+$/, {
     message: makeValidatorMsg(`must be a number (optionally preceded by '>' or '<')`, 'liquidity'),
   })
   @IsOptional()

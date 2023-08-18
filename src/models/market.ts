@@ -95,13 +95,14 @@ export default class Market extends BaseModel {
   avgReleaseDur: number = undefined;
   // The lowest price in the market
   lowestPrice: string = undefined;
+  // The USD equivalent of the lowest price
+  lowestPriceUsd: number;
 
   // *** Non-persisted fields **//
   numDisputes: number;
   baseLogo: string;
   quoteLogo: string;
   numProviders: string;
-  lowestPriceUsd: number;
   lowestPrice24h: string;
   highestPrice24h: string;
   priceChange: number;
@@ -305,6 +306,7 @@ export default class Market extends BaseModel {
    * @param quoteAsset The quote asset address
    * @param queryStr The query string
    * @param price Filter by price (if it starts with >, it means equal or greater than, if it starts with <, it means equal or less than)
+   * @param priceUsd Filter by USD price (if it starts with >, it means equal or greater than, if it starts with <, it means equal or less than)
    * @param availableLiquidity Filter by available liquidity (if it starts with >, it means equal or greater than, if it starts with <, it means equal or less than)
    * @param reqPutBadges A list of PUT badges to filter by
    * @param reqSwapBadges A list of SWAP badges to filter by
@@ -327,6 +329,7 @@ export default class Market extends BaseModel {
     quoteAsset: string,
     queryStr: string,
     price: string,
+    priceUsd: string,
     availableLiquidity: string,
     reqPutBadges: string[],
     reqSwapBadges: string[],
@@ -372,6 +375,12 @@ export default class Market extends BaseModel {
       const operator = price.startsWith('>') ? '>=' : '<=';
       const priceValue = price.replace('>', '').replace('<', '');
       query = query.where(raw('"lowestPrice"'), operator, priceValue);
+    }
+
+    if (priceUsd) {
+      const operator = priceUsd.startsWith('>') ? '>=' : '<=';
+      const priceValue = priceUsd.replace('>', '').replace('<', '');
+      query = query.where(raw('"lowestPriceUsd"'), operator, priceValue);
     }
 
     if (availableLiquidity) {

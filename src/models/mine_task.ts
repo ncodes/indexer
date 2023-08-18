@@ -92,7 +92,7 @@ export default class MineTask extends BaseModel {
       .whereNotDeleted()
       .where({ network, completed: false });
     if (type) q = q.where({ type });
-    if (offset) q = q.offset(offset);
+    if (offset != undefined) q = q.offset(offset);
     if (limit) q = q.limit(limit);
     return q.orderBy('mineAt', 'ASC');
   }

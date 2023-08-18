@@ -132,7 +132,7 @@ export default class Notification extends BaseModel {
     let q = this.query(txn).select(raw('*, count(*) over() as "$queryCount"')).where({ network, userId });
     if (read !== undefined) q = q.where({ read });
     if (limit) q = q.limit(limit);
-    if (offset) q = q.offset(offset);
+    if (offset != undefined) q = q.offset(offset);
 
     return q.whereNotDeleted().orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
   }

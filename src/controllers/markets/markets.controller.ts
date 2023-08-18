@@ -1,5 +1,5 @@
 import { Controller, Get, Param, Query, ValidationPipe } from '@nestjs/common';
-import { ok, throw404 } from '../../common/responses/responses';
+import { ok, throw400, throw404 } from '../../common/responses/responses';
 import Market from '../../models/market';
 import { MarketService } from './market.service';
 import PermittedTrader from '../../models/permitted_trader';

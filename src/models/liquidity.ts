@@ -317,7 +317,7 @@ export default class Liquidity extends BaseModel {
       );
     }
 
-    if (offset) {
+    if (offset != undefined) {
       q = q.offset(offset);
     }
 

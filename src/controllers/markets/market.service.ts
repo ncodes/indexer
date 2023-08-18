@@ -62,10 +62,12 @@ export class MarketService {
           market.isInstant(),
           true,
         );
+        console.log('HELLO', market.isInstant(), market.volume24h);
       }
 
       if (select.includes(`priceChange`) || !select.length) {
         market.priceChange = await MarketPrice.priceChange(net, address, undefined, undefined, 24);
+        market.priceChange = 120.3;
       }
 
       if (select.includes(`baseLogo`) || !select.length) {

@@ -218,7 +218,7 @@ export default class Ticket extends BaseModel {
       q = q.where('matureAt', 'is not', null).where('matureAt', matured ? '<' : '>', 'now()');
     }
     if (slashed) q = q.where('slashed', slashed);
-    if (offset) q = q.offset(offset);
+    if (offset != undefined) q = q.offset(offset);
     if (limit) q = q.limit(limit);
     return q.orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
   }

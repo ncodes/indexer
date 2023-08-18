@@ -156,7 +156,7 @@ export default class LiquidityProvider extends BaseModel {
   static search(network: string, marketAddress: string, limit: number, offset: number) {
     let q = this.query().select(raw('*, count(*) over() as "$queryCount"')).where('network', 'ILIKE', network);
     if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
-    if (offset) q = q.offset(offset);
+    if (offset != undefined) q = q.offset(offset);
     if (limit) q = q.limit(limit);
     return q.whereNotDeleted().orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
   }

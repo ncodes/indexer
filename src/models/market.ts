@@ -411,7 +411,7 @@ export default class Market extends BaseModel {
       return res.count;
     }
 
-    if (offset) query = query.offset(offset);
+    if (offset != undefined) query = query.offset(offset);
 
     if (limit) query = query.limit(limit);
 
@@ -424,6 +424,7 @@ export default class Market extends BaseModel {
       .orderBy('totalSwaps', 'DESC') // prefer high swap transactions
       .orderBy('completionRate', 'DESC') // prefer high release rate (without dispute)
       .orderBy('updatedAt', 'DESC')
+      .orderBy('sn', 'DESC')
       .withGraphFetched(relations);
   }
 

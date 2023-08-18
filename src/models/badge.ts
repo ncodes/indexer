@@ -168,7 +168,7 @@ export default class Badge extends BaseModel {
           return res.count;
         });
     }
-    if (offset) query = query.offset(offset);
+    if (offset != undefined) query = query.offset(offset);
     if (limit) query = query.limit(limit);
     return query.whereNotDeleted().orderBy('updatedAt', 'DESC');
   }

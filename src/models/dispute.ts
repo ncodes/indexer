@@ -327,7 +327,7 @@ export default class Dispute extends BaseModel {
       const res = await q.count('id').first();
       return res.count;
     }
-    if (offset) q = q.offset(offset);
+    if (offset != undefined) q = q.offset(offset);
     if (limit) q = q.limit(limit);
     return q.orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
   }

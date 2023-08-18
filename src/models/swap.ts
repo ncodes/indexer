@@ -304,7 +304,7 @@ export default class Swap extends BaseModel {
   ) {
     return new Promise<string>((resolve, reject) => {
       this.query(txn)
-        .select(raw('sum(cast(?? as numeric))', !usd ? 'amount' : 'valueUsd').as('total'))
+        .select(raw('sum(??)', !usd ? 'amount' : 'valueUsd').as('total'))
         .where((q) => {
           if (network) q = q.where('network', network);
           if (marketAddress) q = q.where('marketAddress', 'ilike', marketAddress);
@@ -579,7 +579,7 @@ export default class Swap extends BaseModel {
         return q.orWhere('provider', 'ILIKE', providerOrTaker).orWhere('taker', 'ILIKE', providerOrTaker);
       });
     }
-    if (offset) q = q.offset(offset);
+    if (offset != undefined) q = q.offset(offset);
     if (limit) q = q.limit(limit);
     return q.orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
   }

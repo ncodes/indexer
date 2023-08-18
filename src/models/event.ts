@@ -247,7 +247,7 @@ export default class Event extends BaseModel {
       .withGraphFetched('[offer,swap,dispute]')
       .orderBy('sn', 'desc')
       .orderBy('createdAt', 'desc');
-    if (offset) q = q.offset(offset);
+    if (offset != undefined) q = q.offset(offset);
     if (limit) q = q.limit(limit);
     if (lastSerial) q = q.where('sn', '<', lastSerial);
     return q;

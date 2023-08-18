@@ -175,7 +175,7 @@ export default class Review extends BaseModel {
       .whereNotDeleted()
       .where({ network });
     if (reviewedAddress) q = q.where('reviewed', 'ILIKE', reviewedAddress);
-    if (offset) q = q.offset(offset);
+    if (offset != undefined) q = q.offset(offset);
     if (limit) q = q.limit(limit);
     return q.orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
   }

@@ -1,9 +1,9 @@
-import { randStr } from "../common/common";
-import Objection, { raw, Transaction } from "objection";
-import { BaseModel } from "./base";
-import Market, { AssetType } from "./market";
-import * as _ from "lodash";
-import * as moment from "moment";
+import { randStr } from '../common/common';
+import Objection, { raw, Transaction } from 'objection';
+import { BaseModel } from './base';
+import Market, { AssetType } from './market';
+import * as _ from 'lodash';
+import * as moment from 'moment';
 
 /**
  * Liquidity represents a liquidity model
@@ -87,6 +87,7 @@ export default class Liquidity extends BaseModel {
   volume24h: string;
   priceChange: number;
   priceUsd: number;
+  amountUsd: number;
 
   /** Relations */
   market: Market;
@@ -231,6 +232,10 @@ export default class Liquidity extends BaseModel {
    * @param maxOpenDisputes Allow only records with lower open disputes
    * @param amount Filter by swap amount
    * @param price Filter by price
+   * @param amountUsd Filter by swap amount in USD (if it starts with '>', it means equal or greater than or if it starts with '<', it means equal or less than)
+   * @param priceUsd Filter by price in USD (if it starts with '>', it means equal or greater than or if it starts with '<', it means equal or less than)
+   * @param quoteUsdRate The USD rate to use for price to USD conversions
+   * @param baseUsdRate The USD rate to use for amount to USD conversions
    * @param reqLpBadges Filter by badges liquidity providers must have been granted
    * @param reqSwapBadges
    * @param limit The number of records to return (optional).
@@ -240,11 +245,15 @@ export default class Liquidity extends BaseModel {
    */
   static search(
     network: string,
-    marketAddress?: string,
-    provider?: string,
-    maxOpenDisputes?: number,
-    amount: string = undefined,
-    price?: string,
+    marketAddress: string,
+    provider: string,
+    maxOpenDisputes: number,
+    amount: string,
+    price: string,
+    amountUsd: string,
+    priceUsd: string,
+    quoteUsdRate = 0,
+    baseUsdRate = 0,
     reqLpBadges?: string[],
     reqSwapBadges?: string[],
     limit?: number,
@@ -255,8 +264,24 @@ export default class Liquidity extends BaseModel {
     select = this.makeSelectList(select);
     let q = this.query(txn);
 
+    q = q.from((sub) => {
+      sub = sub
+        .from('liquidities')
+        .select(
+          'liquidities.*',
+          raw('"price" * ? / 10^"quoteDecimals" as "priceUsd"', [quoteUsdRate]),
+          raw('"amount" * ? / 10^"baseDecimals" as "amountUsd"', [baseUsdRate]),
+        )
+        .innerJoin('markets', (q) => {
+          return q
+            .on('markets.address', 'ILIKE', 'liquidities.marketAddress')
+            .andOn('markets.network', '=', 'liquidities.network');
+        });
+      return sub.as('s');
+    });
+
     if (!_.isEmpty(reqLpBadges)) {
-      q = q.from((sub) => {
+      q = q.alias('s').from((sub) => {
         return sub
           .from('liquidities')
           .select('liquidities.*')
@@ -280,7 +305,9 @@ export default class Liquidity extends BaseModel {
       .whereNotDeleted()
       .where('s.network', network)
       .where('s.paused', false)
-      .where('s.amount', '>', '0');
+      .where((q) => {
+        if (!provider) return q.where('s.amount', '>', '0');
+      });
 
     if (marketAddress) {
       q = q.where('s.marketAddress', 'ILIKE', marketAddress);
@@ -304,6 +331,18 @@ export default class Liquidity extends BaseModel {
       const operator = price.startsWith('>') ? '>=' : '<=';
       const amountValue = price.replace('>', '').replace('<', '');
       q = q.where('s.price', operator, amountValue);
+    }
+
+    if (amountUsd) {
+      const operator = amountUsd.startsWith('>') ? '>=' : '<=';
+      const amountValue = amountUsd.replace('>', '').replace('<', '');
+      q = q.where('s.amountUsd', operator, amountValue);
+    }
+
+    if (priceUsd) {
+      const operator = priceUsd.startsWith('>') ? '>=' : '<=';
+      const amountValue = priceUsd.replace('>', '').replace('<', '');
+      q = q.where('s.priceUsd', operator, amountValue);
     }
 
     if (!_.isEmpty(reqSwapBadges)) {

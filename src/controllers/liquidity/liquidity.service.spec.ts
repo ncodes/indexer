@@ -156,5 +156,13 @@ describe('LiquidityService', () => {
       await expect(service.extendLiquidity(liquidity, ['priceUsd'])).resolves.toBeUndefined();
       expect(liquidity.priceUsd).toBe('100');
     });
+
+    it(`should return correct value when select=['amountUsd']`, async () => {
+      mockTryToUsd.mockResolvedValue('100');
+      await Swap.create({ network: net, amount: '100' });
+      liquidity = await Liquidity.updateById(liquidity.id, { amount: '100' });
+      await expect(service.extendLiquidity(liquidity, ['amountUsd'])).resolves.toBeUndefined();
+      expect(liquidity.amountUsd).toBe('100');
+    });
   });
 });

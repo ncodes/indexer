@@ -1,17 +1,24 @@
-import { forwardRef, Inject, Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import NetworkService from "../../network/network.service";
-import { isValidNetwork, isZero, pow10D } from "../../network/common";
-import { CoinMarketCapMetadata } from "./CoinMarketCapMetadata";
-import { isDevMode, isProdMode, toDec } from "../../common/common";
-import { CoinGeckoMetadata } from "./CoinGeckoMetadata";
-import { findInLocal, findInSynthetic } from "../../common/token_list";
-import { RedisService } from "../redis.service";
-import { ExchangeRateService } from "../exchange_rate.service";
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import NetworkService from '../../network/network.service';
+import { isValidNetwork, isZero, pow10D } from '../../network/common';
+import { CoinMarketCapMetadata } from './CoinMarketCapMetadata';
+import { isDevMode, isProdMode, toDec } from '../../common/common';
+import { CoinGeckoMetadata } from './CoinGeckoMetadata';
+import { findInLocal, findInSynthetic } from '../../common/token_list';
+import { RedisService } from '../redis.service';
+import { ExchangeRateService } from '../exchange_rate.service';
 
 // tslint:disable-next-line:max-classes-per-file
 export abstract class MetadataSource {
   abstract getTokenInfo(network: string, symbolOrContract: string): Promise<TokenMetadata>;
+}
+
+interface Options {
+  // Indicates the amount is already in the highest denomination
+  isHD: boolean;
+  // Indicates whether to refetch the token info
+  refetch: boolean;
 }
 
 @Injectable()
@@ -128,7 +135,7 @@ export class MetadataService {
     net: string,
     amount: string,
     contract: string,
-    tokenInfo?: Partial<TokenMetadata & { isHD: boolean; refetch: boolean }>,
+    tokenInfo?: Partial<TokenMetadata & Options>,
   ): Promise<number> {
     if (isZero(amount)) return 0;
     const isHD = tokenInfo?.isHD;
@@ -148,7 +155,7 @@ export class MetadataService {
     net: string,
     amount: string,
     contract: string,
-    tokenInfo?: Partial<TokenMetadata & { isHD: boolean; refetch: boolean }>,
+    tokenInfo?: Partial<TokenMetadata & Options>,
   ): Promise<number> {
     try {
       return await this.toUsd(net, amount, contract, tokenInfo);

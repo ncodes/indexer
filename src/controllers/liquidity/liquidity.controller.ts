@@ -1,15 +1,17 @@
 import { Controller, Get, Param, Query, ValidationPipe } from '@nestjs/common';
-import { ok, throw404 } from '../../common/responses/responses';
+import { ok, throw400, throw404 } from '../../common/responses/responses';
 import Liquidity from '../../models/liquidity';
 import { LiquidityService } from './liquidity.service';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { GetParamDTO, GetQueryDTO, ListQueryDTO } from './query.dto';
 import { ConfigService } from '../../config/config.service';
 import Event from '../../models/event';
+import { MetadataService } from '../../services/metadata/metadata.service';
+import Market from '../../models/market';
 
 @Controller('v1/liquidities')
 export class LiquidityController {
-  constructor(private liqSrv: LiquidityService, private cfgSrv: ConfigService) {}
+  constructor(private liqSrv: LiquidityService, private cfgSrv: ConfigService, private metadataSrv: MetadataService) {}
 
   /**
    * Get a liquidity
@@ -101,6 +103,23 @@ export class LiquidityController {
       reqSwapBadges.push(...q.swapBadges);
     }
 
+    let baseUsdRate: number;
+    let quoteUsdRate: number;
+    if (q.amountUsd || q.priceUsd) {
+      if (!q.market) return throw400(`'amountUsd' and 'priceUsd' filters require 'market' to be set`);
+
+      const market = await Market.getMarket(q.net, q.market);
+      if (!market) return throw404('market not found');
+
+      baseUsdRate = q.amountUsd
+        ? await this.metadataSrv.tryToUsd(q.net, '1', market.baseAddress, { refetch: true, isHD: true })
+        : undefined;
+
+      quoteUsdRate = q.priceUsd
+        ? await this.metadataSrv.tryToUsd(q.net, '1', market.quoteAddress, { refetch: true, isHD: true })
+        : undefined;
+    }
+
     if (!q.count) {
       const liquidities = await Liquidity.search(
         q.net,
@@ -109,6 +128,10 @@ export class LiquidityController {
         maxOpenDisputes,
         q.amount,
         q.price,
+        q.amountUsd,
+        q.priceUsd,
+        quoteUsdRate,
+        baseUsdRate,
         reqLpBadges,
         reqSwapBadges,
         q.limit || 25,

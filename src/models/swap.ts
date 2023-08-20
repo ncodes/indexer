@@ -1,10 +1,10 @@
-import { randStr, toDec } from "../common/common";
-import Objection, { Model, raw, Transaction } from "objection";
-import { BaseModel } from "./base";
-import * as moment from "moment";
-import Market from "./market";
-import Liquidity from "./liquidity";
-import * as _ from "lodash";
+import { randStr, toDec } from '../common/common';
+import Objection, { Model, raw, Transaction } from 'objection';
+import { BaseModel } from './base';
+import * as moment from 'moment';
+import Market from './market';
+import Liquidity from './liquidity';
+import * as _ from 'lodash';
 
 /**
  * Swap represents a swap operation
@@ -628,7 +628,9 @@ export default class Swap extends BaseModel {
    */
   static getRecentSwap(network: string, providerOrTaker: string, txn?: Transaction) {
     return this.query(txn)
-      .where({ network })
+      .where((q) => {
+        if (network) return q.where('network', network);
+      })
       .where((q) => {
         return q.orWhere('provider', 'ILIKE', providerOrTaker).orWhere('taker', 'ILIKE', providerOrTaker);
       })

@@ -106,23 +106,15 @@ export class MarketsController {
       reqSwapBadges.push(...q.swapBadges);
     }
 
-    let basePriceUsd: number;
-    if (q.liquidityUsd && !q.base) {
-      return throw400(`'liquidityUsd' filter require 'base' to be set`);
-    } else {
-      basePriceUsd = q.base
-        ? await this.metadataSrv.tryToUsd(q.net, '1', q.base, { refetch: true, isHD: true })
-        : undefined;
-    }
+    if (q.liquidityUsd && !q.base) return throw400(`'liquidityUsd' filter requires 'base' to be set`);
+    const baseUsdRate = q.base
+      ? await this.metadataSrv.tryToUsd(q.net, '1', q.base, { refetch: true, isHD: true })
+      : undefined;
 
-    let quotePriceUsd: number;
-    if (q.priceUsd && !q.quote) {
-      return throw400(`'priceUsd' filter require 'quote' to be set`);
-    } else {
-      quotePriceUsd = q.quote
-        ? await this.metadataSrv.tryToUsd(q.net, '1', q.quote, { refetch: true, isHD: true })
-        : undefined;
-    }
+    if (q.priceUsd && !q.quote) return throw400(`'priceUsd' filter requires 'quote' to be set`);
+    const quoteUsdRate = q.quote
+      ? await this.metadataSrv.tryToUsd(q.net, '1', q.quote, { refetch: true, isHD: true })
+      : undefined;
 
     const result = await Market.search(
       q.net,
@@ -133,8 +125,8 @@ export class MarketsController {
       q.query,
       q.price,
       q.liquidity,
-      basePriceUsd,
-      quotePriceUsd,
+      baseUsdRate,
+      quoteUsdRate,
       q.priceUsd,
       q.liquidityUsd,
       reqPutBadges,

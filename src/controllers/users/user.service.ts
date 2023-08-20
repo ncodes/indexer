@@ -24,7 +24,6 @@ export class UserService {
         undefined,
       );
       user.totalSwaps = parseInt(totalSwaps);
-
       user.completionRate = await Swap.getCompletionRate(network, undefined, undefined, user.address);
 
       const badges = await BadgeGrant.search(network, undefined, undefined, user.address);

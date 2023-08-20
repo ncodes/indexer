@@ -19,7 +19,7 @@ export class LiquidityService {
   async extendLiquidity(liq: Liquidity, select = []) {
     select = select && _.filter(select, (s) => !_.isEmpty(s));
     try {
-      const { marketAddress, network: net, provider, quoteAddress } = liq;
+      const { marketAddress, network: net, provider, baseAddress, quoteAddress } = liq;
 
       if (select.includes(`totalSwaps24h`) || !select.length) {
         liq.totalSwaps24h = await Swap.countLiquiditySwaps(net, marketAddress, provider, liq.lid, undefined, 1440);
@@ -43,8 +43,12 @@ export class LiquidityService {
         liq.priceChange = await MarketPrice.priceChange(net, marketAddress, provider, liq.lid, 24);
       }
 
-      if ((select.includes(`priceUsd`) && !isZero(liq.price)) || !select.length) {
+      if (!liq.priceUsd && ((select.includes(`priceUsd`) && !isZero(liq.price)) || !select.length)) {
         liq.priceUsd = await this.metadataSrv.tryToUsd(net, liq.price, quoteAddress);
+      }
+
+      if (!liq.amountUsd && ((select.includes(`amountUsd`) && !isZero(liq.amount)) || !select.length)) {
+        liq.amountUsd = await this.metadataSrv.tryToUsd(net, liq.amount, baseAddress);
       }
     } catch (e) {
       return Promise.reject(e);

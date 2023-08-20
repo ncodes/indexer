@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import NetworkService from '../../network/network.service';
 import { isValidNetwork, isZero, pow10D } from '../../network/common';
@@ -8,6 +8,7 @@ import { CoinGeckoMetadata } from './CoinGeckoMetadata';
 import { findInLocal, findInSynthetic } from '../../common/token_list';
 import { RedisService } from '../redis.service';
 import { ExchangeRateService } from '../exchange_rate.service';
+import axios from 'axios';
 
 // tslint:disable-next-line:max-classes-per-file
 export abstract class MetadataSource {
@@ -23,6 +24,7 @@ interface Options {
 
 @Injectable()
 export class MetadataService {
+  private logger = new Logger(MetadataService.name);
   private source: MetadataSource;
 
   /**
@@ -160,6 +162,7 @@ export class MetadataService {
     try {
       return await this.toUsd(net, amount, contract, tokenInfo);
     } catch (e) {
+      this.logger.error(axios.isAxiosError(e) ? e.response.data : e, e.stack, MetadataService.name);
       return 0;
     }
   }

@@ -787,7 +787,7 @@ describe('MarketsController', () => {
           .expect({
             error: {
               type: 'invalid_request_error',
-              message: "'priceUsd' filter require 'quote' to be set",
+              message: "'priceUsd' filter requires 'quote' to be set",
             },
           });
       });
@@ -1000,7 +1000,7 @@ describe('MarketsController', () => {
           .expect({
             error: {
               type: 'invalid_request_error',
-              message: "'liquidityUsd' filter require 'base' to be set",
+              message: "'liquidityUsd' filter requires 'base' to be set",
             },
           });
       });

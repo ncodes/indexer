@@ -21,7 +21,7 @@ export class MarketService {
     select = select && _.filter(select, (s) => !_.isEmpty(s));
     try {
       let baseInfo: TokenMetadata, quoteInfo: TokenMetadata;
-      const { address, network: net, baseAddress, quoteAddress } = market;
+      const { address, network: net, baseAddress, quoteAddress, totalLiquidity, lowestPrice } = market;
 
       if (select.includes(`numProviders`) || !select.length) {
         market.numProviders = await Liquidity.countProvidersInMarket(net, address);
@@ -33,6 +33,11 @@ export class MarketService {
 
       if (select.includes(`highestPrice24h`) || !select.length) {
         market.highestPrice24h = await Liquidity.getHighestPrice(net, address, undefined, 24);
+      }
+
+      if (!market.lowestPriceUsd && (select.includes(`lowestPrice`) || !select.length)) {
+        quoteInfo = await this.metadataSrv.getTokenInfo(net, quoteAddress);
+        market.lowestPriceUsd = await this.metadataSrv.tryToUsd(net, lowestPrice, quoteAddress, quoteInfo);
       }
 
       if (select.includes(`totalSwaps24h`) || !select.length) {
@@ -81,6 +86,11 @@ export class MarketService {
           market.baseAddress,
           baseInfo,
         );
+      }
+
+      if (!market.totalLiquidityUsd && (select.includes(`totalLiquidity`) || !select.length)) {
+        baseInfo = await this.metadataSrv.getTokenInfo(net, baseAddress);
+        market.totalLiquidityUsd = await this.metadataSrv.tryToUsd(net, totalLiquidity, baseAddress, baseInfo);
       }
 
       return Promise.resolve();

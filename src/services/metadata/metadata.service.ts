@@ -124,10 +124,17 @@ export class MetadataService {
    * @param contract The token contract address
    * @param tokenInfo Optional token metadata. If not provided, it will be fetched from the source
    */
-  async toUsd(net: string, amount: string, contract: string, tokenInfo?: TokenMetadata): Promise<number> {
+  async toUsd(
+    net: string,
+    amount: string,
+    contract: string,
+    tokenInfo?: Partial<TokenMetadata & { isHD: boolean; refetch: boolean }>,
+  ): Promise<number> {
     if (isZero(amount)) return 0;
-    if (!tokenInfo) tokenInfo = await this.getTokenInfo(net, contract);
-    return toDec(amount).div(pow10D(tokenInfo.decimals)).mul(tokenInfo.price).toNumber();
+    const isHD = tokenInfo?.isHD;
+    if (!tokenInfo || tokenInfo.refetch) tokenInfo = await this.getTokenInfo(net, contract);
+    if (!isHD) return toDec(amount).div(pow10D(tokenInfo.decimals)).mul(tokenInfo.price).toNumber();
+    else return toDec(amount).mul(tokenInfo.price).toNumber();
   }
 
   /**
@@ -137,7 +144,12 @@ export class MetadataService {
    * @param contract The token contract address
    * @param tokenInfo Optional token metadata. If not provided, it will be fetched from the source
    */
-  async tryToUsd(net: string, amount: string, contract: string, tokenInfo?: TokenMetadata): Promise<number> {
+  async tryToUsd(
+    net: string,
+    amount: string,
+    contract: string,
+    tokenInfo?: Partial<TokenMetadata & { isHD: boolean; refetch: boolean }>,
+  ): Promise<number> {
     try {
       return await this.toUsd(net, amount, contract, tokenInfo);
     } catch (e) {

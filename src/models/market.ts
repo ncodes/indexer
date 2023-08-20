@@ -83,8 +83,6 @@ export default class Market extends BaseModel {
   manager: string = undefined;
   // Total liquidity in this market
   totalLiquidity: string = undefined;
-  // The USD equivalent of the total liquidity
-  totalLiquidityUsd: string = undefined;
   // The list of required badges to put liquidity
   requiredPutBadges: string[] = undefined;
   // The list of required badges to swap
@@ -97,10 +95,10 @@ export default class Market extends BaseModel {
   avgReleaseDur: number = undefined;
   // The lowest price in the market
   lowestPrice: string = undefined;
-  // The USD equivalent of the lowest price
-  lowestPriceUsd: number;
 
   // *** Non-persisted fields **//
+  lowestPriceUsd: number;
+  totalLiquidityUsd: number = undefined;
   numDisputes: number;
   baseLogo: string;
   quoteLogo: string;
@@ -294,8 +292,7 @@ export default class Market extends BaseModel {
       .orWhere('baseAddress', 'ILIKE', qs)
       .orWhere('quote', 'ILIKE', `%${qs}%`)
       .orWhere('quoteAddress', 'ILIKE', `%${qs}%`)
-      .orWhere('pair', 'ILIKE', `%${qs.replaceAll(/\s|\/|-/gi, '')}%`)
-      .whereNotDeleted();
+      .orWhere('pair', 'ILIKE', `%${qs.replaceAll(/\s|\/|-/gi, '')}%`);
   }
 
   /**
@@ -308,8 +305,10 @@ export default class Market extends BaseModel {
    * @param queryStr The query string
    * @param price Filter by price (if it starts with >, it means equal or greater than, if it starts with <, it means equal or less than)
    * @param priceUsd Filter by USD price (if it starts with >, it means equal or greater than, if it starts with <, it means equal or less than)
-   * @param availableLiquidity Filter by available liquidity (if it starts with >, it means equal or greater than, if it starts with <, it means equal or less than)
-   * @param availableLiquidityUsd Filter by USD available liquidity (if it starts with >, it means equal or greater than, if it starts with <, it means equal or less than)
+   * @param liquidity Filter by available liquidity (if it starts with >, it means equal or greater than, if it starts with <, it means equal or less than)
+   * @param baseUsdRate The USD rate used for base USD conversions
+   * @param quoteUsdRate The USD rate used for quote USD conversions
+   * @param liquidityUsd Filter by USD available liquidity (if it starts with >, it means equal or greater than, if it starts with <, it means equal or less than)
    * @param reqPutBadges A list of PUT badges to filter by
    * @param reqSwapBadges A list of SWAP badges to filter by
    * @param offer Indicate to filter by offer type
@@ -331,9 +330,11 @@ export default class Market extends BaseModel {
     quoteAsset: string,
     queryStr: string,
     price: string,
+    liquidity: string,
+    baseUsdRate = 0,
+    quoteUsdRate = 0,
     priceUsd: string,
-    availableLiquidity: string,
-    availableLiquidityUsd: string,
+    liquidityUsd: string,
     reqPutBadges: string[],
     reqSwapBadges: string[],
     offer: boolean,
@@ -348,58 +349,65 @@ export default class Market extends BaseModel {
     txn?: Objection.Transaction,
   ) {
     select = this.makeSelectList(select);
-    let query = this.query(txn);
+    let q = this.query(txn);
 
-    query = !countOnly ? query.select(...select, raw('count(*) over() as' + ' "$queryCount"')) : query;
+    q = q.from((sub) => {
+      sub = sub.from('markets').select(...select);
+      sub = sub.select(raw('"totalLiquidity" * ?? / 10^"baseDecimals" as "totalLiquidityUsd"', [baseUsdRate]));
+      sub = sub.select(raw('"lowestPrice" * ?? / 10^"quoteDecimals" as "lowestPriceUsd"', [quoteUsdRate]));
+      if (baseAsset) sub = sub.where('baseAddress', 'ilike', baseAsset);
+      if (quoteAsset) sub = sub.where('quoteAddress', 'ilike', quoteAsset);
+      return sub.as('s');
+    });
 
-    if (network) query = query.where('network', 'ilike', network);
+    q = q.alias('s').whereNotDeleted();
 
-    if (creator) query = query.where('creator', 'ilike', creator);
+    q = !countOnly ? q.select(...select, raw('count(*) over() as' + ' "$queryCount"')) : q;
 
-    if (address) query = query.where('address', 'ilike', address);
+    if (network) q = q.where('network', 'ilike', network);
 
-    if (baseAsset) query = query.where('baseAddress', 'ilike', baseAsset);
+    if (creator) q = q.where('creator', 'ilike', creator);
 
-    if (quoteAsset) query = query.where('quoteAddress', 'ilike', quoteAsset);
+    if (address) q = q.where('address', 'ilike', address);
 
-    if (permSwap !== undefined) query = query.where('permSwap', permSwap);
+    if (permSwap !== undefined) q = q.where('permSwap', permSwap);
 
-    if (permPut !== undefined) query = query.where('permPut', permPut);
+    if (permPut !== undefined) q = q.where('permPut', permPut);
 
-    if (instant !== undefined) query = query.where('instant', instant);
+    if (instant !== undefined) q = q.where('instant', instant);
 
     if (queryStr) {
-      query = query.where((q) => {
-        this.makeSearchQuery(q, queryStr);
+      q = q.where((q) => {
+        return this.makeSearchQuery(q, queryStr);
       });
     }
 
     if (price) {
       const operator = price.startsWith('>') ? '>=' : '<=';
       const priceValue = price.replace('>', '').replace('<', '');
-      query = query.where(raw('"lowestPrice"'), operator, priceValue);
+      q = q.where(raw('"lowestPrice"'), operator, priceValue);
     }
 
     if (priceUsd) {
       const operator = priceUsd.startsWith('>') ? '>=' : '<=';
       const priceValue = priceUsd.replace('>', '').replace('<', '');
-      query = query.where(raw('"lowestPriceUsd"'), operator, priceValue);
+      q = q.where(raw('"lowestPriceUsd"'), operator, priceValue);
     }
 
-    if (availableLiquidity) {
-      const operator = availableLiquidity.startsWith('>') ? '>=' : '<=';
-      const availableLiquidityValue = availableLiquidity.replace('>', '').replace('<', '');
-      query = query.where(raw('"totalLiquidity"'), operator, availableLiquidityValue);
+    if (liquidity) {
+      const operator = liquidity.startsWith('>') ? '>=' : '<=';
+      const availableLiquidityValue = liquidity.replace('>', '').replace('<', '');
+      q = q.where(raw('"totalLiquidity"'), operator, availableLiquidityValue);
     }
 
-    if (availableLiquidityUsd) {
-      const operator = availableLiquidityUsd.startsWith('>') ? '>=' : '<=';
-      const availableLiquidityValue = availableLiquidityUsd.replace('>', '').replace('<', '');
-      query = query.where(raw('"totalLiquidityUsd"'), operator, availableLiquidityValue);
+    if (liquidityUsd) {
+      const operator = liquidityUsd.startsWith('>') ? '>=' : '<=';
+      const availableLiquidityValue = liquidityUsd.replace('>', '').replace('<', '');
+      q = q.where(raw('"totalLiquidityUsd"'), operator, availableLiquidityValue);
     }
 
     if (!_.isEmpty(reqPutBadges)) {
-      query = query.whereRaw(
+      q = q.whereRaw(
         `EXISTS (
       SELECT 1
       FROM jsonb_array_elements_text("requiredPutBadges") badge
@@ -410,7 +418,7 @@ export default class Market extends BaseModel {
     }
 
     if (!_.isEmpty(reqSwapBadges)) {
-      query = query.whereRaw(
+      q = q.whereRaw(
         `EXISTS (
       SELECT 1
       FROM jsonb_array_elements_text("requiredSwapBadges") badge
@@ -421,20 +429,19 @@ export default class Market extends BaseModel {
     }
 
     if (offer !== undefined) {
-      query = query.where('offerOnly', offer);
+      q = q.where('offerOnly', offer);
     }
 
     if (countOnly) {
-      const res = await query.count('id').first();
+      const res = await q.count('id').first();
       return res.count;
     }
 
-    if (offset != undefined) query = query.offset(offset);
+    if (offset != undefined) q = q.offset(offset);
 
-    if (limit) query = query.limit(limit);
+    if (limit) q = q.limit(limit);
 
-    return query
-      .whereNotDeleted()
+    return q
       .orderBy('avgFinalizeDur', 'ASC') // prefer low finalize duration
       .orderBy('avgPaymentDur', 'ASC') // prefer low payment duration
       .orderBy('avgReleaseDur', 'ASC') // prefer low release duration

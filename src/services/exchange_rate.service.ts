@@ -1,4 +1,4 @@
-import { Injectable, Module } from '@nestjs/common';
+import { Injectable, Logger, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { Decimal } from 'decimal.js';
@@ -11,6 +11,7 @@ interface Rates {
 @Injectable()
 export class ExchangeRateService {
   private rates: Rates;
+  private logger = new Logger(ExchangeRateService.name);
 
   constructor(private cfgSrv: ConfigService) {}
 
@@ -56,6 +57,7 @@ export class ExchangeRateService {
     try {
       return await this.get(symbol);
     } catch (error) {
+      this.logger.error(axios.isAxiosError(error) ? error.response.data : error, error.stack, ExchangeRateService.name);
       return Promise.resolve(toDec(0));
     }
   }

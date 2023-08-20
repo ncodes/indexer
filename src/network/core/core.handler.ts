@@ -509,13 +509,10 @@ export class CoreHandler extends Handler {
     );
 
     // Update market
-    const totalLiquidity = toBN(market.totalLiquidity).sub(swap.amount).toString();
-    const totalLiquidityUsd = await this.metadataSrv.tryToUsd(this.network, totalLiquidity, market.baseAddress);
     market = await Market.updateById(
       market.id,
       {
-        totalLiquidity,
-        totalLiquidityUsd: totalLiquidityUsd.toString(),
+        totalLiquidity: toBN(market.totalLiquidity).sub(swap.amount).toString(),
         totalSwaps: market.totalSwaps + 1,
       },
       txn,
@@ -627,16 +624,13 @@ export class CoreHandler extends Handler {
       );
 
       // Update market
-      const totalLiquidity = toBN(market.totalLiquidity).sub(amount).toString();
-      const totalLiquidityUsd = await this.metadataSrv.tryToUsd(this.network, totalLiquidity, market.baseAddress);
       market = await Market.updateById(
         market.id,
         {
           lastSwapAt: now,
           amountSwapped: toBN(market.amountSwapped).add(amount).toString(),
           totalSwaps: market.totalSwaps + 1,
-          totalLiquidity,
-          totalLiquidityUsd: totalLiquidityUsd.toString(),
+          totalLiquidity: toBN(market.totalLiquidity).sub(amount).toString(),
         },
         txn,
       );
@@ -797,13 +791,10 @@ export class CoreHandler extends Handler {
 
     // Update market
     let market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
-    const totalLiquidity = toBN(market.totalLiquidity).add(swap.amount).toString();
-    const totalLiquidityUsd = await this.metadataSrv.tryToUsd(this.network, totalLiquidity, market.baseAddress);
     market = await Market.updateById(
       market.id,
       {
-        totalLiquidity,
-        totalLiquidityUsd: totalLiquidityUsd.toString(),
+        totalLiquidity: toBN(market.totalLiquidity).add(swap.amount).toString(),
         avgFinalizeDur: await Swap.getAvgFinalizeDuration(this.network, marketAddress, undefined, undefined, txn),
       },
       txn,
@@ -1018,9 +1009,11 @@ export class CoreHandler extends Handler {
       );
 
       // Update market
-      const lowestPrice = await Liquidity.getLowestPrice(this.network, marketAddress, undefined, undefined, txn);
-      const lowestPriceUsd = await this.metadataSrv.tryToUsd(this.network, lowestPrice, market.quoteAddress);
-      await Market.updateById(market.id, { lowestPrice, lowestPriceUsd }, txn);
+      await Market.updateById(
+        market.id,
+        { lowestPrice: await Liquidity.getLowestPrice(this.network, marketAddress, undefined, undefined, txn) },
+        txn,
+      );
     } else {
       const upd: Partial<Liquidity> = {};
 
@@ -1046,9 +1039,11 @@ export class CoreHandler extends Handler {
       await Liquidity.updateById(liq.id, upd, txn);
 
       // Update market
-      const lowestPrice = await Liquidity.getLowestPrice(this.network, marketAddress, undefined, undefined, txn);
-      const lowestPriceUsd = await this.metadataSrv.tryToUsd(this.network, lowestPrice, market.quoteAddress);
-      await Market.updateById(market.id, { lowestPrice, lowestPriceUsd }, txn);
+      await Market.updateById(
+        market.id,
+        { lowestPrice: await Liquidity.getLowestPrice(this.network, marketAddress, undefined, undefined, txn) },
+        txn,
+      );
     }
 
     // Add new market price entry, if quote is not NFT - since price is not
@@ -1141,17 +1136,11 @@ export class CoreHandler extends Handler {
       );
 
       // Update market
-      const lowestPrice = await Liquidity.getLowestPrice(this.network, marketAddress, undefined, undefined, txn);
-      const lowestPriceUsd = await this.metadataSrv.tryToUsd(this.network, lowestPrice, market.quoteAddress);
-      const totalLiquidity = toBN(market.totalLiquidity).add(amount).toString();
-      const totalLiquidityUsd = await this.metadataSrv.tryToUsd(this.network, totalLiquidity, market.baseAddress);
       await Market.updateById(
         market.id,
         {
-          totalLiquidity,
-          totalLiquidityUsd: totalLiquidityUsd.toString(),
-          lowestPrice,
-          lowestPriceUsd,
+          totalLiquidity: toBN(market.totalLiquidity).add(amount).toString(),
+          lowestPrice: await Liquidity.getLowestPrice(this.network, marketAddress, undefined, undefined, txn),
         },
         txn,
       );
@@ -1179,9 +1168,6 @@ export class CoreHandler extends Handler {
         mktCh.totalLiquidity = deduct
           ? toBN(market.totalLiquidity).sub(amount).toString()
           : toBN(market.totalLiquidity).add(amount).toString();
-        mktCh.totalLiquidityUsd = (
-          await this.metadataSrv.tryToUsd(this.network, mktCh.totalLiquidity, market.baseAddress)
-        ).toString();
       }
 
       if (liq.target != target) ch.target = target;
@@ -1199,7 +1185,6 @@ export class CoreHandler extends Handler {
       await Liquidity.updateById(liq.id, ch, txn);
 
       mktCh.lowestPrice = await Liquidity.getLowestPrice(this.network, marketAddress, undefined, undefined, txn);
-      mktCh.lowestPriceUsd = await this.metadataSrv.tryToUsd(this.network, mktCh.lowestPrice, market.quoteAddress);
       await Market.updateById(market.id, mktCh, txn);
 
       if (liq.amount != ch.amount) {
@@ -1293,11 +1278,8 @@ export class CoreHandler extends Handler {
     );
 
     // Update market
-    const lowestPrice = await Liquidity.getLowestPrice(this.network, marketAddress, undefined, undefined, txn);
-    const lowestPriceUsd = await this.metadataSrv.tryToUsd(this.network, lowestPrice, liq.quoteAddress);
     await Market.updateByNetworkAddress(this.network, marketAddress, {
-      lowestPrice,
-      lowestPriceUsd,
+      lowestPrice: await Liquidity.getLowestPrice(this.network, marketAddress, undefined, undefined, txn),
     });
 
     // Add liquidity event

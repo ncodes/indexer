@@ -19,6 +19,7 @@ import * as moment from 'moment';
 import { randStr } from '../../common/common';
 import Swap from '../../models/swap';
 import { RedisService } from '../../services/redis.service';
+import { powOf } from '../../network/common';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -30,8 +31,11 @@ const NetworkServiceMock = jest.fn().mockImplementation(() => {
   return { getMarketCore: mockGetMarketCore };
 });
 
+const mockTryToUsd = jest.fn();
 const MetadataServiceMock = jest.fn().mockImplementation(() => {
-  return {};
+  return {
+    tryToUsd: mockTryToUsd,
+  };
 });
 
 describe('MarketsController', () => {
@@ -228,6 +232,11 @@ describe('MarketsController', () => {
   });
 
   describe('.list', () => {
+    beforeEach(() => {
+      mockTryToUsd.mockResolvedValue(0.5);
+      jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
+    });
+
     it('should 400 when network is unknown', async () => {
       await request(app.getHttpServer())
         .get(`/v1/markets`)
@@ -256,7 +265,7 @@ describe('MarketsController', () => {
 
     it('should 200 and list of markets when some markets exist', async () => {
       const market = await Market.create({ network: net, address: '0x123' });
-      jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
+
       await request(app.getHttpServer())
         .get(`/v1/markets`)
         .query({ net })
@@ -277,8 +286,6 @@ describe('MarketsController', () => {
         });
         await Market.create({});
 
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
-
         await request(app.getHttpServer())
           .get(`/v1/markets`)
           .query({ creator: '0xCreator', net })
@@ -295,8 +302,6 @@ describe('MarketsController', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({ network: net, address: '0xAddress' });
         await Market.create({ network: net, address: '0xAddress2' });
-
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
@@ -324,8 +329,6 @@ describe('MarketsController', () => {
           creator: '0xCreator',
           permSwap: false,
         });
-
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
@@ -362,8 +365,6 @@ describe('MarketsController', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({ network: net, permPut: true });
         const market2 = await Market.create({ network: net, permPut: false });
-
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
@@ -419,8 +420,6 @@ describe('MarketsController', () => {
           updatedAt: moment().subtract(1, 's').toISOString(),
         });
 
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
-
         await request(app.getHttpServer())
           .get(`/v1/markets`)
           .query({ net, instant: true })
@@ -462,8 +461,6 @@ describe('MarketsController', () => {
         });
         await Market.create({});
 
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
-
         await request(app.getHttpServer())
           .get(`/v1/markets`)
           .query({ base: '0xBaseAddr', net })
@@ -484,8 +481,6 @@ describe('MarketsController', () => {
           quoteAddress: '0xQuoteAddr',
         });
         await Market.create({});
-
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
@@ -508,8 +503,6 @@ describe('MarketsController', () => {
         });
         await Market.create({});
 
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
-
         await request(app.getHttpServer())
           .get(`/v1/markets`)
           .query({ query: market.creator, net })
@@ -529,8 +522,6 @@ describe('MarketsController', () => {
           address: '0x123',
         });
         await Market.create({});
-
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
@@ -552,8 +543,6 @@ describe('MarketsController', () => {
         });
         await Market.create({});
 
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
-
         await request(app.getHttpServer())
           .get(`/v1/markets`)
           .query({ net, query: market.base })
@@ -573,8 +562,6 @@ describe('MarketsController', () => {
           baseAddress: '0xBaseAddress',
         });
         await Market.create({});
-
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
@@ -596,8 +583,6 @@ describe('MarketsController', () => {
         });
         await Market.create({});
 
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
-
         await request(app.getHttpServer())
           .get(`/v1/markets`)
           .query({ net, query: market.quote })
@@ -618,8 +603,6 @@ describe('MarketsController', () => {
         });
         await Market.create({});
 
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
-
         await request(app.getHttpServer())
           .get(`/v1/markets`)
           .query({ net, query: market.quoteAddress })
@@ -639,8 +622,6 @@ describe('MarketsController', () => {
           pair: 'BTCUSDT',
         });
         await Market.create({});
-
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
@@ -688,8 +669,6 @@ describe('MarketsController', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({ network: net, lowestPrice: '10', amountSwapped: '2' });
         const market2 = await Market.create({ network: net, lowestPrice: '11', amountSwapped: '1' });
-
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
@@ -775,25 +754,48 @@ describe('MarketsController', () => {
     });
 
     describe('filter by priceUsd', () => {
-      it('should 200 and correct market', async () => {
-        const market = await Market.create({ network: net, lowestPriceUsd: 10, amountSwapped: '2' });
-        const market2 = await Market.create({ network: net, lowestPriceUsd: 11, amountSwapped: '1' });
+      let market: Market;
+      let market2: Market;
 
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
+      beforeEach(async () => {
+        market = await Market.create({
+          network: net,
+          baseAddress: '0xBase',
+          quoteAddress: '0xQuote',
+          baseDecimals: 18,
+          quoteDecimals: 18,
+          lowestPrice: powOf(100, 18).toString(),
+          amountSwapped: '2',
+        });
+        market2 = await Market.create({
+          network: net,
+          baseAddress: '0xBase',
+          quoteAddress: '0xQuote',
+          baseDecimals: 18,
+          quoteDecimals: 18,
+          lowestPrice: powOf(200, 18).toString(),
+          amountSwapped: '1',
+        });
+      });
 
+      it('should return 400 when base was not provided', async () => {
         await request(app.getHttpServer())
           .get(`/v1/markets`)
           .query({ priceUsd: '10', net })
           .set('Authorization', 'bearer ' + token)
-          .expect(200)
-          .expect((res) => {
-            expect(res.body.data).toHaveLength(1);
-            expect(res.body.data[0].id).toEqual(market.id);
+          .expect(400)
+          .expect({
+            error: {
+              type: 'invalid_request_error',
+              message: "'priceUsd' filter require 'quote' to be set",
+            },
           });
+      });
 
+      it('should 200 and correct market', async () => {
         await request(app.getHttpServer())
           .get(`/v1/markets`)
-          .query({ priceUsd: '<10', net })
+          .query({ net, priceUsd: '50', quote: '0xQuote' })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -803,7 +805,17 @@ describe('MarketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
-          .query({ priceUsd: '<11', net })
+          .query({ priceUsd: '<50', net, quote: '0xQuote' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(market.id);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/markets`)
+          .query({ priceUsd: '<100', net, quote: '0xQuote' })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -814,7 +826,7 @@ describe('MarketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
-          .query({ priceUsd: '>11', net })
+          .query({ priceUsd: '>100', net, quote: '0xQuote' })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -824,7 +836,7 @@ describe('MarketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
-          .query({ priceUsd: '>12', net })
+          .query({ priceUsd: '>102', net, quote: '0xQuote' })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -833,7 +845,7 @@ describe('MarketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
-          .query({ priceUsd: '<9', net })
+          .query({ priceUsd: '<49', net, quote: '0xQuote' })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -842,7 +854,7 @@ describe('MarketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
-          .query({ priceUsd: '9', net })
+          .query({ priceUsd: '49', net, quote: '0xQuote' })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -851,7 +863,7 @@ describe('MarketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
-          .query({ priceUsd: '$9', net })
+          .query({ priceUsd: '$49', net, quote: '0xQuote' })
           .set('Authorization', 'bearer ' + token)
           .expect(400)
           .expect({
@@ -955,25 +967,50 @@ describe('MarketsController', () => {
     });
 
     describe('filter by liquidityUsd', () => {
-      it('should 200 and correct market', async () => {
-        const market = await Market.create({ network: net, totalLiquidityUsd: '10', amountSwapped: '2' });
-        const market2 = await Market.create({ network: net, totalLiquidityUsd: '11', amountSwapped: '1' });
+      let market: Market;
+      let market2: Market;
 
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
+      beforeEach(async () => {
+        market = await Market.create({
+          network: net,
+          baseAddress: '0xBase',
+          quoteAddress: '0xQuote',
+          baseDecimals: 18,
+          quoteDecimals: 18,
+          totalLiquidity: powOf(100, 18).toString(),
+          amountSwapped: '2',
+        });
+        market2 = await Market.create({
+          network: net,
+          baseAddress: '0xBase',
+          quoteAddress: '0xQuote',
+          baseDecimals: 18,
+          quoteDecimals: 18,
+          totalLiquidity: powOf(200, 18).toString(),
+          amountSwapped: '1',
+        });
+      });
 
+      it('should return 400 when base was not provided', async () => {
         await request(app.getHttpServer())
           .get(`/v1/markets`)
           .query({ liquidityUsd: '10', net })
           .set('Authorization', 'bearer ' + token)
-          .expect(200)
-          .expect((res) => {
-            expect(res.body.data).toHaveLength(1);
-            expect(res.body.data[0].id).toEqual(market.id);
+          .expect(400)
+          .expect({
+            error: {
+              type: 'invalid_request_error',
+              message: "'liquidityUsd' filter require 'base' to be set",
+            },
           });
+      });
+
+      it('should 200 and correct market', async () => {
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
-          .query({ liquidityUsd: '<10', net })
+          .query({ liquidityUsd: '50', net, base: '0xBase' })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -983,7 +1020,17 @@ describe('MarketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
-          .query({ liquidityUsd: '<11', net })
+          .query({ liquidityUsd: '<50', net, base: '0xBase' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(market.id);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/markets`)
+          .query({ liquidityUsd: '<100', net, base: '0xBase' })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -994,7 +1041,7 @@ describe('MarketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
-          .query({ liquidityUsd: '>11', net })
+          .query({ liquidityUsd: '>100', net, base: '0xBase' })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -1004,7 +1051,7 @@ describe('MarketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
-          .query({ liquidityUsd: '>12', net })
+          .query({ liquidityUsd: '>101', net, base: '0xBase' })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -1013,7 +1060,7 @@ describe('MarketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
-          .query({ liquidityUsd: '<9', net })
+          .query({ liquidityUsd: '<49', net, base: '0xBase' })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -1022,7 +1069,7 @@ describe('MarketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
-          .query({ liquidityUsd: '9', net })
+          .query({ liquidityUsd: '49', net, base: '0xBase' })
           .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
@@ -1031,7 +1078,7 @@ describe('MarketsController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
-          .query({ liquidityUsd: '$9', net })
+          .query({ liquidityUsd: '$49', net, base: '0xBase' })
           .set('Authorization', 'bearer ' + token)
           .expect(400)
           .expect({

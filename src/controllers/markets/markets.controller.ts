@@ -14,10 +14,11 @@ import {
 import LiquidityProvider from '../../models/market_provider';
 import { ConfigService } from '@nestjs/config';
 import Swap from '../../models/swap';
+import { MetadataService } from '../../services/metadata/metadata.service';
 
 @Controller('v1/markets')
 export class MarketsController {
-  constructor(private marketSrv: MarketService, private cfgSrv: ConfigService) {}
+  constructor(private marketSrv: MarketService, private cfgSrv: ConfigService, private metadataSrv: MetadataService) {}
 
   // Get top markets
   @Get('/top')
@@ -105,6 +106,24 @@ export class MarketsController {
       reqSwapBadges.push(...q.swapBadges);
     }
 
+    let basePriceUsd: number;
+    if (q.liquidityUsd && !q.base) {
+      return throw400(`'liquidityUsd' filter require 'base' to be set`);
+    } else {
+      basePriceUsd = q.base
+        ? await this.metadataSrv.tryToUsd(q.net, '1', q.base, { refetch: true, isHD: true })
+        : undefined;
+    }
+
+    let quotePriceUsd: number;
+    if (q.priceUsd && !q.quote) {
+      return throw400(`'priceUsd' filter require 'quote' to be set`);
+    } else {
+      quotePriceUsd = q.quote
+        ? await this.metadataSrv.tryToUsd(q.net, '1', q.quote, { refetch: true, isHD: true })
+        : undefined;
+    }
+
     const result = await Market.search(
       q.net,
       q.creator,
@@ -113,8 +132,10 @@ export class MarketsController {
       q.quote,
       q.query,
       q.price,
-      q.priceUsd,
       q.liquidity,
+      basePriceUsd,
+      quotePriceUsd,
+      q.priceUsd,
       q.liquidityUsd,
       reqPutBadges,
       reqSwapBadges,

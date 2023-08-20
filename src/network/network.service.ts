@@ -70,8 +70,8 @@ export default class NetworkService {
    * Watch events on different networks
    */
   private async watch() {
-    await this.watchNetwork(SupportedNetworks.Localhost);
-    // await this.watchNetwork(SupportedNetworks.Ethereum);
+    // await this.watchNetwork(SupportedNetworks.Localhost);
+    await this.watchNetwork(SupportedNetworks.Ethereum);
   }
 
   /**

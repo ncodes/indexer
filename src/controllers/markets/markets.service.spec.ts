@@ -118,6 +118,19 @@ describe('MarketsService', () => {
       expect(market.highestPrice24h).toBe('3');
     });
 
+    it(`should return correct value when select=['lowestPrice']`, async () => {
+      market.lowestPrice = '20';
+
+      const tokenInfo = { decimals: 18, price: 5, network: net, logoURI: '', name: '' };
+      const mockGetTokenInfo = jest.spyOn(module.get(MetadataService), 'getTokenInfo').mockResolvedValue(tokenInfo);
+      const mockTryToUsd = jest.spyOn(module.get(MetadataService), 'tryToUsd').mockResolvedValue(100);
+
+      await service.extendMarket(market, ['lowestPrice']);
+      expect(market.lowestPriceUsd).toBe(100);
+      expect(mockGetTokenInfo).toBeCalledWith(net, quote);
+      expect(mockTryToUsd).toBeCalledWith(net, market.lowestPrice, quote, tokenInfo);
+    });
+
     it(`should return correct value when select=['totalSwaps24h']`, async () => {
       await Swap.create({ network: net, marketAddress, createdAt: moment().subtract(86399, 'seconds').toISOString() });
       await Swap.create({ network: net, marketAddress, createdAt: moment().subtract(86400, 'seconds').toISOString() });
@@ -196,6 +209,19 @@ describe('MarketsService', () => {
         .mockResolvedValue({ decimals: 18, price: 5, network: net, logoURI: '', name: '' });
       await service.extendMarket(market, ['amountSwapped']);
       expect(market.amountSwappedUsd).toBe(500);
+    });
+
+    it(`should return correct value when select=['totalLiquidity']`, async () => {
+      market.totalLiquidity = '20';
+
+      const tokenInfo = { decimals: 18, price: 5, network: net, logoURI: '', name: '' };
+      const mockGetTokenInfo = jest.spyOn(module.get(MetadataService), 'getTokenInfo').mockResolvedValue(tokenInfo);
+      const mockTryToUsd = jest.spyOn(module.get(MetadataService), 'tryToUsd').mockResolvedValue(100);
+
+      await service.extendMarket(market, ['totalLiquidity']);
+      expect(market.totalLiquidityUsd).toBe(100);
+      expect(mockGetTokenInfo).toBeCalledWith(net, base);
+      expect(mockTryToUsd).toBeCalledWith(net, market.totalLiquidity, base, tokenInfo);
     });
   });
 });

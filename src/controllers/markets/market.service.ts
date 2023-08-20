@@ -3,7 +3,6 @@ import Liquidity from '../../models/liquidity';
 import Market from '../../models/market';
 import MarketPrice from '../../models/market_price';
 import Swap from '../../models/swap';
-import { getTokenLogo } from '../../common/token_list';
 import * as _ from 'lodash';
 import { MetadataService } from '../../services/metadata/metadata.service';
 
@@ -55,6 +54,7 @@ export class MarketService {
         market.volume24h = await Swap.getVolume(
           net,
           address,
+          undefined,
           undefined,
           undefined,
           undefined,

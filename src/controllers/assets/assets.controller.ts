@@ -25,7 +25,7 @@ export class AssetsController {
     for (const fa of FeaturedAssets) {
       const data: AssetStat = { symbol: fa.symbol, volume24h: '0', price24h: 0 };
       for (const c of fa.contracts) {
-        const volume = await Swap.getVolume(c.net, undefined, c.addr, undefined, undefined, 1440);
+        const volume = await Swap.getVolume(c.net, undefined, c.addr, undefined, undefined, undefined, 1440);
         data.volume24h = toDec(volume).add(data.volume24h).toString();
         if (c.primary) {
           data.price24h = await MarketPrice.priceChangeByBaseAddress(c.net, c.addr, 24);
@@ -63,7 +63,7 @@ export class AssetsController {
       network: net,
     };
 
-    const volume = await Swap.getVolume(net, undefined, address, undefined, undefined, 1440);
+    const volume = await Swap.getVolume(net, undefined, address, undefined, undefined, undefined, 1440);
     data.volume24h = toDec(volume).add(data.volume24h).toString();
     data.price24h = await MarketPrice.priceChangeByBaseAddress(undefined, address, 24);
     data.lowestPrice24h = await Liquidity.getLowestPrice(undefined, undefined, address, 24);

@@ -1,4 +1,4 @@
-import { Controller, Get, Logger, Param, Query, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Query, ValidationPipe } from '@nestjs/common';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import Event from '../../models/event';
 import { ok } from '../../common/responses/responses';

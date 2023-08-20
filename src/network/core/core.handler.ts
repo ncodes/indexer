@@ -685,7 +685,7 @@ export class CoreHandler extends Handler {
 
       // Update liquidity
       let liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
-      let newCompletionRate = await Swap.getCompletionRate(this.network, marketAddress, provider, txn);
+      let newCompletionRate = await Swap.getCompletionRate(this.network, marketAddress, provider, undefined, txn);
       liq = await Liquidity.updateById(
         liq.id,
         {
@@ -707,7 +707,7 @@ export class CoreHandler extends Handler {
       );
 
       // Update market
-      newCompletionRate = await Swap.getCompletionRate(this.network, marketAddress, undefined, txn);
+      newCompletionRate = await Swap.getCompletionRate(this.network, marketAddress, undefined, undefined, txn);
       market = await Market.updateById(
         market.id,
         {

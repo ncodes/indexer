@@ -10,10 +10,18 @@ import * as request from 'supertest';
 import { makeSession } from '../auth/utils';
 import { UsersController } from './users.controller';
 import { randStr } from '../../common/common';
+import { UserService } from './user.service';
+import { MetadataService } from '../../services/metadata/metadata.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
   return { get: mockCfgGet };
+});
+
+// mock metadata service
+const mockMetadataTryToUsd = jest.fn();
+const MetadataServiceMock = jest.fn().mockImplementation(() => {
+  return { tryToUsd: mockMetadataTryToUsd };
 });
 
 describe('UsersController', () => {
@@ -46,10 +54,12 @@ describe('UsersController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [UsersController],
-      providers: [ConfigService],
+      providers: [ConfigService, UserService, MetadataService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
+      .overrideProvider(MetadataService)
+      .useValue(new MetadataServiceMock())
       .compile();
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());
@@ -94,6 +104,7 @@ describe('UsersController', () => {
     });
 
     it('should return 200 and de-sensitized user data when token was not provided', async () => {
+      const mockExtendUser = jest.spyOn(app.get(UserService), 'extendUser').mockResolvedValue(undefined);
       await User.updateById(u.id, {
         address: '0xAddress',
         email: '0x@email.com',
@@ -106,10 +117,12 @@ describe('UsersController', () => {
           expect(res.body.data.object).toEqual('user');
           expect(res.body.data.id).toEqual(u.id);
           expect(res.body.data.email).toBeUndefined();
+          expect(mockExtendUser).toBeCalledTimes(1);
         });
     });
 
     it('should return 200 and full user data when token was provided', async () => {
+      const mockExtendUser = jest.spyOn(app.get(UserService), 'extendUser').mockResolvedValue(undefined);
       await User.updateById(u.id, {
         address: '0xAddress',
         email: '0x@email.com',
@@ -123,6 +136,7 @@ describe('UsersController', () => {
           expect(res.body.data.object).toEqual('user');
           expect(res.body.data.id).toEqual(u.id);
           expect(res.body.data.email).toEqual('0x@email.com');
+          expect(mockExtendUser).toBeCalledTimes(1);
         });
     });
   });

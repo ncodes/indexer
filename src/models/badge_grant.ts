@@ -1,7 +1,7 @@
-import { BaseModel } from './base';
-import Objection, { raw, Transaction } from 'objection';
-import { randStr } from '../common/common';
-import { uniq } from 'lodash';
+import { BaseModel } from "./base";
+import Objection, { raw, Transaction } from "objection";
+import { randStr } from "../common/common";
+import { uniq } from "lodash";
 
 /**
  * BadgeGrant represents a granted badge
@@ -132,7 +132,7 @@ export default class BadgeGrant extends BaseModel {
    * @param select Select specific fields
    * @param txn Optional transaction object
    */
-  static search(
+  static async search(
     network?: string,
     badge?: string,
     path?: string,
@@ -151,12 +151,8 @@ export default class BadgeGrant extends BaseModel {
     if (path) query = query.where('path', path);
     if (grantee) query = query.where('grantee', 'ilike', grantee);
     if (countOnly) {
-      return query
-        .count('id')
-        .first()
-        .then((res: any) => {
-          return res.count;
-        });
+      const res = await query.count('id').first();
+      return res.count;
     }
     if (offset != undefined) query = query.offset(offset);
     if (limit) query = query.limit(limit);

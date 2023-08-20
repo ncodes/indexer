@@ -1,10 +1,10 @@
-import { randStr, toDec } from '../common/common';
-import Objection, { Model, raw, Transaction } from 'objection';
-import { BaseModel } from './base';
-import * as moment from 'moment';
-import Market from './market';
-import Liquidity from './liquidity';
-import * as _ from 'lodash';
+import { randStr, toDec } from "../common/common";
+import Objection, { Model, raw, Transaction } from "objection";
+import { BaseModel } from "./base";
+import * as moment from "moment";
+import Market from "./market";
+import Liquidity from "./liquidity";
+import * as _ from "lodash";
 
 /**
  * Swap represents a swap operation
@@ -284,7 +284,8 @@ export default class Swap extends BaseModel {
    * @param network The network name.
    * @param marketAddress The base asset address
    * @param baseAddress The base address
-   * @param provider The provider address
+   * @param provider The provider address (ignored if providerOrTaker is set)
+   * @param providerOrTaker The provider or taker address (ignored if provider is set)
    * @param lid The liquidity ID
    * @param timeAgo The number of minutes ago to use as the start time
    * @param instant Filter by instant swap
@@ -296,6 +297,7 @@ export default class Swap extends BaseModel {
     marketAddress?: string,
     baseAddress?: string,
     provider?: string,
+    providerOrTaker?: string,
     lid?: number,
     timeAgo?: number,
     instant?: boolean,
@@ -309,7 +311,12 @@ export default class Swap extends BaseModel {
           if (network) q = q.where('network', network);
           if (marketAddress) q = q.where('marketAddress', 'ilike', marketAddress);
           if (baseAddress) q = q.where('baseAddress', 'ilike', baseAddress);
-          if (provider !== undefined) q = q.where('provider', 'ilike', provider);
+          if (provider && !providerOrTaker) q = q.where('provider', 'ilike', provider);
+          if (providerOrTaker && !provider) {
+            q = q.where((q) => {
+              return q.orWhere('provider', 'ILIKE', providerOrTaker).orWhere('taker', 'ILIKE', providerOrTaker);
+            });
+          }
           if (!_.isNil(lid)) q = q.where('lid', lid);
           if (instant !== undefined) q = q.where('instant', instant);
           if (timeAgo) q = q.where('createdAt', '>=', moment().subtract(timeAgo, 'minutes').toISOString());
@@ -500,24 +507,33 @@ export default class Swap extends BaseModel {
    * Count number of released, cancelled or disputed swaps
    * @param network The network name
    * @param marketAddress The market ID
-   * @param provider The provider address
+   * @param provider The provider address (ignored if providerOrTaker is set)
+   * @param providerOrTaker Filter only where address is provider or taker (ignored if provider is set)
    * @param released Indicate to return count for released swaps
    * @param cancelled Indicate to return count for cancelled swaps
    * @param disputed Indicate to return count for disputed swaps
    * @param txn
    */
   static countByStatus(
-    network: string,
-    marketAddress: string,
-    provider: string,
+    network?: string,
+    marketAddress?: string,
+    provider?: string,
+    providerOrTaker?: string,
     released?: boolean,
     cancelled?: boolean,
     disputed?: boolean,
     txn?: Objection.Transaction,
   ) {
     return new Promise<string>((resolve, reject) => {
-      let q = this.query(txn).where({ network }).where('marketAddress', 'ilike', marketAddress);
-      if (provider) q = q.where('provider', 'ilike', provider);
+      let q = this.query(txn);
+      if (network) q = q.where('network', network);
+      if (marketAddress) q = q.where('marketAddress', 'ilike', marketAddress);
+      if (!providerOrTaker && provider) q = q.where('provider', 'ilike', provider);
+      if (!provider && providerOrTaker) {
+        q = q.where((q) => {
+          return q.orWhere('provider', 'ILIKE', providerOrTaker).orWhere('taker', 'ILIKE', providerOrTaker);
+        });
+      }
       if (released !== undefined) q = q.where({ released });
       if (cancelled !== undefined) q = q.where({ cancelled });
       if (disputed !== undefined) q = q.where({ byDispute: disputed });
@@ -535,18 +551,38 @@ export default class Swap extends BaseModel {
    * Calculate completion rate
    * @param network The network name
    * @param marketAddress The market ID
-   * @param provider The provider address
-   * @param txn
+   * @param provider The provider address (ignored if providerOrTaker is set)
+   * @param providerOrTaker Filter only where address is provider or taker (ignored if provider is set)
+   * @param txn Optional transaction object
    */
   static async getCompletionRate(
     network: string,
     marketAddress: string,
     provider: string,
+    providerOrTaker?: string,
     txn?: Objection.Transaction,
   ) {
-    const nReleased = await Swap.countByStatus(network, marketAddress, provider, true, undefined, false, txn);
-    const nSwaps = await Swap.countByStatus(network, marketAddress, provider, undefined, undefined, undefined, txn);
-    return Promise.resolve(toDec(nReleased).div(nSwaps).mul(100).toDP(2).toNumber());
+    const nReleased = await Swap.countByStatus(
+      network,
+      marketAddress,
+      provider,
+      providerOrTaker,
+      true,
+      undefined,
+      false,
+      txn,
+    );
+    const nSwaps = await Swap.countByStatus(
+      network,
+      marketAddress,
+      provider,
+      providerOrTaker,
+      undefined,
+      undefined,
+      undefined,
+      txn,
+    );
+    return Promise.resolve(toDec(nReleased).div(nSwaps).mul(100).toDP(2).toNumber() || 0);
   }
 
   /**
@@ -582,5 +618,23 @@ export default class Swap extends BaseModel {
     if (offset != undefined) q = q.offset(offset);
     if (limit) q = q.limit(limit);
     return q.orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
+  }
+
+  /**
+   * Get most recent swap by provider or taker in network
+   * @param network The network name
+   * @param providerOrTaker The provider or taker address
+   * @param txn Optional transaction object
+   */
+  static getRecentSwap(network: string, providerOrTaker: string, txn?: Transaction) {
+    return this.query(txn)
+      .where({ network })
+      .where((q) => {
+        return q.orWhere('provider', 'ILIKE', providerOrTaker).orWhere('taker', 'ILIKE', providerOrTaker);
+      })
+      .whereNotDeleted()
+      .withGraphFetched('market')
+      .orderBy('createdAt', 'DESC')
+      .first();
   }
 }

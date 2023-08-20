@@ -55,22 +55,39 @@ describe('Swap', () => {
       ).toEqual('3');
     });
 
+    it('should return correct volume when `providerOrTaker` is set', async () => {
+      await Swap.create({ network: net, provider: '0xProvider', amount: '2' });
+      await Swap.create({ network: 'net2', taker: '0xProvider2', amount: '3' });
+      expect(
+        await Swap.getVolume(undefined, undefined, undefined, undefined, '0xProvider2', undefined, undefined),
+      ).toEqual('3');
+      expect(
+        await Swap.getVolume(undefined, undefined, undefined, undefined, '0xProvider', undefined, undefined),
+      ).toEqual('2');
+    });
+
     it('should return correct volume when `lid` is set', async () => {
       await Swap.create({ network: net, lid: 1, amount: '2' });
       await Swap.create({ network: 'net2', lid: 2, amount: '3' });
-      expect(await Swap.getVolume(undefined, undefined, undefined, undefined, 2, undefined, undefined)).toEqual('3');
+      expect(
+        await Swap.getVolume(undefined, undefined, undefined, undefined, undefined, 2, undefined, undefined),
+      ).toEqual('3');
     });
 
     it('should return correct volume when `lid` is set', async () => {
       await Swap.create({ network: net, instant: false, amount: '2' });
       await Swap.create({ network: 'net2', instant: true, amount: '3' });
-      expect(await Swap.getVolume(undefined, undefined, undefined, undefined, undefined, undefined, true)).toEqual('3');
+      expect(
+        await Swap.getVolume(undefined, undefined, undefined, undefined, undefined, undefined, undefined, true),
+      ).toEqual('3');
     });
 
     it('should return correct volume when `timeAgo` is set', async () => {
       await Swap.create({ network: net, amount: '2', createdAt: moment().subtract(1440, 'minutes').toISOString() });
       await Swap.create({ network: net, amount: '3', createdAt: moment().toISOString() });
-      expect(await Swap.getVolume(undefined, undefined, undefined, undefined, undefined, 1440, undefined)).toEqual('3');
+      expect(
+        await Swap.getVolume(undefined, undefined, undefined, undefined, undefined, undefined, 1440, undefined),
+      ).toEqual('3');
     });
 
     describe('`usd` = true', () => {
@@ -79,7 +96,7 @@ describe('Swap', () => {
         await Swap.create({ network: net, marketAddress: '0xMarket', valueUsd: '1' });
         await Swap.create({ network: 'net2', marketAddress: '0xMarket', valueUsd: '2' });
         expect(
-          await Swap.getVolume(net, undefined, undefined, undefined, undefined, undefined, undefined, true),
+          await Swap.getVolume(net, undefined, undefined, undefined, undefined, undefined, undefined, undefined, true),
         ).toEqual('3');
       });
 
@@ -87,7 +104,17 @@ describe('Swap', () => {
         await Swap.create({ network: net, marketAddress: '0xMarket', valueUsd: '2' });
         await Swap.create({ network: 'net2', marketAddress: '0xMarket2', valueUsd: '3' });
         expect(
-          await Swap.getVolume(undefined, '0xMarket2', undefined, undefined, undefined, undefined, undefined, true),
+          await Swap.getVolume(
+            undefined,
+            '0xMarket2',
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            true,
+          ),
         ).toEqual('3');
       });
     });

@@ -1,9 +1,9 @@
-import { randStr } from '../common/common';
-import Objection, { raw, Transaction } from 'objection';
-import { BaseModel } from './base';
-import Market, { AssetType } from './market';
-import * as _ from 'lodash';
-import * as moment from 'moment';
+import { randStr } from "../common/common";
+import Objection, { raw, Transaction } from "objection";
+import { BaseModel } from "./base";
+import Market, { AssetType } from "./market";
+import * as _ from "lodash";
+import * as moment from "moment";
 
 /**
  * Liquidity represents a liquidity model

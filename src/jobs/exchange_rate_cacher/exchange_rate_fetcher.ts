@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
-import { ExchangeRateService } from '../../services/exchange_rate.service';
-import { Base } from '../base';
+import { Injectable, Logger } from "@nestjs/common";
+import { Cron } from "@nestjs/schedule";
+import { ExchangeRateService } from "../../services/exchange_rate.service";
+import { Base } from "../base";
 
 /**
  * ExchangeRateFetcher updates the exchange rate cache

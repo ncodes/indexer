@@ -1,7 +1,6 @@
-import { randStr } from '../common/common';
-import Objection, { Transaction } from 'objection';
-import { Roles } from '../common/roles';
-import { BaseModel } from './base';
+import { randStr } from "../common/common";
+import Objection, { Transaction } from "objection";
+import { BaseModel } from "./base";
 
 /**
  * User represents a user model
@@ -12,6 +11,13 @@ export default class User extends BaseModel {
   locale: string;
   timezone: string;
   role: string;
+
+  totalSwaps: number;
+  completionRate: number;
+  badges: string[];
+  volume: string;
+  volumeUsd: number;
+  lastActiveAt: string;
 
   constructor(init?: Partial<User>) {
     super();

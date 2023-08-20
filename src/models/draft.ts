@@ -1,6 +1,6 @@
-import { randStr } from '../common/common';
-import Objection, { Transaction } from 'objection';
-import { BaseModel } from './base';
+import { randStr } from "../common/common";
+import Objection, { Transaction } from "objection";
+import { BaseModel } from "./base";
 
 /**
  * Draft represents a ticket draft event

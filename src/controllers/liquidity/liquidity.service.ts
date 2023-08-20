@@ -26,7 +26,17 @@ export class LiquidityService {
       }
 
       if (select.includes(`volume24h`) || !select.length) {
-        liq.volume24h = await Swap.getVolume(net, marketAddress, undefined, provider, liq.lid, 1400, undefined, true);
+        liq.volume24h = await Swap.getVolume(
+          net,
+          marketAddress,
+          undefined,
+          provider,
+          undefined,
+          liq.lid,
+          1400,
+          undefined,
+          true,
+        );
       }
 
       if (select.includes(`priceChange`) || !select.length) {

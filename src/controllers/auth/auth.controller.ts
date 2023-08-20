@@ -1,13 +1,13 @@
-import { Body, Controller, Get, Post, Query, ValidationPipe } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { transaction } from 'objection';
-import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
-import { ErrBadSignature, ErrorMessages, ErrorTypes, ok, throw400, throw404 } from '../../common/responses/responses';
-import { Roles } from '../../common/roles';
-import User from '../../models/user';
-import { AuthDTO, GetAuthorizerDTO } from './dto';
-import { hasSeenSignature, makeSession, parseWalletSignature } from './utils';
-import { isEmail } from 'class-validator';
+import { Body, Controller, Get, Post, Query, ValidationPipe } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { transaction } from "objection";
+import { CommonValidationPipeOpt } from "../../common/pipes/common.pipe";
+import { ErrBadSignature, ErrorMessages, ErrorTypes, ok, throw400, throw404 } from "../../common/responses/responses";
+import { Roles } from "../../common/roles";
+import User from "../../models/user";
+import { AuthDTO, GetAuthorizerDTO } from "./dto";
+import { hasSeenSignature, makeSession, parseWalletSignature } from "./utils";
+import { isEmail } from "class-validator";
 
 /**
  * AuthController handles all authentication functionalities.

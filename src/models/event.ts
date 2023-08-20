@@ -4,7 +4,6 @@ import { BaseModel } from './base';
 import Offer from './offers';
 import Swap from './swap';
 import Dispute from './dispute';
-import { uniq } from 'lodash';
 
 export enum Events {
   LiquidityAdd = 'liq_add',

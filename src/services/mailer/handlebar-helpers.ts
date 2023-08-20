@@ -1,5 +1,5 @@
-import * as handlebars from 'handlebars';
-import * as HandlebarHelpers from 'handlebars-helpers';
+import * as handlebars from "handlebars";
+import * as HandlebarHelpers from "handlebars-helpers";
 
 // primaryButton is the component for primary buttons
 handlebars.registerPartial(

@@ -1,17 +1,7 @@
-import {
-  IsArray,
-  IsIn,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Matches,
-  Validate,
-  ValidateNested,
-} from 'class-validator';
+import { IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, Validate } from 'class-validator';
 import { LiquidityDescriptionValidator, makeValidatorMsg } from '../../common/validations/validation';
 import { getNetworks } from '../../network/common';
-import { Transform, Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import { toNumber } from 'lodash';
 
 class LiquidityDTO {

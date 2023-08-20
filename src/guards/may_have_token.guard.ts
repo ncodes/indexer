@@ -1,7 +1,7 @@
-import { CanActivate, ExecutionContext, HttpStatus, Injectable } from '@nestjs/common';
-import * as basicAuth from 'basic-auth';
-import express from 'express';
-import { error, ErrorTypes } from '../common/responses/responses';
+import { CanActivate, ExecutionContext, HttpStatus, Injectable } from "@nestjs/common";
+import * as basicAuth from "basic-auth";
+import express from "express";
+import { error, ErrorTypes } from "../common/responses/responses";
 
 /**
  * MayHaveKeyGuard checks for auth token in either bearer or basic

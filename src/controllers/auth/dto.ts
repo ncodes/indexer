@@ -1,6 +1,6 @@
 /* tslint:disable:max-classes-per-file */
-import { IsNotEmpty } from 'class-validator';
-import { makeValidatorMsg } from '../../common/validations/validation';
+import { IsNotEmpty } from "class-validator";
+import { makeValidatorMsg } from "../../common/validations/validation";
 
 /**
  * AuthDTO represents request body for login request.

@@ -593,6 +593,7 @@ export default class Swap extends BaseModel {
    * @param limit The number of records to return (optional).
    * @param offset The query offset (optional)
    * @param select Select specific fields (optional)
+   * @param relations The relations to be fetched (optional)
    * @param txn Optional transaction object
    */
   static search(
@@ -602,10 +603,12 @@ export default class Swap extends BaseModel {
     limit?: number,
     offset?: number,
     select = [],
+    relations: string = undefined,
     txn?: Transaction,
   ) {
     select = this.makeSelectList(select);
     let q = this.query(txn)
+      .withGraphFetched(relations)
       .select(...select, raw('count(*) over() as' + ' "$queryCount"'))
       .whereNotDeleted()
       .where({ network });

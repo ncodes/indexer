@@ -75,18 +75,19 @@ export class SwapsController {
    */
   @Get()
   async list(@Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
-    const swaps = await Swap.search(q.net, q.marketAddress, q.address, q.limit || 25, q.offset, q.select);
+    const swaps = await Swap.search(
+      q.net,
+      q.marketAddress,
+      q.address,
+      q.limit || 25,
+      q.offset,
+      q.select,
+      '[market,liquidity]',
+    );
 
     for (const swap of swaps) {
-      const market = await Market.getMarket(q.net, swap.marketAddress, q.select, undefined);
-      if (!market) return throw404('market not found');
-      await this.marketSrv.extendMarket(market, q.select);
-      swap.market = market;
-
-      const liquidity = await Liquidity.getLiquidity(q.net, swap.marketAddress, swap.provider, swap.lid, q.select);
-      if (!liquidity) return throw404('liquidity not found');
-      await this.liqSrv.extendLiquidity(liquidity, q.select);
-      swap.liquidity = liquidity;
+      await this.marketSrv.extendMarket(swap.market, q.select);
+      await this.liqSrv.extendLiquidity(swap.liquidity, q.select);
     }
 
     return ok().data(swaps).build();

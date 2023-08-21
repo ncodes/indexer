@@ -75,14 +75,18 @@ export class LiquidityController {
   /**
    * List liquidities on a network
    * @param q The query object
-   * @param q.network The network name
+   * @param q.net The network name
    * @param [q.market] The market ID
+   * @param [q.provider] The provider address
+   * @param [q.base] The base token address
+   * @param [q.quote] The quote token address
    * @param [q.amount] Filter by minimum swap amount (if it starts with '>', it means equal or greater than or if it starts with '<', it means equal or less than)
+   * @param [q.amountUsd] Filter by minimum swap amount in USD (if it starts with '>', it means equal or greater than or if it starts with '<', it means equal or less than)
    * @param [q.price] Filter by price (if it starts with '>', it means equal or greater than or if it starts with '<', it means equal or less than)
+   * @param [q.priceUsd] Filter by price in USD (if it starts with '>', it means equal or greater than or if it starts with '<', it means equal or less than)
    * @param [q.kycLp] Indicate to only return liquidity where LPs has KYC badge
    * @param [q.kycTaker] Indicate to only return liquidity where taker has KYC badge
-   * @param [q.swapBadge] Indicate to only return liquidity where taker has the specified badge(s)
-   * @param [q.provider] The provider address
+   * @param [q.swapBadges] Indicate to only return liquidity where taker has the specified badge(s)
    * @param [q.count] Returns the count of matching result
    * @param [q.limit] The number of result to return
    * @param [q.offset] The query offset
@@ -93,6 +97,7 @@ export class LiquidityController {
   async list(@Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
     const maxOpenDisputes = parseInt(await this.cfgSrv.getContractParam(q.net, 'maxOpenDisputes'));
 
+    console.log(q);
     const reqLpBadges = [];
     if (q.kycLp) {
       reqLpBadges.push(this.cfgSrv.get('app.badges.kyc'));
@@ -130,6 +135,8 @@ export class LiquidityController {
       const liquidities = await Liquidity.search(
         q.net,
         q.market,
+        q.base,
+        q.quote,
         q.provider,
         maxOpenDisputes,
         q.amount,

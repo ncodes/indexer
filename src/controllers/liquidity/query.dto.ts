@@ -47,6 +47,12 @@ export class ListQueryDTO {
   @IsOptional()
   public provider?: string;
 
+  @IsOptional()
+  public base?: string;
+
+  @IsOptional()
+  public quote?: string;
+
   @Matches(/^[<>]?[0-9]+$/, {
     message: makeValidatorMsg(`must be a number (optionally preceded by '>' or '<')`, 'amount'),
   })

@@ -237,6 +237,8 @@ export default class Liquidity extends BaseModel {
    * getLiquidities finds liquidities
    * @param network The network name
    * @param marketAddress The market ID (optional)
+   * @param base Filter by base token address (optional)
+   * @param quote Filter by quote token address (optional)
    * @param provider Filter by provider address (optional)
    * @param maxOpenDisputes Allow only records with lower open disputes
    * @param amount Filter by swap amount
@@ -255,6 +257,8 @@ export default class Liquidity extends BaseModel {
   static search(
     network: string,
     marketAddress: string,
+    base: string,
+    quote: string,
     provider: string,
     maxOpenDisputes: number,
     amount: string,
@@ -320,6 +324,18 @@ export default class Liquidity extends BaseModel {
 
     if (marketAddress) {
       q = q.where('s.marketAddress', 'ILIKE', marketAddress);
+    }
+
+    if (base) {
+      q = q.where((q) => {
+        return q.where('s.baseAddress', 'ILIKE', base).orWhere('s.base', 'ILIKE', base);
+      });
+    }
+
+    if (quote) {
+      q = q.where((q) => {
+        return q.where('s.quoteAddress', 'ILIKE', quote).orWhere('s.quote', 'ILIKE', quote);
+      });
     }
 
     if (provider) {

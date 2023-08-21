@@ -50,6 +50,7 @@ describe('LiquidityController', () => {
   const db = DBService.getForTest();
   const net = 'ethereum';
   const marketAddress = '0xMarket';
+  const marketAddress2 = '0xMarket2';
   let cfgObj = {};
 
   afterEach(async () => {
@@ -296,6 +297,12 @@ describe('LiquidityController', () => {
         baseDecimals: 18,
         quoteDecimals: 18,
       });
+      await Market.create({
+        address: marketAddress2,
+        network: net,
+        baseDecimals: 18,
+        quoteDecimals: 18,
+      });
     });
 
     it('should return 400 when network is unknown', async () => {
@@ -409,6 +416,86 @@ describe('LiquidityController', () => {
           .expect((res) => {
             expect(res.body.data).toHaveLength(1);
             expect(res.body.data[0].id).toEqual(liq.id);
+            expect(mockExtendLiquidity).toHaveBeenCalled();
+            expect(mockExtendMarket).toHaveBeenCalled();
+          });
+      });
+    });
+
+    describe('base or quote is set', () => {
+      it('should return 200 and the correct liquidity records', async () => {
+        const liq = await Liquidity.create({
+          network: net,
+          marketAddress,
+          provider: '0xProvider',
+          amount: '10',
+          base: 'BASE',
+          quote: 'QUOTE',
+          baseAddress: '0xBaseAddress',
+          quoteAddress: '0xQuoteAddress',
+        });
+
+        const liq2 = await Liquidity.create({
+          network: net,
+          marketAddress,
+          provider: '0xProvider2',
+          amount: '10',
+          base: 'BASE2',
+          quote: 'QUOTE2',
+          baseAddress: '0xBaseAddress2',
+          quoteAddress: '0xQuoteAddress2',
+        });
+
+        const mockExtendLiquidity = jest
+          .spyOn(app.get(LiquidityService), 'extendLiquidity')
+          .mockResolvedValue(undefined);
+
+        const mockExtendMarket = jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
+
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities`)
+          .query({ net, base: '0xBaseAddress' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(liq.id);
+            expect(mockExtendLiquidity).toHaveBeenCalled();
+            expect(mockExtendMarket).toHaveBeenCalled();
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities`)
+          .query({ net, quote: '0xQuoteAddress' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(liq.id);
+            expect(mockExtendLiquidity).toHaveBeenCalled();
+            expect(mockExtendMarket).toHaveBeenCalled();
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities`)
+          .query({ net, base: 'BAsE2' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(liq2.id);
+            expect(mockExtendLiquidity).toHaveBeenCalled();
+            expect(mockExtendMarket).toHaveBeenCalled();
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities`)
+          .query({ net, quote: 'QUOTe2' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(liq2.id);
             expect(mockExtendLiquidity).toHaveBeenCalled();
             expect(mockExtendMarket).toHaveBeenCalled();
           });

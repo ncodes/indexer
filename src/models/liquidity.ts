@@ -1,5 +1,5 @@
 import { randStr } from '../common/common';
-import Objection, { raw, Transaction } from 'objection';
+import Objection, { Model, raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 import Market, { AssetType } from './market';
 import * as _ from 'lodash';
@@ -130,7 +130,16 @@ export default class Liquidity extends BaseModel {
   }
 
   static get relationMappings() {
-    return {};
+    return {
+      market: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: Market,
+        join: {
+          from: ['liquidities.network', 'liquidities.marketAddress'],
+          to: ['markets.network', 'markets.address'],
+        },
+      },
+    };
   }
 
   /**
@@ -262,7 +271,7 @@ export default class Liquidity extends BaseModel {
     txn?: Objection.Transaction,
   ) {
     select = this.makeSelectList(select);
-    let q = this.query(txn);
+    let q = this.query(txn).withGraphFetched('market');
 
     q = q.from((sub) => {
       sub = sub

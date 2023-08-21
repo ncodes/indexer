@@ -332,6 +332,8 @@ describe('LiquidityController', () => {
           .spyOn(app.get(LiquidityService), 'extendLiquidity')
           .mockResolvedValue(undefined);
 
+        const mockExtendMarket = jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
+
         await request(app.getHttpServer())
           .get(`/v1/liquidities`)
           .query({ net, provider: '0xProvider' })
@@ -341,6 +343,7 @@ describe('LiquidityController', () => {
             expect(res.body.data).toHaveLength(1);
             expect(res.body.data[0].id).toEqual(liq.id);
             expect(mockExtendLiquidity).toHaveBeenCalled();
+            expect(mockExtendMarket).toHaveBeenCalled();
           });
       });
 
@@ -362,6 +365,8 @@ describe('LiquidityController', () => {
           .spyOn(app.get(LiquidityService), 'extendLiquidity')
           .mockResolvedValue(undefined);
 
+        const mockExtendMarket = jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
+
         await request(app.getHttpServer())
           .get(`/v1/liquidities`)
           .query({ net })
@@ -370,6 +375,7 @@ describe('LiquidityController', () => {
           .expect((res) => {
             expect(res.body.data).toHaveLength(2);
             expect(mockExtendLiquidity).toHaveBeenCalled();
+            expect(mockExtendMarket).toHaveBeenCalled();
           });
       });
     });
@@ -393,6 +399,8 @@ describe('LiquidityController', () => {
           .spyOn(app.get(LiquidityService), 'extendLiquidity')
           .mockResolvedValue(undefined);
 
+        const mockExtendMarket = jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
+
         await request(app.getHttpServer())
           .get(`/v1/liquidities`)
           .query({ net, market: marketAddress })
@@ -402,6 +410,7 @@ describe('LiquidityController', () => {
             expect(res.body.data).toHaveLength(1);
             expect(res.body.data[0].id).toEqual(liq.id);
             expect(mockExtendLiquidity).toHaveBeenCalled();
+            expect(mockExtendMarket).toHaveBeenCalled();
           });
       });
     });
@@ -477,6 +486,7 @@ describe('LiquidityController', () => {
         const mockExtendLiquidity = jest
           .spyOn(app.get(LiquidityService), 'extendLiquidity')
           .mockResolvedValue(undefined);
+        const mockExtendMarket = jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
 
         mockTryToUsd.mockResolvedValue('0.5');
 
@@ -492,6 +502,7 @@ describe('LiquidityController', () => {
             expect(res.body.data[1].id).toEqual(liq.id);
             expect(res.body.data[1].amountUsd).toEqual(5);
             expect(mockExtendLiquidity).toHaveBeenCalled();
+            expect(mockExtendMarket).toHaveBeenCalled();
           });
       });
     });
@@ -570,6 +581,7 @@ describe('LiquidityController', () => {
         const mockExtendLiquidity = jest
           .spyOn(app.get(LiquidityService), 'extendLiquidity')
           .mockResolvedValue(undefined);
+        const mockExtendMarket = jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
 
         mockTryToUsd.mockResolvedValue('0.5');
 
@@ -585,6 +597,7 @@ describe('LiquidityController', () => {
             expect(res.body.data[1].id).toEqual(liq.id);
             expect(res.body.data[1].priceUsd).toEqual(5);
             expect(mockExtendLiquidity).toHaveBeenCalled();
+            expect(mockExtendMarket).toHaveBeenCalled();
           });
       });
     });
@@ -613,6 +626,7 @@ describe('LiquidityController', () => {
         const mockExtendLiquidity = jest
           .spyOn(app.get(LiquidityService), 'extendLiquidity')
           .mockResolvedValue(undefined);
+        const mockExtendMarket = jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
 
         await request(app.getHttpServer())
           .get(`/v1/liquidities`)
@@ -623,6 +637,7 @@ describe('LiquidityController', () => {
             expect(res.body.data).toHaveLength(1);
             expect(res.body.data[0].id).toEqual(liq.id);
             expect(mockExtendLiquidity).toHaveBeenCalled();
+            expect(mockExtendMarket).toHaveBeenCalled();
           });
       });
     });
@@ -651,6 +666,7 @@ describe('LiquidityController', () => {
         });
 
         jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(undefined);
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
 
         await request(app.getHttpServer())
           .get(`/v1/liquidities`)
@@ -709,6 +725,7 @@ describe('LiquidityController', () => {
         });
 
         jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(undefined);
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
 
         await request(app.getHttpServer())
           .get(`/v1/liquidities`)
@@ -763,6 +780,7 @@ describe('LiquidityController', () => {
         const mockExtendLiquidity = jest
           .spyOn(app.get(LiquidityService), 'extendLiquidity')
           .mockResolvedValue(undefined);
+        const mockExtendMarket = jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
 
         await request(app.getHttpServer())
           .get(`/v1/liquidities`)
@@ -773,6 +791,7 @@ describe('LiquidityController', () => {
             expect(res.body.data).toHaveLength(1);
             expect(res.body.data[0].id).toEqual(liq.id);
             expect(mockExtendLiquidity).toHaveBeenCalled();
+            expect(mockExtendMarket).toHaveBeenCalled();
           });
       });
     });
@@ -797,6 +816,7 @@ describe('LiquidityController', () => {
         const mockExtendLiquidity = jest
           .spyOn(app.get(LiquidityService), 'extendLiquidity')
           .mockResolvedValue(undefined);
+        const mockExtendMarket = jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
 
         await request(app.getHttpServer())
           .get(`/v1/liquidities`)
@@ -807,6 +827,7 @@ describe('LiquidityController', () => {
             expect(res.body.data).toHaveLength(1);
             expect(res.body.data[0].id).toEqual(liq.id);
             expect(mockExtendLiquidity).toHaveBeenCalled();
+            expect(mockExtendMarket).toHaveBeenCalled();
           });
       });
     });
@@ -843,6 +864,7 @@ describe('LiquidityController', () => {
         const mockExtendLiquidity = jest
           .spyOn(app.get(LiquidityService), 'extendLiquidity')
           .mockResolvedValue(undefined);
+        const mockExtendMarket = jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
 
         await request(app.getHttpServer())
           .get(`/v1/liquidities`)
@@ -853,6 +875,7 @@ describe('LiquidityController', () => {
             expect(res.body.data).toHaveLength(1);
             expect(res.body.data[0].id).toEqual(liq.id);
             expect(mockExtendLiquidity).toHaveBeenCalled();
+            expect(mockExtendMarket).toHaveBeenCalled();
           });
       });
     });
@@ -876,6 +899,7 @@ describe('LiquidityController', () => {
         const mockExtendLiquidity = jest
           .spyOn(app.get(LiquidityService), 'extendLiquidity')
           .mockResolvedValue(undefined);
+        const mockExtendMarket = jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
 
         await request(app.getHttpServer())
           .get(`/v1/liquidities`)
@@ -886,6 +910,7 @@ describe('LiquidityController', () => {
             expect(res.body.data).toHaveLength(1);
             expect(res.body.data[0].id).toEqual(liq.id);
             expect(mockExtendLiquidity).toHaveBeenCalled();
+            expect(mockExtendMarket).toHaveBeenCalled();
           });
       });
     });
@@ -912,6 +937,7 @@ describe('LiquidityController', () => {
         const mockExtendLiquidity = jest
           .spyOn(app.get(LiquidityService), 'extendLiquidity')
           .mockResolvedValue(undefined);
+        const mockExtendMarket = jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
 
         await request(app.getHttpServer())
           .get(`/v1/liquidities`)
@@ -922,6 +948,7 @@ describe('LiquidityController', () => {
             expect(res.body.data).toHaveLength(1);
             expect(res.body.data[0].id).toEqual(liq.id);
             expect(mockExtendLiquidity).toHaveBeenCalled();
+            expect(mockExtendMarket).toHaveBeenCalled();
           });
 
         await request(app.getHttpServer())
@@ -934,6 +961,7 @@ describe('LiquidityController', () => {
             expect(res.body.data[0].id).toEqual(liq.id);
             expect(res.body.data[1].id).toEqual(liq2.id);
             expect(mockExtendLiquidity).toHaveBeenCalled();
+            expect(mockExtendMarket).toHaveBeenCalled();
           });
       });
     });

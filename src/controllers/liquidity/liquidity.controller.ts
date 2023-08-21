@@ -8,10 +8,16 @@ import { ConfigService } from '../../config/config.service';
 import Event from '../../models/event';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import Market from '../../models/market';
+import { MarketService } from '../markets/market.service';
 
 @Controller('v1/liquidities')
 export class LiquidityController {
-  constructor(private liqSrv: LiquidityService, private cfgSrv: ConfigService, private metadataSrv: MetadataService) {}
+  constructor(
+    private liqSrv: LiquidityService,
+    private mktSrv: MarketService,
+    private cfgSrv: ConfigService,
+    private metadataSrv: MetadataService,
+  ) {}
 
   /**
    * Get a liquidity
@@ -142,6 +148,7 @@ export class LiquidityController {
 
       for (const liquidity of liquidities) {
         await this.liqSrv.extendLiquidity(liquidity, q.select);
+        await this.mktSrv.extendMarket(liquidity.market, ['quoteLogo', 'baseLogo']);
       }
 
       return ok().data(liquidities).build();

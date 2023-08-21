@@ -97,7 +97,6 @@ export class LiquidityController {
   async list(@Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
     const maxOpenDisputes = parseInt(await this.cfgSrv.getContractParam(q.net, 'maxOpenDisputes'));
 
-    console.log(q);
     const reqLpBadges = [];
     if (q.kycLp) {
       reqLpBadges.push(this.cfgSrv.get('app.badges.kyc'));

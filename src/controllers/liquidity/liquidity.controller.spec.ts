@@ -547,7 +547,7 @@ describe('LiquidityController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/liquidities`)
-          .query({ net, market: '0xMarket2', amountUsd: '>1' })
+          .query({ net, market: '0xMarket3', amountUsd: '>1' })
           .set('Authorization', 'bearer ' + token)
           .expect(404)
           .expect({
@@ -640,7 +640,7 @@ describe('LiquidityController', () => {
 
         await request(app.getHttpServer())
           .get(`/v1/liquidities`)
-          .query({ net, market: '0xMarket2', priceUsd: '>1' })
+          .query({ net, market: '0xMarket3', priceUsd: '>1' })
           .set('Authorization', 'bearer ' + token)
           .expect(404)
           .expect({

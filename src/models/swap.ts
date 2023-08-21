@@ -6,6 +6,19 @@ import Market from './market';
 import Liquidity from './liquidity';
 import * as _ from 'lodash';
 
+export enum SearchStatus {
+  Unpaid = 'unpaid',
+  Paid = 'paid',
+  Released = 'released',
+  Disputed = 'disputed',
+  Cancelled = 'cancelled',
+}
+
+export enum SwapType {
+  Instant = 'instant',
+  Interactive = 'interactive',
+}
+
 /**
  * Swap represents a swap operation
  */
@@ -589,7 +602,13 @@ export default class Swap extends BaseModel {
    * search for swaps
    * @param network The network name
    * @param marketAddress The market ID (optional)
+   * @param base The base asset address or symbol (optional)
+   * @param quote The quote asset address or symbol (optional)
    * @param providerOrTaker Filter only where address is provider or taker
+   * @param fromDate The start date to filter by (optional)
+   * @param toDate The end date to filter by (optional)
+   * @param status The swap status (optional)
+   * @param type The swap type (optional)
    * @param limit The number of records to return (optional).
    * @param offset The query offset (optional)
    * @param select Select specific fields (optional)
@@ -598,10 +617,16 @@ export default class Swap extends BaseModel {
    */
   static search(
     network: string,
-    marketAddress?: string,
-    providerOrTaker?: string,
-    limit?: number,
-    offset?: number,
+    marketAddress: string,
+    base: string,
+    quote: string,
+    providerOrTaker: string,
+    fromDate: string,
+    toDate: string,
+    status: SearchStatus,
+    type: SwapType,
+    limit: number,
+    offset: number,
     select = [],
     relations: string = undefined,
     txn?: Transaction,
@@ -612,14 +637,66 @@ export default class Swap extends BaseModel {
       .select(...select, raw('count(*) over() as' + ' "$queryCount"'))
       .whereNotDeleted()
       .where({ network });
+
     if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
+
     if (providerOrTaker) {
       q = q.where((q) => {
         return q.orWhere('provider', 'ILIKE', providerOrTaker).orWhere('taker', 'ILIKE', providerOrTaker);
       });
     }
+
+    if (base) {
+      q = q.where((q) => {
+        return q.where('baseAddress', 'ILIKE', base).orWhere('base', 'ILIKE', base);
+      });
+    }
+
+    if (quote) {
+      q = q.where((q) => {
+        return q.where('quoteAddress', 'ILIKE', quote).orWhere('quote', 'ILIKE', quote);
+      });
+    }
+
+    if (fromDate) q = q.where('createdAt', '>=', fromDate);
+
+    if (toDate) q = q.where('createdAt', '<=', toDate);
+
+    if (status) {
+      switch (status) {
+        case SearchStatus.Unpaid:
+          q = q.where({ paid: false, cancelled: false });
+          break;
+        case SearchStatus.Paid:
+          q = q.where({ paid: true });
+          break;
+        case SearchStatus.Released:
+          q = q.where({ released: true });
+          break;
+        case SearchStatus.Disputed:
+          q = q.where({ byDispute: true });
+          break;
+        case SearchStatus.Cancelled:
+          q = q.where({ cancelled: true });
+          break;
+      }
+    }
+
+    if (type) {
+      switch (type) {
+        case SwapType.Instant:
+          q = q.where({ instant: true });
+          break;
+        case SwapType.Interactive:
+          q = q.where({ instant: false });
+          break;
+      }
+    }
+
     if (offset != undefined) q = q.offset(offset);
+
     if (limit) q = q.limit(limit);
+
     return q.orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
   }
 

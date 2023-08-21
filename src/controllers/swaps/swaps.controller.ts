@@ -67,7 +67,13 @@ export class SwapsController {
    * @param q The query object
    * @param q.net The network name.
    * @param [q.marketAddress] The market ID (optional)
+   * @param [q.base] The base token address or symbol (optional)
+   * @param [q.quote] The quote token address or symbol (optional)
    * @param [q.address] The address involved as a provider or taker (optional)
+   * @param [q.fromDate] The start date (optional)
+   * @param [q.toDate] The end date (optional)
+   * @param [q.status] The swap status (optional)
+   * @param [q.type] The swap type (optional)
    * @param [q.limit] The number of result to return (optional)
    * @param [q.offset] The query offset (optional)
    * @param [q.select] Select fields to return
@@ -78,7 +84,13 @@ export class SwapsController {
     const swaps = await Swap.search(
       q.net,
       q.marketAddress,
+      q.base,
+      q.quote,
       q.address,
+      q.fromDate,
+      q.toDate,
+      q.status,
+      q.type,
       q.limit || 25,
       q.offset,
       q.select,

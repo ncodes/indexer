@@ -283,6 +283,364 @@ describe('SwapsController', () => {
       });
     });
 
+    describe('with base set', () => {
+      it('should return 200 and correct result', async () => {
+        const market = await Market.create({
+          network: net,
+          address: '0xMarket',
+        });
+
+        await Liquidity.create({
+          network: net,
+          marketAddress: market.address,
+          provider: '0xProvider',
+        });
+
+        await Liquidity.create({
+          network: net,
+          marketAddress: market.address,
+          provider: '0xProvider2',
+        });
+
+        const swap = await Swap.create({
+          network: net,
+          orderId: 1,
+          marketAddress: market.address,
+          provider: '0xProvider',
+          base: 'BASE',
+          baseAddress: '0xBase',
+        });
+
+        const swap2 = await Swap.create({
+          network: net,
+          orderId: 1,
+          marketAddress: market.address,
+          taker: '0xProvider',
+          provider: '0xProvider2',
+          base: 'BASE2',
+          baseAddress: '0xBase2',
+        });
+
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
+        jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(null);
+
+        await request(app.getHttpServer())
+          .get(`/v1/swaps`)
+          .query({ net, base: '0xBase' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(swap.id);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/swaps`)
+          .query({ net, base: 'BASE2' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(swap2.id);
+          });
+      });
+    });
+
+    describe('with quote set', () => {
+      it('should return 200 and correct result', async () => {
+        const market = await Market.create({
+          network: net,
+          address: '0xMarket',
+        });
+
+        await Liquidity.create({
+          network: net,
+          marketAddress: market.address,
+          provider: '0xProvider',
+        });
+
+        await Liquidity.create({
+          network: net,
+          marketAddress: market.address,
+          provider: '0xProvider2',
+        });
+
+        const swap = await Swap.create({
+          network: net,
+          orderId: 1,
+          marketAddress: market.address,
+          provider: '0xProvider',
+          quote: 'QUOTE',
+          quoteAddress: '0xQuote',
+        });
+
+        const swap2 = await Swap.create({
+          network: net,
+          orderId: 1,
+          marketAddress: market.address,
+          taker: '0xProvider',
+          provider: '0xProvider2',
+          quote: 'QUOTE2',
+          quoteAddress: '0xQuote2',
+        });
+
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
+        jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(null);
+
+        await request(app.getHttpServer())
+          .get(`/v1/swaps`)
+          .query({ net, quote: '0xQuote' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(swap.id);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/swaps`)
+          .query({ net, quote: 'QUOTE2' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(swap2.id);
+          });
+      });
+    });
+
+    describe('with fromDate set', () => {
+      it('should return 200 and correct result', async () => {
+        const market = await Market.create({
+          network: net,
+          address: '0xMarket',
+        });
+        await Liquidity.create({
+          network: net,
+          marketAddress: market.address,
+          provider: '0xProvider',
+        });
+        await Liquidity.create({
+          network: net,
+          marketAddress: market.address,
+          provider: '0xProvider2',
+        });
+        const now = moment();
+        const swap = await Swap.create({
+          network: net,
+          orderId: 1,
+          marketAddress: market.address,
+          provider: '0xProvider',
+          createdAt: now.clone().subtract(10, 's').toISOString(),
+        });
+        const swap2 = await Swap.create({
+          network: net,
+          orderId: 2,
+          marketAddress: market.address,
+          provider: '0xProvider',
+          createdAt: now.clone().subtract(5, 's').toISOString(),
+        });
+
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
+        jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(null);
+
+        await request(app.getHttpServer())
+          .get(`/v1/swaps`)
+          .query({ net, fromDate: now.clone().subtract(6, 's').toISOString() })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(swap2.id);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/swaps`)
+          .query({ net, fromDate: now.clone().subtract(11, 's').toISOString() })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(2);
+            expect(res.body.data[0].id).toEqual(swap2.id);
+            expect(res.body.data[1].id).toEqual(swap.id);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/swaps`)
+          .query({
+            net,
+            fromDate: now.clone().subtract(11, 's').toISOString(),
+            toDate: now.clone().subtract(6, 's').toISOString(),
+          })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(swap.id);
+          });
+      });
+    });
+
+    describe('with status set', () => {
+      it('should return 400 when status value is unknown', async () => {
+        await request(app.getHttpServer())
+          .get(`/v1/swaps`)
+          .query({ net, status: 'unknown' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(400)
+          .expect({
+            error: {
+              message: 'must be a valid status',
+              param: 'status',
+              type: 'invalid_request_error',
+            },
+          });
+      });
+
+      it('should return 200 and correct result', async () => {
+        const market = await Market.create({
+          network: net,
+          address: '0xMarket',
+        });
+        await Liquidity.create({ network: net, marketAddress: market.address, provider: '0xProvider' });
+        const swap = await Swap.create({
+          network: net,
+          orderId: 1,
+          marketAddress: market.address,
+          provider: '0xProvider',
+          paid: false,
+        });
+
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
+        jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(null);
+
+        await request(app.getHttpServer())
+          .get(`/v1/swaps`)
+          .query({ net, status: 'unpaid' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(swap.id);
+          });
+
+        await Swap.updateById(swap.id, { paid: true });
+        await request(app.getHttpServer())
+          .get(`/v1/swaps`)
+          .query({ net, status: 'paid' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(swap.id);
+          });
+
+        await Swap.updateById(swap.id, { released: true });
+        await request(app.getHttpServer())
+          .get(`/v1/swaps`)
+          .query({ net, status: 'released' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(swap.id);
+          });
+
+        await Swap.updateById(swap.id, { byDispute: true });
+        await request(app.getHttpServer())
+          .get(`/v1/swaps`)
+          .query({ net, status: 'disputed' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(swap.id);
+          });
+
+        await Swap.updateById(swap.id, { cancelled: true });
+        await request(app.getHttpServer())
+          .get(`/v1/swaps`)
+          .query({ net, status: 'cancelled' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(swap.id);
+          });
+      });
+    });
+
+    describe('with type set', () => {
+      it('should return 400 when status value is unknown', async () => {
+        await request(app.getHttpServer())
+          .get(`/v1/swaps`)
+          .query({ net, type: 'unknown' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(400)
+          .expect({
+            error: {
+              message: 'must be a valid swap type',
+              param: 'type',
+              type: 'invalid_request_error',
+            },
+          });
+      });
+
+      it('should return 200 and correct result', async () => {
+        const market = await Market.create({
+          network: net,
+          address: '0xMarket',
+        });
+        await Liquidity.create({ network: net, marketAddress: market.address, provider: '0xProvider' });
+        const swap = await Swap.create({
+          network: net,
+          orderId: 1,
+          marketAddress: market.address,
+          provider: '0xProvider',
+          instant: false,
+        });
+        const swap2 = await Swap.create({
+          network: net,
+          orderId: 1,
+          marketAddress: market.address,
+          provider: '0xProvider2',
+          instant: true,
+        });
+
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
+        jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(null);
+
+        await request(app.getHttpServer())
+          .get(`/v1/swaps`)
+          .query({ net, type: 'instant' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(swap2.id);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/swaps`)
+          .query({ net, type: 'interactive' })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(swap.id);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/swaps`)
+          .query({ net, type: undefined })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(2);
+          });
+      });
+    });
+
     describe('with limit set', () => {
       it('should return 200 and correct result', async () => {
         const market = await Market.create({

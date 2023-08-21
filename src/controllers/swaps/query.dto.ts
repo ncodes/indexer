@@ -1,9 +1,10 @@
-import { IsBoolean, IsIn, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
+import { IsBoolean, IsEnum, IsIn, IsISO8601, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { makeValidatorMsg } from '../../common/validations/validation';
 import { getNetworks } from '../../network/common';
 import { Transform } from 'class-transformer';
 import { toBoolean } from 'underscore.string';
 import { toNumber } from 'lodash';
+import { SearchStatus, SwapType } from '../../models/swap';
 
 export class GetQueryDTO {
   @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
@@ -35,7 +36,29 @@ export class ListQueryDTO {
   public marketAddress?: string;
 
   @IsOptional()
+  base?: string;
+
+  @IsOptional()
+  quote?: string;
+
+  @IsOptional()
   public address?: string;
+
+  @IsISO8601({ strict: true }, { message: makeValidatorMsg('must be a valid ISO8601 date', 'fromDate') })
+  @IsOptional()
+  fromDate?: string;
+
+  @IsISO8601({ strict: true }, { message: makeValidatorMsg('must be a valid ISO8601 date', 'toDate') })
+  @IsOptional()
+  toDate?: string;
+
+  @IsEnum(SearchStatus, { message: makeValidatorMsg('must be a valid status', 'status') })
+  @IsOptional()
+  status?: SearchStatus;
+
+  @IsEnum(SwapType, { message: makeValidatorMsg('must be a valid swap type', 'type') })
+  @IsOptional()
+  type?: SwapType;
 
   @Transform(({ value }) => (value as string).split(','))
   @IsOptional()

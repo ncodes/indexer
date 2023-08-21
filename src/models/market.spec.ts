@@ -108,10 +108,10 @@ describe('Market', () => {
       expect(res[0].id).toEqual(mkt.id);
     });
 
-    it('should return correct result when `baseAsset` is set', async () => {
-      await Market.create({ totalLiquidity: '1', baseAddress: '0xBase' });
-      await Market.create({ totalLiquidity: '1', baseAddress: '0xBase' });
-      const res = await Market.search(
+    it('should return correct result when `base` is set', async () => {
+      await Market.create({ totalLiquidity: '1', baseAddress: '0xBase', base: 'BASE' });
+      await Market.create({ totalLiquidity: '1', baseAddress: '0xBase', base: 'BAZE' });
+      let res = (await Market.search(
         undefined,
         undefined,
         undefined,
@@ -133,14 +133,40 @@ describe('Market', () => {
         undefined,
         undefined,
         undefined,
-      );
+      )) as Market[];
       expect(res).toHaveLength(2);
+
+      res = (await Market.search(
+        undefined,
+        undefined,
+        undefined,
+        'BAZE',
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      )) as Market[];
+      expect(res).toHaveLength(1);
+      expect(res[0].base).toEqual('BAZE');
     });
 
-    it('should return correct result when `quoteAsset` is set', async () => {
-      const mkt = await Market.create({ totalLiquidity: '1', quoteAddress: '0xQuote' });
-      await Market.create({ totalLiquidity: '1', quoteAddress: '0xQuote2' });
-      const res = (await Market.search(
+    it('should return correct result when `quote` is set', async () => {
+      const mkt = await Market.create({ totalLiquidity: '1', quoteAddress: '0xQuote', quote: 'QUOTE' });
+      const mkt2 = await Market.create({ totalLiquidity: '1', quoteAddress: '0xQuote2', quote: 'QUOTE2' });
+      let res = (await Market.search(
         undefined,
         undefined,
         undefined,
@@ -165,6 +191,32 @@ describe('Market', () => {
       )) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt.id);
+
+      res = (await Market.search(
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        'QUOTE2',
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      )) as Market[];
+      expect(res).toHaveLength(1);
+      expect(res[0].id).toEqual(mkt2.id);
     });
 
     it('should return correct result when `queryStr` is set', async () => {

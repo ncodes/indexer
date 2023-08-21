@@ -300,8 +300,8 @@ export default class Market extends BaseModel {
    * @param network The network name
    * @param creator The market creator address
    * @param address The market address
-   * @param baseAsset The base asset address
-   * @param quoteAsset The quote asset address
+   * @param base The base asset address or symbol
+   * @param quote The quote asset address or symbol
    * @param queryStr The query string
    * @param price Filter by price (if it starts with >, it means equal or greater than, if it starts with <, it means equal or less than)
    * @param priceUsd Filter by USD price (if it starts with >, it means equal or greater than, if it starts with <, it means equal or less than)
@@ -326,8 +326,8 @@ export default class Market extends BaseModel {
     network: string,
     creator: string,
     address: string,
-    baseAsset: string,
-    quoteAsset: string,
+    base: string,
+    quote: string,
     queryStr: string,
     price: string,
     liquidity: string,
@@ -355,8 +355,19 @@ export default class Market extends BaseModel {
       sub = sub.from('markets').select(...select);
       sub = sub.select(raw('"totalLiquidity" * ?? / 10^"baseDecimals" as "totalLiquidityUsd"', [baseUsdRate]));
       sub = sub.select(raw('"lowestPrice" * ?? / 10^"quoteDecimals" as "lowestPriceUsd"', [quoteUsdRate]));
-      if (baseAsset) sub = sub.where('baseAddress', 'ilike', baseAsset);
-      if (quoteAsset) sub = sub.where('quoteAddress', 'ilike', quoteAsset);
+
+      if (base) {
+        sub = sub.where((sub) => {
+          return sub.where('baseAddress', 'ILIKE', base).orWhere('base', 'ILIKE', base);
+        });
+      }
+
+      if (quote) {
+        sub = sub.where((sub) => {
+          return sub.where('quoteAddress', 'ILIKE', quote).orWhere('quote', 'ILIKE', quote);
+        });
+      }
+
       return sub.as('s');
     });
 

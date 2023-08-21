@@ -62,8 +62,8 @@ export class MarketsController {
    * @param [q.net] The network name
    * @param [q.creator] Filter the result by creator address
    * @param [q.address] Filter the result by market address
-   * @param [q.base] The base asset address
-   * @param [q.quote] The base asset address
+   * @param [q.base] The base asset address or symbol
+   * @param [q.quote] The base asset address or symbol
    * @param [q.permSwap] Indicate to either return permissioned or non-permissioned markets
    * @param [q.instant] Indicate to only return market where base and quote asset are on-chain (instant swap)
    * @param [q.merchantLp] Indicate to only return market where LPs require merchant badge

@@ -408,7 +408,7 @@ export class CoreHandler extends Handler {
    * @param price The swap price
    */
   async computeSwapUsdValue(market: Market, amount: BigNumber, price: BigNumber) {
-    const { baseType, base, quoteAddress, baseAddress, baseDecimals } = market;
+    const { baseType, base, quoteAddress, baseAddress, baseDecimals, quoteDecimals } = market;
 
     if (market.isInstant()) {
       const value = Market.isNFT(baseType)
@@ -421,7 +421,7 @@ export class CoreHandler extends Handler {
     if (Market.isNFT(baseType)) {
       const rate = await this.exrSrv.get(base);
       const toUsdRate = rate ? toDec(1).div(rate) : toDec(0);
-      const priceHD = toDec(price.toString()).div(pow10D(baseDecimals));
+      const priceHD = toDec(price.toString()).div(pow10D(quoteDecimals));
       return priceHD.mul(toUsdRate).toFixed();
     }
 

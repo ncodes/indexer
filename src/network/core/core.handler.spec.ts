@@ -797,7 +797,7 @@ describe('CoreHandler', () => {
           quoteType: AssetType.SYNTH,
           baseAddress: baseAddress,
           quoteAddress: quoteAddress,
-          baseDecimals: 18,
+          quoteDecimals: 18,
           base: 'BASE',
         });
         mockGet.mockResolvedValue(toDec(400));

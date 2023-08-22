@@ -5,6 +5,7 @@ import * as moment from 'moment';
 import Market from './market';
 import Liquidity from './liquidity';
 import * as _ from 'lodash';
+import Dispute from './dispute';
 
 export enum SearchStatus {
   Unpaid = 'unpaid',
@@ -88,6 +89,7 @@ export default class Swap extends BaseModel {
 
   market: Market;
   liquidity: Liquidity;
+  disputes: Dispute[];
 
   constructor(init?: Partial<Swap>) {
     super();
@@ -113,6 +115,14 @@ export default class Swap extends BaseModel {
         join: {
           from: ['swaps.network', 'swaps.provider', 'swaps.lid'],
           to: ['liquidities.network', 'liquidities.provider', 'liquidities.lid'],
+        },
+      },
+      disputes: {
+        relation: Model.HasManyRelation,
+        modelClass: Dispute,
+        join: {
+          from: ['swaps.network', 'swaps.orderId'],
+          to: ['disputes.network', 'disputes.orderId'],
         },
       },
     };
@@ -691,6 +701,13 @@ export default class Swap extends BaseModel {
           q = q.where({ instant: false });
           break;
       }
+    }
+
+    // If 'disputes' is in the relations, order by dispute createdAt DESC
+    if (relations && relations.indexOf('disputes') > -1) {
+      q = q.modifyGraph('disputes', (builder) => {
+        return builder.orderBy('createdAt', 'DESC');
+      });
     }
 
     if (offset != undefined) q = q.offset(offset);

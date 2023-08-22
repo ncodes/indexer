@@ -94,7 +94,7 @@ export class SwapsController {
       q.limit || 25,
       q.offset,
       q.select,
-      '[market,liquidity]',
+      '[market,liquidity,disputes]',
     );
 
     for (const swap of swaps) {

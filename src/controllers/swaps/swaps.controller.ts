@@ -98,6 +98,7 @@ export class SwapsController {
     );
 
     for (const swap of swaps) {
+      await this.swapSrv.extendSwap(swap, q.select);
       await this.marketSrv.extendMarket(swap.market, q.select);
       await this.liqSrv.extendLiquidity(swap.liquidity, q.select);
     }

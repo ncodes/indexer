@@ -87,6 +87,16 @@ export default class Swap extends BaseModel {
   // The timestamp when the swap was marked as paid
   paidAt?: string = undefined;
 
+  /** Not persisted */
+  priceUsd?: number = undefined;
+  cost?: number = undefined;
+  costUsd?: number = undefined;
+  amountUsd?: number = undefined;
+  fee?: string = undefined;
+  feeUsd?: number = undefined;
+  feeSymbol?: string = undefined;
+
+  /** Relations */
   market: Market;
   liquidity: Liquidity;
   disputes: Dispute[];

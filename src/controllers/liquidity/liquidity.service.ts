@@ -50,6 +50,14 @@ export class LiquidityService {
       if (!liq.amountUsd && ((select.includes(`amountUsd`) && !isZero(liq.amount)) || !select.length)) {
         liq.amountUsd = await this.metadataSrv.tryToUsd(net, liq.amount, baseAddress);
       }
+
+      if (!liq.minSwapUsd && ((select.includes(`minSwapUsd`) && !isZero(liq.minSwap)) || !select.length)) {
+        liq.minSwapUsd = await this.metadataSrv.tryToUsd(net, liq.minSwap, baseAddress);
+      }
+
+      if (!liq.maxSwapUsd && ((select.includes(`maxSwapUsd`) && !isZero(liq.maxSwap)) || !select.length)) {
+        liq.maxSwapUsd = await this.metadataSrv.tryToUsd(net, liq.maxSwap, baseAddress);
+      }
     } catch (e) {
       return Promise.reject(e);
     }

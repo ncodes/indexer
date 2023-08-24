@@ -88,6 +88,8 @@ export default class Liquidity extends BaseModel {
   priceChange: number;
   priceUsd: number;
   amountUsd: number;
+  minSwapUsd: number;
+  maxSwapUsd: number;
 
   /** Relations */
   market: Market;

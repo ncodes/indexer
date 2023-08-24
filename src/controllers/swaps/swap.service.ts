@@ -4,9 +4,94 @@ import Dispute from '../../models/dispute';
 import Draft from '../../models/draft';
 import User from '../../models/user';
 import * as _ from 'lodash';
+import { isZero, toBN } from '../../network/common';
+import { MetadataService } from '../../services/metadata/metadata.service';
+import Market from '../../models/market';
+import { toDec } from '../../common/common';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export default class SwapService {
+  constructor(private metadataSrv: MetadataService, private cfgSrv: ConfigService) {}
+
+  /**
+   * Extend swap with peripheral and derived data
+   * @param swap
+   * @param select
+   */
+  async extendSwap(swap: Swap, select = []) {
+    select = select && _.filter(select, (s) => !_.isEmpty(s));
+    try {
+      const { network, price, baseAddress, quoteAddress, amount } = swap;
+
+      if (!swap.priceUsd && ((select.includes(`priceUsd`) && !isZero(price)) || !select.length)) {
+        swap.priceUsd = await this.metadataSrv.tryToUsd(network, price, quoteAddress);
+      }
+
+      if (!swap.amountUsd && ((select.includes(`amountUsd`) && !isZero(amount)) || !select.length)) {
+        swap.amountUsd = await this.metadataSrv.tryToUsd(network, amount, baseAddress);
+      }
+
+      if (!swap.cost && (select.includes(`cost`) || !select.length)) {
+        const { baseType, quoteType, baseDecimals, quoteDecimals } = swap.market;
+        if (Market.isFungible(baseType) && Market.isFungible(quoteType)) {
+          swap.cost = toDec(amount)
+            .mul(price)
+            .div(toDec(10).pow(baseDecimals + quoteDecimals))
+            .toNumber();
+          swap.costUsd = await this.metadataSrv.tryToUsd(network, swap.cost.toString(), quoteAddress, {
+            isHD: true,
+            refetch: true,
+          });
+        }
+      }
+
+      if (!swap.fee && (select.includes(`fee`) || !select.length)) {
+        const feeInfo = this.getFeeInfo(swap);
+        swap.fee = feeInfo.fee;
+        swap.feeSymbol = feeInfo.symbol;
+        swap.feeUsd = await this.metadataSrv.tryToUsd(network, swap.fee, feeInfo.address);
+      }
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+
+  /**
+   * Returns fee info for a swap
+   * @param swap The swap object
+   */
+  getFeeInfo(swap: Swap) {
+    const info: { symbol: string; fee: string; address: string } = { symbol: '', fee: '', address: '' };
+    const { network, baseType, quoteType, base, quote, baseAddress, quoteAddress } = swap.market;
+
+    // ERC20/ERC20, ERC20/SYNTH
+    if (
+      (Market.isERC20(baseType) && Market.isERC20(quoteType)) ||
+      (Market.isERC20(baseType) && Market.isSynth(quoteType))
+    ) {
+      info.symbol = base;
+      info.fee = toBN(swap.marketCreatorFee).add(swap.protocolFee).toString();
+      info.address = baseAddress;
+    }
+
+    // SYNTH/ERC20
+    if (Market.isSynth(baseType) && Market.isERC20(quoteType)) {
+      info.symbol = quote;
+      info.fee = toBN(swap.marketCreatorFee).add(swap.protocolFee).toString();
+      info.address = quoteAddress;
+    }
+
+    // SYNTH/SYNTH
+    if (Market.isSynth(baseType) && Market.isSynth(quoteType)) {
+      info.symbol = 'P2P';
+      info.fee = toBN(swap.marketCreatorFee).add(swap.protocolFee).toString();
+      info.address = this.cfgSrv.get(`app.networks[${network}].p2pTokenAddr`);
+    }
+
+    return info;
+  }
+
   /**
    * Get a list of user IDs allowed to create messages for a given swap.
    * Only provider, taker and current dispute draftees are allowed.

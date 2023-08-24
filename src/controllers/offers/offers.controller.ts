@@ -2,7 +2,7 @@ import { Controller, Get, Logger, Param, Query, ValidationPipe } from '@nestjs/c
 import { OfferService } from './offer.service';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { GetParamDTO, GetQueryDTO, ListQueryDTO } from './query.dto';
-import Offer from '../../models/offers';
+import Offer from '../../models/offer';
 import { ok, throw404 } from '../../common/responses/responses';
 import Event from '../../models/event';
 
@@ -67,6 +67,9 @@ export class OfferController {
    * @param [q.marketAddress] Filter the result by market address
    * @param [q.provider] Filter the result by liquidity provider address
    * @param [q.lid] Filter the result by liquidity provider ID
+   * @param [q.status] The swap status (optional)
+   * @param [q.fromDate] The start date (optional)
+   * @param [q.toDate] The end date (optional)
    * @param [q.count] Returns only the count of matching result
    * @param [q.select] Select fields to return
    * @param [q.limit] The number of result to return
@@ -81,6 +84,9 @@ export class OfferController {
       q.marketAddress,
       q.provider,
       q.lid,
+      q.status,
+      q.fromDate,
+      q.toDate,
       q.count,
       q.limit,
       q.offset,

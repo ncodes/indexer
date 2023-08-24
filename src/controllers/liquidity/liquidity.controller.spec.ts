@@ -20,7 +20,7 @@ import Meta, { MetaKeys } from '../../models/meta';
 import * as moment from 'moment';
 import BadgeGrant from '../../models/badge_grant';
 import Event from '../../models/event';
-import Offer from '../../models/offers';
+import Offer from '../../models/offer';
 import Swap from '../../models/swap';
 import { RedisService } from '../../services/redis.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';

@@ -1,7 +1,15 @@
-import { randStr } from "../common/common";
-import Objection, { raw, Transaction } from "objection";
-import { BaseModel } from "./base";
-import { uniq } from "lodash";
+import { randStr } from '../common/common';
+import Objection, { raw, Transaction } from 'objection';
+import { BaseModel } from './base';
+import { uniq } from 'lodash';
+import * as moment from 'moment';
+
+export enum SearchStatus {
+  Accepted = 'accepted',
+  Cancelled = 'cancelled',
+  Executed = 'executed',
+  Expired = 'expired',
+}
 
 /**
  * Offer represents an offer request for a liquidity
@@ -139,19 +147,26 @@ export default class Offer extends BaseModel {
    * @param marketAddress The market address to filter by
    * @param provider The provider address to filter by
    * @param lid The liquidity ID to filter by
+   * @param status The offer status to filter by
+   * @param fromDate The start date to filter by (optional)
+   * @param toDate The end date to filter by (optional)
+   * @param status The swap status (optional)
    * @param countOnly Indicates whether to return count only.
    * @param limit The number of records to return.
    * @param offset The offset value
    * @param select Select specific fields
    * @param txn Optional transaction object
    */
-  static search(
-    network?: string,
-    creator?: string,
-    marketAddress?: string,
-    provider?: string,
-    lid?: number,
-    countOnly?: boolean,
+  static async search(
+    network: string,
+    creator: string,
+    marketAddress: string,
+    provider: string,
+    lid: number,
+    status: SearchStatus,
+    fromDate: string,
+    toDate: string,
+    countOnly: boolean,
     limit?: number,
     offset?: number,
     select = [],
@@ -162,17 +177,36 @@ export default class Offer extends BaseModel {
     query = !countOnly ? query.select(...select, raw('count(*) over() as' + ' "$queryCount"')) : query;
     if (network) query = query.where('network', 'ilike', network);
     if (creator) query = query.where('creator', 'ilike', creator);
+    if (marketAddress) query = query.where('marketAddress', 'ilike', marketAddress);
     if (provider) query = query.where('provider', 'ilike', provider);
     if (lid) query = query.where('lid', lid);
-    if (marketAddress) query = query.where('marketAddress', 'ilike', marketAddress);
-    if (countOnly) {
-      return query
-        .count('id')
-        .first()
-        .then((res: any) => {
-          return res.count;
-        });
+
+    if (status) {
+      switch (status) {
+        case SearchStatus.Accepted:
+          query = query.where('accepted', true);
+          break;
+        case SearchStatus.Cancelled:
+          query = query.where('cancelled', true);
+          break;
+        case SearchStatus.Executed:
+          query = query.where('executed', true);
+          break;
+        case SearchStatus.Expired:
+          query = query.where('deadline', '<', moment().toISOString());
+          break;
+      }
     }
+
+    if (fromDate) query = query.where('createdAt', '>=', fromDate);
+
+    if (toDate) query = query.where('createdAt', '<=', toDate);
+
+    if (countOnly) {
+      const res = await query.count('id').first();
+      return res.count;
+    }
+
     if (offset != undefined) query = query.offset(offset);
     if (limit) query = query.limit(limit);
     return query.whereNotDeleted().orderBy('updatedAt', 'DESC');

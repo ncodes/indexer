@@ -1,9 +1,10 @@
-import { IsBoolean, IsIn, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
+import { IsBoolean, IsEnum, IsIn, IsISO8601, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { makeValidatorMsg } from '../../common/validations/validation';
 import { getNetworks } from '../../network/common';
 import { Transform } from 'class-transformer';
 import { toBoolean } from 'underscore.string';
 import { toNumber } from 'lodash';
+import { SearchStatus } from '../../models/offer';
 
 export class GetQueryDTO {
   @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
@@ -51,6 +52,18 @@ export class ListQueryDTO {
   @IsNumber(undefined, { message: makeValidatorMsg('must be a number', 'limit') })
   @IsOptional()
   public lid: number;
+
+  @IsEnum(SearchStatus, { message: makeValidatorMsg('must be a valid status', 'status') })
+  @IsOptional()
+  status?: SearchStatus;
+
+  @IsISO8601({ strict: true }, { message: makeValidatorMsg('must be a valid ISO8601 date', 'fromDate') })
+  @IsOptional()
+  fromDate?: string;
+
+  @IsISO8601({ strict: true }, { message: makeValidatorMsg('must be a valid ISO8601 date', 'toDate') })
+  @IsOptional()
+  toDate?: string;
 
   @Transform(({ value }) => toBoolean(value))
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'count') })

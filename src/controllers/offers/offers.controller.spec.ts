@@ -11,7 +11,7 @@ import { makeSession } from '../auth/utils';
 import { randStr } from '../../common/common';
 import { OfferService } from './offer.service';
 import { OfferController } from './offers.controller';
-import Offer from '../../models/offers';
+import Offer from '../../models/offer';
 import * as moment from 'moment';
 import Event from '../../models/event';
 
@@ -280,6 +280,126 @@ describe('OffersController', () => {
         .expect((res) => {
           expect(res.body.data).toHaveLength(1);
           expect(res.body.data[0].id).toEqual(offer.id);
+        });
+    });
+
+    describe('status was set', () => {
+      it('should return 200 and correct data when [status=accepted] is set', async () => {
+        await Offer.create({ network: net, lid: 1 });
+        await Offer.create({ network: net });
+        await request(app.getHttpServer())
+          .get(`/v1/offers`)
+          .query({ net, status: 'accepted' })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(0);
+          });
+
+        const offer = await Offer.create({ network: net, accepted: true });
+        await request(app.getHttpServer())
+          .get(`/v1/offers`)
+          .query({ net, status: 'accepted' })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(offer.id);
+          });
+      });
+
+      it('should return 200 and correct data when [status=cancelled] is set', async () => {
+        await Offer.create({ network: net, lid: 1 });
+        await Offer.create({ network: net });
+        await request(app.getHttpServer())
+          .get(`/v1/offers`)
+          .query({ net, status: 'cancelled' })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(0);
+          });
+
+        const offer = await Offer.create({ network: net, cancelled: true });
+        await request(app.getHttpServer())
+          .get(`/v1/offers`)
+          .query({ net, status: 'cancelled' })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(offer.id);
+          });
+      });
+
+      it('should return 200 and correct data when [status=executed] is set', async () => {
+        await Offer.create({ network: net, lid: 1 });
+        await Offer.create({ network: net });
+        await request(app.getHttpServer())
+          .get(`/v1/offers`)
+          .query({ net, status: 'executed' })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(0);
+          });
+
+        const offer = await Offer.create({ network: net, executed: true });
+        await request(app.getHttpServer())
+          .get(`/v1/offers`)
+          .query({ net, status: 'executed' })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(offer.id);
+          });
+      });
+    });
+
+    it('should return 200 and correct data when [fromDate,toDate] are set', async () => {
+      const now = moment();
+      const offer = await Offer.create({ network: net, createdAt: now.clone().subtract('1', 'minutes').toISOString() });
+      const offer2 = await Offer.create({
+        network: net,
+        lid: 1,
+        createdAt: now.clone().subtract('2', 'minutes').toISOString(),
+      });
+
+      await request(app.getHttpServer())
+        .get(`/v1/offers`)
+        .query({ net, fromDate: 'invalid iso string' })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'must be a valid ISO8601 date',
+            param: 'fromDate',
+            type: 'invalid_request_error',
+          },
+        });
+
+      await request(app.getHttpServer())
+        .get(`/v1/offers`)
+        .query({ net, toDate: 'invalid iso string' })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'must be a valid ISO8601 date',
+            param: 'toDate',
+            type: 'invalid_request_error',
+          },
+        });
+
+      await request(app.getHttpServer())
+        .get(`/v1/offers`)
+        .query({ net, fromDate: now.subtract(1, 'minute').toISOString() })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data).toHaveLength(1);
+          expect(res.body.data[0].id).toEqual(offer.id);
+        });
+
+      await request(app.getHttpServer())
+        .get(`/v1/offers`)
+        .query({ net, toDate: now.subtract(1, 'minute').toISOString() })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data).toHaveLength(1);
+          expect(res.body.data[0].id).toEqual(offer2.id);
         });
     });
 

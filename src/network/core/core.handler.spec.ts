@@ -12,7 +12,7 @@ import Swap from '../../models/swap';
 import Dispute from '../../models/dispute';
 import * as moment from 'moment';
 import MineTask, { MineTaskType } from '../../models/mine_task';
-import Offer from '../../models/offers';
+import Offer from '../../models/offer';
 import { toDec } from '../../common/common';
 import Event, { Events } from '../../models/event';
 

@@ -1,7 +1,7 @@
 import { randStr } from '../common/common';
 import Objection, { Model, raw, Transaction } from 'objection';
 import { BaseModel } from './base';
-import Offer from './offers';
+import Offer from './offer';
 import Swap from './swap';
 import Dispute from './dispute';
 

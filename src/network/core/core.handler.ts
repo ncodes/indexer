@@ -14,7 +14,7 @@ import { pow10D, toBN } from '../common';
 import Dispute from '../../models/dispute';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 import * as _ from 'lodash';
-import Offer from '../../models/offers';
+import Offer from '../../models/offer';
 import { includesStr, isEqualStr, toDec } from '../../common/common';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';

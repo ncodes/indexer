@@ -19,7 +19,7 @@ import Liquidity from '../src/models/liquidity';
 import Dispute from '../src/models/dispute';
 import { commify, formatEther } from 'ethers/lib/utils';
 import Ticket from '../src/models/ticket';
-import Offer from '../src/models/offers';
+import Offer from '../src/models/offer';
 
 declare global {
   namespace CoinGecko {

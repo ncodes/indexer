@@ -1,8 +1,10 @@
 import { randStr } from '../common/common';
-import Objection, { raw, Transaction } from 'objection';
+import Objection, { Model, raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 import { uniq } from 'lodash';
 import * as moment from 'moment';
+import Market from './market';
+import Liquidity from './liquidity';
 
 export enum SearchStatus {
   Accepted = 'accepted',
@@ -44,6 +46,10 @@ export default class Offer extends BaseModel {
   // The offer expiration date
   deadline: string = undefined;
 
+  /** Relations */
+  market: Market;
+  liquidity: Liquidity;
+
   constructor(init?: Partial<Offer>) {
     super();
     Object.assign(this, init);
@@ -72,7 +78,24 @@ export default class Offer extends BaseModel {
   }
 
   static get relationMappings() {
-    return {};
+    return {
+      market: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: Market,
+        join: {
+          from: ['offers.network', 'offers.marketAddress'],
+          to: ['markets.network', 'markets.address'],
+        },
+      },
+      liquidity: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: Liquidity,
+        join: {
+          from: ['offers.network', 'offers.provider', 'offers.lid'],
+          to: ['liquidities.network', 'liquidities.provider', 'liquidities.lid'],
+        },
+      },
+    };
   }
 
   /**
@@ -156,6 +179,7 @@ export default class Offer extends BaseModel {
    * @param limit The number of records to return.
    * @param offset The offset value
    * @param select Select specific fields
+   * @param relations
    * @param txn Optional transaction object
    */
   static async search(
@@ -169,9 +193,10 @@ export default class Offer extends BaseModel {
     fromDate: string,
     toDate: string,
     countOnly: boolean,
-    limit?: number,
-    offset?: number,
+    limit: number,
+    offset: number,
     select = [],
+    relations: string,
     txn?: Objection.Transaction,
   ) {
     select = this.makeSelectList(select);
@@ -217,6 +242,6 @@ export default class Offer extends BaseModel {
 
     if (offset != undefined) query = query.offset(offset);
     if (limit) query = query.limit(limit);
-    return query.whereNotDeleted().orderBy('updatedAt', 'DESC');
+    return query.withGraphFetched(relations).whereNotDeleted().orderBy('updatedAt', 'DESC');
   }
 }

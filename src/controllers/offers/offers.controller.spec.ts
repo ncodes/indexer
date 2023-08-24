@@ -14,6 +14,11 @@ import { OfferController } from './offers.controller';
 import Offer from '../../models/offer';
 import * as moment from 'moment';
 import Event from '../../models/event';
+import { MarketService } from '../markets/market.service';
+
+const mockMarketService = jest.fn().mockImplementation(() => ({
+  extendMarket: jest.fn(),
+}));
 
 describe('OffersController', () => {
   let app: INestApplication;
@@ -37,8 +42,11 @@ describe('OffersController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [OfferController],
-      providers: [OfferService],
-    }).compile();
+      providers: [OfferService, MarketService],
+    })
+      .overrideProvider(MarketService)
+      .useValue(new mockMarketService())
+      .compile();
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());
     app.useGlobalFilters(new AllExceptionsFilter());

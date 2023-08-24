@@ -5,12 +5,13 @@ import { GetParamDTO, GetQueryDTO, ListQueryDTO } from './query.dto';
 import Offer from '../../models/offer';
 import { ok, throw404 } from '../../common/responses/responses';
 import Event from '../../models/event';
+import { MarketService } from '../markets/market.service';
 
 @Controller('v1/offers')
 export class OfferController {
   private logger = new Logger(OfferController.name);
 
-  constructor(private offerSrv: OfferService) {}
+  constructor(private offerSrv: OfferService, private mktSrv: MarketService) {}
 
   /**
    * Get offer events by offer ID
@@ -92,6 +93,7 @@ export class OfferController {
       q.limit,
       q.offset,
       q.select,
+      '[market,liquidity]',
     );
 
     if (q.count) {
@@ -100,9 +102,8 @@ export class OfferController {
 
     const offers = result as Offer[];
     for (const offer of offers) {
-      await this.offerSrv.extendOffer(offer, q.select).catch((e) => {
-        this.logger.error(e, null, 'list()');
-      });
+      await this.offerSrv.extendOffer(offer, q.select);
+      if (offer.market) await this.mktSrv.extendMarket(offer.market, ['baseLogo', 'quoteLogo']);
     }
 
     return ok().data(offers).build();

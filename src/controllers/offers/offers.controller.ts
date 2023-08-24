@@ -54,7 +54,7 @@ export class OfferController {
     @Param(new ValidationPipe(ValPipeOpt)) params: GetParamDTO,
     @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO,
   ) {
-    const offer = await Offer.getByNetworkAndOfferId(q.net, params.offerId);
+    const offer = await Offer.getByNetworkAndOfferId(q.net, params.offerId, undefined, '[market,liquidity]');
     if (!offer) throw404('market not found');
     await this.offerSrv.extendOffer(offer, q.select);
     return ok().data(offer).build();

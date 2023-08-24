@@ -1563,7 +1563,7 @@ export class CoreHandler extends Handler {
    * @param txn The transaction object
    */
   async onOfferAccepted(offerId: BigNumber, acceptor: string, execAt: number, event: ChainEvent, txn?: Transaction) {
-    let offer = await Offer.getByNetworkAndOfferId(this.network, offerId.toNumber(), undefined, txn);
+    let offer = await Offer.getByNetworkAndOfferId(this.network, offerId.toNumber(), undefined, undefined, txn);
     if (!offer) throw new Error('Offer not found');
 
     // Update the offer
@@ -1603,7 +1603,7 @@ export class CoreHandler extends Handler {
    * @param txn The transaction object
    */
   async onOfferUnaccepted(offerId: BigNumber, unacceptor: string, _event: ChainEvent, txn?: Transaction) {
-    let offer = await Offer.getByNetworkAndOfferId(this.network, offerId.toNumber(), undefined, txn);
+    let offer = await Offer.getByNetworkAndOfferId(this.network, offerId.toNumber(), undefined, undefined, txn);
     if (!offer) throw new Error('Offer not found');
 
     // Update the offer
@@ -1639,7 +1639,7 @@ export class CoreHandler extends Handler {
    * @param txn The transaction object
    */
   async onOfferCancelled(offerId: BigNumber, canceller: string, _event: ChainEvent, txn?: Transaction) {
-    let offer = await Offer.getByNetworkAndOfferId(this.network, offerId.toNumber(), undefined, txn);
+    let offer = await Offer.getByNetworkAndOfferId(this.network, offerId.toNumber(), undefined, undefined, txn);
     if (!offer) throw new Error('Offer not found');
 
     // Update the offer
@@ -1675,7 +1675,7 @@ export class CoreHandler extends Handler {
    * @param txn The transaction object
    */
   async onOfferExecuted(offerId: BigNumber, executor: string, _event: ChainEvent, txn?: Transaction) {
-    let offer = await Offer.getByNetworkAndOfferId(this.network, offerId.toNumber(), undefined, txn);
+    let offer = await Offer.getByNetworkAndOfferId(this.network, offerId.toNumber(), undefined, undefined, txn);
     if (!offer) throw new Error('Offer not found');
 
     // Update the offer

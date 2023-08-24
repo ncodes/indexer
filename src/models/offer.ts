@@ -46,6 +46,10 @@ export default class Offer extends BaseModel {
   // The offer expiration date
   deadline: string = undefined;
 
+  /** Non-persisted fields */
+  priceUsd: number;
+  amountUsd: number;
+
   /** Relations */
   market: Market;
   liquidity: Liquidity;
@@ -132,15 +136,17 @@ export default class Offer extends BaseModel {
    * @param network The network name
    * @param id The on-chain id
    * @param select The fields to be selected
+   * @param relations The relations to be fetched
    * @param txn Optional transaction object
    */
-  static getByNetworkAndOfferId(network: string, id: number, select = [], txn?: Transaction) {
+  static getByNetworkAndOfferId(network: string, id: number, select = [], relations: string, txn?: Transaction) {
     select = this.makeSelectList(select);
     return this.query(txn)
       .whereNotDeleted()
       .select(...select)
       .where('network', network)
       .where('offerId', id)
+      .withGraphFetched(relations)
       .first();
   }
 

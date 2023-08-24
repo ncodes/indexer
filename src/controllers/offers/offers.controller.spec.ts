@@ -283,6 +283,18 @@ describe('OffersController', () => {
         });
     });
 
+    it('should return 200 and correct data when [creatorOrProvider] is set', async () => {
+      await Offer.create({ network: net, lid: 1, provider: '0xProvider' });
+      await Offer.create({ network: net, creator: '0xProvider' });
+      await request(app.getHttpServer())
+        .get(`/v1/offers`)
+        .query({ net, creatorOrProvider: '0xProvider' })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data).toHaveLength(2);
+        });
+    });
+
     describe('status was set', () => {
       it('should return 200 and correct data when [status=accepted] is set', async () => {
         await Offer.create({ network: net, lid: 1 });

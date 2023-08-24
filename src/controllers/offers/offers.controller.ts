@@ -81,8 +81,9 @@ export class OfferController {
     const result = await Offer.search(
       q.net,
       q.creator,
-      q.marketAddress,
       q.provider,
+      q.creatorOrProvider,
+      q.marketAddress,
       q.lid,
       q.status,
       q.fromDate,

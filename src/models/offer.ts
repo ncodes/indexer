@@ -146,6 +146,7 @@ export default class Offer extends BaseModel {
    * @param creator The market creator address
    * @param marketAddress The market address to filter by
    * @param provider The provider address to filter by
+   * @param creatorOrProvider Filter by offer creator or provider
    * @param lid The liquidity ID to filter by
    * @param status The offer status to filter by
    * @param fromDate The start date to filter by (optional)
@@ -160,8 +161,9 @@ export default class Offer extends BaseModel {
   static async search(
     network: string,
     creator: string,
-    marketAddress: string,
     provider: string,
+    creatorOrProvider: string,
+    marketAddress: string,
     lid: number,
     status: SearchStatus,
     fromDate: string,
@@ -180,6 +182,12 @@ export default class Offer extends BaseModel {
     if (marketAddress) query = query.where('marketAddress', 'ilike', marketAddress);
     if (provider) query = query.where('provider', 'ilike', provider);
     if (lid) query = query.where('lid', lid);
+
+    if (creatorOrProvider) {
+      query = query.where((qb) => {
+        return qb.where('creator', 'ilike', creatorOrProvider).orWhere('provider', 'ilike', creatorOrProvider);
+      });
+    }
 
     if (status) {
       switch (status) {

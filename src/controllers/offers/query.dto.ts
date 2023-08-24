@@ -53,6 +53,9 @@ export class ListQueryDTO {
   @IsOptional()
   public lid: number;
 
+  @IsOptional()
+  public creatorOrProvider: string;
+
   @IsEnum(SearchStatus, { message: makeValidatorMsg('must be a valid status', 'status') })
   @IsOptional()
   status?: SearchStatus;

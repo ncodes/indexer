@@ -85,6 +85,17 @@ describe('UsersController', () => {
         });
     });
 
+    it('should return 200 and zero User when user with matching address was not found but no404=true', async () => {
+      await request(app.getHttpServer()).get(`/v1/users/0xAddress2`).query({ no404: true }).expect(200).expect({
+        address: '0xAddress2',
+        volume: '0',
+        volumeUsd: 0,
+        totalSwaps: 0,
+        completionRate: 0,
+        badges: [],
+      });
+    });
+
     it('should return 401 when provided address is not match auth token user address', async () => {
       await User.updateById(u.id, {
         address: '0xAddress',

@@ -7,6 +7,7 @@ import { MayBeAuthenticatedGuard } from '../../guards/maybe_authenticated.guard'
 import { UserService } from './user.service';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { GetQueryDTO } from './dto';
+import { isEqualStr } from '../../common/common';
 
 @Controller('v1/users')
 export class UsersController {
@@ -18,6 +19,8 @@ export class UsersController {
    * @param req The request object
    * @param address The target user address
    * @param q The query object
+   * @param [q.net] The network name
+   * @param [q.no404] Return a zero User object if user was not found
    */
   @UseGuards(MayBeAuthenticatedGuard)
   @UseGuards(MayHaveKeyGuard)
@@ -27,14 +30,23 @@ export class UsersController {
     @Param('address') address: string,
     @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO,
   ) {
-    if (req.user && req.user.address.toLowerCase() !== address.toLowerCase()) {
+    if (req.user && isEqualStr(req.user.address, address.toLowerCase())) {
       throw401(ErrorMessages.NoAuthPermission);
     }
 
     let user = req.user;
     if (!user) {
       user = await User.getByAddress(address);
-      if (!user) throw404(ErrorMessages.UserNotFound);
+      if (!user && !q.no404) throw404(ErrorMessages.UserNotFound);
+      if (!user && q.no404)
+        return {
+          address,
+          volume: '0',
+          volumeUsd: 0,
+          totalSwaps: 0,
+          completionRate: 0,
+          badges: [],
+        };
     }
 
     await this.userSrv.extendUser(user, q.net);

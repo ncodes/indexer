@@ -414,6 +414,14 @@ describe('MediatorManagerHandler', () => {
         disputeId: 1,
       });
 
+      let dispute = await Dispute.create({
+        network: net,
+        marketAddress,
+        orderId: ticket.orderId,
+        disputeId: ticket.disputeId,
+        numMediatorsUndrafted: 1,
+      });
+
       await Swap.create({
         network: net,
         marketAddress,
@@ -440,6 +448,9 @@ describe('MediatorManagerHandler', () => {
       expect(ticket.draftedAt).toBeNull();
       expect(ticket.orderId).toEqual(23);
       expect(ticket.disputeId).toEqual(1);
+
+      dispute = await Dispute.getById(dispute.id);
+      expect(dispute.numMediatorsUndrafted).toEqual(2);
 
       // expect an undraft mining task to be marked as `completed`
       let numCompleted = await MineTask.count({ type: MineTaskType.Undraft, completed: true });

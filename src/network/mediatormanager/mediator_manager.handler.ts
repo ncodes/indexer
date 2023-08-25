@@ -356,9 +356,13 @@ export class MediatorManagerHandler extends Handler {
     txn?: Transaction,
   ) {
     const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, ticketId.toNumber(), undefined, txn);
+    const order = await Swap.get(this.network, ticket.orderId, undefined, undefined, txn);
+
+    // Update dispute
+    const dispute = await Dispute.get(order.network, order.marketAddress, order.orderId, ticket.disputeId, txn);
+    await Dispute.updateById(dispute.id, { numMediatorsUndrafted: dispute.numMediatorsUndrafted + 1 }, txn);
 
     // Create swap event
-    const order = await Swap.get(this.network, ticket.orderId, undefined, undefined, txn);
     await Event.create({
       network: this.network,
       marketAddress: order.marketAddress,

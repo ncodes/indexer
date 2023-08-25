@@ -12,6 +12,7 @@ export enum SearchStatus {
   OrderReleased = 'orderReleased',
   Redispute = 'redispute',
   Draft = 'draft',
+  Undraft = 'undraft',
   Evidence = 'evidence',
   Commit = 'commit',
   Reveal = 'reveal',
@@ -37,6 +38,8 @@ export default class Dispute extends BaseModel {
   numMediators: number = undefined;
   // The number of mediators drafted
   numMediatorsDrafted: number = undefined;
+  // The number of mediators undrafted
+  numMediatorsUndrafted: number = undefined;
   // Indicates the creator's preferred outcome
   wantRelease: boolean = undefined;
   // Indicates whether this dispute was re-disputed
@@ -372,6 +375,10 @@ export default class Dispute extends BaseModel {
         case SearchStatus.Draft:
           q = q.where({ executed: false, orderReleased: false });
           q = q.where(raw('"numMediators" > "numMediatorsDrafted"'));
+          break;
+        case SearchStatus.Undraft:
+          q = q.where({ executed: true });
+          q = q.where(raw('"numMediatorsDrafted" > "numMediatorsUndrafted"'));
           break;
         case SearchStatus.Evidence:
           q = q.where({ executed: false, orderReleased: false });

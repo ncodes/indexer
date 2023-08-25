@@ -11,6 +11,7 @@ exports.up = function (knex) {
       table.string('defendant');
       table.integer('numMediators').defaultTo(0);
       table.integer('numMediatorsDrafted').defaultTo(0);
+      table.integer('numMediatorsUndrafted').defaultTo(0);
       table.boolean('wantRelease').defaultTo(false);
       table.boolean('executed').defaultTo(false);
       table.boolean('released').defaultTo(false);

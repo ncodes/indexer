@@ -317,6 +317,28 @@ describe('DisputesController', () => {
       });
     });
 
+    describe('undraft is set', () => {
+      it('should return correct result', async () => {
+        await Dispute.create({ network: net });
+        const dispute = await Dispute.create({
+          network: net,
+          executed: true,
+          numMediatorsDrafted: 2,
+          numMediatorsUndrafted: 1,
+        });
+        await request(app.getHttpServer())
+          .get(`/v1/disputes`)
+          .set('Authorization', 'bearer ' + token)
+          .query({ net, status: 'undraft' })
+          .send({})
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(dispute.id);
+          });
+      });
+    });
+
     describe('evidence is set', () => {
       it('should return correct result', async () => {
         await Dispute.create({ network: net });

@@ -30,7 +30,7 @@ export class UsersController {
     @Param('address') address: string,
     @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO,
   ) {
-    if (req.user && isEqualStr(req.user.address, address.toLowerCase())) {
+    if (req.user && !isEqualStr(req.user.address, address.toLowerCase())) {
       throw401(ErrorMessages.NoAuthPermission);
     }
 
@@ -38,15 +38,18 @@ export class UsersController {
     if (!user) {
       user = await User.getByAddress(address);
       if (!user && !q.no404) throw404(ErrorMessages.UserNotFound);
-      if (!user && q.no404)
-        return {
-          address,
-          volume: '0',
-          volumeUsd: 0,
-          totalSwaps: 0,
-          completionRate: 0,
-          badges: [],
-        };
+      if (!user && q.no404) {
+        return ok()
+          .data({
+            address,
+            volume: '0',
+            volumeUsd: 0,
+            totalSwaps: 0,
+            completionRate: 0,
+            badges: [],
+          })
+          .build<User>();
+      }
     }
 
     await this.userSrv.extendUser(user, q.net);

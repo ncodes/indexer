@@ -11,15 +11,14 @@ export class DisputesController {
    * @param q The query object
    * @param q.network The network name
    * @param [q.marketAddress] Filter by the  market ID
+   * @param [q.participant] Filter by the dispute participation as creator, defendant or draftee
    * @param [q.creator] Filter by the dispute creator
    * @param [q.defendant] Filter by the dispute defendant
    * @param [q.orderId] Filter by the ID of the order the ticket was drafted to
    * @param [q.disputeId] Filter by the dispute the ticket was drafted to
-   * @param [q.redispute] Filter by redispute status
-   * @param [q.executed] Filter by execution status
-   * @param [q.released] Filter by release status
-   * @param [q.abandoned] Filter by abandon status
-   * @param [q.orderReleased] Filter by order release status
+   * @param [q.status] Filter by the dispute status
+   * @param [q.fromDate] Filter by the date the dispute was created after
+   * @param [q.toDate] Filter by the date the dispute was created before
    * @param [q.count] Return count information only
    * @param [q.limit] Limit the number of records returned
    * @param [q.offset] Set query offset (for pagination)
@@ -30,15 +29,14 @@ export class DisputesController {
     const result = await Dispute.search(
       q.net,
       q.marketAddress,
+      q.participant,
       q.creator,
       q.defendant,
       q.orderId,
       q.disputeId,
-      q.redispute,
-      q.executed,
-      q.released,
-      q.abandoned,
-      q.orderReleased,
+      q.status,
+      q.fromDate,
+      q.toDate,
       q.count,
       Math.min(q.limit || 25, 100),
       q.offset,

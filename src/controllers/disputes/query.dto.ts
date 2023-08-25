@@ -1,9 +1,10 @@
-import { IsBoolean, IsIn, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
+import { IsBoolean, IsEnum, IsIn, IsISO8601, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { makeValidatorMsg } from '../../common/validations/validation';
 import { getNetworks } from '../../network/common';
 import { Transform } from 'class-transformer';
 import { toNumber } from 'lodash';
 import { toBoolean } from 'underscore.string';
+import { SearchStatus } from '../../models/dispute';
 
 export class ListQueryDTO {
   @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
@@ -12,6 +13,9 @@ export class ListQueryDTO {
 
   @IsOptional()
   public marketAddress?: string;
+
+  @IsOptional()
+  public participant?: string;
 
   @IsOptional()
   public creator?: string;
@@ -31,30 +35,17 @@ export class ListQueryDTO {
   @IsOptional()
   public disputeId?: number;
 
-  @Transform(({ value }) => toBoolean(value))
-  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'redispute') })
+  @IsEnum(SearchStatus, { message: makeValidatorMsg('must be a valid status', 'status') })
   @IsOptional()
-  public redispute?: boolean;
+  status?: SearchStatus;
 
-  @Transform(({ value }) => toBoolean(value))
-  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'executed') })
+  @IsISO8601({ strict: true }, { message: makeValidatorMsg('must be a valid ISO8601 date', 'fromDate') })
   @IsOptional()
-  public executed?: boolean;
+  fromDate?: string;
 
-  @Transform(({ value }) => toBoolean(value))
-  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'released') })
+  @IsISO8601({ strict: true }, { message: makeValidatorMsg('must be a valid ISO8601 date', 'toDate') })
   @IsOptional()
-  public released?: boolean;
-
-  @Transform(({ value }) => toBoolean(value))
-  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'abandoned') })
-  @IsOptional()
-  public abandoned?: boolean;
-
-  @Transform(({ value }) => toBoolean(value))
-  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'orderReleased') })
-  @IsOptional()
-  public orderReleased?: boolean;
+  toDate?: string;
 
   @Transform(({ value }) => toBoolean(value))
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'count') })

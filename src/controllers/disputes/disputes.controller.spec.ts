@@ -16,6 +16,8 @@ import Dispute from '../../models/dispute';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { RedisService } from '../../services/redis.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
+import * as moment from 'moment';
+import Draft from '../../models/draft';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -206,14 +208,14 @@ describe('DisputesController', () => {
       });
     });
 
-    describe('query: redispute is set', () => {
+    describe('redispute is set', () => {
       it('should return correct result', async () => {
         await Dispute.create({ network: net });
         const dispute = await Dispute.create({ network: net, redispute: true });
         await request(app.getHttpServer())
           .get(`/v1/disputes`)
           .set('Authorization', 'bearer ' + token)
-          .query({ net, redispute: dispute.redispute })
+          .query({ net, status: 'redispute' })
           .send({})
           .expect(200)
           .expect((res) => {
@@ -223,14 +225,14 @@ describe('DisputesController', () => {
       });
     });
 
-    describe('query: executed is set', () => {
+    describe('executed is set', () => {
       it('should return correct result', async () => {
         await Dispute.create({ network: net });
         const dispute = await Dispute.create({ network: net, executed: true });
         await request(app.getHttpServer())
           .get(`/v1/disputes`)
           .set('Authorization', 'bearer ' + token)
-          .query({ net, executed: dispute.executed })
+          .query({ net, status: 'executed' })
           .send({})
           .expect(200)
           .expect((res) => {
@@ -240,14 +242,14 @@ describe('DisputesController', () => {
       });
     });
 
-    describe('query: released is set', () => {
+    describe('released is set', () => {
       it('should return correct result', async () => {
         await Dispute.create({ network: net });
         const dispute = await Dispute.create({ network: net, released: true });
         await request(app.getHttpServer())
           .get(`/v1/disputes`)
           .set('Authorization', 'bearer ' + token)
-          .query({ net, released: dispute.released })
+          .query({ net, status: 'released' })
           .send({})
           .expect(200)
           .expect((res) => {
@@ -257,14 +259,14 @@ describe('DisputesController', () => {
       });
     });
 
-    describe('query: abandoned is set', () => {
+    describe('abandoned is set', () => {
       it('should return correct result', async () => {
         await Dispute.create({ network: net });
         const dispute = await Dispute.create({ network: net, abandoned: true });
         await request(app.getHttpServer())
           .get(`/v1/disputes`)
           .set('Authorization', 'bearer ' + token)
-          .query({ net, abandoned: dispute.abandoned })
+          .query({ net, status: 'abandoned' })
           .send({})
           .expect(200)
           .expect((res) => {
@@ -274,7 +276,7 @@ describe('DisputesController', () => {
       });
     });
 
-    describe('query: orderReleased is set', () => {
+    describe('orderReleased is set', () => {
       it('should return correct result', async () => {
         await Dispute.create({ network: net });
         const dispute = await Dispute.create({
@@ -284,7 +286,191 @@ describe('DisputesController', () => {
         await request(app.getHttpServer())
           .get(`/v1/disputes`)
           .set('Authorization', 'bearer ' + token)
-          .query({ net, orderReleased: dispute.orderReleased })
+          .query({ net, status: 'orderReleased' })
+          .send({})
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(dispute.id);
+          });
+      });
+    });
+
+    describe('draft is set', () => {
+      it('should return correct result', async () => {
+        await Dispute.create({ network: net });
+        const dispute = await Dispute.create({
+          network: net,
+          numMediators: 2,
+          numMediatorsDrafted: 1,
+        });
+        await request(app.getHttpServer())
+          .get(`/v1/disputes`)
+          .set('Authorization', 'bearer ' + token)
+          .query({ net, status: 'draft' })
+          .send({})
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(dispute.id);
+          });
+      });
+    });
+
+    describe('evidence is set', () => {
+      it('should return correct result', async () => {
+        await Dispute.create({ network: net });
+        const now = moment();
+        const dispute = await Dispute.create({
+          network: net,
+          numMediators: 2,
+          numMediatorsDrafted: 2,
+          evidenceEndAt: now.clone().add('5', 's').toISOString(),
+        });
+        await request(app.getHttpServer())
+          .get(`/v1/disputes`)
+          .set('Authorization', 'bearer ' + token)
+          .query({ net, status: 'evidence' })
+          .send({})
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(dispute.id);
+          });
+      });
+    });
+
+    describe('commit is set', () => {
+      it('should return correct result', async () => {
+        await Dispute.create({ network: net });
+        const now = moment();
+        const dispute = await Dispute.create({
+          network: net,
+          numMediators: 2,
+          numMediatorsDrafted: 2,
+          evidenceEndAt: now.clone().subtract('1', 's').toISOString(),
+          commitEndAt: now.clone().add('2', 's').toISOString(),
+        });
+        await request(app.getHttpServer())
+          .get(`/v1/disputes`)
+          .set('Authorization', 'bearer ' + token)
+          .query({ net, status: 'commit' })
+          .send({})
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(dispute.id);
+          });
+      });
+    });
+
+    describe('reveal is set', () => {
+      it('should return correct result', async () => {
+        await Dispute.create({ network: net });
+        const now = moment();
+        const dispute = await Dispute.create({
+          network: net,
+          numMediators: 2,
+          numMediatorsDrafted: 2,
+          evidenceEndAt: now.clone().subtract('2', 's').toISOString(),
+          commitEndAt: now.clone().subtract('1', 's').toISOString(),
+          revealEndAt: now.clone().add('2', 's').toISOString(),
+        });
+        await request(app.getHttpServer())
+          .get(`/v1/disputes`)
+          .set('Authorization', 'bearer ' + token)
+          .query({ net, status: 'reveal' })
+          .send({})
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(dispute.id);
+          });
+      });
+    });
+
+    describe('query: fromDate and toDate were set', () => {
+      it('should return correct result', async () => {
+        const now = moment();
+        const dispute = await Dispute.create({ network: net, createdAt: now.clone().subtract('6', 's').toISOString() });
+        const dispute2 = await Dispute.create({
+          network: net,
+          createdAt: now.clone().subtract('4', 's').toISOString(),
+        });
+        await request(app.getHttpServer())
+          .get(`/v1/disputes`)
+          .set('Authorization', 'bearer ' + token)
+          .query({ net, fromDate: now.clone().subtract(4, 's').toISOString() })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(dispute2.id);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/disputes`)
+          .set('Authorization', 'bearer ' + token)
+          .query({ net, fromDate: now.clone().subtract(6, 's').toISOString() })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(2);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/disputes`)
+          .set('Authorization', 'bearer ' + token)
+          .query({
+            net,
+            fromDate: now.clone().subtract(6, 's').toISOString(),
+            toDate: now.clone().subtract(5, 's').toISOString(),
+          })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(dispute.id);
+          });
+      });
+    });
+
+    describe('participant is set', () => {
+      it('should return correct result when participant is creator', async () => {
+        await Dispute.create({ network: net, creator: '0xCreator' });
+        const dispute = await Dispute.create({ creator: '0xCreator2', network: net });
+        await request(app.getHttpServer())
+          .get(`/v1/disputes`)
+          .set('Authorization', 'bearer ' + token)
+          .query({ net, participant: '0xCreator2' })
+          .send({})
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(dispute.id);
+          });
+      });
+
+      it('should return correct result when participant is a defendant', async () => {
+        await Dispute.create({ network: net, defendant: '0xCreator' });
+        const dispute = await Dispute.create({ defendant: '0xCreator2', network: net });
+        await request(app.getHttpServer())
+          .get(`/v1/disputes`)
+          .set('Authorization', 'bearer ' + token)
+          .query({ net, participant: '0xCreator2' })
+          .send({})
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(dispute.id);
+          });
+      });
+
+      it('should return correct result when participant is a draftee', async () => {
+        await Dispute.create({ network: net, defendant: '0xCreator', orderId: 0, disputeId: 0 });
+        const dispute = await Dispute.create({ defendant: '0xCreator2', network: net, orderId: 1, disputeId: 0 });
+        await Draft.create({ network: net, orderId: 1, disputeIndex: 0, owner: '0xDraftee' });
+        await request(app.getHttpServer())
+          .get(`/v1/disputes`)
+          .set('Authorization', 'bearer ' + token)
+          .query({ net, participant: '0xDraftee' })
           .send({})
           .expect(200)
           .expect((res) => {

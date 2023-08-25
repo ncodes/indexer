@@ -5,6 +5,18 @@ import * as _ from 'lodash';
 import Draft from './draft';
 import Swap from './swap';
 
+export enum SearchStatus {
+  Executed = 'executed',
+  Released = 'released',
+  Abandoned = 'abandoned',
+  OrderReleased = 'orderReleased',
+  Redispute = 'redispute',
+  Draft = 'draft',
+  Evidence = 'evidence',
+  Commit = 'commit',
+  Reveal = 'reveal',
+}
+
 /**
  * Dispute represents a swap dispute
  */
@@ -83,8 +95,8 @@ export default class Dispute extends BaseModel {
         relation: Model.HasManyRelation,
         modelClass: Draft,
         join: {
-          from: 'drafts.disputeId',
-          to: 'disputes.id',
+          from: ['disputes.network', 'disputes.orderId', 'disputes.disputeId'],
+          to: ['drafts.network', 'drafts.orderId', 'drafts.disputeIndex'],
         },
       },
       swap: {
@@ -276,15 +288,14 @@ export default class Dispute extends BaseModel {
    * searchDisputes finds disputes
    * @param network The network name
    * @param marketAddress The market ID (optional)
+   * @param participant Filter by dispute where the address is either the dispute creator, defendant or draftee
    * @param creator Indicate to return dispute by the given dispute creator
    * @param defendant Indicate to return dispute by the given defendant
    * @param orderId The order ID
    * @param disputeId The dispute ID
-   * @param redispute Indicate to filter by re-dispute status
-   * @param executed Indicate to filter by executed disputes
-   * @param released Indicate to filter by released disputes
-   * @param abandoned Indicate to filter by abandoned disputes
-   * @param orderReleased Indicate to filter by dispute with released swap order
+   * @param status The dispute status and phases
+   * @param fromDate Filter from a specific date of creation
+   * @param toDate Filter to a specific date of creation
    * @param countOnly Indicate to return count only
    * @param limit The number of records to return (optional).
    * @param offset The query offset (optional)
@@ -293,24 +304,46 @@ export default class Dispute extends BaseModel {
    */
   static async search(
     network: string,
-    marketAddress?: string,
-    creator?: string,
-    defendant?: string,
-    orderId?: number,
-    disputeId?: number,
-    redispute?: boolean,
-    executed?: boolean,
-    released?: boolean,
-    abandoned?: boolean,
-    orderReleased?: boolean,
-    countOnly?: boolean,
-    limit?: number,
-    offset?: number,
+    marketAddress: string,
+    participant: string,
+    creator: string,
+    defendant: string,
+    orderId: number,
+    disputeId: number,
+    status: SearchStatus,
+    fromDate: string,
+    toDate: string,
+    countOnly: boolean,
+    limit: number,
+    offset: number,
     select = [],
     txn?: Transaction,
   ) {
     select = this.makeSelectList(select);
     let q = this.query(txn);
+
+    if (participant) {
+      q = q.from((sub) => {
+        sub = sub
+          .from('disputes')
+          .select('disputes.*')
+          .leftJoin('drafts', (q) => {
+            return q
+              .on('drafts.network', 'ILIKE', 'disputes.network')
+              .andOn('drafts.orderId', '=', 'disputes.orderId')
+              .andOn('drafts.disputeIndex', '=', 'disputes.disputeId');
+          })
+          .where((q) => {
+            return q
+              .where('drafts.owner', 'ILIKE', participant)
+              .orWhere('disputes.creator', 'ILIKE', participant)
+              .orWhere('disputes.defendant', 'ILIKE', participant);
+          });
+        return sub.as('s');
+      });
+    }
+
+    q = q.alias('s');
     q = !countOnly ? q.select(...select, raw('count(*) over() as' + ' "$queryCount"')) : q;
     if (!countOnly) q = q.withGraphFetched('[draftees,swap]').whereNotDeleted().where({ network });
     if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
@@ -318,11 +351,60 @@ export default class Dispute extends BaseModel {
     if (defendant) q = q.where('defendant', 'ILIKE', defendant);
     if (orderId) q = q.where('orderId', orderId);
     if (disputeId) q = q.where('disputeId', disputeId);
-    if (redispute !== undefined) q = q.where('redispute', redispute);
-    if (executed !== undefined) q = q.where('executed', executed);
-    if (released !== undefined) q = q.where('released', released);
-    if (abandoned !== undefined) q = q.where('abandoned', abandoned);
-    if (orderReleased !== undefined) q = q.where('orderReleased', orderReleased);
+
+    if (status) {
+      switch (status) {
+        case SearchStatus.Executed:
+          q = q.where({ executed: true });
+          break;
+        case SearchStatus.Released:
+          q = q.where({ released: true });
+          break;
+        case SearchStatus.Abandoned:
+          q = q.where({ abandoned: true });
+          break;
+        case SearchStatus.OrderReleased:
+          q = q.where({ orderReleased: true });
+          break;
+        case SearchStatus.Redispute:
+          q = q.where({ redispute: true });
+          break;
+        case SearchStatus.Draft:
+          q = q.where({ executed: false, orderReleased: false });
+          q = q.where(raw('"numMediators" > "numMediatorsDrafted"'));
+          break;
+        case SearchStatus.Evidence:
+          q = q.where({ executed: false, orderReleased: false });
+          q = q.where(raw('"numMediators" = "numMediatorsDrafted"'));
+          q = q.where('evidenceEndAt', '>', 'now()');
+          break;
+        case SearchStatus.Commit:
+          q = q.where({ executed: false, orderReleased: false });
+          q = q.where(raw('"numMediators" = "numMediatorsDrafted"'));
+          q = q.where('evidenceEndAt', '<', 'now()');
+          q = q.where('commitEndAt', '>', 'now()');
+          break;
+        case SearchStatus.Reveal:
+          q = q.where({ executed: false, orderReleased: false });
+          q = q.where(raw('"numMediators" = "numMediatorsDrafted"'));
+          q = q.where('evidenceEndAt', '<', 'now()');
+          q = q.where('commitEndAt', '<', 'now()');
+          q = q.where('revealEndAt', '>', 'now()');
+          break;
+        default:
+          break;
+      }
+    }
+
+    // if (redispute !== undefined) q = q.where('redispute', redispute);
+    // if (executed !== undefined) q = q.where('executed', executed);
+    // if (released !== undefined) q = q.where('released', released);
+    // if (abandoned !== undefined) q = q.where('abandoned', abandoned);
+    // if (orderReleased !== undefined) q = q.where('orderReleased', orderReleased);
+
+    if (fromDate) q = q.where('createdAt', '>=', fromDate);
+    if (toDate) q = q.where('createdAt', '<=', toDate);
+
     if (countOnly) {
       const res = await q.count('id').first();
       return res.count;

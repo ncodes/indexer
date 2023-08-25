@@ -1,6 +1,6 @@
-import { randStr } from "../common/common";
-import Objection, { Transaction } from "objection";
-import { BaseModel } from "./base";
+import { randStr } from '../common/common';
+import Objection, { Transaction } from 'objection';
+import { BaseModel } from './base';
 
 /**
  * Draft represents a ticket draft event
@@ -14,13 +14,13 @@ export default class Draft extends BaseModel {
   index: number;
   // The market ID joined
   marketAddress: string;
-  // The ticket ID
+  // The ticket ID (in the Ticket table) TODO: unnecessary
   ticketId: string;
   // The swap order ID
   orderId: number;
   // The dispute index
   disputeIndex: number;
-  // The dispute ID
+  // The dispute ID (in the Dispute table) TODO: unnecessary
   disputeId: string;
 
   constructor(init?: Partial<Draft>) {

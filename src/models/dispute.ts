@@ -8,6 +8,7 @@ import Swap from './swap';
 export enum SearchStatus {
   Executed = 'executed',
   Released = 'released',
+  Cancelled = 'cancelled',
   Stalled = 'stalled',
   Abandoned = 'abandoned',
   OrderReleased = 'orderReleased',
@@ -358,11 +359,11 @@ export default class Dispute extends BaseModel {
 
     if (status) {
       switch (status) {
-        case SearchStatus.Executed:
-          q = q.where({ executed: true });
-          break;
         case SearchStatus.Released:
           q = q.where({ released: true });
+          break;
+        case SearchStatus.Cancelled:
+          q = q.where({ executed: true, released: false });
           break;
         case SearchStatus.Stalled:
           q = q.where({ executed: true, abandoned: false, released: null });
@@ -401,6 +402,9 @@ export default class Dispute extends BaseModel {
           q = q.where('evidenceEndAt', '<', 'now()');
           q = q.where('commitEndAt', '<', 'now()');
           q = q.where('revealEndAt', '>', 'now()');
+          break;
+        case SearchStatus.Executed:
+          q = q.where({ executed: true });
           break;
         default:
           break;

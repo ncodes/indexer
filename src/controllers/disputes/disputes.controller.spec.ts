@@ -277,6 +277,23 @@ describe('DisputesController', () => {
       });
     });
 
+    describe('cancelled is set', () => {
+      it('should return correct result', async () => {
+        await Dispute.create({ network: net });
+        const dispute = await Dispute.create({ network: net, executed: true, released: false });
+        await request(app.getHttpServer())
+          .get(`/v1/disputes`)
+          .set('Authorization', 'bearer ' + token)
+          .query({ net, status: 'cancelled' })
+          .send({})
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(dispute.id);
+          });
+      });
+    });
+
     describe('abandoned is set', () => {
       it('should return correct result', async () => {
         await Dispute.create({ network: net });

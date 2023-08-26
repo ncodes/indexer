@@ -369,7 +369,7 @@ export default class Dispute extends BaseModel {
           q = q.where({ executed: true, abandoned: false, released: null });
           break;
         case SearchStatus.Abandoned:
-          q = q.where({ abandoned: true });
+          q = q.where({ executed: true, abandoned: true });
           break;
         case SearchStatus.OrderReleased:
           q = q.where({ orderReleased: true });
@@ -382,7 +382,9 @@ export default class Dispute extends BaseModel {
           q = q.where(raw('"numMediators" > "numMediatorsDrafted"'));
           break;
         case SearchStatus.Undraft:
-          q = q.where({ executed: true });
+          q = q.where((q) => {
+            return q.orWhere({ executed: true }).orWhere({ orderReleased: true });
+          });
           q = q.where(raw('"numMediatorsDrafted" > "numMediatorsUndrafted"'));
           break;
         case SearchStatus.Evidence:

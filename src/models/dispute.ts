@@ -8,6 +8,7 @@ import Swap from './swap';
 export enum SearchStatus {
   Executed = 'executed',
   Released = 'released',
+  Stalled = 'stalled',
   Abandoned = 'abandoned',
   OrderReleased = 'orderReleased',
   Redispute = 'redispute',
@@ -362,6 +363,9 @@ export default class Dispute extends BaseModel {
           break;
         case SearchStatus.Released:
           q = q.where({ released: true });
+          break;
+        case SearchStatus.Stalled:
+          q = q.where({ executed: true, abandoned: false, released: null });
           break;
         case SearchStatus.Abandoned:
           q = q.where({ abandoned: true });

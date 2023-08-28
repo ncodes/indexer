@@ -297,7 +297,7 @@ describe('DisputesController', () => {
     describe('abandoned is set', () => {
       it('should return correct result', async () => {
         await Dispute.create({ network: net });
-        const dispute = await Dispute.create({ network: net, abandoned: true });
+        const dispute = await Dispute.create({ network: net, executed: true, abandoned: true });
         await request(app.getHttpServer())
           .get(`/v1/disputes`)
           .set('Authorization', 'bearer ' + token)

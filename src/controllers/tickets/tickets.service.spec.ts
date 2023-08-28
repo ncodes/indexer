@@ -98,6 +98,11 @@ describe('TicketsService', () => {
       ticket.matureAt = moment().subtract(1, 'day').toISOString();
       await service.extendTicket(ticket, ['matured']);
       expect(ticket.matured).toEqual(true);
+
+      ticket.matureAt = moment().subtract(1, 'day').toISOString();
+      ticket.joined = true;
+      await service.extendTicket(ticket, ['matured']);
+      expect(ticket.matured).toEqual(false);
     });
 
     it('should extend ticket correctly when select=[expired]', async () => {
@@ -109,11 +114,6 @@ describe('TicketsService', () => {
       expect(ticket.expired).toBeFalsy();
 
       ticket.joinBy = moment().subtract(1, 'day').toISOString();
-      await service.extendTicket(ticket, ['expired']);
-      expect(ticket.expired).toBeTruthy();
-
-      ticket.joinBy = undefined;
-      ticket.drained = true;
       await service.extendTicket(ticket, ['expired']);
       expect(ticket.expired).toBeTruthy();
     });

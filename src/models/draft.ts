@@ -8,12 +8,12 @@ import { BaseModel } from './base';
 export default class Draft extends BaseModel {
   // The network name
   network: string;
+  // The market ID joined
+  marketAddress: string;
   // The owner of the ticket
   owner: string;
   // The index of the ticket
   index: number;
-  // The market ID joined
-  marketAddress: string;
   // The ticket ID (in the Ticket table) TODO: unnecessary
   ticketId: string;
   // The swap order ID
@@ -102,6 +102,7 @@ export default class Draft extends BaseModel {
   static getAll(network: string, marketAddress: string, orderId: number, disputeIndex: number, txn?: Transaction) {
     return this.query(txn)
       .whereNotDeleted()
+      .where({ network })
       .where('marketAddress', 'ilike', marketAddress)
       .where({ disputeIndex, orderId });
   }

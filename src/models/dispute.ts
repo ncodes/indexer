@@ -4,6 +4,7 @@ import { BaseModel } from './base';
 import * as _ from 'lodash';
 import Draft from './draft';
 import Swap from './swap';
+import Reveal from './reveal';
 
 export enum SearchStatus {
   Executed = 'executed',
@@ -72,6 +73,7 @@ export default class Dispute extends BaseModel {
   /** Relations */
   draftees: Draft[];
   swap: Swap;
+  reveals: Reveal[];
 
   constructor(init?: Partial<Dispute>) {
     super();
@@ -110,6 +112,14 @@ export default class Dispute extends BaseModel {
         join: {
           from: ['disputes.network', 'disputes.orderId'],
           to: ['swaps.network', 'swaps.orderId'],
+        },
+      },
+      reveals: {
+        relation: Model.HasManyRelation,
+        modelClass: Reveal,
+        join: {
+          from: ['disputes.network', 'disputes.orderId', 'disputes.disputeId'],
+          to: ['reveals.network', 'reveals.orderId', 'reveals.disputeId'],
         },
       },
     };
@@ -350,7 +360,7 @@ export default class Dispute extends BaseModel {
 
     q = q.alias('s');
     q = !countOnly ? q.select(...select, raw('count(*) over() as' + ' "$queryCount"')) : q;
-    if (!countOnly) q = q.withGraphFetched('[draftees,swap]').whereNotDeleted().where({ network });
+    if (!countOnly) q = q.withGraphFetched('[draftees,swap,reveals]').whereNotDeleted().where({ network });
     if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
     if (creator) q = q.where('creator', 'ILIKE', creator);
     if (defendant) q = q.where('defendant', 'ILIKE', defendant);

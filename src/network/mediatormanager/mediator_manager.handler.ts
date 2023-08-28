@@ -186,7 +186,15 @@ export class MediatorManagerHandler extends Handler {
     const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, id.toNumber(), undefined, txn);
     const block = await event.getBlock();
     const cancelAt = block.timestamp + parseInt(await this.getParam('ticketCancelDur'));
-    await Ticket.updateById(ticket.id, { cancelAt: moment.unix(cancelAt).toISOString() }, txn);
+    await Ticket.updateById(
+      ticket.id,
+      {
+        cancelAt: moment.unix(cancelAt).toISOString(),
+        joined: false,
+        poolId: null,
+      },
+      txn,
+    );
   }
 
   /**
@@ -422,6 +430,8 @@ export class MediatorManagerHandler extends Handler {
         orderId: null,
         disputeId: null,
         slashed: true,
+        joined: false,
+        poolId: null,
         bond: toBN(ticket.bond).sub(amount).toString(),
         joinBy: moment.unix(joinBy).toISOString(),
       },
@@ -442,15 +452,16 @@ export class MediatorManagerHandler extends Handler {
         winSide,
       },
       txn,
-    ),
-      // Send notification
-      await this.notifSrv.notify(NotificationID.TicketSlashed, this.network, owner, {
-        ticket,
-        owner,
-        amount: commify(formatEther(amount)),
-        voted,
-        asset: 'P2P',
-      });
+    );
+
+    // Send notification
+    await this.notifSrv.notify(NotificationID.TicketSlashed, this.network, owner, {
+      ticket,
+      owner,
+      amount: commify(formatEther(amount)),
+      voted,
+      asset: 'P2P',
+    });
   }
 
   /**

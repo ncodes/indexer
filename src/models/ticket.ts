@@ -1,9 +1,24 @@
-import { randStr } from "../common/common";
-import Objection, { raw, Transaction } from "objection";
-import { BaseModel } from "./base";
-import Market from "./market";
-import * as _ from "lodash";
-import { isNil } from "lodash";
+import { randStr } from '../common/common';
+import Objection, { Model, raw, Transaction } from 'objection';
+import { BaseModel } from './base';
+import Market from './market';
+import * as _ from 'lodash';
+import { isNil } from 'lodash';
+import Draft from './draft';
+
+export enum SearchStatus {
+  Maturing = 'maturing',
+  Matured = 'matured',
+  Joined = 'joined',
+  Expired = 'expired',
+  Expiring = 'expiring',
+  Drafted = 'drafted',
+  Undrafted = 'undrafted',
+  Slashed = 'slashed',
+  Cancelled = 'cancelled',
+  Cancelling = 'cancelling',
+  Drained = 'drained',
+}
 
 /**
  * Ticket represents a mediation ticket
@@ -50,6 +65,7 @@ export default class Ticket extends BaseModel {
 
   /** Not Persisted */
   market: Market;
+  drafts: Draft[];
 
   matured: boolean;
   expired: boolean;
@@ -78,7 +94,16 @@ export default class Ticket extends BaseModel {
   }
 
   static get relationMappings() {
-    return {};
+    return {
+      drafts: {
+        relation: Model.HasManyRelation,
+        modelClass: Draft,
+        join: {
+          from: ['tickets.network', 'tickets.owner', 'tickets.index'],
+          to: ['drafts.network', 'drafts.owner', 'drafts.index'],
+        },
+      },
+    };
   }
 
   /**
@@ -165,36 +190,29 @@ export default class Ticket extends BaseModel {
    * @param owner Indicate to return ticket with matching owner
    * @param orderId The order ID
    * @param disputeId The dispute ID
-   * @param joined Indicate to return tickets (un)joined  to a market
-   * @param matured Indicate to return matured tickets
-   * @param drafted Indicate to return draft or undrafted tickets
-   * @param expired Indicate to return only expired tickets
-   * @param cancelled Indicate to return only cancelled tickets
-   * @param slashed Indicate to return only slashed tickets
+   * @param status The status of the ticket
    * @param limit The number of records to return (optional).
    * @param offset The query offset (optional)
    * @param select Select specific fields (optional)
+   * @param relations The relations to be joined (optional)
    * @param txn Optional transaction object
    */
   static searchTickets(
     network: string,
-    poolId?: number,
-    owner?: string,
-    orderId?: number,
-    disputeId?: number,
-    joined?: boolean,
-    matured?: boolean,
-    drafted?: boolean,
-    expired?: boolean,
-    cancelled?: boolean,
-    slashed?: boolean,
-    limit?: number,
-    offset?: number,
+    poolId: number,
+    owner: string,
+    orderId: number,
+    disputeId: number,
+    status: SearchStatus,
+    limit: number,
+    offset: number,
     select = [],
+    relations: string,
     txn?: Transaction,
   ) {
     select = this.makeSelectList(select);
     let q = this.query(txn)
+      .withGraphFetched(relations)
       .select(...select, raw('count(*) over() as' + ' "$queryCount"'))
       .whereNotDeleted()
       .where({ network });
@@ -202,22 +220,48 @@ export default class Ticket extends BaseModel {
     if (owner) q = q.where('owner', 'ILIKE', owner);
     if (orderId !== undefined) q = q.where('orderId', orderId);
     if (disputeId !== undefined) q = q.where('disputeId', disputeId);
-    if (joined !== undefined) q = q.where('joined', joined);
-    if (drafted !== undefined) q = q.where('drafted', drafted);
-    if (expired) {
-      q = q.where((q) => {
-        return q
-          .where('joined', false)
-          .where('joinBy', 'is not', null)
-          .where('joinBy', '<', 'now()')
-          .orWhere('drained', true);
-      });
+
+    if (status) {
+      switch (status) {
+        case SearchStatus.Maturing:
+          q = q.where('matureAt', '>', 'now()');
+          break;
+        case SearchStatus.Matured:
+          q = q.where('matureAt', '<=', 'now()').where({ joined: false });
+          break;
+        case SearchStatus.Joined:
+          q = q.where('joined', true);
+          break;
+        case SearchStatus.Expired:
+          q = q.where('joined', false).where('joinBy', '<', 'now()');
+          break;
+        case SearchStatus.Expiring:
+          q = q.where('matureAt', '<', 'now()');
+          q = q.where('joined', false);
+          q = q.where('joinBy', '>', 'now()');
+          break;
+        case SearchStatus.Drafted:
+          q = q.where('drafted', true);
+          break;
+        case SearchStatus.Undrafted:
+          q = q.where('drafted', false);
+          break;
+        case SearchStatus.Slashed:
+          q = q.where('slashed', true);
+          break;
+        case SearchStatus.Cancelled:
+          q = q.where('joined', false);
+          q = q.where('cancelAt', '<', 'now()');
+          break;
+        case SearchStatus.Cancelling:
+          q = q.where('joined', false);
+          q = q.where('cancelAt', '>', 'now()');
+          break;
+        case SearchStatus.Drained:
+          q = q.where('drained', true);
+      }
     }
-    if (cancelled) q = q.where('cancelAt', 'is not', null).where('cancelAt', '<', 'now()');
-    if (matured !== undefined) {
-      q = q.where('matureAt', 'is not', null).where('matureAt', matured ? '<' : '>', 'now()');
-    }
-    if (slashed) q = q.where('slashed', slashed);
+
     if (offset != undefined) q = q.offset(offset);
     if (limit) q = q.limit(limit);
     return q.orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');

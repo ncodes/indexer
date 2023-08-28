@@ -1,6 +1,6 @@
-import { randStr } from "../common/common";
-import Objection, { Transaction } from "objection";
-import { BaseModel } from "./base";
+import { randStr } from '../common/common';
+import Objection, { Transaction } from 'objection';
+import { BaseModel } from './base';
 
 /**
  * Reveal represents a reveal on a dispute

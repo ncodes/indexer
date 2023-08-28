@@ -96,6 +96,8 @@ describe('MediatorManagerHandler', () => {
         network: net,
         index: 1,
         owner: owner,
+        joined: true,
+        poolId: 1,
       });
       const now = moment().unix();
       await expect(
@@ -105,6 +107,8 @@ describe('MediatorManagerHandler', () => {
       ).resolves.toBeUndefined();
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.cancelAt).toBeDefined();
+      expect(ticket.joined).toBeFalsy();
+      expect(ticket.poolId).toBeNull();
       const expectedCancelAt = moment.unix(now + parseInt(await handler.getParam('ticketCancelDur')));
       expect(moment(ticket.cancelAt).unix()).toEqual(expectedCancelAt.unix());
     });
@@ -487,6 +491,7 @@ describe('MediatorManagerHandler', () => {
         owner: owner,
         bond: toBN(20).toString(),
         orderId: 23,
+        joined: true,
       });
 
       const now = moment().unix();
@@ -501,7 +506,8 @@ describe('MediatorManagerHandler', () => {
       expect(ticket.slashed).toBeTruthy();
       expect(ticket.bond).toEqual(toBN(10).toString());
       expect(ticket.orderId).toBeNull();
-      expect(ticket.poolId).toEqual(1);
+      expect(ticket.joined).toBeFalsy();
+      expect(ticket.poolId).toEqual(null);
       const expectedLeaveAt = moment.unix(now + parseInt(await Meta.getContractParam(net, 'ticketExpireDur')));
       expect(moment(ticket.joinBy).unix()).toEqual(expectedLeaveAt.unix());
 

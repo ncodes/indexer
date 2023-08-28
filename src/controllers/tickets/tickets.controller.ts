@@ -51,19 +51,12 @@ export class TicketsController {
    * List tickets
    * @param q The query object
    * @param q.net The network name
-   * @param [q.marketAddress] Filter by the market the ticket joined
-   * @param [q.disputeId] Filter by the dispute the ticket was drafted to
-   * @param [q.orderId] Filter by the order the ticket's current dispute belongs to
+   * @param [q.poolId] Filter by the pool the ticket was drafted to
    * @param [q.owner] Filter by owner address
-   * @param [q.delegate] Filter by delegate address
-   * @param [q.joined] Filter by joined status of the ticket
-   * @param [q.matured] Filter by maturity status
-   * @param [q.drafted] Filter by drafted status of the ticket
-   * @param [q.expired] Filter by expired status
-   * @param [q.cancelled] Filter by cancelled status
+   * @param [q.orderId] Filter by the order the ticket's current dispute belongs to
+   * @param [q.disputeId] Filter by the dispute the ticket was drafted to
+   * @param [q.status] Filter by ticket status
    * @param [q.count] Return count information only
-   * @param [q.slashed] Filter by slashed status
-   * @param [q.noMerge] Prevent merge of contract ticket with DB ticket object
    * @param [q.limit] Limit the number of records returned
    * @param [q.offset] Set query offset (for pagination)
    * @param [q.select] Select specific fields from the query
@@ -77,15 +70,11 @@ export class TicketsController {
         q.owner,
         q.orderId,
         q.disputeId,
-        q.joined,
-        q.matured,
-        q.drafted,
-        q.expired,
-        q.cancelled,
-        q.slashed,
+        q.status,
         Math.min(q.limit || 25, 100),
         q.offset,
         q.select,
+        '[drafts]',
       );
       for (const ticket of result) {
         await this.tickSrv.extendTicket(ticket, q.select);

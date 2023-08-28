@@ -1,6 +1,6 @@
-import { randStr } from "../common/common";
-import Objection, { Transaction } from "objection";
-import { BaseModel } from "./base";
+import { randStr } from '../common/common';
+import Objection, { Transaction } from 'objection';
+import { BaseModel } from './base';
 
 /**
  * TicketSlash represents a ticket slash event
@@ -92,6 +92,26 @@ export default class TicketSlash extends BaseModel {
   static updateById(id: string, udp: Partial<TicketSlash>, txn?: Transaction): Promise<TicketSlash> {
     return new Promise((resolve, reject) => {
       this.query(txn).whereNotDeleted().patchAndFetchById(id, udp).execute().then(resolve).catch(reject);
+    });
+  }
+
+  /**
+   * getSumOfSlashedAmount returns the sum of slashed amount
+   * @param net The network name
+   * @param owner The owner of the ticket
+   * @param index The ticket ID
+   * @param txn
+   */
+  static getSumOfSlashedAmount(net: string, owner: string, index: number, txn?: Transaction): Promise<string> {
+    return new Promise((resolve, reject) => {
+      this.query(txn)
+        .where({ network: net, index })
+        .where('owner', 'ilike', owner)
+        .sum('amount as amount')
+        .then((res) => {
+          resolve(res[0].amount || '0');
+        })
+        .catch(reject);
     });
   }
 }

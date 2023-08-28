@@ -66,11 +66,13 @@ export default class Ticket extends BaseModel {
   /** Not Persisted */
   market: Market;
   drafts: Draft[];
-
   matured: boolean;
   expired: boolean;
   cancelling: boolean;
   cancelled: boolean;
+  bondUsd: number;
+  slashedAmt: string;
+  slashedAmtUsd: number;
 
   constructor(init?: Partial<Ticket>) {
     super();

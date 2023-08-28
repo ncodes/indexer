@@ -9,6 +9,7 @@ import Ticket from '../../models/ticket';
 import * as moment from 'moment';
 import { RedisService } from '../../services/redis.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
+import TicketSlash from '../../models/ticket_slash';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -16,9 +17,11 @@ const ConfigServiceMock = jest.fn().mockImplementation(() => {
 });
 
 const mockGetLogo = jest.fn();
+const mockTryToUsd = jest.fn();
 const MetadataServiceMock = jest.fn().mockImplementation(() => {
   return {
     getLogo: mockGetLogo,
+    tryToUsd: mockTryToUsd,
   };
 });
 
@@ -65,11 +68,13 @@ describe('TicketsService', () => {
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
-      .overrideProvider(NetworkService)
+      .overrideProvider(MetadataService)
       .useValue(new MetadataServiceMock())
       .overrideProvider(RedisService)
       .useValue(new (jest.fn())())
       .overrideProvider(ExchangeRateService)
+      .useValue(new (jest.fn())())
+      .overrideProvider(NetworkService)
       .useValue(new (jest.fn())())
       .compile();
 
@@ -142,6 +147,29 @@ describe('TicketsService', () => {
       ticket.cancelAt = moment().subtract(1, 'day').toISOString();
       await service.extendTicket(ticket, ['cancelled']);
       expect(ticket.cancelled).toBeTruthy();
+    });
+
+    it('should extend ticket correctly when select=[slashedAmt]', async () => {
+      await TicketSlash.create({ network: ticket.network, owner: ticket.owner, index: ticket.index, amount: '100' });
+      await TicketSlash.create({ network: ticket.network, owner: ticket.owner, index: ticket.index, amount: '1' });
+      await service.extendTicket(ticket, ['slashedAmt']);
+      expect(ticket.slashedAmt).toEqual('101');
+    });
+
+    it('should extend ticket correctly when select=[slashedAmtUsd]', async () => {
+      await TicketSlash.create({ network: ticket.network, owner: ticket.owner, index: ticket.index, amount: '100' });
+      await TicketSlash.create({ network: ticket.network, owner: ticket.owner, index: ticket.index, amount: '1' });
+      ticket.slashedAmt = '101';
+      mockTryToUsd.mockResolvedValue(10);
+      await service.extendTicket(ticket, ['slashedAmtUsd']);
+      expect(ticket.slashedAmtUsd).toEqual(10);
+    });
+
+    it('should extend ticket correctly when select=[bondUsd]', async () => {
+      ticket.bond = '100';
+      mockTryToUsd.mockResolvedValue(10);
+      await service.extendTicket(ticket, ['bondUsd']);
+      expect(ticket.bondUsd).toEqual(10);
     });
   });
 });

@@ -2,9 +2,15 @@ import { Injectable } from '@nestjs/common';
 import Ticket from '../../models/ticket';
 import * as moment from 'moment';
 import * as _ from 'lodash';
+import TicketSlash from '../../models/ticket_slash';
+import { MetadataService } from '../../services/metadata/metadata.service';
+import { ConfigService } from '@nestjs/config';
+import { isZero } from '../../network/common';
 
 @Injectable()
 export class TicketsService {
+  constructor(private metadataSrv: MetadataService, private cfgSrv: ConfigService) {}
+
   /**
    * Extend a DB-sourced ticket with other liquidity information
    * @param ticket
@@ -30,6 +36,20 @@ export class TicketsService {
 
       if (select.includes(`cancelled`) || !select.length) {
         ticket.cancelled = !joined && cancelAt && now.isAfter(cancelAt);
+      }
+
+      if (select.includes(`slashedAmt`) || !select.length) {
+        ticket.slashedAmt = await TicketSlash.getSumOfSlashedAmount(ticket.network, ticket.owner, ticket.index);
+      }
+
+      if ((select.includes(`slashedAmtUsd`) && !isZero(ticket.slashedAmt)) || !select.length) {
+        const p2pTokenAddr = this.cfgSrv.get(`app.networks.${ticket.network}.p2pTokenAddr`);
+        ticket.slashedAmtUsd = await this.metadataSrv.tryToUsd(ticket.network, ticket.slashedAmt, p2pTokenAddr);
+      }
+
+      if ((select.includes(`bondUsd`) && !isZero(ticket.bond)) || !select.length) {
+        const p2pTokenAddr = this.cfgSrv.get(`app.networks.${ticket.network}.p2pTokenAddr`);
+        ticket.bondUsd = await this.metadataSrv.tryToUsd(ticket.network, ticket.bond, p2pTokenAddr);
       }
 
       return Promise.resolve();

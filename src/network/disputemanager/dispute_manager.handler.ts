@@ -172,7 +172,7 @@ export class DisputeManagerHandler extends Handler {
     );
 
     // Update liquidity
-    const liquidity = await Liquidity.getLiquidity(network, marketAddress, provider, lid, undefined, txn);
+    const liquidity = await Liquidity.getLiquidity(network, marketAddress, provider, lid, undefined, undefined, txn);
     totalDisputes = !redispute ? liquidity.totalDisputes + 1 : liquidity.totalDisputes;
     await Liquidity.updateById(
       liquidity.id,
@@ -331,6 +331,7 @@ export class DisputeManagerHandler extends Handler {
       swap.marketAddress,
       swap.provider,
       swap.lid,
+      undefined,
       undefined,
       txn,
     );

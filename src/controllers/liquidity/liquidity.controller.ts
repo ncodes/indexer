@@ -34,7 +34,7 @@ export class LiquidityController {
     @Param(new ValidationPipe(ValPipeOpt)) p: GetParamDTO,
     @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO,
   ) {
-    const liquidity = await Liquidity.getLiquidity(q.net, p.mid, p.provider, p.lid, q.select);
+    const liquidity = await Liquidity.getLiquidity(q.net, p.mid, p.provider, p.lid, q.select, 'market');
     if (!liquidity) return throw404('liquidity not found');
     await this.liqSrv.extendLiquidity(liquidity, q.select);
     return ok().data(liquidity).build<Liquidity>();

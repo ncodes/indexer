@@ -35,7 +35,14 @@ export class SwapsController {
     swap.market = market;
 
     // Get liquidity
-    const liquidity = await Liquidity.getLiquidity(q.net, swap.marketAddress, swap.provider, swap.lid, q.select);
+    const liquidity = await Liquidity.getLiquidity(
+      q.net,
+      swap.marketAddress,
+      swap.provider,
+      swap.lid,
+      q.select,
+      undefined,
+    );
     if (!liquidity) return throw404('liquidity not found');
     await this.liqSrv.extendLiquidity(liquidity, q.select);
     swap.liquidity = liquidity;

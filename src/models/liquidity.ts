@@ -180,9 +180,18 @@ export default class Liquidity extends BaseModel {
    * @param provider The provider address
    * @param lid The liquidity ID
    * @param select Select specific fields (optional)
+   * @param relations The relations to be fetched (optional)
    * @param txn Optional transaction object
    */
-  static getLiquidity(network: string, mid?: string, provider?: string, lid?: number, select = [], txn?: Transaction) {
+  static getLiquidity(
+    network: string,
+    mid?: string,
+    provider?: string,
+    lid?: number,
+    select = [],
+    relations = '',
+    txn?: Transaction,
+  ) {
     select = this.makeSelectList(select);
     return this.query(txn)
       .select(...select)
@@ -194,6 +203,7 @@ export default class Liquidity extends BaseModel {
         if (!_.isNil(lid)) q = q.where('lid', lid);
         return q;
       })
+      .withGraphFetched(relations)
       .first();
   }
 

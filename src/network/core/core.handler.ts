@@ -464,7 +464,15 @@ export class CoreHandler extends Handler {
     let amount = numTypeInfo[2];
 
     let market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
-    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
+    const liq = await Liquidity.getLiquidity(
+      this.network,
+      marketAddress,
+      provider,
+      lid.toNumber(),
+      undefined,
+      undefined,
+      txn,
+    );
 
     // If base or quote is NFT, use the whole amount of the liquidity
     amount = Market.isNFT(market.baseType) || Market.isNFT(market.quoteType) ? toBN(liq.amount) : amount;
@@ -575,7 +583,15 @@ export class CoreHandler extends Handler {
 
     if (orderId.isZero()) {
       let market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
-      let liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
+      let liq = await Liquidity.getLiquidity(
+        this.network,
+        marketAddress,
+        provider,
+        lid.toNumber(),
+        undefined,
+        undefined,
+        txn,
+      );
 
       // If base or quote is NFT, use the whole amount of the liquidity
       amount = Market.isNFT(market.baseType) || Market.isNFT(market.quoteType) ? toBN(liq.amount) : amount;
@@ -684,7 +700,15 @@ export class CoreHandler extends Handler {
       }
 
       // Update liquidity
-      let liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
+      let liq = await Liquidity.getLiquidity(
+        this.network,
+        marketAddress,
+        provider,
+        lid.toNumber(),
+        undefined,
+        undefined,
+        txn,
+      );
       let newCompletionRate = await Swap.getCompletionRate(this.network, marketAddress, provider, undefined, txn);
       liq = await Liquidity.updateById(
         liq.id,
@@ -782,7 +806,7 @@ export class CoreHandler extends Handler {
 
     // Update liquidity
     const { marketAddress, provider, lid } = swap;
-    let liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, txn);
+    let liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, undefined, txn);
     liq = await Liquidity.updateById(liq.id, {
       openOrders: liq.openOrders - 1,
       amount: toBN(liq.amount).add(swap.amount).toString(),
@@ -847,7 +871,7 @@ export class CoreHandler extends Handler {
 
     // Update liquidity
     const { marketAddress, provider, lid } = swap;
-    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, txn);
+    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, undefined, txn);
     await Liquidity.updateById(
       liq.id,
       { avgPaymentDur: await Swap.getAvgPaymentDuration(this.network, marketAddress, provider, lid, undefined, txn) },
@@ -980,7 +1004,15 @@ export class CoreHandler extends Handler {
     _event: ChainEvent,
     txn?: Transaction,
   ) {
-    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
+    const liq = await Liquidity.getLiquidity(
+      this.network,
+      marketAddress,
+      provider,
+      lid.toNumber(),
+      undefined,
+      undefined,
+      txn,
+    );
     const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
 
     if (!liq) {
@@ -1099,7 +1131,15 @@ export class CoreHandler extends Handler {
     _event: ChainEvent,
     txn?: Transaction,
   ) {
-    let liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
+    let liq = await Liquidity.getLiquidity(
+      this.network,
+      marketAddress,
+      provider,
+      lid.toNumber(),
+      undefined,
+      undefined,
+      txn,
+    );
     const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
     const common = {
       network: this.network,
@@ -1258,7 +1298,15 @@ export class CoreHandler extends Handler {
     _event: ChainEvent,
     txn?: Transaction,
   ) {
-    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
+    const liq = await Liquidity.getLiquidity(
+      this.network,
+      marketAddress,
+      provider,
+      lid.toNumber(),
+      undefined,
+      undefined,
+      txn,
+    );
 
     // Update liquidity
     await Liquidity.updateById(liq.id, { price: price.toString() }, txn);
@@ -1316,7 +1364,15 @@ export class CoreHandler extends Handler {
     _event: ChainEvent,
     txn?: Transaction,
   ) {
-    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
+    const liq = await Liquidity.getLiquidity(
+      this.network,
+      marketAddress,
+      provider,
+      lid.toNumber(),
+      undefined,
+      undefined,
+      txn,
+    );
 
     await Liquidity.updateById(liq.id, { paused });
 
@@ -1471,7 +1527,15 @@ export class CoreHandler extends Handler {
       txn,
     );
 
-    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid.toNumber(), undefined, txn);
+    const liq = await Liquidity.getLiquidity(
+      this.network,
+      marketAddress,
+      provider,
+      lid.toNumber(),
+      undefined,
+      undefined,
+      txn,
+    );
     await Event.create(
       {
         network: this.network,
@@ -1543,7 +1607,7 @@ export class CoreHandler extends Handler {
 
     const { marketAddress, provider, lid } = offer;
     const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
-    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, txn);
+    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, undefined, txn);
 
     // Send notification
     await this.notifSrv.notify(NotificationID.OfferUpdated, this.network, offer.provider, {
@@ -1585,7 +1649,7 @@ export class CoreHandler extends Handler {
 
     const { marketAddress, provider, lid } = offer;
     const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
-    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, txn);
+    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, undefined, txn);
 
     // Send notification
     await this.notifSrv.notify(NotificationID.OfferAccepted, this.network, offer.creator, {
@@ -1611,7 +1675,7 @@ export class CoreHandler extends Handler {
 
     const { marketAddress, provider, lid } = offer;
     const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
-    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, txn);
+    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, undefined, txn);
 
     await Event.create(
       {
@@ -1657,7 +1721,7 @@ export class CoreHandler extends Handler {
 
     const { marketAddress, provider, lid } = offer;
     const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
-    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, txn);
+    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, undefined, txn);
 
     // Send notification
     await this.notifSrv.notify(NotificationID.OfferCancelled, this.network, offer.provider, {
@@ -1693,7 +1757,7 @@ export class CoreHandler extends Handler {
 
     const { marketAddress, provider, lid } = offer;
     const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
-    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, txn);
+    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, undefined, txn);
 
     // Send notification
     await this.notifSrv.notify(NotificationID.OfferExecuted, this.network, offer.provider, {

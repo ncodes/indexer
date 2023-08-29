@@ -21,7 +21,7 @@ export class TicketsService {
     select = select && _.filter(select, (s) => !_.isEmpty(s));
 
     try {
-      const { joined, joinBy, drained, cancelAt } = ticket;
+      const { joined, joinBy, cancelAt } = ticket;
       const now = moment();
 
       if (select.includes(`matured`) || !select.length) ticket.matured = now.isAfter(ticket.matureAt) && !ticket.joined;

@@ -216,7 +216,7 @@ export default class Event extends BaseModel {
         if (network) q = q.where('network', network);
         if (marketAddress) q = q.where('marketAddress', 'ilike', marketAddress);
         if (provider) q = q.where('provider', 'ilike', provider);
-        if (lid) q = q.where('lid', lid);
+        if (lid != undefined) q = q.where('lid', lid);
         if (orderId) q = q.where('orderId', orderId);
         if (offerId) q = q.where('offerId', offerId);
         q = q.where((q) => {

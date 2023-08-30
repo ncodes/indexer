@@ -6,7 +6,13 @@ import { toBoolean } from 'underscore.string';
 import { toNumber } from 'lodash';
 import { SearchStatus } from '../../models/offer';
 
-export class GetQueryDTO {
+export class BaseQueryDTO {
+  @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
+  @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
+  public net?: string;
+}
+
+export class GetQueryDTO extends BaseQueryDTO {
   @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
   @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
   public net?: string;
@@ -86,4 +92,17 @@ export class ListQueryDTO {
   @IsNumber(undefined, { message: makeValidatorMsg('must be a number', 'offset') })
   @IsOptional()
   public offset?: number;
+}
+
+export class ReadQueryDTO extends BaseQueryDTO {
+  @IsOptional()
+  public marketAddress?: string;
+
+  @IsOptional()
+  public provider?: string;
+
+  @Transform(({ value }) => toNumber(value))
+  @IsNumber(undefined, { message: makeValidatorMsg('must be a number', 'lid') })
+  @IsOptional()
+  public lid?: number;
 }

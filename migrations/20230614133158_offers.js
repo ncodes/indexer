@@ -19,6 +19,8 @@ exports.up = function (knex) {
       table.boolean('accepted').defaultTo(false);
       table.boolean('cancelled').defaultTo(false);
       table.boolean('executed').defaultTo(false);
+      table.boolean('readProvider').defaultTo(false);
+      table.boolean('readOfferer').defaultTo(false);
       table.timestamp('execAt');
       table.timestamp('deadline');
       table.timestamp('createdAt');

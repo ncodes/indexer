@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { DBService } from '../../db/DBService';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import User from '../../models/user';
@@ -22,6 +22,11 @@ const mockMarketService = jest.fn().mockImplementation(() => ({
   extendMarket: jest.fn(),
 }));
 
+const mockCfgGet = jest.fn();
+const ConfigServiceMock = jest.fn().mockImplementation(() => {
+  return { get: mockCfgGet };
+});
+
 const mockTryToUsd = jest.fn();
 const mockMetadataService = jest.fn().mockImplementation(() => ({
   tryToUsd: mockTryToUsd,
@@ -30,6 +35,7 @@ const mockMetadataService = jest.fn().mockImplementation(() => ({
 describe('OffersController', () => {
   let app: INestApplication;
   const db = DBService.getForTest();
+  let cfgObj = {};
 
   afterEach(async () => {
     await db.truncateTables();
@@ -46,11 +52,19 @@ describe('OffersController', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+
+    cfgObj = { 'auth.jwtSecret': 'secret_secret' };
+    mockCfgGet.mockReset().mockImplementation((args) => {
+      return cfgObj[args];
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [OfferController],
       providers: [OfferService, MarketService, MetadataService],
     })
+      .overrideProvider(ConfigService)
+      .useValue(new ConfigServiceMock())
       .overrideProvider(MarketService)
       .useValue(new mockMarketService())
       .overrideProvider(MetadataService)
@@ -65,9 +79,11 @@ describe('OffersController', () => {
   let u: User;
   let token: string;
   const net = 'ethereum';
+  const address = '0xAddress';
+  const address2 = '0xAddress2';
   beforeEach(async () => {
-    u = await User.create({ role: Roles.User });
-    token = await makeSession(u, randStr(), '5', 'secret');
+    u = await User.create({ role: Roles.User, address });
+    token = await makeSession(u, randStr(), '5', cfgObj['auth.jwtSecret']);
   });
 
   beforeEach(async () => {
@@ -533,6 +549,227 @@ describe('OffersController', () => {
           expect(res.body.data).toHaveLength(1);
           expect(res.body.data[0].id).toEqual(offer.id);
         });
+    });
+  });
+
+  describe('.countUnread', () => {
+    it('should return 401 when not authorized', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/offers/count-unread`)
+        .send({})
+        .expect(401)
+        .expect({
+          error: {
+            type: 'authentication_error',
+            message: 'authorization header is required',
+          },
+        });
+    });
+
+    it('should return 400 when network is unknown', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/offers/count-unread`)
+        .query({ net: 'net1' })
+        .set('Authorization', 'bearer ' + token)
+        .expect(400)
+        .expect({
+          error: {
+            message: 'network is unknown',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    describe('when authenticated user has offers where it is a provider', () => {
+      it('should return 200 and correct result', async () => {
+        await Offer.create({ network: net, provider: address, lid: 1 });
+        await Offer.create({ network: net, provider: address, lid: 2, readProvider: true });
+        await request(app.getHttpServer())
+          .get(`/v1/offers/count-unread`)
+          .query({ net })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect({
+            data: {
+              asProvider: 1,
+              asOfferer: 0,
+            },
+          });
+      });
+
+      it('should return 200 and correct result', async () => {
+        await Offer.create({ network: net, provider: address, lid: 1 });
+        await Offer.create({ network: net, provider: address, lid: 2 });
+        await request(app.getHttpServer())
+          .get(`/v1/offers/count-unread`)
+          .query({ net })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect({
+            data: {
+              asProvider: 2,
+              asOfferer: 0,
+            },
+          });
+      });
+
+      it('should return 200 and correct result', async () => {
+        await Offer.create({ network: net, provider: address, lid: 1, readProvider: true });
+        await Offer.create({ network: net, provider: address, lid: 2, readProvider: true });
+        await request(app.getHttpServer())
+          .get(`/v1/offers/count-unread`)
+          .query({ net })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect({
+            data: {
+              asProvider: 0,
+              asOfferer: 0,
+            },
+          });
+      });
+
+      describe('target a specific liquidity', () => {
+        it('should return 200 and correct result', async () => {
+          await Offer.create({
+            network: net,
+            provider: address,
+            marketAddress: '0xMarket',
+            lid: 1,
+          });
+          await Offer.create({
+            network: net,
+            provider: address,
+            marketAddress: '0xMarket2',
+            lid: 1,
+          });
+          await Offer.create({ network: net, provider: address, lid: 2, readProvider: true });
+          await request(app.getHttpServer())
+            .get(`/v1/offers/count-unread`)
+            .query({ net, provider: address, lid: 1, marketAddress: '0xMarket' })
+            .set('Authorization', 'bearer ' + token)
+            .expect(200)
+            .expect({
+              data: {
+                asProvider: 1,
+                asOfferer: 0,
+              },
+            });
+        });
+      });
+    });
+
+    describe('when authenticated user has offers where it is an offerer', () => {
+      it('should return 200 and correct result', async () => {
+        await Offer.create({ network: net, creator: address, lid: 1 });
+        await Offer.create({ network: net, creator: address, lid: 2, readOfferer: true });
+        await request(app.getHttpServer())
+          .get(`/v1/offers/count-unread`)
+          .query({ net })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect({
+            data: {
+              asProvider: 0,
+              asOfferer: 1,
+            },
+          });
+      });
+
+      describe('target a liquidity', () => {
+        it('should return 200 and correct result', async () => {
+          await Offer.create({ network: net, creator: address, lid: 1, provider: address2, marketAddress: '0xMarket' });
+          await Offer.create({ network: net, creator: address, lid: 2, readOfferer: true });
+          await request(app.getHttpServer())
+            .get(`/v1/offers/count-unread`)
+            .query({ net, marketAddress: '0xMarket', provider: address2, lid: 1 })
+            .set('Authorization', 'bearer ' + token)
+            .expect(200)
+            .expect({
+              data: {
+                asProvider: 0,
+                asOfferer: 1,
+              },
+            });
+        });
+      });
+    });
+  });
+
+  describe('.markAsRead', () => {
+    it('should return 401 when not authorized', async () => {
+      await request(app.getHttpServer())
+        .put(`/v1/offers/mark-read`)
+        .send({})
+        .expect(401)
+        .expect({
+          error: {
+            type: 'authentication_error',
+            message: 'authorization header is required',
+          },
+        });
+    });
+
+    it('should return 400 when network is unknown', async () => {
+      await request(app.getHttpServer())
+        .put(`/v1/offers/mark-read`)
+        .query({ net: 'net1' })
+        .set('Authorization', 'bearer ' + token)
+        .expect(400)
+        .expect({
+          error: {
+            message: 'network is unknown',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    describe('when authenticated user has offers where it is a provider', () => {
+      it('should return 200 and correct result', async () => {
+        let offer = await Offer.create({ network: net, provider: address, lid: 1 });
+        let offer2 = await Offer.create({ network: net, provider: address, lid: 2, readProvider: true });
+        await request(app.getHttpServer())
+          .put(`/v1/offers/mark-read`)
+          .query({ net })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect({
+            data: {
+              success: true,
+            },
+          });
+
+        offer = await Offer.getById(offer.id);
+        expect(offer.readProvider).toBeTruthy();
+
+        offer2 = await Offer.getById(offer2.id);
+        expect(offer2.readOfferer).toBeFalsy();
+      });
+    });
+
+    describe('when authenticated user has offers where it is an offerer', () => {
+      it('should return 200 and correct result', async () => {
+        let offer = await Offer.create({ network: net, creator: address, lid: 1 });
+        let offer2 = await Offer.create({ network: net, creator: address, lid: 2, readOfferer: true });
+        await request(app.getHttpServer())
+          .put(`/v1/offers/mark-read`)
+          .query({ net })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect({
+            data: {
+              success: true,
+            },
+          });
+
+        offer = await Offer.getById(offer.id);
+        expect(offer.readProvider).toBeFalsy();
+
+        offer2 = await Offer.getById(offer2.id);
+        expect(offer2.readOfferer).toBeTruthy();
+      });
     });
   });
 });

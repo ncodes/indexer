@@ -5,6 +5,7 @@ import { uniq } from 'lodash';
 import * as moment from 'moment';
 import Market from './market';
 import Liquidity from './liquidity';
+import Swap from './swap';
 
 export enum SearchStatus {
   Accepted = 'accepted',
@@ -41,6 +42,10 @@ export default class Offer extends BaseModel {
   cancelled: boolean = undefined;
   // Indicates if the offer was executed
   executed: boolean = undefined;
+  // Indicates if the offer was read by the provider
+  readProvider: boolean = undefined;
+  // Indicates if the offer was read by the creator
+  readOfferer: boolean = undefined;
   // The offer execution date
   execAt: string = undefined;
   // The offer expiration date
@@ -53,6 +58,7 @@ export default class Offer extends BaseModel {
   /** Relations */
   market: Market;
   liquidity: Liquidity;
+  swap: Swap;
 
   constructor(init?: Partial<Offer>) {
     super();
@@ -97,6 +103,14 @@ export default class Offer extends BaseModel {
         join: {
           from: ['offers.network', 'offers.provider', 'offers.lid'],
           to: ['liquidities.network', 'liquidities.provider', 'liquidities.lid'],
+        },
+      },
+      swap: {
+        relation: Model.HasOneRelation,
+        modelClass: Swap,
+        join: {
+          from: ['offers.network', 'offers.offerId'],
+          to: ['swaps.network', 'swaps.offerId'],
         },
       },
     };
@@ -181,6 +195,8 @@ export default class Offer extends BaseModel {
    * @param fromDate The start date to filter by (optional)
    * @param toDate The end date to filter by (optional)
    * @param status The swap status (optional)
+   * @param readProvider Indicates whether the offer was read by the provider
+   * @param readOfferer Indicates whether the offer was read by the creator
    * @param countOnly Indicates whether to return count only.
    * @param limit The number of records to return.
    * @param offset The offset value
@@ -198,11 +214,13 @@ export default class Offer extends BaseModel {
     status: SearchStatus,
     fromDate: string,
     toDate: string,
-    countOnly: boolean,
-    limit: number,
-    offset: number,
+    readProvider: boolean,
+    readOfferer: boolean,
+    countOnly?: boolean,
+    limit?: number,
+    offset?: number,
     select = [],
-    relations: string,
+    relations?: string,
     txn?: Objection.Transaction,
   ) {
     select = this.makeSelectList(select);
@@ -212,7 +230,7 @@ export default class Offer extends BaseModel {
     if (creator) query = query.where('creator', 'ilike', creator);
     if (marketAddress) query = query.where('marketAddress', 'ilike', marketAddress);
     if (provider) query = query.where('provider', 'ilike', provider);
-    if (lid) query = query.where('lid', lid);
+    if (lid != undefined) query = query.where('lid', lid);
 
     if (creatorOrProvider) {
       query = query.where((qb) => {
@@ -237,6 +255,10 @@ export default class Offer extends BaseModel {
       }
     }
 
+    if (readProvider != undefined) query = query.where('readProvider', readProvider);
+
+    if (readOfferer != undefined) query = query.where('readOfferer', readOfferer);
+
     if (fromDate) query = query.where('createdAt', '>=', fromDate);
 
     if (toDate) query = query.where('createdAt', '<=', toDate);
@@ -249,5 +271,45 @@ export default class Offer extends BaseModel {
     if (offset != undefined) query = query.offset(offset);
     if (limit) query = query.limit(limit);
     return query.withGraphFetched(relations).whereNotDeleted().orderBy('updatedAt', 'DESC');
+  }
+
+  /**
+   * Update the read state of offers
+   * @param network The network name
+   * @param creator The market creator address
+   * @param marketAddress The market address to filter by
+   * @param provider The provider address to filter by
+   * @param lid The liquidity ID to filter by
+   * @param readProvider Indicates whether the offer was read by the provider
+   * @param readOfferer Indicates whether the offer was read by the creator
+   * @param txn Optional transaction object
+   */
+  static async updateReadState(
+    network: string,
+    creator: string,
+    provider: string,
+    marketAddress: string,
+    lid: number,
+    readProvider: boolean,
+    readOfferer: boolean,
+    txn?: Objection.Transaction,
+  ) {
+    let query = this.query(txn);
+    if (network) query = query.where('network', 'ilike', network);
+    if (creator) query = query.where('creator', 'ilike', creator);
+    if (marketAddress) query = query.where('marketAddress', 'ilike', marketAddress);
+    if (provider) query = query.where('provider', 'ilike', provider);
+    if (lid != undefined) query = query.where('lid', lid);
+
+    const patch = {};
+    if (readProvider != undefined) {
+      patch['readProvider'] = readProvider;
+    }
+
+    if (readOfferer != undefined) {
+      patch['readOfferer'] = readOfferer;
+    }
+
+    return query.whereNotDeleted().patch(patch);
   }
 }

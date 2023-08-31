@@ -126,60 +126,6 @@ describe('SwapsController', () => {
         });
     });
 
-    it('should return 404 when swap order was not found', async () => {
-      await Swap.create({ network: net, orderId: 1, marketAddress: '0xMarket' });
-      await request(app.getHttpServer())
-        .get(`/v1/swaps/1`)
-        .query({ net })
-        .set('Authorization', 'bearer ' + token)
-        .expect(404)
-        .expect({
-          error: { message: 'market not found' },
-        });
-    });
-
-    it('should return 404 when liquidity was not found', async () => {
-      const market = await Market.create({
-        network: net,
-        address: '0xMarket',
-      });
-      await Swap.create({
-        network: net,
-        orderId: 1,
-        marketAddress: market.address,
-      });
-      jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
-      await request(app.getHttpServer())
-        .get(`/v1/swaps/1`)
-        .query({ net })
-        .set('Authorization', 'bearer ' + token)
-        .expect(404)
-        .expect({
-          error: { message: 'liquidity not found' },
-        });
-    });
-
-    it('should return 404 when liquidity was not found', async () => {
-      const market = await Market.create({
-        network: net,
-        address: '0xMarket',
-      });
-      await Swap.create({
-        network: net,
-        orderId: 1,
-        marketAddress: market.address,
-      });
-      jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
-      await request(app.getHttpServer())
-        .get(`/v1/swaps/1`)
-        .query({ net })
-        .set('Authorization', 'bearer ' + token)
-        .expect(404)
-        .expect({
-          error: { message: 'liquidity not found' },
-        });
-    });
-
     it('should return 200 with correct result', async () => {
       const market = await Market.create({
         network: net,

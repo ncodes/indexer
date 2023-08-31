@@ -1,9 +1,7 @@
 import { Controller, Get, Param, ParseIntPipe, Query, ValidationPipe } from '@nestjs/common';
 import Swap from '../../models/swap';
 import { ErrorTypes, ok, throw404 } from '../../common/responses/responses';
-import Market from '../../models/market';
 import { MarketService } from '../markets/market.service';
-import Liquidity from '../../models/liquidity';
 import { LiquidityService } from '../liquidity/liquidity.service';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { GetParticipantsDTO, GetQueryDTO, ListQueryDTO } from './query.dto';
@@ -24,29 +22,11 @@ export class SwapsController {
    */
   @Get(':orderId')
   async get(@Param('orderId', ParseIntPipe) orderId: number, @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO) {
-    // Get swap
-    const swap = await Swap.get(q.net, orderId, q.select);
+    const swap = await Swap.get(q.net, orderId, q.select, '[market,liquidity,disputes]');
     if (!swap) throw404('swap not found');
-
-    // Get market
-    const market = await Market.getMarket(q.net, swap.marketAddress, q.select, undefined);
-    if (!market) return throw404('market not found');
-    await this.marketSrv.extendMarket(market, q.select);
-    swap.market = market;
-
-    // Get liquidity
-    const liquidity = await Liquidity.getLiquidity(
-      q.net,
-      swap.marketAddress,
-      swap.provider,
-      swap.lid,
-      q.select,
-      undefined,
-    );
-    if (!liquidity) return throw404('liquidity not found');
-    await this.liqSrv.extendLiquidity(liquidity, q.select);
-    swap.liquidity = liquidity;
-
+    await this.swapSrv.extendSwap(swap, q.select);
+    await this.marketSrv.extendMarket(swap.market, q.select);
+    await this.liqSrv.extendLiquidity(swap.liquidity, q.select);
     return ok().data(swap).build<Swap>();
   }
 

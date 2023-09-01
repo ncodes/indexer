@@ -162,7 +162,7 @@ export class MetadataService {
     try {
       return await this.toUsd(net, amount, contract, tokenInfo);
     } catch (e) {
-      this.logger.error(axios.isAxiosError(e) ? e.response.data : e, e.stack, MetadataService.name);
+      this.logger.error(axios.isAxiosError(e) ? e.response?.data : e, e.stack, MetadataService.name);
       return 0;
     }
   }

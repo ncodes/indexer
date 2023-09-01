@@ -423,12 +423,6 @@ export default class Dispute extends BaseModel {
       }
     }
 
-    // if (redispute !== undefined) q = q.where('redispute', redispute);
-    // if (executed !== undefined) q = q.where('executed', executed);
-    // if (released !== undefined) q = q.where('released', released);
-    // if (abandoned !== undefined) q = q.where('abandoned', abandoned);
-    // if (orderReleased !== undefined) q = q.where('orderReleased', orderReleased);
-
     if (fromDate) q = q.where('createdAt', '>=', fromDate);
     if (toDate) q = q.where('createdAt', '<=', toDate);
 

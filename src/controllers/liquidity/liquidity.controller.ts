@@ -5,7 +5,7 @@ import { LiquidityService } from './liquidity.service';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { GetParamDTO, GetQueryDTO, ListQueryDTO } from './query.dto';
 import { ConfigService } from '../../config/config.service';
-import Event from '../../models/event';
+import Event, { EventActionClass } from '../../models/event';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import Market from '../../models/market';
 import { MarketService } from '../markets/market.service';
@@ -57,6 +57,7 @@ export class LiquidityController {
     @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO,
   ) {
     const events = await Event.search(
+      EventActionClass.Liquidity,
       q.net,
       p.mid,
       p.provider,

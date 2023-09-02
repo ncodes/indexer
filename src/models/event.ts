@@ -5,6 +5,12 @@ import Offer from './offer';
 import Swap from './swap';
 import Dispute from './dispute';
 
+export enum EventActionClass {
+  Liquidity = 'liq',
+  Swap = 'swap',
+  Offer = 'offer',
+}
+
 export enum Events {
   LiquidityAdd = 'liq_add',
   LiquidityRemove = 'liq_remove',
@@ -180,6 +186,7 @@ export default class Event extends BaseModel {
 
   /**
    * Search for records
+   * @param category The event action class
    * @param network The network name
    * @param marketAddress The market address
    * @param provider The provider address
@@ -195,6 +202,7 @@ export default class Event extends BaseModel {
    * @param txn Optional transaction object
    */
   static search(
+    category: EventActionClass,
     network: string,
     marketAddress?: string,
     provider?: string,
@@ -241,6 +249,9 @@ export default class Event extends BaseModel {
           }
           return q;
         });
+
+        if (category) q = q.where('action', 'ilike', category + '%');
+
         return q;
       })
       .withGraphFetched('[offer,swap,dispute]')

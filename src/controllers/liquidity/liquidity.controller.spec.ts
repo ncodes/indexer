@@ -19,7 +19,7 @@ import { randStr } from '../../common/common';
 import Meta, { MetaKeys } from '../../models/meta';
 import * as moment from 'moment';
 import BadgeGrant from '../../models/badge_grant';
-import Event from '../../models/event';
+import Event, { Events } from '../../models/event';
 import Offer from '../../models/offer';
 import Swap from '../../models/swap';
 import { RedisService } from '../../services/redis.service';
@@ -226,6 +226,7 @@ describe('LiquidityController', () => {
         provider: '0xProvider',
         lid: 0,
         createdAt: moment().subtract(1, 'day').toISOString(),
+        action: Events.LiquidityAdd,
       });
       const event2 = await Event.create({
         network: net,
@@ -235,6 +236,7 @@ describe('LiquidityController', () => {
         offerId: 1,
         orderId: 1,
         createdAt: moment().toISOString(),
+        action: Events.LiquidityAdd,
       });
       await request(app.getHttpServer())
         .get(`/v1/liquidities/0xMarket/0xProvider/0/events`)
@@ -259,6 +261,7 @@ describe('LiquidityController', () => {
         provider: '0xProvider',
         lid: 0,
         createdAt: moment().subtract(1, 'day').toISOString(),
+        action: Events.LiquidityAdd,
       });
       const event2 = await Event.create({
         network: net,
@@ -266,6 +269,7 @@ describe('LiquidityController', () => {
         provider: '0xProvider',
         lid: 0,
         createdAt: moment().toISOString(),
+        action: Events.LiquidityAdd,
       });
       await request(app.getHttpServer())
         .get(`/v1/liquidities/0xMarket/0xProvider/0/events`)

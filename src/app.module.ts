@@ -24,6 +24,7 @@ import { TasksModule } from './controllers/tasks/tasks.module';
 import { OffersModule } from './controllers/offers/offers.module';
 import { BadgesModule } from './controllers/badges/badges.module';
 import { TimelinesModule } from './controllers/timelines/timelines.module';
+import { InstructionsModule } from './instructions/instructions.module';
 
 /**
  * Returns the configurations to be loaded.
@@ -79,6 +80,7 @@ function getProviders() {
     UsersModule,
     AssetsModule,
     TasksModule,
+    InstructionsModule,
   ],
   providers: getProviders(),
   controllers: [],

@@ -1,10 +1,10 @@
-import { Body, Controller, Get, Logger, Param, Put, Query, Req, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Logger, Param, Put, Query, Req, UseGuards, ValidationPipe } from '@nestjs/common';
 import { OfferService } from './offer.service';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
-import { ReadQueryDTO, GetParamDTO, GetQueryDTO, ListQueryDTO } from './query.dto';
+import { GetParamDTO, GetQueryDTO, ListQueryDTO, ReadQueryDTO } from './query.dto';
 import Offer from '../../models/offer';
 import { ok, throw404 } from '../../common/responses/responses';
-import Event from '../../models/event';
+import Event, { EventActionClass } from '../../models/event';
 import { MarketService } from '../markets/market.service';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
@@ -29,6 +29,7 @@ export class OfferController {
     @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO,
   ) {
     const events = await Event.search(
+      EventActionClass.Offer,
       q.net,
       undefined,
       undefined,

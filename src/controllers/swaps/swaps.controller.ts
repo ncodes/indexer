@@ -6,11 +6,31 @@ import { LiquidityService } from '../liquidity/liquidity.service';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { GetParticipantsDTO, GetQueryDTO, ListQueryDTO } from './query.dto';
 import SwapService from './swap.service';
-import Event from '../../models/event';
+import Event, { EventActionClass } from '../../models/event';
 
 @Controller('v1/swaps')
 export class SwapsController {
   constructor(private marketSrv: MarketService, private liqSrv: LiquidityService, private swapSrv: SwapService) {}
+
+  // Get swap events
+  @Get(':orderId/events')
+  async events(@Param('orderId', ParseIntPipe) orderId: number, @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO) {
+    const events = await Event.search(
+      EventActionClass.Swap,
+      q.net,
+      undefined,
+      undefined,
+      undefined,
+      orderId,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      q.limit || 25,
+      q.offset,
+    );
+    return ok().data(events).build<Event[]>();
+  }
 
   /**
    * Get a swap
@@ -28,25 +48,6 @@ export class SwapsController {
     await this.marketSrv.extendMarket(swap.market, q.select);
     await this.liqSrv.extendLiquidity(swap.liquidity, q.select);
     return ok().data(swap).build<Swap>();
-  }
-
-  // Get swap events
-  @Get(':orderId/events')
-  async events(@Param('orderId', ParseIntPipe) orderId: number, @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO) {
-    const events = await Event.search(
-      q.net,
-      undefined,
-      undefined,
-      undefined,
-      orderId,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      q.limit || 25,
-      q.offset,
-    );
-    return ok().data(events).build<Event[]>();
   }
 
   /**

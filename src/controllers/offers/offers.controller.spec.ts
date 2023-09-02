@@ -13,7 +13,7 @@ import { OfferService } from './offer.service';
 import { OfferController } from './offers.controller';
 import Offer from '../../models/offer';
 import * as moment from 'moment';
-import Event from '../../models/event';
+import Event, { Events } from '../../models/event';
 import { MarketService } from '../markets/market.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import Market from '../../models/market';
@@ -143,11 +143,13 @@ describe('OffersController', () => {
         network: net,
         offerId: 1,
         createdAt: moment().subtract(1, 's').toISOString(),
+        action: Events.OfferCreate,
       });
       const event2 = await Event.create({
         network: net,
         offerId: 1,
         createdAt: moment().toISOString(),
+        action: Events.OfferCreate,
       });
       await Event.create({ network: 'other', offerId: 1, createdAt: moment().subtract(1, 's').toISOString() });
       await Event.create({ network: 'other', offerId: 1, createdAt: moment().toISOString() });
@@ -167,11 +169,13 @@ describe('OffersController', () => {
         network: net,
         offerId: 1,
         createdAt: moment().subtract(1, 's').toISOString(),
+        action: Events.OfferCreate,
       });
       const event2 = await Event.create({
         network: net,
         offerId: 1,
         createdAt: moment().toISOString(),
+        action: Events.OfferCreate,
       });
       await Event.create({ network: 'other', offerId: 1, createdAt: moment().subtract(1, 's').toISOString() });
       await Event.create({ network: 'other', offerId: 1, createdAt: moment().toISOString() });

@@ -19,7 +19,7 @@ import SwapService from './swap.service';
 import { randStr } from '../../common/common';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import Dispute from '../../models/dispute';
-import Event from '../../models/event';
+import Event, { Events } from '../../models/event';
 import * as moment from 'moment';
 import { RedisService } from '../../services/redis.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
@@ -724,6 +724,7 @@ describe('SwapsController', () => {
         marketAddress: '0xMarket',
         disputeId: 1,
         createdAt: moment().subtract(1, 's').toISOString(),
+        action: Events.SwapPaid,
       });
       const event2 = await Event.create({
         network: net,
@@ -731,6 +732,7 @@ describe('SwapsController', () => {
         marketAddress: '0xMarket',
         disputeId: 1,
         createdAt: moment().subtract(1, 's').toISOString(),
+        action: Events.SwapPaid,
       });
       await request(app.getHttpServer())
         .get(`/v1/swaps/0/events`)

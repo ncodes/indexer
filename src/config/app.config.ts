@@ -67,6 +67,12 @@ export default () => ({
     fastforex: {
       key: process.env.FASTFOREX_KEY,
     },
+    pinata: {
+      key: process.env.PINATA_JWT_KEY,
+    },
+    ipfs: {
+      gateway: process.env.IPFS_GATEWAY,
+    },
     aws: {
       smtpUsername: process.env.AWS_SMTP_USERNAME,
       smtpPassword: process.env.AWS_SMTP_PASSWORD,

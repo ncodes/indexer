@@ -19,6 +19,7 @@ export class TimelinesController {
   @Get()
   async get(@Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO) {
     const events = await Event.search(
+      undefined,
       q.net,
       undefined,
       undefined,

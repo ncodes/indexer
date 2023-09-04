@@ -222,7 +222,7 @@ describe('OffersController', () => {
         .query({ net })
         .send({})
         .expect(404)
-        .expect({ error: { message: 'market not found' } });
+        .expect({ error: { message: 'offer not found' } });
     });
 
     it('should return 200 when offer exists', async () => {

@@ -6,10 +6,12 @@ import { CommonValidationPipeOpt as ValPipeOpt } from '../common/pipes/common.pi
 import { UpdateInstructionsDTO } from './dto';
 import { InstructionsService } from './instructions.service';
 import { Request } from 'express';
+import { ConfigService } from '@nestjs/config';
+import { SupportedNetworks } from '../network/common';
 
 @Controller('v1/instructions')
 export class InstructionsController {
-  constructor(private instructSrv: InstructionsService) {}
+  constructor(private instructSrv: InstructionsService, private cfgSrv: ConfigService) {}
 
   /**
    * Update an instruction.
@@ -28,25 +30,32 @@ export class InstructionsController {
   @UseGuards(BeAuthenticatedGuard)
   @UseGuards(HasKeyGuard)
   async update(@Req() req: Request, @Body(new ValidationPipe(ValPipeOpt)) body: UpdateInstructionsDTO) {
+    body.net = SupportedNetworks.Ethereum; // TODO: remove
+
     // Get the current instruction
     const name = `${req.user.address}:${body.net}`;
     const getResp = await this.instructSrv.get(name);
 
-    // If not found, pin it
+    let hash: string;
     if (!getResp[0]) {
       getResp[0] = { global: '', liquidity: {} };
       if (!body.marketAddress) getResp[0].global = body.content;
       else getResp[0].liquidity[`${body.marketAddress}:${body.provider}:${body.lid}`] = body.content;
-      const hash = await this.instructSrv.pin(getResp[0], name);
+      hash = await this.instructSrv.pin(getResp[0], name);
       return ok().data({ hash, instructions: getResp[0] }).build();
+    } else {
+      if (!body.marketAddress) getResp[0].global = body.content;
+      else getResp[0].liquidity[`${body.marketAddress}:${body.provider}:${body.lid}`.toLowerCase()] = body.content;
+      hash = await this.instructSrv.pin(getResp[0], name);
     }
 
-    // Update the instruction
-    if (!body.marketAddress) getResp[0].global = body.content;
-    else getResp[0].liquidity[`${body.marketAddress}:${body.provider}:${body.lid}`] = body.content;
-    const hash = await this.instructSrv.pin(getResp[0], name);
-
-    return ok().data({ hash, instructions: getResp[0] }).build();
+    return ok()
+      .data({
+        hash,
+        instructions: getResp[0],
+        sigInfo: await this.instructSrv.getGrantSignature(body.net, req.user.address, hash),
+      })
+      .build();
   }
 
   /**

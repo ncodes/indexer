@@ -4,6 +4,7 @@ import { BaseModel } from './base';
 import Offer from './offer';
 import Swap from './swap';
 import Dispute from './dispute';
+import Market from './market';
 
 export enum EventActionClass {
   Liquidity = 'liq',
@@ -98,6 +99,7 @@ export default class Event extends BaseModel {
   offer: Offer;
   swap: Swap;
   dispute: Dispute;
+  market: Market;
 
   constructor(init?: Partial<Event>) {
     super();
@@ -128,6 +130,14 @@ export default class Event extends BaseModel {
 
   static get relationMappings() {
     return {
+      market: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: Market,
+        join: {
+          from: ['events.network', 'events.marketAddress'],
+          to: ['markets.network', 'markets.address'],
+        },
+      },
       offer: {
         relation: Model.BelongsToOneRelation,
         modelClass: Offer,
@@ -254,7 +264,7 @@ export default class Event extends BaseModel {
 
         return q;
       })
-      .withGraphFetched('[offer,swap,dispute]')
+      .withGraphFetched('[offer,swap,dispute,market]')
       .orderBy('sn', 'desc')
       .orderBy('createdAt', 'desc');
     if (offset != undefined) q = q.offset(offset);

@@ -66,7 +66,7 @@ export class InstructionsService {
   async getGrantSignature(network: string, granteeAddr: string, instructionHash: string) {
     const sigInfo: GrantSigInfo = { network };
     const instructionBadge = this.cfgSrv.get('app.badges.instruction');
-    const badgeMgr = this.netSrv.getContracts(network).badgeMgr;
+    const badgeMgr = this.netSrv.getContracts().badgeMgr;
     const hasBadge = await badgeMgr.hasBadge(granteeAddr, instructionBadge, '');
     const signer = new Wallet(this.cfgSrv.get('app.badges.instructionIssuerPk'));
     const sigExp = moment().add(1, 'h');

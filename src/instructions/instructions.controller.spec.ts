@@ -268,7 +268,7 @@ describe('InstructionsController', () => {
 
         const mockGet = jest
           .spyOn(app.get(InstructionsService), 'get')
-          .mockResolvedValue([{ global: 'stuff', liquidity: { '0xMarketAddress:0xProvider:1': 'stuff' } }, hash]);
+          .mockResolvedValue([{ global: 'stuff', liquidity: { '0xmarketaddress:0xprovider:1': 'stuff' } }, hash]);
 
         const mockPin = jest.spyOn(app.get(InstructionsService), 'pin').mockResolvedValue('0xHash');
 
@@ -291,7 +291,7 @@ describe('InstructionsController', () => {
             expect(res.body.data.hash).toBe('0xHash');
             expect(mockGet).toBeCalledWith(`${u.address}:${net}`);
             expect(mockPin).toBeCalledWith(
-              { global: 'stuff', liquidity: { '0xMarketAddress:0xProvider:1': content } },
+              { global: 'stuff', liquidity: { '0xmarketaddress:0xprovider:1': content } },
               `${u.address}:${net}`,
             );
             expect(mockGetGrantSignature).toBeCalledWith(net, u.address, hash);

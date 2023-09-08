@@ -1,13 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import Liquidity from '../../models/liquidity';
 import Market from '../../models/market';
 import MarketPrice from '../../models/market_price';
 import Swap from '../../models/swap';
 import * as _ from 'lodash';
 import { MetadataService } from '../../services/metadata/metadata.service';
+import { handleAxiosError } from '../../common/errors/http_response_error';
 
 @Injectable()
 export class MarketService {
+  logger = new Logger(MarketService.name);
+
   constructor(private metadataSrv: MetadataService) {}
 
   /**
@@ -35,8 +38,12 @@ export class MarketService {
       }
 
       if (!market.lowestPriceUsd && (select.includes(`lowestPrice`) || !select.length)) {
-        quoteInfo = await this.metadataSrv.getTokenInfo(net, quoteAddress);
-        market.lowestPriceUsd = await this.metadataSrv.tryToUsd(net, lowestPrice, quoteAddress, quoteInfo);
+        try {
+          quoteInfo = await this.metadataSrv.getTokenInfo(net, quoteAddress);
+          market.lowestPriceUsd = await this.metadataSrv.tryToUsd(net, lowestPrice, quoteAddress, quoteInfo);
+        } catch (e) {
+          this.logger.error('failed to fetch token info: ' + quoteAddress, handleAxiosError(e).message);
+        }
       }
 
       if (select.includes(`totalSwaps24h`) || !select.length) {
@@ -69,28 +76,44 @@ export class MarketService {
       }
 
       if (select.includes(`baseLogo`) || !select.length) {
-        baseInfo = await this.metadataSrv.getTokenInfo(net, baseAddress);
-        market.baseLogo = baseInfo.logoURI;
+        try {
+          baseInfo = await this.metadataSrv.getTokenInfo(net, baseAddress);
+          market.baseLogo = baseInfo.logoURI;
+        } catch (e) {
+          this.logger.error('failed to fetch token info: ' + quoteAddress, handleAxiosError(e).message);
+        }
       }
 
       if (select.includes(`quoteLogo`) || !select.length) {
-        quoteInfo = await this.metadataSrv.getTokenInfo(net, quoteAddress);
-        market.quoteLogo = quoteInfo.logoURI;
+        try {
+          quoteInfo = await this.metadataSrv.getTokenInfo(net, quoteAddress);
+          market.quoteLogo = quoteInfo.logoURI;
+        } catch (e) {
+          this.logger.error('failed to fetch token info: ' + quoteAddress, handleAxiosError(e).message);
+        }
       }
 
       if (select.includes(`amountSwapped`) || !select.length) {
-        baseInfo = await this.metadataSrv.getTokenInfo(net, baseAddress);
-        market.amountSwappedUsd = await this.metadataSrv.tryToUsd(
-          net,
-          market.amountSwapped,
-          market.baseAddress,
-          baseInfo,
-        );
+        try {
+          baseInfo = await this.metadataSrv.getTokenInfo(net, baseAddress);
+          market.amountSwappedUsd = await this.metadataSrv.tryToUsd(
+            net,
+            market.amountSwapped,
+            market.baseAddress,
+            baseInfo,
+          );
+        } catch (e) {
+          this.logger.error('failed to fetch token info: ' + quoteAddress, handleAxiosError(e).message);
+        }
       }
 
       if (!market.totalLiquidityUsd && (select.includes(`totalLiquidity`) || !select.length)) {
-        baseInfo = await this.metadataSrv.getTokenInfo(net, baseAddress);
-        market.totalLiquidityUsd = await this.metadataSrv.tryToUsd(net, totalLiquidity, baseAddress, baseInfo);
+        try {
+          baseInfo = await this.metadataSrv.getTokenInfo(net, baseAddress);
+          market.totalLiquidityUsd = await this.metadataSrv.tryToUsd(net, totalLiquidity, baseAddress, baseInfo);
+        } catch (e) {
+          this.logger.error('failed to fetch token info: ' + baseAddress);
+        }
       }
 
       return Promise.resolve();

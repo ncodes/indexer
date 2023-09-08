@@ -25,6 +25,7 @@ import { OffersModule } from './controllers/offers/offers.module';
 import { BadgesModule } from './controllers/badges/badges.module';
 import { TimelinesModule } from './controllers/timelines/timelines.module';
 import { InstructionsModule } from './instructions/instructions.module';
+import { RequestLoggerMiddleware } from './common/loggers/request_logger';
 
 /**
  * Returns the configurations to be loaded.
@@ -93,6 +94,8 @@ export class AppModule implements NestModule {
       //   path: '/v1/..',
       //   method: RequestMethod.POST,
       // })
+      .apply(RequestLoggerMiddleware)
+      .forRoutes('*')
       .apply(JsonBodyMiddleware)
       .forRoutes(
         { path: '*', method: RequestMethod.POST },

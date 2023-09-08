@@ -110,11 +110,11 @@ export class TicketsController {
   @Get('stats')
   async stats(@Query(new ValidationPipe(ValPipeOpt)) q: StatsQueryDTO) {
     const totalBonds = await Ticket.getTotalBonds(q.net, undefined, undefined);
-    const price = await this.netSrv.getContracts(q.net).mediatorMgr.getTicketPrice();
-    const ticketSupply = await this.netSrv.getContracts(q.net).mediatorMgr.ticketSupply();
-    const ticketSold = await this.netSrv.getContracts(q.net).mediatorMgr.ticketSold();
+    const price = await this.netSrv.getContracts().mediatorMgr.getTicketPrice();
+    const ticketSupply = await this.netSrv.getContracts().mediatorMgr.ticketSupply();
+    const ticketSold = await this.netSrv.getContracts().mediatorMgr.ticketSold();
 
-    const p2pAddress = this.cfgSrv.get(`app.networks.${q.net}.p2pTokenAddr`);
+    const p2pAddress = this.cfgSrv.get(`app.contractsAddress.p2pTokenAddr`);
     const ownerInfo: { totalBonds?: string; totalBondsUsd?: number; total?: string } = {};
     if (q.owner) {
       ownerInfo.totalBonds = await Ticket.getTotalBonds(q.net, undefined, q.owner);

@@ -86,7 +86,7 @@ export default class SwapService {
     if (Market.isSynth(baseType) && Market.isSynth(quoteType)) {
       info.symbol = 'P2P';
       info.fee = toBN(swap.marketCreatorFee).add(swap.protocolFee).toString();
-      info.address = this.cfgSrv.get(`app.networks[${network}].p2pTokenAddr`);
+      info.address = this.cfgSrv.get(`app.contractsAddress.p2pTokenAddr`);
     }
 
     return info;

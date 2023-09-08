@@ -41,19 +41,11 @@ import Meta, { MetaKeys } from '../models/meta';
 import { MetadataService } from '../services/metadata/metadata.service';
 import { ExchangeRateService } from '../services/exchange_rate.service';
 
-interface ContractInfo {
-  [key: string]: JointContracts;
-}
-
-interface JsonRpcProviders {
-  [key: string]: providers.JsonRpcProvider;
-}
-
 @Injectable()
 export default class NetworkService {
   private logger = new Logger(NetworkService.name);
-  private contracts: ContractInfo = {};
-  private providers: JsonRpcProviders = {};
+  private contracts: JointContracts = {};
+  private provider: providers.JsonRpcProvider;
 
   constructor(
     public cfgSrv: ConfigService,
@@ -67,29 +59,26 @@ export default class NetworkService {
   }
 
   /**
-   * Watch events on different networks
+   * Watch event
    */
   private async watch() {
-    // await this.watchNetwork(SupportedNetworks.Localhost);
-    await this.watchNetwork(SupportedNetworks.Ethereum);
+    await this.watchNetwork(this.cfgSrv.get('app.network'));
   }
 
   /**
    * Get contracts linked to a given network
-   * @param network The network name
    * @returns
    */
-  getContracts(network: string) {
-    return this.contracts[network];
+  getContracts() {
+    return this.contracts;
   }
 
   /**
    * Get a network's provider
-   * @param network The network name
    * @returns
    */
-  getProvider(network: string): providers.JsonRpcProvider {
-    return this.providers[network];
+  getProvider(): providers.JsonRpcProvider {
+    return this.provider;
   }
 
   /**
@@ -98,7 +87,7 @@ export default class NetworkService {
    * @param address The contract address
    */
   getERC20Contract(network: string, address: string): ERC20 {
-    return new Contract(address, erc20TokenABI, this.providers[network]) as ERC20;
+    return new Contract(address, erc20TokenABI, this.provider[network]) as ERC20;
   }
 
   /**
@@ -106,7 +95,7 @@ export default class NetworkService {
    * @param network The network name
    */
   private async loadInitialContractParams(network: string) {
-    const contractsParams = this.cfgSrv.get(`app.contractsParams.${network}`);
+    const contractsParams = this.cfgSrv.get(`app.contractsParams`);
     const key = Meta.makeNetKey(network, MetaKeys.ContractsParams);
     const params = await Meta.get(key);
     if (params && params.value) return;
@@ -115,62 +104,62 @@ export default class NetworkService {
   }
 
   /**
-   * Connect and watch contracts on the Ethereum mainnet.
+   * Connect and watch contracts.
    * @param network The name of the network
    */
   private async watchNetwork(network: string) {
     this.contracts[network] = {};
-    const prov = new providers.JsonRpcProvider(this.cfgSrv.get(`app.networks.${network}.rpcUrl`));
-    this.providers[network] = prov;
+    const prov = new providers.JsonRpcProvider(this.cfgSrv.get(`app.contractsAddress.rpcUrl`));
+    this.provider = prov;
 
     // Initialize contracts
     this.contracts[network].p2pToken = new Contract(
-      this.cfgSrv.get(`app.networks.${network}.p2pTokenAddr`),
+      this.cfgSrv.get(`app.contractsAddress.p2pTokenAddr`),
       p2pTokenABI,
       prov,
     ) as Token;
     this.contracts[network].marketCore = new Contract(
-      this.cfgSrv.get(`app.networks.${network}.marketCoreAddr`),
+      this.cfgSrv.get(`app.contractsAddress.marketCoreAddr`),
       marketCoreABI,
       prov,
     ) as MarketCore;
     this.contracts[network].core = new Contract(
-      this.cfgSrv.get(`app.networks.${network}.coreAddr`),
+      this.cfgSrv.get(`app.contractsAddress.coreAddr`),
       coreABI,
       prov,
     ) as Core;
     this.contracts[network].mediatorMgr = new Contract(
-      this.cfgSrv.get(`app.networks.${network}.mediatorMgrAddr`),
+      this.cfgSrv.get(`app.contractsAddress.mediatorMgrAddr`),
       mediatorManagerABI,
       prov,
     ) as MediatorManager;
     this.contracts[network].disputeMgr = new Contract(
-      this.cfgSrv.get(`app.networks.${network}.disputeMgrAddr`),
+      this.cfgSrv.get(`app.contractsAddress.disputeMgrAddr`),
       disputeManagerABI,
       prov,
     ) as DisputeManager;
     this.contracts[network].tokenPool = new Contract(
-      this.cfgSrv.get(`app.networks.${network}.tokenPoolAddr`),
+      this.cfgSrv.get(`app.contractsAddress.tokenPoolAddr`),
       tokenPoolABI,
       prov,
     ) as TokenPool;
     this.contracts[network].lpPool = new Contract(
-      this.cfgSrv.get(`app.networks.${network}.lpPoolAddr`),
+      this.cfgSrv.get(`app.contractsAddress.lpPoolAddr`),
       lpPoolABI,
       prov,
     ) as LPPool;
     this.contracts[network].feePool = new Contract(
-      this.cfgSrv.get(`app.networks.${network}.feePoolAddr`),
+      this.cfgSrv.get(`app.contractsAddress.feePoolAddr`),
       feePoolABI,
       prov,
     ) as FeePool;
     this.contracts[network].badgeMgr = new Contract(
-      this.cfgSrv.get(`app.networks.${network}.badgeMgrAddr`),
+      this.cfgSrv.get(`app.contractsAddress.badgeMgrAddr`),
       badgeMgrABI,
       prov,
     ) as BadgeManager;
     this.contracts[network].assetRegistry = new Contract(
-      this.cfgSrv.get(`app.networks.${network}.assetRegAddr`),
+      this.cfgSrv.get(`app.contractsAddress.assetRegAddr`),
       assetRegABI,
       prov,
     ) as AssetRegistry;

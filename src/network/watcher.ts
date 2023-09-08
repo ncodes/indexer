@@ -73,7 +73,7 @@ export class Watcher {
         let meta = await Meta.get(key);
         if (!meta) {
           meta = new Meta({
-            value: process.env[`LAUNCH_HEIGHT_${this.network.toUpperCase()}`] || '1',
+            value: process.env[`LAUNCH_HEIGHT`] || '1',
           });
         }
 
@@ -122,7 +122,7 @@ export class Watcher {
         let meta = await Meta.get(key);
         if (!meta) {
           meta = new Meta({
-            value: process.env[`LAUNCH_HEIGHT_${this.network.toUpperCase()}`] || '1',
+            value: process.env[`LAUNCH_HEIGHT`] || '1',
           });
         }
 

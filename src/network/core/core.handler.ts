@@ -1517,6 +1517,7 @@ export class CoreHandler extends Handler {
     await Event.create(
       {
         network: this.network,
+        marketAddress,
         offerId: offer.offerId,
         creator: offerer,
         amount: offer.amount,
@@ -1595,6 +1596,7 @@ export class CoreHandler extends Handler {
     await Event.create(
       {
         network: this.network,
+        marketAddress: offer.marketAddress,
         offerId: offer.offerId,
         creator: offerer,
         amount: offer.amount,
@@ -1623,10 +1625,10 @@ export class CoreHandler extends Handler {
    * @param offerId The offer ID
    * @param acceptor The offer acceptor's address
    * @param execAt The time when the offer can be executed
-   * @param event The event object
+   * @param _event The event object
    * @param txn The transaction object
    */
-  async onOfferAccepted(offerId: BigNumber, acceptor: string, execAt: number, event: ChainEvent, txn?: Transaction) {
+  async onOfferAccepted(offerId: BigNumber, acceptor: string, execAt: number, _event: ChainEvent, txn?: Transaction) {
     let offer = await Offer.getByNetworkAndOfferId(this.network, offerId.toNumber(), undefined, undefined, txn);
     if (!offer) throw new Error('Offer not found');
 
@@ -1640,6 +1642,7 @@ export class CoreHandler extends Handler {
     await Event.create(
       {
         network: this.network,
+        marketAddress: offer.marketAddress,
         offerId: offer.offerId,
         creator: acceptor,
         action: Events.OfferAccept,
@@ -1680,6 +1683,7 @@ export class CoreHandler extends Handler {
     await Event.create(
       {
         network: this.network,
+        marketAddress,
         offerId: offer.offerId,
         creator: unacceptor,
         action: Events.OfferUnaccept,
@@ -1712,6 +1716,7 @@ export class CoreHandler extends Handler {
     await Event.create(
       {
         network: this.network,
+        marketAddress: offer.marketAddress,
         offerId: offer.offerId,
         creator: canceller,
         action: Events.OfferCancel,
@@ -1748,6 +1753,7 @@ export class CoreHandler extends Handler {
     await Event.create(
       {
         network: this.network,
+        marketAddress: offer.marketAddress,
         offerId: offer.offerId,
         creator: executor,
         action: Events.OfferExecute,

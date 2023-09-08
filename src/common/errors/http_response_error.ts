@@ -1,15 +1,23 @@
-export default class HTTPResponseError extends Error {
-  public response: any;
-  constructor(response) {
-    super(`HTTP Error Response: ${response.status} ${response.statusText}`);
-    this.response = response;
+import { AxiosResponse } from 'axios';
+
+export class RequestError extends Error {
+  constructor(public code: number, public message: string) {
+    super(message);
+    Object.setPrototypeOf(this, RequestError.prototype);
   }
+
+  public toString = (): string => {
+    return `RequestError: ${this.message}`;
+  };
 }
 
-export const checkFetchStatus = (response) => {
-  if (response.ok) {
-    return response;
+export function handleAxiosError(error: { response: AxiosResponse; request: unknown }): RequestError {
+  if (error.response) {
+    return new RequestError(error.response.status, (error.response as AxiosResponse).data);
+  } else if (error.request) {
+    return new RequestError(500, 'request error');
   } else {
-    throw new HTTPResponseError(response);
+    console.error(error);
+    return new RequestError(500, 'something went wrong');
   }
-};
+}

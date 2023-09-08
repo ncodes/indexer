@@ -48,7 +48,7 @@ describe('SwapsService', () => {
     jest.clearAllMocks();
 
     cfgObj = {};
-    cfgObj[`app.networks[${net}].p2pTokenAddr`] = '0xP2PAddress';
+    cfgObj[`app.contractsAddress.p2pTokenAddr`] = '0xP2PAddress';
 
     mockCfgGet.mockReset().mockImplementation((args) => {
       return cfgObj[args];

@@ -128,7 +128,7 @@ declare global {
 
     interface Token {
       asset?: string;
-      type?: string;
+      type?: string | 'ERC20' | 'SYNTHETIC';
       address?: string;
       name?: string;
       symbol?: string;

@@ -196,6 +196,19 @@ describe('AssetsController', () => {
     });
   });
 
+  describe('.getTokenList', () => {
+    it('should return 400 when network is unknown', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/assets/unknown`)
+        .expect(400)
+        .expect({ error: { type: 'invalid_request_error', message: 'network is unknown' } });
+    });
+
+    it('should return 200 when network is known', async () => {
+      await request(app.getHttpServer()).get(`/v1/assets/${net}`).expect(200);
+    });
+  });
+
   describe('.getAssetStats', () => {
     it('should return 500 when failure to get token info from metadata service', async () => {
       jest.spyOn(app.get(MetadataService), 'getTokenInfo').mockRejectedValue(new Error('error'));

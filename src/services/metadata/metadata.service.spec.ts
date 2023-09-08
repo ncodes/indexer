@@ -35,7 +35,7 @@ if (process.env.TEST_EXTERNAL_API == 'true' || isLocal()) {
     let module: TestingModule;
 
     afterEach(async () => {
-      TokenLists.local.tokens = localListCopy;
+      TokenLists.localhost.tokens = localListCopy;
       TokenLists.synthetic.tokens = syntheticListCopy;
       await db.truncateTables();
     });
@@ -49,7 +49,7 @@ if (process.env.TEST_EXTERNAL_API == 'true' || isLocal()) {
     beforeEach(async () => {
       await db.truncateTables();
 
-      localListCopy = _.clone(TokenLists.local.tokens);
+      localListCopy = _.clone(TokenLists.localhost.tokens);
       syntheticListCopy = _.clone(TokenLists.synthetic.tokens);
 
       module = await Test.createTestingModule({
@@ -97,9 +97,9 @@ if (process.env.TEST_EXTERNAL_API == 'true' || isLocal()) {
     });
 
     describe('.getTokenInfo', () => {
-      describe('address exist in local list', () => {
+      describe('address exist in localhost list', () => {
         it('should return expected value', async () => {
-          TokenLists.local.tokens.push({
+          TokenLists.localhost.tokens.push({
             name: 'Bitcoin',
             symbol: 'BTC',
             address: '0xAddress',

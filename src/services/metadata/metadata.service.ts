@@ -5,7 +5,7 @@ import { isValidNetwork, isZero, pow10D } from '../../network/common';
 import { CoinMarketCapMetadata } from './CoinMarketCapMetadata';
 import { isDevMode, isProdMode, toDec } from '../../common/common';
 import { CoinGeckoMetadata } from './CoinGeckoMetadata';
-import { findInLocal, findInSynthetic } from '../../common/token_list';
+import { findInLocalhost, findInSynthetic } from '../../common/token_list';
 import { RedisService } from '../redis.service';
 import { ExchangeRateService } from '../exchange_rate.service';
 import axios from 'axios';
@@ -58,7 +58,7 @@ export class MetadataService {
    */
   async getTokenLogo(symbolOrNetwork: string, contract: string): Promise<string> {
     // Check if address exist in local/synthetic list.
-    let info = findInLocal(contract);
+    let info = findInLocalhost(contract);
     if (!info) info = findInSynthetic(contract);
 
     // If not found, check redis cache
@@ -84,12 +84,15 @@ export class MetadataService {
    * - If it finds the synthetic index, it will return the information provided by the index after
    *   querying the exchange rate service for the synthetic token price.
    * - If it finds the redis short-term cache, it will return the information provided by the cache.
+   * - If it did not find the redis cache, it will check if the address has been flagged as a 'bad' and return 'not found' if so.
    * - If it finds the external source, it will return the information provided by the source.
+   * - If it failed to find from source, it will temporarily cache the address as a 'bad' address so
+   *   subsequent requests will not immediately attempt to fetch again and throw an error.
    * @param symbolOrNetwork The asset symbol or network name
    * @param contract The contract address
    */
   async getTokenInfo(symbolOrNetwork: string, contract: string): Promise<TokenMetadata> {
-    const local = findInLocal(contract) || findInSynthetic(contract);
+    const local = findInLocalhost(contract) || findInSynthetic(contract);
     if (local) {
       return {
         network: symbolOrNetwork,
@@ -101,13 +104,26 @@ export class MetadataService {
       };
     }
 
-    // Check redis cache
+    // Check redis cache for existing token information
     const cached = await this.redisSrv.get(`token_info_${contract}`);
     if (cached) return Promise.resolve(JSON.parse(cached));
 
+    // Check redis cache for bad address match
+    const badAddress = await this.redisSrv.get(`bad_address_${contract}`);
+    if (badAddress) return Promise.reject(new Error('token not found'));
+
     // If not found, fetch from external source
-    const info = await this.source.getTokenInfo(symbolOrNetwork, contract);
-    if (!info) return Promise.reject(new Error('token not found'));
+    let info: TokenMetadata;
+    try {
+      info = await this.source.getTokenInfo(symbolOrNetwork, contract);
+      if (!info) return Promise.reject(new Error('token not found'));
+    } catch (e) {
+      // Cache the address as a 'bad' address so subsequent requests will not immediately attempt to fetch again.
+      // It could be the address has been de-listed from the source or it never existed.
+      // TODO: Permanently blacklist the address after a certain number of failures over a duration of time.
+      await this.redisSrv.setWithExpire(`bad_address_${contract}`, JSON.stringify({}), 60);
+      throw e;
+    }
 
     // Ensure the network is valid
     const { network } = info;

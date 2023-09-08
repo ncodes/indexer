@@ -9,8 +9,9 @@ import LiquidityProvider from '../../models/market_provider';
 import PermittedTrader from '../../models/permitted_trader';
 import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierService';
 import NetworkService from '../network.service';
-import { findInSynthetic } from '../../common/token_list';
+import { findInLocalhost, findInSynthetic } from '../../common/token_list';
 import Liquidity from '../../models/liquidity';
+import { isDevMode } from '../../common/common';
 
 export class MarketCoreHandler extends Handler {
   public logger = new Logger(MarketCoreHandler.name);
@@ -214,40 +215,49 @@ export class MarketCoreHandler extends Handler {
       baseDecimals: number,
       quoteDecimals: number;
 
-    if (Market.isERC20(baseType)) {
-      const baseToken = this.newContract(baseAsset, erc20ABI, this.provider);
-      baseSymbol = (await baseToken.symbol()).toUpperCase();
-      baseDecimals = await baseToken.decimals();
-    }
+    if (!isDevMode()) {
+      if (Market.isERC20(baseType)) {
+        const baseToken = this.newContract(baseAsset, erc20ABI, this.provider);
+        baseSymbol = (await baseToken.symbol()).toUpperCase();
+        baseDecimals = await baseToken.decimals();
+      }
 
-    if (Market.isERC20(quoteType)) {
-      const quoteToken = this.newContract(quoteAsset, erc20ABI, this.provider);
-      quoteSymbol = (await quoteToken.symbol()).toUpperCase();
-      quoteDecimals = await quoteToken.decimals();
-    }
+      if (Market.isERC20(quoteType)) {
+        const quoteToken = this.newContract(quoteAsset, erc20ABI, this.provider);
+        quoteSymbol = (await quoteToken.symbol()).toUpperCase();
+        quoteDecimals = await quoteToken.decimals();
+      }
 
-    if (Market.isERC721(baseType)) {
-      const baseToken = this.newContract(baseAsset, erc721ABI, this.provider);
-      baseSymbol = (await baseToken.symbol()).toUpperCase();
-      baseDecimals = 0;
-    }
+      if (Market.isERC721(baseType)) {
+        const baseToken = this.newContract(baseAsset, erc721ABI, this.provider);
+        baseSymbol = (await baseToken.symbol()).toUpperCase();
+        baseDecimals = 0;
+      }
 
-    if (Market.isERC721(quoteType)) {
-      const quoteToken = this.newContract(quoteAsset, erc721ABI, this.provider);
-      quoteSymbol = (await quoteToken.symbol()).toUpperCase();
-      quoteDecimals = 0;
-    }
+      if (Market.isERC721(quoteType)) {
+        const quoteToken = this.newContract(quoteAsset, erc721ABI, this.provider);
+        quoteSymbol = (await quoteToken.symbol()).toUpperCase();
+        quoteDecimals = 0;
+      }
 
-    if (Market.isSynth(baseType)) {
-      const token = findInSynthetic(baseAsset);
-      baseSymbol = token ? token.symbol.toUpperCase() : 'SYNTH_UNK';
-      baseDecimals = token ? token.decimals : 18;
-    }
+      if (Market.isSynth(baseType)) {
+        const token = findInSynthetic(baseAsset);
+        baseSymbol = token ? token.symbol.toUpperCase() : 'SYNTH_UNK';
+        baseDecimals = token ? token.decimals : 18;
+      }
 
-    if (Market.isSynth(quoteType)) {
-      const token = findInSynthetic(quoteAsset);
-      quoteSymbol = token ? token.symbol.toUpperCase() : 'SYNTH_UNK';
-      quoteDecimals = token ? token.decimals : 18;
+      if (Market.isSynth(quoteType)) {
+        const token = findInSynthetic(quoteAsset);
+        quoteSymbol = token ? token.symbol.toUpperCase() : 'SYNTH_UNK';
+        quoteDecimals = token ? token.decimals : 18;
+      }
+    } else {
+      const base = findInLocalhost(baseAsset);
+      const quote = findInLocalhost(quoteAsset);
+      baseSymbol = base.symbol;
+      baseDecimals = base.decimals;
+      quoteSymbol = quote.symbol;
+      quoteDecimals = quote.decimals;
     }
 
     await Market.create(

@@ -2,12 +2,14 @@ import { Controller, Get, Logger, Param } from '@nestjs/common';
 import { FeaturedAssets } from '../../common/featured_assets';
 import Swap from '../../models/swap';
 import { toDec } from '../../common/common';
-import { ErrServerError, ok, throw404 } from '../../common/responses/responses';
+import { ErrServerError, ok, throw400, throw404 } from '../../common/responses/responses';
 import MarketPrice from '../../models/market_price';
 import Liquidity from '../../models/liquidity';
-import { findInLocal, getTokenInfo } from '../../common/token_list';
+import { findInLocalhost, getTokenInfo, ListName, TokenLists } from '../../common/token_list';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import AssetRegistry from '../../models/asset_registry';
+import { isValidNetwork } from '../../network/common';
+import * as _ from 'lodash';
 
 @Controller('v1/assets')
 export class AssetsController {
@@ -23,20 +25,41 @@ export class AssetsController {
     const res: AssetStat[] = [];
 
     for (const fa of FeaturedAssets) {
-      const data: AssetStat = { symbol: fa.symbol, volume24h: '0', price24h: 0 };
+      const data: AssetStat = {
+        symbol: fa.symbol,
+        volume24h: '0',
+        price24h: 0,
+        lowestPrice24h: '0',
+        highestPrice24h: '0',
+      };
+
       for (const c of fa.contracts) {
-        const volume = await Swap.getVolume(c.net, undefined, c.addr, undefined, undefined, undefined, 1440);
+        const [volume, price, lowestPrice, highestPrice] = await Promise.all([
+          Swap.getVolume(c.net, undefined, c.addr, undefined, undefined, undefined, 1440),
+          c.primary ? MarketPrice.priceChangeByBaseAddress(c.net, c.addr, 24) : Promise.resolve(data.price24h),
+          c.primary ? Liquidity.getLowestPrice(c.net, undefined, c.addr, 24) : Promise.resolve(data.lowestPrice24h),
+          c.primary ? Liquidity.getHighestPrice(c.net, undefined, c.addr, 24) : Promise.resolve(data.highestPrice24h),
+        ]);
+
         data.volume24h = toDec(volume).add(data.volume24h).toString();
-        if (c.primary) {
-          data.price24h = await MarketPrice.priceChangeByBaseAddress(c.net, c.addr, 24);
-          data.lowestPrice24h = await Liquidity.getLowestPrice(c.net, undefined, c.addr, 24);
-          data.highestPrice24h = await Liquidity.getHighestPrice(c.net, undefined, c.addr, 24);
-        }
+        data.price24h = price;
+        data.lowestPrice24h = lowestPrice;
+        data.highestPrice24h = highestPrice;
       }
+
       res.push(data);
     }
 
     return ok().data(res).build();
+  }
+
+  // Get swappable token list
+  @Get('/:net')
+  async getTokenList(@Param('net') net: string) {
+    if (!isValidNetwork(net)) throw400('network is unknown');
+    const tokens = TokenLists[net as ListName].tokens;
+    const synth = TokenLists['synthetic']?.tokens;
+    return ok().data(tokens.concat(synth)).build();
   }
 
   /**
@@ -46,7 +69,7 @@ export class AssetsController {
    */
   @Get(':net/:address')
   async getAssetStats(@Param('net') net: string, @Param('address') address: string) {
-    let info = findInLocal(address);
+    let info = findInLocalhost(address);
     if (!info && net) info = getTokenInfo(net, address);
     if (!info)
       info = await this.metadataSrv.getTokenInfo(net, address).catch((e) => {

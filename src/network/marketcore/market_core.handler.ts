@@ -106,13 +106,13 @@ export class MarketCoreHandler extends Handler {
       'UpdatedDisputeDurations',
       async (
         id: string,
-        disputeDelayTime: BigNumber,
+        disputeDelayDur: BigNumber,
         evidenceDur: BigNumber,
         predictDur: BigNumber,
         event: Event,
         txn: Transaction,
       ) => {
-        return this.onUpdatedDisputeDurations(id, disputeDelayTime, evidenceDur, predictDur, event, txn);
+        return this.onUpdatedDisputeDurations(id, disputeDelayDur, evidenceDur, predictDur, event, txn);
       },
     );
 
@@ -376,7 +376,7 @@ export class MarketCoreHandler extends Handler {
   /**
    * Updated dispute durations
    * @param id The market ID
-   * @param disputeDelayTime Number of seconds before dispute can be started
+   * @param disputeDelayDur Number of seconds before dispute can be started
    * @param evidenceDur Number of seconds within which evidence must be shared
    * @param predictDur Number of seconds for votes to be committed and revealed
    * @param event The event object
@@ -384,7 +384,7 @@ export class MarketCoreHandler extends Handler {
    */
   async onUpdatedDisputeDurations(
     id: string,
-    disputeDelayTime: BigNumber,
+    disputeDelayDur: BigNumber,
     evidenceDur: BigNumber,
     predictDur: BigNumber,
     event: Event,
@@ -394,7 +394,7 @@ export class MarketCoreHandler extends Handler {
       this.network,
       id,
       {
-        disputeDelayTime: disputeDelayTime.toNumber(),
+        disputeDelayDur: disputeDelayDur.toNumber(),
         evidenceDur: evidenceDur.toNumber(),
         predictDur: predictDur.toNumber(),
       },

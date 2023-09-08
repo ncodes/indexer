@@ -456,7 +456,7 @@ describe('MarketCoreHandler', () => {
         handler.onUpdatedDisputeDurations(marketAddress, toBN(1), toBN(2), toBN(3), null),
       ).resolves.toBeUndefined();
       const updMkt = await Market.getById(mkt.id);
-      expect(updMkt.disputeDelayTime).toEqual(1);
+      expect(updMkt.disputeDelayDur).toEqual(1);
       expect(updMkt.evidenceDur).toEqual(2);
       expect(updMkt.predictDur).toEqual(3);
     });

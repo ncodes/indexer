@@ -13,6 +13,7 @@ import { pow10 } from '../../network/common';
 import { NotifierService } from '../../jobs/mailer/NotifierService';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { RedisService } from '../../services/redis.service';
+import Meta, { MetaKeys } from '../../models/meta';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -85,6 +86,9 @@ describe('MarketsService', () => {
       .compile();
 
     service = module.get<MarketService>(MarketService);
+
+    const key = Meta.makeNetKey(net, MetaKeys.ContractsParams);
+    await Meta.update(key, JSON.stringify({}));
   });
 
   describe('.extendMarket', () => {

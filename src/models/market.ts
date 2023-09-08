@@ -74,7 +74,7 @@ export default class Market extends BaseModel {
   // Indicates the swap operation is permissioned or not
   permSwap: boolean = undefined;
   // Number of seconds before dispute can be started
-  disputeDelayTime: number = undefined;
+  disputeDelayDur: number = undefined;
   // Number of seconds within which evidence must be shared
   evidenceDur: number = undefined;
   // Number of seconds for votes to be committed and revealed

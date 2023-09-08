@@ -28,7 +28,7 @@ exports.up = function (knex) {
       table.decimal('amountSwapped', null).defaultTo(0);
       table.boolean('permPut').defaultTo(false);
       table.boolean('permSwap').defaultTo(false);
-      table.integer('disputeDelayTime');
+      table.integer('disputeDelayDur');
       table.integer('evidenceDur');
       table.integer('predictDur');
       table.decimal('totalLiquidity', null).defaultTo(0);

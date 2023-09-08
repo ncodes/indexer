@@ -151,7 +151,11 @@ export default class Meta extends BaseModel {
    * @param param The name of the parameter
    * @param txn The transaction object
    */
-  static async getContractParam(network: string, param: keyof ContractsParams, txn?: Transaction): Promise<string> {
+  static async getContractParam<T extends keyof ContractsParams>(
+    network: string,
+    param: T,
+    txn?: Transaction,
+  ): Promise<ContractsParams[T]> {
     const key = Meta.makeNetKey(network, MetaKeys.ContractsParams);
     const existing = await Meta.get(key, txn);
     if (!existing) throw new Error('Contracts params not initialized');

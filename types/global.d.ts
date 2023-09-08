@@ -154,8 +154,11 @@ declare global {
     transferToFeePoolInterval: number;
     nftDiscountBP: number;
 
+    // Market core params
+    defaultDisputeDelayDur: number;
+
     // Market manager params
-    baseTicketPrice: number;
+    baseTicketPrice: string;
     ticketWindowDur: number;
     ticketsPerWindow: number;
     ticketSupply: number;
@@ -169,26 +172,20 @@ declare global {
     loseVoteSlashBP: number;
 
     // Dispute manager params
-    rewardWindowAlloc: BigNumber;
-    rewardWindowDur: number;
-    redeemWindowRewardDur: number;
     predictDur: number;
-    appealDur: number;
     evidenceDur: number;
-    disputeCost: number;
-    maxMediatorPerDispute: number;
 
     // Chainlink params
-    chainlinkKeyHash: string;
-    chainlinkCoordinator: string;
-    chainlinkSubId: number;
+    chainlinkKeyHash?: string;
+    chainlinkCoordinator?: string;
+    chainlinkSubId?: number;
 
     // Operator params
-    operatorBond: BigNumber;
+    operatorBond: string;
 
     // Others
-    safe: string;
-    allocatorAddr: string;
+    safe?: string;
+    allocatorAddr?: string;
   }
 
   export interface InstantSwapNotificationData {

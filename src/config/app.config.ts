@@ -1,27 +1,31 @@
-import * as process from 'process';
+import { parseInt } from 'lodash';
 
-function getContractsParams() {
+function getContractsParams(): ContractsParams {
   return {
-    defaultDisputeDelayDur: process.env[`MC_DEFAULT_DISPUTE_DELAY_DUR`],
-    minTimeToPay: process.env[`OC_MIN_TIME_TO_PAY`],
-    orderGraceDur: process.env[`OC_ORDER_GRACE_DUR`],
-    maxOpenOrders: process.env[`OC_MAX_OPEN_ORDERS`],
-    maxOpenDisputes: process.env[`OC_MAX_OPEN_DISPUTES`],
-    transferToFeePoolInterval: process.env[`OC_TRANSFER_TO_FEE_POOL_INTERVAL`],
+    defaultDisputeDelayDur: parseInt(process.env[`MC_DEFAULT_DISPUTE_DELAY_DUR`]),
+    minTimeToPay: parseInt(process.env[`OC_MIN_TIME_TO_PAY`]),
+    orderGraceDur: parseInt(process.env[`OC_ORDER_GRACE_DUR`]),
+    maxOpenOrders: parseInt(process.env[`OC_MAX_OPEN_ORDERS`]),
+    maxOpenDisputes: parseInt(process.env[`OC_MAX_OPEN_DISPUTES`]),
+    transferToFeePoolInterval: parseInt(process.env[`OC_TRANSFER_TO_FEE_POOL_INTERVAL`]),
+    nftDiscountBP: parseInt(process.env[`OC_NFT_DISCOUNT_BP`]),
+
     baseTicketPrice: process.env[`MM_BASE_TICKET_PRICE`],
-    ticketWindowDur: process.env[`MM_TICKET_WINDOW_DUR`],
-    ticketsPerWindow: process.env[`MM_TICKETS_PER_WINDOW`],
-    ticketSupply: process.env[`MM_TICKET_SUPPLY`],
-    priceSupplyDeltaBP: process.env[`MM_PRICE_SUPPLY_DELTA_BP`],
-    minInactiveWindowBeforeReset: process.env[`MM_MIN_INACTIVE_WINDOW_BEFORE_RESET`],
-    soldOutBP: process.env[`MM_SOLD_OUT_BP`],
-    ticketMatureDur: process.env[`MM_TICKET_MATURE_DUR`],
-    ticketCancelDur: process.env[`MM_TICKET_CANCEL_DUR`],
-    ticketExpireDur: process.env[`MM_TICKET_EXPIRE_DUR`],
-    noVoteSlashBP: process.env[`MM_NO_VOTE_SLASH_BP`],
-    loseVoteSlashBP: process.env[`MM_LOSE_VOTE_SLASH_BP`],
-    evidenceDur: process.env[`DM_EVIDENCE_DUR`],
-    predictDur: process.env[`DM_PREDICT_DUR`],
+    ticketWindowDur: parseInt(process.env[`MM_TICKET_WINDOW_DUR`]),
+    ticketsPerWindow: parseInt(process.env[`MM_TICKETS_PER_WINDOW`]),
+    ticketSupply: parseInt(process.env[`MM_TICKET_SUPPLY`]),
+    priceSupplyDeltaBP: parseInt(process.env[`MM_PRICE_SUPPLY_DELTA_BP`]),
+    minInactiveWindowBeforeReset: parseInt(process.env[`MM_MIN_INACTIVE_WINDOW_BEFORE_RESET`]),
+    soldOutBP: parseInt(process.env[`MM_SOLD_OUT_BP`]),
+    ticketMatureDur: parseInt(process.env[`MM_TICKET_MATURE_DUR`]),
+    ticketCancelDur: parseInt(process.env[`MM_TICKET_CANCEL_DUR`]),
+    ticketExpireDur: parseInt(process.env[`MM_TICKET_EXPIRE_DUR`]),
+    noVoteSlashBP: parseInt(process.env[`MM_NO_VOTE_SLASH_BP`]),
+    loseVoteSlashBP: parseInt(process.env[`MM_LOSE_VOTE_SLASH_BP`]),
+
+    evidenceDur: parseInt(process.env[`DM_EVIDENCE_DUR`]),
+    predictDur: parseInt(process.env[`DM_PREDICT_DUR`]),
+
     operatorBond: process.env[`OP_OPERATOR_BOND`],
   };
 }

@@ -932,7 +932,8 @@ export class CoreHandler extends Handler {
   ) {
     // Add a task for the future
     const block = await event.getBlock();
-    const mineAt = block.timestamp + parseInt(await Meta.getContractParam(this.network, 'transferToFeePoolInterval'));
+    const mineAt =
+      block.timestamp + ((await Meta.getContractParam(this.network, 'transferToFeePoolInterval')) as number);
     await MineTask.create(
       {
         type: MineTaskType.FeeTransfer,

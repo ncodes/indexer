@@ -64,11 +64,11 @@ describe('MediatorManagerHandler', () => {
     await Meta.create(
       Meta.makeNetKey(net, MetaKeys.ContractsParams),
       JSON.stringify({
-        ticketCancelDur: '604800',
-        ticketExpireDur: '172800',
-        predictDur: '2',
-        evidenceDur: '2',
-      }),
+        ticketCancelDur: 604800,
+        ticketExpireDur: 172800,
+        predictDur: 2,
+        evidenceDur: 2,
+      } as Partial<ContractsParams>),
     );
   });
 
@@ -238,12 +238,12 @@ describe('MediatorManagerHandler', () => {
       const unix = moment.unix;
       dispute = await Dispute.getById(dispute.id);
       expect(dispute.numMediatorsDrafted).toEqual(1);
-      const evidEndAt = now + parseInt(await Meta.getContractParam(net, 'evidenceDur'));
+      const evidEndAt = now + ((await Meta.getContractParam(net, 'evidenceDur')) as number);
       expect(unix(evidEndAt).isSame(dispute.evidenceEndAt)).toBeTruthy();
-      const expectedCommitEndAt = evidEndAt + parseInt(await Meta.getContractParam(net, 'predictDur')) / 2;
+      const expectedCommitEndAt = evidEndAt + ((await Meta.getContractParam(net, 'predictDur')) as number) / 2;
       expect(unix(expectedCommitEndAt).isSame(dispute.commitEndAt)).toBeTruthy();
       expect(
-        unix(evidEndAt + parseInt(await Meta.getContractParam(net, 'predictDur'))).isSame(dispute.predictEndAt),
+        unix((evidEndAt + (await Meta.getContractParam(net, 'predictDur'))) as number).isSame(dispute.predictEndAt),
       ).toBeTruthy();
 
       const event = await Event.find({ action: Events.SwapDrafted });
@@ -508,7 +508,7 @@ describe('MediatorManagerHandler', () => {
       expect(ticket.orderId).toBeNull();
       expect(ticket.joined).toBeFalsy();
       expect(ticket.poolId).toEqual(null);
-      const expectedLeaveAt = moment.unix(now + parseInt(await Meta.getContractParam(net, 'ticketExpireDur')));
+      const expectedLeaveAt = moment.unix(now + ((await Meta.getContractParam(net, 'ticketExpireDur')) as number));
       expect(moment(ticket.joinBy).unix()).toEqual(expectedLeaveAt.unix());
 
       const slash = await TicketSlash.find({

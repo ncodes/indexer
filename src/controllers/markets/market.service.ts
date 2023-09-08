@@ -6,6 +6,7 @@ import Swap from '../../models/swap';
 import * as _ from 'lodash';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { handleAxiosError } from '../../common/errors/http_response_error';
+import Meta from '../../models/meta';
 
 @Injectable()
 export class MarketService {
@@ -114,6 +115,18 @@ export class MarketService {
         } catch (e) {
           this.logger.error('failed to fetch token info: ' + baseAddress);
         }
+      }
+
+      if (!market.disputeDelayDur) {
+        market.disputeDelayDur = await Meta.getContractParam(market.network, 'defaultDisputeDelayDur');
+      }
+
+      if (!market.evidenceDur) {
+        market.evidenceDur = await Meta.getContractParam(market.network, 'evidenceDur');
+      }
+
+      if (!market.predictDur) {
+        market.predictDur = await Meta.getContractParam(market.network, 'predictDur');
       }
 
       return Promise.resolve();

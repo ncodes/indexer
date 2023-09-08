@@ -1874,14 +1874,14 @@ describe('CoreHandler', () => {
     it('should throw error if contract params metadata has not been initialized', async () => {
       const key = Meta.makeNetKey(net, MetaKeys.ContractsParams);
       await Meta.update(key, '');
-      await expect(handler.onParameterUpdate('appealDur', '1', {} as any)).rejects.toThrow(
+      await expect(handler.onParameterUpdate('evidenceDur', '1', {} as any)).rejects.toThrow(
         'Contracts params not initialized',
       );
     });
 
     it('should update contract params correctly', async () => {
-      await expect(handler.onParameterUpdate('appealDur', '1', {} as any)).resolves.toBeUndefined();
-      const value = await Meta.getContractParam(net, 'appealDur');
+      await expect(handler.onParameterUpdate('evidenceDur', '1', {} as any)).resolves.toBeUndefined();
+      const value = await Meta.getContractParam(net, 'evidenceDur');
       expect(value).toEqual('1');
     });
   });

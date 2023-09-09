@@ -3,7 +3,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_defaultDisputeDelayTime",
+        "name": "_defaultDisputeDelayDur",
         "type": "uint256"
       }
     ],
@@ -151,6 +151,25 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "internalType": "address",
+        "name": "id",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "RenouncedMarket",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
         "internalType": "address",
         "name": "id",
@@ -252,7 +271,7 @@
         "type": "uint256"
       }
     ],
-    "name": "UpdatedDefaultDisputeDelayTime",
+    "name": "UpdatedDefaultDisputeDelayDur",
     "type": "event"
   },
   {
@@ -267,7 +286,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "disputeDelayTime",
+        "name": "disputeDelayDur",
         "type": "uint256"
       },
       {
@@ -438,7 +457,7 @@
   },
   {
     "inputs": [],
-    "name": "defaultDisputeDelayTime",
+    "name": "defaultDisputeDelayDur",
     "outputs": [
       {
         "internalType": "uint256",
@@ -495,7 +514,7 @@
             "components": [
               {
                 "internalType": "uint256",
-                "name": "disputeDelayTime",
+                "name": "disputeDelayDur",
                 "type": "uint256"
               },
               {
@@ -741,7 +760,7 @@
         "components": [
           {
             "internalType": "uint256",
-            "name": "disputeDelayTime",
+            "name": "disputeDelayDur",
             "type": "uint256"
           },
           {
@@ -908,10 +927,42 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "id",
+        "type": "address"
+      }
+    ],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "renounceOwnership",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "renouncedMarkets",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -1080,7 +1131,7 @@
         "type": "uint256"
       }
     ],
-    "name": "setDefaultDisputeDelayTime",
+    "name": "setDefaultDisputeDelayDuration",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1094,7 +1145,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "disputeDelayTime",
+        "name": "disputeDelayDur",
         "type": "uint256"
       },
       {
@@ -1174,7 +1225,7 @@
             "components": [
               {
                 "internalType": "uint256",
-                "name": "disputeDelayTime",
+                "name": "disputeDelayDur",
                 "type": "uint256"
               },
               {

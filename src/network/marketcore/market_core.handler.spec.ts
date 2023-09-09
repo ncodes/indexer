@@ -277,6 +277,15 @@ describe('MarketCoreHandler', () => {
     });
   });
 
+  describe('.onRenouncedMarket', () => {
+    it('should update creator', async () => {
+      let market = await Market.create({ network: net, address: marketAddress, creator });
+      await expect(handler.onRenouncedMarket(market.address, creator, null)).resolves.toBeUndefined();
+      market = await Market.getById(market.id);
+      expect(market.renounced).toEqual(true);
+    });
+  });
+
   describe('.onOfferOnlyEnabled', () => {
     it('should update creator', async () => {
       let market = await Market.create({ network: net, address: marketAddress });

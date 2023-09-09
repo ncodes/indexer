@@ -73,6 +73,8 @@ export default class Market extends BaseModel {
   permPut: boolean = undefined;
   // Indicates the swap operation is permissioned or not
   permSwap: boolean = undefined;
+  // Indicates the market creator renounced ownership
+  renounced: boolean;
   // Number of seconds before dispute can be started
   disputeDelayDur: number = undefined;
   // Number of seconds within which evidence must be shared

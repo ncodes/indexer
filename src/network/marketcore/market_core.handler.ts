@@ -91,6 +91,10 @@ export class MarketCoreHandler extends Handler {
       return this.onTransferredOwnership(id, oldOwner, newOwner, event);
     });
 
+    this.on('RenouncedMarket', async (id: string, renouncer: string, event: Event) => {
+      return this.onRenouncedMarket(id, renouncer, event);
+    });
+
     this.on('ZeroPriceEnabled', async (id: string, event: Event) => {
       return this.onZeroPriceEnabled(id, event);
     });
@@ -167,6 +171,17 @@ export class MarketCoreHandler extends Handler {
    */
   async onTransferredOwnership(id: string, oldOwner: string, newOwner: string, event: Event, txn?: Transaction) {
     await Market.updateByNetworkAddress(this.network, id, { creator: newOwner }, txn);
+  }
+
+  /**
+   * Renounced ownership of a market
+   * @param id The market ID
+   * @param _renouncer The renouncer's address
+   * @param _event The event object
+   * @param txn The db transaction object
+   */
+  async onRenouncedMarket(id: string, _renouncer: string, _event: Event, txn?: Transaction) {
+    await Market.updateByNetworkAddress(this.network, id, { renounced: true }, txn);
   }
 
   /**

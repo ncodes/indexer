@@ -27,6 +27,7 @@ exports.up = function (knex) {
       table.float('disputeRate').defaultTo(0);
       table.decimal('amountSwapped', null).defaultTo(0);
       table.boolean('permPut').defaultTo(false);
+      table.boolean('renounced').defaultTo(false);
       table.boolean('permSwap').defaultTo(false);
       table.integer('disputeDelayDur');
       table.integer('evidenceDur');

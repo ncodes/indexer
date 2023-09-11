@@ -68,7 +68,7 @@ export class MiscController {
    */
   @Get('contracts-address')
   async getContractAddresses() {
-    return ok().data(this.cfgSrv.get('app.networks')).build();
+    return ok().data(this.cfgSrv.get('app.contractsAddress')).build();
   }
 
   /**

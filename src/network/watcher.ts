@@ -188,6 +188,7 @@ export class Watcher {
   async emit(e: Evt) {
     const txn = await ChainEvent.startTransaction();
     const args = [...e.event.args.slice(0, e.event.args.length), e.event, txn];
+
     try {
       await ChainEvent.bindTransaction(txn).create({
         network: this.network,
@@ -196,13 +197,20 @@ export class Watcher {
         txIndex: e.event.transactionIndex,
         logIndex: e.event.logIndex,
       });
-      this.logger.debug(`Event:${e.event.event}: processing an event...`);
+
+      this.logger.debug(`(Event:${e.event.event}, Contract: ${shortenAddr(e.contract)}): processing an event...`);
       await this.getHandler(e.contract).emitAsync(e.event.event, ...args);
       await txn.commit();
-      this.logger.debug(`Event:${e.event.event}: finished processing an event`);
+
+      this.logger.debug(`(Event:${e.event.event}, Contract: ${shortenAddr(e.contract)}): finished processing an event`);
     } catch (error) {
       await txn.rollback();
-      if (error.message.indexOf('duplicate key') !== -1) return Promise.resolve();
+
+      if (error.message.indexOf('duplicate key') !== -1 && error.message.indexOf(ChainEvent.tableName) !== -1) {
+        this.logger.debug(`(Event: ${e.event.event}, Contract: ${shortenAddr(e.contract)}): Previously seen event`);
+        return Promise.resolve();
+      }
+
       this.logger.error(`Error (Event: ${e.event.event}, Contract: ${shortenAddr(e.contract)}): ${error.message}`);
       return Promise.reject(error);
     }

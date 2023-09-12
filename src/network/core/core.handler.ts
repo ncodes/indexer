@@ -779,14 +779,14 @@ export class CoreHandler extends Handler {
    * @param orderId The new order ID (non-zero)
    * @param canceller The order canceller's address
    * @param byDispute Indicates whether the order was cancelled by dispute
-   * @param event The event object
+   * @param _event The event object
    * @param txn The transaction object
    */
   async onOrderCancelled(
     orderId: BigNumber,
     canceller: string,
     byDispute: boolean,
-    event: ChainEvent,
+    _event: ChainEvent,
     txn?: Transaction,
   ) {
     const now = moment();
@@ -1098,7 +1098,7 @@ export class CoreHandler extends Handler {
   }
 
   /**
-   * Non-fungible market liquidity was updated
+   * Fungible market liquidity was updated
    * @param provider The liquidity owner address
    * @param marketAddress The market ID
    * @param target The target of the liquidity
@@ -1805,10 +1805,10 @@ export class CoreHandler extends Handler {
    * Updated a parameter
    * @param param The parameter name
    * @param value The updated value
-   * @param event The event object
+   * @param _event The event object
    * @param txn The transaction object
    */
-  async onParameterUpdate(param: keyof ContractsParams, value: string, event: ChainEvent, txn?: Transaction) {
+  async onParameterUpdate(param: keyof ContractsParams, value: string, _event: ChainEvent, txn?: Transaction) {
     await Meta.updateContractsParams(this.network, txn, (params) => (params[param] = value));
   }
 }

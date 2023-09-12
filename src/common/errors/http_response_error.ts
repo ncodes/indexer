@@ -11,7 +11,7 @@ export class RequestError extends Error {
   };
 }
 
-export function handleAxiosError(error: { response: AxiosResponse; request: unknown }): RequestError {
+export function handleAxiosError(error: any): RequestError {
   if (error.response) {
     return new RequestError(error.response.status, (error.response as AxiosResponse).data);
   } else if (error.request) {

@@ -2,6 +2,8 @@ import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Logge
 import express from 'express';
 import { isProdMode } from '../common';
 import { error, ErrorTypes } from '../responses/responses';
+import { isAxiosError } from 'axios';
+import { handleAxiosError } from '../errors/http_response_error';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -17,7 +19,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     let msg = (e as Error).message;
     if (isProdMode()) {
-      this.logger.error(msg);
+      this.logger.error(isAxiosError(e) ? handleAxiosError(e).message : msg);
       msg = 'server error';
     }
 

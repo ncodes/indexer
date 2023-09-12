@@ -12,7 +12,6 @@ import * as mediatorManagerABI from '../../abi/MediatorManager.json';
 import * as tokenPoolABI from '../../abi/TokenPool.json';
 import * as p2pTokenABI from '../../abi/Token.json';
 import * as erc20TokenABI from '../../abi/ERC20.json';
-import { SupportedNetworks } from './common';
 import { CoreHandler } from './core/core.handler';
 import { DisputeManagerHandler } from './disputemanager/dispute_manager.handler';
 import { FeePoolHandler } from './feepool/fee_pool.handler';
@@ -40,6 +39,7 @@ import {
 import Meta, { MetaKeys } from '../models/meta';
 import { MetadataService } from '../services/metadata/metadata.service';
 import { ExchangeRateService } from '../services/exchange_rate.service';
+import { TokenPoolHandler } from './tokenpool/token_pool.handler';
 
 @Injectable()
 export default class NetworkService {
@@ -175,7 +175,7 @@ export default class NetworkService {
       new DisputeManagerHandler(this, this.notifSrv, prov, network, this.contracts[network]),
       new CoreHandler(this, this.notifSrv, this.metadataSrv, this.exrSrv, prov, network, this.contracts[network]),
       new BadgeManagerHandler(prov, network, this.contracts[network]),
-      // new TokenPoolHandler(prov, network, this.contracts[network]),
+      new TokenPoolHandler(prov, network, this.contracts[network]),
       new LPPoolHandler(prov, network, this.contracts[network]),
       new FeePoolHandler(prov, network, this.contracts[network]),
       new AssetRegistryHandler(prov, network, this.contracts[network]),

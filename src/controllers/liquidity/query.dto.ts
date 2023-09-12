@@ -53,6 +53,11 @@ export class ListQueryDTO {
   @IsOptional()
   public quote?: string;
 
+  @Transform(({ value }) => toBoolean(value))
+  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'paused') })
+  @IsOptional()
+  public paused?: boolean;
+
   @Matches(/^[<>]?[0-9]+$/, {
     message: makeValidatorMsg(`must be a number (optionally preceded by '>' or '<')`, 'amount'),
   })

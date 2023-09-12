@@ -44,6 +44,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         0.4,
         undefined,
         undefined,
@@ -61,6 +62,7 @@ describe('Liquidity', () => {
       await Liquidity.create({ network: net, marketAddress, amount: powOf(1000, 18).toString() });
       const res = await Liquidity.search(
         net,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -103,6 +105,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
       );
       expect(res).toHaveLength(0);
     });
@@ -111,6 +114,7 @@ describe('Liquidity', () => {
       await Liquidity.create({ network: net, amount: '1', paused: true });
       const res = await Liquidity.search(
         net,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -137,6 +141,7 @@ describe('Liquidity', () => {
       await Liquidity.create({ network: 'net2', amount: '1' });
       const res = await Liquidity.search(
         net,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -181,6 +186,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
       );
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(liq.id);
@@ -208,6 +214,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
       );
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(liq.id);
@@ -218,6 +225,7 @@ describe('Liquidity', () => {
       const liq2 = await Liquidity.create({ network: net, marketAddress, amount: '1', openDisputes: 2 });
       const res = await Liquidity.search(
         net,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -269,6 +277,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         '10',
         undefined,
         undefined,
@@ -293,6 +302,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         '<9',
         undefined,
         undefined,
@@ -311,6 +321,7 @@ describe('Liquidity', () => {
 
       res = await Liquidity.search(
         net,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -364,6 +375,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         '10',
         undefined,
         undefined,
@@ -388,6 +400,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         '<9',
         undefined,
         undefined,
@@ -405,6 +418,7 @@ describe('Liquidity', () => {
 
       res = await Liquidity.search(
         net,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -458,6 +472,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         1,
         undefined,
         undefined,
@@ -496,6 +511,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         1,
         0,
         undefined,
@@ -506,6 +522,7 @@ describe('Liquidity', () => {
 
       res = await Liquidity.search(
         net,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -533,6 +550,7 @@ describe('Liquidity', () => {
       const liq2 = await Liquidity.create({ network: net, marketAddress, amount: '1', provider: '0xProvider2' });
       let res = await Liquidity.search(
         net,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -575,6 +593,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         ['kyc'],
         undefined,
         undefined,
@@ -587,6 +606,7 @@ describe('Liquidity', () => {
 
       res = await Liquidity.search(
         net,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -621,6 +641,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         ['kyc/%'],
         undefined,
         undefined,
@@ -644,6 +665,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         ['merchant'],
         undefined,
         undefined,
@@ -656,6 +678,7 @@ describe('Liquidity', () => {
 
       res = await Liquidity.search(
         net,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -708,6 +731,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
         ['kyc', 'merchant'],
         undefined,
         undefined,
@@ -720,6 +744,7 @@ describe('Liquidity', () => {
 
       res = await Liquidity.search(
         net,
+        undefined,
         undefined,
         undefined,
         undefined,

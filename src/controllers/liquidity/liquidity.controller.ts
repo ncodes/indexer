@@ -138,6 +138,7 @@ export class LiquidityController {
         q.base,
         q.quote,
         q.provider,
+        q.paused,
         maxOpenDisputes,
         q.amount,
         q.price,

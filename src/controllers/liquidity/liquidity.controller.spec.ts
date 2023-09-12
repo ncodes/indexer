@@ -358,7 +358,7 @@ describe('LiquidityController', () => {
           });
       });
 
-      it('should return 200 and the correct liquidity records when no' + ' provider was set', async () => {
+      it('should return 200 and the correct liquidity records when no provider was set', async () => {
         await Liquidity.create({
           network: net,
           provider: '0xProvider',
@@ -422,6 +422,62 @@ describe('LiquidityController', () => {
             expect(res.body.data[0].id).toEqual(liq.id);
             expect(mockExtendLiquidity).toHaveBeenCalled();
             expect(mockExtendMarket).toHaveBeenCalled();
+          });
+      });
+    });
+
+    describe('paused is set', () => {
+      it('should return 200 and the correct liquidity records', async () => {
+        const liq = await Liquidity.create({
+          network: net,
+          provider: '0xProvider',
+          amount: '10',
+          marketAddress,
+          paused: false,
+        });
+        const liq2 = await Liquidity.create({
+          network: net,
+          provider: '0xProvider2',
+          amount: '10',
+          marketAddress,
+          paused: true,
+        });
+
+        const mockExtendLiquidity = jest
+          .spyOn(app.get(LiquidityService), 'extendLiquidity')
+          .mockResolvedValue(undefined);
+
+        const mockExtendMarket = jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
+
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities`)
+          .query({ net, paused: true })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(liq2.id);
+            expect(mockExtendLiquidity).toHaveBeenCalled();
+            expect(mockExtendMarket).toHaveBeenCalled();
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities`)
+          .query({ net, paused: false })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(liq.id);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities`)
+          .query({ net })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(2);
           });
       });
     });

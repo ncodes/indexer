@@ -252,6 +252,7 @@ export default class Liquidity extends BaseModel {
    * @param base Filter by base token address (optional)
    * @param quote Filter by quote token address (optional)
    * @param provider Filter by provider address (optional)
+   * @param paused Filter by paused status (optional)
    * @param maxOpenDisputes Allow only records with lower open disputes
    * @param amount Filter by swap amount
    * @param price Filter by price
@@ -272,6 +273,7 @@ export default class Liquidity extends BaseModel {
     base: string,
     quote: string,
     provider: string,
+    paused: boolean,
     maxOpenDisputes: number,
     amount: string,
     price: string,
@@ -329,7 +331,6 @@ export default class Liquidity extends BaseModel {
       .select(...select, raw('count(*) over() as' + ' "$queryCount"'))
       .whereNotDeleted()
       .where('s.network', network)
-      .where('s.paused', false)
       .where((q) => {
         if (!provider) return q.where('s.amount', '>', '0');
       });
@@ -352,6 +353,10 @@ export default class Liquidity extends BaseModel {
 
     if (provider) {
       q = q.where('s.provider', 'ILIKE', provider);
+    }
+
+    if (paused != undefined) {
+      q = q.where('s.paused', paused);
     }
 
     if (maxOpenDisputes) {

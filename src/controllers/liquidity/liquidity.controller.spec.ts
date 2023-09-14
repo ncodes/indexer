@@ -621,6 +621,7 @@ describe('LiquidityController', () => {
           provider: '0xProvider',
           marketAddress,
           amount: powOf(10, 18).toString(),
+          createdAt: moment().subtract(1, 'day').toISOString(),
         });
 
         const liq2 = await Liquidity.create({
@@ -628,6 +629,7 @@ describe('LiquidityController', () => {
           provider: '0xProvider2',
           marketAddress,
           amount: powOf(20, 18).toString(),
+          createdAt: moment().toISOString(),
         });
 
         const mockExtendLiquidity = jest

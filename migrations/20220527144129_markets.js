@@ -14,7 +14,7 @@ exports.up = function (knex) {
       table.integer('quoteType').defaultTo(0);
       table.integer('quoteDecimals').defaultTo(0);
       table.boolean('instant').defaultTo(false);
-      table.boolean('allowZeroPrice').defaultTo(false);
+      table.boolean('enabledZeroOfferPrice').defaultTo(false);
       table.boolean('offerOnly').defaultTo(false);
       table.string('pair');
       table.string('network');

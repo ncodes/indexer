@@ -259,12 +259,12 @@ describe('MarketCoreHandler', () => {
     });
   });
 
-  describe('.onZeroPriceEnabled', () => {
-    it('should set allowZeroPrice to true', async () => {
+  describe('.onEnabledZeroOfferPrice', () => {
+    it('should set enabledZeroOfferPrice to true', async () => {
       let market = await Market.create({ network: net, address: marketAddress });
-      await expect(handler.onZeroPriceEnabled(market.address, null)).resolves.toBeUndefined();
+      await expect(handler.onEnabledZeroOfferPrice(market.address, null)).resolves.toBeUndefined();
       market = await Market.getById(market.id);
-      expect(market.allowZeroPrice).toBeTruthy();
+      expect(market.enabledZeroOfferPrice).toBeTruthy();
     });
   });
 

@@ -43,8 +43,8 @@ export default class Market extends BaseModel {
   quoteType: AssetType = undefined;
   // Indicates whether this is an instant market
   instant: boolean = undefined;
-  // Indicates that liquidities can have zero price
-  allowZeroPrice: boolean = undefined;
+  // Indicates that offers can have zero price
+  enabledZeroOfferPrice: boolean = undefined;
   // Indicates that all liquidity can be accessed only via offer
   offerOnly: boolean = undefined;
   // The base/asset pair name

@@ -1204,7 +1204,7 @@ export class CoreHandler extends Handler {
       const ch: Partial<Liquidity> = {};
       const mktCh: Partial<Market> = {};
 
-      if (liq.amount !== amount.toString()) {
+      if (!amount.isZero()) {
         ch.amount = deduct ? toBN(liq.amount).sub(amount).toString() : toBN(liq.amount).add(amount).toString();
         mktCh.totalLiquidity = deduct
           ? toBN(market.totalLiquidity).sub(amount).toString()

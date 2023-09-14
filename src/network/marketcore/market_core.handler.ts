@@ -95,8 +95,8 @@ export class MarketCoreHandler extends Handler {
       return this.onRenouncedMarket(id, renouncer, event);
     });
 
-    this.on('ZeroPriceEnabled', async (id: string, event: Event) => {
-      return this.onZeroPriceEnabled(id, event);
+    this.on('EnabledZeroOfferPrice', async (id: string, event: Event) => {
+      return this.onEnabledZeroOfferPrice(id, event);
     });
 
     this.on(
@@ -157,8 +157,8 @@ export class MarketCoreHandler extends Handler {
    * @param event The event object
    * @param txn The db transaction object
    */
-  async onZeroPriceEnabled(id: string, event: Event, txn?: Transaction) {
-    await Market.updateByNetworkAddress(this.network, id, { allowZeroPrice: true }, txn);
+  async onEnabledZeroOfferPrice(id: string, event: Event, txn?: Transaction) {
+    await Market.updateByNetworkAddress(this.network, id, { enabledZeroOfferPrice: true }, txn);
   }
 
   /**

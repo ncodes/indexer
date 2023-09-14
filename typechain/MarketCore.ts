@@ -12,19 +12,10 @@ import type {
   PopulatedTransaction,
   Signer,
   utils,
-} from "ethers";
-import type {
-  FunctionFragment,
-  Result,
-  EventFragment,
-} from "@ethersproject/abi";
-import type { Listener, Provider } from "@ethersproject/providers";
-import type {
-  TypedEventFilter,
-  TypedEvent,
-  TypedListener,
-  OnEvent,
-} from "./common";
+} from 'ethers';
+import type { FunctionFragment, Result, EventFragment } from '@ethersproject/abi';
+import type { Listener, Provider } from '@ethersproject/providers';
+import type { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from './common';
 
 export declare namespace Structs {
   export type MarketDurStruct = {
@@ -87,7 +78,7 @@ export declare namespace Structs {
     string,
     Structs.AssetStructOutput,
     Structs.AssetStructOutput,
-    Structs.MarketPermsStructOutput
+    Structs.MarketPermsStructOutput,
   ] & {
     createdAt: BigNumber;
     numOrders: BigNumber;
@@ -106,343 +97,200 @@ export declare namespace Structs {
 
 export interface MarketCoreInterface extends utils.Interface {
   functions: {
-    "allowZeroOfferPrice(address)": FunctionFragment;
-    "badge()": FunctionFragment;
-    "createMarket(address,address,uint8,uint8,bool,bool,uint256,uint256)": FunctionFragment;
-    "defaultDisputeDelayTime()": FunctionFragment;
-    "getMarket(address)": FunctionFragment;
-    "getReqBadges(address)": FunctionFragment;
-    "hasMarket(address)": FunctionFragment;
-    "isPutPermitted(address,address)": FunctionFragment;
-    "isSwapPermitted(address,address)": FunctionFragment;
-    "markAsOfferOnly(address)": FunctionFragment;
-    "markets(address)": FunctionFragment;
-    "owner()": FunctionFragment;
-    "permitPut(address,address)": FunctionFragment;
-    "permitSwap(address,address)": FunctionFragment;
-    "putAllowList(address,address)": FunctionFragment;
-    "renounceOwnership()": FunctionFragment;
-    "reqPutBadges(address,uint256,uint256)": FunctionFragment;
-    "reqSwapBadges(address,uint256,uint256)": FunctionFragment;
-    "revokePut(address,address)": FunctionFragment;
-    "revokeSwap(address,address)": FunctionFragment;
-    "setBadgeMgr(address)": FunctionFragment;
-    "setCommission(address,uint256)": FunctionFragment;
-    "setCounters(address,bool,bool,bool,uint256)": FunctionFragment;
-    "setDefaultDisputeDelayTime(uint256)": FunctionFragment;
-    "setDisputeDurations(address,uint256,uint256,uint256)": FunctionFragment;
-    "setManager(address,address)": FunctionFragment;
-    "setMarket(address,(uint256,uint256,uint256,uint256,uint256,uint256,(uint256,uint256,uint256),address,address,(address,uint8),(address,uint8),(bool,bool,bool,bool)))": FunctionFragment;
-    "setRequiredBadges(address,string[2][],string[2][])": FunctionFragment;
-    "swapAllowList(address,address)": FunctionFragment;
-    "transferOwnership(address,address)": FunctionFragment;
-    "transferOwnership(address)": FunctionFragment;
-    "updateWriter(address,bool)": FunctionFragment;
-    "writers(address)": FunctionFragment;
+    'allowZeroOfferPrice(address)': FunctionFragment;
+    'badge()': FunctionFragment;
+    'createMarket(address,address,uint8,uint8,bool,bool,uint256,uint256)': FunctionFragment;
+    'defaultDisputeDelayTime()': FunctionFragment;
+    'getMarket(address)': FunctionFragment;
+    'getReqBadges(address)': FunctionFragment;
+    'hasMarket(address)': FunctionFragment;
+    'isPutPermitted(address,address)': FunctionFragment;
+    'isSwapPermitted(address,address)': FunctionFragment;
+    'markAsOfferOnly(address)': FunctionFragment;
+    'markets(address)': FunctionFragment;
+    'owner()': FunctionFragment;
+    'permitPut(address,address)': FunctionFragment;
+    'permitSwap(address,address)': FunctionFragment;
+    'putAllowList(address,address)': FunctionFragment;
+    'renounceOwnership()': FunctionFragment;
+    'reqPutBadges(address,uint256,uint256)': FunctionFragment;
+    'reqSwapBadges(address,uint256,uint256)': FunctionFragment;
+    'revokePut(address,address)': FunctionFragment;
+    'revokeSwap(address,address)': FunctionFragment;
+    'setBadgeMgr(address)': FunctionFragment;
+    'setCommission(address,uint256)': FunctionFragment;
+    'setCounters(address,bool,bool,bool,uint256)': FunctionFragment;
+    'setDefaultDisputeDelayTime(uint256)': FunctionFragment;
+    'setDisputeDurations(address,uint256,uint256,uint256)': FunctionFragment;
+    'setManager(address,address)': FunctionFragment;
+    'setMarket(address,(uint256,uint256,uint256,uint256,uint256,uint256,(uint256,uint256,uint256),address,address,(address,uint8),(address,uint8),(bool,bool,bool,bool)))': FunctionFragment;
+    'setRequiredBadges(address,string[2][],string[2][])': FunctionFragment;
+    'swapAllowList(address,address)': FunctionFragment;
+    'transferOwnership(address,address)': FunctionFragment;
+    'transferOwnership(address)': FunctionFragment;
+    'updateWriter(address,bool)': FunctionFragment;
+    'writers(address)': FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
-      | "allowZeroOfferPrice"
-      | "badge"
-      | "createMarket"
-      | "defaultDisputeDelayTime"
-      | "getMarket"
-      | "getReqBadges"
-      | "hasMarket"
-      | "isPutPermitted"
-      | "isSwapPermitted"
-      | "markAsOfferOnly"
-      | "markets"
-      | "owner"
-      | "permitPut"
-      | "permitSwap"
-      | "putAllowList"
-      | "renounceOwnership"
-      | "reqPutBadges"
-      | "reqSwapBadges"
-      | "revokePut"
-      | "revokeSwap"
-      | "setBadgeMgr"
-      | "setCommission"
-      | "setCounters"
-      | "setDefaultDisputeDelayTime"
-      | "setDisputeDurations"
-      | "setManager"
-      | "setMarket"
-      | "setRequiredBadges"
-      | "swapAllowList"
-      | "transferOwnership(address,address)"
-      | "transferOwnership(address)"
-      | "updateWriter"
-      | "writers"
+      | 'allowZeroOfferPrice'
+      | 'badge'
+      | 'createMarket'
+      | 'defaultDisputeDelayTime'
+      | 'getMarket'
+      | 'getReqBadges'
+      | 'hasMarket'
+      | 'isPutPermitted'
+      | 'isSwapPermitted'
+      | 'markAsOfferOnly'
+      | 'markets'
+      | 'owner'
+      | 'permitPut'
+      | 'permitSwap'
+      | 'putAllowList'
+      | 'renounceOwnership'
+      | 'reqPutBadges'
+      | 'reqSwapBadges'
+      | 'revokePut'
+      | 'revokeSwap'
+      | 'setBadgeMgr'
+      | 'setCommission'
+      | 'setCounters'
+      | 'setDefaultDisputeDelayTime'
+      | 'setDisputeDurations'
+      | 'setManager'
+      | 'setMarket'
+      | 'setRequiredBadges'
+      | 'swapAllowList'
+      | 'transferOwnership(address,address)'
+      | 'transferOwnership(address)'
+      | 'updateWriter'
+      | 'writers',
   ): FunctionFragment;
 
+  encodeFunctionData(functionFragment: 'allowZeroOfferPrice', values: [string]): string;
+  encodeFunctionData(functionFragment: 'badge', values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "allowZeroOfferPrice",
-    values: [string]
+    functionFragment: 'createMarket',
+    values: [string, string, BigNumberish, BigNumberish, boolean, boolean, BigNumberish, BigNumberish],
   ): string;
-  encodeFunctionData(functionFragment: "badge", values?: undefined): string;
+  encodeFunctionData(functionFragment: 'defaultDisputeDelayTime', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'getMarket', values: [string]): string;
+  encodeFunctionData(functionFragment: 'getReqBadges', values: [string]): string;
+  encodeFunctionData(functionFragment: 'hasMarket', values: [string]): string;
+  encodeFunctionData(functionFragment: 'isPutPermitted', values: [string, string]): string;
+  encodeFunctionData(functionFragment: 'isSwapPermitted', values: [string, string]): string;
+  encodeFunctionData(functionFragment: 'markAsOfferOnly', values: [string]): string;
+  encodeFunctionData(functionFragment: 'markets', values: [string]): string;
+  encodeFunctionData(functionFragment: 'owner', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'permitPut', values: [string, string]): string;
+  encodeFunctionData(functionFragment: 'permitSwap', values: [string, string]): string;
+  encodeFunctionData(functionFragment: 'putAllowList', values: [string, string]): string;
+  encodeFunctionData(functionFragment: 'renounceOwnership', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'reqPutBadges', values: [string, BigNumberish, BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'reqSwapBadges', values: [string, BigNumberish, BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'revokePut', values: [string, string]): string;
+  encodeFunctionData(functionFragment: 'revokeSwap', values: [string, string]): string;
+  encodeFunctionData(functionFragment: 'setBadgeMgr', values: [string]): string;
+  encodeFunctionData(functionFragment: 'setCommission', values: [string, BigNumberish]): string;
   encodeFunctionData(
-    functionFragment: "createMarket",
-    values: [
-      string,
-      string,
-      BigNumberish,
-      BigNumberish,
-      boolean,
-      boolean,
-      BigNumberish,
-      BigNumberish
-    ]
+    functionFragment: 'setCounters',
+    values: [string, boolean, boolean, boolean, BigNumberish],
   ): string;
+  encodeFunctionData(functionFragment: 'setDefaultDisputeDelayTime', values: [BigNumberish]): string;
   encodeFunctionData(
-    functionFragment: "defaultDisputeDelayTime",
-    values?: undefined
+    functionFragment: 'setDisputeDurations',
+    values: [string, BigNumberish, BigNumberish, BigNumberish],
   ): string;
-  encodeFunctionData(functionFragment: "getMarket", values: [string]): string;
+  encodeFunctionData(functionFragment: 'setManager', values: [string, string]): string;
+  encodeFunctionData(functionFragment: 'setMarket', values: [string, Structs.MarketStruct]): string;
   encodeFunctionData(
-    functionFragment: "getReqBadges",
-    values: [string]
+    functionFragment: 'setRequiredBadges',
+    values: [string, [string, string][], [string, string][]],
   ): string;
-  encodeFunctionData(functionFragment: "hasMarket", values: [string]): string;
-  encodeFunctionData(
-    functionFragment: "isPutPermitted",
-    values: [string, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "isSwapPermitted",
-    values: [string, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "markAsOfferOnly",
-    values: [string]
-  ): string;
-  encodeFunctionData(functionFragment: "markets", values: [string]): string;
-  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "permitPut",
-    values: [string, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "permitSwap",
-    values: [string, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "putAllowList",
-    values: [string, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "renounceOwnership",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "reqPutBadges",
-    values: [string, BigNumberish, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "reqSwapBadges",
-    values: [string, BigNumberish, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "revokePut",
-    values: [string, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "revokeSwap",
-    values: [string, string]
-  ): string;
-  encodeFunctionData(functionFragment: "setBadgeMgr", values: [string]): string;
-  encodeFunctionData(
-    functionFragment: "setCommission",
-    values: [string, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setCounters",
-    values: [string, boolean, boolean, boolean, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setDefaultDisputeDelayTime",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setDisputeDurations",
-    values: [string, BigNumberish, BigNumberish, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setManager",
-    values: [string, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setMarket",
-    values: [string, Structs.MarketStruct]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setRequiredBadges",
-    values: [string, [string, string][], [string, string][]]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "swapAllowList",
-    values: [string, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "transferOwnership(address,address)",
-    values: [string, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "transferOwnership(address)",
-    values: [string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "updateWriter",
-    values: [string, boolean]
-  ): string;
-  encodeFunctionData(functionFragment: "writers", values: [string]): string;
+  encodeFunctionData(functionFragment: 'swapAllowList', values: [string, string]): string;
+  encodeFunctionData(functionFragment: 'transferOwnership(address,address)', values: [string, string]): string;
+  encodeFunctionData(functionFragment: 'transferOwnership(address)', values: [string]): string;
+  encodeFunctionData(functionFragment: 'updateWriter', values: [string, boolean]): string;
+  encodeFunctionData(functionFragment: 'writers', values: [string]): string;
 
-  decodeFunctionResult(
-    functionFragment: "allowZeroOfferPrice",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "badge", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "createMarket",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "defaultDisputeDelayTime",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "getMarket", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "getReqBadges",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "hasMarket", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "isPutPermitted",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "isSwapPermitted",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "markAsOfferOnly",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "markets", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "permitPut", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "permitSwap", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "putAllowList",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "renounceOwnership",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "reqPutBadges",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "reqSwapBadges",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "revokePut", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "revokeSwap", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "setBadgeMgr",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setCommission",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setCounters",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setDefaultDisputeDelayTime",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setDisputeDurations",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "setManager", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "setMarket", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "setRequiredBadges",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "swapAllowList",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "transferOwnership(address,address)",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "transferOwnership(address)",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "updateWriter",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "writers", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'allowZeroOfferPrice', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'badge', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'createMarket', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'defaultDisputeDelayTime', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'getMarket', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'getReqBadges', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'hasMarket', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'isPutPermitted', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'isSwapPermitted', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'markAsOfferOnly', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'markets', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'owner', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'permitPut', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'permitSwap', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'putAllowList', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'renounceOwnership', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'reqPutBadges', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'reqSwapBadges', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'revokePut', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'revokeSwap', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setBadgeMgr', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setCommission', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setCounters', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setDefaultDisputeDelayTime', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setDisputeDurations', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setManager', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setMarket', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setRequiredBadges', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'swapAllowList', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'transferOwnership(address,address)', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'transferOwnership(address)', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'updateWriter', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'writers', data: BytesLike): Result;
 
   events: {
-    "AllowedPut(address,address)": EventFragment;
-    "AllowedSwap(address,address)": EventFragment;
-    "NewMarket(address,address,address,address,uint8,uint8,bool,bool,uint256,uint256)": EventFragment;
-    "OfferOnlyEnabled(address)": EventFragment;
-    "OwnershipTransferred(address,address)": EventFragment;
-    "RevokedPut(address,address)": EventFragment;
-    "RevokedSwap(address,address)": EventFragment;
-    "TransferredOwnership(address,address,address)": EventFragment;
-    "UpdatedBadgeAddr(address)": EventFragment;
-    "UpdatedCommission(address,uint256)": EventFragment;
-    "UpdatedDefaultDisputeDelayTime(uint256)": EventFragment;
-    "UpdatedDisputeDurations(address,uint256,uint256,uint256)": EventFragment;
-    "UpdatedMarketBadges(address,string[2][],string[2][])": EventFragment;
-    "UpdatedMarketManager(address,address)": EventFragment;
-    "WriterUpdated(address,bool)": EventFragment;
-    "ZeroPriceEnabled(address)": EventFragment;
+    'AllowedPut(address,address)': EventFragment;
+    'AllowedSwap(address,address)': EventFragment;
+    'NewMarket(address,address,address,address,uint8,uint8,bool,bool,uint256,uint256)': EventFragment;
+    'OfferOnlyEnabled(address)': EventFragment;
+    'OwnershipTransferred(address,address)': EventFragment;
+    'RevokedPut(address,address)': EventFragment;
+    'RevokedSwap(address,address)': EventFragment;
+    'TransferredOwnership(address,address,address)': EventFragment;
+    'UpdatedBadgeAddr(address)': EventFragment;
+    'UpdatedCommission(address,uint256)': EventFragment;
+    'UpdatedDefaultDisputeDelayTime(uint256)': EventFragment;
+    'UpdatedDisputeDurations(address,uint256,uint256,uint256)': EventFragment;
+    'UpdatedMarketBadges(address,string[2][],string[2][])': EventFragment;
+    'UpdatedMarketManager(address,address)': EventFragment;
+    'WriterUpdated(address,bool)': EventFragment;
+    'EnabledZeroOfferPrice(address)': EventFragment;
   };
 
-  getEvent(nameOrSignatureOrTopic: "AllowedPut"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "AllowedSwap"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "NewMarket"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OfferOnlyEnabled"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RevokedPut"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RevokedSwap"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "TransferredOwnership"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedBadgeAddr"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedCommission"): EventFragment;
-  getEvent(
-    nameOrSignatureOrTopic: "UpdatedDefaultDisputeDelayTime"
-  ): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedDisputeDurations"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedMarketBadges"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedMarketManager"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "WriterUpdated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "ZeroPriceEnabled"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: 'AllowedPut'): EventFragment;
+  getEvent(nameOrSignatureOrTopic: 'AllowedSwap'): EventFragment;
+  getEvent(nameOrSignatureOrTopic: 'NewMarket'): EventFragment;
+  getEvent(nameOrSignatureOrTopic: 'OfferOnlyEnabled'): EventFragment;
+  getEvent(nameOrSignatureOrTopic: 'OwnershipTransferred'): EventFragment;
+  getEvent(nameOrSignatureOrTopic: 'RevokedPut'): EventFragment;
+  getEvent(nameOrSignatureOrTopic: 'RevokedSwap'): EventFragment;
+  getEvent(nameOrSignatureOrTopic: 'TransferredOwnership'): EventFragment;
+  getEvent(nameOrSignatureOrTopic: 'UpdatedBadgeAddr'): EventFragment;
+  getEvent(nameOrSignatureOrTopic: 'UpdatedCommission'): EventFragment;
+  getEvent(nameOrSignatureOrTopic: 'UpdatedDefaultDisputeDelayTime'): EventFragment;
+  getEvent(nameOrSignatureOrTopic: 'UpdatedDisputeDurations'): EventFragment;
+  getEvent(nameOrSignatureOrTopic: 'UpdatedMarketBadges'): EventFragment;
+  getEvent(nameOrSignatureOrTopic: 'UpdatedMarketManager'): EventFragment;
+  getEvent(nameOrSignatureOrTopic: 'WriterUpdated'): EventFragment;
+  getEvent(nameOrSignatureOrTopic: 'EnabledZeroOfferPrice'): EventFragment;
 }
 
 export interface AllowedPutEventObject {
   id: string;
   addr: string;
 }
-export type AllowedPutEvent = TypedEvent<
-  [string, string],
-  AllowedPutEventObject
->;
+export type AllowedPutEvent = TypedEvent<[string, string], AllowedPutEventObject>;
 
 export type AllowedPutEventFilter = TypedEventFilter<AllowedPutEvent>;
 
@@ -450,10 +298,7 @@ export interface AllowedSwapEventObject {
   id: string;
   addr: string;
 }
-export type AllowedSwapEvent = TypedEvent<
-  [string, string],
-  AllowedSwapEventObject
->;
+export type AllowedSwapEvent = TypedEvent<[string, string], AllowedSwapEventObject>;
 
 export type AllowedSwapEventFilter = TypedEventFilter<AllowedSwapEvent>;
 
@@ -470,18 +315,7 @@ export interface NewMarketEventObject {
   mediatePoolId: BigNumber;
 }
 export type NewMarketEvent = TypedEvent<
-  [
-    string,
-    string,
-    string,
-    string,
-    number,
-    number,
-    boolean,
-    boolean,
-    BigNumber,
-    BigNumber
-  ],
+  [string, string, string, string, number, number, boolean, boolean, BigNumber, BigNumber],
   NewMarketEventObject
 >;
 
@@ -490,34 +324,23 @@ export type NewMarketEventFilter = TypedEventFilter<NewMarketEvent>;
 export interface OfferOnlyEnabledEventObject {
   id: string;
 }
-export type OfferOnlyEnabledEvent = TypedEvent<
-  [string],
-  OfferOnlyEnabledEventObject
->;
+export type OfferOnlyEnabledEvent = TypedEvent<[string], OfferOnlyEnabledEventObject>;
 
-export type OfferOnlyEnabledEventFilter =
-  TypedEventFilter<OfferOnlyEnabledEvent>;
+export type OfferOnlyEnabledEventFilter = TypedEventFilter<OfferOnlyEnabledEvent>;
 
 export interface OwnershipTransferredEventObject {
   previousOwner: string;
   newOwner: string;
 }
-export type OwnershipTransferredEvent = TypedEvent<
-  [string, string],
-  OwnershipTransferredEventObject
->;
+export type OwnershipTransferredEvent = TypedEvent<[string, string], OwnershipTransferredEventObject>;
 
-export type OwnershipTransferredEventFilter =
-  TypedEventFilter<OwnershipTransferredEvent>;
+export type OwnershipTransferredEventFilter = TypedEventFilter<OwnershipTransferredEvent>;
 
 export interface RevokedPutEventObject {
   id: string;
   addr: string;
 }
-export type RevokedPutEvent = TypedEvent<
-  [string, string],
-  RevokedPutEventObject
->;
+export type RevokedPutEvent = TypedEvent<[string, string], RevokedPutEventObject>;
 
 export type RevokedPutEventFilter = TypedEventFilter<RevokedPutEvent>;
 
@@ -525,10 +348,7 @@ export interface RevokedSwapEventObject {
   id: string;
   addr: string;
 }
-export type RevokedSwapEvent = TypedEvent<
-  [string, string],
-  RevokedSwapEventObject
->;
+export type RevokedSwapEvent = TypedEvent<[string, string], RevokedSwapEventObject>;
 
 export type RevokedSwapEventFilter = TypedEventFilter<RevokedSwapEvent>;
 
@@ -537,47 +357,31 @@ export interface TransferredOwnershipEventObject {
   oldOwner: string;
   newOwner: string;
 }
-export type TransferredOwnershipEvent = TypedEvent<
-  [string, string, string],
-  TransferredOwnershipEventObject
->;
+export type TransferredOwnershipEvent = TypedEvent<[string, string, string], TransferredOwnershipEventObject>;
 
-export type TransferredOwnershipEventFilter =
-  TypedEventFilter<TransferredOwnershipEvent>;
+export type TransferredOwnershipEventFilter = TypedEventFilter<TransferredOwnershipEvent>;
 
 export interface UpdatedBadgeAddrEventObject {
   addr: string;
 }
-export type UpdatedBadgeAddrEvent = TypedEvent<
-  [string],
-  UpdatedBadgeAddrEventObject
->;
+export type UpdatedBadgeAddrEvent = TypedEvent<[string], UpdatedBadgeAddrEventObject>;
 
-export type UpdatedBadgeAddrEventFilter =
-  TypedEventFilter<UpdatedBadgeAddrEvent>;
+export type UpdatedBadgeAddrEventFilter = TypedEventFilter<UpdatedBadgeAddrEvent>;
 
 export interface UpdatedCommissionEventObject {
   id: string;
   val: BigNumber;
 }
-export type UpdatedCommissionEvent = TypedEvent<
-  [string, BigNumber],
-  UpdatedCommissionEventObject
->;
+export type UpdatedCommissionEvent = TypedEvent<[string, BigNumber], UpdatedCommissionEventObject>;
 
-export type UpdatedCommissionEventFilter =
-  TypedEventFilter<UpdatedCommissionEvent>;
+export type UpdatedCommissionEventFilter = TypedEventFilter<UpdatedCommissionEvent>;
 
 export interface UpdatedDefaultDisputeDelayTimeEventObject {
   val: BigNumber;
 }
-export type UpdatedDefaultDisputeDelayTimeEvent = TypedEvent<
-  [BigNumber],
-  UpdatedDefaultDisputeDelayTimeEventObject
->;
+export type UpdatedDefaultDisputeDelayTimeEvent = TypedEvent<[BigNumber], UpdatedDefaultDisputeDelayTimeEventObject>;
 
-export type UpdatedDefaultDisputeDelayTimeEventFilter =
-  TypedEventFilter<UpdatedDefaultDisputeDelayTimeEvent>;
+export type UpdatedDefaultDisputeDelayTimeEventFilter = TypedEventFilter<UpdatedDefaultDisputeDelayTimeEvent>;
 
 export interface UpdatedDisputeDurationsEventObject {
   id: string;
@@ -590,8 +394,7 @@ export type UpdatedDisputeDurationsEvent = TypedEvent<
   UpdatedDisputeDurationsEventObject
 >;
 
-export type UpdatedDisputeDurationsEventFilter =
-  TypedEventFilter<UpdatedDisputeDurationsEvent>;
+export type UpdatedDisputeDurationsEventFilter = TypedEventFilter<UpdatedDisputeDurationsEvent>;
 
 export interface UpdatedMarketBadgesEventObject {
   id: string;
@@ -603,42 +406,30 @@ export type UpdatedMarketBadgesEvent = TypedEvent<
   UpdatedMarketBadgesEventObject
 >;
 
-export type UpdatedMarketBadgesEventFilter =
-  TypedEventFilter<UpdatedMarketBadgesEvent>;
+export type UpdatedMarketBadgesEventFilter = TypedEventFilter<UpdatedMarketBadgesEvent>;
 
 export interface UpdatedMarketManagerEventObject {
   id: string;
   mgr: string;
 }
-export type UpdatedMarketManagerEvent = TypedEvent<
-  [string, string],
-  UpdatedMarketManagerEventObject
->;
+export type UpdatedMarketManagerEvent = TypedEvent<[string, string], UpdatedMarketManagerEventObject>;
 
-export type UpdatedMarketManagerEventFilter =
-  TypedEventFilter<UpdatedMarketManagerEvent>;
+export type UpdatedMarketManagerEventFilter = TypedEventFilter<UpdatedMarketManagerEvent>;
 
 export interface WriterUpdatedEventObject {
   addr: string;
   added: boolean;
 }
-export type WriterUpdatedEvent = TypedEvent<
-  [string, boolean],
-  WriterUpdatedEventObject
->;
+export type WriterUpdatedEvent = TypedEvent<[string, boolean], WriterUpdatedEventObject>;
 
 export type WriterUpdatedEventFilter = TypedEventFilter<WriterUpdatedEvent>;
 
-export interface ZeroPriceEnabledEventObject {
+export interface EnabledZeroOfferPriceEventObject {
   id: string;
 }
-export type ZeroPriceEnabledEvent = TypedEvent<
-  [string],
-  ZeroPriceEnabledEventObject
->;
+export type EnabledZeroOfferPriceEvent = TypedEvent<[string], EnabledZeroOfferPriceEventObject>;
 
-export type ZeroPriceEnabledEventFilter =
-  TypedEventFilter<ZeroPriceEnabledEvent>;
+export type EnabledZeroOfferPriceEventFilter = TypedEventFilter<EnabledZeroOfferPriceEvent>;
 
 export interface MarketCore extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -650,16 +441,12 @@ export interface MarketCore extends BaseContract {
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
     fromBlockOrBlockhash?: string | number | undefined,
-    toBlock?: string | number | undefined
+    toBlock?: string | number | undefined,
   ): Promise<Array<TEvent>>;
 
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
+  listeners<TEvent extends TypedEvent>(eventFilter?: TypedEventFilter<TEvent>): Array<TypedListener<TEvent>>;
   listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
+  removeAllListeners<TEvent extends TypedEvent>(eventFilter: TypedEventFilter<TEvent>): this;
   removeAllListeners(eventName?: string): this;
   off: OnEvent<this>;
   on: OnEvent<this>;
@@ -667,10 +454,7 @@ export interface MarketCore extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    allowZeroOfferPrice(
-      id: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+    allowZeroOfferPrice(id: string, overrides?: Overrides & { from?: string }): Promise<ContractTransaction>;
 
     badge(overrides?: CallOverrides): Promise<[string]>;
 
@@ -683,43 +467,26 @@ export interface MarketCore extends BaseContract {
       permSwap: boolean,
       commission: BigNumberish,
       mediatePoolId: BigNumberish,
-      overrides?: Overrides & { from?: string }
+      overrides?: Overrides & { from?: string },
     ): Promise<ContractTransaction>;
 
     defaultDisputeDelayTime(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    getMarket(
-      id: string,
-      overrides?: CallOverrides
-    ): Promise<[Structs.MarketStructOutput]>;
+    getMarket(id: string, overrides?: CallOverrides): Promise<[Structs.MarketStructOutput]>;
 
-    getReqBadges(
-      id: string,
-      overrides?: CallOverrides
-    ): Promise<[[string, string][], [string, string][]]>;
+    getReqBadges(id: string, overrides?: CallOverrides): Promise<[[string, string][], [string, string][]]>;
 
     hasMarket(id: string, overrides?: CallOverrides): Promise<[boolean]>;
 
-    isPutPermitted(
-      id: string,
-      sender: string,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
+    isPutPermitted(id: string, sender: string, overrides?: CallOverrides): Promise<[boolean]>;
 
-    isSwapPermitted(
-      id: string,
-      sender: string,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
+    isSwapPermitted(id: string, sender: string, overrides?: CallOverrides): Promise<[boolean]>;
 
-    markAsOfferOnly(
-      id: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+    markAsOfferOnly(id: string, overrides?: Overrides & { from?: string }): Promise<ContractTransaction>;
 
     markets(
       arg0: string,
-      overrides?: CallOverrides
+      overrides?: CallOverrides,
     ): Promise<
       [
         BigNumber,
@@ -733,7 +500,7 @@ export interface MarketCore extends BaseContract {
         string,
         Structs.AssetStructOutput,
         Structs.AssetStructOutput,
-        Structs.MarketPermsStructOutput
+        Structs.MarketPermsStructOutput,
       ] & {
         createdAt: BigNumber;
         numOrders: BigNumber;
@@ -752,63 +519,28 @@ export interface MarketCore extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
-    permitPut(
-      id: string,
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+    permitPut(id: string, addr: string, overrides?: Overrides & { from?: string }): Promise<ContractTransaction>;
 
-    permitSwap(
-      id: string,
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+    permitSwap(id: string, addr: string, overrides?: Overrides & { from?: string }): Promise<ContractTransaction>;
 
-    putAllowList(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
+    putAllowList(arg0: string, arg1: string, overrides?: CallOverrides): Promise<[boolean]>;
 
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+    renounceOwnership(overrides?: Overrides & { from?: string }): Promise<ContractTransaction>;
 
-    reqPutBadges(
-      arg0: string,
-      arg1: BigNumberish,
-      arg2: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
+    reqPutBadges(arg0: string, arg1: BigNumberish, arg2: BigNumberish, overrides?: CallOverrides): Promise<[string]>;
 
-    reqSwapBadges(
-      arg0: string,
-      arg1: BigNumberish,
-      arg2: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
+    reqSwapBadges(arg0: string, arg1: BigNumberish, arg2: BigNumberish, overrides?: CallOverrides): Promise<[string]>;
 
-    revokePut(
-      id: string,
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+    revokePut(id: string, addr: string, overrides?: Overrides & { from?: string }): Promise<ContractTransaction>;
 
-    revokeSwap(
-      id: string,
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+    revokeSwap(id: string, addr: string, overrides?: Overrides & { from?: string }): Promise<ContractTransaction>;
 
-    setBadgeMgr(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+    setBadgeMgr(addr: string, overrides?: Overrides & { from?: string }): Promise<ContractTransaction>;
 
     setCommission(
       id: string,
       val: BigNumberish,
-      overrides?: Overrides & { from?: string }
+      overrides?: Overrides & { from?: string },
     ): Promise<ContractTransaction>;
 
     setCounters(
@@ -817,12 +549,12 @@ export interface MarketCore extends BaseContract {
       numDisputes: boolean,
       numLiquidity: boolean,
       value: BigNumberish,
-      overrides?: Overrides & { from?: string }
+      overrides?: Overrides & { from?: string },
     ): Promise<ContractTransaction>;
 
     setDefaultDisputeDelayTime(
       val: BigNumberish,
-      overrides?: Overrides & { from?: string }
+      overrides?: Overrides & { from?: string },
     ): Promise<ContractTransaction>;
 
     setDisputeDurations(
@@ -830,58 +562,43 @@ export interface MarketCore extends BaseContract {
       disputeDelayTime: BigNumberish,
       evidenceDur: BigNumberish,
       predictDur: BigNumberish,
-      overrides?: Overrides & { from?: string }
+      overrides?: Overrides & { from?: string },
     ): Promise<ContractTransaction>;
 
-    setManager(
-      id: string,
-      mgr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+    setManager(id: string, mgr: string, overrides?: Overrides & { from?: string }): Promise<ContractTransaction>;
 
     setMarket(
       id: string,
       upd: Structs.MarketStruct,
-      overrides?: Overrides & { from?: string }
+      overrides?: Overrides & { from?: string },
     ): Promise<ContractTransaction>;
 
     setRequiredBadges(
       id: string,
       put: [string, string][],
       swap: [string, string][],
-      overrides?: Overrides & { from?: string }
+      overrides?: Overrides & { from?: string },
     ): Promise<ContractTransaction>;
 
-    swapAllowList(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
+    swapAllowList(arg0: string, arg1: string, overrides?: CallOverrides): Promise<[boolean]>;
 
-    "transferOwnership(address,address)"(
+    'transferOwnership(address,address)'(
       id: string,
       newOwner: string,
-      overrides?: Overrides & { from?: string }
+      overrides?: Overrides & { from?: string },
     ): Promise<ContractTransaction>;
 
-    "transferOwnership(address)"(
+    'transferOwnership(address)'(
       newOwner: string,
-      overrides?: Overrides & { from?: string }
+      overrides?: Overrides & { from?: string },
     ): Promise<ContractTransaction>;
 
-    updateWriter(
-      addr: string,
-      add: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+    updateWriter(addr: string, add: boolean, overrides?: Overrides & { from?: string }): Promise<ContractTransaction>;
 
     writers(arg0: string, overrides?: CallOverrides): Promise<[boolean]>;
   };
 
-  allowZeroOfferPrice(
-    id: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+  allowZeroOfferPrice(id: string, overrides?: Overrides & { from?: string }): Promise<ContractTransaction>;
 
   badge(overrides?: CallOverrides): Promise<string>;
 
@@ -894,43 +611,26 @@ export interface MarketCore extends BaseContract {
     permSwap: boolean,
     commission: BigNumberish,
     mediatePoolId: BigNumberish,
-    overrides?: Overrides & { from?: string }
+    overrides?: Overrides & { from?: string },
   ): Promise<ContractTransaction>;
 
   defaultDisputeDelayTime(overrides?: CallOverrides): Promise<BigNumber>;
 
-  getMarket(
-    id: string,
-    overrides?: CallOverrides
-  ): Promise<Structs.MarketStructOutput>;
+  getMarket(id: string, overrides?: CallOverrides): Promise<Structs.MarketStructOutput>;
 
-  getReqBadges(
-    id: string,
-    overrides?: CallOverrides
-  ): Promise<[[string, string][], [string, string][]]>;
+  getReqBadges(id: string, overrides?: CallOverrides): Promise<[[string, string][], [string, string][]]>;
 
   hasMarket(id: string, overrides?: CallOverrides): Promise<boolean>;
 
-  isPutPermitted(
-    id: string,
-    sender: string,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
+  isPutPermitted(id: string, sender: string, overrides?: CallOverrides): Promise<boolean>;
 
-  isSwapPermitted(
-    id: string,
-    sender: string,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
+  isSwapPermitted(id: string, sender: string, overrides?: CallOverrides): Promise<boolean>;
 
-  markAsOfferOnly(
-    id: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+  markAsOfferOnly(id: string, overrides?: Overrides & { from?: string }): Promise<ContractTransaction>;
 
   markets(
     arg0: string,
-    overrides?: CallOverrides
+    overrides?: CallOverrides,
   ): Promise<
     [
       BigNumber,
@@ -944,7 +644,7 @@ export interface MarketCore extends BaseContract {
       string,
       Structs.AssetStructOutput,
       Structs.AssetStructOutput,
-      Structs.MarketPermsStructOutput
+      Structs.MarketPermsStructOutput,
     ] & {
       createdAt: BigNumber;
       numOrders: BigNumber;
@@ -963,64 +663,25 @@ export interface MarketCore extends BaseContract {
 
   owner(overrides?: CallOverrides): Promise<string>;
 
-  permitPut(
-    id: string,
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+  permitPut(id: string, addr: string, overrides?: Overrides & { from?: string }): Promise<ContractTransaction>;
 
-  permitSwap(
-    id: string,
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+  permitSwap(id: string, addr: string, overrides?: Overrides & { from?: string }): Promise<ContractTransaction>;
 
-  putAllowList(
-    arg0: string,
-    arg1: string,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
+  putAllowList(arg0: string, arg1: string, overrides?: CallOverrides): Promise<boolean>;
 
-  renounceOwnership(
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+  renounceOwnership(overrides?: Overrides & { from?: string }): Promise<ContractTransaction>;
 
-  reqPutBadges(
-    arg0: string,
-    arg1: BigNumberish,
-    arg2: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<string>;
+  reqPutBadges(arg0: string, arg1: BigNumberish, arg2: BigNumberish, overrides?: CallOverrides): Promise<string>;
 
-  reqSwapBadges(
-    arg0: string,
-    arg1: BigNumberish,
-    arg2: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<string>;
+  reqSwapBadges(arg0: string, arg1: BigNumberish, arg2: BigNumberish, overrides?: CallOverrides): Promise<string>;
 
-  revokePut(
-    id: string,
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+  revokePut(id: string, addr: string, overrides?: Overrides & { from?: string }): Promise<ContractTransaction>;
 
-  revokeSwap(
-    id: string,
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+  revokeSwap(id: string, addr: string, overrides?: Overrides & { from?: string }): Promise<ContractTransaction>;
 
-  setBadgeMgr(
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+  setBadgeMgr(addr: string, overrides?: Overrides & { from?: string }): Promise<ContractTransaction>;
 
-  setCommission(
-    id: string,
-    val: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+  setCommission(id: string, val: BigNumberish, overrides?: Overrides & { from?: string }): Promise<ContractTransaction>;
 
   setCounters(
     id: string,
@@ -1028,12 +689,12 @@ export interface MarketCore extends BaseContract {
     numDisputes: boolean,
     numLiquidity: boolean,
     value: BigNumberish,
-    overrides?: Overrides & { from?: string }
+    overrides?: Overrides & { from?: string },
   ): Promise<ContractTransaction>;
 
   setDefaultDisputeDelayTime(
     val: BigNumberish,
-    overrides?: Overrides & { from?: string }
+    overrides?: Overrides & { from?: string },
   ): Promise<ContractTransaction>;
 
   setDisputeDurations(
@@ -1041,50 +702,38 @@ export interface MarketCore extends BaseContract {
     disputeDelayTime: BigNumberish,
     evidenceDur: BigNumberish,
     predictDur: BigNumberish,
-    overrides?: Overrides & { from?: string }
+    overrides?: Overrides & { from?: string },
   ): Promise<ContractTransaction>;
 
-  setManager(
-    id: string,
-    mgr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+  setManager(id: string, mgr: string, overrides?: Overrides & { from?: string }): Promise<ContractTransaction>;
 
   setMarket(
     id: string,
     upd: Structs.MarketStruct,
-    overrides?: Overrides & { from?: string }
+    overrides?: Overrides & { from?: string },
   ): Promise<ContractTransaction>;
 
   setRequiredBadges(
     id: string,
     put: [string, string][],
     swap: [string, string][],
-    overrides?: Overrides & { from?: string }
+    overrides?: Overrides & { from?: string },
   ): Promise<ContractTransaction>;
 
-  swapAllowList(
-    arg0: string,
-    arg1: string,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
+  swapAllowList(arg0: string, arg1: string, overrides?: CallOverrides): Promise<boolean>;
 
-  "transferOwnership(address,address)"(
+  'transferOwnership(address,address)'(
     id: string,
     newOwner: string,
-    overrides?: Overrides & { from?: string }
+    overrides?: Overrides & { from?: string },
   ): Promise<ContractTransaction>;
 
-  "transferOwnership(address)"(
+  'transferOwnership(address)'(
     newOwner: string,
-    overrides?: Overrides & { from?: string }
+    overrides?: Overrides & { from?: string },
   ): Promise<ContractTransaction>;
 
-  updateWriter(
-    addr: string,
-    add: boolean,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+  updateWriter(addr: string, add: boolean, overrides?: Overrides & { from?: string }): Promise<ContractTransaction>;
 
   writers(arg0: string, overrides?: CallOverrides): Promise<boolean>;
 
@@ -1102,40 +751,26 @@ export interface MarketCore extends BaseContract {
       permSwap: boolean,
       commission: BigNumberish,
       mediatePoolId: BigNumberish,
-      overrides?: CallOverrides
+      overrides?: CallOverrides,
     ): Promise<void>;
 
     defaultDisputeDelayTime(overrides?: CallOverrides): Promise<BigNumber>;
 
-    getMarket(
-      id: string,
-      overrides?: CallOverrides
-    ): Promise<Structs.MarketStructOutput>;
+    getMarket(id: string, overrides?: CallOverrides): Promise<Structs.MarketStructOutput>;
 
-    getReqBadges(
-      id: string,
-      overrides?: CallOverrides
-    ): Promise<[[string, string][], [string, string][]]>;
+    getReqBadges(id: string, overrides?: CallOverrides): Promise<[[string, string][], [string, string][]]>;
 
     hasMarket(id: string, overrides?: CallOverrides): Promise<boolean>;
 
-    isPutPermitted(
-      id: string,
-      sender: string,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
+    isPutPermitted(id: string, sender: string, overrides?: CallOverrides): Promise<boolean>;
 
-    isSwapPermitted(
-      id: string,
-      sender: string,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
+    isSwapPermitted(id: string, sender: string, overrides?: CallOverrides): Promise<boolean>;
 
     markAsOfferOnly(id: string, overrides?: CallOverrides): Promise<void>;
 
     markets(
       arg0: string,
-      overrides?: CallOverrides
+      overrides?: CallOverrides,
     ): Promise<
       [
         BigNumber,
@@ -1149,7 +784,7 @@ export interface MarketCore extends BaseContract {
         string,
         Structs.AssetStructOutput,
         Structs.AssetStructOutput,
-        Structs.MarketPermsStructOutput
+        Structs.MarketPermsStructOutput,
       ] & {
         createdAt: BigNumber;
         numOrders: BigNumber;
@@ -1168,59 +803,25 @@ export interface MarketCore extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<string>;
 
-    permitPut(
-      id: string,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    permitPut(id: string, addr: string, overrides?: CallOverrides): Promise<void>;
 
-    permitSwap(
-      id: string,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    permitSwap(id: string, addr: string, overrides?: CallOverrides): Promise<void>;
 
-    putAllowList(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
+    putAllowList(arg0: string, arg1: string, overrides?: CallOverrides): Promise<boolean>;
 
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
-    reqPutBadges(
-      arg0: string,
-      arg1: BigNumberish,
-      arg2: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<string>;
+    reqPutBadges(arg0: string, arg1: BigNumberish, arg2: BigNumberish, overrides?: CallOverrides): Promise<string>;
 
-    reqSwapBadges(
-      arg0: string,
-      arg1: BigNumberish,
-      arg2: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<string>;
+    reqSwapBadges(arg0: string, arg1: BigNumberish, arg2: BigNumberish, overrides?: CallOverrides): Promise<string>;
 
-    revokePut(
-      id: string,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    revokePut(id: string, addr: string, overrides?: CallOverrides): Promise<void>;
 
-    revokeSwap(
-      id: string,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    revokeSwap(id: string, addr: string, overrides?: CallOverrides): Promise<void>;
 
     setBadgeMgr(addr: string, overrides?: CallOverrides): Promise<void>;
 
-    setCommission(
-      id: string,
-      val: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    setCommission(id: string, val: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
     setCounters(
       id: string,
@@ -1228,84 +829,49 @@ export interface MarketCore extends BaseContract {
       numDisputes: boolean,
       numLiquidity: boolean,
       value: BigNumberish,
-      overrides?: CallOverrides
+      overrides?: CallOverrides,
     ): Promise<void>;
 
-    setDefaultDisputeDelayTime(
-      val: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    setDefaultDisputeDelayTime(val: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
     setDisputeDurations(
       id: string,
       disputeDelayTime: BigNumberish,
       evidenceDur: BigNumberish,
       predictDur: BigNumberish,
-      overrides?: CallOverrides
+      overrides?: CallOverrides,
     ): Promise<void>;
 
-    setManager(
-      id: string,
-      mgr: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    setManager(id: string, mgr: string, overrides?: CallOverrides): Promise<void>;
 
-    setMarket(
-      id: string,
-      upd: Structs.MarketStruct,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    setMarket(id: string, upd: Structs.MarketStruct, overrides?: CallOverrides): Promise<void>;
 
     setRequiredBadges(
       id: string,
       put: [string, string][],
       swap: [string, string][],
-      overrides?: CallOverrides
+      overrides?: CallOverrides,
     ): Promise<void>;
 
-    swapAllowList(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
+    swapAllowList(arg0: string, arg1: string, overrides?: CallOverrides): Promise<boolean>;
 
-    "transferOwnership(address,address)"(
-      id: string,
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    'transferOwnership(address,address)'(id: string, newOwner: string, overrides?: CallOverrides): Promise<void>;
 
-    "transferOwnership(address)"(
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    'transferOwnership(address)'(newOwner: string, overrides?: CallOverrides): Promise<void>;
 
-    updateWriter(
-      addr: string,
-      add: boolean,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    updateWriter(addr: string, add: boolean, overrides?: CallOverrides): Promise<void>;
 
     writers(arg0: string, overrides?: CallOverrides): Promise<boolean>;
   };
 
   filters: {
-    "AllowedPut(address,address)"(
-      id?: string | null,
-      addr?: string | null
-    ): AllowedPutEventFilter;
+    'AllowedPut(address,address)'(id?: string | null, addr?: string | null): AllowedPutEventFilter;
     AllowedPut(id?: string | null, addr?: string | null): AllowedPutEventFilter;
 
-    "AllowedSwap(address,address)"(
-      id?: string | null,
-      addr?: string | null
-    ): AllowedSwapEventFilter;
-    AllowedSwap(
-      id?: string | null,
-      addr?: string | null
-    ): AllowedSwapEventFilter;
+    'AllowedSwap(address,address)'(id?: string | null, addr?: string | null): AllowedSwapEventFilter;
+    AllowedSwap(id?: string | null, addr?: string | null): AllowedSwapEventFilter;
 
-    "NewMarket(address,address,address,address,uint8,uint8,bool,bool,uint256,uint256)"(
+    'NewMarket(address,address,address,address,uint8,uint8,bool,bool,uint256,uint256)'(
       id?: string | null,
       owner?: null,
       base?: null,
@@ -1315,7 +881,7 @@ export interface MarketCore extends BaseContract {
       permPut?: null,
       permSwap?: null,
       commission?: null,
-      mediatePoolId?: null
+      mediatePoolId?: null,
     ): NewMarketEventFilter;
     NewMarket(
       id?: string | null,
@@ -1327,118 +893,72 @@ export interface MarketCore extends BaseContract {
       permPut?: null,
       permSwap?: null,
       commission?: null,
-      mediatePoolId?: null
+      mediatePoolId?: null,
     ): NewMarketEventFilter;
 
-    "OfferOnlyEnabled(address)"(
-      id?: string | null
-    ): OfferOnlyEnabledEventFilter;
+    'OfferOnlyEnabled(address)'(id?: string | null): OfferOnlyEnabledEventFilter;
     OfferOnlyEnabled(id?: string | null): OfferOnlyEnabledEventFilter;
 
-    "OwnershipTransferred(address,address)"(
+    'OwnershipTransferred(address,address)'(
       previousOwner?: string | null,
-      newOwner?: string | null
+      newOwner?: string | null,
     ): OwnershipTransferredEventFilter;
-    OwnershipTransferred(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
+    OwnershipTransferred(previousOwner?: string | null, newOwner?: string | null): OwnershipTransferredEventFilter;
 
-    "RevokedPut(address,address)"(
-      id?: string | null,
-      addr?: string | null
-    ): RevokedPutEventFilter;
+    'RevokedPut(address,address)'(id?: string | null, addr?: string | null): RevokedPutEventFilter;
     RevokedPut(id?: string | null, addr?: string | null): RevokedPutEventFilter;
 
-    "RevokedSwap(address,address)"(
-      id?: string | null,
-      addr?: string | null
-    ): RevokedSwapEventFilter;
-    RevokedSwap(
-      id?: string | null,
-      addr?: string | null
-    ): RevokedSwapEventFilter;
+    'RevokedSwap(address,address)'(id?: string | null, addr?: string | null): RevokedSwapEventFilter;
+    RevokedSwap(id?: string | null, addr?: string | null): RevokedSwapEventFilter;
 
-    "TransferredOwnership(address,address,address)"(
+    'TransferredOwnership(address,address,address)'(
       id?: string | null,
       oldOwner?: null,
-      newOwner?: null
+      newOwner?: null,
     ): TransferredOwnershipEventFilter;
-    TransferredOwnership(
-      id?: string | null,
-      oldOwner?: null,
-      newOwner?: null
-    ): TransferredOwnershipEventFilter;
+    TransferredOwnership(id?: string | null, oldOwner?: null, newOwner?: null): TransferredOwnershipEventFilter;
 
-    "UpdatedBadgeAddr(address)"(addr?: null): UpdatedBadgeAddrEventFilter;
+    'UpdatedBadgeAddr(address)'(addr?: null): UpdatedBadgeAddrEventFilter;
     UpdatedBadgeAddr(addr?: null): UpdatedBadgeAddrEventFilter;
 
-    "UpdatedCommission(address,uint256)"(
-      id?: string | null,
-      val?: null
-    ): UpdatedCommissionEventFilter;
-    UpdatedCommission(
-      id?: string | null,
-      val?: null
-    ): UpdatedCommissionEventFilter;
+    'UpdatedCommission(address,uint256)'(id?: string | null, val?: null): UpdatedCommissionEventFilter;
+    UpdatedCommission(id?: string | null, val?: null): UpdatedCommissionEventFilter;
 
-    "UpdatedDefaultDisputeDelayTime(uint256)"(
-      val?: null
-    ): UpdatedDefaultDisputeDelayTimeEventFilter;
-    UpdatedDefaultDisputeDelayTime(
-      val?: null
-    ): UpdatedDefaultDisputeDelayTimeEventFilter;
+    'UpdatedDefaultDisputeDelayTime(uint256)'(val?: null): UpdatedDefaultDisputeDelayTimeEventFilter;
+    UpdatedDefaultDisputeDelayTime(val?: null): UpdatedDefaultDisputeDelayTimeEventFilter;
 
-    "UpdatedDisputeDurations(address,uint256,uint256,uint256)"(
+    'UpdatedDisputeDurations(address,uint256,uint256,uint256)'(
       id?: string | null,
       disputeDelayTime?: null,
       evidenceDur?: null,
-      predictDur?: null
+      predictDur?: null,
     ): UpdatedDisputeDurationsEventFilter;
     UpdatedDisputeDurations(
       id?: string | null,
       disputeDelayTime?: null,
       evidenceDur?: null,
-      predictDur?: null
+      predictDur?: null,
     ): UpdatedDisputeDurationsEventFilter;
 
-    "UpdatedMarketBadges(address,string[2][],string[2][])"(
+    'UpdatedMarketBadges(address,string[2][],string[2][])'(
       id?: string | null,
       arg1?: null,
-      arg2?: null
+      arg2?: null,
     ): UpdatedMarketBadgesEventFilter;
-    UpdatedMarketBadges(
-      id?: string | null,
-      arg1?: null,
-      arg2?: null
-    ): UpdatedMarketBadgesEventFilter;
+    UpdatedMarketBadges(id?: string | null, arg1?: null, arg2?: null): UpdatedMarketBadgesEventFilter;
 
-    "UpdatedMarketManager(address,address)"(
-      id?: string | null,
-      mgr?: null
-    ): UpdatedMarketManagerEventFilter;
-    UpdatedMarketManager(
-      id?: string | null,
-      mgr?: null
-    ): UpdatedMarketManagerEventFilter;
+    'UpdatedMarketManager(address,address)'(id?: string | null, mgr?: null): UpdatedMarketManagerEventFilter;
+    UpdatedMarketManager(id?: string | null, mgr?: null): UpdatedMarketManagerEventFilter;
 
-    "WriterUpdated(address,bool)"(
-      addr?: null,
-      added?: null
-    ): WriterUpdatedEventFilter;
+    'WriterUpdated(address,bool)'(addr?: null, added?: null): WriterUpdatedEventFilter;
     WriterUpdated(addr?: null, added?: null): WriterUpdatedEventFilter;
 
-    "ZeroPriceEnabled(address)"(
-      id?: string | null
-    ): ZeroPriceEnabledEventFilter;
-    ZeroPriceEnabled(id?: string | null): ZeroPriceEnabledEventFilter;
+    'EnabledZeroOfferPrice(address)'(id?: string | null): EnabledZeroOfferPriceEventFilter;
+    EnabledZeroOfferPrice(id?: string | null): EnabledZeroOfferPriceEventFilter;
   };
 
   estimateGas: {
-    allowZeroOfferPrice(
-      id: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
+    allowZeroOfferPrice(id: string, overrides?: Overrides & { from?: string }): Promise<BigNumber>;
 
     badge(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -1451,7 +971,7 @@ export interface MarketCore extends BaseContract {
       permSwap: boolean,
       commission: BigNumberish,
       mediatePoolId: BigNumberish,
-      overrides?: Overrides & { from?: string }
+      overrides?: Overrides & { from?: string },
     ): Promise<BigNumber>;
 
     defaultDisputeDelayTime(overrides?: CallOverrides): Promise<BigNumber>;
@@ -1462,85 +982,35 @@ export interface MarketCore extends BaseContract {
 
     hasMarket(id: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-    isPutPermitted(
-      id: string,
-      sender: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    isPutPermitted(id: string, sender: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-    isSwapPermitted(
-      id: string,
-      sender: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    isSwapPermitted(id: string, sender: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-    markAsOfferOnly(
-      id: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
+    markAsOfferOnly(id: string, overrides?: Overrides & { from?: string }): Promise<BigNumber>;
 
     markets(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
-    permitPut(
-      id: string,
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
+    permitPut(id: string, addr: string, overrides?: Overrides & { from?: string }): Promise<BigNumber>;
 
-    permitSwap(
-      id: string,
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
+    permitSwap(id: string, addr: string, overrides?: Overrides & { from?: string }): Promise<BigNumber>;
 
-    putAllowList(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    putAllowList(arg0: string, arg1: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
+    renounceOwnership(overrides?: Overrides & { from?: string }): Promise<BigNumber>;
 
-    reqPutBadges(
-      arg0: string,
-      arg1: BigNumberish,
-      arg2: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    reqPutBadges(arg0: string, arg1: BigNumberish, arg2: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
 
-    reqSwapBadges(
-      arg0: string,
-      arg1: BigNumberish,
-      arg2: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    reqSwapBadges(arg0: string, arg1: BigNumberish, arg2: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
 
-    revokePut(
-      id: string,
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
+    revokePut(id: string, addr: string, overrides?: Overrides & { from?: string }): Promise<BigNumber>;
 
-    revokeSwap(
-      id: string,
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
+    revokeSwap(id: string, addr: string, overrides?: Overrides & { from?: string }): Promise<BigNumber>;
 
-    setBadgeMgr(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
+    setBadgeMgr(addr: string, overrides?: Overrides & { from?: string }): Promise<BigNumber>;
 
-    setCommission(
-      id: string,
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
+    setCommission(id: string, val: BigNumberish, overrides?: Overrides & { from?: string }): Promise<BigNumber>;
 
     setCounters(
       id: string,
@@ -1548,72 +1018,47 @@ export interface MarketCore extends BaseContract {
       numDisputes: boolean,
       numLiquidity: boolean,
       value: BigNumberish,
-      overrides?: Overrides & { from?: string }
+      overrides?: Overrides & { from?: string },
     ): Promise<BigNumber>;
 
-    setDefaultDisputeDelayTime(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
+    setDefaultDisputeDelayTime(val: BigNumberish, overrides?: Overrides & { from?: string }): Promise<BigNumber>;
 
     setDisputeDurations(
       id: string,
       disputeDelayTime: BigNumberish,
       evidenceDur: BigNumberish,
       predictDur: BigNumberish,
-      overrides?: Overrides & { from?: string }
+      overrides?: Overrides & { from?: string },
     ): Promise<BigNumber>;
 
-    setManager(
-      id: string,
-      mgr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
+    setManager(id: string, mgr: string, overrides?: Overrides & { from?: string }): Promise<BigNumber>;
 
-    setMarket(
-      id: string,
-      upd: Structs.MarketStruct,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
+    setMarket(id: string, upd: Structs.MarketStruct, overrides?: Overrides & { from?: string }): Promise<BigNumber>;
 
     setRequiredBadges(
       id: string,
       put: [string, string][],
       swap: [string, string][],
-      overrides?: Overrides & { from?: string }
+      overrides?: Overrides & { from?: string },
     ): Promise<BigNumber>;
 
-    swapAllowList(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    swapAllowList(arg0: string, arg1: string, overrides?: CallOverrides): Promise<BigNumber>;
 
-    "transferOwnership(address,address)"(
+    'transferOwnership(address,address)'(
       id: string,
       newOwner: string,
-      overrides?: Overrides & { from?: string }
+      overrides?: Overrides & { from?: string },
     ): Promise<BigNumber>;
 
-    "transferOwnership(address)"(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
+    'transferOwnership(address)'(newOwner: string, overrides?: Overrides & { from?: string }): Promise<BigNumber>;
 
-    updateWriter(
-      addr: string,
-      add: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
+    updateWriter(addr: string, add: boolean, overrides?: Overrides & { from?: string }): Promise<BigNumber>;
 
     writers(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    allowZeroOfferPrice(
-      id: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
+    allowZeroOfferPrice(id: string, overrides?: Overrides & { from?: string }): Promise<PopulatedTransaction>;
 
     badge(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -1626,109 +1071,59 @@ export interface MarketCore extends BaseContract {
       permSwap: boolean,
       commission: BigNumberish,
       mediatePoolId: BigNumberish,
-      overrides?: Overrides & { from?: string }
+      overrides?: Overrides & { from?: string },
     ): Promise<PopulatedTransaction>;
 
-    defaultDisputeDelayTime(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+    defaultDisputeDelayTime(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    getMarket(
-      id: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+    getMarket(id: string, overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    getReqBadges(
-      id: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+    getReqBadges(id: string, overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    hasMarket(
-      id: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+    hasMarket(id: string, overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    isPutPermitted(
-      id: string,
-      sender: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+    isPutPermitted(id: string, sender: string, overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    isSwapPermitted(
-      id: string,
-      sender: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+    isSwapPermitted(id: string, sender: string, overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    markAsOfferOnly(
-      id: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
+    markAsOfferOnly(id: string, overrides?: Overrides & { from?: string }): Promise<PopulatedTransaction>;
 
-    markets(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+    markets(arg0: string, overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    permitPut(
-      id: string,
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
+    permitPut(id: string, addr: string, overrides?: Overrides & { from?: string }): Promise<PopulatedTransaction>;
 
-    permitSwap(
-      id: string,
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
+    permitSwap(id: string, addr: string, overrides?: Overrides & { from?: string }): Promise<PopulatedTransaction>;
 
-    putAllowList(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+    putAllowList(arg0: string, arg1: string, overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
+    renounceOwnership(overrides?: Overrides & { from?: string }): Promise<PopulatedTransaction>;
 
     reqPutBadges(
       arg0: string,
       arg1: BigNumberish,
       arg2: BigNumberish,
-      overrides?: CallOverrides
+      overrides?: CallOverrides,
     ): Promise<PopulatedTransaction>;
 
     reqSwapBadges(
       arg0: string,
       arg1: BigNumberish,
       arg2: BigNumberish,
-      overrides?: CallOverrides
+      overrides?: CallOverrides,
     ): Promise<PopulatedTransaction>;
 
-    revokePut(
-      id: string,
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
+    revokePut(id: string, addr: string, overrides?: Overrides & { from?: string }): Promise<PopulatedTransaction>;
 
-    revokeSwap(
-      id: string,
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
+    revokeSwap(id: string, addr: string, overrides?: Overrides & { from?: string }): Promise<PopulatedTransaction>;
 
-    setBadgeMgr(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
+    setBadgeMgr(addr: string, overrides?: Overrides & { from?: string }): Promise<PopulatedTransaction>;
 
     setCommission(
       id: string,
       val: BigNumberish,
-      overrides?: Overrides & { from?: string }
+      overrides?: Overrides & { from?: string },
     ): Promise<PopulatedTransaction>;
 
     setCounters(
@@ -1737,12 +1132,12 @@ export interface MarketCore extends BaseContract {
       numDisputes: boolean,
       numLiquidity: boolean,
       value: BigNumberish,
-      overrides?: Overrides & { from?: string }
+      overrides?: Overrides & { from?: string },
     ): Promise<PopulatedTransaction>;
 
     setDefaultDisputeDelayTime(
       val: BigNumberish,
-      overrides?: Overrides & { from?: string }
+      overrides?: Overrides & { from?: string },
     ): Promise<PopulatedTransaction>;
 
     setDisputeDurations(
@@ -1750,54 +1145,39 @@ export interface MarketCore extends BaseContract {
       disputeDelayTime: BigNumberish,
       evidenceDur: BigNumberish,
       predictDur: BigNumberish,
-      overrides?: Overrides & { from?: string }
+      overrides?: Overrides & { from?: string },
     ): Promise<PopulatedTransaction>;
 
-    setManager(
-      id: string,
-      mgr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
+    setManager(id: string, mgr: string, overrides?: Overrides & { from?: string }): Promise<PopulatedTransaction>;
 
     setMarket(
       id: string,
       upd: Structs.MarketStruct,
-      overrides?: Overrides & { from?: string }
+      overrides?: Overrides & { from?: string },
     ): Promise<PopulatedTransaction>;
 
     setRequiredBadges(
       id: string,
       put: [string, string][],
       swap: [string, string][],
-      overrides?: Overrides & { from?: string }
+      overrides?: Overrides & { from?: string },
     ): Promise<PopulatedTransaction>;
 
-    swapAllowList(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+    swapAllowList(arg0: string, arg1: string, overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    "transferOwnership(address,address)"(
+    'transferOwnership(address,address)'(
       id: string,
       newOwner: string,
-      overrides?: Overrides & { from?: string }
+      overrides?: Overrides & { from?: string },
     ): Promise<PopulatedTransaction>;
 
-    "transferOwnership(address)"(
+    'transferOwnership(address)'(
       newOwner: string,
-      overrides?: Overrides & { from?: string }
+      overrides?: Overrides & { from?: string },
     ): Promise<PopulatedTransaction>;
 
-    updateWriter(
-      addr: string,
-      add: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
+    updateWriter(addr: string, add: boolean, overrides?: Overrides & { from?: string }): Promise<PopulatedTransaction>;
 
-    writers(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+    writers(arg0: string, overrides?: CallOverrides): Promise<PopulatedTransaction>;
   };
 }

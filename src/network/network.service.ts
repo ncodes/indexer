@@ -83,11 +83,10 @@ export default class NetworkService {
 
   /**
    * Get an  ERC20 contract
-   * @param network The network name
    * @param address The contract address
    */
-  getERC20Contract(network: string, address: string): ERC20 {
-    return new Contract(address, erc20TokenABI, this.provider[network]) as ERC20;
+  getERC20Contract(address: string): ERC20 {
+    return new Contract(address, erc20TokenABI, this.provider) as ERC20;
   }
 
   /**
@@ -108,57 +107,49 @@ export default class NetworkService {
    * @param network The name of the network
    */
   private async watchNetwork(network: string) {
-    this.contracts[network] = {};
+    this.contracts = {};
     const prov = new providers.JsonRpcProvider(this.cfgSrv.get(`app.contractsAddress.rpcUrl`));
     this.provider = prov;
 
     // Initialize contracts
-    this.contracts[network].p2pToken = new Contract(
+    this.contracts.p2pToken = new Contract(
       this.cfgSrv.get(`app.contractsAddress.p2pTokenAddr`),
       p2pTokenABI,
       prov,
     ) as Token;
-    this.contracts[network].marketCore = new Contract(
+    this.contracts.marketCore = new Contract(
       this.cfgSrv.get(`app.contractsAddress.marketCoreAddr`),
       marketCoreABI,
       prov,
     ) as MarketCore;
-    this.contracts[network].core = new Contract(
-      this.cfgSrv.get(`app.contractsAddress.coreAddr`),
-      coreABI,
-      prov,
-    ) as Core;
-    this.contracts[network].mediatorMgr = new Contract(
+    this.contracts.core = new Contract(this.cfgSrv.get(`app.contractsAddress.coreAddr`), coreABI, prov) as Core;
+    this.contracts.mediatorMgr = new Contract(
       this.cfgSrv.get(`app.contractsAddress.mediatorMgrAddr`),
       mediatorManagerABI,
       prov,
     ) as MediatorManager;
-    this.contracts[network].disputeMgr = new Contract(
+    this.contracts.disputeMgr = new Contract(
       this.cfgSrv.get(`app.contractsAddress.disputeMgrAddr`),
       disputeManagerABI,
       prov,
     ) as DisputeManager;
-    this.contracts[network].tokenPool = new Contract(
+    this.contracts.tokenPool = new Contract(
       this.cfgSrv.get(`app.contractsAddress.tokenPoolAddr`),
       tokenPoolABI,
       prov,
     ) as TokenPool;
-    this.contracts[network].lpPool = new Contract(
-      this.cfgSrv.get(`app.contractsAddress.lpPoolAddr`),
-      lpPoolABI,
-      prov,
-    ) as LPPool;
-    this.contracts[network].feePool = new Contract(
+    this.contracts.lpPool = new Contract(this.cfgSrv.get(`app.contractsAddress.lpPoolAddr`), lpPoolABI, prov) as LPPool;
+    this.contracts.feePool = new Contract(
       this.cfgSrv.get(`app.contractsAddress.feePoolAddr`),
       feePoolABI,
       prov,
     ) as FeePool;
-    this.contracts[network].badgeMgr = new Contract(
+    this.contracts.badgeMgr = new Contract(
       this.cfgSrv.get(`app.contractsAddress.badgeMgrAddr`),
       badgeMgrABI,
       prov,
     ) as BadgeManager;
-    this.contracts[network].assetRegistry = new Contract(
+    this.contracts.assetRegistry = new Contract(
       this.cfgSrv.get(`app.contractsAddress.assetRegAddr`),
       assetRegABI,
       prov,
@@ -170,15 +161,15 @@ export default class NetworkService {
     // Add handlers to watcher
     const watcher = new Watcher(network, prov);
     await watcher.add(
-      new MarketCoreHandler(this, this.notifSrv, prov, network, this.contracts[network]),
-      new MediatorManagerHandler(this, this.notifSrv, prov, network, this.contracts[network]),
-      new DisputeManagerHandler(this, this.notifSrv, prov, network, this.contracts[network]),
-      new CoreHandler(this, this.notifSrv, this.metadataSrv, this.exrSrv, prov, network, this.contracts[network]),
-      new BadgeManagerHandler(prov, network, this.contracts[network]),
-      new TokenPoolHandler(prov, network, this.contracts[network]),
-      new LPPoolHandler(prov, network, this.contracts[network]),
-      new FeePoolHandler(prov, network, this.contracts[network]),
-      new AssetRegistryHandler(prov, network, this.contracts[network]),
+      new MarketCoreHandler(this, this.notifSrv, prov, network, this.contracts),
+      new MediatorManagerHandler(this, this.notifSrv, prov, network, this.contracts),
+      new DisputeManagerHandler(this, this.notifSrv, prov, network, this.contracts),
+      new CoreHandler(this, this.notifSrv, this.metadataSrv, this.exrSrv, prov, network, this.contracts),
+      new BadgeManagerHandler(prov, network, this.contracts),
+      new TokenPoolHandler(prov, network, this.contracts),
+      new LPPoolHandler(prov, network, this.contracts),
+      new FeePoolHandler(prov, network, this.contracts),
+      new AssetRegistryHandler(prov, network, this.contracts),
     );
   }
 }

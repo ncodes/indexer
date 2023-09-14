@@ -131,7 +131,7 @@ export class MetadataService {
 
     // If the token is a contract, try to get the decimals if not provided
     if (info.isContract && network && isProdMode() && !info.decimals)
-      info.decimals = await this.netSrv.getERC20Contract(network, contract).decimals();
+      info.decimals = await this.netSrv.getERC20Contract(contract).decimals();
 
     // In dev mode, set decimals to 18 if not provided
     if (isDevMode() && !info.decimals) info.decimals = 18;

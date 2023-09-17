@@ -96,6 +96,10 @@ export class ListQueryDTO {
   @IsOptional()
   swapBadges?: string[];
 
+  @Transform(({ value }) => (value as string).split(',').map((v) => v.replaceAll('%', '').trim().replace(/\/$/g, '%')))
+  @IsOptional()
+  paymentMethods?: string[];
+
   @Transform(({ value }) => toBoolean(value))
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'count') })
   @IsOptional()

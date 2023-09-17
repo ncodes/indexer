@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { BigNumber, constants, Event as ChainEvent, providers } from 'ethers';
 import { Transaction } from 'objection';
-import Liquidity from '../../models/liquidity';
+import Liquidity, { makeLiqAddress } from '../../models/liquidity';
 import MarketPrice from '../../models/market_price';
 import { Handler } from '../handler';
 import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierService';
@@ -1022,6 +1022,7 @@ export class CoreHandler extends Handler {
           network: this.network,
           provider,
           marketAddress,
+          address: makeLiqAddress(marketAddress, provider, lid.toNumber()),
           target,
           paused,
           lid: lid.toNumber(),
@@ -1157,6 +1158,7 @@ export class CoreHandler extends Handler {
           marketAddress,
           provider,
           lid: lid.toNumber(),
+          address: makeLiqAddress(marketAddress, provider, lid.toNumber()),
           target,
           paused,
           base: market.base,

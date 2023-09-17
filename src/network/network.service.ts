@@ -165,7 +165,7 @@ export default class NetworkService {
       new MediatorManagerHandler(this, this.notifSrv, prov, network, this.contracts),
       new DisputeManagerHandler(this, this.notifSrv, prov, network, this.contracts),
       new CoreHandler(this, this.notifSrv, this.metadataSrv, this.exrSrv, prov, network, this.contracts),
-      new BadgeManagerHandler(prov, network, this.contracts),
+      new BadgeManagerHandler(this, prov, network, this.contracts),
       new TokenPoolHandler(prov, network, this.contracts),
       new LPPoolHandler(prov, network, this.contracts),
       new FeePoolHandler(prov, network, this.contracts),

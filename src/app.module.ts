@@ -26,6 +26,7 @@ import { BadgesModule } from './controllers/badges/badges.module';
 import { TimelinesModule } from './controllers/timelines/timelines.module';
 import { InstructionsModule } from './instructions/instructions.module';
 import { RequestLoggerMiddleware } from './common/loggers/request_logger';
+import { PaymentsModule } from './controllers/payments/payments.module';
 
 /**
  * Returns the configurations to be loaded.
@@ -82,6 +83,7 @@ function getProviders() {
     AssetsModule,
     TasksModule,
     InstructionsModule,
+    PaymentsModule,
   ],
   providers: getProviders(),
   controllers: [],

@@ -148,6 +148,7 @@ export class LiquidityController {
         baseUsdRate,
         reqLpBadges,
         reqSwapBadges,
+        q.paymentMethods,
         q.limit || 25,
         q.offset,
         q.select,

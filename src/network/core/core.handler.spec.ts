@@ -1,7 +1,7 @@
 import { DBService } from '../../db/DBService';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { CoreHandler } from './core.handler';
-import { constants } from 'ethers';
+import { constants, ethers } from 'ethers';
 import Liquidity from '../../models/liquidity';
 import Market, { AssetType } from '../../models/market';
 import { pow10, powOf, toBN } from '../common';
@@ -52,8 +52,8 @@ const MockNetworkService = jest.fn().mockImplementation(() => {
 
 describe('CoreHandler', () => {
   const taker = '0xTaker';
-  const provider = '0xProvider';
-  const marketAddress = '0xMarket';
+  const provider = ethers.Wallet.createRandom().address;
+  const marketAddress = ethers.Wallet.createRandom().address;
   const manager = '0xManager';
   const BASE = 'BASE';
   const QUOTE = 'QUOTE';

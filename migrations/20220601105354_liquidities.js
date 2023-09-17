@@ -10,6 +10,7 @@ exports.up = function (knex) {
       table.string('network');
       table.string('provider');
       table.integer('lid');
+      table.string('address');
       table.string('marketAddress');
       table.string('target');
       table.string('base');
@@ -30,6 +31,7 @@ exports.up = function (knex) {
       table.integer('timeToPay').defaultTo(0);
       table.boolean('paused').defaultTo(false);
       table.boolean('swapDisabled').defaultTo(false);
+      table.jsonb('paymentMethods').defaultTo([]);
       table.integer('openOrders').defaultTo(0);
       table.integer('openDisputes').defaultTo(0);
       table.integer('totalDisputes').defaultTo(0);

@@ -40,7 +40,8 @@
       "name": "NGN LOCAL",
       "symbol": "NGN",
       "decimals": 18,
-      "logoURI": "https://assets-cdn.trustwallet.com/blockchains/polygon/assets/0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619/logo.png"
+      "logoURI": "https://assets-cdn.trustwallet.com/blockchains/polygon/assets/0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619/logo.png",
+      "price": 0
     },
     {
       "asset": "c60_t0xBF494F02EE3FdE1F20BEE6242bCe2d1ED0c15e47",

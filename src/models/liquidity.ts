@@ -4,6 +4,21 @@ import { BaseModel } from './base';
 import Market, { AssetType } from './market';
 import * as _ from 'lodash';
 import * as moment from 'moment';
+import { ethers } from 'ethers';
+
+/**
+ * Derive a liquidity address
+ * @param marketAddress - The market address
+ * @param provider - The provider address
+ * @param lid - The liquidity ID
+ */
+export function makeLiqAddress(marketAddress: string, provider: string, lid: number) {
+  return ethers.utils.getCreate2Address(
+    marketAddress,
+    ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(['address', 'uint256'], [provider, lid])),
+    ethers.utils.keccak256(ethers.utils.toUtf8Bytes('Liquidity(address provider, uint256 lid)')),
+  );
+}
 
 /**
  * Liquidity represents a liquidity model
@@ -17,6 +32,8 @@ export default class Liquidity extends BaseModel {
   lid: number;
   // The market address
   marketAddress: string = undefined;
+  // The unique address of the liquidity
+  address: string = undefined;
   // The base asset symbol
   base: string = undefined;
   // The base asset address
@@ -81,6 +98,8 @@ export default class Liquidity extends BaseModel {
   avgPaymentDur: number;
   // The average number of seconds within which swaps are marked as released
   avgReleaseDur: number;
+  // The list of payment methods badges associated
+  paymentMethods: string[];
 
   /** Not Persisted */
   totalSwaps24h: string;
@@ -108,6 +127,7 @@ export default class Liquidity extends BaseModel {
     this.requiredSwapBadges = this.requiredSwapBadges
       ? (JSON.stringify(this.requiredSwapBadges) as any)
       : this.requiredSwapBadges;
+    this.paymentMethods = this.paymentMethods ? (JSON.stringify(this.paymentMethods) as any) : this.paymentMethods;
   }
 
   $beforeUpdate() {
@@ -118,6 +138,7 @@ export default class Liquidity extends BaseModel {
     this.requiredSwapBadges = this.requiredSwapBadges
       ? (JSON.stringify(this.requiredSwapBadges) as any)
       : this.requiredSwapBadges;
+    this.paymentMethods = this.paymentMethods ? (JSON.stringify(this.paymentMethods) as any) : this.paymentMethods;
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
@@ -208,6 +229,24 @@ export default class Liquidity extends BaseModel {
   }
 
   /**
+   * Find liquidity by address
+   * @param network The network name
+   * @param address The liquidity address
+   * @param relations The relations to be fetched (optional)
+   * @param txn Optional transaction object
+   */
+  static getByAddress(network: string, address: string, relations = '', txn?: Transaction) {
+    return this.query(txn)
+      .whereNotDeleted()
+      .where({ network })
+      .where((q) => {
+        return q.where('address', 'ILIKE', address);
+      })
+      .withGraphFetched(relations)
+      .first();
+  }
+
+  /**
    * Update all liquidities belonging to a provider in a given network and market
    * @param network The network name
    * @param marketAddress The market address
@@ -261,7 +300,8 @@ export default class Liquidity extends BaseModel {
    * @param quoteUsdRate The USD rate to use for price to USD conversions
    * @param baseUsdRate The USD rate to use for amount to USD conversions
    * @param reqLpBadges Filter by badges liquidity providers must have been granted
-   * @param reqSwapBadges
+   * @param reqSwapBadges Filter by badges takers must have been granted
+   * @param paymentMethods Filter by payment methods
    * @param limit The number of records to return (optional).
    * @param offset The query offset (optional)
    * @param select Select specific fields (optional)
@@ -283,6 +323,7 @@ export default class Liquidity extends BaseModel {
     baseUsdRate = 0,
     reqLpBadges?: string[],
     reqSwapBadges?: string[],
+    paymentMethods?: string[],
     limit?: number,
     offset?: number,
     select = [],
@@ -312,8 +353,11 @@ export default class Liquidity extends BaseModel {
         return sub
           .from('liquidities')
           .select('liquidities.*')
-          .innerJoin('badge_grants', 'badge_grants.grantee', 'ILIKE', 'liquidities.provider')
-          .where('badge_grants.network', network)
+          .leftJoin('badge_grants', (q) => {
+            return q
+              .on('badge_grants.grantee', 'ILIKE', 'liquidities.provider')
+              .andOn('badge_grants.network', 'ILIKE', 'liquidities.network');
+          })
           .where((q) => {
             return q
               .whereRaw(`badge_grants.badge ILIKE ANY (?)`, [reqLpBadges])
@@ -395,6 +439,17 @@ export default class Liquidity extends BaseModel {
       WHERE badge ILIKE ANY (?)
       )`,
         [reqSwapBadges],
+      );
+    }
+
+    if (!_.isEmpty(paymentMethods)) {
+      q = q.whereRaw(
+        `EXISTS (
+      SELECT 1
+      FROM jsonb_array_elements_text("paymentMethods") method
+      WHERE method ILIKE ANY (?)
+      )`,
+        [paymentMethods],
       );
     }
 

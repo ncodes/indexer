@@ -88,6 +88,8 @@ export default () => ({
       kyc: process.env.KYC_BADGE,
       instruction: process.env.INSTRUCTION_BADGE,
       instructionIssuerPk: process.env.INSTRUCTION_BADGE_ISSUER_PK,
+      paymentMethodIssuerPk: process.env.PAYMENT_METHOD_BADGE_ISSUER_PK,
+      paymentMethod: process.env.PAYMENT_METHOD_BADGE,
     },
   },
 });

@@ -5,6 +5,7 @@ import { toBN } from '../common';
 import BadgeGrant from '../../models/badge_grant';
 import * as moment from 'moment';
 import Badge from '../../models/badge';
+import Liquidity from '../../models/liquidity';
 
 const BadgeManagerContract = jest.fn().mockImplementation(() => {
   return {};
@@ -27,7 +28,9 @@ describe('BadgeManagerHandler', () => {
   let handler: BadgeManagerHandler;
   const badgeMgrContract = new BadgeManagerContract();
   const contracts = { core: badgeMgrContract };
-  const cfg = {};
+  const cfg = {
+    'app.badges.paymentMethod': 'pm',
+  };
 
   afterEach(async () => {
     await db.truncateTables();
@@ -39,11 +42,16 @@ describe('BadgeManagerHandler', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    handler = new BadgeManagerHandler(new MockNetworkService(), net, contracts);
+    handler = new BadgeManagerHandler(new MockNetworkService(), null, net, contracts);
     handler.logger = new NoopLogger() as any;
     handler.getParam = (param) => {
       return cfg[param];
     };
+    handler.cfg = {
+      get: function (key) {
+        return cfg[key];
+      },
+    } as any;
     await db.truncateTables();
   });
 
@@ -65,6 +73,23 @@ describe('BadgeManagerHandler', () => {
       expect(rec.grantee).toEqual(grantee);
       expect(rec.metadata).toEqual({ key1: 'val1', key2: 'val2' });
       expect(rec.expireAt).toBeNull();
+    });
+
+    describe('when badge=pm and path is set', () => {
+      it('should update payment method on liquidity matching the specified liquidity address in meta key array', async () => {
+        let liq = await Liquidity.create({ network: net, address: '0xLiqAddress' });
+        await handler.onGrantedBadge('pm', 'bank_transfer', grantee, ['0xLiqAddress'], ['1'], toBN(0), null);
+        liq = await Liquidity.getById(liq.id);
+        expect(liq.paymentMethods).toEqual(['pm/bank_transfer']);
+
+        await handler.onGrantedBadge('pm', 'union_bank', grantee, ['0xLiqAddress'], ['1'], toBN(0), null);
+        liq = await Liquidity.getById(liq.id);
+        expect(liq.paymentMethods).toEqual(['pm/bank_transfer', 'pm/union_bank']);
+
+        await handler.onGrantedBadge('pm', 'bank_transfer', grantee, ['0xLiqAddress'], ['0'], toBN(0), null);
+        liq = await Liquidity.getById(liq.id);
+        expect(liq.paymentMethods).toEqual(['pm/union_bank']);
+      });
     });
   });
 
@@ -195,6 +220,23 @@ describe('BadgeManagerHandler', () => {
       await handler.onGranteeBadgeMetaUpdated(issuer, grantee, badge, path, 'age', '100', null);
       grant = await BadgeGrant.find({ badge, grantee });
       expect(grant.metadata).toEqual({ key1: 'val1', key2: 'val2', age: '100' });
+    });
+
+    describe('when badge=pm and path is set', () => {
+      it('should update payment method on liquidity matching the specified liquidity address in meta key array', async () => {
+        let liq = await Liquidity.create({ network: net, address: '0xLiqAddress' });
+        await handler.onGrantedBadge('pm', 'bank_transfer', grantee, ['0xLiqAddress'], ['1'], toBN(0), null);
+        liq = await Liquidity.getById(liq.id);
+        expect(liq.paymentMethods).toEqual(['pm/bank_transfer']);
+
+        await handler.onGranteeBadgeMetaUpdated(issuer, grantee, 'pm', 'bank_transfer', '0xLiqAddress', '0', null);
+        liq = await Liquidity.getById(liq.id);
+        expect(liq.paymentMethods).toEqual([]);
+
+        await handler.onGranteeBadgeMetaUpdated(issuer, grantee, 'pm', 'bank_transfer', '0xLiqAddress', '1', null);
+        liq = await Liquidity.getById(liq.id);
+        expect(liq.paymentMethods).toEqual(['pm/bank_transfer']);
+      });
     });
   });
 

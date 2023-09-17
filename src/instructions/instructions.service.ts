@@ -71,27 +71,21 @@ export class InstructionsService {
     const signer = new Wallet(this.cfgSrv.get('app.badges.instructionIssuerPk'));
     const sigExp = moment().add(1, 'h');
 
+    let types: string[];
     if (!hasBadge) {
+      types = ['string', 'string', 'address', 'uint256', 'string[]', 'string[]', 'uint256'];
       sigInfo.values = [instructionBadge, '', granteeAddr, 0, ['hash'], [instructionHash], sigExp.unix()];
-      const msgHash = ethers.utils.keccak256(
-        ethers.utils.defaultAbiCoder.encode(
-          ['string', 'string', 'address', 'uint256', 'string[]', 'string[]', 'uint256'],
-          sigInfo.values,
-        ),
-      );
+      const msgHash = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(types, sigInfo.values));
       const msgHashBytes = Buffer.from(msgHash.substring(2), 'hex');
       sigInfo.sig = await signer.signMessage(msgHashBytes);
       sigInfo.isNew = true;
       return sigInfo;
     }
 
+    // Generate signature for upsertGranteeMetaBySig
+    types = ['string', 'string', 'address', 'string', 'string', 'uint256'];
     sigInfo.values = [instructionBadge, '', granteeAddr, 'hash', instructionHash, sigExp.unix()];
-    const msgHash = ethers.utils.keccak256(
-      ethers.utils.defaultAbiCoder.encode(
-        ['string', 'string', 'address', 'string', 'string', 'uint256'],
-        sigInfo.values,
-      ),
-    );
+    const msgHash = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(types, sigInfo.values));
     const msgHashBytes = Buffer.from(msgHash.substring(2), 'hex');
     sigInfo.sig = await signer.signMessage(msgHashBytes);
     sigInfo.isNew = false;

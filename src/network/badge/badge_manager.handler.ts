@@ -4,10 +4,17 @@ import { Transaction } from 'objection';
 import Badge from '../../models/badge';
 import BadgeGrant from '../../models/badge_grant';
 import * as moment from 'moment';
+import Liquidity from '../../models/liquidity';
+import NetworkService from '../network.service';
 
 export class BadgeManagerHandler extends Handler {
-  constructor(private provider: providers.JsonRpcProvider, public network: string, private contracts: JointContracts) {
-    super(BadgeManagerHandler.name, null, network, contracts.badgeMgr);
+  constructor(
+    netSrv: NetworkService,
+    private provider: providers.JsonRpcProvider,
+    public network: string,
+    private contracts: JointContracts,
+  ) {
+    super(BadgeManagerHandler.name, netSrv.cfgSrv, network, contracts.badgeMgr);
   }
 
   /**
@@ -135,7 +142,7 @@ export class BadgeManagerHandler extends Handler {
    * @param metadataKeys The metadata keys
    * @param metadataValues The metadata values
    * @param expireAt
-   * @param event The event object
+   * @param _event The event object
    * @param txn The transaction object
    */
   async onGrantedBadge(
@@ -145,9 +152,24 @@ export class BadgeManagerHandler extends Handler {
     metadataKeys: string[],
     metadataValues: string[],
     expireAt: BigNumber,
-    event: ethers.Event,
+    _event: ethers.Event,
     txn?: Transaction,
   ) {
+    // Handle payment method badge grant
+    if (badge == this.cfg.get('app.badges.paymentMethod') && path != '') {
+      const liq = await Liquidity.getByAddress(this.network, metadataKeys[0], undefined, txn);
+      await Liquidity.updateById(
+        liq.id,
+        {
+          paymentMethods:
+            metadataValues[0] == '0'
+              ? liq.paymentMethods.filter((v) => v != `${badge}/${path}`)
+              : [...liq.paymentMethods, `${badge}/${path}`],
+        },
+        txn,
+      );
+    }
+
     await BadgeGrant.create(
       {
         network: this.network,
@@ -334,6 +356,21 @@ export class BadgeManagerHandler extends Handler {
     event: ethers.Event,
     txn?: Transaction,
   ) {
+    // Handle payment method badge grant
+    if (badge == this.cfg.get('app.badges.paymentMethod') && path != '') {
+      const liq = await Liquidity.getByAddress(this.network, key, undefined, txn);
+      await Liquidity.updateById(
+        liq.id,
+        {
+          paymentMethods:
+            value == '0'
+              ? liq.paymentMethods.filter((v) => v != `${badge}/${path}`)
+              : [...liq.paymentMethods, `${badge}/${path}`],
+        },
+        txn,
+      );
+    }
+
     const existing = await BadgeGrant.find(
       {
         network: this.network,

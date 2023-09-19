@@ -40,23 +40,30 @@ export function getTokenInfo(network: string, address: string): TokenList.Token 
 
 /**
  * Find a given asset in the local token list
- * @param address The target address
+ * @param addressOrSymbol The target address or symbol
  */
-export function findInLocalhost(address: string): TokenList.Token {
+export function findInLocalhost(addressOrSymbol: string): TokenList.Token {
   return TokenLists.localhost.tokens.find((token) => {
-    return token.address.toLowerCase() === address.toLowerCase();
+    const match =
+      token.address.toLowerCase() === addressOrSymbol.toLowerCase() ||
+      token.symbol.toLowerCase() === addressOrSymbol.toLowerCase();
+    if (!match) return;
+    token.isSynthetic = token.isSynthetic || token.type == 'SYNTHETIC';
+    return token;
   });
 }
 
 /**
  * Find a given asset in the synthetic token list
- * @param address The target address
+ * @param addressOrSymbol The target address or symbol
  */
-export function findInSynthetic(address: string): TokenList.Token {
+export function findInSynthetic(addressOrSymbol: string): TokenList.Token {
   return TokenLists.synthetic.tokens.find((token) => {
-    const match = token.address.toLowerCase() === address.toLowerCase();
+    const match =
+      token.address.toLowerCase() === addressOrSymbol.toLowerCase() ||
+      token.symbol.toLowerCase() === addressOrSymbol.toLowerCase();
     if (!match) return;
-    token.isSynthetic = true;
+    token.isSynthetic = token.isSynthetic || token.type == 'SYNTHETIC';
     return token;
   });
 }

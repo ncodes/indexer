@@ -1,5 +1,5 @@
-import { Controller, Get, Param } from '@nestjs/common';
-import { getTokenInfo, TokenLists } from '../../common/token_list';
+import { Controller, Get, Param, Query } from '@nestjs/common';
+import { findInLocalhost, getTokenInfo, TokenLists } from '../../common/token_list';
 import { ok, throw400 } from '../../common/responses/responses';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
@@ -42,14 +42,17 @@ export class MiscController {
   }
 
   /**
-   * Get fiat currency rate to 1 USD
-   * @param symbol The currency symbol (e.g USD, NGN)
+   * Get synthetic asset USD rate (ex: 1 NGN = 0.0013 USD)
+   * @param symbol The currency symbol (e.g. USD, NGN, GIFT CARD)
+   * @param reverse Return the reverse rate (e.g. 1 USD = 700 NGN)
    */
-  @Get('fiat-rate/:symbol')
-  async getFiatRate(@Param('symbol') symbol: string) {
+  @Get('synth-rate/:symbol')
+  async getSynthRate(@Param('symbol') symbol: string, @Query('reverse') reverse: boolean) {
     const rate = await this.exRateSvr.get(symbol);
     if (!rate) throw400('symbol not supported');
-    return ok().data({ rate }).build();
+    return ok()
+      .data({ price: !reverse ? 1 / rate.toNumber() : rate.toNumber() })
+      .build();
   }
 
   /**

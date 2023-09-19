@@ -40,13 +40,11 @@ export function getTokenInfo(network: string, address: string): TokenList.Token 
 
 /**
  * Find a given asset in the local token list
- * @param addressOrSymbol The target address or symbol
+ * @param address The target address
  */
-export function findInLocalhost(addressOrSymbol: string): TokenList.Token {
+export function findInLocalhost(address: string): TokenList.Token {
   return TokenLists.localhost.tokens.find((token) => {
-    const match =
-      token.address.toLowerCase() === addressOrSymbol.toLowerCase() ||
-      token.symbol.toLowerCase() === addressOrSymbol.toLowerCase();
+    const match = token.address.toLowerCase() === address.toLowerCase();
     if (!match) return;
     token.isSynthetic = token.isSynthetic || token.type == 'SYNTHETIC';
     return token;
@@ -55,13 +53,11 @@ export function findInLocalhost(addressOrSymbol: string): TokenList.Token {
 
 /**
  * Find a given asset in the synthetic token list
- * @param addressOrSymbol The target address or symbol
+ * @param address The target address
  */
-export function findInSynthetic(addressOrSymbol: string): TokenList.Token {
+export function findInSynthetic(address: string): TokenList.Token {
   return TokenLists.synthetic.tokens.find((token) => {
-    const match =
-      token.address.toLowerCase() === addressOrSymbol.toLowerCase() ||
-      token.symbol.toLowerCase() === addressOrSymbol.toLowerCase();
+    const match = token.address.toLowerCase() === address.toLowerCase();
     if (!match) return;
     token.isSynthetic = token.isSynthetic || token.type == 'SYNTHETIC';
     return token;

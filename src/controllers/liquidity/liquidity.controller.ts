@@ -37,6 +37,7 @@ export class LiquidityController {
     const liquidity = await Liquidity.getLiquidity(q.net, p.mid, p.provider, p.lid, q.select, 'market');
     if (!liquidity) return throw404('liquidity not found');
     await this.liqSrv.extendLiquidity(liquidity, q.select);
+    await this.mktSrv.extendMarket(liquidity.market, ['quoteLogo', 'baseLogo']);
     return ok().data(liquidity).build<Liquidity>();
   }
 

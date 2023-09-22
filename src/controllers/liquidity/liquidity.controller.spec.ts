@@ -164,7 +164,7 @@ describe('LiquidityController', () => {
         });
     });
 
-    it('should return 404 when liquidity was not found', async () => {
+    it('should return 200 when liquidity was found', async () => {
       const liq = await Liquidity.create({
         network: net,
         provider: '0xProvider',
@@ -173,6 +173,7 @@ describe('LiquidityController', () => {
       });
 
       const mockExtendLiquidity = jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(undefined);
+      const mockExtendMarket = jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
 
       await request(app.getHttpServer())
         .get(`/v1/liquidities/0xMarket/0xProvider/0`)
@@ -182,6 +183,7 @@ describe('LiquidityController', () => {
         .expect((res) => {
           expect(res.body.data.id).toEqual(liq.id);
           expect(mockExtendLiquidity).toHaveBeenCalled();
+          expect(mockExtendMarket).toHaveBeenCalled();
         });
     });
   });

@@ -10,7 +10,7 @@
       "name": "Joint LOCAL",
       "symbol": "P2P",
       "decimals": 18,
-      "logoURI": "https://storage.googleapis.com/joint-images/p2p.svg",
+      "logoURI": "https://storage.googleapis.com/joint-images/token-logos/p2p.svg",
       "price": 0
     },
     {
@@ -40,7 +40,7 @@
       "name": "NGN LOCAL",
       "symbol": "NGN",
       "decimals": 18,
-      "logoURI": "https://assets-cdn.trustwallet.com/blockchains/polygon/assets/0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619/logo.png",
+      "logoURI": "https://storage.googleapis.com/joint-images/country-flags/nigeria.svg",
       "price": 0
     },
     {

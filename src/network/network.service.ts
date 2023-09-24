@@ -40,6 +40,7 @@ import Meta, { MetaKeys } from '../models/meta';
 import { MetadataService } from '../services/metadata/metadata.service';
 import { ExchangeRateService } from '../services/exchange_rate.service';
 import { TokenPoolHandler } from './tokenpool/token_pool.handler';
+import Processor from './processor';
 
 @Injectable()
 export default class NetworkService {
@@ -158,9 +159,8 @@ export default class NetworkService {
     // Load initial contract params
     await this.loadInitialContractParams(network);
 
-    // Add handlers to watcher
-    const watcher = new Watcher(network, prov);
-    await watcher.add(
+    // Initialize handlers
+    const handlers = [
       new MarketCoreHandler(this, this.notifSrv, prov, network, this.contracts),
       new MediatorManagerHandler(this, this.notifSrv, prov, network, this.contracts),
       new DisputeManagerHandler(this, this.notifSrv, prov, network, this.contracts),
@@ -170,6 +170,14 @@ export default class NetworkService {
       new LPPoolHandler(prov, network, this.contracts),
       new FeePoolHandler(prov, network, this.contracts),
       new AssetRegistryHandler(prov, network, this.contracts),
-    );
+    ];
+
+    // Create event processor
+    const processor = new Processor(network);
+    await processor.add(...handlers);
+
+    // Create event watcher
+    const watcher = new Watcher(network, prov, processor);
+    await watcher.add(...handlers);
   }
 }

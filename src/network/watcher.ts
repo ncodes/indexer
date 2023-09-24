@@ -1,13 +1,12 @@
 import { Logger } from '@nestjs/common';
 import { Contract, ethers, providers } from 'ethers';
 import Meta from '../models/meta';
-import * as sortArray from 'sort-array';
 import { Handler } from './handler';
-import { isDevMode, isTestMode, shortenAddr } from '../common/common';
-import ChainEvent from '../models/chain_events';
 import * as defer from 'defer-promise';
+import Processor from './processor';
+import { isDevMode } from '../common/common';
 
-interface Evt {
+export interface UnprocessedEvent {
   event: ethers.Event;
   block: number;
   txIndex: number;
@@ -20,16 +19,15 @@ export class Watcher {
   logger = new Logger(Watcher.name);
   private intervals: { [key: string]: NodeJS.Timeout } = {};
   handlers: Handler[] = [];
-  events: Evt[] = [];
+  private isSyncing: { [k: string]: boolean } = {};
 
   /**
    * Initialize the watcher
    * @param network The network name
    * @param provider The network provider
+   * @param processor The processor object
    */
-  constructor(public network: string, private provider: providers.JsonRpcProvider) {
-    if (!isTestMode()) this.processEvents();
-  }
+  constructor(public network: string, private provider: providers.JsonRpcProvider, private processor: Processor) {}
 
   /**
    * Add a handler and start synchronizing it
@@ -39,9 +37,7 @@ export class Watcher {
     for (const h of handlers) {
       this.handlers.push(h);
       this.intervals[h.getContract().address] = this.sync(h.name, h.getContract());
-      h.listen();
     }
-    return Promise.resolve();
   }
 
   /**
@@ -54,17 +50,9 @@ export class Watcher {
   }
 
   /**
-   * Get a handler by contract address
-   * @param address The contract address
-   */
-  getHandler(address: string) {
-    for (const item of this.handlers) {
-      if (item.getContract().address === address) return item;
-    }
-  }
-
-  /**
    * Watch for event on new block
+   * @param handlerName The handler name
+   * @param contract The target contract
    */
   watchBlock(handlerName: string, contract: Contract) {
     const listener = async (curBlock: number) => {
@@ -86,7 +74,7 @@ export class Watcher {
           for (const e of events) {
             const deferred = defer();
             promises.push(deferred.promise);
-            this.pushEvent({
+            this.processor.addEvent({
               event: e,
               block: e.blockNumber,
               txIndex: e.transactionIndex,
@@ -103,7 +91,7 @@ export class Watcher {
       } catch (e) {
         this.logger.error('WatchBlock(): ', e);
         this.provider.off('block', listener);
-        this.sync(handlerName, contract);
+        this.intervals[contract.address] = this.sync(handlerName, contract);
       }
     };
     this.provider.on('block', listener);
@@ -115,121 +103,60 @@ export class Watcher {
    * @param contract The target contract
    */
   sync(handlerName: string, contract: Contract) {
-    return setInterval(async () => {
-      try {
-        // Get last synced block height
-        const key = this.makeSyncKey(contract.address);
-        let meta = await Meta.get(key);
-        if (!meta) {
-          meta = new Meta({
-            value: process.env[`LAUNCH_HEIGHT`] || '1',
-          });
-        }
-
-        // Ensure we are not fully synchronized yet.
-        // If we are, stop watching on interval. Instead, watch on new block.
-        const curBlock = await contract.provider.getBlockNumber();
-        if (parseInt(meta.value) + 1 > curBlock) {
-          this.watchBlock(handlerName, contract);
-          clearInterval(this.intervals[contract.address]);
-          return;
-        }
-
-        // Query events
-        let endBlock = process.env.WATCH_RANGE
-          ? parseInt(process.env.WATCH_RANGE) + parseInt(meta.value)
-          : parseInt(meta.value) + 1;
-        endBlock = endBlock > curBlock ? curBlock : endBlock;
-        const startBlock = parseInt(meta.value) + 1;
-        const events = await contract.queryFilter({}, startBlock, endBlock);
-
-        if (events.length) {
-          const promises = [];
-          for (const e of events) {
-            const deferred = defer();
-            promises.push(deferred.promise);
-            this.pushEvent({
-              event: e,
-              block: e.blockNumber,
-              txIndex: e.transactionIndex,
-              eventIndex: e.logIndex,
-              contract: contract.address,
-              promise: deferred,
+    return setInterval(
+      async () => {
+        if (this.isSyncing[contract.address]) return;
+        this.isSyncing[contract.address] = true;
+        try {
+          // Get last synced block height
+          const key = this.makeSyncKey(contract.address);
+          let meta = await Meta.get(key);
+          if (!meta) {
+            meta = new Meta({
+              value: process.env[`LAUNCH_HEIGHT`] || '1',
             });
           }
-          await Promise.all(promises);
-        }
 
-        // Update the last sync height
-        await Meta.update(key, endBlock.toString());
-      } catch (e) {
-        this.logger.error(`watch(${handlerName}): ` + e.message, e.stack);
-      }
-    }, 1000);
-  }
+          // Ensure we are not fully synchronized yet.
+          // If we are, stop watching on interval. Instead, watch on new block.
+          const curBlock = await contract.provider.getBlockNumber();
+          if (parseInt(meta.value) + 1 > curBlock) {
+            this.watchBlock(handlerName, contract);
+            clearInterval(this.intervals[contract.address]);
+            return;
+          }
 
-  /**
-   * Push events to the list and sort it
-   * @param e The new event
-   * @private
-   */
-  private pushEvent(e: Evt) {
-    this.events.push(e);
-    sortArray(this.events, {
-      by: ['block', 'txIndex', 'eventIndex'],
-      order: 'asc',
-    });
-  }
+          // Query events
+          let endBlock = process.env.WATCH_RANGE
+            ? parseInt(process.env.WATCH_RANGE) + parseInt(meta.value)
+            : parseInt(meta.value) + 1;
+          endBlock = endBlock > curBlock ? curBlock : endBlock;
+          const startBlock = parseInt(meta.value) + 1;
+          const events = await contract.queryFilter({}, startBlock, endBlock);
 
-  /**
-   * Emit an event that has not previously been emitted
-   * @param e The target event to be emitted
-   */
-  async emit(e: Evt) {
-    const txn = await ChainEvent.startTransaction();
-    const args = [...e.event.args.slice(0, e.event.args.length), e.event, txn];
+          if (events.length) {
+            const promises = [];
+            for (const e of events) {
+              const deferred = defer();
+              promises.push(deferred.promise);
+              this.processor.addEvent({
+                event: e,
+                block: e.blockNumber,
+                txIndex: e.transactionIndex,
+                eventIndex: e.logIndex,
+                contract: contract.address,
+                promise: deferred,
+              });
+            }
+            await Promise.all(promises);
+          }
 
-    try {
-      await ChainEvent.bindTransaction(txn).create({
-        network: this.network,
-        signature: e.event.eventSignature,
-        blockNumber: e.event.blockNumber,
-        txIndex: e.event.transactionIndex,
-        logIndex: e.event.logIndex,
-      });
-
-      this.logger.debug(`(Event:${e.event.event}, Contract: ${shortenAddr(e.contract)}): processing an event...`);
-      await this.getHandler(e.contract).emitAsync(e.event.event, ...args);
-      await txn.commit();
-
-      this.logger.debug(`(Event:${e.event.event}, Contract: ${shortenAddr(e.contract)}): finished processing an event`);
-    } catch (error) {
-      await txn.rollback();
-
-      if (error.message.indexOf('duplicate key') !== -1 && error.message.indexOf(ChainEvent.tableName) !== -1) {
-        this.logger.debug(`(Event: ${e.event.event}, Contract: ${shortenAddr(e.contract)}): Previously seen event`);
-        return Promise.resolve();
-      }
-
-      this.logger.error(`Error (Event: ${e.event.event}, Contract: ${shortenAddr(e.contract)}): ${error.message}`);
-      return Promise.reject(error);
-    }
-  }
-
-  /**
-   * Process events from the queue
-   * @private
-   */
-  private processEvents() {
-    setInterval(
-      async () => {
-        if (this.events.length === 0) return;
-        const evt = this.events.splice(0, 1)[0];
-        try {
-          await this.emit(evt);
-          evt.promise.resolve();
+          // Update the last sync height
+          await Meta.update(key, endBlock.toString());
         } catch (e) {
-          evt.promise.reject(e);
+          this.logger.error(`watch(${handlerName}): ` + e.message, e.stack);
+        } finally {
+          this.isSyncing[contract.address] = false;
         }
       },
       isDevMode() ? 100 : 1000,

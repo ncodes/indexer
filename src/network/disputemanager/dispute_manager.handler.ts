@@ -337,7 +337,7 @@ export class DisputeManagerHandler extends Handler {
     );
     await Liquidity.updateById(
       liquidity.id,
-      { openDisputes: !stalled ? liquidity.openDisputes - 1 : liquidity.openDisputes },
+      { openDisputes: !stalled || dispute.orderReleased ? liquidity.openDisputes - 1 : liquidity.openDisputes },
       txn,
     );
 

@@ -497,7 +497,7 @@ describe('MediatorManagerHandler', () => {
       const now = moment().unix();
       const voted = true;
       await expect(
-        handler.onTicketSlashed(owner, toBN(1), marketAddress, toBN(10), voted, true, {
+        handler.onTicketSlashed(owner, toBN(1), toBN(10), voted, true, {
           getBlock: jest.fn().mockResolvedValue({ timestamp: now }),
         } as any),
       ).resolves.toBeUndefined();

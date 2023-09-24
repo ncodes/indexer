@@ -100,14 +100,13 @@ export class MediatorManagerHandler extends Handler {
       async (
         owner: string,
         ticketId: BigNumber,
-        marketAddress: string,
         amount: BigNumber,
         voted: boolean,
         winSide: boolean,
         event: ethers.Event,
         txn?: Transaction,
       ) => {
-        return this.onTicketSlashed(owner, ticketId, marketAddress, amount, voted, winSide, event, txn);
+        return this.onTicketSlashed(owner, ticketId, amount, voted, winSide, event, txn);
       },
     );
 
@@ -403,7 +402,6 @@ export class MediatorManagerHandler extends Handler {
    * A ticket was slashed
    * @param owner The ticket owner
    * @param ticketId The unique id of the ticket
-   * @param _marketAddress The ID of the market the ticket joined
    * @param amount The amount that was slashed
    * @param voted Indicates whether the ticket voted
    * @param winSide Indicates whether the ticker was on the winning side
@@ -413,7 +411,6 @@ export class MediatorManagerHandler extends Handler {
   async onTicketSlashed(
     owner: string,
     ticketId: BigNumber,
-    _marketAddress: string,
     amount: BigNumber,
     voted: boolean,
     winSide: boolean,

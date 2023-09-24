@@ -259,12 +259,17 @@ export default class Swap extends BaseModel {
    */
   static get(network: string, orderId: number, select = [], relations = 'market', txn?: Transaction) {
     select = this.makeSelectList(select);
-    return this.query(txn)
-      .select(...select)
-      .where({ network, orderId })
-      .withGraphFetched(relations)
-      .whereNotDeleted()
-      .first();
+
+    let q = this.query(txn).select(...select);
+
+    // If 'disputes' is in the relations, order by dispute createdAt DESC
+    if (relations && relations.indexOf('disputes') > -1) {
+      q = q.modifyGraph('disputes', (builder) => {
+        return builder.orderBy('createdAt', 'DESC');
+      });
+    }
+
+    return q.where({ network, orderId }).withGraphFetched(relations).whereNotDeleted().first();
   }
 
   /**

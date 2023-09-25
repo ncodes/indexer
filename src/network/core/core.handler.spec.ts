@@ -874,8 +874,8 @@ describe('CoreHandler', () => {
 
     it('should create swap correctly and send notification to liquidity provider', async () => {
       mockComputeSwapFees.mockResolvedValue({ protocolFee: 2, marketCreatorFee: 3 });
-      const cancelAt = moment().add(1, 'day');
-      const numTypeInfo = [toBN(2), lid, toBN(100), toBN(1), toBN(1), toBN(1), toBN(cancelAt.unix())];
+      const cancelDuration = 300;
+      const numTypeInfo = [toBN(2), lid, toBN(100), toBN(1), toBN(1), toBN(1), toBN(cancelDuration)];
       const [orderId, , amount, , , operator] = numTypeInfo;
 
       mockTryToUsd.mockResolvedValue(5.6);
@@ -888,7 +888,10 @@ describe('CoreHandler', () => {
         numTypeInfo,
         [toBN(1)],
         [toBN(2)],
-        { transactionHash: '0xTxHash' } as any,
+        {
+          transactionHash: '0xTxHash',
+          getBlock: jest.fn().mockResolvedValue({ timestamp: moment().unix() as any }),
+        } as any,
       );
       const swap = await Swap.getByOrderId(orderId.toNumber());
       expect(swap).toBeDefined();
@@ -909,7 +912,7 @@ describe('CoreHandler', () => {
       expect(swap.operator).toEqual(operator.toNumber());
       expect(swap.protocolFee).toEqual('2');
       expect(swap.marketCreatorFee).toEqual('3');
-      expect(moment(swap.cancelAt).unix()).toEqual(cancelAt.unix());
+      expect(moment(swap.cancelAt).diff(moment(), 's')).toBeGreaterThanOrEqual(299);
 
       const liq = await Liquidity.getLiquidity(net, marketAddress, provider, lid.toNumber());
       expect(liq.openOrders).toEqual(1);
@@ -942,8 +945,8 @@ describe('CoreHandler', () => {
       it('should set swap amount to liquidity amount', async () => {
         await Market.updateById(market.id, { quoteType: AssetType.ERC721 });
         mockComputeSwapFees.mockResolvedValue({ protocolFee: 2, marketCreatorFee: 3 });
-        const cancelAt = moment().add(1, 'day');
-        const numTypeInfo = [toBN(2), lid, toBN(100), toBN(1), toBN(1), toBN(1), toBN(cancelAt.unix())];
+        const cancelDuration = 300;
+        const numTypeInfo = [toBN(2), lid, toBN(100), toBN(1), toBN(1), toBN(1), toBN(cancelDuration)];
         const [orderId, , , , ,] = numTypeInfo;
         await handler.onSwapOrder(
           marketAddress,
@@ -953,7 +956,10 @@ describe('CoreHandler', () => {
           numTypeInfo,
           [toBN(1)],
           [toBN(2)],
-          { transactionHash: '0xTxHash' } as any,
+          {
+            transactionHash: '0xTxHash',
+            getBlock: jest.fn().mockResolvedValue({ timestamp: moment().unix() as any }),
+          } as any,
         );
         const swap = await Swap.getByOrderId(orderId.toNumber());
         expect(swap).toBeDefined();
@@ -965,8 +971,8 @@ describe('CoreHandler', () => {
       it('should set swap amount to liquidity amount', async () => {
         await Market.updateById(market.id, { baseType: AssetType.ERC721 });
         mockComputeSwapFees.mockResolvedValue({ protocolFee: 2, marketCreatorFee: 3 });
-        const cancelAt = moment().add(1, 'day');
-        const numTypeInfo = [toBN(2), lid, toBN(100), toBN(1), toBN(1), toBN(1), toBN(cancelAt.unix())];
+        const cancelDuration = 300;
+        const numTypeInfo = [toBN(2), lid, toBN(100), toBN(1), toBN(1), toBN(1), toBN(cancelDuration)];
         const [orderId, , , , ,] = numTypeInfo;
         await handler.onSwapOrder(
           marketAddress,
@@ -976,7 +982,10 @@ describe('CoreHandler', () => {
           numTypeInfo,
           [toBN(1)],
           [toBN(2)],
-          { transactionHash: '0xTxHash' } as any,
+          {
+            transactionHash: '0xTxHash',
+            getBlock: jest.fn().mockResolvedValue({ timestamp: moment().unix() as any }),
+          } as any,
         );
         const swap = await Swap.getByOrderId(orderId.toNumber());
         expect(swap).toBeDefined();

@@ -496,7 +496,8 @@ export class CoreHandler extends Handler {
       takerIds: idsFromTaker.map((id) => id.toNumber()),
       operator: operator.toNumber(),
       txHash: event.transactionHash,
-      cancelAt: moment(await getBlockTime(event))
+      cancelAt: moment
+        .unix(await getBlockTime(event))
         .add(cancelDuration.toNumber(), 'seconds')
         .toISOString(),
     };

@@ -42,7 +42,7 @@ export class SwapsController {
    */
   @Get(':orderId')
   async get(@Param('orderId', ParseIntPipe) orderId: number, @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO) {
-    const swap = await Swap.get(q.net, orderId, q.select, '[market,liquidity,disputes.[draftees,reveals]]');
+    const swap = await Swap.get(q.net, orderId, q.select, '[market,liquidity,disputes.[draftees,reveals,commits]]');
     if (!swap) throw404('swap not found');
     await this.swapSrv.extendSwap(swap, q.select);
     await this.marketSrv.extendMarket(swap.market, q.select);
@@ -82,7 +82,7 @@ export class SwapsController {
       q.limit || 25,
       q.offset,
       q.select,
-      '[market,liquidity,disputes.[draftees,reveals]]',
+      '[market,liquidity,disputes.[draftees,reveals,commits]]',
     );
 
     for (const swap of swaps) {

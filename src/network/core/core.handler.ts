@@ -10,7 +10,7 @@ import Meta, { FeeName, ProtocolFeeBeneficiary } from '../../models/meta';
 import NetworkService from '../network.service';
 import Market from '../../models/market';
 import * as moment from 'moment';
-import { pow10D, toBN } from '../common';
+import { getBlockTime, pow10D, toBN } from '../common';
 import Dispute from '../../models/dispute';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 import * as _ from 'lodash';
@@ -460,7 +460,7 @@ export class CoreHandler extends Handler {
     event: ChainEvent,
     txn?: Transaction,
   ) {
-    const [orderId, lid, , price, offerId, operator, cancelAt] = numTypeInfo;
+    const [orderId, lid, , price, offerId, operator, cancelDuration] = numTypeInfo;
     let amount = numTypeInfo[2];
 
     let market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
@@ -496,7 +496,9 @@ export class CoreHandler extends Handler {
       takerIds: idsFromTaker.map((id) => id.toNumber()),
       operator: operator.toNumber(),
       txHash: event.transactionHash,
-      cancelAt: moment.unix(cancelAt.toNumber()).toISOString(),
+      cancelAt: moment(await getBlockTime(event))
+        .add(cancelDuration.toNumber(), 'seconds')
+        .toISOString(),
     };
 
     // Get swap fee info
@@ -931,9 +933,8 @@ export class CoreHandler extends Handler {
     txn?: Transaction,
   ) {
     // Add a task for the future
-    const block = await event.getBlock();
-    const mineAt =
-      block.timestamp + ((await Meta.getContractParam(this.network, 'transferToFeePoolInterval')) as number);
+    const blockTime = await getBlockTime(event);
+    const mineAt = blockTime + ((await Meta.getContractParam(this.network, 'transferToFeePoolInterval')) as number);
     await MineTask.create(
       {
         type: MineTaskType.FeeTransfer,

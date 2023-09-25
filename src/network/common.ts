@@ -1,7 +1,8 @@
-import { BigNumber, BigNumberish } from 'ethers';
+import { BigNumber, BigNumberish, Event } from 'ethers';
 import { EnumValues } from 'enum-values';
 import { toDec } from '../common/common';
 import Decimal from 'decimal.js';
+import * as moment from 'moment/moment';
 
 export enum SupportedNetworks {
   Ethereum = 'ethereum',
@@ -103,4 +104,14 @@ export function toFixed(n: Decimal, places?: number): string {
 // isZero checks if amt is zero or undefined
 export function isZero(amt: BigNumberish) {
   return !amt || toDec(amt).eq(0);
+}
+
+/**
+ * Get block time but defaults to unix time if block time is in the future
+ * @param event The blockchain event
+ */
+export async function getBlockTime(event: Event) {
+  const now = moment().unix();
+  const block = await event.getBlock();
+  return block.timestamp > now ? now : block.timestamp;
 }

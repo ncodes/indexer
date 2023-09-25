@@ -4,7 +4,7 @@ import { Handler } from '../handler';
 import { Transaction } from 'objection';
 import Ticket from '../../models/ticket';
 import * as moment from 'moment';
-import { toBN } from '../common';
+import { getBlockTime, toBN } from '../common';
 import TicketSlash from '../../models/ticket_slash';
 import NetworkService from '../network.service';
 import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierService';
@@ -183,8 +183,8 @@ export class MediatorManagerHandler extends Handler {
    */
   async onTicketCancelled(owner: string, id: BigNumber, event: ethers.Event, txn?: Transaction) {
     const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, id.toNumber(), undefined, txn);
-    const block = await event.getBlock();
-    const cancelAt = block.timestamp + parseInt(await this.getParam('ticketCancelDur'));
+    const blockTime = await getBlockTime(event);
+    const cancelAt = blockTime + parseInt(await this.getParam('ticketCancelDur'));
     await Ticket.updateById(
       ticket.id,
       {
@@ -277,9 +277,8 @@ export class MediatorManagerHandler extends Handler {
     // Compute dispute phases times when dispute is fully drafted
     const numDrafted = dispute.numMediatorsDrafted + 1;
     const fullyDrafted = numDrafted >= dispute.numMediators;
-    const block = await event.getBlock();
-    const now = block.timestamp;
-    const evidEndAt = fullyDrafted ? now + parseInt(await this.getParam('evidenceDur')) : undefined;
+    const blockTime = await getBlockTime(event);
+    const evidEndAt = fullyDrafted ? blockTime + parseInt(await this.getParam('evidenceDur')) : undefined;
     const commitEndAt = fullyDrafted ? evidEndAt + parseInt(await this.getParam('predictDur')) / 2 : undefined;
     const predictEndAt = fullyDrafted ? evidEndAt + parseInt(await this.getParam('predictDur')) : undefined;
     dispute = await Dispute.updateById(
@@ -417,8 +416,8 @@ export class MediatorManagerHandler extends Handler {
     event: ethers.Event,
     txn?: Transaction,
   ) {
-    const block = await event.getBlock();
-    const joinBy = block.timestamp + parseInt(await this.getParam('ticketExpireDur'));
+    const blockTime = await getBlockTime(event);
+    const joinBy = blockTime + parseInt(await this.getParam('ticketExpireDur'));
 
     let ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, ticketId.toNumber(), undefined, txn);
     ticket = await Ticket.updateById(

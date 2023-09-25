@@ -322,7 +322,13 @@ export class DisputeManagerHandler extends Handler {
 
     // Update market
     const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
-    await Market.updateById(market.id, { openDisputes: !stalled ? market.openDisputes - 1 : market.openDisputes }, txn);
+    await Market.updateById(
+      market.id,
+      {
+        openDisputes: !stalled || dispute.orderReleased ? market.openDisputes - 1 : market.openDisputes,
+      },
+      txn,
+    );
 
     // Update liquidity
     const swap = await Swap.get(dispute.network, dispute.orderId, [], undefined, txn);
@@ -337,7 +343,9 @@ export class DisputeManagerHandler extends Handler {
     );
     await Liquidity.updateById(
       liquidity.id,
-      { openDisputes: !stalled || dispute.orderReleased ? liquidity.openDisputes - 1 : liquidity.openDisputes },
+      {
+        openDisputes: !stalled || dispute.orderReleased ? liquidity.openDisputes - 1 : liquidity.openDisputes,
+      },
       txn,
     );
 

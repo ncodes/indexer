@@ -1440,8 +1440,11 @@ describe('CoreHandler', () => {
         taker,
       });
 
-      const disputeFrom = moment().unix();
-      await handler.onSwapOrderPaid(orderId, toBN(disputeFrom), {} as any);
+      const disputeFrom = 300;
+      const now = moment();
+      await handler.onSwapOrderPaid(orderId, toBN(disputeFrom), {
+        getBlock: jest.fn().mockResolvedValue({ timestamp: now.unix() }),
+      } as any);
 
       // Make sure swap is marked as paid
       let swap = await Swap.find({ marketAddress: market.address });
@@ -1449,7 +1452,7 @@ describe('CoreHandler', () => {
       expect(swap.paid).toBeTruthy();
       expect(swap.payer).toEqual(taker);
       expect(swap.paidAt).toBeDefined();
-      expect(moment(swap.disputeFrom).unix()).toEqual(disputeFrom);
+      expect(moment(swap.disputeFrom).diff(now, 's')).toBeGreaterThanOrEqual(299);
 
       const event = await Event.find({ action: Events.SwapPaid });
       expect(event).toBeDefined();
@@ -1472,7 +1475,9 @@ describe('CoreHandler', () => {
 
       // Should send notification to taker when base is SYNTH and quote ERC20
       market = await Market.updateById(market.id, { baseType: AssetType.SYNTH, quoteType: AssetType.ERC20 });
-      await handler.onSwapOrderPaid(orderId, toBN(disputeFrom), {} as any);
+      await handler.onSwapOrderPaid(orderId, toBN(disputeFrom), {
+        getBlock: jest.fn().mockResolvedValue({ timestamp: now.unix() }),
+      } as any);
       swap = await Swap.find({ marketAddress: market.address });
       market = await Market.getById(market.id);
       swap.market = market;

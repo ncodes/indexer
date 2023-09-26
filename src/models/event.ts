@@ -168,7 +168,7 @@ export default class Event extends BaseModel {
         modelClass: Dispute,
         join: {
           from: ['events.network', 'events.marketAddress', 'events.orderId', 'events.disputeId'],
-          to: ['disputes.network', 'disputes.marketAddress', 'disputes.orderId', 'disputes.orderId'],
+          to: ['disputes.network', 'disputes.marketAddress', 'disputes.orderId', 'disputes.disputeId'],
         },
       },
     };

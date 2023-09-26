@@ -41,11 +41,15 @@ export enum NotificationID {
 
 @Injectable()
 export class NotifierService {
+  disable = false;
+
   constructor(
     @InjectQueue('notifier') private queue: Queue,
     private cfgSrv: ConfigService,
     private notifier: NotifierConsumer,
-  ) {}
+  ) {
+    this.disable = this.cfgSrv.get('app.disableNotifications') == 'true';
+  }
 
   /**
    * Schedule notification
@@ -55,7 +59,7 @@ export class NotifierService {
    * @param data The context data
    */
   notify(notifType: NotificationID, network: string, recipient: string, data: { [key: string]: any }) {
-    if (this.cfgSrv.get('app.disableNotifications') === 'true') return Promise.resolve();
+    if (this.disable) return Promise.resolve();
     if (isDevMode()) return this.notifyNow(notifType, network, recipient, data);
     return this.queue.add(
       {

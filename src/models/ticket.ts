@@ -152,7 +152,7 @@ export default class Ticket extends BaseModel {
     let q = this.query(txn)
       .select(...select)
       .whereNotDeleted();
-    if (index) q = q.where({ index });
+    if (index != undefined) q = q.where({ index });
     if (network) q = q.where({ network });
     if (owner) q = q.where('owner', 'ilike', owner);
     return q.first();
@@ -162,9 +162,9 @@ export default class Ticket extends BaseModel {
   static async getTotalBonds(network?: string, poolId?: number, owner?: string, drained?: boolean, txn?: Transaction) {
     let q = this.query(txn).sum('bond as total').whereNotDeleted();
     if (network) q = q.where({ network });
-    if (poolId) q = q.where({ poolId });
+    if (poolId != undefined) q = q.where({ poolId });
     if (owner) q = q.where('owner', 'ilike', owner);
-    if (drained !== undefined) q = q.where({ drained });
+    if (drained != undefined) q = q.where({ drained });
     const res = (await q.first()) as Ticket & { total: string };
     return res.total || '0';
   }
@@ -218,10 +218,10 @@ export default class Ticket extends BaseModel {
       .select(...select, raw('count(*) over() as' + ' "$queryCount"'))
       .whereNotDeleted()
       .where({ network });
-    if (!isNil(poolId)) q = q.where('poolId', poolId);
+    if (poolId != undefined) q = q.where('poolId', poolId);
     if (owner) q = q.where('owner', 'ILIKE', owner);
-    if (orderId !== undefined) q = q.where('orderId', orderId);
-    if (disputeId !== undefined) q = q.where('disputeId', disputeId);
+    if (orderId != undefined) q = q.where('orderId', orderId);
+    if (disputeId != undefined) q = q.where('disputeId', disputeId);
 
     if (status) {
       switch (status) {
@@ -299,12 +299,12 @@ export default class Ticket extends BaseModel {
     txn?: Transaction,
   ): Promise<string> {
     let q = this.query(txn).whereNotDeleted().where({ network });
-    if (!isNil(poolId)) q = q.where('poolId', poolId);
+    if (poolId != undefined) q = q.where('poolId', poolId);
     if (owner) q = q.where('owner', 'ILIKE', owner);
-    if (orderId !== undefined) q = q.where('orderId', orderId);
-    if (disputeId !== undefined) q = q.where('disputeId', disputeId);
-    if (joined !== undefined) q = q.where('joined', joined);
-    if (drafted !== undefined) q = q.where('drafted', drafted);
+    if (orderId != undefined) q = q.where('orderId', orderId);
+    if (disputeId != undefined) q = q.where('disputeId', disputeId);
+    if (joined != undefined) q = q.where('joined', joined);
+    if (drafted != undefined) q = q.where('drafted', drafted);
     if (expired) {
       q = q.where((q) => {
         return q
@@ -315,7 +315,7 @@ export default class Ticket extends BaseModel {
       });
     }
     if (cancelled) q = q.where('cancelAt', 'is not', null).where('cancelAt', '<', 'now()');
-    if (matured !== undefined) {
+    if (matured != undefined) {
       q = q.where('matureAt', 'is not', null).where('matureAt', matured ? '<' : '>', 'now()');
     }
     if (slashed) q = q.where('slashed', slashed);

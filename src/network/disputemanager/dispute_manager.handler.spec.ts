@@ -235,7 +235,7 @@ describe('DisputeManagerHandler', () => {
       const marketAddress = '0xMarket';
       const disputeId = toBN(1);
       await expect(
-        handler.onCommitted(marketAddress, orderId, disputeId, '0xCommitter', '0xHash', {} as any),
+        handler.onCommitted(marketAddress, orderId, disputeId, '0xCommitter', toBN(1), '0xHash', {} as any),
       ).resolves.toBeUndefined();
 
       const commit = await Commit.find({
@@ -244,6 +244,7 @@ describe('DisputeManagerHandler', () => {
       });
       expect(commit).toBeDefined();
       expect(commit.committer).toEqual('0xCommitter');
+      expect(commit.ticketIndex).toEqual(1);
 
       const event = await Event.find({ action: Events.SwapCommitted });
       expect(event).toBeDefined();
@@ -261,11 +262,12 @@ describe('DisputeManagerHandler', () => {
       const marketAddress = '0xMarket';
       const disputeId = toBN(1);
       await expect(
-        handler.onRevealed(marketAddress, orderId, disputeId, '0xRevealer', '1vote', {} as any),
+        handler.onRevealed(marketAddress, orderId, disputeId, '0xRevealer', toBN(1), '1vote', {} as any),
       ).resolves.toBeUndefined();
 
       const reveal = await Reveal.find({ marketAddress, orderId: orderId.toNumber() });
       expect(reveal).toBeDefined();
+      expect(reveal.ticketIndex).toEqual(1);
 
       const event = await Event.find({ action: Events.SwapRevealed });
       expect(event).toBeDefined();

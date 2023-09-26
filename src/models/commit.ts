@@ -16,6 +16,8 @@ export default class Commit extends BaseModel {
   orderId: number;
   // The dispute ID
   disputeId: number;
+  // The ticket index
+  ticketIndex: number;
   // The committed hash
   hash: string;
 

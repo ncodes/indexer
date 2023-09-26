@@ -16,6 +16,8 @@ export default class Reveal extends BaseModel {
   orderId: number;
   // The dispute ID
   disputeId: number;
+  // The ticket index
+  ticketIndex: number;
   // The revealed vote
   vote: string;
 

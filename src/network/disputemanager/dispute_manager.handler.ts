@@ -52,11 +52,12 @@ export class DisputeManagerHandler extends Handler {
         orderId: BigNumber,
         disputeId: BigNumber,
         committer: string,
+        ticketIdx: BigNumber,
         hash: string,
         event: ethers.Event,
         txn?: Transaction,
       ) => {
-        return this.onCommitted(marketAddress, orderId, disputeId, committer, hash, event, txn);
+        return this.onCommitted(marketAddress, orderId, disputeId, committer, ticketIdx, hash, event, txn);
       },
     );
 
@@ -67,11 +68,12 @@ export class DisputeManagerHandler extends Handler {
         orderId: BigNumber,
         disputeId: BigNumber,
         revealer: string,
+        ticketIdx: BigNumber,
         vote: string,
         event: ethers.Event,
         txn?: Transaction,
       ) => {
-        return this.onRevealed(marketAddress, orderId, disputeId, revealer, vote, event, txn);
+        return this.onRevealed(marketAddress, orderId, disputeId, revealer, ticketIdx, vote, event, txn);
       },
     );
 
@@ -210,6 +212,7 @@ export class DisputeManagerHandler extends Handler {
    * @param orderId The order ID
    * @param disputeId The dispute ID
    * @param committer The address of the mediator
+   * @param ticketIdx The index of the ticket
    * @param hash The hash committed
    * @param _event The event object
    * @param txn The transaction object
@@ -219,6 +222,7 @@ export class DisputeManagerHandler extends Handler {
     orderId: BigNumber,
     disputeId: BigNumber,
     committer: string,
+    ticketIdx: BigNumber,
     hash: string,
     _event: ChainEvent,
     txn?: Transaction,
@@ -229,6 +233,7 @@ export class DisputeManagerHandler extends Handler {
         marketAddress,
         committer,
         hash,
+        ticketIndex: ticketIdx.toNumber(),
         orderId: orderId.toNumber(),
         disputeId: disputeId.toNumber(),
       },
@@ -252,6 +257,7 @@ export class DisputeManagerHandler extends Handler {
    * @param orderId The order ID
    * @param disputeId The dispute ID
    * @param revealer The address of the mediator
+   * @param ticketIdx The index of the ticket
    * @param vote The revealed vote
    * @param _event The event object
    * @param txn The transaction object
@@ -261,6 +267,7 @@ export class DisputeManagerHandler extends Handler {
     orderId: BigNumber,
     disputeId: BigNumber,
     revealer: string,
+    ticketIdx: BigNumber,
     vote: string,
     _event: ChainEvent,
     txn?: Transaction,
@@ -271,6 +278,7 @@ export class DisputeManagerHandler extends Handler {
         marketAddress,
         revealer,
         vote,
+        ticketIndex: ticketIdx.toNumber(),
         orderId: orderId.toNumber(),
         disputeId: disputeId.toNumber(),
       },

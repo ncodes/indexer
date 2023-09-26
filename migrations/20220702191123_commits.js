@@ -7,6 +7,7 @@ exports.up = function (knex) {
       table.string('marketAddress');
       table.integer('orderId');
       table.integer('disputeId');
+      table.integer('ticketIndex');
       table.string('committer');
       table.string('hash');
       table.timestamp('createdAt');

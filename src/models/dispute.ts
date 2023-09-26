@@ -77,6 +77,9 @@ export default class Dispute extends BaseModel {
   reveals: Reveal[];
   commits: Commit[];
 
+  /** Alias */
+  ticketIndex: number;
+
   constructor(init?: Partial<Dispute>) {
     super();
     Object.assign(this, init);
@@ -351,7 +354,7 @@ export default class Dispute extends BaseModel {
       q = q.from((sub) => {
         sub = sub
           .from('disputes')
-          .select('disputes.*')
+          .select(raw(`disputes.*, drafts.index as "ticketIndex"`))
           .leftJoin('drafts', (q) => {
             return q
               .on('drafts.network', 'ILIKE', 'disputes.network')

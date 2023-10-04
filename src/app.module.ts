@@ -27,6 +27,7 @@ import { TimelinesModule } from './controllers/timelines/timelines.module';
 import { InstructionsModule } from './instructions/instructions.module';
 import { RequestLoggerMiddleware } from './common/loggers/request_logger';
 import { PaymentsModule } from './controllers/payments/payments.module';
+import { FilesModule } from './controllers/files/files.module';
 
 /**
  * Returns the configurations to be loaded.
@@ -84,6 +85,7 @@ function getProviders() {
     TasksModule,
     InstructionsModule,
     PaymentsModule,
+    FilesModule,
   ],
   providers: getProviders(),
   controllers: [],

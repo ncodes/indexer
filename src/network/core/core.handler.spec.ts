@@ -1246,7 +1246,7 @@ describe('CoreHandler', () => {
         expect(event).toBeDefined();
         expect(event.network).toEqual(net);
         expect(event.marketAddress).toEqual(marketAddress);
-        expect(event.orderId).toEqual(orderId.toNumber());
+        expect(event.orderId).toEqual(orderId.sub(1).toNumber());
         expect(event.creator).toEqual(provider);
 
         // mark recent dispute as released

@@ -1,4 +1,4 @@
-import { randStr, toDec } from '../common/common';
+import { isEqualStr, randStr, toDec } from '../common/common';
 import Objection, { Model, raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 import * as moment from 'moment';
@@ -169,6 +169,27 @@ export default class Swap extends BaseModel {
       payer = this.taker;
     }
     return payer;
+  }
+
+  /**
+   * Checks if the address is one of the swap's dispute draftees.
+   * @param swap The swap object
+   * @param address The address to check
+   * @param recent If true, only checks the most recent dispute
+   */
+  static isSwapDraftee(swap: Swap, address: string, recent = false) {
+    if (!swap.disputes) return false;
+    if (recent) return Dispute.isDisputeDraftee(swap.disputes[0], address);
+    return swap.disputes.some((d) => d.draftees.some((dr) => isEqualStr(dr.owner, address)));
+  }
+
+  /**
+   * Checks if the address is either the provider or the taker.
+   * @param swap The swap object
+   * @param address The address to check
+   */
+  static isSwapCounterparty(swap: Swap, address: string) {
+    return isEqualStr(swap.provider, address) || isEqualStr(swap.taker, address);
   }
 
   /**

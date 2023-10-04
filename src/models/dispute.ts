@@ -1,4 +1,4 @@
-import { randStr } from '../common/common';
+import { isEqualStr, randStr } from '../common/common';
 import Objection, { Model, raw, Transaction } from 'objection';
 import { BaseModel } from './base';
 import * as _ from 'lodash';
@@ -136,6 +136,16 @@ export default class Dispute extends BaseModel {
         },
       },
     };
+  }
+
+  /**
+   * Checks if the address is one of the dispute's draftees.
+   * @param dispute The dispute object
+   * @param address The address to check
+   */
+  static isDisputeDraftee(dispute: Dispute, address: string) {
+    if (!dispute || !dispute.draftees) return false;
+    return dispute.draftees.some((d) => isEqualStr(d.owner, address));
   }
 
   /**

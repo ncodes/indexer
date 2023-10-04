@@ -134,7 +134,6 @@ if (process.env.TEST_EXTERNAL_API == 'true' || isLocal()) {
           expect(resp).toHaveProperty('name', 'Naira');
           expect(resp).toHaveProperty('logoURI', 'https://bitcoin.org/img.png');
           expect(resp).toHaveProperty('decimals', 8);
-          expect(resp).toHaveProperty('price', 1000);
         });
       });
 

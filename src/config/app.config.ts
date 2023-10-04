@@ -59,6 +59,7 @@ export default () => ({
     disableNotifications: process.env.DISABLE_NOTIFICATIONS,
     tokenMetadataSource: process.env.TOKEN_METADATA_SOURCE,
     exchangeRateSource: process.env.EXCHANGE_RATE_SOURCE,
+    maxSwapFileSize: process.env.MAX_SWAP_FILE_SIZE,
     redis: {
       url: process.env.REDIS_URL,
     },

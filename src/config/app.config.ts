@@ -59,7 +59,17 @@ export default () => ({
     disableNotifications: process.env.DISABLE_NOTIFICATIONS,
     tokenMetadataSource: process.env.TOKEN_METADATA_SOURCE,
     exchangeRateSource: process.env.EXCHANGE_RATE_SOURCE,
-    maxSwapFileSize: process.env.MAX_SWAP_FILE_SIZE,
+    maxSwapImageSize: process.env.MAX_SWAP_IMAGE_SIZE,
+    maxSwapVideoSize: process.env.MAX_SWAP_VIDEO_SIZE,
+    maxSwapDocSize: process.env.MAX_SWAP_DOC_SIZE,
+    fileUpload: {
+      maxImageSize: process.env.FILE_UPLOAD_MAX_IMAGE_SIZE,
+      maxVideoSize: process.env.FILE_UPLOAD_MAX_VIDEO_SIZE,
+      maxDocSize: process.env.FILE_UPLOAD_MAX_DOC_SIZE,
+      allowedImageTypes: process.env.FILE_UPLOAD_ALLOWED_IMAGE_TYPES,
+      allowedVideoTypes: process.env.FILE_UPLOAD_ALLOWED_VIDEO_TYPES,
+      allowedDocTypes: process.env.FILE_UPLOAD_ALLOWED_DOC_TYPES,
+    },
     redis: {
       url: process.env.REDIS_URL,
     },

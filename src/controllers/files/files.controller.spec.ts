@@ -1,21 +1,21 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { DBService } from '../../db/DBService';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { NoopLogger } from '../../common/loggers/noop_logger';
-import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
-import { FilesController } from './files.controller';
-import { SupportedNetworks } from '../../network/common';
-import { FilesService } from './files.service';
-import * as request from 'supertest';
+import { Test, TestingModule } from '@nestjs/testing';
 import * as path from 'path';
-import User from '../../models/user';
-import { Roles } from '../../common/roles';
-import { makeSession } from '../auth/utils';
+import * as request from 'supertest';
 import { randStr } from '../../common/common';
-import Swap from '../../models/swap';
+import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
+import { NoopLogger } from '../../common/loggers/noop_logger';
+import { Roles } from '../../common/roles';
+import { DBService } from '../../db/DBService';
 import Dispute from '../../models/dispute';
 import Draft from '../../models/draft';
+import Swap from '../../models/swap';
+import User from '../../models/user';
+import { SupportedNetworks } from '../../network/common';
+import { makeSession } from '../auth/utils';
+import { FilesController } from './files.controller';
+import { FilesService } from './files.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -129,7 +129,110 @@ describe('FilesController', () => {
         });
     });
 
+    describe('image upload', () => {
+      beforeEach(() => {});
+
+      it(`should return 400 when the uploaded file's type is not supported`, async () => {
+        cfgObj['app.fileUpload.allowedImageTypes'] = 'image/abc';
+        await request(app.getHttpServer())
+          .post(`/v1/files/upload/${net}/0`)
+          .set('Authorization', 'bearer ' + token)
+          .attach('file', path.resolve(__dirname, './testdata/image.jpg'))
+          .expect(400)
+          .expect({
+            error: {
+              type: 'invalid_request_error',
+              message: 'file type is not valid (only jpg, jpeg, png are allowed)',
+            },
+          });
+      });
+
+      it(`should return 400 when the uploaded file's size is too large`, async () => {
+        cfgObj['app.fileUpload.allowedImageTypes'] = 'image/jpg';
+        cfgObj['app.fileUpload.maxImageSize'] = '1';
+        await request(app.getHttpServer())
+          .post(`/v1/files/upload/${net}/0`)
+          .set('Authorization', 'bearer ' + token)
+          .attach('file', path.resolve(__dirname, './testdata/image.jpg'))
+          .expect(400)
+          .expect({
+            error: {
+              type: 'invalid_request_error',
+              message: 'file type is not valid (only jpg, jpeg, png are allowed)',
+            },
+          });
+      });
+    });
+
+    describe('video upload', () => {
+      it(`should return 400 when the uploaded file's type is not supported`, async () => {
+        cfgObj['app.fileUpload.allowedVideoTypes'] = 'video/abc';
+        await request(app.getHttpServer())
+          .post(`/v1/files/upload/${net}/0`)
+          .set('Authorization', 'bearer ' + token)
+          .attach('file', path.resolve(__dirname, './testdata/video.mp4'))
+          .expect(400)
+          .expect({
+            error: {
+              type: 'invalid_request_error',
+              message: 'file type is not valid (only mp4, mov, wmv, webm are allowed)',
+            },
+          });
+      });
+
+      it(`should return 400 when the uploaded file's size is too large`, async () => {
+        cfgObj['app.fileUpload.allowedVideoTypes'] = 'video/mp4';
+        cfgObj['app.fileUpload.maxVideoSize'] = '1';
+        await request(app.getHttpServer())
+          .post(`/v1/files/upload/${net}/0`)
+          .set('Authorization', 'bearer ' + token)
+          .attach('file', path.resolve(__dirname, './testdata/video.mp4'))
+          .expect(400)
+          .expect({
+            error: {
+              type: 'invalid_request_error',
+              message: 'file limit was exceeded (max: 30MB)',
+            },
+          });
+      });
+    });
+
+    describe('document upload', () => {
+      it(`should return 400 when the uploaded file's type is not supported`, async () => {
+        cfgObj['app.fileUpload.allowedDocTypes'] = 'application/abc';
+        await request(app.getHttpServer())
+          .post(`/v1/files/upload/${net}/0`)
+          .set('Authorization', 'bearer ' + token)
+          .attach('file', path.resolve(__dirname, './testdata/doc.pdf'))
+          .expect(400)
+          .expect({
+            error: {
+              type: 'invalid_request_error',
+              message: 'file type is not supported',
+            },
+          });
+      });
+
+      it(`should return 400 when the uploaded file's size is too large`, async () => {
+        cfgObj['app.fileUpload.allowedDocTypes'] = 'application/pdf';
+        cfgObj['app.fileUpload.maxDocSize'] = '1';
+        await request(app.getHttpServer())
+          .post(`/v1/files/upload/${net}/0`)
+          .set('Authorization', 'bearer ' + token)
+          .attach('file', path.resolve(__dirname, './testdata/doc.pdf'))
+          .expect(400)
+          .expect({
+            error: {
+              type: 'invalid_request_error',
+              message: 'file limit was exceeded (max: 10MB)',
+            },
+          });
+      });
+    });
+
     it('should return 400 when swap is unknown', async () => {
+      cfgObj['app.fileUpload.allowedImageTypes'] = 'image/jpeg';
+      cfgObj['app.fileUpload.maxImageSize'] = '11534336';
       await request(app.getHttpServer())
         .post(`/v1/files/upload/${net}/0`)
         .set('Authorization', 'bearer ' + token)
@@ -141,6 +244,8 @@ describe('FilesController', () => {
     });
 
     it('should return 401 when authenticated user is neither a swap counterparty or active dispute draftee', async () => {
+      cfgObj['app.fileUpload.allowedImageTypes'] = 'image/jpeg';
+      cfgObj['app.fileUpload.maxImageSize'] = '11534336';
       await Swap.create({ network: net, orderId: 1 });
       await request(app.getHttpServer())
         .post(`/v1/files/upload/${net}/1`)
@@ -153,6 +258,8 @@ describe('FilesController', () => {
     });
 
     it('should return 200 on successful upload and when auth user is provider', async () => {
+      cfgObj['app.fileUpload.allowedImageTypes'] = 'image/jpeg';
+      cfgObj['app.fileUpload.maxImageSize'] = '11534336';
       await Swap.create({ network: net, orderId: 1, provider: u.address });
       jest.spyOn(app.get(FilesService), 'upload').mockResolvedValue('0xHash');
       await request(app.getHttpServer())
@@ -166,6 +273,8 @@ describe('FilesController', () => {
     });
 
     it('should return 200 on successful upload and when auth user is taker', async () => {
+      cfgObj['app.fileUpload.allowedImageTypes'] = 'image/jpeg';
+      cfgObj['app.fileUpload.maxImageSize'] = '11534336';
       await Swap.create({ network: net, orderId: 1, taker: u.address });
       jest.spyOn(app.get(FilesService), 'upload').mockResolvedValue('0xHash');
       await request(app.getHttpServer())
@@ -179,6 +288,8 @@ describe('FilesController', () => {
     });
 
     it('should return 200 on successful upload and when auth user is an active dispute draftee', async () => {
+      cfgObj['app.fileUpload.allowedImageTypes'] = 'image/jpeg';
+      cfgObj['app.fileUpload.maxImageSize'] = '11534336';
       await Swap.create({ network: net, orderId: 1 });
       await Dispute.create({ network: net, orderId: 1, disputeId: 0 });
       await Draft.create({ network: net, orderId: 1, disputeIndex: 0, owner: u.address });

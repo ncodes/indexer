@@ -1,33 +1,22 @@
-import {
-  Controller,
-  FileTypeValidator,
-  MaxFileSizeValidator,
-  Param,
-  ParseFilePipe,
-  Post,
-  Req,
-  UploadedFile,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
-import { Request } from 'express';
-import cfg from '../../config/app.config';
+import { Controller, Param, ParseFilePipe, Post, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { isValidNetwork } from '../../network/common';
-import { ok, throw400, throw401 } from '../../common/responses/responses';
-import Swap from '../../models/swap';
-import { FilesService } from './files.service';
-import { HasKeyGuard } from '../../guards/has_token.guard';
-import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
+import { Request } from 'express';
 import validator from 'validator';
+import { ok, throw400, throw401 } from '../../common/responses/responses';
+import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
+import { HasKeyGuard } from '../../guards/has_token.guard';
+import Swap from '../../models/swap';
+import { isValidNetwork } from '../../network/common';
+import { FilesService } from './files.service';
 import isNumeric = validator.isNumeric;
 
 @Controller('v1/files')
 export class FilesController {
-  constructor(private fileSrv: FilesService) {}
+  constructor(private fileSrv: FilesService, private cfgSrv: ConfigService) {}
 
   /**
-   * Upload a file to IPFS
+   * Process file upload
    * @param req The request object
    * @param network The network
    * @param orderId The order id
@@ -43,14 +32,6 @@ export class FilesController {
     @Param('orderId') orderId: string,
     @UploadedFile(
       new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({
-            maxSize: parseInt(cfg().app.maxSwapFileSize) || 5 * 1024 * 1024, // default to 5MB
-          }),
-          new FileTypeValidator({
-            fileType: /(image\/(png|jpe?g))|(video\/mp4)/,
-          }),
-        ],
         fileIsRequired: true,
         exceptionFactory: (errors) => {
           throw400(errors.toLowerCase());
@@ -59,14 +40,41 @@ export class FilesController {
     )
     file: Express.Multer.File,
   ) {
+    // Validate network
     if (!isValidNetwork(network)) throw400('network is unknown');
+
+    // Validate order ID
     if (!isNumeric(orderId)) throw400('order id is not a number');
+
+    // Validate images
+    if (file.mimetype.startsWith('image')) {
+      if (!this.cfgSrv.get<string>('app.fileUpload.allowedImageTypes').split(',').includes(file.mimetype))
+        throw400('file type is not valid (only jpg, jpeg, png are allowed)');
+      if (file.size > parseInt(this.cfgSrv.get('app.fileUpload.maxImageSize')))
+        throw400('file limit was exceeded (max: 10MB)');
+    }
+
+    // Validate videos
+    else if (file.mimetype.startsWith('video')) {
+      if (!this.cfgSrv.get<string>('app.fileUpload.allowedVideoTypes').split(',').includes(file.mimetype))
+        throw400('file type is not valid (only mp4, mov, wmv, webm are allowed)');
+      if (file.size > parseInt(this.cfgSrv.get('app.fileUpload.maxVideoSize')))
+        throw400('file limit was exceeded (max: 30MB)');
+    }
+
+    // Validate documents
+    else if (this.cfgSrv.get<string>('app.fileUpload.allowedDocTypes').split(',').includes(file.mimetype)) {
+      if (file.size > parseInt(this.cfgSrv.get('app.fileUpload.maxDocSize')))
+        throw400('file limit was exceeded (max: 10MB)');
+    } else {
+      throw400('file type is not supported');
+    }
 
     // Get swap
     const swap = await Swap.get(network, parseInt(orderId), undefined, '[disputes.[draftees]]');
     if (!swap) throw400('swap not found');
 
-    // Make sure user is allowed to upload files
+    // Make sure user is part of the swap or dispute
     const user = req.user;
     if (!Swap.isSwapCounterparty(swap, user.address) && !Swap.isSwapDraftee(swap, user.address, true))
       throw401('you are not allowed to upload files for this swap');

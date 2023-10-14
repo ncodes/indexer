@@ -1,9 +1,9 @@
+import { Transform } from 'class-transformer';
 import { IsBoolean, IsIn, IsNotEmpty, IsNumber, IsOptional, Matches } from 'class-validator';
+import { toNumber } from 'lodash';
+import { toBoolean } from 'underscore.string';
 import { makeValidatorMsg } from '../../common/validations/validation';
 import { getNetworks } from '../../network/common';
-import { Transform } from 'class-transformer';
-import { toBoolean } from 'underscore.string';
-import { toNumber } from 'lodash';
 
 export class GetQueryDTO {
   @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
@@ -23,8 +23,10 @@ export class ListQueryDTO {
   @IsOptional()
   public creator?: string;
 
+  // Transform to string array
+  @Transform(({ value }: { value: string }) => value.split(',').map((x) => x.trim()))
   @IsOptional()
-  public address?: string;
+  public address?: string[];
 
   @IsOptional()
   public base?: string;

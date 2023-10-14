@@ -1,25 +1,25 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { MarketsController } from './markets.controller';
 import { INestApplication } from '@nestjs/common';
-import { DBService } from '../../db/DBService';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { NoopLogger } from '../../common/loggers/noop_logger';
-import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
-import User from '../../models/user';
-import { Roles } from '../../common/roles';
-import * as request from 'supertest';
-import NetworkService from '../../network/network.service';
-import { MarketService } from './market.service';
-import { MetadataService } from '../../services/metadata/metadata.service';
-import { makeSession } from '../auth/utils';
-import Market, { AssetType } from '../../models/market';
-import PermittedTrader from '../../models/permitted_trader';
-import LiquidityProvider from '../../models/market_provider';
+import { Test, TestingModule } from '@nestjs/testing';
 import * as moment from 'moment';
+import * as request from 'supertest';
 import { randStr } from '../../common/common';
+import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
+import { NoopLogger } from '../../common/loggers/noop_logger';
+import { Roles } from '../../common/roles';
+import { DBService } from '../../db/DBService';
+import Market, { AssetType } from '../../models/market';
+import LiquidityProvider from '../../models/market_provider';
+import PermittedTrader from '../../models/permitted_trader';
 import Swap from '../../models/swap';
-import { RedisService } from '../../services/redis.service';
+import User from '../../models/user';
 import { powOf } from '../../network/common';
+import NetworkService from '../../network/network.service';
+import { MetadataService } from '../../services/metadata/metadata.service';
+import { RedisService } from '../../services/redis.service';
+import { makeSession } from '../auth/utils';
+import { MarketService } from './market.service';
+import { MarketsController } from './markets.controller';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -312,6 +312,22 @@ describe('MarketsController', () => {
             expect(res.body.data).toHaveLength(1);
             expect(res.body.data[0].id).toEqual(market.id);
           });
+      });
+
+      describe('use comma separated addresses', () => {
+        it('should 200 and correct markets', async () => {
+          const market = await Market.create({ network: net, address: '0x123' });
+          const market2 = await Market.create({ network: net, address: '0xXyz' });
+
+          await request(app.getHttpServer())
+            .get(`/v1/markets`)
+            .query({ address: [market.address, market2.address].join(','), net })
+            .set('Authorization', 'bearer ' + token)
+            .expect(200)
+            .expect((res) => {
+              expect(res.body.data).toHaveLength(2);
+            });
+        });
       });
     });
 

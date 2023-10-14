@@ -1,7 +1,7 @@
-import { randStr } from '../common/common';
-import Objection, { QueryBuilderType, raw, Transaction } from 'objection';
-import { BaseModel } from './base';
 import * as _ from 'lodash';
+import Objection, { QueryBuilderType, raw, Transaction } from 'objection';
+import { randStr } from '../common/common';
+import { BaseModel } from './base';
 
 export enum AssetType {
   SYNTH,
@@ -301,7 +301,7 @@ export default class Market extends BaseModel {
    * Search for markets (all fields are optional)
    * @param network The network name
    * @param creator The market creator address
-   * @param address The market address
+   * @param address The market addresses to filter by
    * @param base The base asset address or symbol
    * @param quote The quote asset address or symbol
    * @param queryStr The query string
@@ -327,7 +327,7 @@ export default class Market extends BaseModel {
   static async search(
     network: string,
     creator: string,
-    address: string,
+    address: string[],
     base: string,
     quote: string,
     queryStr: string,
@@ -381,7 +381,7 @@ export default class Market extends BaseModel {
 
     if (creator) q = q.where('creator', 'ilike', creator);
 
-    if (address) q = q.where('address', 'ilike', address);
+    if (address) q = q.where('address', 'in', address);
 
     if (permSwap !== undefined) q = q.where('permSwap', permSwap);
 

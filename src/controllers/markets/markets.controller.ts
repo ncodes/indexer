@@ -1,9 +1,13 @@
 import { Controller, Get, Param, Query, ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ok, throw400, throw404 } from '../../common/responses/responses';
 import Market from '../../models/market';
-import { MarketService } from './market.service';
+import LiquidityProvider from '../../models/market_provider';
 import PermittedTrader from '../../models/permitted_trader';
-import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
+import Swap from '../../models/swap';
+import { MetadataService } from '../../services/metadata/metadata.service';
+import { MarketService } from './market.service';
 import {
   GetQueryDTO,
   GetTopMarketsQueryDTO,
@@ -11,10 +15,6 @@ import {
   ListPermittedTradersQueryDTO,
   ListQueryDTO,
 } from './query.dto';
-import LiquidityProvider from '../../models/market_provider';
-import { ConfigService } from '@nestjs/config';
-import Swap from '../../models/swap';
-import { MetadataService } from '../../services/metadata/metadata.service';
 
 @Controller('v1/markets')
 export class MarketsController {
@@ -61,7 +61,7 @@ export class MarketsController {
    * @param q The query object
    * @param [q.net] The network name
    * @param [q.creator] Filter the result by creator address
-   * @param [q.address] Filter the result by market address
+   * @param [q.address] Filter the result by one or more market address
    * @param [q.base] The base asset address or symbol
    * @param [q.quote] The base asset address or symbol
    * @param [q.permSwap] Indicate to either return permissioned or non-permissioned markets

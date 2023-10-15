@@ -1,9 +1,9 @@
-import { IsBoolean, IsIn, IsNotEmpty, IsNumber, IsOptional, Matches } from 'class-validator';
-import { makeValidatorMsg } from '../../common/validations/validation';
-import { getNetworks } from '../../network/common';
 import { Transform } from 'class-transformer';
+import { IsBoolean, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, Validate } from 'class-validator';
 import { toNumber } from 'lodash';
 import { toBoolean } from 'underscore.string';
+import { LiquidityDescriptionValidator, makeValidatorMsg } from '../../common/validations/validation';
+import { getNetworks } from '../../network/common';
 
 export class GetQueryDTO {
   @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
@@ -36,6 +36,15 @@ export class GetParamDTO {
   public lid: number;
 }
 
+class LiquidityDTO {
+  @IsString({ message: makeValidatorMsg('must be a string', 'provider') })
+  public provider: string;
+
+  @Transform(({ value }) => toNumber(value))
+  @IsNumber(undefined, { message: makeValidatorMsg('must be a number', 'lid') })
+  public lid: number;
+}
+
 export class ListQueryDTO {
   @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
   @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
@@ -52,6 +61,11 @@ export class ListQueryDTO {
 
   @IsOptional()
   public quote?: string;
+
+  @Validate(LiquidityDescriptionValidator)
+  @Transform(({ value }) => JSON.parse(value as string))
+  @IsOptional()
+  public liquidities?: LiquidityDTO[];
 
   @Transform(({ value }) => toBoolean(value))
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'paused') })

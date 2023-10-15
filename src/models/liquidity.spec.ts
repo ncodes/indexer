@@ -1,9 +1,9 @@
-import { DBService } from '../db/DBService';
-import Liquidity from './liquidity';
 import * as moment from 'moment';
-import BadgeGrant from './badge_grant';
-import Market from './market';
+import { DBService } from '../db/DBService';
 import { powOf } from '../network/common';
+import BadgeGrant from './badge_grant';
+import Liquidity from './liquidity';
+import Market from './market';
 
 describe('Liquidity', () => {
   const db = DBService.getForTest();
@@ -54,6 +54,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
       );
       expect(res).toHaveLength(1);
       expect(res[0].priceUsd).toEqual(400);
@@ -81,6 +82,8 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
+        undefined,
       );
       expect(res).toHaveLength(1);
       expect(res[0].amountUsd).toEqual(400);
@@ -90,6 +93,7 @@ describe('Liquidity', () => {
       await Liquidity.create({ network: net, amount: '0' });
       const res = await Liquidity.search(
         net,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -136,6 +140,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
       );
       expect(res).toHaveLength(0);
     });
@@ -145,6 +150,7 @@ describe('Liquidity', () => {
       await Liquidity.create({ network: 'net2', amount: '1' });
       const res = await Liquidity.search(
         net,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -193,6 +199,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
       );
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(liq.id);
@@ -207,6 +214,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         '0xProvider',
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -238,6 +246,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         3,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -299,6 +308,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
       );
       expect(res).toHaveLength(2);
       expect(res[0].id).toEqual(liq.id);
@@ -325,6 +335,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
       );
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(liq.id);
@@ -338,6 +349,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         '>10',
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -399,6 +411,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
       );
       expect(res).toHaveLength(2);
       expect(res[0].id).toEqual(liq.id);
@@ -414,6 +427,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         '<9',
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -450,10 +464,57 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
       );
       expect(res).toHaveLength(2);
       expect(res[0].id).toEqual(liq2.id);
       expect(res[1].id).toEqual(liq3.id);
+    });
+
+    it('should return correct result when `liquidities` is set', async () => {
+      const liq = await Liquidity.create({
+        network: net,
+        marketAddress,
+        provider: '0xProvider',
+        lid: 1,
+        amount: '1',
+        price: '9',
+        updatedAt: moment().subtract(2, 'd').toISOString(),
+      });
+      await Liquidity.create({
+        network: net,
+        marketAddress,
+        provider: '0xProvider',
+        lid: 2,
+        amount: '1',
+        price: '10',
+        updatedAt: moment().subtract(1, 'd').toISOString(),
+      });
+      const res = await Liquidity.search(
+        net,
+        marketAddress,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        [{ provider: '0xProvider', lid: 1 }],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      );
+      expect(res).toHaveLength(1);
+      expect(res[0].id).toEqual(liq.id);
     });
 
     it('should return correct result when `limit` is set', async () => {
@@ -488,7 +549,9 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        [],
         1,
+        undefined,
         undefined,
         undefined,
       );
@@ -528,6 +591,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        [],
         1,
         0,
         undefined,
@@ -553,6 +617,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        [],
         1,
         1,
         undefined,
@@ -580,6 +645,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         ['kyc'],
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -619,6 +685,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
       );
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(liq.id);
@@ -638,6 +705,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         ['kyc/usa'],
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -669,6 +737,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
       );
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(liq.id);
@@ -694,6 +763,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
       );
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(liq2.id);
@@ -713,6 +783,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         ['bitcoiner'],
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -761,6 +832,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
       );
       expect(res).toHaveLength(2);
       expect(res[0].id).toEqual(liq.id);
@@ -782,6 +854,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         ['kyc'],
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -830,6 +903,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
       );
       expect(res).toHaveLength(2);
       expect(res[0].id).toEqual(liq.id);
@@ -852,6 +926,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         ['pm/bank1'],
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -881,6 +956,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
+        undefined,
       );
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(liq2.id);
@@ -902,6 +978,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         ['pm%'],
+        undefined,
         undefined,
         undefined,
         undefined,

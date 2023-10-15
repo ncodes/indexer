@@ -1,10 +1,10 @@
-import { randStr } from '../common/common';
-import Objection, { Model, raw, Transaction } from 'objection';
-import { BaseModel } from './base';
-import Market, { AssetType } from './market';
+import { ethers } from 'ethers';
 import * as _ from 'lodash';
 import * as moment from 'moment';
-import { ethers } from 'ethers';
+import Objection, { Model, raw, Transaction } from 'objection';
+import { randStr } from '../common/common';
+import { BaseModel } from './base';
+import Market, { AssetType } from './market';
 
 /**
  * Derive a liquidity address
@@ -302,6 +302,7 @@ export default class Liquidity extends BaseModel {
    * @param reqLpBadges Filter by badges liquidity providers must have been granted
    * @param reqSwapBadges Filter by badges takers must have been granted
    * @param paymentMethods Filter by payment methods
+   * @param liquidities Filter by liquidities
    * @param limit The number of records to return (optional).
    * @param offset The query offset (optional)
    * @param select Select specific fields (optional)
@@ -324,6 +325,7 @@ export default class Liquidity extends BaseModel {
     reqLpBadges?: string[],
     reqSwapBadges?: string[],
     paymentMethods?: string[],
+    liquidities?: { provider: string; lid: number }[],
     limit?: number,
     offset?: number,
     select = [],
@@ -429,6 +431,16 @@ export default class Liquidity extends BaseModel {
       const operator = priceUsd.startsWith('>') ? '>=' : '<=';
       const amountValue = priceUsd.replace('>', '').replace('<', '');
       q = q.where('s.priceUsd', operator, amountValue);
+    }
+
+    if (liquidities && liquidities.length) {
+      q = q.andWhere((q) => {
+        liquidities.forEach((liq) => {
+          q = q.orWhere((q) => {
+            return q.where('provider', liq.provider).where('lid', liq.lid);
+          });
+        });
+      });
     }
 
     if (!_.isEmpty(reqSwapBadges)) {

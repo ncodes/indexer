@@ -1,14 +1,14 @@
 import { Controller, Get, Param, Query, ValidationPipe } from '@nestjs/common';
-import { ok, throw400, throw404 } from '../../common/responses/responses';
-import Liquidity from '../../models/liquidity';
-import { LiquidityService } from './liquidity.service';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
-import { GetParamDTO, GetQueryDTO, ListQueryDTO } from './query.dto';
+import { ok, throw400, throw404 } from '../../common/responses/responses';
 import { ConfigService } from '../../config/config.service';
 import Event, { EventActionClass } from '../../models/event';
-import { MetadataService } from '../../services/metadata/metadata.service';
+import Liquidity from '../../models/liquidity';
 import Market from '../../models/market';
+import { MetadataService } from '../../services/metadata/metadata.service';
 import { MarketService } from '../markets/market.service';
+import { LiquidityService } from './liquidity.service';
+import { GetParamDTO, GetQueryDTO, ListQueryDTO } from './query.dto';
 
 @Controller('v1/liquidities')
 export class LiquidityController {
@@ -82,6 +82,7 @@ export class LiquidityController {
    * @param [q.provider] The provider address
    * @param [q.base] The base token address
    * @param [q.quote] The quote token address
+   * @param [q.liquidities] The list of liquidities to limit query to
    * @param [q.amount] Filter by minimum swap amount (if it starts with '>', it means equal or greater than or if it starts with '<', it means equal or less than)
    * @param [q.amountUsd] Filter by minimum swap amount in USD (if it starts with '>', it means equal or greater than or if it starts with '<', it means equal or less than)
    * @param [q.price] Filter by price (if it starts with '>', it means equal or greater than or if it starts with '<', it means equal or less than)
@@ -150,6 +151,7 @@ export class LiquidityController {
         reqLpBadges,
         reqSwapBadges,
         q.paymentMethods,
+        q.liquidities,
         q.limit || 25,
         q.offset,
         q.select,

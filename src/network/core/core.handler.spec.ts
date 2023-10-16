@@ -1,20 +1,20 @@
-import { DBService } from '../../db/DBService';
-import { NoopLogger } from '../../common/loggers/noop_logger';
-import { CoreHandler } from './core.handler';
 import { constants, ethers } from 'ethers';
+import * as moment from 'moment';
+import { toDec } from '../../common/common';
+import { NoopLogger } from '../../common/loggers/noop_logger';
+import { DBService } from '../../db/DBService';
+import { NotificationID } from '../../jobs/mailer/NotifierService';
+import Dispute from '../../models/dispute';
+import Event, { Events } from '../../models/event';
 import Liquidity from '../../models/liquidity';
 import Market, { AssetType } from '../../models/market';
-import { pow10, powOf, toBN } from '../common';
 import MarketPrice from '../../models/market_price';
-import { NotificationID } from '../../jobs/mailer/NotifierService';
 import Meta, { FeeName, MetaKeys, ProtocolFeeBeneficiary } from '../../models/meta';
-import Swap from '../../models/swap';
-import Dispute from '../../models/dispute';
-import * as moment from 'moment';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 import Offer from '../../models/offer';
-import { toDec } from '../../common/common';
-import Event, { Events } from '../../models/event';
+import Swap from '../../models/swap';
+import { pow10, powOf, toBN } from '../common';
+import { CoreHandler } from './core.handler';
 
 const mockGetOrder = jest.fn();
 const mockGetOffer = jest.fn();
@@ -1564,14 +1564,17 @@ describe('CoreHandler', () => {
         provider,
       });
 
-      const now = moment();
       const offerId = toBN(1);
       const amount = powOf(10, 18);
       const price = powOf(1, 18);
       const ids = [toBN(1), toBN(2)];
-      const deadline = toBN(now.unix());
+      const dur = toBN(200);
+      const now = moment().unix();
       await expect(
-        handler.onNewOffer(marketAddress, provider, lid, taker, offerId, amount, price, ids, deadline, {} as any),
+        handler.onNewOffer(marketAddress, provider, lid, taker, offerId, amount, price, ids, dur, {
+          transactionHash: '0xTxHash',
+          getBlock: jest.fn().mockResolvedValue({ timestamp: now as any }),
+        } as any),
       ).resolves.toBeUndefined();
 
       const offer = await Offer.getByOfferId(offerId.sub(1).toNumber());
@@ -1583,7 +1586,7 @@ describe('CoreHandler', () => {
       expect(offer.amount).toEqual(amount.toString());
       expect(offer.price).toEqual(price.toString());
       expect(offer.ids).toEqual(ids.map((id) => id.toNumber()));
-      expect(moment(offer.deadline).toISOString()).toEqual(moment.unix(deadline.toNumber()).toISOString());
+      expect(moment(offer.deadline).toISOString()).toEqual(moment.unix(dur.toNumber() + now).toISOString());
 
       const offerEvent = await Event.find({ network: net, offerId: offer.offerId, action: Events.OfferCreate });
       expect(offerEvent).toBeDefined();
@@ -1633,9 +1636,13 @@ describe('CoreHandler', () => {
         creator: taker,
       });
 
-      const deadline = moment().add(1, 'day').unix();
+      const now = moment().unix();
+      const dur = 200;
       await expect(
-        handler.onOfferUpdated(toBN(1), taker, toBN(2), toBN(3), [toBN(4)], toBN(deadline), {} as any),
+        handler.onOfferUpdated(toBN(1), taker, toBN(2), toBN(3), [toBN(4)], toBN(dur), {
+          transactionHash: '0xTxHash',
+          getBlock: jest.fn().mockResolvedValue({ timestamp: now as any }),
+        } as any),
       ).resolves.toBeUndefined();
 
       offer = await Offer.getByOfferId(offer.offerId);
@@ -1643,7 +1650,7 @@ describe('CoreHandler', () => {
       expect(offer.amount).toEqual('2');
       expect(offer.price).toEqual('3');
       expect(offer.ids).toEqual([4]);
-      expect(moment(offer.deadline).toISOString()).toEqual(moment.unix(deadline).toISOString());
+      expect(moment(offer.deadline).toISOString()).toEqual(moment.unix(now + dur).toISOString());
 
       const offerEvent = await Event.find({ network: net, offerId: offer.offerId, action: Events.OfferUpdate });
       expect(offerEvent).toBeDefined();
@@ -1687,7 +1694,12 @@ describe('CoreHandler', () => {
       });
 
       const execAt = moment().add(1, 'day').unix();
-      await expect(handler.onOfferAccepted(toBN(1), provider, execAt, {} as any)).resolves.toBeUndefined();
+      await expect(
+        handler.onOfferAccepted(toBN(1), provider, execAt, {
+          transactionHash: '0xTxHash',
+          getBlock: jest.fn().mockResolvedValue({ timestamp: moment().unix() as any }),
+        } as any),
+      ).resolves.toBeUndefined();
 
       offer = await Offer.getByOfferId(offer.offerId);
       expect(offer).toBeDefined();

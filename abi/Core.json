@@ -133,7 +133,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "deadline",
+        "name": "expireDuration",
         "type": "uint256"
       }
     ],
@@ -258,7 +258,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "deadline",
+        "name": "expireDuration",
         "type": "uint256"
       }
     ],

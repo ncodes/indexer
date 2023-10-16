@@ -1,24 +1,24 @@
 import { Logger } from '@nestjs/common';
-import { BigNumber, constants, Event as ChainEvent, providers } from 'ethers';
-import { Transaction } from 'objection';
-import Liquidity, { makeLiqAddress } from '../../models/liquidity';
-import MarketPrice from '../../models/market_price';
-import { Handler } from '../handler';
-import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierService';
-import Swap from '../../models/swap';
-import Meta, { FeeName, ProtocolFeeBeneficiary } from '../../models/meta';
-import NetworkService from '../network.service';
-import Market from '../../models/market';
-import * as moment from 'moment';
-import { getBlockTime, pow10D, toBN } from '../common';
-import Dispute from '../../models/dispute';
-import MineTask, { MineTaskType } from '../../models/mine_task';
+import { BigNumber, Event as ChainEvent, constants, providers } from 'ethers';
 import * as _ from 'lodash';
-import Offer from '../../models/offer';
+import * as moment from 'moment';
+import { Transaction } from 'objection';
 import { includesStr, isEqualStr, toDec } from '../../common/common';
-import { MetadataService } from '../../services/metadata/metadata.service';
-import { ExchangeRateService } from '../../services/exchange_rate.service';
+import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierService';
+import Dispute from '../../models/dispute';
 import Event, { Events } from '../../models/event';
+import Liquidity, { makeLiqAddress } from '../../models/liquidity';
+import Market from '../../models/market';
+import MarketPrice from '../../models/market_price';
+import Meta, { FeeName, ProtocolFeeBeneficiary } from '../../models/meta';
+import MineTask, { MineTaskType } from '../../models/mine_task';
+import Offer from '../../models/offer';
+import Swap from '../../models/swap';
+import { ExchangeRateService } from '../../services/exchange_rate.service';
+import { MetadataService } from '../../services/metadata/metadata.service';
+import { getBlockTime, pow10D, toBN } from '../common';
+import { Handler } from '../handler';
+import NetworkService from '../network.service';
 
 export class CoreHandler extends Handler {
   logger = new Logger(CoreHandler.name);
@@ -289,7 +289,7 @@ export class CoreHandler extends Handler {
         amount: BigNumber,
         price: BigNumber,
         ids: BigNumber[],
-        deadline: BigNumber,
+        expireDuration: BigNumber,
         event: ChainEvent,
         txn?: Transaction,
       ) => {
@@ -302,7 +302,7 @@ export class CoreHandler extends Handler {
           amount,
           price,
           ids,
-          deadline,
+          expireDuration,
           event,
           txn,
         );
@@ -317,11 +317,11 @@ export class CoreHandler extends Handler {
         amount: BigNumber,
         price: BigNumber,
         ids: BigNumber[],
-        deadline: BigNumber,
+        expireDuration: BigNumber,
         event: ChainEvent,
         txn?: Transaction,
       ) => {
-        return this.onOfferUpdated(offerId, offerer, amount, price, ids, deadline, event, txn);
+        return this.onOfferUpdated(offerId, offerer, amount, price, ids, expireDuration, event, txn);
       },
     );
 
@@ -1499,8 +1499,8 @@ export class CoreHandler extends Handler {
    * @param amount The offer amount
    * @param price The offer price
    * @param ids The offered NFT IDs
-   * @param deadline The offer deadline
-   * @param _event The event object
+   * @param expireDuration The offer expiry duration
+   * @param event The event object
    * @param txn The transaction object
    */
   async onNewOffer(
@@ -1512,8 +1512,8 @@ export class CoreHandler extends Handler {
     amount: BigNumber,
     price: BigNumber,
     ids: BigNumber[],
-    deadline: BigNumber,
-    _event: ChainEvent,
+    expireDuration: BigNumber,
+    event: ChainEvent,
     txn?: Transaction,
   ) {
     // Save the offer
@@ -1528,7 +1528,10 @@ export class CoreHandler extends Handler {
         amount: amount.toString(),
         price: price.toString(),
         ids: ids.map((id) => id.toNumber()),
-        deadline: moment.unix(deadline.toNumber()).toISOString(),
+        deadline: moment
+          .unix(await getBlockTime(event))
+          .add(expireDuration.toNumber(), 'seconds')
+          .toISOString(),
       },
       txn,
     );
@@ -1586,8 +1589,8 @@ export class CoreHandler extends Handler {
    * @param amount The updated amount
    * @param price The updated price
    * @param ids The updated offered NFT IDs
-   * @param deadline The updated deadline
-   * @param _event The event object
+   * @param expireDuration The updated offer expiry duration
+   * @param event The event object
    * @param txn The transaction object
    */
   async onOfferUpdated(
@@ -1596,8 +1599,8 @@ export class CoreHandler extends Handler {
     amount: BigNumber,
     price: BigNumber,
     ids: BigNumber[],
-    deadline: BigNumber,
-    _event: ChainEvent,
+    expireDuration: BigNumber,
+    event: ChainEvent,
     txn?: Transaction,
   ) {
     const offer = await Offer.updateByOfferId(
@@ -1607,7 +1610,10 @@ export class CoreHandler extends Handler {
         price: price.toString(),
         ids: ids.map((id) => id.toNumber()),
         accepted: false,
-        deadline: moment.unix(deadline.toNumber()).toISOString(),
+        deadline: moment
+          .unix(await getBlockTime(event))
+          .add(expireDuration.toNumber(), 'seconds')
+          .toISOString(),
       },
       txn,
     );

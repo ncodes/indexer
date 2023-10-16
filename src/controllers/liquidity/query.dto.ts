@@ -37,11 +37,17 @@ export class GetParamDTO {
 }
 
 class LiquidityDTO {
+  @IsString({ message: makeValidatorMsg('must be a string', 'marketAddress') })
+  @IsNotEmpty({ message: makeValidatorMsg('marketAddress is required', 'marketAddress') })
+  public marketAddress: string;
+
   @IsString({ message: makeValidatorMsg('must be a string', 'provider') })
+  @IsNotEmpty({ message: makeValidatorMsg('provider is required', 'provider') })
   public provider: string;
 
   @Transform(({ value }) => toNumber(value))
   @IsNumber(undefined, { message: makeValidatorMsg('must be a number', 'lid') })
+  @IsNotEmpty({ message: makeValidatorMsg('liquidity Id is required', 'lid') })
   public lid: number;
 }
 
@@ -63,7 +69,6 @@ export class ListQueryDTO {
   public quote?: string;
 
   @Validate(LiquidityDescriptionValidator)
-  @Transform(({ value }) => JSON.parse(value as string))
   @IsOptional()
   public liquidities?: LiquidityDTO[];
 
@@ -106,17 +111,21 @@ export class ListQueryDTO {
   @IsOptional()
   public kycTaker?: boolean;
 
-  @Transform(({ value }) => (value as string).split(',').map((v) => v.replaceAll('%', '').trim().replace(/\/$/g, '%')))
+  @Transform(({ value }) =>
+    !value ? undefined : value.split(',').map((v) => v.replaceAll('%', '').trim().replace(/\/$/g, '%')),
+  )
   @IsOptional()
   swapBadges?: string[];
 
-  @Transform(({ value }) => (value as string).split(',').map((v) => v.replaceAll('%', '').trim().replace(/\/$/g, '%')))
+  @Transform(({ value }) =>
+    !value ? undefined : value.split(',').map((v) => v.replaceAll('%', '').trim().replace(/\/$/g, '%')),
+  )
   @IsOptional()
   paymentMethods?: string[];
 
   @Transform(({ value }) => toBoolean(value))
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'count') })
-  @IsOptional()
+  @IsOptional({})
   public count?: boolean;
 
   @Transform(({ value }) => toNumber(value))

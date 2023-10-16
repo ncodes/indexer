@@ -325,7 +325,7 @@ export default class Liquidity extends BaseModel {
     reqLpBadges?: string[],
     reqSwapBadges?: string[],
     paymentMethods?: string[],
-    liquidities?: { provider: string; lid: number }[],
+    liquidities?: { marketAddress: string; provider: string; lid: number }[],
     limit?: number,
     offset?: number,
     select = [],
@@ -437,7 +437,7 @@ export default class Liquidity extends BaseModel {
       q = q.andWhere((q) => {
         liquidities.forEach((liq) => {
           q = q.orWhere((q) => {
-            return q.where('provider', liq.provider).where('lid', liq.lid);
+            return q.where('marketAddress', liq.marketAddress).where('provider', liq.provider).where('lid', liq.lid);
           });
         });
       });

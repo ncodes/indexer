@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, ValidationPipe } from '@nestjs/common';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ok, throw400, throw404 } from '../../common/responses/responses';
 import { ConfigService } from '../../config/config.service';
@@ -171,5 +171,12 @@ export class LiquidityController {
         })
         .build();
     }
+  }
+
+  // Like list() but with a POST body.
+  // Specifically, for passing arrays of liquidities for the 'liquidities' filter.
+  @Post()
+  async listPost(@Body(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
+    return this.list(q);
   }
 }

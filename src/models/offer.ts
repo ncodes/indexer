@@ -1,10 +1,10 @@
-import { randStr } from '../common/common';
-import Objection, { Model, raw, Transaction } from 'objection';
-import { BaseModel } from './base';
 import { uniq } from 'lodash';
 import * as moment from 'moment';
-import Market from './market';
+import Objection, { Model, raw, Transaction } from 'objection';
+import { randStr } from '../common/common';
+import { BaseModel } from './base';
 import Liquidity from './liquidity';
+import Market from './market';
 import Swap from './swap';
 
 export enum SearchStatus {
@@ -303,10 +303,12 @@ export default class Offer extends BaseModel {
 
     const patch = {};
     if (readProvider != undefined) {
+      query = query.where('readProvider', '!=', readProvider);
       patch['readProvider'] = readProvider;
     }
 
     if (readOfferer != undefined) {
+      query = query.where('readOfferer', '!=', readOfferer);
       patch['readOfferer'] = readOfferer;
     }
 

@@ -1,14 +1,14 @@
 import { Controller, Get, Logger, Param, Put, Query, Req, UseGuards, ValidationPipe } from '@nestjs/common';
-import { OfferService } from './offer.service';
+import { Request } from 'express';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
-import { GetParamDTO, GetQueryDTO, ListQueryDTO, ReadQueryDTO } from './query.dto';
-import Offer from '../../models/offer';
 import { ok, throw404 } from '../../common/responses/responses';
-import Event, { EventActionClass } from '../../models/event';
-import { MarketService } from '../markets/market.service';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
-import { Request } from 'express';
+import Event, { EventActionClass } from '../../models/event';
+import Offer from '../../models/offer';
+import { MarketService } from '../markets/market.service';
+import { OfferService } from './offer.service';
+import { GetParamDTO, GetQueryDTO, ListQueryDTO, ReadQueryDTO } from './query.dto';
 
 @Controller('v1/offers')
 export class OfferController {
@@ -179,8 +179,9 @@ export class OfferController {
     @Param(new ValidationPipe(ValPipeOpt)) params: GetParamDTO,
     @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO,
   ) {
-    const offer = await Offer.getByNetworkAndOfferId(q.net, params.offerId, undefined, '[market,liquidity]');
+    const offer = await Offer.getByNetworkAndOfferId(q.net, params.offerId, undefined, '[market,liquidity,swap]');
     if (!offer) throw404('offer not found');
+    await this.mktSrv.extendMarket(offer.market, ['baseLogo', 'quoteLogo']);
     await this.offerSrv.extendOffer(offer, q.select);
     return ok().data(offer).build();
   }

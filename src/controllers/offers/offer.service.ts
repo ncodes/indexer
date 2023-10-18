@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import Offer from '../../models/offer';
 import * as _ from 'lodash';
+import Offer from '../../models/offer';
 import { isZero } from '../../network/common';
 import { MetadataService } from '../../services/metadata/metadata.service';
 
@@ -19,6 +19,8 @@ export class OfferService {
     const { network, quoteAddress, baseAddress } = offer.market;
 
     try {
+      offer.liquidity.market = offer.market;
+
       if (!offer.priceUsd && ((select.includes(`priceUsd`) && !isZero(offer.price)) || !select.length)) {
         offer.priceUsd = await this.metadataSrv.tryToUsd(network, offer.price, quoteAddress);
       }

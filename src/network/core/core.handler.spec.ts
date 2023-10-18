@@ -1693,18 +1693,19 @@ describe('CoreHandler', () => {
         creator: userAddr,
       });
 
-      const execAt = moment().add(1, 'day').unix();
+      const now = moment().unix();
+      const execDelayDur = 200;
       await expect(
-        handler.onOfferAccepted(toBN(1), provider, execAt, {
+        handler.onOfferAccepted(toBN(1), provider, toBN(execDelayDur), {
           transactionHash: '0xTxHash',
-          getBlock: jest.fn().mockResolvedValue({ timestamp: moment().unix() as any }),
+          getBlock: jest.fn().mockResolvedValue({ timestamp: now }),
         } as any),
       ).resolves.toBeUndefined();
 
       offer = await Offer.getByOfferId(offer.offerId);
       expect(offer).toBeDefined();
       expect(offer.accepted).toBeTruthy();
-      expect(moment(offer.execAt).toISOString()).toEqual(moment.unix(execAt).toISOString());
+      expect(moment(offer.execAt).toISOString()).toEqual(moment.unix(now + execDelayDur).toISOString());
 
       const offerEvent = await Event.find({ network: net, offerId: offer.offerId, action: Events.OfferAccept });
       expect(offerEvent).toBeDefined();

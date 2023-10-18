@@ -258,7 +258,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "expireDuration",
+        "name": "execDelayDur",
         "type": "uint256"
       }
     ],

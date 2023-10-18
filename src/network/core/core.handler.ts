@@ -327,8 +327,8 @@ export class CoreHandler extends Handler {
 
     this.on(
       'OfferAccepted',
-      async (offerId: BigNumber, acceptor: string, execAt: BigNumber, event: ChainEvent, txn?: Transaction) => {
-        return this.onOfferAccepted(offerId, acceptor, execAt.toNumber(), event, txn);
+      async (offerId: BigNumber, acceptor: string, execDelayDur: BigNumber, event: ChainEvent, txn?: Transaction) => {
+        return this.onOfferAccepted(offerId, acceptor, execDelayDur, event, txn);
       },
     );
 
@@ -1649,18 +1649,30 @@ export class CoreHandler extends Handler {
    * Offer was accepted
    * @param offerId The offer ID
    * @param acceptor The offer acceptor's address
-   * @param execAt The time when the offer can be executed
-   * @param _event The event object
+   * @param execDelayDur The offer execution delay duration
+   * @param event The event object
    * @param txn The transaction object
    */
-  async onOfferAccepted(offerId: BigNumber, acceptor: string, execAt: number, _event: ChainEvent, txn?: Transaction) {
+  async onOfferAccepted(
+    offerId: BigNumber,
+    acceptor: string,
+    execDelayDur: BigNumber,
+    event: ChainEvent,
+    txn?: Transaction,
+  ) {
     let offer = await Offer.getByNetworkAndOfferId(this.network, offerId.toNumber(), undefined, undefined, txn);
     if (!offer) throw new Error('Offer not found');
 
     // Update the offer
     offer = await Offer.updateByOfferId(
       offerId.toNumber(),
-      { accepted: true, execAt: moment.unix(execAt).toISOString() },
+      {
+        accepted: true,
+        execAt: moment
+          .unix(await getBlockTime(event))
+          .add(execDelayDur.toNumber(), 'seconds')
+          .toISOString(),
+      },
       txn,
     );
 

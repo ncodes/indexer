@@ -507,7 +507,7 @@ describe('Liquidity', () => {
         undefined,
         undefined,
         undefined,
-        [{ provider: '0xProvider', lid: 1 }],
+        [{ marketAddress, provider: '0xProvider', lid: 1 }],
         undefined,
         undefined,
         undefined,

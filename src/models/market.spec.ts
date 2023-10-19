@@ -84,7 +84,7 @@ describe('Market', () => {
       const res = (await Market.search(
         undefined,
         undefined,
-        '0xAddress',
+        ['0xAddress'],
         undefined,
         undefined,
         undefined,

@@ -284,7 +284,6 @@ describe('OffersController', () => {
         .query({ net, creator: offer.creator })
         .expect(200)
         .expect((res) => {
-          console.log(res.body);
           expect(res.body.data).toHaveLength(1);
           expect(res.body.data[0].id).toEqual(offer.id);
         });

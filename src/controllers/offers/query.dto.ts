@@ -1,10 +1,10 @@
-import { IsBoolean, IsEnum, IsIn, IsISO8601, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
-import { makeValidatorMsg } from '../../common/validations/validation';
-import { getNetworks } from '../../network/common';
 import { Transform } from 'class-transformer';
-import { toBoolean } from 'underscore.string';
+import { IsBoolean, IsEnum, IsIn, IsISO8601, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { toNumber } from 'lodash';
+import { toBoolean } from 'underscore.string';
+import { makeValidatorMsg } from '../../common/validations/validation';
 import { SearchStatus } from '../../models/offer';
+import { getNetworks } from '../../network/common';
 
 export class BaseQueryDTO {
   @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
@@ -105,4 +105,9 @@ export class ReadQueryDTO extends BaseQueryDTO {
   @IsNumber(undefined, { message: makeValidatorMsg('must be a number', 'lid') })
   @IsOptional()
   public lid?: number;
+
+  @Transform(({ value }) => toNumber(value))
+  @IsNumber(undefined, { message: makeValidatorMsg('must be a number', 'offerId') })
+  @IsOptional()
+  public offerId: number;
 }

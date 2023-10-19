@@ -161,8 +161,17 @@ export class OfferController {
   @UseGuards(HasKeyGuard)
   @Put('/mark-read')
   async markAsRead(@Req() req: Request, @Query(new ValidationPipe(ValPipeOpt)) q: ReadQueryDTO) {
-    await Offer.updateReadState(q.net, undefined, req.user.address, q.marketAddress, q.lid, true, undefined);
-    await Offer.updateReadState(q.net, req.user.address, q.provider, q.marketAddress, q.lid, undefined, true);
+    await Offer.updateReadState(q.net, undefined, q.marketAddress, q.offerId, req.user.address, q.lid, true, undefined);
+    await Offer.updateReadState(
+      q.net,
+      req.user.address,
+      q.marketAddress,
+      q.offerId,
+      q.provider,
+      q.lid,
+      undefined,
+      true,
+    );
     return ok().data({ success: true }).build();
   }
 

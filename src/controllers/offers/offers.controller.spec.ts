@@ -1,22 +1,23 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { DBService } from '../../db/DBService';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { NoopLogger } from '../../common/loggers/noop_logger';
-import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
-import User from '../../models/user';
-import { Roles } from '../../common/roles';
+import { Test, TestingModule } from '@nestjs/testing';
+import * as moment from 'moment';
 import * as request from 'supertest';
-import { makeSession } from '../auth/utils';
 import { randStr } from '../../common/common';
+import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
+import { NoopLogger } from '../../common/loggers/noop_logger';
+import { Roles } from '../../common/roles';
+import { DBService } from '../../db/DBService';
+import Event, { Events } from '../../models/event';
+import Liquidity from '../../models/liquidity';
+import Market from '../../models/market';
+import Offer from '../../models/offer';
+import User from '../../models/user';
+import { MetadataService } from '../../services/metadata/metadata.service';
+import { makeSession } from '../auth/utils';
+import { MarketService } from '../markets/market.service';
 import { OfferService } from './offer.service';
 import { OfferController } from './offers.controller';
-import Offer from '../../models/offer';
-import * as moment from 'moment';
-import Event, { Events } from '../../models/event';
-import { MarketService } from '../markets/market.service';
-import { MetadataService } from '../../services/metadata/metadata.service';
-import Market from '../../models/market';
 
 const mockMarketService = jest.fn().mockImplementation(() => ({
   extendMarket: jest.fn(),
@@ -36,6 +37,13 @@ describe('OffersController', () => {
   let app: INestApplication;
   const db = DBService.getForTest();
   let cfgObj = {};
+  const net = 'ethereum';
+  const address = '0xAddress';
+  const address2 = '0xAddress2';
+  const provider = '0xProvider';
+  const provider2 = '0xProvider2';
+  const provider3 = '0xProvider3';
+  const marketAddress = '0xMarket';
 
   afterEach(async () => {
     await db.truncateTables();
@@ -78,9 +86,7 @@ describe('OffersController', () => {
 
   let u: User;
   let token: string;
-  const net = 'ethereum';
-  const address = '0xAddress';
-  const address2 = '0xAddress2';
+
   beforeEach(async () => {
     u = await User.create({ role: Roles.User, address });
     token = await makeSession(u, randStr(), '5', cfgObj['auth.jwtSecret']);
@@ -89,10 +95,13 @@ describe('OffersController', () => {
   beforeEach(async () => {
     await Market.create({
       network: net,
-      address: '0xMarket',
+      address: marketAddress,
       baseAddress: '0xBase',
       quoteAddress: '0xQuote',
     });
+    await Liquidity.create({ network: net, marketAddress, provider, lid: 1 });
+    await Liquidity.create({ network: net, marketAddress, provider: provider2, lid: 2 });
+    await Liquidity.create({ network: net, marketAddress, provider: provider3, lid: 3 });
   });
 
   describe('.events', () => {
@@ -229,7 +238,9 @@ describe('OffersController', () => {
       const offer = await Offer.create({
         network: net,
         offerId: 1,
-        marketAddress: '0xMarket',
+        provider,
+        lid: 1,
+        marketAddress,
       });
       await request(app.getHttpServer())
         .get(`/v1/offers/${offer.offerId}`)
@@ -265,21 +276,24 @@ describe('OffersController', () => {
     });
 
     it('should return 200 and correct data when [query=creator] is set', async () => {
-      const offer = await Offer.create({ network: net, creator: '0xCreator', marketAddress: '0xMarket' });
-      await Offer.create({ network: net, creator: '0xCreator2', marketAddress: '0xMarket' });
+      const offer = await Offer.create({ network: net, provider, lid: 1, creator: '0xCreator', marketAddress });
+      await Offer.create({ network: net, provider: provider2, lid: 2, creator: '0xCreator2', marketAddress });
+
       await request(app.getHttpServer())
         .get(`/v1/offers`)
         .query({ net, creator: offer.creator })
         .expect(200)
         .expect((res) => {
+          console.log(res.body);
           expect(res.body.data).toHaveLength(1);
           expect(res.body.data[0].id).toEqual(offer.id);
         });
     });
 
-    it('should return 200 and correct data when [query=creator] is set', async () => {
-      const offer = await Offer.create({ network: net, marketAddress: '0xMarket' });
-      await Offer.create({ network: net, marketAddress: '0xMarket2' });
+    it('should return 200 and correct data when [query=marketAddress] is set', async () => {
+      const offer = await Offer.create({ network: net, marketAddress, provider, lid: 1 });
+      await Offer.create({ network: net, marketAddress: '0xMarket2', provider, lid: 1 });
+
       await request(app.getHttpServer())
         .get(`/v1/offers`)
         .query({ net, marketAddress: offer.marketAddress })
@@ -291,8 +305,9 @@ describe('OffersController', () => {
     });
 
     it('should return 200 and correct data when [query=provider] is set', async () => {
-      const offer = await Offer.create({ network: net, provider: '0xProvider', marketAddress: '0xMarket' });
-      await Offer.create({ network: net, provider: '0xProvider2', marketAddress: '0xMarket' });
+      const offer = await Offer.create({ network: net, provider: provider, lid: 1, marketAddress });
+      await Offer.create({ network: net, provider: provider2, lid: 2, marketAddress });
+
       await request(app.getHttpServer())
         .get(`/v1/offers`)
         .query({ net, provider: offer.provider })
@@ -304,8 +319,9 @@ describe('OffersController', () => {
     });
 
     it('should return 200 and correct data when [query=lid] is set', async () => {
-      const offer = await Offer.create({ network: net, lid: 2, marketAddress: '0xMarket' });
-      await Offer.create({ network: net, lid: 1 });
+      const offer = await Offer.create({ network: net, provider, lid: 1, marketAddress });
+      await Offer.create({ network: net, provider: provider2, lid: 2 });
+
       await request(app.getHttpServer())
         .get(`/v1/offers`)
         .query({ net, lid: offer.lid })
@@ -317,9 +333,10 @@ describe('OffersController', () => {
     });
 
     it('should return 200 and correct data when [query=provider,lid] are set', async () => {
-      await Offer.create({ network: net, lid: 2, marketAddress: '0xMarket' });
-      await Offer.create({ network: net, provider: '0xProvider', lid: 1, marketAddress: '0xMarket' });
-      const offer = await Offer.create({ network: net, provider: '0xProvider', lid: 3, marketAddress: '0xMarket' });
+      await Offer.create({ network: net, provider, lid: 1, marketAddress });
+      await Offer.create({ network: net, provider: provider2, lid: 2, marketAddress });
+      const offer = await Offer.create({ network: net, provider: provider3, lid: 3, marketAddress });
+
       await request(app.getHttpServer())
         .get(`/v1/offers`)
         .query({ net, provider: offer.provider, lid: offer.lid })
@@ -331,11 +348,12 @@ describe('OffersController', () => {
     });
 
     it('should return 200 and correct data when [creatorOrProvider] is set', async () => {
-      await Offer.create({ network: net, lid: 1, provider: '0xProvider', marketAddress: '0xMarket' });
-      await Offer.create({ network: net, creator: '0xProvider', marketAddress: '0xMarket' });
+      await Offer.create({ network: net, lid: 1, provider: provider, marketAddress });
+      await Offer.create({ network: net, lid: 2, provider: provider2, creator: provider, marketAddress });
+
       await request(app.getHttpServer())
         .get(`/v1/offers`)
-        .query({ net, creatorOrProvider: '0xProvider' })
+        .query({ net, creatorOrProvider: provider })
         .expect(200)
         .expect((res) => {
           expect(res.body.data).toHaveLength(2);
@@ -343,8 +361,9 @@ describe('OffersController', () => {
     });
 
     it('should return 200 and correct `priceUsd` value', async () => {
-      await Offer.create({ network: net, lid: 1, provider: '0xProvider', marketAddress: '0xMarket', price: '10' });
+      await Offer.create({ network: net, lid: 1, provider: provider, marketAddress, price: '10' });
       mockTryToUsd.mockResolvedValue(100);
+
       await request(app.getHttpServer())
         .get(`/v1/offers`)
         .query({ net })
@@ -357,8 +376,9 @@ describe('OffersController', () => {
     });
 
     it('should return 200 and correct `amountUsd` value', async () => {
-      await Offer.create({ network: net, lid: 1, provider: '0xProvider', marketAddress: '0xMarket', amount: '10' });
+      await Offer.create({ network: net, lid: 1, provider: provider, marketAddress, amount: '10' });
       mockTryToUsd.mockResolvedValue(100);
+
       await request(app.getHttpServer())
         .get(`/v1/offers`)
         .query({ net })
@@ -372,8 +392,10 @@ describe('OffersController', () => {
 
     describe('status was set', () => {
       it('should return 200 and correct data when [status=accepted] is set', async () => {
-        await Offer.create({ network: net, lid: 1, marketAddress: '0xMarket' });
-        await Offer.create({ network: net, marketAddress: '0xMarket' });
+        mockTryToUsd.mockResolvedValue(100);
+
+        await Offer.create({ network: net, provider, lid: 1, marketAddress });
+        await Offer.create({ network: net, provider: provider2, lid: 2, marketAddress });
         await request(app.getHttpServer())
           .get(`/v1/offers`)
           .query({ net, status: 'accepted' })
@@ -382,7 +404,7 @@ describe('OffersController', () => {
             expect(res.body.data).toHaveLength(0);
           });
 
-        const offer = await Offer.create({ network: net, marketAddress: '0xMarket', accepted: true });
+        const offer = await Offer.create({ network: net, provider: provider3, lid: 3, marketAddress, accepted: true });
         await request(app.getHttpServer())
           .get(`/v1/offers`)
           .query({ net, status: 'accepted' })
@@ -394,8 +416,10 @@ describe('OffersController', () => {
       });
 
       it('should return 200 and correct data when [status=cancelled] is set', async () => {
-        await Offer.create({ network: net, lid: 1, marketAddress: '0xMarket' });
-        await Offer.create({ network: net, marketAddress: '0xMarket' });
+        mockTryToUsd.mockResolvedValue(100);
+
+        await Offer.create({ network: net, provider, lid: 1, marketAddress });
+        await Offer.create({ network: net, provider: provider2, lid: 2, marketAddress });
         await request(app.getHttpServer())
           .get(`/v1/offers`)
           .query({ net, status: 'cancelled' })
@@ -404,7 +428,7 @@ describe('OffersController', () => {
             expect(res.body.data).toHaveLength(0);
           });
 
-        const offer = await Offer.create({ network: net, marketAddress: '0xMarket', cancelled: true });
+        const offer = await Offer.create({ network: net, provider: provider3, lid: 3, marketAddress, cancelled: true });
         await request(app.getHttpServer())
           .get(`/v1/offers`)
           .query({ net, status: 'cancelled' })
@@ -416,8 +440,10 @@ describe('OffersController', () => {
       });
 
       it('should return 200 and correct data when [status=executed] is set', async () => {
-        await Offer.create({ network: net, lid: 1, marketAddress: '0xMarket' });
-        await Offer.create({ network: net, marketAddress: '0xMarket' });
+        mockTryToUsd.mockResolvedValue(100);
+
+        await Offer.create({ network: net, provider, lid: 1, marketAddress });
+        await Offer.create({ network: net, provider: provider2, lid: 2, marketAddress });
         await request(app.getHttpServer())
           .get(`/v1/offers`)
           .query({ net, status: 'executed' })
@@ -426,7 +452,7 @@ describe('OffersController', () => {
             expect(res.body.data).toHaveLength(0);
           });
 
-        const offer = await Offer.create({ network: net, marketAddress: '0xMarket', executed: true });
+        const offer = await Offer.create({ network: net, provider: provider3, lid: 3, marketAddress, executed: true });
         await request(app.getHttpServer())
           .get(`/v1/offers`)
           .query({ net, status: 'executed' })
@@ -439,16 +465,21 @@ describe('OffersController', () => {
     });
 
     it('should return 200 and correct data when [fromDate,toDate] are set', async () => {
+      mockTryToUsd.mockResolvedValue(100);
+
       const now = moment();
       const offer = await Offer.create({
         network: net,
-        marketAddress: '0xMarket',
+        provider,
+        lid: 1,
+        marketAddress,
         createdAt: now.clone().subtract('1', 'minutes').toISOString(),
       });
       const offer2 = await Offer.create({
         network: net,
-        marketAddress: '0xMarket',
-        lid: 1,
+        provider: provider2,
+        lid: 2,
+        marketAddress,
         createdAt: now.clone().subtract('2', 'minutes').toISOString(),
       });
 
@@ -496,9 +527,10 @@ describe('OffersController', () => {
     });
 
     it('should return 200 and correct count when [query=count] is set', async () => {
-      await Offer.create({ network: net, lid: 2, marketAddress: '0xMarket' });
-      await Offer.create({ network: net, provider: '0xProvider', lid: 1, marketAddress: '0xMarket' });
-      const offer = await Offer.create({ network: net, provider: '0xProvider', lid: 3, marketAddress: '0xMarket' });
+      mockTryToUsd.mockResolvedValue(100);
+      await Offer.create({ network: net, provider, lid: 1, marketAddress });
+      await Offer.create({ network: net, provider: provider2, lid: 2, marketAddress });
+      const offer = await Offer.create({ network: net, provider: provider3, lid: 3, marketAddress });
       await request(app.getHttpServer())
         .get(`/v1/offers`)
         .query({ net, provider: offer.provider, lid: offer.lid, count: true })
@@ -507,9 +539,9 @@ describe('OffersController', () => {
     });
 
     it('should return 200 and correct data when [query=limit] is set', async () => {
-      await Offer.create({ network: net, lid: 2, marketAddress: '0xMarket' });
-      await Offer.create({ network: net, provider: '0xProvider', lid: 1, marketAddress: '0xMarket' });
-      await Offer.create({ network: net, provider: '0xProvider', lid: 3, marketAddress: '0xMarket' });
+      await Offer.create({ network: net, provider, lid: 1, marketAddress });
+      await Offer.create({ network: net, provider: provider2, lid: 2, marketAddress });
+      await Offer.create({ network: net, provider: provider3, lid: 3, marketAddress });
       await request(app.getHttpServer())
         .get(`/v1/offers`)
         .query({ net, limit: 2 })
@@ -521,18 +553,18 @@ describe('OffersController', () => {
 
     it('should return 200 and correct data when [query=limit,offset] is set', async () => {
       const now = moment();
-      await Offer.create({ network: net, lid: 2, marketAddress: '0xMarket', updatedAt: now.toISOString() });
+      await Offer.create({ network: net, lid: 2, marketAddress, updatedAt: now.toISOString() });
       const offer = await Offer.create({
         network: net,
-        provider: '0xProvider',
-        marketAddress: '0xMarket',
+        provider: provider,
         lid: 1,
+        marketAddress,
         updatedAt: now.add(1, 's').toISOString(),
       });
       const offer2 = await Offer.create({
         network: net,
-        provider: '0xProvider',
-        marketAddress: '0xMarket',
+        provider: provider3,
+        marketAddress,
         lid: 3,
         updatedAt: now.add(2, 's').toISOString(),
       });
@@ -639,7 +671,7 @@ describe('OffersController', () => {
           await Offer.create({
             network: net,
             provider: address,
-            marketAddress: '0xMarket',
+            marketAddress,
             lid: 1,
           });
           await Offer.create({
@@ -651,7 +683,7 @@ describe('OffersController', () => {
           await Offer.create({ network: net, provider: address, lid: 2, readProvider: true });
           await request(app.getHttpServer())
             .get(`/v1/offers/count-unread`)
-            .query({ net, provider: address, lid: 1, marketAddress: '0xMarket' })
+            .query({ net, provider: address, lid: 1, marketAddress })
             .set('Authorization', 'bearer ' + token)
             .expect(200)
             .expect({
@@ -683,11 +715,11 @@ describe('OffersController', () => {
 
       describe('target a liquidity', () => {
         it('should return 200 and correct result', async () => {
-          await Offer.create({ network: net, creator: address, lid: 1, provider: address2, marketAddress: '0xMarket' });
+          await Offer.create({ network: net, creator: address, lid: 1, provider: address2, marketAddress });
           await Offer.create({ network: net, creator: address, lid: 2, readOfferer: true });
           await request(app.getHttpServer())
             .get(`/v1/offers/count-unread`)
-            .query({ net, marketAddress: '0xMarket', provider: address2, lid: 1 })
+            .query({ net, marketAddress, provider: address2, lid: 1 })
             .set('Authorization', 'bearer ' + token)
             .expect(200)
             .expect({
@@ -730,7 +762,7 @@ describe('OffersController', () => {
         });
     });
 
-    describe('when authenticated user has offers where it is a provider', () => {
+    describe('when auth user has offers where is the liquidity provider', () => {
       it('should return 200 and correct result', async () => {
         let offer = await Offer.create({ network: net, provider: address, lid: 1 });
         let offer2 = await Offer.create({ network: net, provider: address, lid: 2, readProvider: true });
@@ -747,9 +779,11 @@ describe('OffersController', () => {
 
         offer = await Offer.getById(offer.id);
         expect(offer.readProvider).toBeTruthy();
+        expect(offer.readOfferer).toBeFalsy();
 
         offer2 = await Offer.getById(offer2.id);
         expect(offer2.readOfferer).toBeFalsy();
+        expect(offer2.readProvider).toBeTruthy();
       });
     });
 
@@ -770,9 +804,103 @@ describe('OffersController', () => {
 
         offer = await Offer.getById(offer.id);
         expect(offer.readProvider).toBeFalsy();
+        expect(offer.readOfferer).toBeTruthy();
 
         offer2 = await Offer.getById(offer2.id);
         expect(offer2.readOfferer).toBeTruthy();
+        expect(offer2.readProvider).toBeFalsy();
+      });
+    });
+
+    describe('query by provider', () => {
+      it('should return 200 and correct result', async () => {
+        let offer = await Offer.create({ network: net, provider: address, lid: 1, readOfferer: false });
+        let offer2 = await Offer.create({ network: net, creator: address, lid: 2, readOfferer: false });
+        await request(app.getHttpServer())
+          .put(`/v1/offers/mark-read`)
+          .query({ net, provider: address })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect({
+            data: {
+              success: true,
+            },
+          });
+
+        offer = await Offer.getById(offer.id);
+        expect(offer.readProvider).toBeTruthy();
+
+        offer2 = await Offer.getById(offer2.id);
+        expect(offer2.readOfferer).toBeFalsy();
+      });
+    });
+
+    describe('query by marketAddress', () => {
+      it('should return 200 and correct result', async () => {
+        let offer = await Offer.create({ network: net, provider: address, marketAddress, lid: 1, readOfferer: false });
+        let offer2 = await Offer.create({ network: net, creator: address, lid: 2, readOfferer: false });
+        await request(app.getHttpServer())
+          .put(`/v1/offers/mark-read`)
+          .query({ net, marketAddress })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect({
+            data: {
+              success: true,
+            },
+          });
+
+        offer = await Offer.getById(offer.id);
+        expect(offer.readProvider).toBeTruthy();
+
+        offer2 = await Offer.getById(offer2.id);
+        expect(offer2.readOfferer).toBeFalsy();
+      });
+    });
+
+    describe('query by offerId', () => {
+      it('should return 200 and correct result', async () => {
+        let offer = await Offer.create({ network: net, provider: address, offerId: 1, lid: 1, readOfferer: false });
+        let offer2 = await Offer.create({ network: net, creator: address, lid: 2, readOfferer: false });
+        await request(app.getHttpServer())
+          .put(`/v1/offers/mark-read`)
+          .query({ net, offerId: 1 })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect({
+            data: {
+              success: true,
+            },
+          });
+
+        offer = await Offer.getById(offer.id);
+        expect(offer.readProvider).toBeTruthy();
+
+        offer2 = await Offer.getById(offer2.id);
+        expect(offer2.readOfferer).toBeFalsy();
+      });
+    });
+
+    describe('query by net, provider, lid', () => {
+      it('should return 200 and correct result', async () => {
+        let offer = await Offer.create({ network: net, provider: address, offerId: 1, lid: 1, readOfferer: false });
+        let offer2 = await Offer.create({ network: net, creator: address, lid: 2, readOfferer: false });
+        await request(app.getHttpServer())
+          .put(`/v1/offers/mark-read`)
+          .query({ net, provider, lid: 1 })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect({
+            data: {
+              success: true,
+            },
+          });
+
+        offer = await Offer.getById(offer.id);
+        expect(offer.readProvider).toBeTruthy();
+
+        offer2 = await Offer.getById(offer2.id);
+        expect(offer2.readOfferer).toBeFalsy();
       });
     });
   });

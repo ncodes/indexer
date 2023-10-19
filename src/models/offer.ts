@@ -278,6 +278,7 @@ export default class Offer extends BaseModel {
    * @param network The network name
    * @param creator The market creator address
    * @param marketAddress The market address to filter by
+   * @param offerId The on-chain offer ID
    * @param provider The provider address to filter by
    * @param lid The liquidity ID to filter by
    * @param readProvider Indicates whether the offer was read by the provider
@@ -287,8 +288,9 @@ export default class Offer extends BaseModel {
   static async updateReadState(
     network: string,
     creator: string,
-    provider: string,
     marketAddress: string,
+    offerId: number,
+    provider: string,
     lid: number,
     readProvider: boolean,
     readOfferer: boolean,
@@ -298,6 +300,7 @@ export default class Offer extends BaseModel {
     if (network) query = query.where('network', 'ilike', network);
     if (creator) query = query.where('creator', 'ilike', creator);
     if (marketAddress) query = query.where('marketAddress', 'ilike', marketAddress);
+    if (offerId != undefined) query = query.where('offerId', offerId);
     if (provider) query = query.where('provider', 'ilike', provider);
     if (lid != undefined) query = query.where('lid', lid);
 

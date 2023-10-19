@@ -906,7 +906,7 @@ describe('CoreHandler', () => {
       expect(swap.orderId).toEqual(2);
       expect(swap.amount).toEqual('100');
       expect(swap.price).toEqual('1');
-      expect(swap.offerId).toEqual(1);
+      expect(swap.offerId).toEqual(0);
       expect(swap.providerIds).toEqual([1]);
       expect(swap.takerIds).toEqual([2]);
       expect(swap.operator).toEqual(operator.toNumber());
@@ -1069,7 +1069,7 @@ describe('CoreHandler', () => {
         expect(swap.instant).toBeTruthy();
         expect(swap.paid).toBeTruthy();
         expect(swap.released).toBeTruthy();
-        expect(swap.offerId).toEqual(offerId.toNumber());
+        expect(swap.offerId).toEqual(offerId.sub(1).toNumber());
         expect(swap.operator).toEqual(operator.toNumber());
         expect(swap.providerIds).toEqual([1, 2]);
         expect(swap.takerIds).toEqual([3, 4]);

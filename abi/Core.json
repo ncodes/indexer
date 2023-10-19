@@ -499,7 +499,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "disputeFrom",
+        "name": "disputeDelayDur",
         "type": "uint256"
       }
     ],
@@ -1310,6 +1310,11 @@
       {
         "internalType": "uint256",
         "name": "offerId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "txDeadline",
         "type": "uint256"
       }
     ],

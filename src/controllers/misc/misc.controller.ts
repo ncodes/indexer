@@ -1,12 +1,13 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
-import { findInLocalhost, getTokenInfo, TokenLists } from '../../common/token_list';
+import KnownMediatorPools from '../../common/mediator_pools';
 import { ok, throw400 } from '../../common/responses/responses';
-import { MetadataService } from '../../services/metadata/metadata.service';
-import { ExchangeRateService } from '../../services/exchange_rate.service';
+import { TokenLists, getTokenInfo } from '../../common/token_list';
+import { ConfigService } from '../../config/config.service';
+import AssetRegistry from '../../models/asset_registry';
 import Meta, { FeeName } from '../../models/meta';
 import { isValidNetwork } from '../../network/common';
-import AssetRegistry from '../../models/asset_registry';
-import { ConfigService } from '../../config/config.service';
+import { ExchangeRateService } from '../../services/exchange_rate.service';
+import { MetadataService } from '../../services/metadata/metadata.service';
 
 @Controller('v1/misc')
 export class MiscController {
@@ -121,5 +122,14 @@ export class MiscController {
       [FeeName.InstantNFTSwapFeeBp]: await Meta.getProtocolFee(network, FeeName.InstantNFTSwapFeeBp),
     };
     return ok().data(data).build();
+  }
+
+  /**
+   * Get all known pools
+   * @returns
+   */
+  @Get('/:network/mediator-pools')
+  async getMediatorPools(@Param('network') network: string) {
+    return ok().data(KnownMediatorPools[network]).build();
   }
 }

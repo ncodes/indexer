@@ -1,5 +1,6 @@
 import { Controller, Get, Param, Query, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { isProdMode } from '../../common/common';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ok, throw400, throw404 } from '../../common/responses/responses';
 import Market from '../../models/market';
@@ -28,7 +29,7 @@ export class MarketsController {
       undefined,
       undefined,
       undefined,
-      1440,
+      isProdMode() ? 1440 : 0,
       undefined,
       q.limit || 10,
     );

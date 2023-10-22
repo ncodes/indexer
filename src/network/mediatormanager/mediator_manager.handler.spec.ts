@@ -1,18 +1,18 @@
-import { DBService } from '../../db/DBService';
-import { NoopLogger } from '../../common/loggers/noop_logger';
 import * as moment from 'moment';
-import { MediatorManagerHandler } from './mediator_manager.handler';
-import { toBN } from '../common';
-import Ticket from '../../models/ticket';
-import TicketSlash from '../../models/ticket_slash';
-import Draft from '../../models/draft';
-import Market from '../../models/market';
+import { NoopLogger } from '../../common/loggers/noop_logger';
+import { DBService } from '../../db/DBService';
 import { NotificationID } from '../../jobs/mailer/NotifierService';
 import Dispute from '../../models/dispute';
-import Swap from '../../models/swap';
-import MineTask, { MineTaskType } from '../../models/mine_task';
-import Meta, { MetaKeys } from '../../models/meta';
+import Draft from '../../models/draft';
 import Event, { Events } from '../../models/event';
+import Market from '../../models/market';
+import Meta, { MetaKeys } from '../../models/meta';
+import MineTask, { MineTaskType } from '../../models/mine_task';
+import Swap from '../../models/swap';
+import Ticket from '../../models/ticket';
+import TicketSlash from '../../models/ticket_slash';
+import { toBN } from '../common';
+import { MediatorManagerHandler } from './mediator_manager.handler';
 
 const MarketCoreContract = jest.fn().mockImplementation(() => {
   return {};
@@ -530,6 +530,22 @@ describe('MediatorManagerHandler', () => {
         amount: '0.00000000000000001',
         asset: 'P2P',
       });
+    });
+  });
+
+  describe('.onParameterUpdate', function () {
+    it('should throw error if contract params metadata has not been initialized', async () => {
+      const key = Meta.makeNetKey(net, MetaKeys.ContractsParams);
+      await Meta.update(key, '');
+      await expect(handler.onParameterUpdate('ticketCancelDur', '1', {} as any)).rejects.toThrow(
+        'Contracts params not initialized',
+      );
+    });
+
+    it('should update contract params correctly', async () => {
+      await expect(handler.onParameterUpdate('ticketCancelDur', '1', {} as any)).resolves.toBeUndefined();
+      const value = await Meta.getContractParam(net, 'ticketCancelDur');
+      expect(value).toEqual('1');
     });
   });
 });

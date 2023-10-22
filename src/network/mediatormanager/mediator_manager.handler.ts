@@ -1,20 +1,20 @@
 import * as ethers from 'ethers';
 import { BigNumber } from 'ethers';
-import { Handler } from '../handler';
-import { Transaction } from 'objection';
-import Ticket from '../../models/ticket';
-import * as moment from 'moment';
-import { getBlockTime, toBN } from '../common';
-import TicketSlash from '../../models/ticket_slash';
-import NetworkService from '../network.service';
-import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierService';
 import { commify, formatEther } from 'ethers/lib/utils';
-import Draft from '../../models/draft';
+import * as moment from 'moment';
+import { Transaction } from 'objection';
+import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierService';
 import Dispute from '../../models/dispute';
-import Swap from '../../models/swap';
-import MineTask, { MineTaskType } from '../../models/mine_task';
-import Meta from '../../models/meta';
+import Draft from '../../models/draft';
 import Event, { Events } from '../../models/event';
+import Meta from '../../models/meta';
+import MineTask, { MineTaskType } from '../../models/mine_task';
+import Swap from '../../models/swap';
+import Ticket from '../../models/ticket';
+import TicketSlash from '../../models/ticket_slash';
+import { getBlockTime, toBN } from '../common';
+import { Handler } from '../handler';
+import NetworkService from '../network.service';
 
 export class MediatorManagerHandler extends Handler {
   constructor(
@@ -136,6 +136,18 @@ export class MediatorManagerHandler extends Handler {
         );
       },
     );
+
+    this.on('UpdatedTicketCancelDuration', async (duration: BigNumber, event: ethers.Event, txn?: Transaction) => {
+      return this.onParameterUpdate('ticketCancelDur', duration.toString(), event, txn);
+    });
+
+    this.on('UpdatedTicketMatureDuration', async (duration: BigNumber, event: ethers.Event, txn?: Transaction) => {
+      return this.onParameterUpdate('ticketMatureDur', duration.toString(), event, txn);
+    });
+
+    this.on('UpdatedTicketExpireDuration', async (duration: BigNumber, event: ethers.Event, txn?: Transaction) => {
+      return this.onParameterUpdate('ticketExpireDur', duration.toString(), event, txn);
+    });
   }
 
   /**
@@ -496,5 +508,16 @@ export class MediatorManagerHandler extends Handler {
       }),
       txn,
     );
+  }
+
+  /**
+   * Updated a parameter
+   * @param param The parameter name
+   * @param value The updated value
+   * @param _event The event object
+   * @param txn The transaction object
+   */
+  async onParameterUpdate(param: keyof ContractsParams, value: string, _event: ethers.Event, txn?: Transaction) {
+    await Meta.updateContractsParams(this.network, txn, (params) => (params[param] = value));
   }
 }

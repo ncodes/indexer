@@ -1,15 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigModule } from '@nestjs/config';
-import { DBService } from '../../db/DBService';
-import { UserService } from './user.service';
-import Market, { AssetType } from '../../models/market';
-import { MarketService } from '../markets/market.service';
-import Swap from '../../models/swap';
+import { Test, TestingModule } from '@nestjs/testing';
 import * as moment from 'moment';
+import { DBService } from '../../db/DBService';
+import BadgeGrant from '../../models/badge_grant';
+import Market, { AssetType } from '../../models/market';
+import Swap from '../../models/swap';
+import User from '../../models/user';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { RedisService } from '../../services/redis.service';
-import User from '../../models/user';
-import BadgeGrant from '../../models/badge_grant';
+import { MarketService } from '../markets/market.service';
+import ChatNotificationService from '../notifications/chat_notification.service';
+import { UserService } from './user.service';
 
 const mockTryToUsd = jest.fn();
 const MetadataServiceMock = jest.fn().mockImplementation(() => {
@@ -44,7 +45,7 @@ describe('UserService', () => {
 
     module = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
-      providers: [UserService, MarketService, MetadataService, RedisService],
+      providers: [UserService, MarketService, MetadataService, RedisService, ChatNotificationService],
     })
       .overrideProvider(MetadataService)
       .useValue(new MetadataServiceMock())
@@ -167,6 +168,45 @@ describe('UserService', () => {
       });
       await expect(service.extendUser(u2, net)).resolves.toBeUndefined();
       expect(u2.lastActiveAt).toEqual(swap2.createdAt);
+    });
+  });
+
+  describe('.registerDevice', () => {
+    it(`should return device token`, async () => {
+      const mockRegisterInstallation = jest
+        .spyOn(module.get(ChatNotificationService), 'registerInstallation')
+        .mockResolvedValue(undefined);
+
+      let u = await User.create({ address: user });
+      const res = await service.registerDevice(u, 'email');
+      u = await User.getById(u.id);
+      expect(u.deviceTokenEmail).toHaveLength(32);
+      expect(res).toEqual(u.deviceTokenEmail);
+
+      expect(mockRegisterInstallation).toBeCalledWith(u.id, 'email', u.deviceTokenEmail);
+    });
+
+    it(`should not reset device token if already set`, async () => {
+      let u = await User.create({ address: user, deviceTokenEmail: 'token-01' });
+      service.registerDevice(u, 'email');
+      u = await User.getById(u.id);
+      expect(u.deviceTokenEmail).toEqual('token-01');
+    });
+  });
+
+  describe('.unregisterDevice', () => {
+    it(`should return true and clear device token`, async () => {
+      const mockUnregisterInstallation = jest
+        .spyOn(module.get(ChatNotificationService), 'unregisterInstallation')
+        .mockResolvedValue(undefined);
+
+      let u = await User.create({ address: user, deviceTokenEmail: 'token-01' });
+      const res = await service.unregisterDevice(u, 'email');
+      expect(res).toBeTruthy();
+      u = await User.getById(u.id);
+      expect(u.deviceTokenEmail).toBeNull();
+
+      expect(mockUnregisterInstallation).toBeCalledWith(u.id);
     });
   });
 });

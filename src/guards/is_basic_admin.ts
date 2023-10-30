@@ -1,15 +1,15 @@
-import { CanActivate, ExecutionContext, HttpStatus, Injectable } from "@nestjs/common";
-import * as basicAuth from "basic-auth";
-import express from "express";
-import { error, ErrorTypes } from "../common/responses/responses";
-import { ConfigService } from "@nestjs/config";
-import { notPermitted } from "./be_authenticated.guard";
+import { CanActivate, ExecutionContext, HttpStatus, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as basicAuth from 'basic-auth';
+import express from 'express';
+import { ErrorTypes, error } from '../common/responses/responses';
+import { notPermitted } from './be_authenticated.guard';
 
 /**
- * IsBasicAdmin checks for basic authorization header represents the root admin.
+ * IsRootAdmin checks for basic authorization header represents the root admin.
  */
 @Injectable()
-export class IsBasicAdmin implements CanActivate {
+export class IsRootAdmin implements CanActivate {
   constructor(private cfgSrv: ConfigService) {}
 
   canActivate(ctx: ExecutionContext): Promise<boolean> {
@@ -34,6 +34,10 @@ export class IsBasicAdmin implements CanActivate {
       }
 
       const user = basicAuth(req);
+      if (!user) {
+        return rej(malformedErr.build());
+      }
+
       if (user.name !== this.cfgSrv.get('app.rootAdminUser') || user.pass !== this.cfgSrv.get('app.rootAdminPass')) {
         return rej(notPermitted.build());
       }

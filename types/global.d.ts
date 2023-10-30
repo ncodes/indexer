@@ -1,6 +1,12 @@
-import User from '../src/models/user';
 import { BigNumber } from 'ethers';
 import { NotificationID } from '../src/jobs/mailer/NotifierService';
+import Dispute from '../src/models/dispute';
+import Liquidity from '../src/models/liquidity';
+import Market from '../src/models/market';
+import Offer from '../src/models/offer';
+import Swap from '../src/models/swap';
+import Ticket from '../src/models/ticket';
+import User from '../src/models/user';
 import {
   AssetRegistry,
   BadgeManager,
@@ -13,12 +19,6 @@ import {
   Token,
   TokenPool,
 } from '../typechain';
-import Market from '../src/models/market';
-import Swap from '../src/models/swap';
-import Liquidity from '../src/models/liquidity';
-import Dispute from '../src/models/dispute';
-import Ticket from '../src/models/ticket';
-import Offer from '../src/models/offer';
 
 declare global {
   namespace Express {
@@ -330,6 +330,11 @@ declare global {
     offer: Offer;
     market: Market;
     liq: Liquidity;
+  }
+
+  interface ChatNewMessageNotification {
+    user: User;
+    convo: Convo;
   }
 
   interface NewUpdatedOfferNotification extends BaseOfferNotification {

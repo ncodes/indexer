@@ -1,6 +1,6 @@
-import { randStr } from "../common/common";
-import Objection, { Transaction } from "objection";
-import { BaseModel } from "./base";
+import Objection, { Transaction } from 'objection';
+import { randStr } from '../common/common';
+import { BaseModel } from './base';
 
 /**
  * User represents a user model
@@ -11,7 +11,9 @@ export default class User extends BaseModel {
   locale: string;
   timezone: string;
   role: string;
+  deviceTokenEmail: string;
 
+  // Not persisted
   totalSwaps: number;
   completionRate: number;
   badges: string[];
@@ -76,6 +78,16 @@ export default class User extends BaseModel {
     return new Promise((resolve, reject) => {
       this.query(txn).where('email', 'ILIKE', email).whereNotDeleted().first().then(resolve).catch(reject);
     });
+  }
+
+  /**
+   * Get a user by device token
+   * @param token
+   * @param txn
+   * @returns
+   */
+  static async getByToken(token: string, txn?: Transaction): Promise<User> {
+    return this.query(txn).where('deviceTokenEmail', token).whereNotDeleted().first();
   }
 
   /**

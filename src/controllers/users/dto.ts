@@ -1,8 +1,10 @@
-import { IsBoolean, IsIn, IsOptional } from 'class-validator';
-import { getNetworks } from '../../network/common';
-import { makeValidatorMsg } from '../../common/validations/validation';
-import { toBoolean } from 'underscore.string';
 import { Transform } from 'class-transformer';
+import { IsBoolean, IsIn, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
+import { toBoolean } from 'underscore.string';
+import { makeValidatorMsg } from '../../common/validations/validation';
+import { getNetworks } from '../../network/common';
+
+export type DeviceType = 'email';
 
 export class GetQueryDTO {
   @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
@@ -13,4 +15,23 @@ export class GetQueryDTO {
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'no404') })
   @IsOptional()
   no404?: boolean;
+}
+
+export class RegisterDeviceDTO {
+  @IsIn(['email'], { message: makeValidatorMsg('device type is unknown', 'type') })
+  @IsNotEmpty({ message: makeValidatorMsg('device type is required', 'type') })
+  public type?: DeviceType;
+}
+
+export class LogOnlineStatusDTO {
+  @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
+  public net: string;
+
+  @IsNumber(undefined, { message: makeValidatorMsg('must be a number', 'orderId') })
+  @IsOptional()
+  public orderId: number;
+
+  @IsNumber(undefined, { message: makeValidatorMsg('must be a number', 'offerId') })
+  @IsOptional()
+  public offerId: number;
 }

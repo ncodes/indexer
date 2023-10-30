@@ -1,11 +1,15 @@
 import { Injectable } from '@nestjs/common';
+import { isEqualStr, randStr } from '../../common/common';
+import BadgeGrant from '../../models/badge_grant';
 import Swap from '../../models/swap';
 import User from '../../models/user';
-import BadgeGrant from '../../models/badge_grant';
-import { isEqualStr } from '../../common/common';
+import ChatNotificationService from '../notifications/chat_notification.service';
+import { DeviceType } from './dto';
 
 @Injectable()
 export class UserService {
+  constructor(private chatNotifSrv: ChatNotificationService) {}
+
   /**
    * Extend user with peripheral and derived data
    * @param user The user object
@@ -67,5 +71,45 @@ export class UserService {
     } catch (e) {
       return Promise.reject(e);
     }
+  }
+
+  /**
+   * Register a device
+   * @param user The user object
+   * @param deviceType The device type
+   * @param token The device token (if not provided, a new one will be generated)
+   * @returns The device token
+   */
+  async registerDevice(user: User, deviceType: DeviceType, token = '') {
+    if (user.deviceTokenEmail) return user.deviceTokenEmail;
+    if (!token) token = randStr(32);
+
+    if (deviceType === 'email') {
+      await this.chatNotifSrv.registerInstallation(user.id, deviceType, token);
+      await User.updateById(user.id, { deviceTokenEmail: token });
+    } else {
+      throw new Error(`Unknown device type ${deviceType}`);
+    }
+
+    return token;
+  }
+
+  /**
+   * Unregister a device
+   * @param user The user object
+   * @param deviceType The device type
+   * @returns True if success
+   */
+  async unregisterDevice(user: User, deviceType: DeviceType) {
+    if (!user.deviceTokenEmail) return true;
+    await this.chatNotifSrv.unregisterInstallation(user.id);
+
+    if (deviceType === 'email') {
+      await User.updateById(user.id, { deviceTokenEmail: null });
+    } else {
+      throw new Error(`Unknown device type ${deviceType}`);
+    }
+
+    return true;
   }
 }

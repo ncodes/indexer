@@ -4,16 +4,18 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ethers } from 'ethers';
 import * as moment from 'moment';
 import * as request from 'supertest';
+import { sha1 } from '../../common/common';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import { NoopLogger } from '../../common/loggers/noop_logger';
+import { ErrorMessages } from '../../common/responses/responses';
 import { Roles } from '../../common/roles';
 import { DBService } from '../../db/DBService';
 import Session from '../../models/session';
 import User from '../../models/user';
-import { AuthController } from './auth.controller';
-import { ErrorMessages } from '../../common/responses/responses';
-import { sha1 } from '../../common/common';
 import { RedisService } from '../../services/redis.service';
+import ChatNotificationService from '../notifications/chat_notification.service';
+import { UserService } from '../users/user.service';
+import { AuthController } from './auth.controller';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -62,7 +64,7 @@ describe('AuthController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [AuthController],
-      providers: [ConfigService, RedisService],
+      providers: [ConfigService, RedisService, UserService, ChatNotificationService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
@@ -187,6 +189,8 @@ describe('AuthController', () => {
       const msg = Buffer.from(makeMsg(wallet.address, 'person@gmail.com', moment().toISOString()));
       const sig = await wallet.signMessage(msg.toString());
 
+      jest.spyOn(app.get(UserService), 'registerDevice').mockResolvedValue('device_token');
+
       await request(app.getHttpServer())
         .post(`/v1/auth`)
         .send({
@@ -198,6 +202,7 @@ describe('AuthController', () => {
           expect(res.body.data.token).toBeDefined();
           expect(res.body.data.user).toBeDefined();
           expect(res.body.data.user.address.toLowerCase()).toEqual(wallet.address.toLowerCase());
+          expect(res.body.data.user.deviceTokenEmail).toEqual('device_token');
         });
 
       const session = await Session.getBySignature(sha1(sig));
@@ -210,6 +215,9 @@ describe('AuthController', () => {
       const msg = Buffer.from(makeMsg(wallet.address, 'person@gmail.com', moment().subtract(1, 's').toISOString()));
       const sig = await wallet.signMessage(msg.toString());
       const existing = await User.create({ address: wallet.address });
+
+      jest.spyOn(app.get(UserService), 'registerDevice').mockResolvedValue('device_token');
+
       let user: User;
       await request(app.getHttpServer())
         .post(`/v1/auth`)
@@ -235,6 +243,9 @@ describe('AuthController', () => {
       const msg = Buffer.from(makeMsg(wallet.address, 'person@gmail.com', moment().subtract(1, 's').toISOString()));
       const sig = await wallet.signMessage(msg.toString());
       await Session.create('user_123', sha1(sig));
+
+      jest.spyOn(app.get(UserService), 'registerDevice').mockResolvedValue('device_token');
+
       await request(app.getHttpServer())
         .post(`/v1/auth`)
         .send({

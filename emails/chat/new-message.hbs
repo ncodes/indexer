@@ -1,0 +1,17 @@
+<table style="margin: auto; width: 100%;  background-color: #ffffff;  border-radius: 5px;">
+  <tr>
+    <td style="padding: 10px 30px; font-size: 20px; line-height: 30px;">
+      Hello {{userAddrShort}},
+      <br><br>
+      You received a new message interaction regarding {{#if isSwap}}a swap order{{else}}an offer{{/if}} you are involved in.
+      <br>
+      <br>
+      {{> primaryButton this }}
+      <br />
+      Love, <br>
+      {{app}} Team
+    </td>
+  </tr>
+</table>
+
+

@@ -1,7 +1,7 @@
 import { uniq } from 'lodash';
 import * as moment from 'moment';
 import Objection, { Model, raw, Transaction } from 'objection';
-import { randStr } from '../common/common';
+import { isEqualStr, randStr } from '../common/common';
 import { BaseModel } from './base';
 import Liquidity from './liquidity';
 import Market from './market';
@@ -117,6 +117,14 @@ export default class Offer extends BaseModel {
   }
 
   /**
+   * Check if the given address is involved in the offer
+   * @param address The address to check
+   */
+  isInvolved(address: string) {
+    return isEqualStr(this.creator, address) || isEqualStr(this.provider, address);
+  }
+
+  /**
    * create a record
    * @param data The transfer info
    * @param txn Optional transaction object
@@ -153,7 +161,7 @@ export default class Offer extends BaseModel {
    * @param relations The relations to be fetched
    * @param txn Optional transaction object
    */
-  static getByNetworkAndOfferId(network: string, id: number, select = [], relations: string, txn?: Transaction) {
+  static getByNetworkAndOfferId(network: string, id: number, select = [], relations?: string, txn?: Transaction) {
     select = this.makeSelectList(select);
     return this.query(txn)
       .whereNotDeleted()

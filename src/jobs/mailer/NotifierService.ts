@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
-import { Queue } from 'bull';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { NotifierConsumer } from './NotifierConsumer';
+import { Queue } from 'bull';
 import { isDevMode } from '../../common/common';
+import { NotifierConsumer } from './NotifierConsumer';
 
 export enum NotificationID {
   MediatorInviteReceived = 'MediatorInviteReceived',
@@ -37,6 +37,7 @@ export enum NotificationID {
   OfferCancelled = 'OfferCancelled',
   OfferUnaccepted = 'OfferUnaccepted',
   OfferExecuted = 'OfferExecuted',
+  ChatNewMessage = 'ChatNewMessage',
 }
 
 @Injectable()

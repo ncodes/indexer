@@ -1,20 +1,21 @@
-import { Body, Controller, Get, Post, Query, ValidationPipe } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { transaction } from "objection";
-import { CommonValidationPipeOpt } from "../../common/pipes/common.pipe";
-import { ErrBadSignature, ErrorMessages, ErrorTypes, ok, throw400, throw404 } from "../../common/responses/responses";
-import { Roles } from "../../common/roles";
-import User from "../../models/user";
-import { AuthDTO, GetAuthorizerDTO } from "./dto";
-import { hasSeenSignature, makeSession, parseWalletSignature } from "./utils";
-import { isEmail } from "class-validator";
+import { Body, Controller, Get, Post, Query, ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { isEmail } from 'class-validator';
+import { transaction } from 'objection';
+import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
+import { ErrBadSignature, ErrorMessages, ErrorTypes, ok, throw400, throw404 } from '../../common/responses/responses';
+import { Roles } from '../../common/roles';
+import User from '../../models/user';
+import { UserService } from '../users/user.service';
+import { AuthDTO, GetAuthorizerDTO } from './dto';
+import { hasSeenSignature, makeSession, parseWalletSignature } from './utils';
 
 /**
  * AuthController handles all authentication functionalities.
  */
 @Controller('v1/auth')
 export class AuthController {
-  constructor(private cfgSrv: ConfigService) {}
+  constructor(private cfgSrv: ConfigService, private userSrv: UserService) {}
 
   /**
    * Authenticate signature and generate session token
@@ -52,6 +53,11 @@ export class AuthController {
         : await User.updateById(user.id, { email: user.email !== sigData.email ? sigData.email : user.email });
       token = await makeSession(user, body.sig, this.cfgSrv.get('auth.jwtExpMin'), this.cfgSrv.get('auth.jwtSecret'));
     });
+
+    // Register email device for email notifications
+    if (!user.deviceTokenEmail) {
+      user.deviceTokenEmail = await this.userSrv.registerDevice(user, 'email');
+    }
 
     return ok().data({ token, user }).build();
   }

@@ -1,17 +1,22 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { DBService } from '../../db/DBService';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { NoopLogger } from '../../common/loggers/noop_logger';
-import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
-import User from '../../models/user';
-import { Roles } from '../../common/roles';
+import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
-import { makeSession } from '../auth/utils';
-import { UsersController } from './users.controller';
 import { randStr } from '../../common/common';
-import { UserService } from './user.service';
+import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
+import { NoopLogger } from '../../common/loggers/noop_logger';
+import { Roles } from '../../common/roles';
+import { DBService } from '../../db/DBService';
+import Dispute from '../../models/dispute';
+import Draft from '../../models/draft';
+import Offer from '../../models/offer';
+import Swap from '../../models/swap';
+import User from '../../models/user';
 import { MetadataService } from '../../services/metadata/metadata.service';
+import { makeSession } from '../auth/utils';
+import ChatNotificationService from '../notifications/chat_notification.service';
+import { UserService } from './user.service';
+import { UsersController } from './users.controller';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -27,6 +32,7 @@ const MetadataServiceMock = jest.fn().mockImplementation(() => {
 describe('UsersController', () => {
   let app: INestApplication;
   const db = DBService.getForTest();
+  const net = 'ethereum';
   let cfgObj = {};
 
   afterEach(async () => {
@@ -54,7 +60,7 @@ describe('UsersController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [UsersController],
-      providers: [ConfigService, UserService, MetadataService],
+      providers: [ConfigService, UserService, MetadataService, ChatNotificationService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
@@ -155,6 +161,294 @@ describe('UsersController', () => {
           expect(res.body.data.email).toEqual('0x@email.com');
           expect(mockExtendUser).toBeCalledTimes(1);
         });
+    });
+  });
+
+  describe('.registerDevice', () => {
+    it('should return 401 when authorization header is missing', async () => {
+      await User.updateById(u.id, { address: '0xAddress', email: '0x@email.com' });
+      await request(app.getHttpServer())
+        .post(`/v1/users/register-device`)
+        .expect(401)
+        .expect({
+          error: {
+            type: 'authentication_error',
+            message: 'authorization header is required',
+          },
+        });
+    });
+
+    it('should return 400 when type is not provided', async () => {
+      await User.updateById(u.id, { address: '0xAddress', email: '0x@email.com' });
+      await request(app.getHttpServer())
+        .post(`/v1/users/register-device`)
+        .set('Authorization', 'bearer ' + token)
+        .expect(400)
+        .expect({
+          error: {
+            message: 'device type is required',
+            param: 'type',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 400 when device type is unknown', async () => {
+      await User.updateById(u.id, { address: '0xAddress', email: '0x@email.com' });
+      await request(app.getHttpServer())
+        .post(`/v1/users/register-device`)
+        .set('Authorization', 'bearer ' + token)
+        .send({ type: 'unknown' })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'device type is unknown',
+            param: 'type',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 201 on success', async () => {
+      jest.spyOn(app.get(UserService), 'registerDevice').mockResolvedValue('token');
+      await User.updateById(u.id, { address: '0xAddress', email: '0x@email.com' });
+      await request(app.getHttpServer())
+        .post(`/v1/users/register-device`)
+        .set('Authorization', 'bearer ' + token)
+        .send({ type: 'email' })
+        .expect(201)
+        .expect({ data: { token: 'token' } });
+    });
+  });
+
+  describe('.unregisterDevice', () => {
+    it('should return 401 when authorization header is missing', async () => {
+      await User.updateById(u.id, { address: '0xAddress', email: '0x@email.com' });
+      await request(app.getHttpServer())
+        .delete(`/v1/users/unregister-device`)
+        .expect(401)
+        .expect({
+          error: {
+            type: 'authentication_error',
+            message: 'authorization header is required',
+          },
+        });
+    });
+
+    it('should return 400 when type is not provided', async () => {
+      await User.updateById(u.id, { address: '0xAddress', email: '0x@email.com' });
+      await request(app.getHttpServer())
+        .delete(`/v1/users/unregister-device`)
+        .set('Authorization', 'bearer ' + token)
+        .expect(400)
+        .expect({
+          error: {
+            message: 'device type is required',
+            param: 'type',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 400 when device type is unknown', async () => {
+      await User.updateById(u.id, { address: '0xAddress', email: '0x@email.com' });
+      await request(app.getHttpServer())
+        .delete(`/v1/users/unregister-device`)
+        .set('Authorization', 'bearer ' + token)
+        .send({ type: 'unknown' })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'device type is unknown',
+            param: 'type',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 200 on success', async () => {
+      jest.spyOn(app.get(UserService), 'unregisterDevice').mockResolvedValue(true);
+      await User.updateById(u.id, { address: '0xAddress', email: '0x@email.com' });
+      await request(app.getHttpServer())
+        .delete(`/v1/users/unregister-device`)
+        .set('Authorization', 'bearer ' + token)
+        .send({ type: 'email' })
+        .expect(200)
+        .expect({ data: { success: true } });
+    });
+  });
+
+  describe('.logOnlineStatus', () => {
+    it('should return 401 when authorization header is missing', async () => {
+      await request(app.getHttpServer())
+        .post(`/v1/users/log-status`)
+        .expect(401)
+        .expect({
+          error: {
+            type: 'authentication_error',
+            message: 'authorization header is required',
+          },
+        });
+    });
+
+    it('should return 400 when network was not provided', async () => {
+      await request(app.getHttpServer())
+        .post(`/v1/users/log-status`)
+        .set('Authorization', 'bearer ' + token)
+        .expect(400)
+        .expect({
+          error: {
+            message: 'network is unknown',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return true when orderId or offerId was not provided', async () => {
+      await request(app.getHttpServer())
+        .post(`/v1/users/log-status`)
+        .set('Authorization', 'bearer ' + token)
+        .send({
+          net: 'ethereum',
+        })
+        .expect(201)
+        .expect({
+          data: { ok: true },
+        });
+    });
+
+    describe('orderId was provided', () => {
+      it('should return true when user is a counterpart of orderId', async () => {
+        const order = await Swap.create({ network: net, orderId: 1, provider: u.address });
+        await request(app.getHttpServer())
+          .post(`/v1/users/log-status`)
+          .set('Authorization', 'bearer ' + token)
+          .send({
+            net,
+            orderId: order.orderId,
+          })
+          .expect(201)
+          .expect({
+            data: { ok: true },
+          });
+      });
+
+      it('should return true when user is a recent dispute draftee of the order', async () => {
+        const order = await Swap.create({ network: net, orderId: 1 });
+        const dispute = await Dispute.create({
+          network: net,
+          orderId: order.orderId,
+          creator: u.address,
+          defendant: '0xDefendant',
+          disputeId: 1,
+        });
+        await Draft.create({
+          network: net,
+          orderId: order.orderId,
+          owner: u.address,
+          disputeIndex: dispute.disputeId,
+        });
+        await request(app.getHttpServer())
+          .post(`/v1/users/log-status`)
+          .set('Authorization', 'bearer ' + token)
+          .send({
+            net,
+            orderId: order.orderId,
+          })
+          .expect(201)
+          .expect({
+            data: { ok: true },
+          });
+      });
+    });
+
+    it('should return false when order does not exist', async () => {
+      await request(app.getHttpServer())
+        .post(`/v1/users/log-status`)
+        .set('Authorization', 'bearer ' + token)
+        .send({
+          net,
+          orderId: 1,
+        })
+        .expect(200)
+        .expect({
+          data: { ok: false },
+        });
+    });
+
+    it('should return false when user not a counterparty or recent dispute draftee of the order', async () => {
+      const order = await Swap.create({ network: net, orderId: 1 });
+      const dispute = await Dispute.create({
+        network: net,
+        orderId: order.orderId,
+        creator: '0xCreator',
+        defendant: '0xDefendant',
+        disputeId: 1,
+      });
+      await Draft.create({
+        network: net,
+        orderId: order.orderId,
+        owner: '0xDraftee',
+        disputeIndex: dispute.disputeId,
+      });
+      await request(app.getHttpServer())
+        .post(`/v1/users/log-status`)
+        .set('Authorization', 'bearer ' + token)
+        .send({
+          net,
+          orderId: order.orderId,
+        })
+        .expect(200)
+        .expect({
+          data: { ok: false },
+        });
+    });
+
+    describe('offerId was provided', () => {
+      it('should return true when user is the provider', async () => {
+        const offer = await Offer.create({ network: net, offerId: 1, provider: u.address, creator: '0xCreator' });
+        await request(app.getHttpServer())
+          .post(`/v1/users/log-status`)
+          .set('Authorization', 'bearer ' + token)
+          .send({
+            net,
+            offerId: offer.offerId,
+          })
+          .expect(201)
+          .expect({
+            data: { ok: true },
+          });
+      });
+
+      it('should return true when user is the creator', async () => {
+        const offer = await Offer.create({ network: net, offerId: 1, creator: u.address, provider: '0xProvider' });
+        await request(app.getHttpServer())
+          .post(`/v1/users/log-status`)
+          .set('Authorization', 'bearer ' + token)
+          .send({
+            net,
+            offerId: offer.offerId,
+          })
+          .expect(201)
+          .expect({
+            data: { ok: true },
+          });
+      });
+
+      it('should return false when offer does not exist', async () => {
+        await request(app.getHttpServer())
+          .post(`/v1/users/log-status`)
+          .set('Authorization', 'bearer ' + token)
+          .send({
+            net,
+            offerId: 1,
+          })
+          .expect(200)
+          .expect({
+            data: { ok: false },
+          });
+      });
     });
   });
 });

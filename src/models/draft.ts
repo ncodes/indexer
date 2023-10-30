@@ -1,5 +1,5 @@
-import { randStr } from '../common/common';
 import Objection, { Transaction } from 'objection';
+import { randStr } from '../common/common';
 import { BaseModel } from './base';
 
 /**

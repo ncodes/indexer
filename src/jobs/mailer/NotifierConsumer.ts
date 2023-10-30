@@ -1,13 +1,13 @@
-import { Process, Processor } from "@nestjs/bull";
-import { Job } from "bull";
-import { MailerService } from "../../services/mailer/mailer.service";
-import User from "../../models/user";
-import Notification, { NotificationType } from "../../models/notification";
-import { Logger } from "@nestjs/common";
-import Market from "../../models/market";
-import { pow10D, toFixed } from "../../network/common";
-import { isEqualStr, shortenAddr, toDec } from "../../common/common";
-import * as moment from "moment-timezone";
+import { Process, Processor } from '@nestjs/bull';
+import { Logger } from '@nestjs/common';
+import { Job } from 'bull';
+import * as moment from 'moment-timezone';
+import { isEqualStr, shortenAddr, toDec } from '../../common/common';
+import Market from '../../models/market';
+import Notification, { NotificationType } from '../../models/notification';
+import User from '../../models/user';
+import { pow10D, toFixed } from '../../network/common';
+import { MailerService } from '../../services/mailer/mailer.service';
 
 // noinspection JSUnusedGlobalSymbols
 @Processor('notifier')
@@ -22,9 +22,13 @@ export class NotifierConsumer {
    */
   @Process()
   async notify(job: Job<NotifyJob<any>>) {
-    const user = await User.getByAddress(job.data.recipient);
-    if (!user || !user.email) return Promise.resolve();
-    job.data.user = user;
+    if (!job.data.data.user) {
+      const user = await User.getByAddress(job.data.recipient);
+      if (!user || !user.email) return Promise.resolve();
+      job.data.user = user;
+    } else {
+      job.data.user = job.data.data.user;
+    }
 
     const handler = this[`notify${job.data.notifType}`];
     if (!handler) {
@@ -1230,6 +1234,37 @@ export class NotifierConsumer {
 
     await Notification.create({
       type: NotificationType.OfferExecuted,
+      network: job.network,
+      userId: job.user.id,
+      title: subject,
+      body: note,
+    });
+
+    // Send email
+    await this.mailer.send(template, subject, user.email, locals);
+  }
+
+  async notifyChatNewMessage(job: NotifyJob<ChatNewMessageNotification>) {
+    const { user } = job;
+    const { convo } = job.data;
+    const locals = {
+      userAddrShort: shortenAddr(user.address),
+      isSwap: !!convo.swap,
+      orderId: convo.swap?.orderId,
+      offerId: convo.swap?.offerId,
+      title: 'New Swap Message Interaction',
+      btnLink: !!convo.swap
+        ? `${job.appUrl}/swap/${convo.swap?.orderId}`
+        : `${job.appUrl}/offer/${convo.offer?.offerId}`,
+      btnValue: !!convo.swap ? 'View Swap' : 'View Offer',
+    };
+
+    const template = `chat/new-message`;
+    const subject = await this.mailer.render(`${template}.subject`, locals);
+    const note = await this.mailer.render(`${template}.note`, locals);
+
+    await Notification.create({
+      type: NotificationType.ChatNewMessage,
       network: job.network,
       userId: job.user.id,
       title: subject,

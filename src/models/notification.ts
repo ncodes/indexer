@@ -1,5 +1,5 @@
-import { randStr } from '../common/common';
 import Objection, { raw, Transaction } from 'objection';
+import { randStr } from '../common/common';
 import { BaseModel } from './base';
 
 export enum NotificationType {
@@ -34,6 +34,7 @@ export enum NotificationType {
   OfferUnaccepted = 'offer:unaccepted',
   OfferCancelled = 'offer:cancelled',
   OfferExecuted = 'offer:executed',
+  ChatNewMessage = 'chat:new-message',
 }
 
 /**

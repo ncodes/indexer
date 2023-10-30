@@ -1,20 +1,43 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { DBService } from '../../db/DBService';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { NoopLogger } from '../../common/loggers/noop_logger';
-import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
-import User from '../../models/user';
-import { Roles } from '../../common/roles';
+import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
-import { makeSession } from '../auth/utils';
-import { NotificationsController } from './notifications.controller';
-import Notification, { NotificationType } from '../../models/notification';
 import { randStr } from '../../common/common';
+import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
+import { NoopLogger } from '../../common/loggers/noop_logger';
+import { Roles } from '../../common/roles';
+import { DBService } from '../../db/DBService';
+import Convo from '../../models/convo';
+import Notification, { NotificationType } from '../../models/notification';
+import Offer from '../../models/offer';
+import OnlineStatus from '../../models/online_status';
+import Swap from '../../models/swap';
+import User from '../../models/user';
+import { RedisService } from '../../services/redis.service';
+import { makeSession } from '../auth/utils';
+import { NotificationID, NotifierService } from './../../jobs/mailer/NotifierService';
+import ChatNotificationService from './chat_notification.service';
+import { NotificationsController } from './notifications.controller';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
   return { get: mockCfgGet };
+});
+
+const mockNotify = jest.fn();
+const NotifierServiceMock = jest.fn().mockImplementation(() => {
+  return {
+    notify: mockNotify,
+  };
+});
+
+const mockExist = jest.fn();
+const mockSetWithExpire = jest.fn();
+const RedisServiceMock = jest.fn().mockImplementation(() => {
+  return {
+    exist: mockExist,
+    setWithExpire: mockSetWithExpire,
+  };
 });
 
 describe('NotificationsController', () => {
@@ -39,7 +62,12 @@ describe('NotificationsController', () => {
     jest.clearAllMocks();
     mockCfgGet.mockReset();
 
-    cfgObj = { 'auth.jwtSecret': 'secret_secret' };
+    cfgObj = {
+      'auth.jwtSecret': 'secret_secret',
+      'app.rootAdminUser': 'admin',
+      'app.rootAdminPass': 'admin',
+    };
+
     mockCfgGet.mockReset().mockImplementation((args) => {
       return cfgObj[args];
     });
@@ -47,10 +75,14 @@ describe('NotificationsController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [NotificationsController],
-      providers: [ConfigService],
+      providers: [ConfigService, ChatNotificationService, NotifierService, RedisService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
+      .overrideProvider(NotifierService)
+      .useValue(new NotifierServiceMock())
+      .overrideProvider(RedisService)
+      .useValue(new RedisServiceMock())
       .compile();
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());
@@ -168,7 +200,7 @@ describe('NotificationsController', () => {
 
     describe('count=true', () => {
       it('should return correct results', async () => {
-        const notif = await Notification.create({ type: NotificationType.InstantSwap, network: net, userId: u.id });
+        await Notification.create({ type: NotificationType.InstantSwap, network: net, userId: u.id });
         await Notification.create({ type: NotificationType.InstantSwap, network: net, userId: u.id, read: true });
         await request(app.getHttpServer())
           .get(`/v1/notifications`)
@@ -219,6 +251,448 @@ describe('NotificationsController', () => {
         });
       notif = await Notification.find({ id: notif.id });
       expect(notif.read).toBeTruthy();
+    });
+  });
+
+  describe('.subscribeToConvos', () => {
+    it('should return 401 when not authorized', async () => {
+      await request(app.getHttpServer())
+        .post(`/v1/notifications/subscribe`)
+        .send({})
+        .expect(401)
+        .expect({
+          error: {
+            type: 'authentication_error',
+            message: 'authorization header is required',
+          },
+        });
+    });
+
+    it('should return 400 when no topic was provided', async () => {
+      await User.updateById(u.id, { deviceTokenEmail: 'token-01' });
+      await request(app.getHttpServer())
+        .post(`/v1/notifications/subscribe`)
+        .set('Authorization', 'bearer ' + token)
+        .send({
+          topics: [],
+        })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'at least one topic is required',
+            param: 'topics',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 400 when network was not provided', async () => {
+      await User.updateById(u.id, { deviceTokenEmail: 'token-01' });
+      await request(app.getHttpServer())
+        .post(`/v1/notifications/subscribe`)
+        .set('Authorization', 'bearer ' + token)
+        .send({
+          topics: ['topic'],
+        })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'network is required',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 400 when either orderId or offerId was not provided', async () => {
+      await User.updateById(u.id, { deviceTokenEmail: 'token-01' });
+      await request(app.getHttpServer())
+        .post(`/v1/notifications/subscribe`)
+        .set('Authorization', 'bearer ' + token)
+        .send({
+          net,
+          topics: ['topic'],
+        })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'orderId or offerId is required',
+            param: 'orderId',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 201 and subscribe to topics and create a convo entry', async () => {
+      const mockSubscribe = jest.spyOn(app.get(ChatNotificationService), 'subscribe').mockReturnValue(undefined);
+      await User.updateById(u.id, { deviceTokenEmail: 'token-01' });
+      await request(app.getHttpServer())
+        .post(`/v1/notifications/subscribe`)
+        .set('Authorization', 'bearer ' + token)
+        .send({
+          net,
+          orderId: 1,
+          topics: ['topic', 'topic2'],
+        })
+        .expect(201)
+        .expect(async (res) => {
+          expect(res.body.data).toEqual({ ok: true });
+          expect(mockSubscribe).toBeCalledWith(u.id, ['topic', 'topic2']);
+
+          const convo = await Convo.getByNetworkAndTopic(net, 'topic');
+          expect(convo).toBeDefined();
+          const convo2 = await Convo.getByNetworkAndTopic(net, 'topic2');
+          expect(convo2).toBeDefined();
+        });
+    });
+  });
+
+  describe('.unsubscribeToConvos', () => {
+    it('should return 401 when not authorized', async () => {
+      await request(app.getHttpServer())
+        .post(`/v1/notifications/unsubscribe`)
+        .send({})
+        .expect(401)
+        .expect({
+          error: {
+            type: 'authentication_error',
+            message: 'authorization header is required',
+          },
+        });
+    });
+
+    it('should return 201 and unsubscribe to topics', async () => {
+      const mockUnsubscribe = jest.spyOn(app.get(ChatNotificationService), 'unsubscribe').mockReturnValue(undefined);
+      await User.updateById(u.id, { deviceTokenEmail: 'token-01' });
+      await request(app.getHttpServer())
+        .post(`/v1/notifications/unsubscribe`)
+        .set('Authorization', 'bearer ' + token)
+        .send({
+          topics: ['topic', 'topic2'],
+        })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data).toEqual({ ok: true });
+          expect(mockUnsubscribe).toBeCalledWith(u.id, ['topic', 'topic2']);
+        });
+    });
+  });
+
+  describe('.newChatNotification', () => {
+    it('should return 401 when not authorized', async () => {
+      await request(app.getHttpServer())
+        .post(`/v1/notifications/new-message`)
+        .send({})
+        .expect(401)
+        .expect({
+          error: {
+            type: 'authentication_error',
+            message: 'authorization header is required',
+          },
+        });
+    });
+
+    it('should return 400 when token was not provided', async () => {
+      await request(app.getHttpServer())
+        .post(`/v1/notifications/new-message`)
+        .auth('admin', 'admin')
+        .send({})
+        .expect(400)
+        .expect({
+          error: {
+            message: 'token is required',
+            param: 'token',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 400 when topic was not provided', async () => {
+      await request(app.getHttpServer())
+        .post(`/v1/notifications/new-message`)
+        .auth('admin', 'admin')
+        .send({
+          token: 'token-01',
+        })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'topic is required',
+            param: 'topic',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 400 when timestamp was not provided', async () => {
+      await request(app.getHttpServer())
+        .post(`/v1/notifications/new-message`)
+        .auth('admin', 'admin')
+        .send({
+          token: 'token-01',
+          topic: 'topic',
+        })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'timestamp is required',
+            param: 'timestamp',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 400 when message was not provided', async () => {
+      await request(app.getHttpServer())
+        .post(`/v1/notifications/new-message`)
+        .auth('admin', 'admin')
+        .send({
+          token: 'token-01',
+          topic: 'topic',
+          timestamp: 123,
+        })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'message is required',
+            param: 'message',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 404 when no user with matching token', async () => {
+      await request(app.getHttpServer())
+        .post(`/v1/notifications/new-message`)
+        .auth('admin', 'admin')
+        .send({
+          token: 'token-01',
+          topic: 'topic',
+          timestamp: 123,
+          message: 'hello there',
+        })
+        .expect(404)
+        .expect({
+          error: {
+            message: 'user not found',
+          },
+        });
+    });
+
+    it('should return 404 when no convo with a matching topic', async () => {
+      await User.create({ deviceTokenEmail: 'token-01' });
+      await request(app.getHttpServer())
+        .post(`/v1/notifications/new-message`)
+        .auth('admin', 'admin')
+        .send({
+          token: 'token-01',
+          topic: 'topic',
+          timestamp: 123,
+          message: 'hello there',
+        })
+        .expect(404)
+        .expect({
+          error: {
+            message: 'convo not found',
+          },
+        });
+    });
+
+    it('should return 200 and false when message has been seen before', async () => {
+      await User.create({ deviceTokenEmail: 'token-01' });
+      await Convo.create({ network: net, topic: 'topic' });
+
+      mockExist.mockReturnValueOnce(true);
+
+      await request(app.getHttpServer())
+        .post(`/v1/notifications/new-message`)
+        .auth('admin', 'admin')
+        .send({
+          token: 'token-01',
+          topic: 'topic',
+          timestamp: 123,
+          message: 'hello there',
+        })
+        .expect(201)
+        .expect((res) => {
+          expect(res.body.data).toEqual({ ok: false });
+        });
+    });
+
+    it('should return 200 and false when convo has been locked', async () => {
+      await User.create({ deviceTokenEmail: 'token-01' });
+      await Convo.create({ network: net, topic: 'topic' });
+
+      mockExist.mockReturnValueOnce(false);
+      mockExist.mockReturnValueOnce(true);
+
+      await request(app.getHttpServer())
+        .post(`/v1/notifications/new-message`)
+        .auth('admin', 'admin')
+        .send({
+          token: 'token-01',
+          topic: 'topic',
+          timestamp: 123,
+          message: 'hello there',
+        })
+        .expect(201)
+        .expect((res) => {
+          expect(res.body.data).toEqual({ ok: false });
+        });
+    });
+
+    it('should return 200 and false when notification was not sent', async () => {
+      await User.create({ deviceTokenEmail: 'token-01' });
+      await Convo.create({ network: net, topic: 'topic' });
+
+      mockExist.mockReturnValueOnce(false);
+      mockExist.mockReturnValueOnce(false);
+
+      await request(app.getHttpServer())
+        .post(`/v1/notifications/new-message`)
+        .auth('admin', 'admin')
+        .send({
+          token: 'token-01',
+          topic: 'topic',
+          timestamp: 123,
+          message: 'hello there',
+        })
+        .expect(201)
+        .expect((res) => {
+          expect(res.body.data).toEqual({ ok: false });
+        });
+    });
+
+    describe('conversation linked to a swap', () => {
+      it('should return 200 and send notification to taker when provider is online and taker is not', async () => {
+        await User.create({ deviceTokenEmail: 'token-01' });
+        const taker = await User.create({ address: '0xTaker' });
+        await Swap.create({ network: net, orderId: 1, taker: '0xTaker', provider: '0xProvider' });
+        const convo = await Convo.create({ network: net, topic: 'topic', orderId: 1 });
+        await OnlineStatus.create({ network: net, address: '0xProvider', orderId: 1 });
+
+        mockExist.mockReturnValueOnce(false);
+        mockExist.mockReturnValueOnce(false);
+
+        await request(app.getHttpServer())
+          .post(`/v1/notifications/new-message`)
+          .auth('admin', 'admin')
+          .send({
+            token: 'token-01',
+            topic: 'topic',
+            timestamp: 123,
+            message: 'hello there',
+          })
+          .expect(201)
+          .expect((res) => {
+            expect(res.body.data).toEqual({ ok: true });
+            expect(mockNotify.mock.calls).toHaveLength(1);
+            const call = mockNotify.mock.calls[0];
+            expect(call[0]).toEqual(NotificationID.ChatNewMessage);
+            expect(call[1]).toBeUndefined();
+            expect(call[2]).toBeUndefined();
+            expect(call[3].user.id).toEqual(taker.id);
+            expect(call[3].convo.id).toEqual(convo.id);
+          });
+      });
+
+      it('should return 200 and send notification to provider when taker is online and provider is not', async () => {
+        await User.create({ deviceTokenEmail: 'token-01' });
+        const provider = await User.create({ address: '0xProvider' });
+        await Swap.create({ network: net, orderId: 1, taker: '0xTaker', provider: '0xProvider' });
+        const convo = await Convo.create({ network: net, topic: 'topic', orderId: 1 });
+        await OnlineStatus.create({ network: net, address: '0xTaker', orderId: 1 });
+
+        mockExist.mockReturnValueOnce(false);
+        mockExist.mockReturnValueOnce(false);
+
+        await request(app.getHttpServer())
+          .post(`/v1/notifications/new-message`)
+          .auth('admin', 'admin')
+          .send({
+            token: 'token-01',
+            topic: 'topic',
+            timestamp: 123,
+            message: 'hello there',
+          })
+          .expect(201)
+          .expect((res) => {
+            expect(res.body.data).toEqual({ ok: true });
+            expect(mockNotify.mock.calls).toHaveLength(1);
+            const call = mockNotify.mock.calls[0];
+            expect(call[0]).toEqual(NotificationID.ChatNewMessage);
+            expect(call[1]).toBeUndefined();
+            expect(call[2]).toBeUndefined();
+            expect(call[3].user.id).toEqual(provider.id);
+            expect(call[3].convo.id).toEqual(convo.id);
+          });
+      });
+    });
+
+    describe('conversation linked to a offer', () => {
+      it('should return 200 and send notification to taker when provider is online and taker is not', async () => {
+        await User.create({ deviceTokenEmail: 'token-01' });
+        const taker = await User.create({ address: '0xTaker' });
+        await Offer.create({ network: net, offerId: 1, creator: '0xTaker', provider: '0xProvider' });
+        const convo = await Convo.create({ network: net, topic: 'topic', offerId: 1 });
+        await OnlineStatus.create({ network: net, address: '0xProvider', offerId: 1 });
+
+        mockExist.mockReturnValueOnce(false);
+        mockExist.mockReturnValueOnce(false);
+
+        await request(app.getHttpServer())
+          .post(`/v1/notifications/new-message`)
+          .auth('admin', 'admin')
+          .send({
+            token: 'token-01',
+            topic: 'topic',
+            timestamp: 123,
+            message: 'hello there',
+          })
+          .expect(201)
+          .expect((res) => {
+            expect(res.body.data).toEqual({ ok: true });
+            expect(mockNotify.mock.calls).toHaveLength(1);
+            const call = mockNotify.mock.calls[0];
+            expect(call[0]).toEqual(NotificationID.ChatNewMessage);
+            expect(call[1]).toBeUndefined();
+            expect(call[2]).toBeUndefined();
+            expect(call[3].user.id).toEqual(taker.id);
+            expect(call[3].convo.id).toEqual(convo.id);
+          });
+      });
+
+      it('should return 200 and send notification to provider when taker is online and provider is not', async () => {
+        await User.create({ deviceTokenEmail: 'token-01' });
+        const provider = await User.create({ address: '0xProvider' });
+        await Offer.create({ network: net, offerId: 1, creator: '0xTaker', provider: '0xProvider' });
+        const convo = await Convo.create({ network: net, topic: 'topic', offerId: 1 });
+        await OnlineStatus.create({ network: net, address: '0xTaker', offerId: 1 });
+
+        mockExist.mockReturnValueOnce(false);
+        mockExist.mockReturnValueOnce(false);
+
+        await request(app.getHttpServer())
+          .post(`/v1/notifications/new-message`)
+          .auth('admin', 'admin')
+          .send({
+            token: 'token-01',
+            topic: 'topic',
+            timestamp: 123,
+            message: 'hello there',
+          })
+          .expect(201)
+          .expect((res) => {
+            expect(res.body.data).toEqual({ ok: true });
+            expect(mockNotify.mock.calls).toHaveLength(1);
+            const call = mockNotify.mock.calls[0];
+            expect(call[0]).toEqual(NotificationID.ChatNewMessage);
+            expect(call[1]).toBeUndefined();
+            expect(call[2]).toBeUndefined();
+            expect(call[3].user.id).toEqual(provider.id);
+            expect(call[3].convo.id).toEqual(convo.id);
+          });
+      });
     });
   });
 });

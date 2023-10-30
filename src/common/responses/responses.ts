@@ -1,6 +1,7 @@
 import { HttpException, HttpStatus, Logger } from '@nestjs/common';
-import { isDevMode } from '../common';
+import { Response } from 'express';
 import * as _ from 'lodash';
+import { isDevMode } from '../common';
 
 export class ErrorBuilder {
   private logger = new Logger(ErrorBuilder.name);
@@ -82,10 +83,12 @@ export function error(e?: Error) {
 // tslint:disable-next-line:max-classes-per-file
 class OKBuilder {
   private _status: number;
+  private res: Response;
   private readonly _data: { [key: string]: any };
 
-  constructor() {
+  constructor(res?: Response) {
     this._data = {};
+    this.res = res;
   }
 
   status(status: number) {
@@ -131,15 +134,16 @@ class OKBuilder {
 
   build<T>(): Promise<T> {
     this.extractMeta();
-    return HttpException.createBody(this._data, undefined, this._status) as unknown as Promise<T>;
+    if (!this.res) return HttpException.createBody(this._data, undefined, this._status) as unknown as Promise<T>;
+    this.res.status(this._status || HttpStatus.CREATED).json(this._data);
   }
 }
 
 /**
  * ok returns a builder for create a success response
  */
-export function ok() {
-  return new OKBuilder();
+export function ok(res?: Response) {
+  return new OKBuilder(res);
 }
 
 export enum ErrorTypes {

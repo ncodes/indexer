@@ -1,13 +1,19 @@
-import { Controller, Get, Param, Query, Req, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query, Req, Res, UseGuards, ValidationPipe } from '@nestjs/common';
 import express from 'express';
+import { transaction } from 'objection';
+import { isEqualStr } from '../../common/common';
+import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ErrorMessages, ok, throw401, throw404 } from '../../common/responses/responses';
-import User from '../../models/user';
+import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
+import { HasKeyGuard } from '../../guards/has_token.guard';
 import { MayHaveKeyGuard } from '../../guards/may_have_token.guard';
 import { MayBeAuthenticatedGuard } from '../../guards/maybe_authenticated.guard';
+import Offer from '../../models/offer';
+import OnlineStatus from '../../models/online_status';
+import Swap from '../../models/swap';
+import User from '../../models/user';
+import { GetQueryDTO, LogOnlineStatusDTO, RegisterDeviceDTO } from './dto';
 import { UserService } from './user.service';
-import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
-import { GetQueryDTO } from './dto';
-import { isEqualStr } from '../../common/common';
 
 @Controller('v1/users')
 export class UsersController {
@@ -30,7 +36,7 @@ export class UsersController {
     @Param('address') address: string,
     @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO,
   ) {
-    if (req.user && !isEqualStr(req.user.address, address.toLowerCase())) {
+    if (req.user && !isEqualStr(req.user.address, address)) {
       throw401(ErrorMessages.NoAuthPermission);
     }
 
@@ -57,5 +63,79 @@ export class UsersController {
     if (!req.user) user.desensitize();
 
     return ok().data(user).build<User>();
+  }
+
+  /**
+   * Register a device
+   * @param req The request object
+   * @param body The request body
+   * @returns
+   */
+  @UseGuards(BeAuthenticatedGuard)
+  @UseGuards(HasKeyGuard)
+  @Post('/register-device')
+  async registerDevice(@Req() req: express.Request, @Body(new ValidationPipe(ValPipeOpt)) body: RegisterDeviceDTO) {
+    return ok()
+      .data({ token: await this.userSrv.registerDevice(req.user, body.type) })
+      .build();
+  }
+
+  /**
+   * Unregister a device
+   * @param req The request object
+   * @param body The request body
+   * @returns
+   */
+  @UseGuards(BeAuthenticatedGuard)
+  @UseGuards(HasKeyGuard)
+  @Delete('/unregister-device')
+  async unregisterDevice(@Req() req: express.Request, @Body(new ValidationPipe(ValPipeOpt)) body: RegisterDeviceDTO) {
+    return ok()
+      .data({ success: await this.userSrv.unregisterDevice(req.user, body.type) })
+      .build();
+  }
+
+  /**
+   * Log the online status of a user
+   * @param req The request object
+   * @param body The request body
+   */
+  @UseGuards(BeAuthenticatedGuard)
+  @UseGuards(HasKeyGuard)
+  @Post('/log-status')
+  async logOnlineStatus(
+    @Req() req: express.Request,
+    @Res() res: express.Response,
+    @Body(new ValidationPipe(ValPipeOpt)) body: LogOnlineStatusDTO,
+  ) {
+    const address = req.user.address;
+
+    // If order ID is provided, make sure the user is involved in the order
+    if (body.orderId != undefined) {
+      const swap = await Swap.get(body.net, body.orderId, undefined, 'disputes.draftees');
+      if (!swap) return ok(res).status(200).data({ ok: false }).build();
+      const isInvolved = !Swap.isSwapCounterparty(swap, address) && !Swap.isSwapDraftee(swap, address, true);
+      if (isInvolved) return ok(res).status(200).data({ ok: false }).build();
+    }
+
+    // If offer ID is provided, make sure the user is involved in the offer
+    if (body.offerId != undefined) {
+      const offer = await Offer.getByNetworkAndOfferId(body.net, body.offerId);
+      if (!offer) return ok(res).status(200).data({ ok: false }).build();
+      const isInvolved = offer.isInvolved(address);
+      if (!isInvolved) return ok(res).status(200).data({ ok: false }).build();
+    }
+
+    await transaction(OnlineStatus, async (OnlineStatus) => {
+      await OnlineStatus.delete(body.net, req.user.address, body.orderId, body.offerId);
+      await OnlineStatus.create({
+        network: body.net,
+        address: req.user.address,
+        orderId: body.orderId,
+        offerId: body.offerId,
+      });
+    });
+
+    return ok().data({ ok: true }).build();
   }
 }

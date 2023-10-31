@@ -189,26 +189,26 @@ export class NotificationsController {
     }
 
     // When provider is online but taker is not, send notification to taker
+    let recipient: User;
     if (isProviderOnline && !isTakerOnline) {
-      const recipient = await User.getByAddress(taker);
-      await this.notifySrv.notify(NotificationID.ChatNewMessage, undefined, undefined, {
-        user: recipient,
-        convo,
-      });
-      return ok().data({ ok: true }).build<OKResponse>();
+      recipient = await User.getByAddress(taker);
     }
 
     // When taker is online but provider is not, send notification to provider
     if (isTakerOnline && !isProviderOnline) {
-      const recipient = await User.getByAddress(provider);
+      recipient = await User.getByAddress(provider);
+    }
+
+    let isOk = false;
+    if (recipient) {
+      isOk = true;
       await this.notifySrv.notify(NotificationID.ChatNewMessage, undefined, undefined, {
         user: recipient,
         convo,
       });
-      return ok().data({ ok: true }).build<OKResponse>();
     }
 
-    return ok().data({ ok: false }).build<OKResponse>();
+    return ok().data({ ok: isOk }).build<OKResponse>();
   }
 
   /**
@@ -237,12 +237,12 @@ export class NotificationsController {
   @Get('try-notif')
   async tryNotif() {
     const sub = await WebPushSubscription.getByNetworkAndAddress(
-      'localhost',
+      'ethereum',
       '0xB24780438dD4DB52848A3A398B1A8A08223aBd83',
     );
     await webpush.sendNotification(
       JSON.parse(sub.subscription),
-      JSON.stringify({ title: 'Hello Kennedy', body: 'You have new message' }),
+      JSON.stringify({ title: 'Hello Kennedy', body: 'You have new message', orderId: 0 }),
     );
 
     return 'hello';

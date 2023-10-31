@@ -2,10 +2,12 @@ import { Process, Processor } from '@nestjs/bull';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bull';
 import * as moment from 'moment-timezone';
+import * as webpush from 'web-push';
 import { isEqualStr, shortenAddr, toDec } from '../../common/common';
 import Market from '../../models/market';
 import Notification, { NotificationType } from '../../models/notification';
 import User from '../../models/user';
+import WebPushSubscription from '../../models/web_push_subscription';
 import { pow10D, toFixed } from '../../network/common';
 import { MailerService } from '../../services/mailer/mailer.service';
 
@@ -1269,7 +1271,23 @@ export class NotifierConsumer {
       userId: job.user.id,
       title: subject,
       body: note,
+      orderId: convo.swap ? convo.swap.orderId : null,
+      offerId: convo.offer ? convo.offer.offerId : null,
     });
+
+    const sub = await WebPushSubscription.getByNetworkAndAddress(convo.network, user.address);
+    if (sub) {
+      await webpush.sendNotification(
+        JSON.parse(sub.subscription),
+        JSON.stringify({
+          title: subject,
+          body: note.replace(/<\/?a[^>].*>.*?/g, ''),
+          network: convo.network,
+          orderId: convo.orderId,
+          offerId: convo.offerId,
+        }),
+      );
+    }
 
     // Send email
     await this.mailer.send(template, subject, user.email, locals);

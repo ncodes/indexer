@@ -6,6 +6,8 @@ exports.up = function (knex) {
       table.string('network');
       table.string('userId');
       table.string('type').notNullable();
+      table.integer('orderId');
+      table.integer('offerId');
       table.text('title');
       table.text('body');
       table.boolean('read').defaultTo(false);

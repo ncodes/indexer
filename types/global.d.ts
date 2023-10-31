@@ -19,6 +19,7 @@ import {
   Token,
   TokenPool,
 } from '../typechain';
+import Convo from '../src/models/convo';
 
 declare global {
   namespace Express {

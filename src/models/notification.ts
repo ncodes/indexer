@@ -51,6 +51,10 @@ export default class Notification extends BaseModel {
   title: string;
   // The body of the message
   body: string;
+  // The order ID linked to the notification
+  orderId: number;
+  // The offer ID linked to the notification
+  offerId: number;
   // Indicates whether it has been read
   read: boolean;
 

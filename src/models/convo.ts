@@ -18,6 +18,8 @@ export default class Convo extends BaseModel {
   offerId: number;
   // The conversation topic
   topic: string;
+  // Indicates whether the user has muted the conversation
+  muted: boolean;
 
   // Relations
   swap: Swap;

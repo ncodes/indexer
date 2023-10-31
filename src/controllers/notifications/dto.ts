@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { ArrayMinSize, IsBoolean, IsIn, IsNotEmpty, IsNumber, IsOptional, ValidateIf } from 'class-validator';
+import { IsBoolean, IsIn, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { toNumber } from 'lodash';
 import { toBoolean } from 'underscore.string';
 import { makeValidatorMsg } from '../../common/validations/validation';
@@ -29,30 +29,6 @@ export class ListQueryDTO {
   @IsNumber(undefined, { message: makeValidatorMsg('must be a number', 'offset') })
   @IsOptional()
   public offset?: number;
-}
-
-export class SubscribeToConvoDTO {
-  @ArrayMinSize(1, { message: makeValidatorMsg('at least one topic is required', 'topics') })
-  @IsNotEmpty({ message: makeValidatorMsg('at least one topic is required', 'topics') })
-  public topics: string[];
-
-  @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
-  @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
-  public net: string;
-
-  @ValidateIf((o) => o.offerId == undefined)
-  @IsNotEmpty({ message: makeValidatorMsg('orderId or offerId is required', 'orderId') })
-  public orderId: number;
-
-  @ValidateIf((o) => o.orderId == undefined)
-  @IsNotEmpty({ message: makeValidatorMsg('offerId is required', 'offerId') })
-  public offerId: number;
-}
-
-export class UnsubscribeToConvoDTO {
-  @ArrayMinSize(1, { message: makeValidatorMsg('at least one topic is required', 'topics') })
-  @IsNotEmpty({ message: makeValidatorMsg('at least one topic is required', 'topics') })
-  public topics: string[];
 }
 
 export class ChatNotificationDTO {

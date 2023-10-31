@@ -6,7 +6,9 @@ exports.up = function (knex) {
       table.string('network');
       table.integer('orderId');
       table.integer('offerId');
+      table.string('address');
       table.string('topic');
+      table.boolean('muted').defaultTo(false);
       table.timestamp('createdAt');
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');

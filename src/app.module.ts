@@ -3,31 +3,32 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from 'nestjs-throttler-storage-redis';
+import { RequestLoggerMiddleware } from './common/loggers/request_logger';
 import { JsonBodyMiddleware } from './common/middlewares/body.middleware';
 import AppConfig from './config/app.config';
 import AuthConfig from './config/auth.config';
 import KnexConfig from './config/knex.config';
+import { AssetsModule } from './controllers/assets/assets.module';
 import { AuthModule } from './controllers/auth/auth.module';
+import { BadgesModule } from './controllers/badges/badges.module';
+import { ConvosModule } from './controllers/convos/convos.module';
+import { DisputesModule } from './controllers/disputes/disputes.module';
+import { FilesModule } from './controllers/files/files.module';
 import { LiquidityModule } from './controllers/liquidity/liquidity.module';
 import { MarketsModule } from './controllers/markets/markets.module';
-import { DBService } from './db/DBService';
-import { JobsModule } from './jobs/jobs.module';
-import { NetworkModule } from './network/network.module';
 import { MiscModule } from './controllers/misc/misc.module';
 import { NotificationsModule } from './controllers/notifications/notifications.module';
-import { SwapsModule } from './controllers/swaps/swaps.module';
-import { TicketsModule } from './controllers/tickets/tickets.module';
-import { DisputesModule } from './controllers/disputes/disputes.module';
-import { UsersModule } from './controllers/users/users.module';
-import { AssetsModule } from './controllers/assets/assets.module';
-import { TasksModule } from './controllers/tasks/tasks.module';
 import { OffersModule } from './controllers/offers/offers.module';
-import { BadgesModule } from './controllers/badges/badges.module';
-import { TimelinesModule } from './controllers/timelines/timelines.module';
-import { InstructionsModule } from './instructions/instructions.module';
-import { RequestLoggerMiddleware } from './common/loggers/request_logger';
 import { PaymentsModule } from './controllers/payments/payments.module';
-import { FilesModule } from './controllers/files/files.module';
+import { SwapsModule } from './controllers/swaps/swaps.module';
+import { TasksModule } from './controllers/tasks/tasks.module';
+import { TicketsModule } from './controllers/tickets/tickets.module';
+import { TimelinesModule } from './controllers/timelines/timelines.module';
+import { UsersModule } from './controllers/users/users.module';
+import { DBService } from './db/DBService';
+import { InstructionsModule } from './instructions/instructions.module';
+import { JobsModule } from './jobs/jobs.module';
+import { NetworkModule } from './network/network.module';
 
 /**
  * Returns the configurations to be loaded.
@@ -77,6 +78,7 @@ function getProviders() {
     LiquidityModule,
     MiscModule,
     NotificationsModule,
+    ConvosModule,
     SwapsModule,
     TicketsModule,
     DisputesModule,

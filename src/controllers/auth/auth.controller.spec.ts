@@ -13,7 +13,7 @@ import { DBService } from '../../db/DBService';
 import Session from '../../models/session';
 import User from '../../models/user';
 import { RedisService } from '../../services/redis.service';
-import ChatNotificationService from '../notifications/chat_notification.service';
+import ConvosService from '../convos/convos.service';
 import { UserService } from '../users/user.service';
 import { AuthController } from './auth.controller';
 
@@ -64,7 +64,7 @@ describe('AuthController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [AuthController],
-      providers: [ConfigService, RedisService, UserService, ChatNotificationService],
+      providers: [ConfigService, RedisService, UserService, ConvosService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())

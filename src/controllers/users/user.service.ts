@@ -3,12 +3,12 @@ import { isEqualStr, randStr } from '../../common/common';
 import BadgeGrant from '../../models/badge_grant';
 import Swap from '../../models/swap';
 import User from '../../models/user';
-import ChatNotificationService from '../notifications/chat_notification.service';
+import ConvosService from '../convos/convos.service';
 import { DeviceType } from './dto';
 
 @Injectable()
 export class UserService {
-  constructor(private chatNotifSrv: ChatNotificationService) {}
+  constructor(private chatNotifSrv: ConvosService) {}
 
   /**
    * Extend user with peripheral and derived data

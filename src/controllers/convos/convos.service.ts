@@ -1,10 +1,10 @@
 import { createPromiseClient } from '@connectrpc/connect';
 import { createConnectTransport } from '@connectrpc/connect-node';
 import { Injectable } from '@nestjs/common';
-import { Notifications } from './proto/service_connect';
+import { Notifications } from '../notifications/proto/service_connect';
 
 @Injectable()
-export default class ChatNotificationService {
+export default class ConvosService {
   // Get the client
   private getClient() {
     return createPromiseClient(

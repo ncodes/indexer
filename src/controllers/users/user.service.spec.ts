@@ -8,8 +8,8 @@ import Swap from '../../models/swap';
 import User from '../../models/user';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { RedisService } from '../../services/redis.service';
+import ConvosService from '../convos/convos.service';
 import { MarketService } from '../markets/market.service';
-import ChatNotificationService from '../notifications/chat_notification.service';
 import { UserService } from './user.service';
 
 const mockTryToUsd = jest.fn();
@@ -45,7 +45,7 @@ describe('UserService', () => {
 
     module = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
-      providers: [UserService, MarketService, MetadataService, RedisService, ChatNotificationService],
+      providers: [UserService, MarketService, MetadataService, RedisService, ConvosService],
     })
       .overrideProvider(MetadataService)
       .useValue(new MetadataServiceMock())
@@ -174,7 +174,7 @@ describe('UserService', () => {
   describe('.registerDevice', () => {
     it(`should return device token`, async () => {
       const mockRegisterInstallation = jest
-        .spyOn(module.get(ChatNotificationService), 'registerInstallation')
+        .spyOn(module.get(ConvosService), 'registerInstallation')
         .mockResolvedValue(undefined);
 
       let u = await User.create({ address: user });
@@ -197,7 +197,7 @@ describe('UserService', () => {
   describe('.unregisterDevice', () => {
     it(`should return true and clear device token`, async () => {
       const mockUnregisterInstallation = jest
-        .spyOn(module.get(ChatNotificationService), 'unregisterInstallation')
+        .spyOn(module.get(ConvosService), 'unregisterInstallation')
         .mockResolvedValue(undefined);
 
       let u = await User.create({ address: user, deviceTokenEmail: 'token-01' });

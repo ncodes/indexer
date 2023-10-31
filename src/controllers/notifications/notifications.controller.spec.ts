@@ -16,7 +16,6 @@ import User from '../../models/user';
 import { RedisService } from '../../services/redis.service';
 import { makeSession } from '../auth/utils';
 import { NotificationID, NotifierService } from './../../jobs/mailer/NotifierService';
-import ChatNotificationService from './chat_notification.service';
 import { NotificationsController } from './notifications.controller';
 
 const mockCfgGet = jest.fn();
@@ -75,7 +74,7 @@ describe('NotificationsController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [NotificationsController],
-      providers: [ConfigService, ChatNotificationService, NotifierService, RedisService],
+      providers: [ConfigService, NotifierService, RedisService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
@@ -94,7 +93,7 @@ describe('NotificationsController', () => {
   let token: string;
   const net = 'ethereum';
   beforeEach(async () => {
-    u = await User.create({ role: Roles.User });
+    u = await User.create({ role: Roles.User, address: '0xAddress' });
     token = await makeSession(u, randStr(), '5', mockCfgGet('auth.jwtSecret'));
   });
 
@@ -254,130 +253,6 @@ describe('NotificationsController', () => {
     });
   });
 
-  describe('.subscribeToConvos', () => {
-    it('should return 401 when not authorized', async () => {
-      await request(app.getHttpServer())
-        .post(`/v1/notifications/subscribe`)
-        .send({})
-        .expect(401)
-        .expect({
-          error: {
-            type: 'authentication_error',
-            message: 'authorization header is required',
-          },
-        });
-    });
-
-    it('should return 400 when no topic was provided', async () => {
-      await User.updateById(u.id, { deviceTokenEmail: 'token-01' });
-      await request(app.getHttpServer())
-        .post(`/v1/notifications/subscribe`)
-        .set('Authorization', 'bearer ' + token)
-        .send({
-          topics: [],
-        })
-        .expect(400)
-        .expect({
-          error: {
-            message: 'at least one topic is required',
-            param: 'topics',
-            type: 'invalid_request_error',
-          },
-        });
-    });
-
-    it('should return 400 when network was not provided', async () => {
-      await User.updateById(u.id, { deviceTokenEmail: 'token-01' });
-      await request(app.getHttpServer())
-        .post(`/v1/notifications/subscribe`)
-        .set('Authorization', 'bearer ' + token)
-        .send({
-          topics: ['topic'],
-        })
-        .expect(400)
-        .expect({
-          error: {
-            message: 'network is required',
-            param: 'net',
-            type: 'invalid_request_error',
-          },
-        });
-    });
-
-    it('should return 400 when either orderId or offerId was not provided', async () => {
-      await User.updateById(u.id, { deviceTokenEmail: 'token-01' });
-      await request(app.getHttpServer())
-        .post(`/v1/notifications/subscribe`)
-        .set('Authorization', 'bearer ' + token)
-        .send({
-          net,
-          topics: ['topic'],
-        })
-        .expect(400)
-        .expect({
-          error: {
-            message: 'orderId or offerId is required',
-            param: 'orderId',
-            type: 'invalid_request_error',
-          },
-        });
-    });
-
-    it('should return 201 and subscribe to topics and create a convo entry', async () => {
-      const mockSubscribe = jest.spyOn(app.get(ChatNotificationService), 'subscribe').mockReturnValue(undefined);
-      await User.updateById(u.id, { deviceTokenEmail: 'token-01' });
-      await request(app.getHttpServer())
-        .post(`/v1/notifications/subscribe`)
-        .set('Authorization', 'bearer ' + token)
-        .send({
-          net,
-          orderId: 1,
-          topics: ['topic', 'topic2'],
-        })
-        .expect(201)
-        .expect(async (res) => {
-          expect(res.body.data).toEqual({ ok: true });
-          expect(mockSubscribe).toBeCalledWith(u.id, ['topic', 'topic2']);
-
-          const convo = await Convo.get(net, 'topic');
-          expect(convo).toBeDefined();
-          const convo2 = await Convo.get(net, 'topic2');
-          expect(convo2).toBeDefined();
-        });
-    });
-  });
-
-  describe('.unsubscribeToConvos', () => {
-    it('should return 401 when not authorized', async () => {
-      await request(app.getHttpServer())
-        .post(`/v1/notifications/unsubscribe`)
-        .send({})
-        .expect(401)
-        .expect({
-          error: {
-            type: 'authentication_error',
-            message: 'authorization header is required',
-          },
-        });
-    });
-
-    it('should return 201 and unsubscribe to topics', async () => {
-      const mockUnsubscribe = jest.spyOn(app.get(ChatNotificationService), 'unsubscribe').mockReturnValue(undefined);
-      await User.updateById(u.id, { deviceTokenEmail: 'token-01' });
-      await request(app.getHttpServer())
-        .post(`/v1/notifications/unsubscribe`)
-        .set('Authorization', 'bearer ' + token)
-        .send({
-          topics: ['topic', 'topic2'],
-        })
-        .expect(200)
-        .expect((res) => {
-          expect(res.body.data).toEqual({ ok: true });
-          expect(mockUnsubscribe).toBeCalledWith(u.id, ['topic', 'topic2']);
-        });
-    });
-  });
-
   describe('.newChatNotification', () => {
     it('should return 401 when not authorized', async () => {
       await request(app.getHttpServer())
@@ -495,6 +370,27 @@ describe('NotificationsController', () => {
           error: {
             message: 'convo not found',
           },
+        });
+    });
+
+    it('should return 200 and false when convo has been muted', async () => {
+      await User.create({ deviceTokenEmail: 'token-01' });
+      await Convo.create({ network: net, topic: 'topic', muted: true });
+
+      mockExist.mockReturnValueOnce(true);
+
+      await request(app.getHttpServer())
+        .post(`/v1/notifications/new-message`)
+        .auth('admin', 'admin')
+        .send({
+          token: 'token-01',
+          topic: 'topic',
+          timestamp: 123,
+          message: 'hello there',
+        })
+        .expect(201)
+        .expect((res) => {
+          expect(res.body.data).toEqual({ ok: false });
         });
     });
 

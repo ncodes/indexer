@@ -74,8 +74,9 @@ export class UsersController {
   @UseGuards(BeAuthenticatedGuard)
   @UseGuards(HasKeyGuard)
   @Post('/register-device')
-  async registerDevice(@Req() req: express.Request, @Body(new ValidationPipe(ValPipeOpt)) body: RegisterDeviceDTO) {
+  async registerDevice(@Req() req: express.Request) {
     await this.userSrv.registerDevice(req.user);
+
     return ok().data({ ok: true }).build();
   }
 

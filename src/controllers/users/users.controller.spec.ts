@@ -14,7 +14,7 @@ import Swap from '../../models/swap';
 import User from '../../models/user';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { makeSession } from '../auth/utils';
-import ChatNotificationService from '../notifications/chat_notification.service';
+import ConvosService from '../convos/convos.service';
 import { UserService } from './user.service';
 import { UsersController } from './users.controller';
 
@@ -60,7 +60,7 @@ describe('UsersController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [UsersController],
-      providers: [ConfigService, UserService, MetadataService, ChatNotificationService],
+      providers: [ConfigService, UserService, MetadataService, ConvosService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())

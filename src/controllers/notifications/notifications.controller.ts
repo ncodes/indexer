@@ -1,8 +1,8 @@
-import { Body, Controller, Get, Param, Post, Put, Query, Req, Res, UseGuards, ValidationPipe } from '@nestjs/common';
-import { Request, Response } from 'express';
-import { Model, transaction } from 'objection';
+import { Body, Controller, Get, Param, Post, Put, Query, Req, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Request } from 'express';
+import { Model } from 'objection';
 import * as webpush from 'web-push';
-import { sha1 } from '../../common/common';
+import { isDevMode, sha1 } from '../../common/common';
 import { CommonValidationPipeOpt, CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ok, throw404 } from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
@@ -15,22 +15,11 @@ import OnlineStatus from '../../models/online_status';
 import User from '../../models/user';
 import WebPushSubscription from '../../models/web_push_subscription';
 import { RedisService } from '../../services/redis.service';
-import ChatNotificationService from './chat_notification.service';
-import {
-  ChatNotificationDTO,
-  ListQueryDTO,
-  SubscribeToConvoDTO,
-  UnsubscribeToConvoDTO,
-  WebPushSubscribeDTO,
-} from './dto';
+import { ChatNotificationDTO, ListQueryDTO, WebPushSubscribeDTO } from './dto';
 
 @Controller('v1/notifications')
 export class NotificationsController {
-  constructor(
-    private chatNotifSrv: ChatNotificationService,
-    private notifySrv: NotifierService,
-    private redisSrv: RedisService,
-  ) {}
+  constructor(private notifySrv: NotifierService, private redisSrv: RedisService) {}
 
   /**
    * @param req The request object
@@ -70,73 +59,6 @@ export class NotificationsController {
   }
 
   /**
-   * Subscribe to one or more conversation topics.
-   * @param req The request object
-   * @param body The request body
-   * @returns
-   */
-  @UseGuards(BeAuthenticatedGuard)
-  @UseGuards(HasKeyGuard)
-  @Post('/subscribe')
-  async subscribeToConvos(
-    @Req() req: Request,
-    @Body(new ValidationPipe(CommonValidationPipeOpt))
-    body: SubscribeToConvoDTO,
-  ) {
-    // Get installation IDs
-    const installIds: string[] = [];
-    if (req.user.deviceTokenEmail) installIds.push(req.user.id);
-
-    // Subscribe to conversation for each installation
-    for (const installId of installIds) {
-      await this.chatNotifSrv.subscribe(installId, body.topics);
-    }
-
-    // Create convo records
-    await transaction(Convo, async (Convo) => {
-      for (const topic of body.topics) {
-        const convo = await Convo.get(body.net, req.user.address, topic);
-        if (convo) continue;
-        await Convo.create({
-          address: req.user.address,
-          network: body.net,
-          orderId: body.orderId,
-          offerId: body.offerId,
-          topic,
-        });
-      }
-    });
-
-    return ok().data({ ok: true }).build<OKResponse>();
-  }
-
-  /**
-   * Unsubscribe to one or more conversation topics
-   * @param req The request object
-   * @param body The request body
-   */
-  @UseGuards(BeAuthenticatedGuard)
-  @UseGuards(HasKeyGuard)
-  @Post('/unsubscribe')
-  async unsubscribeToConvos(
-    @Req() req: Request,
-    @Res() res: Response,
-    @Body(new ValidationPipe(CommonValidationPipeOpt))
-    body: UnsubscribeToConvoDTO,
-  ) {
-    // Get installation IDs
-    const installIds: string[] = [];
-    if (req.user.deviceTokenEmail) installIds.push(req.user.id);
-
-    // Subscribe to conversation for each installation
-    for (const installId of installIds) {
-      await this.chatNotifSrv.unsubscribe(installId, body.topics);
-    }
-
-    return ok(res).status(200).data({ ok: true }).build<OKResponse>();
-  }
-
-  /**
    * Incoming chat message notification
    * @param req The request object
    * @param body The request body
@@ -155,17 +77,18 @@ export class NotificationsController {
     // Find convo
     const convo = await Convo.getByTopic(body.topic, '[swap,offer]');
     if (!convo) throw404('convo not found');
+    if (convo.muted) return ok().data({ ok: false }).build();
 
     // Make sure we haven't seen this notification before
     const hash = sha1(body.message);
-    if (await this.redisSrv.exist(hash)) return ok().data({ ok: false }).build<OKResponse>();
+    if (await this.redisSrv.exist(hash)) return ok().data({ ok: false }).build();
 
     // Save hash to redis for 1 minute
     await this.redisSrv.setWithExpire(hash, '1', 60);
 
     // Make sure the conversation is not locked
     const lockHash = sha1(`lock-${convo.topic}`);
-    if (await this.redisSrv.exist(lockHash)) return ok().data({ ok: false }).build<OKResponse>();
+    if (await this.redisSrv.exist(lockHash)) return ok().data({ ok: false }).build();
 
     // Lock the convo for 3 seconds, effectively ignoring immediate
     // notifications. Since it is impossible to tell which
@@ -211,7 +134,7 @@ export class NotificationsController {
       });
     }
 
-    return ok().data({ ok: isOk }).build<OKResponse>();
+    return ok().data({ ok: isOk }).build();
   }
 
   /**
@@ -239,6 +162,7 @@ export class NotificationsController {
 
   @Get('try-notif')
   async tryNotif() {
+    if (!isDevMode()) return 'disabled';
     const sub = await WebPushSubscription.getByNetworkAndAddress(
       'ethereum',
       '0xB24780438dD4DB52848A3A398B1A8A08223aBd83',

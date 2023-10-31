@@ -178,7 +178,7 @@ describe('UserService', () => {
         .mockResolvedValue(undefined);
 
       let u = await User.create({ address: user });
-      const res = await service.registerDevice(u, 'email');
+      const res = await service.registerDevice(u);
       u = await User.getById(u.id);
       expect(u.deviceTokenEmail).toHaveLength(32);
       expect(res).toEqual(u.deviceTokenEmail);
@@ -188,7 +188,7 @@ describe('UserService', () => {
 
     it(`should not reset device token if already set`, async () => {
       let u = await User.create({ address: user, deviceTokenEmail: 'token-01' });
-      service.registerDevice(u, 'email');
+      service.registerDevice(u);
       u = await User.getById(u.id);
       expect(u.deviceTokenEmail).toEqual('token-01');
     });

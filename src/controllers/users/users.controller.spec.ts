@@ -217,7 +217,7 @@ describe('UsersController', () => {
         .set('Authorization', 'bearer ' + token)
         .send({ type: 'email' })
         .expect(201)
-        .expect({ data: { token: 'token' } });
+        .expect({ data: { ok: true } });
     });
   });
 

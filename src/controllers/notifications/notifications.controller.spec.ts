@@ -339,9 +339,9 @@ describe('NotificationsController', () => {
           expect(res.body.data).toEqual({ ok: true });
           expect(mockSubscribe).toBeCalledWith(u.id, ['topic', 'topic2']);
 
-          const convo = await Convo.getByNetworkAndTopic(net, 'topic');
+          const convo = await Convo.get(net, 'topic');
           expect(convo).toBeDefined();
-          const convo2 = await Convo.getByNetworkAndTopic(net, 'topic2');
+          const convo2 = await Convo.get(net, 'topic2');
           expect(convo2).toBeDefined();
         });
     });

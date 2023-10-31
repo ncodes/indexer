@@ -54,10 +54,8 @@ export class AuthController {
       token = await makeSession(user, body.sig, this.cfgSrv.get('auth.jwtExpMin'), this.cfgSrv.get('auth.jwtSecret'));
     });
 
-    // Register email device for email notifications
-    if (!user.deviceTokenEmail) {
-      user.deviceTokenEmail = await this.userSrv.registerDevice(user, 'email');
-    }
+    // Register device for notifications
+    await this.userSrv.registerDevice(user);
 
     return ok().data({ token, user }).build();
   }

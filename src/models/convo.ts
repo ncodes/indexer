@@ -10,6 +10,8 @@ import Swap from './swap';
 export default class Convo extends BaseModel {
   // The network name
   network: string;
+  // The address of the user
+  address: string;
   // The order ID
   orderId: number;
   // The offer ID
@@ -97,13 +99,19 @@ export default class Convo extends BaseModel {
   /**
    * Get by network and topic
    * @param network The network name
+   * @param address The address of the user
    * @param topic The topic
    * @param relations Optional relations to be fetched
    * @param txn Optional transaction object
    * @returns
    */
-  static getByNetworkAndTopic(network: string, topic: string, relations?: string, txn?: Transaction) {
-    return this.query(txn).whereNotDeleted().where({ network, topic }).withGraphFetched(relations).first();
+  static get(network: string, address: string, topic: string, relations?: string, txn?: Transaction) {
+    return this.query(txn)
+      .whereNotDeleted()
+      .where({ network, topic })
+      .where('address', 'ilike', address)
+      .withGraphFetched(relations)
+      .first();
   }
 
   /**

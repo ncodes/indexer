@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Post, Put, Query, Req, Res, UseGuards, ValidationPipe } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { Model } from 'objection';
+import { Model, transaction } from 'objection';
 import * as webpush from 'web-push';
 import { sha1 } from '../../common/common';
 import { CommonValidationPipeOpt, CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
@@ -93,16 +93,19 @@ export class NotificationsController {
     }
 
     // Create convo records
-    for (const topic of body.topics) {
-      const convo = await Convo.getByNetworkAndTopic(body.net, topic);
-      if (convo) continue;
-      await Convo.create({
-        network: body.net,
-        orderId: body.orderId,
-        offerId: body.offerId,
-        topic,
-      });
-    }
+    await transaction(Convo, async (Convo) => {
+      for (const topic of body.topics) {
+        const convo = await Convo.get(body.net, req.user.address, topic);
+        if (convo) continue;
+        await Convo.create({
+          address: req.user.address,
+          network: body.net,
+          orderId: body.orderId,
+          offerId: body.offerId,
+          topic,
+        });
+      }
+    });
 
     return ok().data({ ok: true }).build<OKResponse>();
   }

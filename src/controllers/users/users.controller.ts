@@ -75,9 +75,8 @@ export class UsersController {
   @UseGuards(HasKeyGuard)
   @Post('/register-device')
   async registerDevice(@Req() req: express.Request, @Body(new ValidationPipe(ValPipeOpt)) body: RegisterDeviceDTO) {
-    return ok()
-      .data({ token: await this.userSrv.registerDevice(req.user, body.type) })
-      .build();
+    await this.userSrv.registerDevice(req.user);
+    return ok().data({ ok: true }).build();
   }
 
   /**
@@ -136,6 +135,6 @@ export class UsersController {
       });
     });
 
-    return ok().data({ ok: true }).build();
+    return ok(res).status(201).data({ ok: true }).build();
   }
 }

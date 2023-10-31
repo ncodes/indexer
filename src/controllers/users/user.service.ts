@@ -76,19 +76,16 @@ export class UserService {
   /**
    * Register a device
    * @param user The user object
-   * @param deviceType The device type
    * @param token The device token (if not provided, a new one will be generated)
    * @returns The device token
    */
-  async registerDevice(user: User, deviceType: DeviceType, token = '') {
-    if (user.deviceTokenEmail) return user.deviceTokenEmail;
+  async registerDevice(user: User, token = '') {
     if (!token) token = randStr(32);
 
-    if (deviceType === 'email') {
-      await this.chatNotifSrv.registerInstallation(user.id, deviceType, token);
+    if (!user.deviceTokenEmail) {
+      await this.chatNotifSrv.registerInstallation(user.id, 'email', token);
       await User.updateById(user.id, { deviceTokenEmail: token });
-    } else {
-      throw new Error(`Unknown device type ${deviceType}`);
+      user.deviceTokenEmail = token;
     }
 
     return token;

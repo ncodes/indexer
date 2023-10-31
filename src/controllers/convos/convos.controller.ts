@@ -22,7 +22,7 @@ export class ConvosController {
   @UseGuards(HasKeyGuard)
   @Get('/:net/:topic')
   async getConvoByTopic(@Req() req: Request, @Param('net') net: string, @Param('topic') topic: string) {
-    const convo = await Convo.get(net, req.user.address, topic, '[swap,offer]');
+    const convo = await Convo.get(net, req.user.address, topic.replaceAll('_', '/'), '[swap,offer]');
     if (!convo) throw404('convo not found');
     return ok().data(convo).build<Convo>();
   }

@@ -221,9 +221,10 @@ describe('ConvosController', () => {
     });
 
     it('should return 200 and convo', async () => {
-      const convo = await Convo.create({ network: net, topic: 'topic', address: u.address });
+      const topic = '/xmtp/0/m-b06fdc5f8beb8779b31c71c072c7221189f9d6b7757e539481cad8e94927b6fc/proto';
+      const convo = await Convo.create({ network: net, topic, address: u.address });
       await request(app.getHttpServer())
-        .get(`/v1/convos/${net}/topic`)
+        .get(`/v1/convos/${net}/${topic.replaceAll('/', '_')}`)
         .set('Authorization', 'bearer ' + token)
         .send({})
         .expect(200)

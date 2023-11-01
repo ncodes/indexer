@@ -79,24 +79,6 @@ export class NotificationsController {
     if (!convo) throw404('convo not found');
     if (convo.muted) return ok().data({ ok: false }).build();
 
-    // Make sure we haven't seen this notification before
-    const hash = sha1(body.message);
-    if (await this.redisSrv.exist(hash)) return ok().data({ ok: false }).build();
-
-    // Save hash to redis for 1 minute
-    await this.redisSrv.setWithExpire(hash, '1', 60);
-
-    // Make sure the conversation is not locked
-    const lockHash = sha1(`lock-${convo.topic}`);
-    if (await this.redisSrv.exist(lockHash)) return ok().data({ ok: false }).build();
-
-    // Lock the convo for 3 seconds, effectively ignoring immediate
-    // notifications. Since it is impossible to tell which
-    // notification represents a text message, delivery or read receipt, we cannot
-    // determine if a notification is a message that should result to a
-    // notification. To avoid sending notification for read receipts, we lock.
-    await this.redisSrv.setWithExpire(lockHash, '1', 3);
-
     // Determine if provider and taker are online
     let isProviderOnline = false;
     let isTakerOnline = false;
@@ -124,6 +106,17 @@ export class NotificationsController {
     if (isTakerOnline && !isProviderOnline) {
       recipient = await User.getByAddress(provider);
     }
+
+    // Make sure the recipient is not locked
+    const lockHash = sha1(`lock-recipient-${recipient}`);
+    if (await this.redisSrv.exist(lockHash)) return ok().data({ ok: false }).build();
+
+    // Lock the recipient for 15 seconds, effectively ignoring immediate
+    // notifications. Since it is impossible to tell which
+    // notification represents a text message, delivery or read receipt, we cannot
+    // determine if a notification is a message that should result to a
+    // notification. To avoid sending notification for read receipts, we lock.
+    await this.redisSrv.setWithExpire(lockHash, '1', 15);
 
     let isOk = false;
     if (recipient) {

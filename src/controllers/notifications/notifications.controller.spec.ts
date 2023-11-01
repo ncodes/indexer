@@ -60,6 +60,7 @@ describe('NotificationsController', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     mockCfgGet.mockReset();
+    mockExist.mockReset();
 
     cfgObj = {
       'auth.jwtSecret': 'secret_secret',
@@ -415,11 +416,10 @@ describe('NotificationsController', () => {
         });
     });
 
-    it('should return 200 and false when convo has been locked', async () => {
+    it('should return 200 and false when recipient has been locked', async () => {
       await User.create({ deviceTokenEmail: 'token-01' });
       await Convo.create({ network: net, topic: 'topic' });
 
-      mockExist.mockReturnValueOnce(false);
       mockExist.mockReturnValueOnce(true);
 
       await request(app.getHttpServer())
@@ -460,14 +460,13 @@ describe('NotificationsController', () => {
     });
 
     describe('conversation linked to a swap', () => {
-      it('should return 200 and send notification to taker when provider is online and taker is not', async () => {
+      it('should return 200 and send notification to taker when provider is online and taker is not online', async () => {
         await User.create({ deviceTokenEmail: 'token-01' });
         const taker = await User.create({ address: '0xTaker' });
         await Swap.create({ network: net, orderId: 1, taker: '0xTaker', provider: '0xProvider' });
         const convo = await Convo.create({ network: net, topic: 'topic', orderId: 1 });
         await OnlineStatus.create({ network: net, address: '0xProvider', orderId: 1 });
 
-        mockExist.mockReturnValueOnce(false);
         mockExist.mockReturnValueOnce(false);
 
         await request(app.getHttpServer())

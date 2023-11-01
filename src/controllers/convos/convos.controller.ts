@@ -22,7 +22,7 @@ export class ConvosController {
   @UseGuards(HasKeyGuard)
   @Get('/:net/:topic')
   async getConvoByTopic(@Req() req: Request, @Param('net') net: string, @Param('topic') topic: string) {
-    const convo = await Convo.get(net, req.user.address, topic.replaceAll('_', '/'), '[swap,offer]');
+    const convo = await Convo.get(net, req.user.address, topic.replaceAll('_', '/'));
     if (!convo) throw404('convo not found');
     return ok().data(convo).build<Convo>();
   }
@@ -36,7 +36,7 @@ export class ConvosController {
   @UseGuards(HasKeyGuard)
   @Put('/:net/:topic/toggle-mute')
   async toggleConvoMute(@Req() req: Request, @Param('net') net: string, @Param('topic') topic: string) {
-    const convo = await Convo.get(net, req.user.address, topic);
+    const convo = await Convo.get(net, req.user.address, topic.replaceAll('_', '/'));
     if (!convo) throw404('convo not found');
     await Convo.updateById(convo.id, { muted: !convo.muted });
     return ok().data({ muted: !convo.muted }).build<OKResponse>();

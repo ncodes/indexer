@@ -1,21 +1,24 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as redis from 'redis';
-import { isDevMode, isLocal } from '../common/common';
+import Redis from 'ioredis';
 
 @Injectable()
 export class RedisService {
   private logger = new Logger(RedisService.name);
-  private client: redis.RedisClientType;
+  private client: Redis;
 
   constructor(private cfg: ConfigService) {
-    const opt = { url: cfg.get('app.redis.url'), tls: { rejectUnauthorized: false } };
-    if (isLocal() || isDevMode()) delete opt.tls;
-    this.client = redis.createClient(opt);
+    this.client = new Redis(cfg.get('app.redis.url'), {
+      enableReadyCheck: true,
+    });
+
     this.client.on('error', (e) => {
       this.logger.error('Failed to connect to redis', e.message);
     });
-    this.client.connect().catch(this.logger.error);
+
+    this.client.on('ready', () => {
+      this.logger.log('Redis connected');
+    });
   }
 
   async close() {
@@ -46,7 +49,7 @@ export class RedisService {
   setWithExpire(key: string, value: string, expireSec: number): Promise<void> {
     return new Promise((res, rej) => {
       this.client
-        .setEx(key, expireSec, value)
+        .setex(key, expireSec, value)
         .then(() => {
           return res();
         })

@@ -1,8 +1,9 @@
 import { Body, Controller, Get, Param, Post, Put, Req, Res, UseGuards, ValidationPipe } from '@nestjs/common';
+import { isEthereumAddress } from 'class-validator';
 import { Request, Response } from 'express';
 import { transaction } from 'objection';
 import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
-import { ok, throw404 } from '../../common/responses/responses';
+import { ok, throw400, throw404 } from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import Convo from '../../models/convo';
@@ -56,6 +57,16 @@ export class ConvosController {
     @Body(new ValidationPipe(CommonValidationPipeOpt))
     body: SubscribeToConvoDTO,
   ) {
+    // Each topic must have corresponding peer address
+    if (body.topics.length != body.peerAddresses.length) {
+      throw400('topics and peerAddresses must have the same length');
+    }
+
+    // Validate peer addresses
+    for (const peerAddress of body.peerAddresses) {
+      if (!isEthereumAddress(peerAddress)) throw400('invalid peer address found', undefined, 'peerAddresses');
+    }
+
     // Get installation IDs
     const installIds: string[] = [];
     if (req.user.deviceTokenEmail) installIds.push(req.user.id);
@@ -67,16 +78,20 @@ export class ConvosController {
 
     // Create convo records
     await transaction(Convo, async (Convo) => {
+      let i = 0;
       for (const topic of body.topics) {
         const convo = await Convo.get(body.net, req.user.address, topic);
-        if (convo) continue;
-        await Convo.create({
-          address: req.user.address,
-          network: body.net,
-          orderId: body.orderId,
-          offerId: body.offerId,
-          topic,
-        });
+        if (!convo) {
+          await Convo.create({
+            address: req.user.address,
+            peerAddress: body.peerAddresses[i],
+            network: body.net,
+            orderId: body.orderId,
+            offerId: body.offerId,
+            topic,
+          });
+        }
+        i++;
       }
     });
 

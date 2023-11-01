@@ -84,12 +84,29 @@ describe('ConvosController', () => {
         });
     });
 
+    it('should return 400 when network was not provided', async () => {
+      await User.updateById(u.id, { deviceTokenEmail: 'token-01' });
+      await request(app.getHttpServer())
+        .post(`/v1/convos/subscribe`)
+        .set('Authorization', 'bearer ' + token)
+        .send({})
+        .expect(400)
+        .expect({
+          error: {
+            message: 'network is required',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
     it('should return 400 when no topic was provided', async () => {
       await User.updateById(u.id, { deviceTokenEmail: 'token-01' });
       await request(app.getHttpServer())
         .post(`/v1/convos/subscribe`)
         .set('Authorization', 'bearer ' + token)
         .send({
+          net,
           topics: [],
         })
         .expect(400)
@@ -102,20 +119,42 @@ describe('ConvosController', () => {
         });
     });
 
-    it('should return 400 when network was not provided', async () => {
+    it('should return 400 when no peer address was provided', async () => {
       await User.updateById(u.id, { deviceTokenEmail: 'token-01' });
       await request(app.getHttpServer())
         .post(`/v1/convos/subscribe`)
         .set('Authorization', 'bearer ' + token)
         .send({
+          net,
           topics: ['topic'],
         })
         .expect(400)
         .expect({
           error: {
-            message: 'network is required',
-            param: 'net',
+            message: 'at least one peer address is required',
+            param: 'peerAddresses',
             type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 400 when a peer address is not a valid ethereum address', async () => {
+      await User.updateById(u.id, { deviceTokenEmail: 'token-01' });
+      await request(app.getHttpServer())
+        .post(`/v1/convos/subscribe`)
+        .set('Authorization', 'bearer ' + token)
+        .send({
+          net,
+          topics: ['topic'],
+          peerAddresses: ['abc'],
+          orderId: 1,
+        })
+        .expect(400)
+        .expect({
+          error: {
+            param: 'peerAddresses',
+            type: 'invalid_request_error',
+            message: 'invalid peer address found',
           },
         });
     });
@@ -128,6 +167,7 @@ describe('ConvosController', () => {
         .send({
           net,
           topics: ['topic'],
+          peerAddresses: ['abc'],
         })
         .expect(400)
         .expect({
@@ -149,6 +189,7 @@ describe('ConvosController', () => {
           net,
           orderId: 1,
           topics: ['topic', 'topic2'],
+          peerAddresses: ['0xB24780438dD4DB52848A3A398B1A8A08223aBd83', '0xB24780438dD4DB52848A3A398B1A8A08223aBd84'],
         })
         .expect(201)
         .expect(async (res) => {
@@ -156,8 +197,10 @@ describe('ConvosController', () => {
           expect(mockSubscribe).toBeCalledWith(u.id, ['topic', 'topic2']);
           const convo = await Convo.get(net, u.address, 'topic');
           expect(convo).toBeDefined();
+          expect(convo.peerAddress).toEqual('0xB24780438dD4DB52848A3A398B1A8A08223aBd83');
           const convo2 = await Convo.get(net, u.address, 'topic2');
           expect(convo2).toBeDefined();
+          expect(convo2.peerAddress).toEqual('0xB24780438dD4DB52848A3A398B1A8A08223aBd84');
         });
     });
   });

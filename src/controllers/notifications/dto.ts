@@ -10,10 +10,19 @@ export class ListQueryDTO {
   @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
   public net?: string;
 
+  @IsOptional()
+  public type: string;
+
   @Transform(({ value }) => toBoolean(value))
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'read') })
   @IsOptional()
   public read: boolean;
+
+  @IsOptional()
+  offerId: number;
+
+  @IsOptional()
+  orderId: number;
 
   @Transform(({ value }) => toBoolean(value))
   @IsBoolean({ message: makeValidatorMsg('must be boolean', 'count') })

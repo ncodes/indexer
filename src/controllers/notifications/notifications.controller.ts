@@ -34,7 +34,17 @@ export class NotificationsController {
   @UseGuards(HasKeyGuard)
   @Get()
   async list(@Req() req: Request, @Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
-    const res = await Notification.getRecent(q.net, q.count, req.user.id, q.read, q.limit, q.offset);
+    const res = await Notification.getRecent(
+      q.net,
+      q.type,
+      req.user.id,
+      q.orderId,
+      q.offerId,
+      q.read,
+      q.count,
+      q.limit,
+      q.offset,
+    );
 
     if (q.count) {
       return ok().data({ count: res }).build<CountResponse>();
@@ -74,41 +84,36 @@ export class NotificationsController {
     const user = await User.getByToken(body.token);
     if (!user) throw404('user not found');
 
-    // Find convo
+    // Find the convo; If convo is muted, return immediately
     const convo = await Convo.getByTopic(body.topic, '[swap,offer]');
     if (!convo) throw404('convo not found');
     if (convo.muted) return ok().data({ ok: false }).build();
 
     // Determine if provider and taker are online
-    let isProviderOnline = false;
-    let isTakerOnline = false;
-    let provider, taker: string;
+    let isUserOnline = false;
+    let isPeerOnline = false;
     const { swap, offer } = convo;
     if (swap) {
-      isProviderOnline = await OnlineStatus.isOnline(swap.network, swap.provider, swap.orderId);
-      isTakerOnline = await OnlineStatus.isOnline(swap.network, swap.taker, swap.orderId);
-      provider = swap.provider;
-      taker = swap.taker;
+      isUserOnline = await OnlineStatus.isOnline(swap.network, user.address, swap.orderId);
+      isPeerOnline = await OnlineStatus.isOnline(swap.network, convo.peerAddress, swap.orderId);
     } else if (offer) {
-      isProviderOnline = await OnlineStatus.isOnline(offer.network, offer.provider, undefined, offer.offerId);
-      isTakerOnline = await OnlineStatus.isOnline(offer.network, offer.creator, undefined, offer.offerId);
-      provider = offer.provider;
-      taker = offer.creator;
+      isUserOnline = await OnlineStatus.isOnline(offer.network, user.address, undefined, offer.offerId);
+      isPeerOnline = await OnlineStatus.isOnline(offer.network, convo.peerAddress, undefined, offer.offerId);
     }
 
-    // When provider is online but taker is not, send notification to taker
+    // Assumption: When user is online but peer is not, set recipient to peer
     let recipient: User;
-    if (isProviderOnline && !isTakerOnline) {
-      recipient = await User.getByAddress(taker);
+    if (isUserOnline && !isPeerOnline) {
+      recipient = await User.getByAddress(convo.peerAddress);
     }
 
-    // When taker is online but provider is not, send notification to provider
-    if (isTakerOnline && !isProviderOnline) {
-      recipient = await User.getByAddress(provider);
+    // Assumption: When peer is online but user is not, set recipient to user
+    if (isPeerOnline && !isUserOnline) {
+      recipient = user;
     }
 
     // Make sure the recipient is not locked
-    const lockHash = sha1(`lock-recipient-${recipient}`);
+    const lockHash = sha1(`lock-recipient-${recipient}-${swap?.orderId}-${offer?.offerId}}`);
     if (await this.redisSrv.exist(lockHash)) return ok().data({ ok: false }).build();
 
     // Lock the recipient for 15 seconds, effectively ignoring immediate
@@ -121,7 +126,7 @@ export class NotificationsController {
     let isOk = false;
     if (recipient) {
       isOk = true;
-      await this.notifySrv.notify(NotificationID.ChatNewMessage, undefined, undefined, {
+      await this.notifySrv.notify(NotificationID.ChatNewMessage, convo.network, undefined, {
         user: recipient,
         convo,
       });

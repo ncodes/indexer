@@ -12,6 +12,8 @@ export default class Convo extends BaseModel {
   network: string;
   // The address of the user
   address: string;
+  // The peer address
+  peerAddress: string;
   // The order ID
   orderId: number;
   // The offer ID

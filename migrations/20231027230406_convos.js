@@ -7,6 +7,7 @@ exports.up = function (knex) {
       table.integer('orderId');
       table.integer('offerId');
       table.string('address');
+      table.string('peerAddress');
       table.string('topic');
       table.boolean('muted').defaultTo(false);
       table.timestamp('createdAt');

@@ -108,24 +108,44 @@ export default class Notification extends BaseModel {
   /**
    * Get recent notifications
    * @param network The network name
-   * @param count Indicates to return count of query
+   * @param type The notification type
    * @param userId The user ID linked to the notification
+   * @param orderId The order ID linked to the notification
+   * @param offerId The offer ID linked to the notification
    * @param read Indicated whether to filter by read or unread status
+   * @param count Indicates to return count of query
    * @param limit The number of records to return
    * @param offset The query offset
    * @param txn The transaction object
    */
   static getRecent(
     network: string,
-    count: boolean,
+    type: string,
     userId: string,
+    orderId: number,
+    offerId: number,
     read: boolean,
+    count: boolean,
     limit: number,
     offset: number,
     txn?: Transaction,
   ) {
-    if (count) {
-      const q = this.query(txn).where({ network, userId });
+    let q = this.query(txn).where({ network, userId });
+
+    if (!count) {
+      q = q.select(raw('*, count(*) over() as "$queryCount"'));
+    }
+
+    if (type) q = q.where({ type });
+    if (orderId != undefined) q = q.where({ orderId });
+    if (offerId != undefined) q = q.where({ offerId });
+    if (read !== undefined) q = q.where({ read });
+    if (limit && !count) q = q.limit(limit);
+    if (offset != undefined && !count) q = q.offset(offset);
+
+    if (!count) {
+      return q.whereNotDeleted().orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
+    } else {
       return q
         .count('id')
         .first()
@@ -133,13 +153,6 @@ export default class Notification extends BaseModel {
           return res.count;
         });
     }
-
-    let q = this.query(txn).select(raw('*, count(*) over() as "$queryCount"')).where({ network, userId });
-    if (read !== undefined) q = q.where({ read });
-    if (limit) q = q.limit(limit);
-    if (offset != undefined) q = q.offset(offset);
-
-    return q.whereNotDeleted().orderBy('createdAt', 'DESC').orderBy('sn', 'DESC');
   }
 
   /**

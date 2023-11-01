@@ -161,6 +161,68 @@ describe('NotificationsController', () => {
       });
     });
 
+    describe('type was set', () => {
+      it('should return correct result', async () => {
+        await Notification.create({ type: NotificationType.InstantSwap, network: net, userId: u.id });
+        const notif = await Notification.create({
+          type: NotificationType.CommitPhaseEnded,
+          network: net,
+          userId: u.id,
+        });
+        await request(app.getHttpServer())
+          .get(`/v1/notifications`)
+          .query({ net, type: NotificationType.CommitPhaseEnded })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(notif.id);
+          });
+      });
+    });
+
+    describe('orderId was set', () => {
+      it('should return correct result', async () => {
+        await Notification.create({ type: NotificationType.InstantSwap, orderId: 2, network: net, userId: u.id });
+        const notif = await Notification.create({
+          type: NotificationType.InstantSwap,
+          network: net,
+          userId: u.id,
+          orderId: 1,
+        });
+        await request(app.getHttpServer())
+          .get(`/v1/notifications`)
+          .query({ net, orderId: 1 })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(notif.id);
+          });
+      });
+    });
+
+    describe('offerId was set', () => {
+      it('should return correct result', async () => {
+        await Notification.create({ type: NotificationType.InstantSwap, offerId: 2, network: net, userId: u.id });
+        const notif = await Notification.create({
+          type: NotificationType.InstantSwap,
+          network: net,
+          userId: u.id,
+          offerId: 1,
+        });
+        await request(app.getHttpServer())
+          .get(`/v1/notifications`)
+          .query({ net, offerId: 1 })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(notif.id);
+          });
+      });
+    });
+
     describe('limit=1', () => {
       it('should return correct results', async () => {
         await Notification.create({ type: NotificationType.InstantSwap, network: net, userId: u.id });
@@ -460,12 +522,18 @@ describe('NotificationsController', () => {
     });
 
     describe('conversation linked to a swap', () => {
-      it('should return 200 and send notification to taker when provider is online and taker is not online', async () => {
-        await User.create({ deviceTokenEmail: 'token-01' });
-        const taker = await User.create({ address: '0xTaker' });
-        await Swap.create({ network: net, orderId: 1, taker: '0xTaker', provider: '0xProvider' });
-        const convo = await Convo.create({ network: net, topic: 'topic', orderId: 1 });
-        await OnlineStatus.create({ network: net, address: '0xProvider', orderId: 1 });
+      it('should return 200 and send notification to convo peer when user is online and convo peer is not online', async () => {
+        const swap = await Swap.create({ network: net, orderId: 1 });
+        await User.create({ deviceTokenEmail: 'token-01', address: '0xAddress2' });
+        const peer = await User.create({ address: '0xPeer' });
+        const convo = await Convo.create({
+          network: net,
+          topic: 'topic',
+          orderId: swap.orderId,
+          address: '0xAddress2',
+          peerAddress: '0xPeer',
+        });
+        await OnlineStatus.create({ network: net, address: '0xAddress2', orderId: 1 });
 
         mockExist.mockReturnValueOnce(false);
 
@@ -484,21 +552,26 @@ describe('NotificationsController', () => {
             expect(mockNotify.mock.calls).toHaveLength(1);
             const call = mockNotify.mock.calls[0];
             expect(call[0]).toEqual(NotificationID.ChatNewMessage);
-            expect(call[1]).toBeUndefined();
+            expect(call[1]).toEqual(net);
             expect(call[2]).toBeUndefined();
-            expect(call[3].user.id).toEqual(taker.id);
+            expect(call[3].user.id).toEqual(peer.id);
             expect(call[3].convo.id).toEqual(convo.id);
           });
       });
 
-      it('should return 200 and send notification to provider when taker is online and provider is not', async () => {
-        await User.create({ deviceTokenEmail: 'token-01' });
-        const provider = await User.create({ address: '0xProvider' });
-        await Swap.create({ network: net, orderId: 1, taker: '0xTaker', provider: '0xProvider' });
-        const convo = await Convo.create({ network: net, topic: 'topic', orderId: 1 });
-        await OnlineStatus.create({ network: net, address: '0xTaker', orderId: 1 });
+      it('should return 200 and send notification to user when peer is online and user is not', async () => {
+        const swap = await Swap.create({ network: net, orderId: 1 });
+        const user = await User.create({ deviceTokenEmail: 'token-01', address: '0xAddress2' });
+        await User.create({ address: '0xPeer' });
+        const convo = await Convo.create({
+          network: net,
+          topic: 'topic',
+          orderId: swap.orderId,
+          address: '0xAddress2',
+          peerAddress: '0xPeer',
+        });
+        await OnlineStatus.create({ network: net, address: '0xPeer', orderId: 1 });
 
-        mockExist.mockReturnValueOnce(false);
         mockExist.mockReturnValueOnce(false);
 
         await request(app.getHttpServer())
@@ -516,23 +589,28 @@ describe('NotificationsController', () => {
             expect(mockNotify.mock.calls).toHaveLength(1);
             const call = mockNotify.mock.calls[0];
             expect(call[0]).toEqual(NotificationID.ChatNewMessage);
-            expect(call[1]).toBeUndefined();
+            expect(call[1]).toEqual(net);
             expect(call[2]).toBeUndefined();
-            expect(call[3].user.id).toEqual(provider.id);
+            expect(call[3].user.id).toEqual(user.id);
             expect(call[3].convo.id).toEqual(convo.id);
           });
       });
     });
 
     describe('conversation linked to a offer', () => {
-      it('should return 200 and send notification to taker when provider is online and taker is not', async () => {
-        await User.create({ deviceTokenEmail: 'token-01' });
-        const taker = await User.create({ address: '0xTaker' });
-        await Offer.create({ network: net, offerId: 1, creator: '0xTaker', provider: '0xProvider' });
-        const convo = await Convo.create({ network: net, topic: 'topic', offerId: 1 });
-        await OnlineStatus.create({ network: net, address: '0xProvider', offerId: 1 });
+      it('should return 200 and send notification to peer when user is online and peer is not', async () => {
+        const offer = await Offer.create({ network: net, offerId: 1 });
+        await User.create({ deviceTokenEmail: 'token-01', address: '0xAddress2' });
+        const peer = await User.create({ address: '0xPeer' });
+        const convo = await Convo.create({
+          network: net,
+          topic: 'topic',
+          offerId: offer.offerId,
+          address: '0xAddress2',
+          peerAddress: '0xPeer',
+        });
+        await OnlineStatus.create({ network: net, address: '0xAddress2', offerId: 1 });
 
-        mockExist.mockReturnValueOnce(false);
         mockExist.mockReturnValueOnce(false);
 
         await request(app.getHttpServer())
@@ -550,19 +628,25 @@ describe('NotificationsController', () => {
             expect(mockNotify.mock.calls).toHaveLength(1);
             const call = mockNotify.mock.calls[0];
             expect(call[0]).toEqual(NotificationID.ChatNewMessage);
-            expect(call[1]).toBeUndefined();
+            expect(call[1]).toEqual(net);
             expect(call[2]).toBeUndefined();
-            expect(call[3].user.id).toEqual(taker.id);
+            expect(call[3].user.id).toEqual(peer.id);
             expect(call[3].convo.id).toEqual(convo.id);
           });
       });
 
-      it('should return 200 and send notification to provider when taker is online and provider is not', async () => {
-        await User.create({ deviceTokenEmail: 'token-01' });
-        const provider = await User.create({ address: '0xProvider' });
-        await Offer.create({ network: net, offerId: 1, creator: '0xTaker', provider: '0xProvider' });
-        const convo = await Convo.create({ network: net, topic: 'topic', offerId: 1 });
-        await OnlineStatus.create({ network: net, address: '0xTaker', offerId: 1 });
+      it('should return 200 and send notification to user when peer is online and user is not', async () => {
+        const offer = await Offer.create({ network: net, offerId: 1 });
+        const user = await User.create({ deviceTokenEmail: 'token-01', address: '0xAddress2' });
+        await User.create({ address: '0xPeer' });
+        const convo = await Convo.create({
+          network: net,
+          topic: 'topic',
+          offerId: offer.offerId,
+          address: '0xAddress2',
+          peerAddress: '0xPeer',
+        });
+        await OnlineStatus.create({ network: net, address: '0xPeer', offerId: 1 });
 
         mockExist.mockReturnValueOnce(false);
         mockExist.mockReturnValueOnce(false);
@@ -582,9 +666,9 @@ describe('NotificationsController', () => {
             expect(mockNotify.mock.calls).toHaveLength(1);
             const call = mockNotify.mock.calls[0];
             expect(call[0]).toEqual(NotificationID.ChatNewMessage);
-            expect(call[1]).toBeUndefined();
+            expect(call[1]).toEqual(net);
             expect(call[2]).toBeUndefined();
-            expect(call[3].user.id).toEqual(provider.id);
+            expect(call[3].user.id).toEqual(user.id);
             expect(call[3].convo.id).toEqual(convo.id);
           });
       });

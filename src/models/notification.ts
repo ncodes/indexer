@@ -174,7 +174,7 @@ export default class Notification extends BaseModel {
     offerId: number,
     txn?: Transaction,
   ) {
-    let q = this.query(txn).where({ network, userId });
+    let q = this.query(txn).where({ network, userId, read: false });
     if (id) q = q.where({ id });
     if (type) q = q.where({ type });
     if (orderId != undefined) q = q.where({ orderId });

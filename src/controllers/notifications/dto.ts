@@ -46,13 +46,16 @@ export class MarkReadDTO {
   public net: string;
 
   @IsOptional()
+  public id?: string;
+
+  @IsOptional()
   public type?: string;
 
   @IsOptional()
-  offerId?: number;
+  public offerId?: number;
 
   @IsOptional()
-  orderId?: number;
+  public orderId?: number;
 }
 
 export class ChatNotificationDTO {

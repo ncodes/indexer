@@ -160,6 +160,7 @@ export default class Notification extends BaseModel {
    * @param network The network name
    * @param type The notification type
    * @param userId The user ID linked to the notification
+   * @param id The notification ID
    * @param orderId The order ID linked to the notification
    * @param offerId The offer ID linked to the notification
    * @param txn The transaction object
@@ -168,11 +169,13 @@ export default class Notification extends BaseModel {
     network: string,
     type: string,
     userId: string,
+    id: string,
     orderId: number,
     offerId: number,
     txn?: Transaction,
   ) {
     let q = this.query(txn).where({ network, userId });
+    if (id) q = q.where({ id });
     if (type) q = q.where({ type });
     if (orderId != undefined) q = q.where({ orderId });
     if (offerId != undefined) q = q.where({ offerId });

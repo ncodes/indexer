@@ -62,7 +62,7 @@ export class NotificationsController {
   @UseGuards(HasKeyGuard)
   @Put('/mark-read')
   async markAsRead(@Req() req: Request, @Body(new ValidationPipe(ValPipeOpt)) q: MarkReadDTO) {
-    await Notification.markAsRead(q.net, q.type, req.user.id, q.orderId, q.offerId);
+    await Notification.markAsRead(q.net, q.type, req.user.id, q.id, q.orderId, q.offerId);
     return ok().data({ ok: true }).build<OKResponse>();
   }
 

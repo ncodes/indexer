@@ -305,6 +305,25 @@ describe('NotificationsController', () => {
         });
     });
 
+    describe('when id is set', () => {
+      it('should return 200 and update correct records', async () => {
+        let notif = await Notification.create({ type: NotificationType.ChatNewMessage, network: net, userId: u.id });
+        let notif2 = await Notification.create({ type: NotificationType.InstantSwap, network: net, userId: u.id });
+        await request(app.getHttpServer())
+          .put(`/v1/notifications/mark-read`)
+          .set('Authorization', 'bearer ' + token)
+          .send({ net, id: notif2.id })
+          .expect(200)
+          .expect({
+            data: { ok: true },
+          });
+        notif = await Notification.find({ id: notif.id });
+        expect(notif.read).toBeFalsy();
+        notif2 = await Notification.find({ id: notif2.id });
+        expect(notif2.read).toBeTruthy();
+      });
+    });
+
     describe('when type is set', () => {
       it('should return 200 and update correct records', async () => {
         let notif = await Notification.create({ type: NotificationType.ChatNewMessage, network: net, userId: u.id });

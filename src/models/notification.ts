@@ -156,6 +156,30 @@ export default class Notification extends BaseModel {
   }
 
   /**
+   * Get recent notifications
+   * @param network The network name
+   * @param type The notification type
+   * @param userId The user ID linked to the notification
+   * @param orderId The order ID linked to the notification
+   * @param offerId The offer ID linked to the notification
+   * @param txn The transaction object
+   */
+  static markAsRead(
+    network: string,
+    type: string,
+    userId: string,
+    orderId: number,
+    offerId: number,
+    txn?: Transaction,
+  ) {
+    let q = this.query(txn).where({ network, userId });
+    if (type) q = q.where({ type });
+    if (orderId != undefined) q = q.where({ orderId });
+    if (offerId != undefined) q = q.where({ offerId });
+    return q.whereNotDeleted().patch({ read: true });
+  }
+
+  /**
    * Get a notification by its ID and user ID
    * @param id The notification ID
    * @param userId The user ID

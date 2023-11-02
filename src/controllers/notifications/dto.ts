@@ -40,6 +40,21 @@ export class ListQueryDTO {
   public offset?: number;
 }
 
+export class MarkReadDTO {
+  @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
+  @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
+  public net: string;
+
+  @IsOptional()
+  public type?: string;
+
+  @IsOptional()
+  offerId?: number;
+
+  @IsOptional()
+  orderId?: number;
+}
+
 export class ChatNotificationDTO {
   @IsNotEmpty({ message: makeValidatorMsg('token is required', 'token') })
   token: string;

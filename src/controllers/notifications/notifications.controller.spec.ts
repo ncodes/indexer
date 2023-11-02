@@ -279,7 +279,7 @@ describe('NotificationsController', () => {
   describe('.markAsRead', () => {
     it('should return 401 when not authorized', async () => {
       await request(app.getHttpServer())
-        .put(`/v1/notifications/0x123/mark-read`)
+        .put(`/v1/notifications/mark-read`)
         .send({})
         .expect(401)
         .expect({
@@ -290,29 +290,96 @@ describe('NotificationsController', () => {
         });
     });
 
-    it('should return 404 when notification was not found', async () => {
+    it('should return 400 when network was not provided', async () => {
       await request(app.getHttpServer())
-        .put(`/v1/notifications/0x123/mark-read`)
+        .put(`/v1/notifications/mark-read`)
         .set('Authorization', 'bearer ' + token)
-        .expect(404)
+        .send({})
+        .expect(400)
         .expect({
           error: {
-            message: 'notification not found',
+            message: 'network is required',
+            param: 'net',
+            type: 'invalid_request_error',
           },
         });
     });
 
-    it('should return 200 when update was successful', async () => {
-      let notif = await Notification.create({ type: NotificationType.InstantSwap, network: net, userId: u.id });
-      await request(app.getHttpServer())
-        .put(`/v1/notifications/${notif.id}/mark-read`)
-        .set('Authorization', 'bearer ' + token)
-        .expect(200)
-        .expect({
-          data: { ok: true },
+    describe('when type is set', () => {
+      it('should return 200 and update correct records', async () => {
+        let notif = await Notification.create({ type: NotificationType.ChatNewMessage, network: net, userId: u.id });
+        let notif2 = await Notification.create({ type: NotificationType.InstantSwap, network: net, userId: u.id });
+        await request(app.getHttpServer())
+          .put(`/v1/notifications/mark-read`)
+          .set('Authorization', 'bearer ' + token)
+          .send({ net, type: NotificationType.ChatNewMessage })
+          .expect(200)
+          .expect({
+            data: { ok: true },
+          });
+        notif = await Notification.find({ id: notif.id });
+        expect(notif.read).toBeTruthy();
+        notif2 = await Notification.find({ id: notif2.id });
+        expect(notif2.read).toBeFalsy();
+      });
+    });
+
+    describe('when orderId is set', () => {
+      it('should return 200 and update correct records', async () => {
+        let notif = await Notification.create({
+          type: NotificationType.ChatNewMessage,
+          network: net,
+          userId: u.id,
+          orderId: 1,
         });
-      notif = await Notification.find({ id: notif.id });
-      expect(notif.read).toBeTruthy();
+        let notif2 = await Notification.create({
+          type: NotificationType.InstantSwap,
+          network: net,
+          userId: u.id,
+          orderId: 2,
+        });
+        await request(app.getHttpServer())
+          .put(`/v1/notifications/mark-read`)
+          .set('Authorization', 'bearer ' + token)
+          .send({ net, orderId: 2 })
+          .expect(200)
+          .expect({
+            data: { ok: true },
+          });
+        notif2 = await Notification.find({ id: notif2.id });
+        expect(notif2.read).toBeTruthy();
+        notif = await Notification.find({ id: notif.id });
+        expect(notif.read).toBeFalsy();
+      });
+    });
+
+    describe('when offerId is set', () => {
+      it('should return 200 and update correct records', async () => {
+        let notif = await Notification.create({
+          type: NotificationType.ChatNewMessage,
+          network: net,
+          userId: u.id,
+          offerId: 1,
+        });
+        let notif2 = await Notification.create({
+          type: NotificationType.InstantSwap,
+          network: net,
+          userId: u.id,
+          offerId: 2,
+        });
+        await request(app.getHttpServer())
+          .put(`/v1/notifications/mark-read`)
+          .set('Authorization', 'bearer ' + token)
+          .send({ net, offerId: 2 })
+          .expect(200)
+          .expect({
+            data: { ok: true },
+          });
+        notif2 = await Notification.find({ id: notif2.id });
+        expect(notif2.read).toBeTruthy();
+        notif = await Notification.find({ id: notif.id });
+        expect(notif.read).toBeFalsy();
+      });
     });
   });
 

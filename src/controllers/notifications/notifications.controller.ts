@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, Query, Req, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Query, Req, UseGuards, ValidationPipe } from '@nestjs/common';
 import { Request } from 'express';
 import { Model } from 'objection';
 import * as webpush from 'web-push';
@@ -15,7 +15,7 @@ import OnlineStatus from '../../models/online_status';
 import User from '../../models/user';
 import WebPushSubscription from '../../models/web_push_subscription';
 import { RedisService } from '../../services/redis.service';
-import { ChatNotificationDTO, ListQueryDTO, WebPushSubscribeDTO } from './dto';
+import { ChatNotificationDTO, ListQueryDTO, MarkReadDTO, WebPushSubscribeDTO } from './dto';
 
 @Controller('v1/notifications')
 export class NotificationsController {
@@ -60,11 +60,9 @@ export class NotificationsController {
    */
   @UseGuards(BeAuthenticatedGuard)
   @UseGuards(HasKeyGuard)
-  @Put(':id/mark-read')
-  async markAsRead(@Req() req: Request, @Param('id') id: string) {
-    const notification = await Notification.getByIDAndUser(id, req.user.id);
-    if (!notification) throw404('notification not found');
-    await Notification.updateById(notification.id, { read: true });
+  @Put('/mark-read')
+  async markAsRead(@Req() req: Request, @Body(new ValidationPipe(ValPipeOpt)) q: MarkReadDTO) {
+    await Notification.markAsRead(q.net, q.type, req.user.id, q.orderId, q.offerId);
     return ok().data({ ok: true }).build<OKResponse>();
   }
 

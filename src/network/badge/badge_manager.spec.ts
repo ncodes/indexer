@@ -109,9 +109,20 @@ describe('BadgeManagerHandler', () => {
 
       it('should update region on market matching the specified grantee address', async () => {
         let market = await Market.create({ network: net, address: '0xMarketAddress' });
+
         await handler.onGrantedBadge('region', 'asia', market.address, [], [], toBN(0), null);
         market = await Market.getById(market.id);
-        expect(market.region).toEqual('region/asia');
+        expect(market.regions).toEqual(['region/asia']);
+
+        // handle duplicate
+        await handler.onGrantedBadge('region', 'asia', market.address, [], [], toBN(0), null);
+        market = await Market.getById(market.id);
+        expect(market.regions).toEqual(['region/asia']);
+
+        // handle a new region
+        await handler.onGrantedBadge('region', 'europe', market.address, [], [], toBN(0), null);
+        market = await Market.getById(market.id);
+        expect(market.regions).toEqual(['region/asia', 'region/europe']);
       });
     });
   });

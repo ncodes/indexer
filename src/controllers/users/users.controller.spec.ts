@@ -178,39 +178,8 @@ describe('UsersController', () => {
         });
     });
 
-    it('should return 400 when type is not provided', async () => {
-      await User.updateById(u.id, { address: '0xAddress', email: '0x@email.com' });
-      await request(app.getHttpServer())
-        .post(`/v1/users/register-device`)
-        .set('Authorization', 'bearer ' + token)
-        .expect(400)
-        .expect({
-          error: {
-            message: 'device type is required',
-            param: 'type',
-            type: 'invalid_request_error',
-          },
-        });
-    });
-
-    it('should return 400 when device type is unknown', async () => {
-      await User.updateById(u.id, { address: '0xAddress', email: '0x@email.com' });
-      await request(app.getHttpServer())
-        .post(`/v1/users/register-device`)
-        .set('Authorization', 'bearer ' + token)
-        .send({ type: 'unknown' })
-        .expect(400)
-        .expect({
-          error: {
-            message: 'device type is unknown',
-            param: 'type',
-            type: 'invalid_request_error',
-          },
-        });
-    });
-
     it('should return 201 on success', async () => {
-      jest.spyOn(app.get(UserService), 'registerDevice').mockResolvedValue('token');
+      jest.spyOn(app.get(UserService), 'registerDevice').mockResolvedValue(undefined);
       await User.updateById(u.id, { address: '0xAddress', email: '0x@email.com' });
       await request(app.getHttpServer())
         .post(`/v1/users/register-device`)

@@ -39,8 +39,8 @@ exports.up = function (knex) {
       table.float('avgReleaseDur').defaultTo(0);
       table.jsonb('requiredPutBadges').defaultTo([]);
       table.jsonb('requiredSwapBadges').defaultTo([]);
+      table.jsonb('regions').defaultTo([]);
       table.string('manager');
-      table.string('region');
       table.string('txHash');
       table.timestamp('lastSwapAt');
       table.timestamp('createdAt');

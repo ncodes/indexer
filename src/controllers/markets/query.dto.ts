@@ -93,6 +93,10 @@ export class ListQueryDTO {
 
   @Transform(({ value }) => (value as string).split(',').map((v) => v.replaceAll('%', '').trim().replace(/\/$/g, '%')))
   @IsOptional()
+  regions?: string[];
+
+  @Transform(({ value }) => (value as string).split(',').map((v) => v.replaceAll('%', '').trim().replace(/\/$/g, '%')))
+  @IsOptional()
   putBadges?: string[];
 
   @Transform(({ value }) => (value as string).split(',').map((v) => v.replaceAll('%', '').trim().replace(/\/$/g, '%')))

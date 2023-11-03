@@ -1,4 +1,5 @@
 import { BigNumber, ethers, Event, providers } from 'ethers';
+import * as _ from 'lodash';
 import * as moment from 'moment';
 import { Transaction } from 'objection';
 import Badge from '../../models/badge';
@@ -175,9 +176,10 @@ export class BadgeManagerHandler extends Handler {
 
     // Handle region badge grant to market
     if (badge == this.cfg.get('app.badges.region') && path != '') {
-      const market = await Market.getMarket(this.network, grantee, ['id'], undefined, txn);
+      const market = await Market.getMarket(this.network, grantee, ['id', 'regions'], undefined, txn);
       if (market) {
-        await Market.updateById(market.id, { region: `${badge}/${path}` }, txn);
+        const regions = _.uniq([...(market.regions || []), `${badge}/${path}`]);
+        await Market.updateById(market.id, { regions }, txn);
       }
     }
 

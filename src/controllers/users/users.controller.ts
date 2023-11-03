@@ -76,7 +76,6 @@ export class UsersController {
   @Post('/register-device')
   async registerDevice(@Req() req: express.Request) {
     await this.userSrv.registerDevice(req.user);
-
     return ok().data({ ok: true }).build();
   }
 

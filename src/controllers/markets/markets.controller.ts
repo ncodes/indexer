@@ -63,6 +63,7 @@ export class MarketsController {
    * @param [q.net] The network name
    * @param [q.creator] Filter the result by creator address
    * @param [q.address] Filter the result by one or more market address
+   * @param [q.regions] Filter the result by one or more region
    * @param [q.base] The base asset address or symbol
    * @param [q.quote] The base asset address or symbol
    * @param [q.permSwap] Indicate to either return permissioned or non-permissioned markets
@@ -130,6 +131,7 @@ export class MarketsController {
       quoteUsdRate,
       q.priceUsd,
       q.liquidityUsd,
+      q.regions,
       reqPutBadges,
       reqSwapBadges,
       q.offer,

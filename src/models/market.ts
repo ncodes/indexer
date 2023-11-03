@@ -84,7 +84,7 @@ export default class Market extends BaseModel {
   // The market manager
   manager: string = undefined;
   // The region badge attached to this market
-  region: string = undefined;
+  regions: string[] = undefined;
   // Total liquidity in this market
   totalLiquidity: string = undefined;
   // The list of required badges to put liquidity
@@ -128,6 +128,7 @@ export default class Market extends BaseModel {
     this.requiredPutBadges = this.requiredPutBadges
       ? (JSON.stringify(this.requiredPutBadges) as any)
       : this.requiredPutBadges;
+    this.regions = this.regions ? (JSON.stringify(this.regions) as any) : this.regions;
   }
 
   $beforeUpdate() {
@@ -138,6 +139,7 @@ export default class Market extends BaseModel {
     this.requiredPutBadges = this.requiredPutBadges
       ? (JSON.stringify(this.requiredPutBadges) as any)
       : this.requiredPutBadges;
+    this.regions = this.regions ? (JSON.stringify(this.regions) as any) : this.regions;
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
@@ -313,6 +315,7 @@ export default class Market extends BaseModel {
    * @param baseUsdRate The USD rate used for base USD conversions
    * @param quoteUsdRate The USD rate used for quote USD conversions
    * @param liquidityUsd Filter by USD available liquidity (if it starts with >, it means equal or greater than, if it starts with <, it means equal or less than)
+   * @param regions A list of regions to filter by
    * @param reqPutBadges A list of PUT badges to filter by
    * @param reqSwapBadges A list of SWAP badges to filter by
    * @param offer Indicate to filter by offer type
@@ -339,6 +342,7 @@ export default class Market extends BaseModel {
     quoteUsdRate = 0,
     priceUsd: string,
     liquidityUsd: string,
+    regions: string[],
     reqPutBadges: string[],
     reqSwapBadges: string[],
     offer: boolean,
@@ -419,6 +423,17 @@ export default class Market extends BaseModel {
       const operator = liquidityUsd.startsWith('>') ? '>=' : '<=';
       const availableLiquidityValue = liquidityUsd.replace('>', '').replace('<', '');
       q = q.where(raw('"totalLiquidityUsd"'), operator, availableLiquidityValue);
+    }
+
+    if (regions && regions.length) {
+      q = q.whereRaw(
+        `EXISTS (
+      SELECT 1
+      FROM jsonb_array_elements_text("regions") region
+      WHERE region ILIKE ANY (?::text[])
+      )`,
+        [regions],
+      );
     }
 
     if (!_.isEmpty(reqPutBadges)) {

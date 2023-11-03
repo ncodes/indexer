@@ -189,7 +189,7 @@ describe('AuthController', () => {
       const msg = Buffer.from(makeMsg(wallet.address, 'person@gmail.com', moment().toISOString()));
       const sig = await wallet.signMessage(msg.toString());
 
-      const mockRegDevice = jest.spyOn(app.get(UserService), 'registerDevice');
+      const mockRegDevice = jest.spyOn(app.get(UserService), 'registerDevice').mockResolvedValue(undefined);
 
       await request(app.getHttpServer())
         .post(`/v1/auth`)
@@ -216,7 +216,7 @@ describe('AuthController', () => {
       const sig = await wallet.signMessage(msg.toString());
       const existing = await User.create({ address: wallet.address });
 
-      jest.spyOn(app.get(UserService), 'registerDevice');
+      jest.spyOn(app.get(UserService), 'registerDevice').mockResolvedValue(undefined);
 
       let user: User;
       await request(app.getHttpServer())
@@ -244,7 +244,7 @@ describe('AuthController', () => {
       const sig = await wallet.signMessage(msg.toString());
       await Session.create('user_123', sha1(sig));
 
-      jest.spyOn(app.get(UserService), 'registerDevice');
+      jest.spyOn(app.get(UserService), 'registerDevice').mockResolvedValue(undefined);
 
       await request(app.getHttpServer())
         .post(`/v1/auth`)

@@ -40,6 +40,7 @@ exports.up = function (knex) {
       table.jsonb('requiredPutBadges').defaultTo([]);
       table.jsonb('requiredSwapBadges').defaultTo([]);
       table.string('manager');
+      table.string('region');
       table.string('txHash');
       table.timestamp('lastSwapAt');
       table.timestamp('createdAt');

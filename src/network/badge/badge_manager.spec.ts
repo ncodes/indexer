@@ -1,11 +1,12 @@
-import { DBService } from '../../db/DBService';
-import { NoopLogger } from '../../common/loggers/noop_logger';
-import { BadgeManagerHandler } from './badge_manager.handler';
-import { toBN } from '../common';
-import BadgeGrant from '../../models/badge_grant';
 import * as moment from 'moment';
+import { NoopLogger } from '../../common/loggers/noop_logger';
+import { DBService } from '../../db/DBService';
 import Badge from '../../models/badge';
+import BadgeGrant from '../../models/badge_grant';
 import Liquidity from '../../models/liquidity';
+import Market from '../../models/market';
+import { toBN } from '../common';
+import { BadgeManagerHandler } from './badge_manager.handler';
 
 const BadgeManagerContract = jest.fn().mockImplementation(() => {
   return {};
@@ -30,6 +31,7 @@ describe('BadgeManagerHandler', () => {
   const contracts = { core: badgeMgrContract };
   const cfg = {
     'app.badges.paymentMethod': 'pm',
+    'app.badges.region': 'region',
   };
 
   afterEach(async () => {
@@ -76,6 +78,12 @@ describe('BadgeManagerHandler', () => {
     });
 
     describe('when badge=pm and path is set', () => {
+      it("should create badge grant record even when liquidity doesn't exist", async () => {
+        await handler.onGrantedBadge('pm', 'bank_transfer', grantee, ['0xLiqAddress'], ['1'], toBN(0), null);
+        const rec = await BadgeGrant.find({ badge: 'pm', path: 'bank_transfer' });
+        expect(rec).toBeDefined();
+      });
+
       it('should update payment method on liquidity matching the specified liquidity address in meta key array', async () => {
         let liq = await Liquidity.create({ network: net, address: '0xLiqAddress' });
         await handler.onGrantedBadge('pm', 'bank_transfer', grantee, ['0xLiqAddress'], ['1'], toBN(0), null);
@@ -89,6 +97,21 @@ describe('BadgeManagerHandler', () => {
         await handler.onGrantedBadge('pm', 'bank_transfer', grantee, ['0xLiqAddress'], ['0'], toBN(0), null);
         liq = await Liquidity.getById(liq.id);
         expect(liq.paymentMethods).toEqual(['pm/union_bank']);
+      });
+    });
+
+    describe('when badge=region and path is set', () => {
+      it("should create badge grant record even when market doesn't exist", async () => {
+        await handler.onGrantedBadge('region', 'asia', '0xMarketAddress', [], [], toBN(0), null);
+        const rec = await BadgeGrant.find({ badge: 'region', path: 'asia' });
+        expect(rec).toBeDefined();
+      });
+
+      it('should update region on market matching the specified grantee address', async () => {
+        let market = await Market.create({ network: net, address: '0xMarketAddress' });
+        await handler.onGrantedBadge('region', 'asia', market.address, [], [], toBN(0), null);
+        market = await Market.getById(market.id);
+        expect(market.region).toEqual('region/asia');
       });
     });
   });

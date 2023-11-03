@@ -1,10 +1,11 @@
 import { BigNumber, ethers, Event, providers } from 'ethers';
-import { Handler } from '../handler';
+import * as moment from 'moment';
 import { Transaction } from 'objection';
 import Badge from '../../models/badge';
 import BadgeGrant from '../../models/badge_grant';
-import * as moment from 'moment';
 import Liquidity from '../../models/liquidity';
+import Market from '../../models/market';
+import { Handler } from '../handler';
 import NetworkService from '../network.service';
 
 export class BadgeManagerHandler extends Handler {
@@ -158,16 +159,26 @@ export class BadgeManagerHandler extends Handler {
     // Handle payment method badge grant
     if (badge == this.cfg.get('app.badges.paymentMethod') && path != '') {
       const liq = await Liquidity.getByAddress(this.network, metadataKeys[0], undefined, txn);
-      await Liquidity.updateById(
-        liq.id,
-        {
-          paymentMethods:
-            metadataValues[0] == '0'
-              ? liq.paymentMethods.filter((v) => v != `${badge}/${path}`)
-              : [...liq.paymentMethods, `${badge}/${path}`],
-        },
-        txn,
-      );
+      if (liq) {
+        await Liquidity.updateById(
+          liq.id,
+          {
+            paymentMethods:
+              metadataValues[0] == '0'
+                ? liq.paymentMethods.filter((v) => v != `${badge}/${path}`)
+                : [...liq.paymentMethods, `${badge}/${path}`],
+          },
+          txn,
+        );
+      }
+    }
+
+    // Handle region badge grant to market
+    if (badge == this.cfg.get('app.badges.region') && path != '') {
+      const market = await Market.getMarket(this.network, grantee, ['id'], undefined, txn);
+      if (market) {
+        await Market.updateById(market.id, { region: `${badge}/${path}` }, txn);
+      }
     }
 
     await BadgeGrant.create(

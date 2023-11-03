@@ -83,6 +83,8 @@ export default class Market extends BaseModel {
   predictDur: number = undefined;
   // The market manager
   manager: string = undefined;
+  // The region badge attached to this market
+  region: string = undefined;
   // Total liquidity in this market
   totalLiquidity: string = undefined;
   // The list of required badges to put liquidity

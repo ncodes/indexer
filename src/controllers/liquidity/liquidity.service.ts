@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import Liquidity from '../../models/liquidity';
-import Swap from '../../models/swap';
-import MarketPrice from '../../models/market_price';
 import * as _ from 'lodash';
-import { MetadataService } from '../../services/metadata/metadata.service';
+import Liquidity from '../../models/liquidity';
+import MarketPrice from '../../models/market_price';
+import OnlineStatus from '../../models/online_status';
+import Swap from '../../models/swap';
 import { isZero } from '../../network/common';
+import { MetadataService } from '../../services/metadata/metadata.service';
 
 @Injectable()
 export class LiquidityService {
@@ -57,6 +58,12 @@ export class LiquidityService {
 
       if (!liq.maxSwapUsd && ((select.includes(`maxSwapUsd`) && !isZero(liq.maxSwap)) || !select.length)) {
         liq.maxSwapUsd = await this.metadataSrv.tryToUsd(net, liq.maxSwap, baseAddress);
+      }
+
+      if (!liq.lastTimeOnline && ((select.includes(`lastTimeOnline`) && !isZero(liq.maxSwap)) || !select.length)) {
+        console.log(await OnlineStatus.isLastTimeOnline(net, provider));
+        liq.online = await OnlineStatus.isOnline(net, provider);
+        liq.lastTimeOnline = await OnlineStatus.isLastTimeOnline(net, provider);
       }
     } catch (e) {
       return Promise.reject(e);

@@ -142,4 +142,23 @@ export default class OnlineStatus extends BaseModel {
 
     return moment().diff(moment(record.updatedAt), 'second') <= activeWindow;
   }
+
+  /**
+   * Check if a user is online
+   * @param network The network name
+   * @param address The address of the user
+   * @param orderId The order ID
+   * @param offerId The offer ID
+   * @param txn Optional transaction object
+   * @returns
+   */
+  static async isLastTimeOnline(network: string, address: string, txn?: Transaction) {
+    const record = await this.query(txn)
+      .where({ network })
+      .where('address', 'ilike', address)
+      .orderBy('updatedAt', 'DESC')
+      .first();
+    if (!record) return undefined;
+    return record.updatedAt || null;
+  }
 }

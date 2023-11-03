@@ -6,9 +6,6 @@ import { isDevMode } from '../../common/common';
 import { NotifierConsumer } from './NotifierConsumer';
 
 export enum NotificationID {
-  MediatorInviteReceived = 'MediatorInviteReceived',
-  MediatorInviteAccepted = 'MediatorInviteAccepted',
-  MediatorRevoked = 'MediatorRevoked',
   PutApproved = 'PutApproved',
   PutRevoked = 'PutRevoked',
   SwapApproved = 'SwapApproved',
@@ -20,8 +17,6 @@ export enum NotificationID {
   SwapOrderReleased = 'SwapOrderReleased',
   SwapOrderCancelled = 'SwapOrderCancelled',
   SwapOrderPaid = 'SwapOrderPaid',
-  NewTicketJoinedPool = 'NewTicketJoinedPool',
-  TicketLeftMarket = 'TicketLeftMarket',
   TicketSlashed = 'TicketSlashed',
   TicketDrafted = 'TicketDrafted',
   DisputeCreated = 'DisputeCreated',

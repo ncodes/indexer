@@ -1,5 +1,6 @@
 import { BigNumber } from 'ethers';
 import { NotificationID } from '../src/jobs/mailer/NotifierService';
+import Convo from '../src/models/convo';
 import Dispute from '../src/models/dispute';
 import Liquidity from '../src/models/liquidity';
 import Market from '../src/models/market';
@@ -19,7 +20,6 @@ import {
   Token,
   TokenPool,
 } from '../typechain';
-import Convo from '../src/models/convo';
 
 declare global {
   namespace Express {
@@ -220,19 +220,6 @@ declare global {
     market: Market;
   }
 
-  interface MediatorInviteReceivedNotification {
-    market: Market;
-  }
-
-  interface MediatorInviteAcceptedNotification {
-    market: Market;
-    invitee: string;
-  }
-
-  interface MediatorRevokedNotification {
-    market: Market;
-  }
-
   interface PutApprovedNotification {
     market: Market;
   }
@@ -257,18 +244,6 @@ declare global {
   interface RemoveLiquidityManagerNotification {
     market: Market;
     provider: string;
-  }
-
-  interface NewTicketJoinedPoolNotification {
-    market: Market;
-    owner: string;
-    numTickets: string;
-  }
-
-  interface NewTicketLeftMarketNotification {
-    market: Market;
-    owner: string;
-    numTickets: string;
   }
 
   interface DisputeCreatedNotification {

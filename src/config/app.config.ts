@@ -101,6 +101,7 @@ export default () => ({
       instructionIssuerPk: process.env.INSTRUCTION_BADGE_ISSUER_PK,
       paymentMethodIssuerPk: process.env.PAYMENT_METHOD_BADGE_ISSUER_PK,
       paymentMethod: process.env.PAYMENT_METHOD_BADGE,
+      region: process.env.REGION_BADGE,
     },
   },
 });

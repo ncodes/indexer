@@ -16,6 +16,7 @@ import { isTestMode } from '../../common/common';
 import { build400, ok } from '../../common/responses/responses';
 import MineTask from '../../models/mine_task';
 import { isValidNetwork } from '../../network/common';
+import { SupportedNetworks } from './../../network/common';
 
 type QueuedTask = {
   task: MineTask;
@@ -26,6 +27,12 @@ type QueuedTask = {
 export function makeMinerId(network: string, address: string) {
   return `miner_${network}_${address}`;
 }
+
+const taskDuration = {
+  [SupportedNetworks.Ethereum]: 60,
+  [SupportedNetworks.Localhost]: 30,
+  [SupportedNetworks.Binance]: 60,
+};
 
 class Miner {
   network: string;
@@ -184,7 +191,8 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
    * @param queuedTask The queued task
    */
   async checkTaskStatus(queuedTask: QueuedTask) {
-    if (Date.now() / 1000 - queuedTask.queuedAt <= 60) return;
+    // Wait for a period of time before checking task status
+    if (Date.now() / 1000 - queuedTask.queuedAt <= (taskDuration[queuedTask.task.network] || 60)) return;
 
     this.logger.debug('Checking task status', queuedTask.task.id);
 

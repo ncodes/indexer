@@ -61,7 +61,6 @@ export class LiquidityService {
       }
 
       if (!liq.lastTimeOnline && ((select.includes(`lastTimeOnline`) && !isZero(liq.maxSwap)) || !select.length)) {
-        console.log(await OnlineStatus.isLastTimeOnline(net, provider));
         liq.online = await OnlineStatus.isOnline(net, provider);
         liq.lastTimeOnline = await OnlineStatus.isLastTimeOnline(net, provider);
       }

@@ -134,7 +134,7 @@ class OKBuilder {
 
   build<T>(): Promise<T> {
     this.extractMeta();
-    if (!this.res) return HttpException.createBody(this._data, undefined, this._status) as unknown as Promise<T>;
+    if (!this.res) return HttpException.createBody(this._data as any, undefined, this._status) as unknown as Promise<T>;
     this.res.status(this._status || HttpStatus.CREATED).json(this._data);
   }
 }

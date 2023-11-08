@@ -290,14 +290,14 @@ export class MediatorManagerHandler extends Handler {
     const numDrafted = dispute.numMediatorsDrafted + 1;
     const fullyDrafted = numDrafted >= dispute.numMediators;
     const blockTime = await getBlockTime(event);
-    const evidEndAt = fullyDrafted ? blockTime + parseInt(await this.getParam('evidenceDur')) : undefined;
-    const commitEndAt = fullyDrafted ? evidEndAt + parseInt(await this.getParam('predictDur')) / 2 : undefined;
-    const predictEndAt = fullyDrafted ? evidEndAt + parseInt(await this.getParam('predictDur')) : undefined;
+    const evidenceEndAt = fullyDrafted ? blockTime + parseInt(await this.getParam('evidenceDur')) : undefined;
+    const commitEndAt = fullyDrafted ? evidenceEndAt + parseInt(await this.getParam('predictDur')) / 2 : undefined;
+    const predictEndAt = fullyDrafted ? evidenceEndAt + parseInt(await this.getParam('predictDur')) : undefined;
     dispute = await Dispute.updateById(
       dispute.id,
       {
         numMediatorsDrafted: numDrafted,
-        evidenceEndAt: evidEndAt ? moment.unix(evidEndAt).toISOString() : undefined,
+        evidenceEndAt: evidenceEndAt ? moment.unix(evidenceEndAt).toISOString() : undefined,
         commitEndAt: commitEndAt ? moment.unix(commitEndAt).toISOString() : undefined,
         predictEndAt: predictEndAt ? moment.unix(predictEndAt).toISOString() : undefined,
         revealEndAt: predictEndAt ? moment.unix(predictEndAt).toISOString() : undefined,
@@ -335,7 +335,7 @@ export class MediatorManagerHandler extends Handler {
     });
 
     // Send notification
-    await this.notifSrv.notify(NotificationID.TicketDrafted, this.network, owner, {
+    this.notifSrv.notify(NotificationID.TicketDrafted, this.network, owner, {
       owner,
       ticketId: ticketId.toNumber(),
       dispute,
@@ -345,13 +345,13 @@ export class MediatorManagerHandler extends Handler {
       // Send notification to provider and taker when fully drafted
       const swap = await Swap.get(this.network, orderId.toNumber(), undefined, undefined, txn);
       const locals = { dispute, evidencePhaseHoursLeft: moment(dispute.evidenceEndAt).fromNow(true) };
-      await this.notifSrv.notify(NotificationID.FullyDrafted, this.network, swap.provider, locals);
-      await this.notifSrv.notify(NotificationID.FullyDrafted, this.network, swap.taker, locals);
+      this.notifSrv.notify(NotificationID.FullyDrafted, this.network, swap.provider, locals);
+      this.notifSrv.notify(NotificationID.FullyDrafted, this.network, swap.taker, locals);
 
       // Send notification to drafted mediators
       const drafted = await Draft.getAll(this.network, marketAddress, orderId.toNumber(), disputeId.toNumber(), txn);
       for (const draft of drafted) {
-        await this.notifSrv.notify(NotificationID.EvidencePhaseStarted, this.network, draft.owner, locals);
+        this.notifSrv.notify(NotificationID.EvidencePhaseStarted, this.network, draft.owner, locals);
       }
     }
   }
@@ -381,14 +381,17 @@ export class MediatorManagerHandler extends Handler {
     await Dispute.updateById(dispute.id, { numMediatorsUndrafted: dispute.numMediatorsUndrafted + 1 }, txn);
 
     // Create swap event
-    await Event.create({
-      network: this.network,
-      marketAddress: order.marketAddress,
-      orderId: ticket.orderId,
-      creator: undrafter,
-      disputeId: ticket.disputeId,
-      action: Events.SwapUndrafted,
-    });
+    await Event.create(
+      {
+        network: this.network,
+        marketAddress: order.marketAddress,
+        orderId: ticket.orderId,
+        creator: undrafter,
+        disputeId: ticket.disputeId,
+        action: Events.SwapUndrafted,
+      },
+      txn,
+    );
 
     // Complete an undraft mining task
     await MineTask.completeOneUndraftTask(this.network, ticket.orderId, ticket.disputeId, txn);
@@ -463,7 +466,7 @@ export class MediatorManagerHandler extends Handler {
     );
 
     // Send notification
-    await this.notifSrv.notify(NotificationID.TicketSlashed, this.network, owner, {
+    this.notifSrv.notify(NotificationID.TicketSlashed, this.network, owner, {
       ticket,
       owner,
       amount: commify(formatEther(amount)),

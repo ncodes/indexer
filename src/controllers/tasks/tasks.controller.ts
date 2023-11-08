@@ -1,8 +1,8 @@
 import { Controller, Get, Query, ValidationPipe } from '@nestjs/common';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
-import { ListQueryDTO } from './query.dto';
 import { ok } from '../../common/responses/responses';
 import MineTask from '../../models/mine_task';
+import { ListQueryDTO } from './query.dto';
 
 @Controller('v1/tasks')
 export class TasksController {
@@ -19,7 +19,7 @@ export class TasksController {
   @Get()
   async list(@Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
     if (!q.count) {
-      const tasks = await MineTask.searchTasks(q.net, q.type, Math.min(q.limit || 25, 100), q.offset);
+      const tasks = await MineTask.fetchMineable(q.net, q.type, Math.min(q.limit || 25, 100), q.offset);
       return ok().data(tasks).build();
     } else {
       return ok()

@@ -1,28 +1,17 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Contract, providers } from 'ethers';
+import * as assetRegABI from '../../abi/AssetRegistry.json';
+import * as badgeMgrABI from '../../abi/BadgeManager.json';
 import * as coreABI from '../../abi/Core.json';
 import * as disputeManagerABI from '../../abi/DisputeManager.json';
+import * as erc20TokenABI from '../../abi/ERC20.json';
 import * as feePoolABI from '../../abi/FeePool.json';
-import * as badgeMgrABI from '../../abi/BadgeManager.json';
-import * as assetRegABI from '../../abi/AssetRegistry.json';
 import * as lpPoolABI from '../../abi/LPPool.json';
 import * as marketCoreABI from '../../abi/MarketCore.json';
 import * as mediatorManagerABI from '../../abi/MediatorManager.json';
-import * as tokenPoolABI from '../../abi/TokenPool.json';
 import * as p2pTokenABI from '../../abi/Token.json';
-import * as erc20TokenABI from '../../abi/ERC20.json';
-import { CoreHandler } from './core/core.handler';
-import { DisputeManagerHandler } from './disputemanager/dispute_manager.handler';
-import { FeePoolHandler } from './feepool/fee_pool.handler';
-import { LPPoolHandler } from './lppool/lp_pool.handler';
-import { MarketCoreHandler } from './marketcore/market_core.handler';
-import { MediatorManagerHandler } from './mediatormanager/mediator_manager.handler';
-import { NotifierService } from '../jobs/mailer/NotifierService';
-import { isTestMode } from '../common/common';
-import { Watcher } from './watcher';
-import { BadgeManagerHandler } from './badge/badge_manager.handler';
-import { AssetRegistryHandler } from './assetregistry/asset_registry.handler';
+import * as tokenPoolABI from '../../abi/TokenPool.json';
 import {
   AssetRegistry,
   BadgeManager,
@@ -36,11 +25,22 @@ import {
   Token,
   TokenPool,
 } from '../../typechain';
+import { isTestMode } from '../common/common';
+import { NotifierService } from '../jobs/mailer/NotifierService';
 import Meta, { MetaKeys } from '../models/meta';
-import { MetadataService } from '../services/metadata/metadata.service';
 import { ExchangeRateService } from '../services/exchange_rate.service';
-import { TokenPoolHandler } from './tokenpool/token_pool.handler';
+import { MetadataService } from '../services/metadata/metadata.service';
+import { AssetRegistryHandler } from './assetregistry/asset_registry.handler';
+import { BadgeManagerHandler } from './badge/badge_manager.handler';
+import { CoreHandler } from './core/core.handler';
+import { DisputeManagerHandler } from './disputemanager/dispute_manager.handler';
+import { FeePoolHandler } from './feepool/fee_pool.handler';
+import { LPPoolHandler } from './lppool/lp_pool.handler';
+import { MarketCoreHandler } from './marketcore/market_core.handler';
+import { MediatorManagerHandler } from './mediatormanager/mediator_manager.handler';
 import Processor from './processor';
+import { TokenPoolHandler } from './tokenpool/token_pool.handler';
+import { Watcher } from './watcher';
 
 @Injectable()
 export default class NetworkService {

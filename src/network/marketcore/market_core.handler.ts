@@ -3,15 +3,15 @@ import { BigNumber, Event, providers } from 'ethers';
 import { Transaction } from 'objection';
 import * as erc20ABI from '../../../abi/ERC20.json';
 import * as erc721ABI from '../../../abi/ERC721.json';
+import { isDevMode } from '../../common/common';
+import { findInLocalhost, findInSynthetic } from '../../common/token_list';
+import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierService';
+import Liquidity from '../../models/liquidity';
 import Market from '../../models/market';
-import { Handler } from '../handler';
 import LiquidityProvider from '../../models/market_provider';
 import PermittedTrader from '../../models/permitted_trader';
-import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierService';
+import { Handler } from '../handler';
 import NetworkService from '../network.service';
-import { findInLocalhost, findInSynthetic } from '../../common/token_list';
-import Liquidity from '../../models/liquidity';
-import { isDevMode } from '../../common/common';
 
 export class MarketCoreHandler extends Handler {
   public logger = new Logger(MarketCoreHandler.name);
@@ -324,7 +324,7 @@ export class MarketCoreHandler extends Handler {
 
     // Notify approved user
     const market = await Market.getMarket(this.network, marketAddress, [], undefined, txn);
-    await this.notifSrv.notify(NotificationID.PutApproved, this.network, address, {
+    this.notifSrv.notify(NotificationID.PutApproved, this.network, address, {
       market,
     });
   }
@@ -344,7 +344,7 @@ export class MarketCoreHandler extends Handler {
 
     // Notify revoked user
     const market = await Market.getMarket(this.network, marketAddress, [], undefined, txn);
-    await this.notifSrv.notify(NotificationID.PutRevoked, this.network, address, { market });
+    this.notifSrv.notify(NotificationID.PutRevoked, this.network, address, { market });
   }
 
   /**
@@ -359,7 +359,7 @@ export class MarketCoreHandler extends Handler {
 
     // Notify approved user
     const market = await Market.getMarket(this.network, marketAddress, [], undefined, txn);
-    await this.notifSrv.notify(NotificationID.SwapApproved, this.network, address, { market });
+    this.notifSrv.notify(NotificationID.SwapApproved, this.network, address, { market });
   }
 
   /**
@@ -374,7 +374,7 @@ export class MarketCoreHandler extends Handler {
 
     // Notify revoked user
     const market = await Market.getMarket(this.network, marketAddress, [], undefined, txn);
-    await this.notifSrv.notify(NotificationID.SwapRevoked, this.network, address, { market });
+    this.notifSrv.notify(NotificationID.SwapRevoked, this.network, address, { market });
   }
 
   /**

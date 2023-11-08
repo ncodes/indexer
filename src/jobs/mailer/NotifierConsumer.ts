@@ -271,7 +271,7 @@ export class NotifierConsumer {
     };
 
     const template = `order/paid`;
-    locals.disputeFrom = moment(swap.disputeFrom).tz(user.timezone).fromNow(true);
+    locals.disputeFrom = moment(swap.disputeFrom).fromNow(true);
     const subject = await this.mailer.render(`${template}.subject`, locals);
     const note = await this.mailer.render(`${template}.note`, locals);
 

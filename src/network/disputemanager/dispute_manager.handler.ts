@@ -1,20 +1,20 @@
-import { BigNumber, ethers, Event as ChainEvent, providers } from 'ethers';
-import { Handler } from '../handler';
-import Swap from '../../models/swap';
-import { Transaction } from 'objection';
-import Dispute from '../../models/dispute';
-import Market from '../../models/market';
-import Commit from '../../models/commit';
-import Reveal from '../../models/reveal';
-import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierService';
-import NetworkService from '../network.service';
-import Draft from '../../models/draft';
+import { BigNumber, Event as ChainEvent, ethers, providers } from 'ethers';
 import * as _ from 'lodash';
+import { Transaction } from 'objection';
 import { isEqualStr, toDec } from '../../common/common';
-import Liquidity from '../../models/liquidity';
-import MineTask, { MineTaskType } from '../../models/mine_task';
-import Meta from '../../models/meta';
+import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierService';
+import Commit from '../../models/commit';
+import Dispute from '../../models/dispute';
+import Draft from '../../models/draft';
 import Event, { Events } from '../../models/event';
+import Liquidity from '../../models/liquidity';
+import Market from '../../models/market';
+import Meta from '../../models/meta';
+import MineTask, { MineTaskType } from '../../models/mine_task';
+import Reveal from '../../models/reveal';
+import Swap from '../../models/swap';
+import { Handler } from '../handler';
+import NetworkService from '../network.service';
 
 export class DisputeManagerHandler extends Handler {
   constructor(
@@ -189,18 +189,21 @@ export class DisputeManagerHandler extends Handler {
     );
 
     // Create swap event
-    await Event.create({
-      network: this.network,
-      marketAddress,
-      orderId: orderId.toNumber(),
-      creator: creator,
-      disputeId: disputeId.toNumber(),
-      action: Events.SwapDisputed,
-    });
+    await Event.create(
+      {
+        network: this.network,
+        marketAddress,
+        orderId: orderId.toNumber(),
+        creator: creator,
+        disputeId: disputeId.toNumber(),
+        action: Events.SwapDisputed,
+      },
+      txn,
+    );
 
     // Send notification;
     const recipient = isEqualStr(swap.provider, creator) ? swap.taker : swap.provider;
-    await this.notifSrv.notify(NotificationID.DisputeCreated, this.network, recipient, {
+    this.notifSrv.notify(NotificationID.DisputeCreated, this.network, recipient, {
       dispute,
       swap,
     });
@@ -241,14 +244,17 @@ export class DisputeManagerHandler extends Handler {
     );
 
     // Create swap event
-    await Event.create({
-      network: this.network,
-      marketAddress,
-      orderId: orderId.toNumber(),
-      creator: committer,
-      disputeId: disputeId.toNumber(),
-      action: Events.SwapCommitted,
-    });
+    await Event.create(
+      {
+        network: this.network,
+        marketAddress,
+        orderId: orderId.toNumber(),
+        creator: committer,
+        disputeId: disputeId.toNumber(),
+        action: Events.SwapCommitted,
+      },
+      txn,
+    );
   }
 
   /**
@@ -286,15 +292,18 @@ export class DisputeManagerHandler extends Handler {
     );
 
     // Create swap event
-    await Event.create({
-      network: this.network,
-      marketAddress,
-      orderId: orderId.toNumber(),
-      creator: revealer,
-      disputeId: disputeId.toNumber(),
-      vote,
-      action: Events.SwapRevealed,
-    });
+    await Event.create(
+      {
+        network: this.network,
+        marketAddress,
+        orderId: orderId.toNumber(),
+        creator: revealer,
+        disputeId: disputeId.toNumber(),
+        vote,
+        action: Events.SwapRevealed,
+      },
+      txn,
+    );
   }
 
   /**
@@ -377,14 +386,17 @@ export class DisputeManagerHandler extends Handler {
     await MineTask.completeOneExecutionTask(this.network, marketAddress, dispute.orderId, dispute.disputeId, txn);
 
     // Create swap event
-    await Event.create({
-      network: this.network,
-      marketAddress,
-      orderId: orderId.toNumber(),
-      creator: executor,
-      disputeId: disputeId.toNumber(),
-      action: Events.SwapExecuted,
-    });
+    await Event.create(
+      {
+        network: this.network,
+        marketAddress,
+        orderId: orderId.toNumber(),
+        creator: executor,
+        disputeId: disputeId.toNumber(),
+        action: Events.SwapExecuted,
+      },
+      txn,
+    );
 
     // Collate notification recipients
     const recipients: { address: string; drafted?: boolean }[] = [];
@@ -402,7 +414,7 @@ export class DisputeManagerHandler extends Handler {
 
     // Send notification
     for (const recipient of recipients) {
-      await this.notifSrv.notify(NotificationID.DisputeExecuted, swap.network, recipient.address, {
+      this.notifSrv.notify(NotificationID.DisputeExecuted, swap.network, recipient.address, {
         swap,
         dispute,
         drafted: recipient.drafted,

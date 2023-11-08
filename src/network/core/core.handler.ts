@@ -545,7 +545,7 @@ export class CoreHandler extends Handler {
 
     // Send notification
     swap.market = market;
-    await this.notifSrv.notify(NotificationID.NewInteractiveSwap, this.network, provider, <SwapOrderNotificationData>{
+    this.notifSrv.notify(NotificationID.NewInteractiveSwap, this.network, provider, <SwapOrderNotificationData>{
       marketAddress,
       provider,
       swapper,
@@ -670,7 +670,7 @@ export class CoreHandler extends Handler {
       );
 
       // Send notification
-      await this.notifSrv.notify(NotificationID.NewInstantSwap, this.network, provider, <InstantSwapNotificationData>{
+      this.notifSrv.notify(NotificationID.NewInstantSwap, this.network, provider, <InstantSwapNotificationData>{
         market,
         swap,
         liq,
@@ -774,10 +774,10 @@ export class CoreHandler extends Handler {
       // or send to both if neither is the finalizer
       const notifData = { market, liq, swap };
       if (includesStr([swap.provider, swap.taker], swap.finalizer)) {
-        await this.notifSrv.notify(NotificationID.SwapOrderReleased, this.network, swap.getPayer(), notifData);
+        this.notifSrv.notify(NotificationID.SwapOrderReleased, this.network, swap.getPayer(), notifData);
       } else {
-        await this.notifSrv.notify(NotificationID.SwapOrderReleased, this.network, swap.provider, notifData);
-        await this.notifSrv.notify(NotificationID.SwapOrderReleased, this.network, swap.taker, notifData);
+        this.notifSrv.notify(NotificationID.SwapOrderReleased, this.network, swap.provider, notifData);
+        this.notifSrv.notify(NotificationID.SwapOrderReleased, this.network, swap.taker, notifData);
       }
     }
   }
@@ -851,10 +851,10 @@ export class CoreHandler extends Handler {
     const notifData = { market, liq, swap };
     if (includesStr([swap.provider, swap.taker], canceller)) {
       const recipient = swap.provider === canceller ? swap.taker : swap.provider;
-      await this.notifSrv.notify(NotificationID.SwapOrderCancelled, this.network, recipient, notifData);
+      this.notifSrv.notify(NotificationID.SwapOrderCancelled, this.network, recipient, notifData);
     } else {
-      await this.notifSrv.notify(NotificationID.SwapOrderCancelled, this.network, swap.provider, notifData);
-      await this.notifSrv.notify(NotificationID.SwapOrderCancelled, this.network, swap.taker, notifData);
+      this.notifSrv.notify(NotificationID.SwapOrderCancelled, this.network, swap.provider, notifData);
+      this.notifSrv.notify(NotificationID.SwapOrderCancelled, this.network, swap.taker, notifData);
     }
   }
 
@@ -924,7 +924,7 @@ export class CoreHandler extends Handler {
 
     // Send notification
     const recipient = swap.payer == swap.provider ? swap.taker : swap.provider;
-    await this.notifSrv.notify(NotificationID.SwapOrderPaid, this.network, recipient, {
+    this.notifSrv.notify(NotificationID.SwapOrderPaid, this.network, recipient, {
       swap,
       market,
     });
@@ -1452,11 +1452,11 @@ export class CoreHandler extends Handler {
     const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
     const notifData = { market, provider };
     if (oldManager != constants.AddressZero && !isEqualStr(manager, oldManager)) {
-      await this.notifSrv.notify(NotificationID.RemoveLiquidityManager, this.network, oldManager, notifData);
+      this.notifSrv.notify(NotificationID.RemoveLiquidityManager, this.network, oldManager, notifData);
     }
 
     // Notify the new manager
-    await this.notifSrv.notify(NotificationID.UpdatedLiquidityManager, this.network, manager, notifData);
+    this.notifSrv.notify(NotificationID.UpdatedLiquidityManager, this.network, manager, notifData);
   }
 
   /**
@@ -1575,7 +1575,7 @@ export class CoreHandler extends Handler {
     const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
 
     // Send notification
-    await this.notifSrv.notify(NotificationID.NewOffer, this.network, provider, {
+    this.notifSrv.notify(NotificationID.NewOffer, this.network, provider, {
       market,
       liq,
       offer,
@@ -1637,7 +1637,7 @@ export class CoreHandler extends Handler {
     const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, undefined, txn);
 
     // Send notification
-    await this.notifSrv.notify(NotificationID.OfferUpdated, this.network, offer.provider, {
+    this.notifSrv.notify(NotificationID.OfferUpdated, this.network, offer.provider, {
       updated: true,
       market,
       liq,
@@ -1692,7 +1692,7 @@ export class CoreHandler extends Handler {
     const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, undefined, txn);
 
     // Send notification
-    await this.notifSrv.notify(NotificationID.OfferAccepted, this.network, offer.creator, {
+    this.notifSrv.notify(NotificationID.OfferAccepted, this.network, offer.creator, {
       offer,
       liq,
       market,
@@ -1729,7 +1729,7 @@ export class CoreHandler extends Handler {
     );
 
     // Send notification
-    await this.notifSrv.notify(NotificationID.OfferUnaccepted, this.network, offer.creator, {
+    this.notifSrv.notify(NotificationID.OfferUnaccepted, this.network, offer.creator, {
       offer,
       liq,
       market,
@@ -1766,7 +1766,7 @@ export class CoreHandler extends Handler {
     const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, undefined, txn);
 
     // Send notification
-    await this.notifSrv.notify(NotificationID.OfferCancelled, this.network, offer.provider, {
+    this.notifSrv.notify(NotificationID.OfferCancelled, this.network, offer.provider, {
       offer,
       liq,
       market,
@@ -1803,7 +1803,7 @@ export class CoreHandler extends Handler {
     const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, undefined, txn);
 
     // Send notification
-    await this.notifSrv.notify(NotificationID.OfferExecuted, this.network, offer.provider, {
+    this.notifSrv.notify(NotificationID.OfferExecuted, this.network, offer.provider, {
       offer,
       market,
       liq,

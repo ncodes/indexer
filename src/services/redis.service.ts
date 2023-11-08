@@ -30,14 +30,8 @@ export class RedisService {
    * @param key The target key
    */
   async get(key: string): Promise<string> {
-    return new Promise((res, rej) => {
-      this.client
-        .get(key)
-        .then((val) => {
-          return res(val);
-        })
-        .catch(rej);
-    });
+    const res = await this.client.get(key);
+    return res;
   }
 
   /**
@@ -46,44 +40,41 @@ export class RedisService {
    * @param value The value stored with the key.
    * @param expireSec The number of second to keep to key around
    */
-  setWithExpire(key: string, value: string, expireSec: number): Promise<void> {
-    return new Promise((res, rej) => {
-      this.client
-        .setex(key, expireSec, value)
-        .then(() => {
-          return res();
-        })
-        .catch(rej);
-    });
+  async setWithExpire(key: string, value: string, expireSec: number): Promise<void> {
+    await this.client.setex(key, expireSec, value);
   }
 
   /**
    * delete deletes a key
    * @param key The target key
    */
-  delete(key: string): Promise<void> {
-    return new Promise((res, rej) => {
-      this.client
-        .del(key)
-        .then(() => {
-          res();
-        })
-        .catch(rej);
-    });
+  async delete(key: string): Promise<void> {
+    await this.client.del(key);
   }
 
   /**
    * exist checks if a key exists
    * @param key The target key
    */
-  exist(key: string): Promise<boolean> {
-    return new Promise(async (res, rej) => {
-      this.client
-        .exists(key)
-        .then((ex) => {
-          return res(ex === 1);
-        })
-        .catch(rej);
-    });
+  async exist(key: string): Promise<boolean> {
+    const ex = await this.client.exists(key);
+    return ex === 1;
+  }
+
+  /**
+   * rPush pushes a value to the tail of a list
+   * @param key The name of the list
+   * @param value The value to push
+   */
+  async rPush(key: string, value: string): Promise<void> {
+    await this.client.rpush(key, value);
+  }
+
+  /**
+   * lPop pops a value from the head of a list
+   * @param key The name of the list
+   */
+  async lPop(key: string): Promise<string> {
+    return this.client.lpop(key);
   }
 }

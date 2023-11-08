@@ -62,11 +62,13 @@ function getProviders() {
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (cfgSrv: ConfigService) => ({
-        ttl: parseInt(cfgSrv.get('app.throttle_ttl')),
-        limit: parseInt(cfgSrv.get('app.throttle_limit')),
-        storage: new ThrottlerStorageRedisService(cfgSrv.get('app.redis.url')),
-      }),
+      useFactory: (cfgSrv: ConfigService) => [
+        {
+          ttl: parseInt(cfgSrv.get('app.throttle_ttl')),
+          limit: parseInt(cfgSrv.get('app.throttle_limit')),
+          storage: new ThrottlerStorageRedisService(cfgSrv.get('app.redis.url')),
+        },
+      ],
     }),
     JobsModule,
     AuthModule,

@@ -1,8 +1,8 @@
-import { randStr } from '../common/common';
-import Objection, { raw, Transaction } from 'objection';
-import { BaseModel } from './base';
-import * as moment from 'moment';
 import * as _ from 'lodash';
+import * as moment from 'moment';
+import Objection, { Transaction } from 'objection';
+import { randStr } from '../common/common';
+import { BaseModel } from './base';
 
 export enum MineTaskType {
   Draft = 'draft',
@@ -79,22 +79,20 @@ export default class MineTask extends BaseModel {
   }
 
   /**
-   * searchTasks finds tasks
+   * Fetch minable tasks
    * @param network The network name
    * @param type The task type
    * @param limit The number of records to return (optional).
    * @param offset The query offset (optional)
    * @param txn Optional transaction object
    */
-  static searchTasks(network: string, type?: MineTaskType, limit?: number, offset?: number, txn?: Transaction) {
-    let q = this.query(txn)
-      .select('*', raw('count(*) over() as' + ' "$queryCount"'))
-      .whereNotDeleted()
-      .where({ network, completed: false });
+  static fetchMineable(network: string, type?: MineTaskType, limit?: number, offset?: number, txn?: Transaction) {
+    let q = this.query(txn).select('*').whereNotDeleted().where({ completed: false });
+    if (network) q = q.where({ network });
     if (type) q = q.where({ type });
     if (offset != undefined) q = q.offset(offset);
     if (limit) q = q.limit(limit);
-    return q.orderBy('mineAt', 'ASC');
+    return q.where('mineAt', '<=', 'now()').orderBy('mineAt', 'ASC');
   }
 
   /**

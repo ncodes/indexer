@@ -16,7 +16,7 @@
     {
       "asset": "0002",
       "type": "ERC20",
-      "address": "0xf5059a5D33d5853360D16C683c16e67980206f36",
+      "address": "0x95401dc811bb5740090279Ba06cfA8fcF6113778",
       "name": "WETH LOCAL",
       "symbol": "WETH",
       "decimals": 18,
@@ -26,7 +26,7 @@
     {
       "asset": "0003",
       "type": "ERC20",
-      "address": "0x95401dc811bb5740090279Ba06cfA8fcF6113778",
+      "address": "0x998abeb3E57409262aE5b751f60747921B33613E",
       "name": "UNI LOCAL",
       "symbol": "UNI",
       "decimals": 18,
@@ -36,7 +36,7 @@
     {
       "asset": "0004",
       "type": "SYNTHETIC",
-      "address": "0x998abeb3E57409262aE5b751f60747921B33613E",
+      "address": "0x70e0bA845a1A0F2DA3359C97E0285013525FFC49",
       "name": "NGN LOCAL",
       "symbol": "NGN",
       "decimals": 18,

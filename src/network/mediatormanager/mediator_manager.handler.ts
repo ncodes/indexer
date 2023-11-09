@@ -7,6 +7,7 @@ import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierServi
 import Dispute from '../../models/dispute';
 import Draft from '../../models/draft';
 import Event, { Events } from '../../models/event';
+import Market from '../../models/market';
 import Meta from '../../models/meta';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 import Swap from '../../models/swap';
@@ -286,13 +287,17 @@ export class MediatorManagerHandler extends Handler {
       txn,
     );
 
+    const market = await Market.getMarket(this.network, marketAddress);
+
     // Compute dispute phases times when dispute is fully drafted
+    const evidenceDur = market.evidenceDur || parseInt(await this.getParam('evidenceDur'));
+    const predictDur = market.predictDur || parseInt(await this.getParam('predictDur'));
     const numDrafted = dispute.numMediatorsDrafted + 1;
     const fullyDrafted = numDrafted >= dispute.numMediators;
     const blockTime = await getBlockTime(event);
-    const evidenceEndAt = fullyDrafted ? blockTime + parseInt(await this.getParam('evidenceDur')) : undefined;
-    const commitEndAt = fullyDrafted ? evidenceEndAt + parseInt(await this.getParam('predictDur')) / 2 : undefined;
-    const predictEndAt = fullyDrafted ? evidenceEndAt + parseInt(await this.getParam('predictDur')) : undefined;
+    const evidenceEndAt = fullyDrafted ? blockTime + evidenceDur : undefined;
+    const commitEndAt = fullyDrafted ? evidenceEndAt + predictDur / 2 : undefined;
+    const predictEndAt = fullyDrafted ? evidenceEndAt + predictDur : undefined;
     dispute = await Dispute.updateById(
       dispute.id,
       {

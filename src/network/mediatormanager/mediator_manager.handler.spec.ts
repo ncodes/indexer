@@ -160,6 +160,14 @@ describe('MediatorManagerHandler', () => {
   });
 
   describe('.onDrafted', () => {
+    beforeEach(async () => {
+      await Market.create({
+        network: net,
+        creator: creator,
+        address: marketAddress,
+      });
+    });
+
     it('should mark ticket as drafted', async () => {
       let ticket = await Ticket.create({
         network: net,

@@ -10,8 +10,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { isEthereumAddress } from 'class-validator';
-import { Socket } from 'dgram';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { isTestMode } from '../../common/common';
 import { build400, ok } from '../../common/responses/responses';
 import MineTask from '../../models/mine_task';
@@ -72,6 +71,10 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
       setInterval(() => {
         this.assignTask();
       }, 1000);
+
+      setInterval(() => {
+        this.logger.log(`Miners: ${Object.keys(this.knownMiners).length} / Queue Size: ${this.queue.length}`);
+      }, 5000);
     }
   }
 
@@ -83,8 +86,9 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     this.logger.log('Websocket connected');
   }
 
-  handleDisconnect() {
-    this.logger.log('Websocket disconnected');
+  handleDisconnect(client: Socket) {
+    this.logger.log('Websocket disconnected', client.id);
+    this.cleanUpMiner(client.id);
   }
 
   /**
@@ -124,13 +128,8 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
       });
       this.minersQueue[network] = [...(this.minersQueue[network] || []), miner];
       this.knownMiners[miner.id] = miner;
-      this.logger.debug(`Miner registered`, miner.id);
+      this.logger.debug(`Miner registered`, JSON.stringify({ minerId: miner.id, clientId: client.id }));
     } else {
-      if (this.knownMiners[minerId].socket != client) {
-        this.knownMiners[minerId].socket.disconnect();
-        this.knownMiners[minerId].socket = client;
-      }
-
       const curTask = this.minerTask[minerId];
       if (curTask) {
         this.checkTaskStatus(curTask);
@@ -154,7 +153,6 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
       this.queuedTasks[t.id] = { task: t, queuedAt: Date.now() / 1000 };
       this.queue.push(t);
     }
-    this.logger.debug(`Queue Size: ${this.queue.length}`);
   }
 
   /**
@@ -177,6 +175,8 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
       this.logger.debug(`No miner available for ${task.network}`);
       if (!queuedTask) this.queue.push(task);
       return 'No miner available';
+    } else if (!miner.socket.connected) {
+      return 'Miner disconnected';
     }
 
     try {
@@ -222,5 +222,19 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     // Add the previously assigned miner back to the pool
     delete this.minerTask[queuedTask.minerId];
     this.minersQueue[task.network].push(this.knownMiners[queuedTask.minerId]);
+  }
+
+  /**
+   * Clean up miner whose socket is disconnected
+   * @param clientId The client id
+   */
+  cleanUpMiner(clientId: string) {
+    for (const minerId in this.knownMiners) {
+      if (this.knownMiners[minerId].socket.id === clientId) {
+        delete this.knownMiners[minerId];
+        delete this.minerTask[minerId];
+        this.logger.debug(`Disconnected miner was removed`, minerId);
+      }
+    }
   }
 }

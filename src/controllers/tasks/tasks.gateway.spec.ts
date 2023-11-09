@@ -145,36 +145,6 @@ describe('TaskGateway', () => {
       expect(mockCheckTaskStatus).toHaveBeenCalledTimes(1);
       expect(mockCheckTaskStatus).toHaveBeenCalledWith(gateway.minerTask[miner.id]);
     });
-
-    it('should disconnect and replace old socket if miner is already known', async () => {
-      const mockCheckTaskStatus = jest.fn();
-      gateway.checkTaskStatus = mockCheckTaskStatus;
-
-      const mockDisconnect = jest.fn();
-      const socket = { disconnect: mockDisconnect };
-      let resp = await gateway.handleRegisterMiner(socket as any, net, '0xB24780438dD4DB52848A3A398B1A8A08223aBd83');
-      expect(resp).toBeInstanceOf(Object);
-      expect(resp).toEqual({
-        data: {
-          ok: true,
-        },
-      });
-
-      const miner = gateway.minersQueue[net][0];
-      gateway.minerTask[miner.id] = { task, minerId: miner.id, queuedAt: Date.now() / 1000 };
-
-      const socket2 = { id: 'xyz' };
-      resp = await gateway.handleRegisterMiner(socket2 as any, net, '0xB24780438dD4DB52848A3A398B1A8A08223aBd83');
-      expect(resp).toEqual({
-        data: {
-          ok: true,
-        },
-      });
-      expect(gateway.knownMiners[miner.id].socket).toEqual(socket2);
-      expect(mockDisconnect).toHaveBeenCalledTimes(1);
-      expect(mockCheckTaskStatus).toHaveBeenCalledTimes(1);
-      expect(mockCheckTaskStatus).toHaveBeenCalledWith(gateway.minerTask[miner.id]);
-    });
   });
 
   describe('.produceTasks', () => {
@@ -247,12 +217,24 @@ describe('TaskGateway', () => {
       expect(gateway.queue).toHaveLength(0);
     });
 
+    it('should return `Miner disconnected` when a miner socket disconnected', async () => {
+      const mockEmit = jest.fn().mockImplementation((event, task, cb) => {
+        cb();
+      });
+
+      const socket = { emit: mockEmit, connected: false };
+      await gateway.handleRegisterMiner(socket as any, net, '0xB24780438dD4DB52848A3A398B1A8A08223aBd83');
+      await gateway.produceTasks();
+      const resp = gateway.assignTask();
+      expect(resp).toEqual('Miner disconnected');
+    });
+
     it('should return `ok` when a miner is found and emit task to miner and update state correctly', async () => {
       const mockEmit = jest.fn().mockImplementation((event, task, cb) => {
         cb();
       });
 
-      const socket = { emit: mockEmit };
+      const socket = { emit: mockEmit, connected: true };
       await gateway.handleRegisterMiner(socket as any, net, '0xB24780438dD4DB52848A3A398B1A8A08223aBd83');
       await gateway.produceTasks();
       const resp = gateway.assignTask();
@@ -271,7 +253,7 @@ describe('TaskGateway', () => {
         throw new Error('failed to emit');
       });
 
-      const socket = { emit: mockEmit };
+      const socket = { emit: mockEmit, connected: true };
       await gateway.handleRegisterMiner(socket as any, net, '0xB24780438dD4DB52848A3A398B1A8A08223aBd83');
       await gateway.produceTasks();
       const resp = gateway.assignTask();
@@ -290,7 +272,7 @@ describe('TaskGateway', () => {
         throw new Error('failed to emit');
       });
 
-      const socket = { emit: mockEmit };
+      const socket = { emit: mockEmit, connected: true };
       await gateway.handleRegisterMiner(socket as any, net, '0xB24780438dD4DB52848A3A398B1A8A08223aBd83');
       await gateway.produceTasks();
       const task = gateway.queue[0];
@@ -304,6 +286,22 @@ describe('TaskGateway', () => {
       expect(gateway.minersQueue[net]).toHaveLength(0);
       expect(gateway.knownMiners).toEqual({});
       expect(gateway.queue).toHaveLength(0);
+    });
+  });
+
+  describe('.cleanUpMiner', () => {
+    it('should remove miner from queue and knownMiners', async () => {
+      const minerId = makeMinerId(net, '0xB24780438dD4DB52848A3A398B1A8A08223aBd83');
+
+      const socket = { id: 'socket_123' };
+      await gateway.handleRegisterMiner(socket as any, net, '0xB24780438dD4DB52848A3A398B1A8A08223aBd83');
+      expect(gateway.minersQueue[net]).toHaveLength(1);
+      expect(gateway.knownMiners).toHaveProperty(minerId);
+
+      gateway.minerTask[minerId] = { minerId } as any;
+      await gateway.cleanUpMiner(socket.id);
+      expect(gateway.knownMiners).toEqual({});
+      expect(gateway.minerTask).toEqual({});
     });
   });
 });

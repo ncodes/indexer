@@ -124,10 +124,17 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
       });
       this.minersQueue[network] = [...(this.minersQueue[network] || []), miner];
       this.knownMiners[miner.id] = miner;
-      this.logger.debug(`Miner ${address} registered`);
+      this.logger.debug(`Miner registered`, miner.id);
     } else {
+      if (this.knownMiners[minerId].socket != client) {
+        this.knownMiners[minerId].socket.disconnect();
+        this.knownMiners[minerId].socket = client;
+      }
+
       const curTask = this.minerTask[minerId];
-      if (curTask) this.checkTaskStatus(curTask);
+      if (curTask) {
+        this.checkTaskStatus(curTask);
+      }
     }
 
     return ok().data({ ok: true }).build();
@@ -160,7 +167,9 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
    */
   assignTask(queuedTask?: MineTask) {
     const task = queuedTask || this.queue.shift();
-    if (!task) return 'No task available';
+    if (!task) {
+      return 'No task available';
+    }
 
     const miners = this.minersQueue[task.network] || [];
     const miner = miners.shift();
@@ -192,7 +201,9 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
    */
   async checkTaskStatus(queuedTask: QueuedTask) {
     // Wait for a period of time before checking task status
-    if (Date.now() / 1000 - queuedTask.queuedAt <= (taskDuration[queuedTask.task.network] || 60)) return;
+    if (Date.now() / 1000 - queuedTask.queuedAt <= (taskDuration[queuedTask.task.network] || 60)) {
+      return;
+    }
 
     this.logger.debug('Checking task status', queuedTask.task.id);
 
@@ -204,7 +215,9 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     }
 
     // If not completed, reassign task to another miner
-    if (!task.completed && this.assignTask(task) instanceof Error) return;
+    if (!task.completed && this.assignTask(task) instanceof Error) {
+      return;
+    }
 
     // Add the previously assigned miner back to the pool
     delete this.minerTask[queuedTask.minerId];

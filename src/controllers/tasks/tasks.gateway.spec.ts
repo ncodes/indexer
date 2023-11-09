@@ -145,6 +145,36 @@ describe('TaskGateway', () => {
       expect(mockCheckTaskStatus).toHaveBeenCalledTimes(1);
       expect(mockCheckTaskStatus).toHaveBeenCalledWith(gateway.minerTask[miner.id]);
     });
+
+    it('should disconnect and replace old socket if miner is already known', async () => {
+      const mockCheckTaskStatus = jest.fn();
+      gateway.checkTaskStatus = mockCheckTaskStatus;
+
+      const mockDisconnect = jest.fn();
+      const socket = { disconnect: mockDisconnect };
+      let resp = await gateway.handleRegisterMiner(socket as any, net, '0xB24780438dD4DB52848A3A398B1A8A08223aBd83');
+      expect(resp).toBeInstanceOf(Object);
+      expect(resp).toEqual({
+        data: {
+          ok: true,
+        },
+      });
+
+      const miner = gateway.minersQueue[net][0];
+      gateway.minerTask[miner.id] = { task, minerId: miner.id, queuedAt: Date.now() / 1000 };
+
+      const socket2 = { id: 'xyz' };
+      resp = await gateway.handleRegisterMiner(socket2 as any, net, '0xB24780438dD4DB52848A3A398B1A8A08223aBd83');
+      expect(resp).toEqual({
+        data: {
+          ok: true,
+        },
+      });
+      expect(gateway.knownMiners[miner.id].socket).toEqual(socket2);
+      expect(mockDisconnect).toHaveBeenCalledTimes(1);
+      expect(mockCheckTaskStatus).toHaveBeenCalledTimes(1);
+      expect(mockCheckTaskStatus).toHaveBeenCalledWith(gateway.minerTask[miner.id]);
+    });
   });
 
   describe('.produceTasks', () => {

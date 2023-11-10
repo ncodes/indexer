@@ -1,12 +1,14 @@
-import * as ethereum from './tokenlist/ethereum.json';
-import * as polygon from './tokenlist/polygon.json';
-import * as binance from './tokenlist/binance.json';
-import * as optimism from './tokenlist/optimism.json';
-import * as localhost from './tokenlist/localhost.json';
-import * as synthetic from './tokenlist/synthetic.json';
 import * as _ from 'lodash';
+import { isEqualStr } from './common';
+import * as binance from './tokenlist/binance.json';
+import * as ethereum from './tokenlist/ethereum.json';
+import * as localhost from './tokenlist/localhost.json';
+import * as optimism from './tokenlist/optimism.json';
+import * as polygon from './tokenlist/polygon.json';
+import * as sepolia from './tokenlist/sepolia.json';
+import * as synthetic from './tokenlist/synthetic.json';
 
-export type ListName = 'ethereum' | 'polygon' | 'binance' | 'optimism' | 'localhost' | 'synthetic';
+export type ListName = 'ethereum' | 'polygon' | 'binance' | 'optimism' | 'localhost' | 'synthetic' | 'sepolia';
 
 /**
  * TokenList contains a network categorized list
@@ -23,8 +25,9 @@ export const TokenLists: { [key in ListName]: TokenList.TokenData } = {
   polygon,
   binance,
   optimism,
-  localhost,
   synthetic,
+  localhost,
+  sepolia,
 };
 
 /**
@@ -35,7 +38,7 @@ export const TokenLists: { [key in ListName]: TokenList.TokenData } = {
 export function getTokenInfo(network: string, address: string): TokenList.Token {
   const netList = TokenLists[network];
   if (!netList) return;
-  return _.find(netList.tokens, (x) => x.address === address);
+  return _.find(netList.tokens, (x) => isEqualStr(x.address, address));
 }
 
 /**
@@ -44,7 +47,7 @@ export function getTokenInfo(network: string, address: string): TokenList.Token 
  */
 export function findInLocalhost(address: string): TokenList.Token {
   return TokenLists.localhost.tokens.find((token) => {
-    const match = token.address.toLowerCase() === address.toLowerCase();
+    const match = isEqualStr(token.address, address);
     if (!match) return;
     token.isSynthetic = token.isSynthetic || token.type == 'SYNTHETIC';
     return token;
@@ -57,7 +60,7 @@ export function findInLocalhost(address: string): TokenList.Token {
  */
 export function findInSynthetic(address: string): TokenList.Token {
   return TokenLists.synthetic.tokens.find((token) => {
-    const match = token.address.toLowerCase() === address.toLowerCase();
+    const match = isEqualStr(token.address, address);
     if (!match) return;
     token.isSynthetic = token.isSynthetic || token.type == 'SYNTHETIC';
     return token;

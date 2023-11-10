@@ -1,8 +1,8 @@
-import { BigNumber, BigNumberish, Event } from 'ethers';
-import { EnumValues } from 'enum-values';
-import { toDec } from '../common/common';
 import Decimal from 'decimal.js';
+import { EnumValues } from 'enum-values';
+import { BigNumber, BigNumberish, Event } from 'ethers';
 import * as moment from 'moment/moment';
+import { toDec } from '../common/common';
 
 export enum SupportedNetworks {
   Ethereum = 'ethereum',
@@ -10,6 +10,7 @@ export enum SupportedNetworks {
   Optimism = 'optimism',
   Binance = 'binance',
   Localhost = 'localhost',
+  Sepolia = 'sepolia',
 }
 
 export enum ChainIDs {
@@ -17,6 +18,7 @@ export enum ChainIDs {
   Polygon = 137,
   Optimism = 10,
   Binance = 56,
+  Sepolia = 11155111,
 }
 
 // Configuration for CoinMarketCap API
@@ -26,12 +28,14 @@ export const CoinGeckoConfig = {
     binance: 'binance-smart-chain',
     optimism: 'optimistic-ethereum',
     polygon: 'polygon-pos',
+    sepolia: 'sepolia',
   },
   symbolMap: {
     ETH: 'ethereum',
     BNB: 'binancecoin',
     MATIC: 'matic-network',
     BTC: 'bitcoin',
+    SEP_ETH: 'sepolia',
   },
 };
 

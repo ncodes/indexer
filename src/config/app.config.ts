@@ -2,14 +2,13 @@ import { parseInt } from 'lodash';
 
 function getContractsParams(): ContractsParams {
   return {
-    defaultDisputeDelayDur: parseInt(process.env[`MC_DEFAULT_DISPUTE_DELAY_DUR`]),
     minTimeToPay: parseInt(process.env[`OC_MIN_TIME_TO_PAY`]),
     orderGraceDur: parseInt(process.env[`OC_ORDER_GRACE_DUR`]),
     maxOpenOrders: parseInt(process.env[`OC_MAX_OPEN_ORDERS`]),
     maxOpenDisputes: parseInt(process.env[`OC_MAX_OPEN_DISPUTES`]),
     transferToFeePoolInterval: parseInt(process.env[`OC_TRANSFER_TO_FEE_POOL_INTERVAL`]),
     nftDiscountBP: parseInt(process.env[`OC_NFT_DISCOUNT_BP`]),
-
+    defaultDisputeDelayDur: parseInt(process.env[`MC_DEFAULT_DISPUTE_DELAY_DUR`]),
     baseTicketPrice: process.env[`MM_BASE_TICKET_PRICE`],
     ticketWindowDur: parseInt(process.env[`MM_TICKET_WINDOW_DUR`]),
     ticketsPerWindow: parseInt(process.env[`MM_TICKETS_PER_WINDOW`]),
@@ -20,12 +19,14 @@ function getContractsParams(): ContractsParams {
     ticketMatureDur: parseInt(process.env[`MM_TICKET_MATURE_DUR`]),
     ticketCancelDur: parseInt(process.env[`MM_TICKET_CANCEL_DUR`]),
     ticketExpireDur: parseInt(process.env[`MM_TICKET_EXPIRE_DUR`]),
-    noVoteSlashBP: parseInt(process.env[`MM_NO_VOTE_SLASH_BP`]),
-    loseVoteSlashBP: parseInt(process.env[`MM_LOSE_VOTE_SLASH_BP`]),
-
+    reqPoolBond: process.env[`MM_POOL_REQ_BOND`],
+    poolDraftReward: process.env[`MM_POOL_DRAFT_REWARD`],
+    poolWinReward: process.env[`MM_POOL_WIN_REWARD`],
+    poolNumDraftee: parseInt(process.env[`MM_POOL_NUM_DRAFTEE`]),
+    poolNoVoteSlashBP: parseInt(process.env[`MM_POOL_NO_VOTE_SLASH_BP`]),
+    poolLoseVoteSlashBP: parseInt(process.env[`MM_POOL_LOSE_VOTE_SLASH_BP`]),
     evidenceDur: parseInt(process.env[`DM_EVIDENCE_DUR`]),
     predictDur: parseInt(process.env[`DM_PREDICT_DUR`]),
-
     operatorBond: process.env[`OP_OPERATOR_BOND`],
   };
 }

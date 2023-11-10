@@ -109,67 +109,58 @@ export default class NetworkService {
    */
   private async watchNetwork(network: string) {
     this.contracts = {};
-    const prov = new providers.JsonRpcProvider(this.cfgSrv.get(`app.contractsAddress.rpcUrl`));
-    this.provider = prov;
+    const rpcUrl = this.cfgSrv.get(`app.contractsAddress.rpcUrl`);
+    if (!rpcUrl) throw new Error('rpcUrl is not defined');
+    const provider = new providers.JsonRpcProvider(rpcUrl);
+    this.provider = provider;
 
     // Initialize contracts
-    this.contracts.p2pToken = new Contract(
-      this.cfgSrv.get(`app.contractsAddress.p2pTokenAddr`),
-      p2pTokenABI,
-      prov,
-    ) as Token;
-    this.contracts.marketCore = new Contract(
-      this.cfgSrv.get(`app.contractsAddress.marketCoreAddr`),
-      marketCoreABI,
-      prov,
-    ) as MarketCore;
-    this.contracts.core = new Contract(this.cfgSrv.get(`app.contractsAddress.coreAddr`), coreABI, prov) as Core;
-    this.contracts.mediatorMgr = new Contract(
-      this.cfgSrv.get(`app.contractsAddress.mediatorMgrAddr`),
-      mediatorManagerABI,
-      prov,
-    ) as MediatorManager;
-    this.contracts.disputeMgr = new Contract(
-      this.cfgSrv.get(`app.contractsAddress.disputeMgrAddr`),
-      disputeManagerABI,
-      prov,
-    ) as DisputeManager;
-    this.contracts.tokenPool = new Contract(
-      this.cfgSrv.get(`app.contractsAddress.tokenPoolAddr`),
-      tokenPoolABI,
-      prov,
-    ) as TokenPool;
-    this.contracts.lpPool = new Contract(this.cfgSrv.get(`app.contractsAddress.lpPoolAddr`), lpPoolABI, prov) as LPPool;
-    this.contracts.feePool = new Contract(
-      this.cfgSrv.get(`app.contractsAddress.feePoolAddr`),
-      feePoolABI,
-      prov,
-    ) as FeePool;
-    this.contracts.badgeMgr = new Contract(
-      this.cfgSrv.get(`app.contractsAddress.badgeMgrAddr`),
-      badgeMgrABI,
-      prov,
-    ) as BadgeManager;
-    this.contracts.assetRegistry = new Contract(
-      this.cfgSrv.get(`app.contractsAddress.assetRegAddr`),
-      assetRegABI,
-      prov,
-    ) as AssetRegistry;
+    const p2pTokenAddr = this.cfgSrv.get(`app.contractsAddress.p2pTokenAddr`);
+    if (p2pTokenAddr) this.contracts.p2pToken = new Contract(p2pTokenAddr, p2pTokenABI, provider) as Token;
+
+    const marketCoreAddr = this.cfgSrv.get(`app.contractsAddress.marketCoreAddr`);
+    if (marketCoreAddr) this.contracts.marketCore = new Contract(marketCoreAddr, marketCoreABI, provider) as MarketCore;
+
+    const coreAddr = this.cfgSrv.get(`app.contractsAddress.coreAddr`);
+    if (coreAddr) this.contracts.core = new Contract(coreAddr, coreABI, provider) as Core;
+
+    const mediatorMgr = this.cfgSrv.get(`app.contractsAddress.mediatorMgrAddr`);
+    if (mediatorMgr)
+      this.contracts.mediatorMgr = new Contract(mediatorMgr, mediatorManagerABI, provider) as MediatorManager;
+
+    const disputeMgrAddr = this.cfgSrv.get(`app.contractsAddress.disputeMgrAddr`);
+    if (disputeMgrAddr)
+      this.contracts.disputeMgr = new Contract(disputeMgrAddr, disputeManagerABI, provider) as DisputeManager;
+
+    const tokenPoolAddr = this.cfgSrv.get(`app.contractsAddress.tokenPoolAddr`);
+    if (tokenPoolAddr) this.contracts.tokenPool = new Contract(tokenPoolAddr, tokenPoolABI, provider) as TokenPool;
+
+    const lpPoolAddr = this.cfgSrv.get(`app.contractsAddress.lpPoolAddr`);
+    if (lpPoolAddr) this.contracts.lpPool = new Contract(lpPoolAddr, lpPoolABI, provider) as LPPool;
+
+    const feePoolAddr = this.cfgSrv.get(`app.contractsAddress.feePoolAddr`);
+    if (feePoolAddr) this.contracts.feePool = new Contract(feePoolAddr, feePoolABI, provider) as FeePool;
+
+    const badgeMgrAddr = this.cfgSrv.get(`app.contractsAddress.badgeMgrAddr`);
+    if (badgeMgrAddr) this.contracts.badgeMgr = new Contract(badgeMgrAddr, badgeMgrABI, provider) as BadgeManager;
+
+    const assetRegAddr = this.cfgSrv.get(`app.contractsAddress.assetRegAddr`);
+    if (assetRegAddr) this.contracts.assetRegistry = new Contract(assetRegAddr, assetRegABI, provider) as AssetRegistry;
 
     // Load initial contract params
     await this.loadInitialContractParams(network);
 
     // Initialize handlers
     const handlers = [
-      new MarketCoreHandler(this, this.notifSrv, prov, network, this.contracts),
-      new MediatorManagerHandler(this, this.notifSrv, prov, network, this.contracts),
-      new DisputeManagerHandler(this, this.notifSrv, prov, network, this.contracts),
-      new CoreHandler(this, this.notifSrv, this.metadataSrv, this.exrSrv, prov, network, this.contracts),
-      new BadgeManagerHandler(this, prov, network, this.contracts),
-      new TokenPoolHandler(prov, network, this.contracts),
-      new LPPoolHandler(prov, network, this.contracts),
-      new FeePoolHandler(prov, network, this.contracts),
-      new AssetRegistryHandler(prov, network, this.contracts),
+      new MarketCoreHandler(this, this.notifSrv, provider, network, this.contracts),
+      new MediatorManagerHandler(this, this.notifSrv, provider, network, this.contracts),
+      new DisputeManagerHandler(this, this.notifSrv, provider, network, this.contracts),
+      new CoreHandler(this, this.notifSrv, this.metadataSrv, this.exrSrv, provider, network, this.contracts),
+      new BadgeManagerHandler(this, provider, network, this.contracts),
+      new TokenPoolHandler(provider, network, this.contracts),
+      new LPPoolHandler(provider, network, this.contracts),
+      new FeePoolHandler(provider, network, this.contracts),
+      new AssetRegistryHandler(provider, network, this.contracts),
     ];
 
     // Create event processor
@@ -177,7 +168,7 @@ export default class NetworkService {
     await processor.add(...handlers);
 
     // Create event watcher
-    const watcher = new Watcher(network, prov, processor);
+    const watcher = new Watcher(network, provider, processor);
     await watcher.add(...handlers);
   }
 }

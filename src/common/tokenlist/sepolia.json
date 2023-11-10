@@ -1,0 +1,32 @@
+{
+  "name": "Trust Wallet: Localhost",
+  "logoURI": "https://trustwallet.com/assets/images/favicon.png",
+  "timestamp": "2021-10-07T08:50:36.056Z",
+  "tokens": [
+    {
+      "asset": "0001",
+      "type": "ERC20",
+      "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+      "name": "Joint LOCAL",
+      "symbol": "P2P",
+      "decimals": 18,
+      "logoURI": "https://storage.googleapis.com/joint-images/token-logos/p2p.svg",
+      "price": 0
+    },
+    {
+      "asset": "0004",
+      "type": "SYNTHETIC",
+      "address": "0x70e0bA845a1A0F2DA3359C97E0285013525FFC49",
+      "name": "NGN LOCAL",
+      "symbol": "NGN",
+      "decimals": 18,
+      "logoURI": "https://storage.googleapis.com/joint-images/country-flags/nigeria.svg",
+      "price": 0
+    }
+  ],
+  "version": {
+    "major": 6,
+    "minor": 0,
+    "patch": 0
+  }
+}

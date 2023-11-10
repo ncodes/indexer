@@ -169,8 +169,12 @@ declare global {
     ticketMatureDur: number;
     ticketCancelDur: number;
     ticketExpireDur: number;
-    noVoteSlashBP: number;
-    loseVoteSlashBP: number;
+    reqPoolBond: string;
+    poolDraftReward: string;
+    poolWinReward: string;
+    poolNumDraftee: number;
+    poolNoVoteSlashBP: number;
+    poolLoseVoteSlashBP: number;
 
     // Dispute manager params
     predictDur: number;

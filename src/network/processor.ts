@@ -1,9 +1,9 @@
-import { UnprocessedEvent } from './watcher';
-import * as sortArray from 'sort-array';
 import { Logger } from '@nestjs/common';
+import * as sortArray from 'sort-array';
+import { isDevMode, isEqualStr, isTestMode, shortenAddr } from '../common/common';
 import ChainEvent from '../models/chain_events';
 import { Handler } from './handler';
-import { isDevMode, isTestMode, shortenAddr } from '../common/common';
+import { UnprocessedEvent } from './watcher';
 
 /**
  * Processor processes events from the queue
@@ -41,7 +41,7 @@ export default class Processor {
    */
   getHandler(address: string) {
     for (const item of this.handlers) {
-      if (item.getContract().address === address) return item;
+      if (isEqualStr(item.getContract().address, address)) return item;
     }
   }
 

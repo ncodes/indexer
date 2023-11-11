@@ -109,9 +109,11 @@ export default class NetworkService {
    */
   private async watchNetwork(network: string) {
     this.contracts = {};
-    const rpcUrl = this.cfgSrv.get(`app.contractsAddress.rpcUrl`);
+    const rpcUrl = this.cfgSrv.get(`app.contractsAddress.rpcUrl`) as string;
     if (!rpcUrl) throw new Error('rpcUrl is not defined');
-    const provider = new providers.JsonRpcProvider(rpcUrl);
+    const provider = rpcUrl.startsWith('ws')
+      ? new providers.WebSocketProvider(rpcUrl)
+      : new providers.JsonRpcProvider(rpcUrl);
     this.provider = provider;
 
     // Initialize contracts

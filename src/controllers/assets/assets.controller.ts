@@ -1,15 +1,14 @@
 import { Controller, Get, Logger, Param } from '@nestjs/common';
-import { FeaturedAssets } from '../../common/featured_assets';
-import Swap from '../../models/swap';
 import { toDec } from '../../common/common';
+import { FeaturedAssets } from '../../common/featured_assets';
 import { ErrServerError, ok, throw400, throw404 } from '../../common/responses/responses';
-import MarketPrice from '../../models/market_price';
-import Liquidity from '../../models/liquidity';
-import { findInLocalhost, getTokenInfo, ListName, TokenLists } from '../../common/token_list';
-import { MetadataService } from '../../services/metadata/metadata.service';
+import { TokenLists, findInLocalhost, getTokenInfo } from '../../common/token_list';
 import AssetRegistry from '../../models/asset_registry';
-import { isValidNetwork } from '../../network/common';
-import * as _ from 'lodash';
+import Liquidity from '../../models/liquidity';
+import MarketPrice from '../../models/market_price';
+import Swap from '../../models/swap';
+import { NetworkNames, isValidNetwork } from '../../network/common';
+import { MetadataService } from '../../services/metadata/metadata.service';
 
 @Controller('v1/assets')
 export class AssetsController {
@@ -57,7 +56,7 @@ export class AssetsController {
   @Get('/:net')
   async getTokenList(@Param('net') net: string) {
     if (!isValidNetwork(net)) throw400('network is unknown');
-    const tokens = TokenLists[net as ListName].tokens;
+    const tokens = TokenLists[net as NetworkNames].tokens;
     const synth = TokenLists['synthetic']?.tokens;
     return ok().data(tokens.concat(synth)).build();
   }

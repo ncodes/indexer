@@ -1,4 +1,5 @@
 import * as _ from 'lodash';
+import { NetworkNames } from '../network/common';
 import { isEqualStr } from './common';
 import * as binance from './tokenlist/binance.json';
 import * as ethereum from './tokenlist/ethereum.json';
@@ -7,8 +8,6 @@ import * as optimism from './tokenlist/optimism.json';
 import * as polygon from './tokenlist/polygon.json';
 import * as sepolia from './tokenlist/sepolia.json';
 import * as synthetic from './tokenlist/synthetic.json';
-
-export type ListName = 'ethereum' | 'polygon' | 'binance' | 'optimism' | 'localhost' | 'synthetic' | 'sepolia';
 
 /**
  * TokenList contains a network categorized list
@@ -20,7 +19,7 @@ export type ListName = 'ethereum' | 'polygon' | 'binance' | 'optimism' | 'localh
  * This list relies on TrustWallet's assets list:
  * https://github.com/trustwallet/assets
  */
-export const TokenLists: { [key in ListName]: TokenList.TokenData } = {
+export const TokenLists: { [key in NetworkNames]: TokenList.TokenData } = {
   ethereum,
   polygon,
   binance,

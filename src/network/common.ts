@@ -4,6 +4,8 @@ import { BigNumber, BigNumberish, Event } from 'ethers';
 import * as moment from 'moment/moment';
 import { toDec } from '../common/common';
 
+export type NetworkNames = 'ethereum' | 'polygon' | 'binance' | 'optimism' | 'localhost' | 'synthetic' | 'sepolia';
+
 export enum SupportedNetworks {
   Ethereum = 'ethereum',
   Polygon = 'polygon',

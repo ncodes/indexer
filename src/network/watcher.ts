@@ -1,11 +1,10 @@
 import { Logger } from '@nestjs/common';
+import * as defer from 'defer-promise';
 import { ethers, providers } from 'ethers';
+import { isDevMode } from '../common/common';
 import Meta from '../models/meta';
 import { Handler } from './handler';
-import * as defer from 'defer-promise';
 import Processor from './processor';
-import { isDevMode } from '../common/common';
-import { NotifierService } from '../jobs/mailer/NotifierService';
 
 export interface UnprocessedEvent {
   event: ethers.Event;
@@ -137,7 +136,7 @@ export class Watcher {
           // Ensure we are not fully synchronized yet.
           // If we are, stop watching on interval. Instead, watch on new block.
           const curBlock = await this.provider.getBlockNumber();
-          if (parseInt(meta.value) + 1 > curBlock) {
+          if (parseInt(meta.value) + 1 >= curBlock) {
             this.watchBlock();
             clearInterval(this.interval);
             return;

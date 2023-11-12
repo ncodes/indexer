@@ -58,6 +58,7 @@ export default () => ({
     rootAdminUser: process.env.ROOT_ADMIN_USER,
     rootAdminPass: process.env.ROOT_ADMIN_PASS,
     disableNotifications: process.env.DISABLE_NOTIFICATIONS,
+    disableWatcher: process.env.DISABLE_WATCHER,
     tokenMetadataSource: process.env.TOKEN_METADATA_SOURCE,
     exchangeRateSource: process.env.EXCHANGE_RATE_SOURCE,
     maxSwapImageSize: process.env.MAX_SWAP_IMAGE_SIZE,

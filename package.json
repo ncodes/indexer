@@ -27,7 +27,10 @@
     "mig:dev:rollback": "knex-migrate rollback --env=development",
     "mig:prod:up": "knex-migrate up --env=production",
     "mig:prod:rollback": "knex-migrate rollback --env=production",
-    "typechain": "typechain --target ethers-v5 --out-dir typechain abi/*.json"
+    "typechain": "typechain --target ethers-v5 --out-dir typechain abi/*.json",
+    "docker:build": "docker build -t indexer-service .",
+    "docker:gcp:tag": "docker tag indexer-service us-central1-docker.pkg.dev/quick-guru-354614/indexer-service/indexer-service",
+    "docker:gcp:push": "docker push us-central1-docker.pkg.dev/quick-guru-354614/indexer-service/indexer-service"
   },
   "dependencies": {
     "@bufbuild/connect-web": "^0.13.0",

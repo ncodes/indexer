@@ -17,6 +17,11 @@ export class MiscController {
     private exRateSvr: ExchangeRateService,
   ) {}
 
+  @Get('health')
+  async getHealth() {
+    return ok().build();
+  }
+
   /**
    * Get token list
    * @param network The network name

@@ -56,13 +56,16 @@ export default class NetworkService {
     private exrSrv: ExchangeRateService,
   ) {
     if (isTestMode()) return;
-    this.watch().catch(this.logger.error);
+    this.watch().catch((e) => {
+      this.logger.error('Watcher error', e);
+    });
   }
 
   /**
    * Watch event
    */
   private async watch() {
+    if (['true', '1'].includes(this.cfgSrv.get('app.disableWatcher'))) return;
     await this.watchNetwork(this.cfgSrv.get('app.network'));
   }
 

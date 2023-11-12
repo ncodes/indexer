@@ -50,7 +50,7 @@ export class MailerService {
 
     try {
       const resp = await this.trans.sendMail({
-        from: `"${locals.app}" <no-reply@fiatx.co>`,
+        from: `"${locals.app}" <no-reply@joint.exchange>`,
         to,
         subject: sub,
         html,

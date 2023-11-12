@@ -1,26 +1,26 @@
 {
-  "name": "Trust Wallet: Localhost",
+  "name": "Trust Wallet: Sepolia",
   "logoURI": "https://trustwallet.com/assets/images/favicon.png",
   "timestamp": "2021-10-07T08:50:36.056Z",
   "tokens": [
     {
       "asset": "0001",
       "type": "ERC20",
-      "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-      "name": "Joint LOCAL",
-      "symbol": "P2P",
+      "address": "0x4263541D13298963498ff1f83d992812Ef3d2E73",
+      "name": "WETH",
+      "symbol": "WETH",
       "decimals": 18,
-      "logoURI": "https://storage.googleapis.com/joint-images/token-logos/p2p.svg",
+      "logoURI": "https://assets-cdn.trustwallet.com/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
       "price": 0
     },
     {
-      "asset": "0004",
-      "type": "SYNTHETIC",
-      "address": "0x70e0bA845a1A0F2DA3359C97E0285013525FFC49",
-      "name": "NGN LOCAL",
-      "symbol": "NGN",
+      "asset": "0002",
+      "type": "ERC20",
+      "address": "0xd0dE9c8983C1e7071dC2cB826eb7b9F6D3ac60d2",
+      "name": "Joint",
+      "symbol": "P2P",
       "decimals": 18,
-      "logoURI": "https://storage.googleapis.com/joint-images/country-flags/nigeria.svg",
+      "logoURI": "https://storage.googleapis.com/joint-images/token-logos/p2p.svg",
       "price": 0
     }
   ],

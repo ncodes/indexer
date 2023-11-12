@@ -1,14 +1,14 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import NetworkService from '../../network/network.service';
-import { isValidNetwork, isZero, pow10D } from '../../network/common';
-import { CoinMarketCapMetadata } from './CoinMarketCapMetadata';
-import { isDevMode, isProdMode, toDec } from '../../common/common';
-import { CoinGeckoMetadata } from './CoinGeckoMetadata';
-import { findInLocalhost, findInSynthetic } from '../../common/token_list';
-import { RedisService } from '../redis.service';
-import { ExchangeRateService } from '../exchange_rate.service';
 import axios from 'axios';
+import { isDevMode, isProdMode, toDec } from '../../common/common';
+import { findInLocalhost, findInSynthetic } from '../../common/token_list';
+import { isValidNetwork, isZero, pow10D } from '../../network/common';
+import NetworkService from '../../network/network.service';
+import { ExchangeRateService } from '../exchange_rate.service';
+import { RedisService } from '../redis.service';
+import { CoinGeckoMetadata } from './CoinGeckoMetadata';
+import { CoinMarketCapMetadata } from './CoinMarketCapMetadata';
 
 // tslint:disable-next-line:max-classes-per-file
 export abstract class MetadataSource {

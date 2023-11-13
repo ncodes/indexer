@@ -1,13 +1,13 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { Cron } from "@nestjs/schedule";
-import { Base } from "../../base";
-import Dispute from "../../../models/dispute";
-import Swap from "../../../models/swap";
-import Draft from "../../../models/draft";
-import * as _ from "lodash";
-import { NotificationID, NotifierService } from "../../mailer/NotifierService";
-import Reveal from "../../../models/reveal";
-import { ConfigService } from "../../../config/config.service";
+import { Injectable, Logger } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
+import * as _ from 'lodash';
+import { ConfigService } from '../../../config/config.service';
+import Dispute from '../../../models/dispute';
+import Draft from '../../../models/draft';
+import Reveal from '../../../models/reveal';
+import Swap from '../../../models/swap';
+import { Base } from '../../base';
+import { NotificationID, NotifierService } from '../../mailer/NotifierService';
 
 /**
  * OnRevealPeriodEnd finds disputes whose reveal period has ended
@@ -23,7 +23,8 @@ export default class OnRevealPeriodEnd extends Base {
 
   @Cron('*/5 * * * * *')
   schedule() {
-    this.process().catch((e) => this.logger.error(e));
+    const disabled = this.cfgSrv.get('app.disableNotifications') == 'true';
+    if (!disabled) this.process().catch((e) => this.logger.error(e));
   }
 
   async process() {

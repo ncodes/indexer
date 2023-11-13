@@ -1,12 +1,13 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { Cron } from "@nestjs/schedule";
-import { Base } from "../../base";
-import Dispute from "../../../models/dispute";
-import Swap from "../../../models/swap";
-import Draft from "../../../models/draft";
-import * as _ from "lodash";
-import { NotificationID, NotifierService } from "../../mailer/NotifierService";
-import * as moment from "moment";
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Cron } from '@nestjs/schedule';
+import * as _ from 'lodash';
+import * as moment from 'moment';
+import Dispute from '../../../models/dispute';
+import Draft from '../../../models/draft';
+import Swap from '../../../models/swap';
+import { Base } from '../../base';
+import { NotificationID, NotifierService } from '../../mailer/NotifierService';
 
 /**
  * OnEvidencePeriodEnd finds disputes whose evidence period has ended
@@ -15,14 +16,15 @@ import * as moment from "moment";
 export default class OnEvidencePeriodEnd extends Base {
   private logger = new Logger(OnEvidencePeriodEnd.name);
 
-  constructor(private notifier: NotifierService) {
+  constructor(private notifier: NotifierService, private cfgSrv: ConfigService) {
     super();
     this.schedule();
   }
 
   @Cron('*/5 * * * * *')
   schedule() {
-    this.process().catch((e) => this.logger.error(e));
+    const disabled = this.cfgSrv.get('app.disableNotifications') == 'true';
+    if (!disabled) this.process().catch((e) => this.logger.error(e));
   }
 
   async process() {

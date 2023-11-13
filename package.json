@@ -27,8 +27,13 @@
     "mig:dev:rollback": "knex-migrate rollback --env=development",
     "mig:prod:up": "knex-migrate up --env=production",
     "mig:prod:rollback": "knex-migrate rollback --env=production",
+    "db:start:dev": "yarn docker:create-devnet && docker run --name dev-db -d --rm --network devnet -v ${PWD}/volumes/postgres-docker:/var/lib/postgresql/data -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres",
+    "db:start:test": "docker run --name dev-db-test -d --rm -v ${PWD}/volumes/postgres-docker-test:/var/lib/postgresql/data -e POSTGRES_PASSWORD=postgres -p 5433:5432 postgres",
+    "redis:start": "yarn docker:create-devnet && docker run --name=redis -d --network devnet --rm -v ${PWD}/volumes/redis-docker:/data -p 6379:6379 redis",
     "typechain": "typechain --target ethers-v5 --out-dir typechain abi/*.json",
+    "docker:create-devnet": "docker network create devnet4 2> /dev/null || true",
     "docker:build": "docker build -t indexer-service .",
+    "docker:build:no-cache": "docker build --no-cache -t indexer-service .",
     "docker:gcp:tag": "docker tag indexer-service us-central1-docker.pkg.dev/quick-guru-354614/indexer-service/indexer-service",
     "docker:gcp:push": "docker push us-central1-docker.pkg.dev/quick-guru-354614/indexer-service/indexer-service"
   },

@@ -1,3 +1,3 @@
 #!/bin/bash
-# Entry point for an indexer docker container.
-nohup redis-server &> redis.log & node dist/src/main.js
+# This script is the entrypoint called by the Dockerfile in the root to run the indexer service.
+node dist/src/main.js

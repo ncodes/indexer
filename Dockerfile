@@ -6,10 +6,6 @@ WORKDIR /usr/src/app
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install redis
-RUN apt update
-RUN apt install redis-server -y
-
 # Install app dependencies
 RUN npm install --legacy-peer-deps
 

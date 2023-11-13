@@ -1,11 +1,11 @@
 /* tslint:disable:no-string-literal */
-import { utils } from "ethers";
-import * as jwt from "jsonwebtoken";
-import * as moment from "moment";
-import Session from "../../models/session";
-import User from "../../models/user";
-import * as yaml from "js-yaml";
-import { sha1 } from "../../common/common";
+import { utils } from 'ethers';
+import * as yaml from 'js-yaml';
+import * as jwt from 'jsonwebtoken';
+import * as moment from 'moment';
+import { sha1 } from '../../common/common';
+import Session from '../../models/session';
+import User from '../../models/user';
 
 export const SignatureError = new Error('signature is invalid or expired');
 
@@ -92,9 +92,9 @@ export function parseWalletSignature(msg: string, sig: string, ignoreEmail = fal
  * @param jwtSecret The JWT secret
  */
 export function verifyOAuthStateToken(token: string, jwtSecret: string): Promise<boolean> {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     let valid = false;
-    jwt.verify(token, jwtSecret, (err, decoded) => {
+    jwt.verify(token, jwtSecret, (err) => {
       if (err) return;
       valid = true;
     });

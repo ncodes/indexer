@@ -1,17 +1,17 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { NoopLogger } from '../../../common/loggers/noop_logger';
-import { DBService } from '../../../db/DBService';
-import { NotificationID, NotifierService } from '../../mailer/NotifierService';
-import Dispute from '../../../models/dispute';
 import * as moment from 'moment';
-import Swap from '../../../models/swap';
-import Draft from '../../../models/draft';
-import Reveal from '../../../models/reveal';
-import OnRevealPeriodEnd from './on_reveal_period_end';
+import { NoopLogger } from '../../../common/loggers/noop_logger';
 import { ConfigService } from '../../../config/config.service';
-import Meta, { MetaKeys } from '../../../models/meta';
+import { DBService } from '../../../db/DBService';
+import Dispute from '../../../models/dispute';
+import Draft from '../../../models/draft';
 import Market from '../../../models/market';
+import Meta, { MetaKeys } from '../../../models/meta';
+import Reveal from '../../../models/reveal';
+import Swap from '../../../models/swap';
+import { NotificationID, NotifierService } from '../../mailer/NotifierService';
+import OnRevealPeriodEnd from './on_reveal_period_end';
 
 const mockNotify = jest.fn();
 const MockNotifierService = jest.fn().mockImplementation(() => {
@@ -28,7 +28,6 @@ describe('OnRevealPeriodEnd', () => {
   const draftee = '0xDraftee';
   const marketAddress = '0xMarket';
 
-  const disputeCost = '100';
   const cfg = {};
 
   afterEach(async () => {

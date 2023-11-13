@@ -1,7 +1,7 @@
-import { randStr } from "../common/common";
-import Objection, { Model } from "objection";
-import { BaseModel } from "./base";
-import User from "./user";
+import { randStr } from '../common/common';
+import Objection, { Model } from 'objection';
+import { BaseModel } from './base';
+import User from './user';
 
 /**
  * Session represents a user's login session.

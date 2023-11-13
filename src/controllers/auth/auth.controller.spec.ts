@@ -77,9 +77,8 @@ describe('AuthController', () => {
     await app.init();
   });
 
-  let u: User;
   beforeEach(async () => {
-    u = await User.create({ role: Roles.User });
+    await User.create({ role: Roles.User });
   });
 
   describe('.auth', () => {

@@ -1,19 +1,19 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { DBService } from '../../db/DBService';
 import { ConfigModule } from '@nestjs/config';
-import { NoopLogger } from '../../common/loggers/noop_logger';
-import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
-import User from '../../models/user';
-import { Roles } from '../../common/roles';
+import { Test, TestingModule } from '@nestjs/testing';
+import * as moment from 'moment/moment';
 import * as request from 'supertest';
-import { makeSession } from '../auth/utils';
 import { randStr } from '../../common/common';
-import { BadgeService } from './badge.service';
-import { BadgesController } from './badges.controller';
+import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
+import { NoopLogger } from '../../common/loggers/noop_logger';
+import { Roles } from '../../common/roles';
+import { DBService } from '../../db/DBService';
 import Badge from '../../models/badge';
 import BadgeGrant from '../../models/badge_grant';
-import * as moment from 'moment/moment';
+import User from '../../models/user';
+import { makeSession } from '../auth/utils';
+import { BadgeService } from './badge.service';
+import { BadgesController } from './badges.controller';
 
 describe('BadgesController', () => {
   let app: INestApplication;
@@ -46,11 +46,10 @@ describe('BadgesController', () => {
   });
 
   let u: User;
-  let token: string;
   const net = 'ethereum';
   beforeEach(async () => {
     u = await User.create({ role: Roles.User });
-    token = await makeSession(u, randStr(), '5', 'secret');
+    await makeSession(u, randStr(), '5', 'secret');
   });
 
   describe('.listBadges', function () {

@@ -5,6 +5,7 @@ import axios from 'axios';
 import { ethers, Wallet } from 'ethers';
 import NetworkService from '../network/network.service';
 import * as moment from 'moment';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const pinataSDK = require('@pinata/sdk');
 
 @Injectable()

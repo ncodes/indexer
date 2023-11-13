@@ -33,11 +33,11 @@ export class TokenPoolHandler extends Handler {
 
   /**
    * An account added a stake
-   * @param account The address of the account
-   * @param amount The amount staked
+   * @param _account The address of the account
+   * @param _amount The amount staked
    * @param event The event object
    */
-  async onStaked(account: string, amount: BigNumber, event: Event) {
+  async onStaked(_account: string, _amount: BigNumber, _event: Event) {
     // TODO: Implement
   }
 
@@ -47,7 +47,7 @@ export class TokenPoolHandler extends Handler {
    * @param amount The amount staked
    * @param event The event object
    */
-  async onVestStaked(account: string, amount: BigNumber, event: Event) {
+  async onVestStaked(_account: string, _amount: BigNumber, _event: Event) {
     // TODO: Implement
   }
 
@@ -57,7 +57,7 @@ export class TokenPoolHandler extends Handler {
    * @param amount The amount withdrawn
    * @param event The event object
    */
-  async onStakeWithdrawn(account: string, amount: BigNumber, event: Event) {
+  async onStakeWithdrawn(_account: string, _amount: BigNumber, _event: Event) {
     // TODO: Implement
   }
 
@@ -67,7 +67,7 @@ export class TokenPoolHandler extends Handler {
    * @param amount The amount of reward withdrawn
    * @param event The event object
    */
-  async onRewardWithdrawn(account: string, amount: BigNumber, event: Event) {
+  async onRewardWithdrawn(_account: string, _amount: BigNumber, _event: Event) {
     // TODO: Implement
   }
 
@@ -77,7 +77,7 @@ export class TokenPoolHandler extends Handler {
    * @param amount The amount recovered
    * @param event The event object
    */
-  async onRecovered(token: string, amount: BigNumber, event: Event) {
+  async onRecovered(_token: string, _amount: BigNumber, _event: Event) {
     // TODO: Implement
   }
 }

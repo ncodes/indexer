@@ -25,32 +25,32 @@ export class FeePoolHandler extends Handler {
 
   /**
    * A token has been transferred into the contract for sharing
-   * @param token The address of the token
-   * @param amount The amount transferred
-   * @param event The event object
+   * @param _token The address of the token
+   * @param _amount The amount transferred
+   * @param _event The event object
    */
-  async onRewardAdded(token: string, amount: BigNumber, event: Event) {
+  async onRewardAdded(_token: string, _amount: BigNumber, _event: Event) {
     //
   }
 
   /**
    * An account withdrew some reward
-   * @param token The token address
-   * @param account The address of the account
-   * @param amount The amount of reward withdrawn
-   * @param event The event object
+   * @param _token The token address
+   * @param _account The address of the account
+   * @param _amount The amount of reward withdrawn
+   * @param _event The event object
    */
-  async onRewardWithdrawn(token: string, account: string, amount: BigNumber, event: Event) {
+  async onRewardWithdrawn(_token: string, _account: string, _amount: BigNumber, _event: Event) {
     //
   }
 
   /**
    * An erroneously sent token was recovered
-   * @param token The address of the token
-   * @param amount The amount recovered
-   * @param event The event object
+   * @param _token The address of the token
+   * @param _amount The amount recovered
+   * @param _event The event object
    */
-  async onRecovered(token: string, amount: BigNumber, event: Event) {
+  async onRecovered(_token: string, _amount: BigNumber, _event: Event) {
     //
   }
 }

@@ -1,10 +1,9 @@
-import { randStr } from '../common/common';
-import Objection, { Model, raw, Transaction } from 'objection';
-import { BaseModel } from './base';
-import Market from './market';
 import * as _ from 'lodash';
-import { isNil } from 'lodash';
+import Objection, { Model, raw, Transaction } from 'objection';
+import { randStr } from '../common/common';
+import { BaseModel } from './base';
 import Draft from './draft';
+import Market from './market';
 
 export enum SearchStatus {
   Maturing = 'maturing',

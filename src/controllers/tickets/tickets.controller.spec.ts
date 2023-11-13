@@ -1,24 +1,24 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { DBService } from '../../db/DBService';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { NoopLogger } from '../../common/loggers/noop_logger';
-import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
-import User from '../../models/user';
-import { Roles } from '../../common/roles';
+import { Test, TestingModule } from '@nestjs/testing';
+import * as moment from 'moment';
 import * as request from 'supertest';
+import { randStr } from '../../common/common';
+import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
+import { NoopLogger } from '../../common/loggers/noop_logger';
+import { Roles } from '../../common/roles';
+import { DBService } from '../../db/DBService';
+import Market from '../../models/market';
+import Ticket from '../../models/ticket';
+import User from '../../models/user';
+import { toBN } from '../../network/common';
 import NetworkService from '../../network/network.service';
+import { MetadataService } from '../../services/metadata/metadata.service';
+import { RedisService } from '../../services/redis.service';
 import { makeSession } from '../auth/utils';
 import { MarketService } from '../markets/market.service';
 import { TicketsController } from './tickets.controller';
 import { TicketsService } from './tickets.service';
-import Ticket from '../../models/ticket';
-import Market from '../../models/market';
-import * as moment from 'moment';
-import { randStr } from '../../common/common';
-import { MetadataService } from '../../services/metadata/metadata.service';
-import { toBN } from '../../network/common';
-import { RedisService } from '../../services/redis.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -100,11 +100,10 @@ describe('TicketsController', () => {
   });
 
   let u: User;
-  let token: string;
   const net = 'ethereum';
   beforeEach(async () => {
     u = await User.create({ role: Roles.User });
-    token = await makeSession(u, randStr(), '5', mockCfgGet('auth.jwtSecret'));
+    await makeSession(u, randStr(), '5', mockCfgGet('auth.jwtSecret'));
   });
 
   describe('.get', () => {

@@ -4,6 +4,7 @@
 docker run \
     --name indexer \
     -p3001:3001 \
+    --rm \
     --env-file=.env \
     -e DATABASE_URL=postgres://postgres:@host.docker.internal:5432/joint?sslmode=disable \
     -e REDIS_URL=redis://host.docker.internal:6379 \

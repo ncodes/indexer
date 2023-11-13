@@ -110,7 +110,7 @@ describe('UserService', () => {
     });
 
     it(`should calculate correct 'lastActiveAt'`, async () => {
-      const swap = await Swap.create({
+      await Swap.create({
         network: net,
         marketAddress,
         provider: user,

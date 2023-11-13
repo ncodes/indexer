@@ -1,28 +1,23 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { DBService } from '../../db/DBService';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { NoopLogger } from '../../common/loggers/noop_logger';
-import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
-import * as request from 'supertest';
-import { AssetsController } from './assets.controller';
-import { setFeaturedAssets } from '../../common/featured_assets';
-import Swap from '../../models/swap';
+import { Test, TestingModule } from '@nestjs/testing';
 import * as moment from 'moment';
-import MarketPrice from '../../models/market_price';
-import Liquidity from '../../models/liquidity';
-import { MetadataService } from '../../services/metadata/metadata.service';
-import NetworkService from '../../network/network.service';
-import { NotifierService } from '../../jobs/mailer/NotifierService';
+import * as request from 'supertest';
+import { setFeaturedAssets } from '../../common/featured_assets';
+import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
+import { NoopLogger } from '../../common/loggers/noop_logger';
 import { TokenLists } from '../../common/token_list';
+import { DBService } from '../../db/DBService';
+import { NotifierService } from '../../jobs/mailer/NotifierService';
 import AssetRegistry from '../../models/asset_registry';
+import Liquidity from '../../models/liquidity';
+import MarketPrice from '../../models/market_price';
+import Swap from '../../models/swap';
+import NetworkService from '../../network/network.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
+import { MetadataService } from '../../services/metadata/metadata.service';
 import { RedisService } from '../../services/redis.service';
-
-const mockCfgGet = jest.fn();
-const ConfigServiceMock = jest.fn().mockImplementation(() => {
-  return { get: mockCfgGet };
-});
+import { AssetsController } from './assets.controller';
 
 const NotifierServiceMock = jest.fn().mockImplementation(() => {
   return {};
@@ -35,7 +30,6 @@ describe('AssetsController', () => {
   const net2 = 'bsc';
   const baseAddress = '0xBase';
   const baseAddress2 = '0xBase2';
-  let cfgObj = {};
 
   afterEach(async () => {
     await db.truncateTables();
@@ -52,12 +46,6 @@ describe('AssetsController', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    mockCfgGet.mockReset();
-
-    cfgObj = { 'auth.jwtSecret': 'secret_secret' };
-    mockCfgGet.mockReset().mockImplementation((args) => {
-      return cfgObj[args];
-    });
 
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],

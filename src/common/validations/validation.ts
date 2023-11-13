@@ -1,6 +1,6 @@
 import { HttpStatus } from '@nestjs/common';
-import { error, ErrorTypes } from '../responses/responses';
 import { ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
+import { error, ErrorTypes } from '../responses/responses';
 
 /**
  * makeValidatorMsg creates a class-validator decorator message
@@ -25,7 +25,7 @@ export function makeValidatorMsg(msg: string, param?: string, code = '') {
  */
 @ValidatorConstraint({ name: 'liquidityDescription', async: false })
 export class LiquidityDescriptionValidator implements ValidatorConstraintInterface {
-  validate(value: any, args: ValidationArguments) {
+  validate(value: any, _args: ValidationArguments) {
     if (!Array.isArray(value)) return false;
     return value.every((item) => {
       return (
@@ -38,7 +38,7 @@ export class LiquidityDescriptionValidator implements ValidatorConstraintInterfa
     });
   }
 
-  defaultMessage(args: ValidationArguments) {
+  defaultMessage(_args: ValidationArguments) {
     return 'liquidity description is invalid';
   }
 }

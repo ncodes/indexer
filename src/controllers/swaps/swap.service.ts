@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import Swap from '../../models/swap';
+import { ConfigService } from '@nestjs/config';
+import * as _ from 'lodash';
+import { toDec } from '../../common/common';
 import Dispute from '../../models/dispute';
 import Draft from '../../models/draft';
+import Market from '../../models/market';
+import Swap from '../../models/swap';
 import User from '../../models/user';
-import * as _ from 'lodash';
 import { isZero, toBN } from '../../network/common';
 import { MetadataService } from '../../services/metadata/metadata.service';
-import Market from '../../models/market';
-import { toDec } from '../../common/common';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export default class SwapService {
@@ -63,7 +63,7 @@ export default class SwapService {
    */
   getFeeInfo(swap: Swap) {
     const info: { symbol: string; fee: string; address: string } = { symbol: '', fee: '', address: '' };
-    const { network, baseType, quoteType, base, quote, baseAddress, quoteAddress } = swap.market;
+    const { baseType, quoteType, base, quote, baseAddress, quoteAddress } = swap.market;
 
     // ERC20/ERC20, ERC20/SYNTH
     if (

@@ -33,50 +33,50 @@ export class LPPoolHandler extends Handler {
 
   /**
    * An account withdrew some reward
-   * @param account The address of the account
-   * @param amount The amount that was withdrawn
-   * @param event The event object
+   * @param _account The address of the account
+   * @param _amount The amount that was withdrawn
+   * @param _event The event object
    */
-  async onRewardWithdrawn(account: string, amount: BigNumber, event: ethers.Event) {
+  async onRewardWithdrawn(_account: string, _amount: BigNumber, _event: ethers.Event) {
     // TODO: Implement
   }
 
   /**
    * Reward tokens were transferred to the contract
-   * @param amount The amount transferred
-   * @param event The event object
+   * @param _amount The amount transferred
+   * @param _event The event object
    */
-  async onRewardAdded(amount: BigNumber, event: ethers.Event) {
+  async onRewardAdded(_amount: BigNumber, _event: ethers.Event) {
     // TODO: Implement
   }
 
   /**
    * An account locked some LP tokens
-   * @param account The address of the account
-   * @param amount The amount of LP tokens
-   * @param event The event object
+   * @param _account The address of the account
+   * @param _amount The amount of LP tokens
+   * @param _event The event object
    */
-  async onLocked(account: string, amount: BigNumber, event: ethers.Event) {
+  async onLocked(_account: string, _amount: BigNumber, _event: ethers.Event) {
     // TODO: Implement
   }
 
   /**
    * An account unlocked some LP tokens
-   * @param account The address of the account
-   * @param amount The amount of LP tokens unlocked
-   * @param event The event object
+   * @param _account The address of the account
+   * @param _amount The amount of LP tokens unlocked
+   * @param _event The event object
    */
-  async onUnlocked(account: string, amount: BigNumber, event: ethers.Event) {
+  async onUnlocked(_account: string, _amount: BigNumber, _event: ethers.Event) {
     // TODO: Implement
   }
 
   /**
    * An erroneously sent token was recovered
-   * @param token The address of the token
-   * @param amount The amount recovered
-   * @param event The event object
+   * @param _token The address of the token
+   * @param _amount The amount recovered
+   * @param _event The event object
    */
-  async onRecovered(token: string, amount: BigNumber, event: ethers.Event) {
+  async onRecovered(_token: string, _amount: BigNumber, _event: ethers.Event) {
     // TODO: Implement
   }
 }

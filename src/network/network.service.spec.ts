@@ -1,11 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { NotifierService } from '../jobs/mailer/NotifierService';
+import { Test, TestingModule } from '@nestjs/testing';
 import { DBService } from '../db/DBService';
-import NetworkService from './network.service';
-import { MetadataService } from '../services/metadata/metadata.service';
+import { NotifierService } from '../jobs/mailer/NotifierService';
 import { ExchangeRateService } from '../services/exchange_rate.service';
+import { MetadataService } from '../services/metadata/metadata.service';
 import { RedisService } from '../services/redis.service';
+import NetworkService from './network.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -19,7 +19,6 @@ const MockNotifierService = jest.fn().mockImplementation(() => {
 
 describe('NetworkService', () => {
   let module: TestingModule;
-  let service: NetworkService;
   const db = DBService.getForTest();
   let cfgObj = {};
 

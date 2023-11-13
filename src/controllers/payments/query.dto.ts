@@ -1,9 +1,8 @@
+import { Transform } from 'class-transformer';
 import { IsBoolean, IsEthereumAddress, IsIn, IsNotEmpty, IsOptional } from 'class-validator';
+import { toBoolean } from 'underscore.string';
 import { makeValidatorMsg } from '../../common/validations/validation';
 import { getNetworks } from '../../network/common';
-import { Transfer } from 'aws-sdk';
-import { Transform } from 'class-transformer';
-import { toBoolean } from 'underscore.string';
 
 export class GetQueryDTO {
   @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })

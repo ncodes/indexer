@@ -1,4 +1,4 @@
-name: CI
+name: Lint Check
 on: push
 jobs:
   build:
@@ -8,8 +8,6 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v1
         with:
-          node-version: 16.14.x
-      - name: Lint Check
-        run: yarn
+          node-version: 18.18.x
       - name: Run ESLint
         run: yarn lint

@@ -65,7 +65,10 @@ export default class NetworkService {
    * Watch event
    */
   private async watch() {
-    if (['true', '1'].includes(this.cfgSrv.get('app.disableWatcher'))) return;
+    if (['true', '1'].includes(this.cfgSrv.get('app.disableWatcher'))) {
+      this.logger.log('Watcher disabled');
+      return;
+    }
     await this.watchNetwork(this.cfgSrv.get('app.network'));
   }
 

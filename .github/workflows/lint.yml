@@ -1,4 +1,4 @@
-name: Lint Check
+name: Check Source (Lint)
 on: push
 jobs:
   build:

@@ -1,5 +1,5 @@
-import { BadRequestException, HttpException, HttpStatus, ValidationPipeOptions } from "@nestjs/common";
-import validator from "validator";
+import { BadRequestException, HttpException, HttpStatus, ValidationPipeOptions } from '@nestjs/common';
+import validator from 'validator';
 
 /**
  * CommonValidationPipeOpt describes common validation option

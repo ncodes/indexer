@@ -130,8 +130,6 @@ describe('FilesController', () => {
     });
 
     describe('image upload', () => {
-      beforeEach(() => {});
-
       it(`should return 400 when the uploaded file's type is not supported`, async () => {
         cfgObj['app.fileUpload.allowedImageTypes'] = 'image/abc';
         await request(app.getHttpServer())

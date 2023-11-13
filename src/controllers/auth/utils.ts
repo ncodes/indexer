@@ -1,11 +1,11 @@
 /* tslint:disable:no-string-literal */
-import { utils } from "ethers";
-import * as jwt from "jsonwebtoken";
-import * as moment from "moment";
-import Session from "../../models/session";
-import User from "../../models/user";
-import * as yaml from "js-yaml";
-import { sha1 } from "../../common/common";
+import { utils } from 'ethers';
+import * as jwt from 'jsonwebtoken';
+import * as moment from 'moment';
+import Session from '../../models/session';
+import User from '../../models/user';
+import * as yaml from 'js-yaml';
+import { sha1 } from '../../common/common';
 
 export const SignatureError = new Error('signature is invalid or expired');
 

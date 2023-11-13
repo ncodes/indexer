@@ -4,6 +4,7 @@ import PinataClient from '@pinata/sdk';
 import Swap from '../../models/swap';
 import User from '../../models/user';
 import { Readable } from 'stream';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const pinataSDK = require('@pinata/sdk');
 
 @Injectable()

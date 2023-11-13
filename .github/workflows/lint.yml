@@ -9,5 +9,8 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 18.18.x
+      - name: Lint Check
+        run: yarn add -D eslint eslint-config-prettier eslint-plugin-prettier
+        prettier @typescript-eslint/eslint-plugin @typescript-eslint/parser typescript-eslint
       - name: Run ESLint
         run: yarn lint

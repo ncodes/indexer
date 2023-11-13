@@ -51,6 +51,17 @@ describe('TaskGateway', () => {
       });
     });
 
+    it('should return error when disabled', async () => {
+      gateway.disabled = true;
+      const resp = await gateway.handleRegisterMiner(null, '', '');
+      expect(resp).toBeInstanceOf(HttpException);
+      expect((resp as HttpException).getResponse()).toEqual({
+        error: {
+          message: 'task processing is disabled',
+        },
+      });
+    });
+
     it('should return error when network was not provided', async () => {
       const resp = await gateway.handleRegisterMiner(null, '', '');
       expect(resp).toBeInstanceOf(HttpException);

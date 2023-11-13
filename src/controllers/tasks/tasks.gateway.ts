@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   ConnectedSocket,
   MessageBody,
@@ -12,7 +13,7 @@ import {
 import { isEthereumAddress } from 'class-validator';
 import { Server, Socket } from 'socket.io';
 import { isTestMode } from '../../common/common';
-import { build400, ok } from '../../common/responses/responses';
+import { build400, build500, ok } from '../../common/responses/responses';
 import MineTask from '../../models/mine_task';
 import { isValidNetwork } from '../../network/common';
 import { SupportedNetworks } from './../../network/common';
@@ -54,6 +55,7 @@ class Miner {
 @WebSocketGateway({ namespace: '/v1/mining' })
 export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private logger = new Logger('TasksWebSocket');
+  disabled = false;
   @WebSocketServer() server: Server;
   minersQueue: { [network: string]: Miner[] } = {};
   knownMiners: { [minerId: string]: Miner } = {};
@@ -62,7 +64,13 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
   queuedTasks: { [id: string]: QueuedTask } = {};
   clientAddress: { [clientId: string]: string } = {};
 
-  constructor() {
+  constructor(private cfgSrv: ConfigService) {
+    this.disabled = this.cfgSrv.get('app.disableMineTaskProcessing') == 'true';
+    if (this.disabled) {
+      this.logger.log('Task processing is disabled');
+      return;
+    }
+
     if (!isTestMode()) {
       setInterval(() => {
         this.produceTasks();
@@ -102,6 +110,10 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     @MessageBody('network') network: string,
     @MessageBody('address') address: string,
   ) {
+    if (this.disabled) {
+      return build500('task processing is disabled');
+    }
+
     if (!network) {
       return build400('network is required');
     }

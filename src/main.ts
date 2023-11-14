@@ -12,6 +12,7 @@ dayjs.extend(utc);
 sourceMapSupport.install();
 
 async function bootstrap() {
+  console.log(process.env);
   const app = await NestFactory.create(AppModule, {
     logger: appLogger,
     bodyParser: false,

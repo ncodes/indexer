@@ -12,6 +12,7 @@ module.exports = {
       password: process.env.DB_PASS,
       database: process.env.DB_NAME,
       connectionString: process.env.DATABASE_URL || undefined,
+      socketPath: process.env.DB_SOCKET_PATH || undefined,
       sslMode: process.env.DB_SSL_MODE,
       ssl: process.env.DB_SSL ? { rejectUnauthorized: false } : false,
     },

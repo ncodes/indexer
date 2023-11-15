@@ -6,15 +6,7 @@ module.exports = {
   development: {
     client: 'postgres',
     connection: {
-      host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT),
-      user: process.env.DB_USER,
-      password: process.env.DB_PASS,
-      database: process.env.DB_NAME,
       connectionString: process.env.DATABASE_URL || undefined,
-      socketPath: process.env.DB_SOCKET_PATH || undefined,
-      sslMode: process.env.DB_SSL_MODE,
-      ssl: process.env.DB_SSL ? { rejectUnauthorized: false } : false,
     },
   },
 
@@ -26,10 +18,15 @@ module.exports = {
   production: {
     client: 'postgres',
     connection: {
-      connectionString: process.env.DATABASE_URL,
-      ssl: {
-        rejectUnauthorized: false,
-      },
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : undefined,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASS,
+      database: process.env.DB_NAME,
+      connectionString: process.env.DATABASE_URL || undefined,
+      socketPath: process.env.DB_SOCKET_PATH || undefined,
+      sslMode: process.env.DB_SSL_MODE,
+      ssl: process.env.DB_SSL ? { rejectUnauthorized: false } : false,
     },
     migrations: {
       tableName: 'knex_migrations',

@@ -5,12 +5,12 @@ steps:
       docker build -t $_REGION-docker.pkg.dev/$PROJECT_ID/indexer/indexer:$TAG_NAME .
     automapSubstitutions: true
 
+  # Push the container image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', '$_REGION-docker.pkg.dev/$PROJECT_ID/indexer/indexer:$TAG_NAME']
+
   # Deploy to Cloud Run
   - name: 'gcr.io/cloud-builders/gcloud'
     script: |
-      gcloud run deploy $_SERVICE_NAME --image $_REGION-docker.pkg.dev/quick-guru-354614/indexer/indexer --region $_REGION --platform managed --allow-unauthenticated
+      gcloud run deploy $_SERVICE_NAME --image $_REGION-docker.pkg.dev/$PROJECT_ID/indexer/indexer --region $_REGION --platform managed --allow-unauthenticated
     automapSubstitutions: true
-
-# Images to push
-images:
-  - '$_REGION-docker.pkg.dev/$PROJECT_ID/indexer/indexer:$TAG_NAME'

@@ -33,7 +33,9 @@
     "redis:start": "yarn docker:create-devnet && docker run --name=redis -d --network devnet --rm -v ${PWD}/volumes/redis-docker:/data -p 6379:6379 redis",
     "docker:create-devnet": "docker network create devnet4 2> /dev/null || true",
     "docker:build": "docker build -t indexer .",
-    "docker:build:no-cache": "docker build --no-cache -t indexer ."
+    "docker:build:no-cache": "docker build --no-cache -t indexer .",
+    "gcr:build-run": "gcloud builds submit --region=us-central1 --config dev/gcloud/build_and_deploy.yaml --substitutions=TAG_NAME='latest',_SERVICE_NAME=$SERVICE_NAME,_REGION=$REGION",
+    "gcr:update-env": "gcloud run services update indexer-sepolia --region=$REGION"
   },
   "dependencies": {
     "@bufbuild/connect-web": "^0.13.0",

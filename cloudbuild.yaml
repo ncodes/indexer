@@ -1,8 +1,0 @@
-steps:
-  - name: 'gcr.io/cloud-builders/docker'
-  script: |
-  docker build -t $LOCATION-docker.pkg.dev/$PROJECT_ID/indexer/indexer:$TAG_NAME .
-  automapSubstitutions: true
-
-images:
-- '$LOCATION-docker.pkg.dev/$PROJECT_ID/indexer/indexer:$TAG_NAME'

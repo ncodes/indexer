@@ -35,7 +35,7 @@
     "docker:build": "docker build -t indexer .",
     "docker:build:no-cache": "docker build --no-cache -t indexer .",
     "gcr:build-run": "gcloud builds submit --region=us-central1 --config dev/gcloud/build_and_deploy.yaml --substitutions=TAG_NAME='latest',_SERVICE_NAME=$SERVICE_NAME,_REGION=$REGION",
-    "gcr:update-env": "gcloud run services update indexer-sepolia --region=$REGION"
+    "gcr:update-env": "gcloud run services update indexer-sepolia --region=$REGION  --update-env-vars"
   },
   "dependencies": {
     "@bufbuild/connect-web": "^0.13.0",

@@ -63,6 +63,7 @@ export default class Processor {
    */
   async emit(e: UnprocessedEvent) {
     const txn = await ChainEvent.startTransaction();
+    await txn.raw('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE');
     const args = [...e.event.args.slice(0, e.event.args.length), e.event, txn];
 
     try {

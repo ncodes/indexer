@@ -1,10 +1,13 @@
-FROM node:18.18.0
+FROM node:18.18.2-alpine3.17
 
 # Create app directory
 WORKDIR /usr/src/app
 
 # Copy package.json and package-lock.json
 COPY package*.json ./
+
+# Install git
+RUN apk add git
 
 # Install app dependencies
 RUN npm install --legacy-peer-deps

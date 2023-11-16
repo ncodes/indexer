@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { Base } from '../base';
@@ -10,8 +11,13 @@ import { Base } from '../base';
 export default class ExchangeRateFetcher extends Base {
   private logger = new Logger(ExchangeRateFetcher.name);
 
-  constructor(private exRateSrv: ExchangeRateService) {
+  constructor(private exRateSrv: ExchangeRateService, private cfgSrv: ConfigService) {
     super();
+    const disabled = this.cfgSrv.get('app.disableCurrencyRateFetcher') == 'true';
+    if (disabled) {
+      this.logger.log('Exchange Rate Fetcher is disabled');
+      return;
+    }
     this.schedule();
   }
 

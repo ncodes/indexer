@@ -81,7 +81,7 @@ export class NotifierService {
    * @param data The context data
    */
   notifyNow(notifType: NotificationID, network: string, recipient: string, data: any) {
-    if (this.cfgSrv.get('app.disableNotifications') === 'true') return Promise.resolve();
+    if (this.disable) return Promise.resolve();
     return this.notifier.notify({
       data: {
         appUrl: this.cfgSrv.get('app.appUrl'),

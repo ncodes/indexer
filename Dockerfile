@@ -19,4 +19,4 @@ COPY . .
 RUN npm run build
 
 # Start app
-CMD chmod +x ./dev/run.sh && ./dev/run.sh
+CMD sh ./dev/run.sh

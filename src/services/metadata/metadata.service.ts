@@ -10,6 +10,8 @@ import { RedisService } from '../redis.service';
 import { CoinGeckoMetadata } from './CoinGeckoMetadata';
 import { CoinMarketCapMetadata } from './CoinMarketCapMetadata';
 
+export const ErrTokenNotFound = 'token not found';
+
 // tslint:disable-next-line:max-classes-per-file
 export abstract class MetadataSource {
   abstract getTokenInfo(network: string, symbolOrContract: string): Promise<TokenMetadata>;
@@ -69,7 +71,7 @@ export class MetadataService {
 
     // If not found, fetch from external source
     if (!info) info = await this.source.getTokenInfo(symbolOrNetwork, contract);
-    if (!info) return Promise.reject(new Error('token not found'));
+    if (!info) return Promise.reject(ErrTokenNotFound);
 
     // Cache the logo URL for 7 days
     await this.redisSrv.setWithExpire(`token_logo_${symbolOrNetwork}_${contract}`, info.logoURI, 60 * 60 * 24 * 7);
@@ -110,13 +112,13 @@ export class MetadataService {
 
     // Check redis cache for bad address match
     const badAddress = await this.redisSrv.get(`bad_address_${contract}`);
-    if (badAddress) return Promise.reject(new Error('token not found'));
+    if (badAddress) return Promise.reject(ErrTokenNotFound);
 
     // If not found, fetch from external source
     let info: TokenMetadata;
     try {
       info = await this.source.getTokenInfo(symbolOrNetwork, contract);
-      if (!info) return Promise.reject(new Error('token not found'));
+      if (!info) return Promise.reject(ErrTokenNotFound);
     } catch (e) {
       // Cache the address as a 'bad' address so subsequent requests will not immediately attempt to fetch again.
       // It could be the address has been de-listed from the source or it never existed.

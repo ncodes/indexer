@@ -1,13 +1,13 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import KnownMediatorPools from '../../common/mediator_pools';
-import { ok, throw400 } from '../../common/responses/responses';
+import { ok, throw400, throw404 } from '../../common/responses/responses';
 import { TokenLists, getTokenInfo } from '../../common/token_list';
 import { ConfigService } from '../../config/config.service';
 import AssetRegistry from '../../models/asset_registry';
 import Meta, { FeeName } from '../../models/meta';
 import { isValidNetwork } from '../../network/common';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
-import { MetadataService } from '../../services/metadata/metadata.service';
+import { ErrTokenNotFound, MetadataService } from '../../services/metadata/metadata.service';
 
 @Controller('v1/misc')
 export class MiscController {
@@ -68,8 +68,16 @@ export class MiscController {
    */
   @Get('crypto-rate/:network/:token')
   async getCryptoRate(@Param('network') network: string, @Param('token') token: string) {
-    const info = await this.metadataSrv.getTokenInfo(network, token);
-    return ok().data({ price: info.price }).build();
+    try {
+      const info = await this.metadataSrv.getTokenInfo(network, token);
+      return ok().data({ price: info.price }).build();
+    } catch (error) {
+      let msg = error.message;
+      if (error.response && error.response.status == 400) {
+        msg = ErrTokenNotFound;
+      }
+      throw404(msg);
+    }
   }
 
   /**

@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
+import * as _ from 'lodash';
+import { handleAxiosError } from '../../common/errors/http_response_error';
 import Liquidity from '../../models/liquidity';
 import Market from '../../models/market';
 import MarketPrice from '../../models/market_price';
-import Swap from '../../models/swap';
-import * as _ from 'lodash';
-import { MetadataService } from '../../services/metadata/metadata.service';
-import { handleAxiosError } from '../../common/errors/http_response_error';
 import Meta from '../../models/meta';
+import Swap from '../../models/swap';
+import { MetadataService } from '../../services/metadata/metadata.service';
 
 @Injectable()
 export class MarketService {
@@ -82,6 +82,7 @@ export class MarketService {
           market.baseLogo = baseInfo.logoURI;
         } catch (e) {
           this.logger.error('failed to fetch token info: ' + quoteAddress, handleAxiosError(e).message);
+          market.baseLogo = 'https://storage.googleapis.com/joint-images/token-logos/unknown_base.svg';
         }
       }
 
@@ -91,6 +92,7 @@ export class MarketService {
           market.quoteLogo = quoteInfo.logoURI;
         } catch (e) {
           this.logger.error('failed to fetch token info: ' + quoteAddress, handleAxiosError(e).message);
+          market.quoteLogo = 'https://storage.googleapis.com/joint-images/token-logos/unknown_quote.svg';
         }
       }
 

@@ -82,8 +82,8 @@ export class MarketService {
           market.baseLogo = baseInfo.logoURI;
         } catch (e) {
           this.logger.error('failed to fetch token info: ' + quoteAddress, handleAxiosError(e).message);
-          market.baseLogo = 'https://storage.googleapis.com/joint-images/token-logos/unknown_base.svg';
         }
+        market.baseLogo = market.baseLogo || 'https://storage.googleapis.com/joint-images/token-logos/unknown_base.svg';
       }
 
       if (select.includes(`quoteLogo`) || !select.length) {
@@ -92,8 +92,9 @@ export class MarketService {
           market.quoteLogo = quoteInfo.logoURI;
         } catch (e) {
           this.logger.error('failed to fetch token info: ' + quoteAddress, handleAxiosError(e).message);
-          market.quoteLogo = 'https://storage.googleapis.com/joint-images/token-logos/unknown_quote.svg';
         }
+        market.quoteLogo =
+          market.quoteLogo || 'https://storage.googleapis.com/joint-images/token-logos/unknown_quote.svg';
       }
 
       if (select.includes(`amountSwapped`) || !select.length) {

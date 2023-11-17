@@ -230,7 +230,7 @@ export class MarketCoreHandler extends Handler {
       baseDecimals: number,
       quoteDecimals: number;
 
-    if (!isDevMode()) {
+    if (!isDevMode(true)) {
       if (Market.isERC20(baseType)) {
         const baseToken = this.newContract(baseAsset, erc20ABI, this.provider);
         baseSymbol = (await baseToken.symbol()).toUpperCase();

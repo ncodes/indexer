@@ -11,8 +11,8 @@ export enum SupportedNetworks {
   Polygon = 'polygon',
   Optimism = 'optimism',
   Binance = 'binance',
-  Localhost = 'localhost',
   Sepolia = 'sepolia',
+  Localhost = 'localhost',
 }
 
 export enum ChainIDs {
@@ -21,24 +21,35 @@ export enum ChainIDs {
   Optimism = 10,
   Binance = 56,
   Sepolia = 11155111,
+  Localhost = 31337,
 }
 
-// Configuration for CoinMarketCap API
+// Map network or symbol name to corresponding CoinGecko network identifier
 export const CoinGeckoConfig = {
-  networkMap: {
+  networkToID: {
     ethereum: 'ethereum',
-    binance: 'binance-smart-chain',
-    optimism: 'optimistic-ethereum',
-    polygon: 'polygon-pos',
-    sepolia: 'sepolia',
+    polygon: 'matic-network',
+    optimism: 'optimism',
+    binance: 'binancecoin',
   },
-  symbolMap: {
+  symbolToID: {
     ETH: 'ethereum',
-    BNB: 'binancecoin',
     MATIC: 'matic-network',
+    OP: 'optimism',
+    BNB: 'binancecoin',
     BTC: 'bitcoin',
-    SEP_ETH: 'sepolia',
   },
+};
+
+// MinerTaskDurations is the number of seconds a
+// miner has to complete a mining task for a given network
+export const MinerTaskDurations = {
+  [SupportedNetworks.Ethereum]: 60,
+  [SupportedNetworks.Localhost]: 30,
+  [SupportedNetworks.Polygon]: 30,
+  [SupportedNetworks.Optimism]: 30,
+  [SupportedNetworks.Sepolia]: 30,
+  [SupportedNetworks.Binance]: 60,
 };
 
 /**
@@ -56,7 +67,6 @@ export function getNetworks() {
  * @param network
  */
 export function getChainID(network: string): number {
-  if (!isValidNetwork(network)) return;
   const key = EnumValues.getNameFromValue(SupportedNetworks, network);
   return ChainIDs[key];
 }

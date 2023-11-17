@@ -100,6 +100,8 @@ declare global {
     decimals: number;
     price?: number;
     isContract?: boolean;
+    address?: string;
+    chainId?: number;
   }
 
   interface SignatureData {

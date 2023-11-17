@@ -1,14 +1,14 @@
-import { MarketCoreHandler } from './market_core.handler';
-import { DBService } from '../../db/DBService';
-import Market, { AssetType } from '../../models/market';
-import { NoopLogger } from '../../common/loggers/noop_logger';
-import LiquidityProvider from '../../models/market_provider';
 import * as moment from 'moment';
-import PermittedTrader from '../../models/permitted_trader';
-import { NotificationID } from '../../jobs/mailer/NotifierService';
-import { toBN } from '../common';
+import { NoopLogger } from '../../common/loggers/noop_logger';
 import { TokenLists } from '../../common/token_list';
+import { DBService } from '../../db/DBService';
+import { NotificationID } from '../../jobs/mailer/NotifierService';
 import Liquidity from '../../models/liquidity';
+import Market, { AssetType } from '../../models/market';
+import LiquidityProvider from '../../models/market_provider';
+import PermittedTrader from '../../models/permitted_trader';
+import { toBN } from '../common';
+import { MarketCoreHandler } from './market_core.handler';
 
 const mockGetMarket = jest.fn();
 const MarketCoreContract = jest.fn().mockImplementation(() => {

@@ -1,6 +1,6 @@
 // tslint:disable-next-line:max-classes-per-file
-import { CoinGeckoConfig, getChainID } from '../../network/common';
 import axios from 'axios';
+import { CoinGeckoConfig, getChainID } from '../../network/common';
 import { MetadataSource } from './metadata.service';
 
 export class CoinGeckoMetadata implements MetadataSource {
@@ -27,28 +27,26 @@ export class CoinGeckoMetadata implements MetadataSource {
    * @returns
    */
   async getTokenInfo(network: string, symbolOrContract: string): Promise<TokenMetadata> {
-    try {
-      let path = `coins/${CoinGeckoConfig.networkMap[network]}/contract/${symbolOrContract}`;
-      const isSymbol = !symbolOrContract.toLowerCase().startsWith('0x');
-      if (isSymbol) {
-        const id = CoinGeckoConfig.symbolMap[symbolOrContract.toUpperCase()];
-        if (!id) return Promise.reject(new Error('unsupported symbol'));
-        path = `coins/${id}`;
-      }
-      const resp = await this.get(path, {});
-      const data: CoinGecko.Asset = resp.data;
-      return Promise.resolve({
-        name: data.name,
-        chainId: network ? getChainID(network) : '',
-        network,
-        address: !isSymbol ? symbolOrContract : null,
-        decimals: data.detail_platforms[data.asset_platform_id || ''].decimal_place || 0,
-        logoURI: data.image.large,
-        price: data.market_data.current_price.usd,
-        isContract: !isSymbol,
-      });
-    } catch (e) {
-      return Promise.reject(e);
+    let path = `coins/${CoinGeckoConfig.networkToID[network]}/contract/${symbolOrContract}`;
+
+    const isSymbol = !symbolOrContract.match(/^0x/i);
+    if (isSymbol) {
+      const id = CoinGeckoConfig.symbolToID[symbolOrContract.toUpperCase()];
+      if (!id) throw new Error('unsupported symbol');
+      path = `coins/${id}`;
     }
+
+    const resp = await this.get(path, {});
+    const data: CoinGecko.Asset = resp.data;
+    return {
+      name: data.name,
+      chainId: getChainID(network),
+      network,
+      address: !isSymbol ? symbolOrContract : null,
+      decimals: data.detail_platforms[data.asset_platform_id || ''].decimal_place || 0,
+      logoURI: data.image.large,
+      price: data.market_data.current_price.usd,
+      isContract: !isSymbol,
+    };
   }
 }

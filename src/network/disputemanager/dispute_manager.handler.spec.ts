@@ -1,18 +1,18 @@
-import { DBService } from '../../db/DBService';
 import { NoopLogger } from '../../common/loggers/noop_logger';
-import { DisputeManagerHandler } from './dispute_manager.handler';
-import { toBN } from '../common';
-import Swap from '../../models/swap';
-import Market from '../../models/market';
-import Dispute from '../../models/dispute';
+import { DBService } from '../../db/DBService';
 import { NotificationID } from '../../jobs/mailer/NotifierService';
 import Commit from '../../models/commit';
-import Reveal from '../../models/reveal';
+import Dispute from '../../models/dispute';
 import Draft from '../../models/draft';
-import Liquidity from '../../models/liquidity';
-import MineTask, { MineTaskType } from '../../models/mine_task';
-import Meta from '../../models/meta';
 import Event, { Events } from '../../models/event';
+import Liquidity from '../../models/liquidity';
+import Market from '../../models/market';
+import Meta from '../../models/meta';
+import MineTask, { MineTaskType } from '../../models/mine_task';
+import Reveal from '../../models/reveal';
+import Swap from '../../models/swap';
+import { toBN } from '../common';
+import { DisputeManagerHandler } from './dispute_manager.handler';
 
 const MarketCoreContract = jest.fn().mockImplementation(() => {
   return {};

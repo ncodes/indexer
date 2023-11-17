@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import Ticket from '../../models/ticket';
-import * as moment from 'moment';
-import * as _ from 'lodash';
-import TicketSlash from '../../models/ticket_slash';
-import { MetadataService } from '../../services/metadata/metadata.service';
 import { ConfigService } from '@nestjs/config';
+import * as _ from 'lodash';
+import * as moment from 'moment';
+import Ticket from '../../models/ticket';
+import TicketSlash from '../../models/ticket_slash';
 import { isZero } from '../../network/common';
+import { MetadataService } from '../../services/metadata/metadata.service';
 
 @Injectable()
 export class TicketsService {

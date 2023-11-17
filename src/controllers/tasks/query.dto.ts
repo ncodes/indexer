@@ -1,10 +1,10 @@
-import { IsBoolean, IsIn, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
-import { makeValidatorMsg } from '../../common/validations/validation';
-import { getNetworks } from '../../network/common';
 import { Transform } from 'class-transformer';
+import { IsBoolean, IsIn, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { toNumber } from 'lodash';
 import { toBoolean } from 'underscore.string';
+import { makeValidatorMsg } from '../../common/validations/validation';
 import { MineTaskType } from '../../models/mine_task';
+import { getNetworks } from '../../network/common';
 
 export class ListQueryDTO {
   @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })

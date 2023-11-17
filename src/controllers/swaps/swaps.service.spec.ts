@@ -1,14 +1,14 @@
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DBService } from '../../db/DBService';
-import SwapService from './swap.service';
-import Swap from '../../models/swap';
-import User from '../../models/user';
 import Dispute from '../../models/dispute';
 import Draft from '../../models/draft';
-import { MetadataService } from '../../services/metadata/metadata.service';
-import { ConfigService } from '@nestjs/config';
-import { powOf } from '../../network/common';
 import Market, { AssetType } from '../../models/market';
+import Swap from '../../models/swap';
+import User from '../../models/user';
+import { powOf } from '../../network/common';
+import { MetadataService } from '../../services/metadata/metadata.service';
+import SwapService from './swap.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {

@@ -1,4 +1,4 @@
-import { ValidateIf, IsIn, IsNotEmpty, MaxLength } from 'class-validator';
+import { IsIn, IsNotEmpty, MaxLength, ValidateIf } from 'class-validator';
 import { makeValidatorMsg } from '../common/validations/validation';
 import { getNetworks } from '../network/common';
 

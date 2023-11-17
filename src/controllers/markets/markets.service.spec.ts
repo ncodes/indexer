@@ -1,19 +1,19 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { MarketService } from './market.service';
-import NetworkService from '../../network/network.service';
-import { MetadataService } from '../../services/metadata/metadata.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { Test, TestingModule } from '@nestjs/testing';
 import * as moment from 'moment';
 import { DBService } from '../../db/DBService';
-import Market from '../../models/market';
-import Swap from '../../models/swap';
-import Liquidity from '../../models/liquidity';
-import MarketPrice from '../../models/market_price';
-import { pow10 } from '../../network/common';
 import { NotifierService } from '../../jobs/mailer/NotifierService';
-import { ExchangeRateService } from '../../services/exchange_rate.service';
-import { RedisService } from '../../services/redis.service';
+import Liquidity from '../../models/liquidity';
+import Market from '../../models/market';
+import MarketPrice from '../../models/market_price';
 import Meta, { MetaKeys } from '../../models/meta';
+import Swap from '../../models/swap';
+import { pow10 } from '../../network/common';
+import NetworkService from '../../network/network.service';
+import { ExchangeRateService } from '../../services/exchange_rate.service';
+import { MetadataService } from '../../services/metadata/metadata.service';
+import { RedisService } from '../../services/redis.service';
+import { MarketService } from './market.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {

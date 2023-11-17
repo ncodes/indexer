@@ -1,8 +1,8 @@
-import { DBService } from '../../db/DBService';
 import { NoopLogger } from '../../common/loggers/noop_logger';
+import { DBService } from '../../db/DBService';
+import AssetRegistry from '../../models/asset_registry';
 import { toBN } from '../common';
 import { AssetRegistryHandler } from './asset_registry.handler';
-import AssetRegistry from '../../models/asset_registry';
 
 const BadgeManagerContract = jest.fn().mockImplementation(() => {
   return {};

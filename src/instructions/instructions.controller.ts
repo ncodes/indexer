@@ -1,13 +1,13 @@
 import { Body, Controller, Get, Param, Put, Req, UseGuards, ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Request } from 'express';
+import { CommonValidationPipeOpt as ValPipeOpt } from '../common/pipes/common.pipe';
+import { ok, throw404 } from '../common/responses/responses';
 import { BeAuthenticatedGuard } from '../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../guards/has_token.guard';
-import { ok, throw404 } from '../common/responses/responses';
-import { CommonValidationPipeOpt as ValPipeOpt } from '../common/pipes/common.pipe';
+import { SupportedNetworks } from '../network/common';
 import { UpdateInstructionsDTO } from './dto';
 import { InstructionsService } from './instructions.service';
-import { Request } from 'express';
-import { ConfigService } from '@nestjs/config';
-import { SupportedNetworks } from '../network/common';
 
 @Controller('v1/instructions')
 export class InstructionsController {

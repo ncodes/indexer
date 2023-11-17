@@ -1,10 +1,10 @@
-import { IsBoolean, IsEnum, IsIn, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
-import { makeValidatorMsg } from '../../common/validations/validation';
-import { getNetworks } from '../../network/common';
 import { Transform } from 'class-transformer';
+import { IsBoolean, IsEnum, IsIn, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { toNumber } from 'lodash';
 import { toBoolean } from 'underscore.string';
+import { makeValidatorMsg } from '../../common/validations/validation';
 import { SearchStatus } from '../../models/ticket';
+import { getNetworks } from '../../network/common';
 
 export class GetQueryDTO {
   @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })

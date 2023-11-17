@@ -1,14 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { DBService } from '../../db/DBService';
 import { ConfigModule } from '@nestjs/config';
+import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
-import { NoopLogger } from '../../common/loggers/noop_logger';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
-import { PaymentsController } from './payments.controller';
+import { NoopLogger } from '../../common/loggers/noop_logger';
+import { DBService } from '../../db/DBService';
 import { SupportedNetworks } from '../../network/common';
-import { PaymentsService } from './payments.service';
 import NetworkService from '../../network/network.service';
+import { PaymentsController } from './payments.controller';
+import { PaymentsService } from './payments.service';
 
 describe('PaymentsController', () => {
   let app: INestApplication;

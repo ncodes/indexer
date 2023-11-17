@@ -1,8 +1,8 @@
+import { Transform } from 'class-transformer';
 import { IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, Validate } from 'class-validator';
+import { toNumber } from 'lodash';
 import { LiquidityDescriptionValidator, makeValidatorMsg } from '../../common/validations/validation';
 import { getNetworks } from '../../network/common';
-import { Transform } from 'class-transformer';
-import { toNumber } from 'lodash';
 
 class LiquidityDTO {
   @IsString({ message: makeValidatorMsg('must be a string', 'provider') })

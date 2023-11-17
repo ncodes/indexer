@@ -56,7 +56,7 @@ describe('NetworkService', () => {
       .useValue(new (jest.fn())())
       .compile();
 
-    service = module.get<NetworkService>(NetworkService);
+    module.get<NetworkService>(NetworkService);
   });
 
   it('no-op', function () {

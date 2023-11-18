@@ -1,8 +1,8 @@
-import { randStr, toDec } from '../common/common';
-import Objection, { Transaction } from 'objection';
-import { BaseModel } from './base';
-import * as moment from 'moment';
 import { isNil } from 'lodash';
+import * as moment from 'moment';
+import Objection, { Transaction } from 'objection';
+import { randStr, toDec } from '../common/common';
+import { BaseModel } from './base';
 
 /**
  * MarketPrice represents a market's historic price
@@ -91,20 +91,10 @@ export default class MarketPrice extends BaseModel {
     return this.query(txn)
       .where((q) => {
         if (network) q.where({ network });
-      })
-      .where((q) => {
         if (marketAddress) q.where('marketAddress', 'ilike', marketAddress);
-      })
-      .where((q) => {
         if (baseAddress) q.where('baseAddress', 'ilike', baseAddress);
-      })
-      .where((q) => {
         if (provider) q.where('provider', 'ilike', provider);
-      })
-      .where((q) => {
         if (!isNil(lid)) q.where({ lid });
-      })
-      .where((q) => {
         if (excludeAfter) q.where('createdAt', '<', excludeAfter);
       })
       .orderBy('createdAt', 'DESC')
@@ -132,6 +122,7 @@ export default class MarketPrice extends BaseModel {
     const priceHourAgo = await MarketPrice.findRecent(network, marketAddress, undefined, provider, lid, timeAgo, txn);
     if (!priceHourAgo) return Promise.resolve(0);
     const currentPrice = await MarketPrice.findRecent(network, marketAddress, undefined, provider, lid, undefined, txn);
+    if (priceHourAgo.price == '0') return 0;
     return Promise.resolve(
       toDec(currentPrice.price).sub(priceHourAgo.price).div(toDec(priceHourAgo.price)).mul(100).toNumber(),
     );

@@ -1,10 +1,10 @@
+import * as crypto from 'crypto';
 import * as dayjs from 'dayjs';
 import * as utc from 'dayjs/plugin/utc';
 import Decimal from 'decimal.js';
-import { uid } from 'uid';
 import { BigNumberish } from 'ethers';
 import * as notifier from 'node-notifier';
-import * as crypto from 'crypto';
+import { uid } from 'uid';
 import * as util from 'util';
 
 dayjs.extend(utc);
@@ -23,10 +23,10 @@ export const toDec = (val: BigNumberish) => new Decimal(val.toString());
 
 /**
  * Check if current environment is 'development'
- * @param nodeEnvOnly Only check NODE_ENV (exclude DEV_MODE)
+ * @param ignoreDevModeEnv Only check NODE_ENV (exclude DEV_MODE)
  */
-export function isDevMode(nodeEnvOnly = false) {
-  return process.env.NODE_ENV === 'development' || (!nodeEnvOnly && process.env.DEV_MODE != undefined);
+export function isDev(ignoreDevModeEnv = false) {
+  return process.env.NODE_ENV === 'development' || (!ignoreDevModeEnv && process.env.DEV_MODE != undefined);
 }
 
 /**
@@ -39,14 +39,14 @@ export function isLocal() {
 /**
  * Check if current environment is 'production'
  */
-export function isProdMode() {
+export function isProd() {
   return process.env.NODE_ENV === 'production';
 }
 
 /**
  * Check if current environment is 'test'
  */
-export function isTestMode() {
+export function isTest() {
   return process.env.NODE_ENV === 'test';
 }
 
@@ -101,7 +101,7 @@ export function shortenAddr(addr: string) {
  * @param param The parameters to format the message
  */
 export function notify(format: string, ...param: any[]) {
-  if (isProdMode()) return;
+  if (isProd()) return;
   notifier.notify({
     title: 'Debug',
     message: util.format(format, ...param),

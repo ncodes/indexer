@@ -2,7 +2,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Queue } from 'bull';
-import { isDevMode } from '../../common/common';
+import { isDev } from '../../common/common';
 import { NotifierConsumer } from './NotifierConsumer';
 
 export enum NotificationID {
@@ -56,7 +56,7 @@ export class NotifierService {
    */
   notify(notifType: NotificationID, network: string, recipient: string, data: { [key: string]: any }) {
     if (this.disable) return Promise.resolve();
-    if (isDevMode()) return this.notifyNow(notifType, network, recipient, data);
+    if (isDev()) return this.notifyNow(notifType, network, recipient, data);
     return this.queue.add(
       {
         appUrl: this.cfgSrv.get('app.appUrl'),

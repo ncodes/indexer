@@ -1,7 +1,7 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import { isDevMode, isProdMode, toDec } from '../../common/common';
+import { isDev, isProd, toDec } from '../../common/common';
 import { findInLocalhost, findInSynthetic } from '../../common/token_list';
 import { isValidNetwork, isZero, pow10D } from '../../network/common';
 import NetworkService from '../../network/network.service';
@@ -132,11 +132,11 @@ export class MetadataService {
     if (network && !isValidNetwork(network)) return Promise.reject('network not supported');
 
     // If the token is a contract, try to get the decimals if not provided
-    if (info.isContract && network && isProdMode() && !info.decimals)
+    if (info.isContract && network && isProd() && !info.decimals)
       info.decimals = await this.netSrv.getERC20Contract(contract).decimals();
 
     // In dev mode, set decimals to 18 if not provided
-    if (isDevMode() && !info.decimals) info.decimals = 18;
+    if (isDev() && !info.decimals) info.decimals = 18;
 
     // Cache the token info for n seconds
     await this.redisSrv.setWithExpire(`token_info_${contract}`, JSON.stringify(info), 30);

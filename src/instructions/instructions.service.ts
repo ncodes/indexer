@@ -3,8 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import PinataClient, { PinataPinListResponse } from '@pinata/sdk';
 import axios from 'axios';
 import { ethers, Wallet } from 'ethers';
-import NetworkService from '../network/network.service';
 import * as moment from 'moment';
+import NetworkService from '../network/network.service';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const pinataSDK = require('@pinata/sdk');
 
@@ -68,27 +68,39 @@ export class InstructionsService {
     const sigInfo: GrantSigInfo = { network };
     const badgeMgr = this.netSrv.getContracts().badgeMgr;
     const instructionBadge = this.cfgSrv.get('app.badges.instruction');
+    console.log('>BadgeName', instructionBadge);
     const hasBadge = await badgeMgr.hasBadge(granteeAddr, instructionBadge, '');
+    console.log('>Has Badge', hasBadge);
     const signer = new Wallet(this.cfgSrv.get('app.badges.instructionIssuerPk'));
-    const sigExp = moment().add(1, 'h');
+    console.log('>Signer', signer.address);
+    const sigExp = moment().add(1, 'h'); // TODO: should instruction badge expire so soon?
 
     let types: string[];
     if (!hasBadge) {
+      console.log('A');
       types = ['string', 'string', 'address', 'uint256', 'string[]', 'string[]', 'uint256'];
+      console.log('B');
       sigInfo.values = [instructionBadge, '', granteeAddr, 0, ['hash'], [instructionHash], sigExp.unix()];
       const msgHash = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(types, sigInfo.values));
+      console.log('C');
       const msgHashBytes = Buffer.from(msgHash.substring(2), 'hex');
+      console.log('D');
       sigInfo.sig = await signer.signMessage(msgHashBytes);
       sigInfo.isNew = true;
+      console.log('E');
       return sigInfo;
     }
 
     // Generate signature for upsertGranteeMetaBySig
+    console.log('1');
     types = ['string', 'string', 'address', 'string', 'string', 'uint256'];
     sigInfo.values = [instructionBadge, '', granteeAddr, 'hash', instructionHash, sigExp.unix()];
+    console.log('2');
     const msgHash = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(types, sigInfo.values));
+    console.log('3');
     const msgHashBytes = Buffer.from(msgHash.substring(2), 'hex');
     sigInfo.sig = await signer.signMessage(msgHashBytes);
+    console.log('4');
     sigInfo.isNew = false;
 
     return sigInfo;

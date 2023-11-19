@@ -3,7 +3,7 @@ import { BigNumber, Event, providers } from 'ethers';
 import { Transaction } from 'objection';
 import * as erc20ABI from '../../../abi/ERC20.json';
 import * as erc721ABI from '../../../abi/ERC721.json';
-import { isDevMode } from '../../common/common';
+import { isDev } from '../../common/common';
 import { findInLocalhost, findInSynthetic } from '../../common/token_list';
 import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierService';
 import Liquidity from '../../models/liquidity';
@@ -230,7 +230,7 @@ export class MarketCoreHandler extends Handler {
       baseDecimals: number,
       quoteDecimals: number;
 
-    if (!isDevMode(true)) {
+    if (!isDev(true)) {
       if (Market.isERC20(baseType)) {
         const baseToken = this.newContract(baseAsset, erc20ABI, this.provider);
         baseSymbol = (await baseToken.symbol()).toUpperCase();

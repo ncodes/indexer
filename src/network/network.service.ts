@@ -25,7 +25,7 @@ import {
   Token,
   TokenPool,
 } from '../../typechain';
-import { isTestMode } from '../common/common';
+import { isTest } from '../common/common';
 import { NotifierService } from '../jobs/mailer/NotifierService';
 import Meta, { MetaKeys } from '../models/meta';
 import { ExchangeRateService } from '../services/exchange_rate.service';
@@ -55,7 +55,7 @@ export default class NetworkService {
     private metadataSrv: MetadataService,
     private exrSrv: ExchangeRateService,
   ) {
-    if (isTestMode()) return;
+    if (isTest()) return;
     this.watch().catch((e) => {
       this.logger.error('Watcher error', e);
     });

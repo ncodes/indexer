@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 import * as sortArray from 'sort-array';
-import { isDevMode, isEqualStr, isTestMode, shortenAddr } from '../common/common';
+import { isDev, isEqualStr, isTest, shortenAddr } from '../common/common';
 import ChainEvent from '../models/chain_events';
 import { Handler } from './handler';
 import { UnprocessedEvent } from './watcher';
@@ -21,7 +21,7 @@ export default class Processor {
    * @param handlers The event handlers
    */
   constructor(private network: string, private handlers: Handler[] = []) {
-    if (!isTestMode()) this.processEvents();
+    if (!isTest()) this.processEvents();
   }
 
   /**
@@ -113,7 +113,7 @@ export default class Processor {
           this.processing = false;
         }
       },
-      isDevMode() ? 100 : 1000,
+      isDev() ? 100 : 1000,
     );
   }
 }

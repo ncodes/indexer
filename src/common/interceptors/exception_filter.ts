@@ -1,9 +1,9 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Logger } from '@nestjs/common';
-import express from 'express';
-import { isProdMode } from '../common';
-import { error, ErrorTypes } from '../responses/responses';
 import { isAxiosError } from 'axios';
+import express from 'express';
+import { isProd } from '../common';
 import { handleAxiosError } from '../errors/http_response_error';
+import { ErrorTypes, error } from '../responses/responses';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -18,7 +18,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
 
     let msg = (e as Error).message;
-    if (isProdMode()) {
+    if (isProd()) {
       this.logger.error(isAxiosError(e) ? handleAxiosError(e).message : msg);
       msg = 'server error';
     }

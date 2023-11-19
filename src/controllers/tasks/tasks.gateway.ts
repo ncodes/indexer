@@ -12,7 +12,7 @@ import {
 } from '@nestjs/websockets';
 import { isEthereumAddress } from 'class-validator';
 import { Server, Socket } from 'socket.io';
-import { isTestMode } from '../../common/common';
+import { isTest } from '../../common/common';
 import { build400, build500, ok } from '../../common/responses/responses';
 import MineTask from '../../models/mine_task';
 import { MinerTaskDurations, isValidNetwork } from '../../network/common';
@@ -64,7 +64,7 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
       return;
     }
 
-    if (!isTestMode()) {
+    if (!isTest()) {
       setInterval(() => {
         this.produceTasks();
       }, 5000);

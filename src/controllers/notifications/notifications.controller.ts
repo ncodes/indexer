@@ -2,7 +2,7 @@ import { Body, Controller, Get, Post, Put, Query, Req, UseGuards, ValidationPipe
 import { Request } from 'express';
 import { Model } from 'objection';
 import * as webpush from 'web-push';
-import { isDevMode, sha1 } from '../../common/common';
+import { isDev, sha1 } from '../../common/common';
 import { CommonValidationPipeOpt, CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ok, throw404 } from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
@@ -78,6 +78,7 @@ export class NotificationsController {
     @Body(new ValidationPipe(CommonValidationPipeOpt))
     body: ChatNotificationDTO,
   ) {
+    console.log('New message received');
     // Find user by token
     const user = await User.getByToken(body.token);
     if (!user) throw404('user not found');
@@ -114,6 +115,7 @@ export class NotificationsController {
     const lockHash = sha1(`lock-recipient-${recipient}-${swap?.orderId}-${offer?.offerId}}`);
     if (await this.redisSrv.exist(lockHash)) return ok().data({ ok: false }).build();
 
+    console.log('About to send notification');
     // Lock the recipient for 15 seconds, effectively ignoring immediate
     // notifications. Since it is impossible to tell which
     // notification represents a text message, delivery or read receipt, we cannot
@@ -123,6 +125,7 @@ export class NotificationsController {
 
     let isOk = false;
     if (recipient) {
+      console.log('Sent notification', recipient.email);
       isOk = true;
       await this.notifySrv.notify(NotificationID.ChatNewMessage, convo.network, undefined, {
         user: recipient,
@@ -156,18 +159,15 @@ export class NotificationsController {
     return ok().data({ ok: true }).build<OKResponse>();
   }
 
+  // TODO: Remove this endpoint
   @Get('try-notif')
-  async tryNotif() {
-    if (!isDevMode()) return 'disabled';
-    const sub = await WebPushSubscription.getByNetworkAndAddress(
-      'ethereum',
-      '0xB24780438dD4DB52848A3A398B1A8A08223aBd83',
-    );
+  async tryNotif(@Query('network') net: string, @Query('address') addr: string) {
+    if (!isDev()) return 'disabled';
+    const sub = await WebPushSubscription.getByNetworkAndAddress(net, addr);
     await webpush.sendNotification(
       JSON.parse(sub.subscription),
       JSON.stringify({ title: 'Hello Kennedy', body: 'You have new message', orderId: 0 }),
     );
-
-    return 'hello';
+    return 'sent';
   }
 }

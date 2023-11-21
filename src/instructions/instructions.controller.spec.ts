@@ -239,7 +239,7 @@ describe('InstructionsController', () => {
             expect(res.body.data.hash).toBe('0xHash');
             expect(mockGet).toBeCalledWith(`${u.address}:${net}`);
             expect(mockPin).toBeCalledWith(
-              { global: '', liquidity: { '0xMarketAddress:0xProvider:1': content } },
+              { global: '', liquidity: { '0xmarketaddress:0xprovider:1': content } },
               `${u.address}:${net}`,
             );
             expect(mockGetGrantSignature).toBeCalledWith(net, u.address, '0xHash');

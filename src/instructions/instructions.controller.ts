@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Put, Req, UseGuards, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
+import { toLower } from 'lodash';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../common/pipes/common.pipe';
 import { ok, throw404 } from '../common/responses/responses';
 import { BeAuthenticatedGuard } from '../guards/be_authenticated.guard';
@@ -31,29 +32,17 @@ export class InstructionsController {
   async update(@Req() req: Request, @Body(new ValidationPipe(ValPipeOpt)) body: UpdateInstructionsDTO) {
     // Get the current instruction
     const name = `${req.user.address}:${body.net}`;
-    const getResp = await this.instructSrv.get(name);
+    let [instruction] = await this.instructSrv.get(name);
+    instruction = instruction ?? { global: '', liquidity: {} };
 
-    console.log('Get?', name, getResp);
-
-    let hash: string;
-    if (!getResp[0]) {
-      console.log('No Instruction Found');
-      getResp[0] = { global: '', liquidity: {} };
-      if (!body.marketAddress) getResp[0].global = body.content;
-      else getResp[0].liquidity[`${body.marketAddress}:${body.provider}:${body.lid}`] = body.content;
-      hash = await this.instructSrv.pin(getResp[0], name);
-      console.log('Pinned', hash);
-    } else {
-      console.log('Existing Instruction Found');
-      if (!body.marketAddress) getResp[0].global = body.content;
-      else getResp[0].liquidity[`${body.marketAddress}:${body.provider}:${body.lid}`.toLowerCase()] = body.content;
-      hash = await this.instructSrv.pin(getResp[0], name);
-    }
+    if (!body.marketAddress) instruction.global = body.content;
+    else instruction.liquidity[toLower(`${body.marketAddress}:${body.provider}:${body.lid}`)] = body.content;
+    const hash = await this.instructSrv.pin(instruction, name);
 
     return ok()
       .data({
         hash,
-        instructions: getResp[0],
+        instructions: instruction,
         sigInfo: await this.instructSrv.getGrantSignature(body.net, req.user.address, hash),
       })
       .build();

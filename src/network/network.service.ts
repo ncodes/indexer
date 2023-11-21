@@ -65,10 +65,6 @@ export default class NetworkService {
    * Watch event
    */
   private async watch() {
-    if (['true', '1'].includes(this.cfgSrv.get('app.disableWatcher'))) {
-      this.logger.log('Watcher disabled');
-      return;
-    }
     await this.watchNetwork(this.cfgSrv.get('app.network'));
   }
 
@@ -115,60 +111,63 @@ export default class NetworkService {
    */
   private async watchNetwork(network: string) {
     this.contracts = {};
+
     const rpcUrl = this.cfgSrv.get(`app.contractsAddress.rpcUrl`) as string;
     if (!rpcUrl) throw new Error('rpcUrl is not defined');
-    const provider = rpcUrl.startsWith('ws')
+
+    this.provider = rpcUrl.startsWith('ws')
       ? new providers.WebSocketProvider(rpcUrl)
       : new providers.JsonRpcProvider(rpcUrl);
-    this.provider = provider;
 
     // Initialize contracts
     const p2pTokenAddr = this.cfgSrv.get(`app.contractsAddress.p2pTokenAddr`);
-    if (p2pTokenAddr) this.contracts.p2pToken = new Contract(p2pTokenAddr, p2pTokenABI, provider) as Token;
+    if (p2pTokenAddr) this.contracts.p2pToken = new Contract(p2pTokenAddr, p2pTokenABI, this.provider) as Token;
 
     const marketCoreAddr = this.cfgSrv.get(`app.contractsAddress.marketCoreAddr`);
-    if (marketCoreAddr) this.contracts.marketCore = new Contract(marketCoreAddr, marketCoreABI, provider) as MarketCore;
+    if (marketCoreAddr)
+      this.contracts.marketCore = new Contract(marketCoreAddr, marketCoreABI, this.provider) as MarketCore;
 
     const coreAddr = this.cfgSrv.get(`app.contractsAddress.coreAddr`);
-    if (coreAddr) this.contracts.core = new Contract(coreAddr, coreABI, provider) as Core;
+    if (coreAddr) this.contracts.core = new Contract(coreAddr, coreABI, this.provider) as Core;
 
     const mediatorMgr = this.cfgSrv.get(`app.contractsAddress.mediatorMgrAddr`);
     if (mediatorMgr)
-      this.contracts.mediatorMgr = new Contract(mediatorMgr, mediatorManagerABI, provider) as MediatorManager;
+      this.contracts.mediatorMgr = new Contract(mediatorMgr, mediatorManagerABI, this.provider) as MediatorManager;
 
     const disputeMgrAddr = this.cfgSrv.get(`app.contractsAddress.disputeMgrAddr`);
     if (disputeMgrAddr)
-      this.contracts.disputeMgr = new Contract(disputeMgrAddr, disputeManagerABI, provider) as DisputeManager;
+      this.contracts.disputeMgr = new Contract(disputeMgrAddr, disputeManagerABI, this.provider) as DisputeManager;
 
     const tokenPoolAddr = this.cfgSrv.get(`app.contractsAddress.tokenPoolAddr`);
-    if (tokenPoolAddr) this.contracts.tokenPool = new Contract(tokenPoolAddr, tokenPoolABI, provider) as TokenPool;
+    if (tokenPoolAddr) this.contracts.tokenPool = new Contract(tokenPoolAddr, tokenPoolABI, this.provider) as TokenPool;
 
     const lpPoolAddr = this.cfgSrv.get(`app.contractsAddress.lpPoolAddr`);
-    if (lpPoolAddr) this.contracts.lpPool = new Contract(lpPoolAddr, lpPoolABI, provider) as LPPool;
+    if (lpPoolAddr) this.contracts.lpPool = new Contract(lpPoolAddr, lpPoolABI, this.provider) as LPPool;
 
     const feePoolAddr = this.cfgSrv.get(`app.contractsAddress.feePoolAddr`);
-    if (feePoolAddr) this.contracts.feePool = new Contract(feePoolAddr, feePoolABI, provider) as FeePool;
+    if (feePoolAddr) this.contracts.feePool = new Contract(feePoolAddr, feePoolABI, this.provider) as FeePool;
 
     const badgeMgrAddr = this.cfgSrv.get(`app.contractsAddress.badgeMgrAddr`);
-    if (badgeMgrAddr) this.contracts.badgeMgr = new Contract(badgeMgrAddr, badgeMgrABI, provider) as BadgeManager;
+    if (badgeMgrAddr) this.contracts.badgeMgr = new Contract(badgeMgrAddr, badgeMgrABI, this.provider) as BadgeManager;
 
     const assetRegAddr = this.cfgSrv.get(`app.contractsAddress.assetRegAddr`);
-    if (assetRegAddr) this.contracts.assetRegistry = new Contract(assetRegAddr, assetRegABI, provider) as AssetRegistry;
+    if (assetRegAddr)
+      this.contracts.assetRegistry = new Contract(assetRegAddr, assetRegABI, this.provider) as AssetRegistry;
 
     // Load initial contract params
     await this.loadInitialContractParams(network);
 
     // Initialize handlers
     const handlers = [
-      new MarketCoreHandler(this, this.notifSrv, provider, network, this.contracts),
-      new MediatorManagerHandler(this, this.notifSrv, provider, network, this.contracts),
-      new DisputeManagerHandler(this, this.notifSrv, provider, network, this.contracts),
-      new CoreHandler(this, this.notifSrv, this.metadataSrv, this.exrSrv, provider, network, this.contracts),
-      new BadgeManagerHandler(this, provider, network, this.contracts),
-      new TokenPoolHandler(provider, network, this.contracts),
-      new LPPoolHandler(provider, network, this.contracts),
-      new FeePoolHandler(provider, network, this.contracts),
-      new AssetRegistryHandler(provider, network, this.contracts),
+      new MarketCoreHandler(this, this.notifSrv, this.provider, network, this.contracts),
+      new MediatorManagerHandler(this, this.notifSrv, this.provider, network, this.contracts),
+      new DisputeManagerHandler(this, this.notifSrv, this.provider, network, this.contracts),
+      new CoreHandler(this, this.notifSrv, this.metadataSrv, this.exrSrv, this.provider, network, this.contracts),
+      new BadgeManagerHandler(this, this.provider, network, this.contracts),
+      new TokenPoolHandler(this.provider, network, this.contracts),
+      new LPPoolHandler(this.provider, network, this.contracts),
+      new FeePoolHandler(this.provider, network, this.contracts),
+      new AssetRegistryHandler(this.provider, network, this.contracts),
     ];
 
     // Create event processor
@@ -176,7 +175,11 @@ export default class NetworkService {
     await processor.add(...handlers);
 
     // Create event watcher
-    const watcher = new Watcher(network, provider, processor);
-    await watcher.add(...handlers);
+    if (!['true', '1'].includes(this.cfgSrv.get('app.disableWatcher'))) {
+      const watcher = new Watcher(network, this.provider, processor);
+      await watcher.add(...handlers);
+    } else {
+      this.logger.log('Watcher disabled');
+    }
   }
 }

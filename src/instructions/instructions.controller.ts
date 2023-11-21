@@ -5,7 +5,6 @@ import { CommonValidationPipeOpt as ValPipeOpt } from '../common/pipes/common.pi
 import { ok, throw404 } from '../common/responses/responses';
 import { BeAuthenticatedGuard } from '../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../guards/has_token.guard';
-import { SupportedNetworks } from '../network/common';
 import { UpdateInstructionsDTO } from './dto';
 import { InstructionsService } from './instructions.service';
 
@@ -30,20 +29,22 @@ export class InstructionsController {
   @UseGuards(BeAuthenticatedGuard)
   @UseGuards(HasKeyGuard)
   async update(@Req() req: Request, @Body(new ValidationPipe(ValPipeOpt)) body: UpdateInstructionsDTO) {
-    body.net = SupportedNetworks.Ethereum; // TODO: remove
-
     // Get the current instruction
     const name = `${req.user.address}:${body.net}`;
     const getResp = await this.instructSrv.get(name);
 
+    console.log('Get?', name, getResp);
+
     let hash: string;
     if (!getResp[0]) {
+      console.log('No Instruction Found');
       getResp[0] = { global: '', liquidity: {} };
       if (!body.marketAddress) getResp[0].global = body.content;
       else getResp[0].liquidity[`${body.marketAddress}:${body.provider}:${body.lid}`] = body.content;
       hash = await this.instructSrv.pin(getResp[0], name);
-      return ok().data({ hash, instructions: getResp[0] }).build();
+      console.log('Pinned', hash);
     } else {
+      console.log('Existing Instruction Found');
       if (!body.marketAddress) getResp[0].global = body.content;
       else getResp[0].liquidity[`${body.marketAddress}:${body.provider}:${body.lid}`.toLowerCase()] = body.content;
       hash = await this.instructSrv.pin(getResp[0], name);

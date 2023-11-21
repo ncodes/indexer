@@ -1,18 +1,18 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { Test, TestingModule } from '@nestjs/testing';
+import * as randstring from 'randomstring';
 import * as request from 'supertest';
-import { DBService } from '../db/DBService';
-import { InstructionsController } from './instructions.controller';
+import { randStr } from '../common/common';
 import { AllExceptionsFilter } from '../common/interceptors/exception_filter';
 import { NoopLogger } from '../common/loggers/noop_logger';
-import { InstructionsService } from './instructions.service';
-import User from '../models/user';
 import { Roles } from '../common/roles';
 import { makeSession } from '../controllers/auth/utils';
-import { randStr } from '../common/common';
-import * as randstring from 'randomstring';
+import { DBService } from '../db/DBService';
+import User from '../models/user';
 import NetworkService from '../network/network.service';
+import { InstructionsController } from './instructions.controller';
+import { InstructionsService } from './instructions.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -191,6 +191,13 @@ describe('InstructionsController', () => {
         const content = 'content';
         const mockGet = jest.spyOn(app.get(InstructionsService), 'get').mockResolvedValue([undefined, undefined]);
         const mockPin = jest.spyOn(app.get(InstructionsService), 'pin').mockResolvedValue('0xHash');
+        const mockGetGrantSignature = jest.spyOn(app.get(InstructionsService), 'getGrantSignature').mockResolvedValue({
+          isNew: true,
+          sig: '0xSig',
+          network: net,
+          values: ['1'],
+        });
+
         await request(app.getHttpServer())
           .put(`/v1/instructions`)
           .set('Authorization', 'bearer ' + token)
@@ -203,6 +210,7 @@ describe('InstructionsController', () => {
             expect(res.body.data.hash).toBe('0xHash');
             expect(mockGet).toBeCalledWith(`${u.address}:${net}`);
             expect(mockPin).toBeCalledWith({ global: content, liquidity: {} }, `${u.address}:${net}`);
+            expect(mockGetGrantSignature).toBeCalledWith(net, u.address, '0xHash');
           });
       });
 
@@ -210,6 +218,12 @@ describe('InstructionsController', () => {
         const content = 'content';
         const mockGet = jest.spyOn(app.get(InstructionsService), 'get').mockResolvedValue([undefined, undefined]);
         const mockPin = jest.spyOn(app.get(InstructionsService), 'pin').mockResolvedValue('0xHash');
+        const mockGetGrantSignature = jest.spyOn(app.get(InstructionsService), 'getGrantSignature').mockResolvedValue({
+          isNew: true,
+          sig: '0xSig',
+          network: net,
+          values: ['1'],
+        });
         await request(app.getHttpServer())
           .put(`/v1/instructions`)
           .set('Authorization', 'bearer ' + token)
@@ -228,6 +242,7 @@ describe('InstructionsController', () => {
               { global: '', liquidity: { '0xMarketAddress:0xProvider:1': content } },
               `${u.address}:${net}`,
             );
+            expect(mockGetGrantSignature).toBeCalledWith(net, u.address, '0xHash');
           });
       });
     });

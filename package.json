@@ -16,6 +16,7 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/src/main.js",
+    "commitlint": "commitlint --from=HEAD~1",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "typechain": "typechain --target ethers-v5 --out-dir typechain abi/*.json",
     "test": "yarn mig:test:up && jest --runInBand",

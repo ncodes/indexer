@@ -114,17 +114,17 @@ export class Watcher {
       } catch (e) {
         this.logger.error('WatchBlock(): ', e);
         this.provider.off('block', listener);
-        this.interval = this.sync();
+        if (!this.isSyncing) this.interval = this.sync();
       }
     };
     this.provider.on('block', listener);
   }
 
   sync() {
+    if (this.isSyncing) return;
+    this.isSyncing = true;
     return setInterval(
       async () => {
-        if (this.isSyncing) return;
-        this.isSyncing = true;
         try {
           // Get last synced block height
           const key = this.makeSyncKey();
@@ -136,10 +136,11 @@ export class Watcher {
           // Ensure we are not fully synchronized yet.
           // If we are, stop watching on interval. Instead, watch on new block.
           const curBlock = await this.provider.getBlockNumber();
-          if (parseInt(meta.value) + 1 >= curBlock) {
+          if (parseInt(meta.value) == curBlock) {
             this.watchBlock();
             clearInterval(this.interval);
             return;
+          } else {
           }
 
           // Determine the start and end block height

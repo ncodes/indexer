@@ -3,6 +3,7 @@ import * as dayjs from 'dayjs';
 import * as utc from 'dayjs/plugin/utc';
 import Decimal from 'decimal.js';
 import { BigNumberish } from 'ethers';
+import * as moment from 'moment';
 import * as notifier from 'node-notifier';
 import { uid } from 'uid';
 import * as util from 'util';
@@ -48,6 +49,20 @@ export function isProd() {
  */
 export function isTest() {
   return process.env.NODE_ENV === 'test';
+}
+
+/**
+ * Return timezone representation of the given iso time.
+ * If timezone is undefined, fallback to UTC.
+ * @param isoTime The ISO time string
+ * @param tz The timezone
+ * @returns
+ */
+export function toTimezone(isoTime: string, tz: string) {
+  const m = moment(isoTime);
+  if (tz) m.tz(tz);
+  else m.utc();
+  return m;
 }
 
 /**

@@ -3,7 +3,7 @@ import { Logger } from '@nestjs/common';
 import { Job } from 'bull';
 import * as moment from 'moment-timezone';
 import * as webpush from 'web-push';
-import { isEqualStr, shortenAddr, toDec } from '../../common/common';
+import { isEqualStr, shortenAddr, toDec, toTimezone } from '../../common/common';
 import Market from '../../models/market';
 import Notification, { NotificationType } from '../../models/notification';
 import User from '../../models/user';
@@ -158,7 +158,7 @@ export class NotifierConsumer {
         8,
       );
       locals.payer = isEqualStr(swap.getPayer(), job.recipient);
-      locals.cancelAt = moment(swap.cancelAt).tz(user.timezone).fromNow(true);
+      locals.cancelAt = toTimezone(swap.cancelAt, user.timezone).fromNow(true);
       subject = await this.mailer.render(`${template}.subject`, locals);
       note = await this.mailer.render(`${template}.note`, locals);
     }
@@ -172,7 +172,7 @@ export class NotifierConsumer {
       locals.quoteSize = swap.takerIds.length;
       locals.pluralStr = locals.quoteSize > 1 ? 's' : '';
       locals.wasOrWereStr = locals.quoteSize > 1 ? 'were' : 'was';
-      locals.cancelAt = moment(swap.cancelAt).tz(user.timezone).fromNow(true);
+      locals.cancelAt = toTimezone(swap.cancelAt, user.timezone).fromNow(true);
       subject = await this.mailer.render(`${template}.subject`, locals);
       note = await this.mailer.render(`${template}.note`, locals);
     }
@@ -186,7 +186,7 @@ export class NotifierConsumer {
       locals.baseSize = swap.providerIds.length;
       locals.pluralStr = locals.baseSize > 1 ? 's' : '';
       locals.wasOrWereStr = locals.baseSize > 1 ? 'were' : 'was';
-      locals.cancelAt = moment(swap.cancelAt).tz(user.timezone).fromNow(true);
+      locals.cancelAt = toTimezone(swap.cancelAt, user.timezone).fromNow(true);
       subject = await this.mailer.render(`${template}.subject`, locals);
       note = await this.mailer.render(`${template}.note`, locals);
     }
@@ -203,7 +203,7 @@ export class NotifierConsumer {
           .div(pow10D(quoteDecimals * 2)),
         8,
       );
-      locals.cancelAt = moment(swap.cancelAt).tz(user.timezone).fromNow(true);
+      locals.cancelAt = toTimezone(swap.cancelAt, user.timezone).fromNow(true);
       subject = await this.mailer.render(`${template}.subject`, locals);
       note = await this.mailer.render(`${template}.note`, locals);
     }
@@ -864,7 +864,7 @@ export class NotifierConsumer {
       const { amount, price } = offer;
       locals.amount = toFixed(toDec(amount).div(pow10D(baseDecimals)), 8);
       locals.price = toFixed(toDec(price).div(pow10D(quoteDecimals)), 8);
-      locals.deadline = moment(offer.deadline).tz(user.timezone).fromNow(true);
+      locals.deadline = toTimezone(offer.deadline, user.timezone).fromNow(true);
       subject = await this.mailer.render(`${template}.subject`, locals);
       note = await this.mailer.render(`${template}.note`, locals);
     }
@@ -875,7 +875,7 @@ export class NotifierConsumer {
       const { baseDecimals } = market;
       const { ids } = offer;
       locals.amount = toFixed(toDec(liq.amount).div(pow10D(baseDecimals)), 8);
-      locals.deadline = moment(offer.deadline).tz(user.timezone).fromNow(true);
+      locals.deadline = toTimezone(offer.deadline, user.timezone).fromNow(true);
       locals.pluralStr = ids.length > 1 ? 's' : '';
       subject = await this.mailer.render(`${template}.subject`, locals);
       note = await this.mailer.render(`${template}.note`, locals);
@@ -886,7 +886,7 @@ export class NotifierConsumer {
       template = `offer/new-update/nft-erc20_synth`;
       const { quoteDecimals } = market;
       locals.price = toFixed(toDec(offer.price).div(pow10D(quoteDecimals)), 8);
-      locals.deadline = moment(offer.deadline).tz(user.timezone).fromNow(true);
+      locals.deadline = toTimezone(offer.deadline, user.timezone).fromNow(true);
       locals.pluralStr = liq.ids.length > 1 ? 's' : '';
       subject = await this.mailer.render(`${template}.subject`, locals);
       note = await this.mailer.render(`${template}.note`, locals);
@@ -895,7 +895,7 @@ export class NotifierConsumer {
     // NFT/NFT
     if (Market.isNFT(market.baseType) && Market.isNFT(market.quoteType)) {
       template = `offer/new-update/nft-nft`;
-      locals.deadline = moment(offer.deadline).tz(user.timezone).fromNow(true);
+      locals.deadline = toTimezone(offer.deadline, user.timezone).fromNow(true);
       locals.pluralStr = liq.ids.length > 1 ? 's' : '';
       locals.pluralStr2 = offer.ids.length > 1 ? 's' : '';
       subject = await this.mailer.render(`${template}.subject`, locals);
@@ -951,7 +951,7 @@ export class NotifierConsumer {
     };
 
     const template = `offer/accepted`;
-    locals.execTime = moment(offer.execAt).tz(user.timezone).fromNow(true);
+    locals.execTime = toTimezone(offer.execAt, user.timezone).fromNow(true);
     const subject = await this.mailer.render(`${template}.subject`, locals);
     const note = await this.mailer.render(`${template}.note`, locals);
 

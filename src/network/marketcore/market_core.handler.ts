@@ -257,22 +257,22 @@ export class MarketCoreHandler extends Handler {
 
       if (Market.isSynth(baseType)) {
         const token = findInSynthetic(baseAsset);
-        baseSymbol = token ? token.symbol.toUpperCase() : 'SYNTH_UNK';
+        baseSymbol = token ? token.symbol.toUpperCase() : 'UNKNW';
         baseDecimals = token ? token.decimals : 18;
       }
 
       if (Market.isSynth(quoteType)) {
         const token = findInSynthetic(quoteAsset);
-        quoteSymbol = token ? token.symbol.toUpperCase() : 'SYNTH_UNK';
+        quoteSymbol = token ? token.symbol.toUpperCase() : 'UNKNW';
         quoteDecimals = token ? token.decimals : 18;
       }
     } else {
       const base = findInLocalhost(baseAsset);
       const quote = findInLocalhost(quoteAsset);
-      baseSymbol = base.symbol;
-      baseDecimals = base.decimals;
-      quoteSymbol = quote.symbol;
-      quoteDecimals = quote.decimals;
+      baseSymbol = base?.symbol ?? 'UNKNW';
+      baseDecimals = base?.decimals ?? 18;
+      quoteSymbol = quote?.symbol ?? 'UNKNW';
+      quoteDecimals = quote?.decimals ?? 18;
     }
 
     await Market.create(

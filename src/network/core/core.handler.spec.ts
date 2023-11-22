@@ -296,10 +296,7 @@ describe('CoreHandler', () => {
       expect(eventTarget.creator).toEqual(provider);
       expect(eventTarget.target).toEqual('0xNewTarget');
 
-      const eventTimeToPay = await Event.find({
-        network: net,
-        action: Events.LiquidityTimeToPayUpdate,
-      });
+      const eventTimeToPay = await Event.find({ network: net, action: Events.LiquidityTimeToPayUpdate });
       expect(eventTimeToPay).toBeDefined();
       expect(eventTimeToPay.marketAddress).toEqual(market.address);
       expect(eventTimeToPay.lid).toEqual(liq.lid);
@@ -307,10 +304,7 @@ describe('CoreHandler', () => {
       expect(eventTimeToPay.creator).toEqual(provider);
       expect(eventTimeToPay.timeToPay).toEqual(10);
 
-      const eventMinSwap = await Event.find({
-        network: net,
-        action: Events.LiquiditySwapLimitUpdate,
-      });
+      const eventMinSwap = await Event.find({ network: net, action: Events.LiquiditySwapLimitUpdate });
       expect(eventMinSwap).toBeDefined();
       expect(eventMinSwap.marketAddress).toEqual(market.address);
       expect(eventMinSwap.lid).toEqual(liq.lid);

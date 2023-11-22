@@ -1227,47 +1227,29 @@ export class CoreHandler extends Handler {
         mktCh.totalLiquidity = deduct
           ? toBN(market.totalLiquidity).sub(amount).toString()
           : toBN(market.totalLiquidity).add(amount).toString();
-      }
 
-      if (liq.target != target) ch.target = target;
-      if (liq.paused != paused) ch.paused = paused;
-      if (liq.price !== price.toString()) ch.price = price.toString();
-      if (liq.minSwap !== minSwap.toString()) ch.minSwap = minSwap.toString();
-      if (liq.maxSwap !== maxSwap.toString()) ch.maxSwap = maxSwap.toString();
-      if (liq.timeToPay !== timeToPay.toNumber()) ch.timeToPay = timeToPay.toNumber();
-
-      const _wantAndIds = wantAndIds.map((id) => id.toNumber());
-      if (!_.isEqual(liq.wantAndIds, _wantAndIds)) ch.wantAndIds = _wantAndIds;
-      const _wantOrIds = wantOrIds.map((id) => id.toNumber());
-      if (!_.isEqual(liq.wantOrIds, _wantOrIds)) ch.wantOrIds = _wantOrIds;
-
-      await Liquidity.updateById(liq.id, ch, txn);
-
-      mktCh.lowestPrice = await Liquidity.getLowestPrice(this.network, marketAddress, undefined, undefined, txn);
-      await Market.updateById(market.id, mktCh, txn);
-
-      if (liq.amount != ch.amount) {
         const action = deduct ? Events.LiquidityRemove : Events.LiquidityAdd;
         await Event.create({ ...common, amount: amount.toString(), action }, txn);
       }
 
-      if (liq.price != ch.price) {
-        await Event.create({ ...common, price: ch.price, action: Events.LiquidityPriceUpdate }, txn);
-      }
-
-      if (liq.paused != ch.paused) {
-        await Event.create({ ...common, paused: ch.paused, action: Events.LiquidityPause }, txn);
-      }
-
-      if (liq.target != ch.target) {
+      if (liq.target != target) {
+        ch.target = target;
         await Event.create({ ...common, target: ch.target, action: Events.LiquidityTargetUpdate }, txn);
       }
 
-      if (liq.timeToPay != ch.timeToPay) {
-        await Event.create({ ...common, timeToPay: ch.timeToPay, action: Events.LiquidityTimeToPayUpdate }, txn);
+      if (liq.paused != paused) {
+        ch.paused = paused;
+        await Event.create({ ...common, paused: ch.paused, action: Events.LiquidityPause }, txn);
       }
 
-      if (liq.minSwap != ch.minSwap || liq.maxSwap != ch.maxSwap) {
+      if (liq.price !== price.toString()) {
+        ch.price = price.toString();
+        await Event.create({ ...common, price: ch.price, action: Events.LiquidityPriceUpdate }, txn);
+      }
+
+      if (liq.minSwap !== minSwap.toString() || liq.maxSwap !== maxSwap.toString()) {
+        ch.minSwap = liq.minSwap !== minSwap.toString() ? minSwap.toString() : undefined;
+        ch.maxSwap = liq.maxSwap !== maxSwap.toString() ? maxSwap.toString() : undefined;
         await Event.create(
           {
             ...common,
@@ -1278,6 +1260,22 @@ export class CoreHandler extends Handler {
           txn,
         );
       }
+
+      if (liq.timeToPay !== timeToPay.toNumber()) {
+        ch.timeToPay = timeToPay.toNumber();
+        await Event.create({ ...common, timeToPay: ch.timeToPay, action: Events.LiquidityTimeToPayUpdate }, txn);
+      }
+
+      const _wantAndIds = wantAndIds.map((id) => id.toNumber());
+      if (!_.isEqual(liq.wantAndIds, _wantAndIds)) ch.wantAndIds = _wantAndIds;
+
+      const _wantOrIds = wantOrIds.map((id) => id.toNumber());
+      if (!_.isEqual(liq.wantOrIds, _wantOrIds)) ch.wantOrIds = _wantOrIds;
+
+      await Liquidity.updateById(liq.id, ch, txn);
+
+      mktCh.lowestPrice = await Liquidity.getLowestPrice(this.network, marketAddress, undefined, undefined, txn);
+      await Market.updateById(market.id, mktCh, txn);
     }
 
     // Add new market price entry, if quote is not NFT - since price is not

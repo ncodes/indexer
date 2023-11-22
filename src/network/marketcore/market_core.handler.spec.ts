@@ -172,7 +172,7 @@ describe('MarketCoreHandler', () => {
           expect(market.base).toEqual(base);
           expect(market.baseAddress).toEqual(baseAsset);
           expect(market.quoteAddress).toEqual(quoteAsset);
-          expect(market.quote).toEqual('SYNTH_UNK');
+          expect(market.quote).toEqual('UNKNW');
           expect(market.quoteDecimals).toEqual(18);
           expect(market.pair).toEqual(`${market.base}${market.quote}`);
         });

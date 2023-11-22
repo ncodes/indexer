@@ -78,7 +78,6 @@ export class NotificationsController {
     @Body(new ValidationPipe(CommonValidationPipeOpt))
     body: ChatNotificationDTO,
   ) {
-    console.log('New message received');
     // Find user by token
     const user = await User.getByToken(body.token);
     if (!user) throw404('user not found');
@@ -115,7 +114,6 @@ export class NotificationsController {
     const lockHash = sha1(`lock-recipient-${recipient}-${swap?.orderId}-${offer?.offerId}}`);
     if (await this.redisSrv.exist(lockHash)) return ok().data({ ok: false }).build();
 
-    console.log('About to send notification');
     // Lock the recipient for 15 seconds, effectively ignoring immediate
     // notifications. Since it is impossible to tell which
     // notification represents a text message, delivery or read receipt, we cannot
@@ -125,7 +123,6 @@ export class NotificationsController {
 
     let isOk = false;
     if (recipient) {
-      console.log('Sent notification', recipient.email);
       isOk = true;
       await this.notifySrv.notify(NotificationID.ChatNewMessage, convo.network, undefined, {
         user: recipient,

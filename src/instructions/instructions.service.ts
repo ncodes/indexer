@@ -67,7 +67,6 @@ export class InstructionsService {
   async getGrantSignature(network: string, granteeAddr: string, instructionHash: string) {
     const sigInfo: GrantSigInfo = { network };
     const badgeMgr = this.netSrv.getContracts().badgeMgr;
-    console.log('Contracts', network, this.netSrv.getContracts());
     const instructionBadge = this.cfgSrv.get('app.badges.instruction');
     const hasBadge = await badgeMgr.hasBadge(granteeAddr, instructionBadge, '');
     const signer = new Wallet(this.cfgSrv.get('app.badges.instructionIssuerPk'));
@@ -75,18 +74,15 @@ export class InstructionsService {
 
     let types: string[];
     if (!hasBadge) {
-      console.log('No Badge');
       types = ['string', 'string', 'address', 'uint256', 'string[]', 'string[]', 'uint256'];
       sigInfo.values = [instructionBadge, '', granteeAddr, 0, ['hash'], [instructionHash], sigExp.unix()];
       const msgHash = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(types, sigInfo.values));
       const msgHashBytes = Buffer.from(msgHash.substring(2), 'hex');
       sigInfo.sig = await signer.signMessage(msgHashBytes);
       sigInfo.isNew = true;
-      console.log('Sig Info', sigInfo);
       return sigInfo;
     }
 
-    console.log('Has Badge');
     // Generate signature for upsertGranteeMetaBySig
     types = ['string', 'string', 'address', 'string', 'string', 'uint256'];
     sigInfo.values = [instructionBadge, '', granteeAddr, 'hash', instructionHash, sigExp.unix()];
@@ -94,7 +90,6 @@ export class InstructionsService {
     const msgHashBytes = Buffer.from(msgHash.substring(2), 'hex');
     sigInfo.sig = await signer.signMessage(msgHashBytes);
     sigInfo.isNew = false;
-    console.log(sigInfo);
 
     return sigInfo;
   }

@@ -2,7 +2,7 @@ steps:
   # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
     script: |
-      docker build --no-cache -t $_REGION-docker.pkg.dev/$PROJECT_ID/indexer/indexer:$TAG_NAME .
+      docker build -t $_REGION-docker.pkg.dev/$PROJECT_ID/indexer/indexer:$TAG_NAME .
     automapSubstitutions: true
 
   # Push the container image to Artifact Registry

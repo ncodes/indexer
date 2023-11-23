@@ -24,6 +24,7 @@ import { MetadataService } from '../../services/metadata/metadata.service';
 import { RedisService } from '../../services/redis.service';
 import { makeSession } from '../auth/utils';
 import { MarketService } from '../markets/market.service';
+import SwapService from '../swaps/swap.service';
 import { LiquidityController } from './liquidity.controller';
 import { LiquidityService } from './liquidity.service';
 
@@ -88,6 +89,7 @@ describe('LiquidityController', () => {
         MetadataService,
         RedisService,
         ExchangeRateService,
+        SwapService,
       ],
     })
       .overrideProvider(ConfigService)
@@ -237,15 +239,25 @@ describe('LiquidityController', () => {
         lid: 0,
         offerId: 1,
         orderId: 1,
+        swapId: swap.id,
         createdAt: moment().toISOString(),
         action: Events.LiquidityAdd,
       });
+
+      const mockExtendSwap = jest
+        .spyOn(app.get(SwapService), 'extendSwap')
+        .mockImplementation(async (swap: Swap, _select: string[]) => {
+          swap.cost = 100;
+          return null;
+        });
+
       await request(app.getHttpServer())
         .get(`/v1/liquidities/0xMarket/0xProvider/0/events`)
         .query({ net })
         .set('Authorization', 'bearer ' + token)
         .expect(200)
         .expect((res) => {
+          expect(mockExtendSwap).toHaveBeenCalled();
           expect(res.body.data).toHaveLength(2);
           expect(res.body.data[0].id).toEqual(event2.id);
           expect(res.body.data[1].id).toEqual(event.id);
@@ -253,6 +265,7 @@ describe('LiquidityController', () => {
           expect(res.body.data[0].offer.id).toEqual(offer.id);
           expect(res.body.data[0].swap).toBeDefined();
           expect(res.body.data[0].swap.id).toEqual(swap.id);
+          expect(res.body.data[0].swap.cost).toEqual(100);
         });
     });
 

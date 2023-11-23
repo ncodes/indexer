@@ -7,6 +7,7 @@ import Liquidity from '../../models/liquidity';
 import Market from '../../models/market';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { MarketService } from '../markets/market.service';
+import SwapService from '../swaps/swap.service';
 import { LiquidityService } from './liquidity.service';
 import { GetParamDTO, GetQueryDTO, ListQueryDTO } from './query.dto';
 
@@ -17,6 +18,7 @@ export class LiquidityController {
     private mktSrv: MarketService,
     private cfgSrv: ConfigService,
     private metadataSrv: MetadataService,
+    private swapSrv: SwapService,
   ) {}
 
   /**
@@ -71,6 +73,13 @@ export class LiquidityController {
       q.limit || 25,
       q.offset,
     );
+
+    for (const event of events) {
+      if (event.swap) {
+        this.swapSrv.extendSwap(event.swap, ['cost']);
+      }
+    }
+
     return ok().data(events).build<Liquidity>();
   }
 

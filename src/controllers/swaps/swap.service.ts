@@ -19,7 +19,7 @@ export default class SwapService {
    * @param swap
    * @param select
    */
-  async extendSwap(swap: Swap, select = []) {
+  async extendSwap(swap: Swap, select: string[] = []): Promise<void> {
     select = select && _.filter(select, (s) => !_.isEmpty(s));
     try {
       const { network, price, baseAddress, quoteAddress, amount } = swap;

@@ -14,6 +14,5 @@ Dockerfile
 .dockerignore
 npm-debug.log
 dist
-migrations
 coverage
 logs

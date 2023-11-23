@@ -539,6 +539,7 @@ export class CoreHandler extends Handler {
         creator: swapper,
         orderId: orderId.toNumber(),
         action: Events.LiquiditySwap,
+        swapId: swap.id,
       },
       txn,
     );
@@ -665,6 +666,7 @@ export class CoreHandler extends Handler {
           creator: swapper,
           orderId: orderId.toNumber(),
           action: Events.LiquiditySwap,
+          swapId: swap.id,
         },
         txn,
       );

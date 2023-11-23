@@ -920,6 +920,7 @@ describe('CoreHandler', () => {
       expect(event.provider).toEqual(provider);
       expect(event.creator).toEqual(taker);
       expect(event.orderId).toEqual(swap.orderId);
+      expect(event.swapId).toEqual(swap.id);
 
       market = await Market.getById(market.id);
       expect(market.totalSwaps).toEqual(1);
@@ -1090,6 +1091,7 @@ describe('CoreHandler', () => {
         expect(event.provider).toEqual(provider);
         expect(event.creator).toEqual(taker);
         expect(event.orderId).toEqual(0);
+        expect(event.swapId).toEqual(swap.id);
 
         expect(mockNotify).toHaveBeenCalledWith(NotificationID.NewInstantSwap, net, provider, {
           market,

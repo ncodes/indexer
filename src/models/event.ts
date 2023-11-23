@@ -1,11 +1,11 @@
-import { randStr } from '../common/common';
 import Objection, { Model, raw, Transaction } from 'objection';
+import { randStr } from '../common/common';
 import { BaseModel } from './base';
+import Dispute from './dispute';
+import Liquidity from './liquidity';
+import Market from './market';
 import Offer from './offer';
 import Swap from './swap';
-import Dispute from './dispute';
-import Market from './market';
-import Liquidity from './liquidity';
 
 export enum EventActionClass {
   Liquidity = 'liq',
@@ -51,6 +51,8 @@ export default class Event extends BaseModel {
   network: string = undefined;
   // The market address
   marketAddress: string = undefined;
+  // The internal swap ID
+  swapId: string;
   // The swap order ID
   orderId: number = undefined;
   // The offer event action
@@ -159,8 +161,8 @@ export default class Event extends BaseModel {
         relation: Model.BelongsToOneRelation,
         modelClass: Swap,
         join: {
-          from: ['events.network', 'events.orderId'],
-          to: ['swaps.network', 'swaps.orderId'],
+          from: ['events.swapId'],
+          to: ['swaps.id'],
         },
       },
       dispute: {

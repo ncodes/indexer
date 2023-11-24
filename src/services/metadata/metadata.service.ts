@@ -94,7 +94,7 @@ export class MetadataService {
    * @param contract The contract address
    */
   async getTokenInfo(symbolOrNetwork: string, contract: string): Promise<TokenMetadata> {
-    const local = findInLocalhost(contract) || findInSynthetic(contract);
+    const local = findInSynthetic(contract) || findInLocalhost(contract);
     if (local) {
       return {
         network: symbolOrNetwork,

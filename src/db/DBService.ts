@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as Knex from 'knex';
 import * as dbMgr from 'knex-db-manager';
@@ -6,7 +6,7 @@ import { Model } from 'objection';
 import * as knexJSON from '../../knexfile';
 
 @Injectable()
-export class DBService implements OnModuleInit {
+export class DBService {
   private knex: Knex.Knex;
   private dbManager: dbMgr.KnexDbManager;
 
@@ -18,12 +18,8 @@ export class DBService implements OnModuleInit {
     if (!cfgService) return;
     const config = cfgService.get('knex')[process.env.NODE_ENV];
     this.knex = Knex.knex(config);
-  }
-
-  async onModuleInit() {
-    if (!this.knex) return;
-    await this.knex.migrate.latest();
     Model.knex(this.knex);
+    this.knex.migrate.latest();
   }
 
   /**

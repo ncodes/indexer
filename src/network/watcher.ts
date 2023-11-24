@@ -123,6 +123,7 @@ export class Watcher {
   sync() {
     if (this.isSyncing) return;
     this.isSyncing = true;
+
     return setInterval(
       async () => {
         try {

@@ -100,6 +100,7 @@ export default class Event extends BaseModel {
 
   /** Relations */
   offer: Offer;
+  offerSwap: Swap;
   swap: Swap;
   dispute: Dispute;
   market: Market;
@@ -165,6 +166,14 @@ export default class Event extends BaseModel {
           to: ['swaps.id'],
         },
       },
+      offerSwap: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: Swap,
+        join: {
+          from: ['events.offerId'],
+          to: ['swaps.offerId'],
+        },
+      },
       dispute: {
         relation: Model.BelongsToOneRelation,
         modelClass: Dispute,
@@ -222,7 +231,7 @@ export default class Event extends BaseModel {
    * @param lastSerial The last serial number
    * @param txn Optional transaction object
    */
-  static search(
+  static async search(
     category: EventActionClass,
     network: string,
     marketAddress?: string,
@@ -275,12 +284,22 @@ export default class Event extends BaseModel {
 
         return q;
       })
-      .withGraphFetched('[offer.liquidity,liquidity,swap.market,dispute,market]')
+      .withGraphFetched('[offer.liquidity,liquidity,swap,offerSwap,market,dispute,market]')
       .orderBy('sn', 'desc')
       .orderBy('createdAt', 'desc');
     if (offset != undefined) q = q.offset(offset);
     if (limit) q = q.limit(limit);
     if (lastSerial) q = q.where('sn', '<', lastSerial);
-    return q;
+
+    let result = await q.execute();
+    result = result.map((r) => {
+      if (r.offerSwap && !r.swap) {
+        r.swap = r.offerSwap;
+        delete r.offerSwap;
+      }
+      return r;
+    });
+
+    return result;
   }
 }

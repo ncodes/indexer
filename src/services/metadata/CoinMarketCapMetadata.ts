@@ -1,5 +1,5 @@
-import * as _ from 'lodash';
 import axios from 'axios';
+import * as _ from 'lodash';
 import { MetadataSource } from './metadata.service';
 
 export class CoinMarketCapMetadata implements MetadataSource {
@@ -29,8 +29,11 @@ export class CoinMarketCapMetadata implements MetadataSource {
     return Promise.resolve({
       network: network ? network : info?.platform?.slug,
       name: info.name,
+      symbol: info.symbol.toUpperCase(),
       logoURI: info.logo,
+      type: 'ERC20',
       price,
+      address: !isSymbol ? symbolOrContract : null,
       decimals: 0,
       isContract: !isSymbol,
     });

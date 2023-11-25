@@ -96,6 +96,8 @@ declare global {
   interface TokenMetadata {
     logoURI: string;
     network: string;
+    symbol: string;
+    type: string;
     name: string;
     decimals: number;
     price?: number;
@@ -137,6 +139,7 @@ declare global {
       symbol?: string;
       decimals?: number;
       logoURI?: string;
+      disabled?: boolean;
       price?: number; // Used in dev mode only
       isSynthetic?: boolean; // Used to identify synthetic tokens
     }

@@ -28,7 +28,11 @@ export class MiscController {
    */
   @Get('token-list/:network')
   async getTokenList(@Param('network') network: string) {
-    return ok().data(TokenLists[network]).build();
+    const list: TokenList.TokenData = TokenLists[network];
+    list.tokens = list.tokens.filter((token) => {
+      if (!token.disabled) return token;
+    });
+    return ok().data(list).build();
   }
 
   /**
@@ -42,7 +46,7 @@ export class MiscController {
     let info: TokenList.Token;
     network = network !== '-' ? network : undefined;
     if (network && !isValidNetwork(network)) throw400('network not supported');
-    if (!info && network) info = getTokenInfo(network, address);
+    if (network) info = getTokenInfo(network, address);
     if (!info) info = await this.metadataSrv.getTokenInfo(network, address);
     return ok().data(info).build();
   }

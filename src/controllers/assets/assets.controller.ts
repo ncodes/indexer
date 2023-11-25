@@ -56,9 +56,11 @@ export class AssetsController {
   @Get('/:net')
   async getTokenList(@Param('net') net: string) {
     if (!isValidNetwork(net)) throw400('network is unknown');
-    const tokens = TokenLists[net as NetworkNames].tokens;
-    const synth = TokenLists['synthetic']?.tokens;
-    return ok().data(tokens.concat(synth)).build();
+    let tokens = TokenLists[net as NetworkNames].tokens.concat(TokenLists['synthetic'].tokens);
+    tokens = tokens.filter((token) => {
+      if (!token.disabled) return token;
+    });
+    return ok().data(tokens).build();
   }
 
   /**

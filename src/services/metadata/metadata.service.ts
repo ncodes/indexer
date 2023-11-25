@@ -101,7 +101,10 @@ export class MetadataService {
         price: !local.isSynthetic ? local.price : (await this.exRateSrv.tryGet(local.symbol))?.toNumber() || 0,
         decimals: local.decimals,
         logoURI: local.logoURI,
-        isContract: false,
+        symbol: local.symbol,
+        type: local.type,
+        address: local.address,
+        isContract: !local.isSynthetic,
         name: local.name,
       };
     }

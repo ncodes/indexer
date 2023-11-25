@@ -84,7 +84,7 @@ export class MarketService {
           if (info) mkt.baseLogo = info.logoURI;
         }
 
-        mkt.baseLogo = mkt.baseLogo || 'https://storage.googleapis.com/joint-images/token-logos/unknown_base.svg';
+        mkt.baseLogo = mkt.baseLogo || 'https://storage.googleapis.com/joint-images/token-logos/unknown.svg';
       }
 
       if (select.includes(`quoteLogo`) || !select.length) {
@@ -101,7 +101,7 @@ export class MarketService {
           if (info) mkt.quoteLogo = info.logoURI;
         }
 
-        mkt.quoteLogo = mkt.quoteLogo || 'https://storage.googleapis.com/joint-images/token-logos/unknown_quote.svg';
+        mkt.quoteLogo = mkt.quoteLogo || 'https://storage.googleapis.com/joint-images/token-logos/unknown.svg';
       }
 
       if (select.includes(`amountSwapped`) || !select.length) {

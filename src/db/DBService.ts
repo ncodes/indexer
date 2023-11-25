@@ -31,7 +31,6 @@ export class DBService {
     const knex = Knex.knex(config);
     const srv = new DBService(null);
     srv.knex = knex;
-    srv.knex.migrate.latest();
     Model.knex(srv.knex);
     srv.dbManager = dbMgr.databaseManagerFactory({
       knex: config,

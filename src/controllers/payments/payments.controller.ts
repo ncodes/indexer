@@ -1,9 +1,9 @@
 import { Controller, Get, Query, ValidationPipe } from '@nestjs/common';
-import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
-import { GetGrantSigDTO, GetQueryDTO } from './query.dto';
-import { ok } from '../../common/responses/responses';
 import { paymentMethods } from '../../common/payment_methods';
+import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
+import { ok } from '../../common/responses/responses';
 import { PaymentsService } from './payments.service';
+import { GetGrantSigDTO, GetQueryDTO } from './query.dto';
 
 @Controller('v1/payments')
 export class PaymentsController {

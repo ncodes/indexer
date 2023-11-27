@@ -284,7 +284,7 @@ export default class Event extends BaseModel {
 
         return q;
       })
-      .withGraphFetched('[offer.liquidity,liquidity,swap,offerSwap,market,dispute,market]')
+      .withGraphFetched('[offer.liquidity,liquidity,swap.[market],offerSwap.[market],market,dispute]')
       .orderBy('sn', 'desc')
       .orderBy('createdAt', 'desc');
     if (offset != undefined) q = q.offset(offset);

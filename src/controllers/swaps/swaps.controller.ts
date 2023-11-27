@@ -1,12 +1,12 @@
 import { Controller, Get, Param, ParseIntPipe, Query, ValidationPipe } from '@nestjs/common';
-import Swap from '../../models/swap';
-import { ErrorTypes, ok, throw404 } from '../../common/responses/responses';
-import { MarketService } from '../markets/market.service';
-import { LiquidityService } from '../liquidity/liquidity.service';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
+import { ErrorTypes, ok, throw404 } from '../../common/responses/responses';
+import Event, { EventActionClass } from '../../models/event';
+import Swap from '../../models/swap';
+import { LiquidityService } from '../liquidity/liquidity.service';
+import { MarketService } from '../markets/market.service';
 import { GetParticipantsDTO, GetQueryDTO, ListQueryDTO } from './query.dto';
 import SwapService from './swap.service';
-import Event, { EventActionClass } from '../../models/event';
 
 @Controller('v1/swaps')
 export class SwapsController {

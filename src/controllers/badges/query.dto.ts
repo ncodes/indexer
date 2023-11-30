@@ -1,13 +1,13 @@
+import { getChainNames } from '@jointlabs/chains-info';
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsIn, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { toNumber } from 'lodash';
 import { toBoolean } from 'underscore.string';
 import { makeValidatorMsg } from '../../common/validations/validation';
-import { getNetworks } from '../../network/common';
 
 // tslint:disable-next-line:max-classes-per-file
 export class ListBadgesQueryDTO {
-  @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
+  @IsIn(getChainNames(), { message: makeValidatorMsg('network is unknown', 'net') })
   @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
   public net?: string;
 
@@ -45,7 +45,7 @@ export class ListBadgesQueryDTO {
 
 // tslint:disable-next-line:max-classes-per-file
 export class ListGrantedBadgesQueryDTO {
-  @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
+  @IsIn(getChainNames(), { message: makeValidatorMsg('network is unknown', 'net') })
   @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
   public net?: string;
 

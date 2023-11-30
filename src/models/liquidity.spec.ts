@@ -1,3 +1,4 @@
+import { ChainNames } from '@jointlabs/chains-info';
 import * as moment from 'moment';
 import { DBService } from '../db/DBService';
 import { powOf } from '../network/common';
@@ -7,7 +8,7 @@ import Market from './market';
 
 describe('Liquidity', () => {
   const db = DBService.getForTest();
-  const net = 'net1';
+  const net: ChainNames = 'ethereum';
   const marketAddress = '0xMarket';
 
   afterEach(async () => {

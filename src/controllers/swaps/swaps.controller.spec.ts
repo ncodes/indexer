@@ -1,28 +1,28 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { DBService } from '../../db/DBService';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { NoopLogger } from '../../common/loggers/noop_logger';
-import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
-import User from '../../models/user';
-import { Roles } from '../../common/roles';
+import { Test, TestingModule } from '@nestjs/testing';
+import * as moment from 'moment';
 import * as request from 'supertest';
-import NetworkService from '../../network/network.service';
-import { makeSession } from '../auth/utils';
-import { MarketService } from '../markets/market.service';
-import { SwapsController } from './swaps.controller';
-import { LiquidityService } from '../liquidity/liquidity.service';
-import Swap from '../../models/swap';
-import Market from '../../models/market';
-import Liquidity from '../../models/liquidity';
-import SwapService from './swap.service';
 import { randStr } from '../../common/common';
-import { MetadataService } from '../../services/metadata/metadata.service';
+import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
+import { NoopLogger } from '../../common/loggers/noop_logger';
+import { Roles } from '../../common/roles';
+import { DBService } from '../../db/DBService';
 import Dispute from '../../models/dispute';
 import Event, { Events } from '../../models/event';
-import * as moment from 'moment';
-import { RedisService } from '../../services/redis.service';
+import Liquidity from '../../models/liquidity';
+import Market from '../../models/market';
+import Swap from '../../models/swap';
+import User from '../../models/user';
+import NetworkService from '../../network/network.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
+import { MetadataService } from '../../services/metadata/metadata.service';
+import { RedisService } from '../../services/redis.service';
+import { makeSession } from '../auth/utils';
+import { LiquidityService } from '../liquidity/liquidity.service';
+import { MarketService } from '../markets/market.service';
+import SwapService from './swap.service';
+import { SwapsController } from './swaps.controller';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -720,6 +720,7 @@ describe('SwapsController', () => {
       const dispute = await Dispute.create({ network: net, marketAddress: '0xMarket', orderId: 1, disputeId: 1 });
       const event = await Event.create({
         network: net,
+        swapId: swap.id,
         orderId: 1,
         marketAddress: '0xMarket',
         disputeId: 1,
@@ -728,6 +729,7 @@ describe('SwapsController', () => {
       });
       const event2 = await Event.create({
         network: net,
+        swapId: swap.id,
         orderId: 1,
         marketAddress: '0xMarket',
         disputeId: 1,

@@ -29,7 +29,7 @@ const MockNetworkService = jest.fn().mockImplementation(() => {
 
 describe('DisputeManagerHandler', () => {
   const db = DBService.getForTest();
-  const net = 'net';
+  const net = 'ethereum';
   const userAddr = '0xUser';
   const marketAddress = '0xMarket';
   const provider = '0xProvider';

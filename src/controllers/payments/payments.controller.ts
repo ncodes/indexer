@@ -1,5 +1,5 @@
+import { paymentMethods } from '@jointlabs/chains-info';
 import { Controller, Get, Query, ValidationPipe } from '@nestjs/common';
-import { paymentMethods } from '../../common/payment_methods';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ok } from '../../common/responses/responses';
 import { PaymentsService } from './payments.service';

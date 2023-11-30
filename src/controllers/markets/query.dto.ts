@@ -1,12 +1,12 @@
+import { getChainNames } from '@jointlabs/chains-info';
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsIn, IsNotEmpty, IsNumber, IsOptional, Matches } from 'class-validator';
 import { toNumber } from 'lodash';
 import { toBoolean } from 'underscore.string';
 import { makeValidatorMsg } from '../../common/validations/validation';
-import { getNetworks } from '../../network/common';
 
 export class GetQueryDTO {
-  @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
+  @IsIn(getChainNames(), { message: makeValidatorMsg('network is unknown', 'net') })
   @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
   public net?: string;
 
@@ -16,7 +16,7 @@ export class GetQueryDTO {
 }
 
 export class ListQueryDTO {
-  @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
+  @IsIn(getChainNames(), { message: makeValidatorMsg('network is unknown', 'net') })
   @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
   public net?: string;
 
@@ -129,7 +129,7 @@ export class ListQueryDTO {
 }
 
 export class ListPermittedTradersQueryDTO {
-  @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
+  @IsIn(getChainNames(), { message: makeValidatorMsg('network is unknown', 'net') })
   @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
   public net?: string;
 
@@ -145,7 +145,7 @@ export class ListPermittedTradersQueryDTO {
 }
 
 export class GetTopMarketsQueryDTO {
-  @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
+  @IsIn(getChainNames(), { message: makeValidatorMsg('network is unknown', 'net') })
   @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
   public net?: string;
 
@@ -156,7 +156,7 @@ export class GetTopMarketsQueryDTO {
 }
 
 export class ListPermittedProviderQueryDTO {
-  @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
+  @IsIn(getChainNames(), { message: makeValidatorMsg('network is unknown', 'net') })
   @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
   public net?: string;
 

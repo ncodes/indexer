@@ -1,9 +1,9 @@
+import { getChainNames } from '@jointlabs/chains-info';
 import { ArrayMinSize, IsIn, IsNotEmpty, ValidateIf } from 'class-validator';
 import { makeValidatorMsg } from '../../common/validations/validation';
-import { getNetworks } from '../../network/common';
 
 export class SubscribeToConvoDTO {
-  @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
+  @IsIn(getChainNames(), { message: makeValidatorMsg('network is unknown', 'net') })
   @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
   public net: string;
 

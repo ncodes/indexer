@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as moment from 'moment/moment';
 import * as request from 'supertest';
+import { BadgeManifest } from '../../common/badge_manifest';
 import { randStr } from '../../common/common';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import { NoopLogger } from '../../common/loggers/noop_logger';
@@ -299,6 +300,45 @@ describe('BadgesController', () => {
           expect(res.body.data).toHaveLength(1);
           expect(res.body.data[0].id).toEqual(grant.id);
         });
+    });
+  });
+
+  describe('.getBadgeManifest', function () {
+    it('should return 404 when no manifest was found for the given network', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/badges/${net}/kyc/nga/manifest`)
+        .expect(404)
+        .expect({
+          error: {
+            message: "no manifest found for 'ethereum'",
+          },
+        });
+    });
+
+    it('should return 404x when no manifest was found for the given badge', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/badges/localhost/kyc/nga/manifest`)
+        .expect(404)
+        .expect({
+          error: {
+            message: "no manifest found for 'kyc/nga'",
+          },
+        });
+    });
+
+    it('should return 404 when no manifest was found for badge', async () => {
+      BadgeManifest['localhost']['kyc/abc'] = {
+        name: 'kyc/abc',
+        logoUrl: 'https://logo',
+        shortDescription: 'short desc',
+        longDescriptions: ['long desc'],
+        issuer: 'issuer',
+        issuerAddress: '0xIssuer',
+        claimPageUrl: 'https://claim',
+      };
+      await request(app.getHttpServer()).get(`/v1/badges/localhost/kyc/abc/manifest`).expect(200).expect({
+        data: BadgeManifest['localhost']['kyc/abc'],
+      });
     });
   });
 });

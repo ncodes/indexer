@@ -7,13 +7,12 @@ import { AllExceptionsFilter } from '../../common/interceptors/exception_filter'
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { DBService } from '../../db/DBService';
 import MineTask, { MineTaskType } from '../../models/mine_task';
-import { SupportedNetworks } from '../../network/common';
 import { TasksController } from './tasks.controller';
 
 describe('TaskController', () => {
   let app: INestApplication;
   const db = DBService.getForTest();
-  const net = SupportedNetworks.Ethereum;
+  const net = 'ethereum';
 
   afterEach(async () => {
     await db.truncateTables();

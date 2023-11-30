@@ -1,8 +1,8 @@
+import { getChainNames } from '@jointlabs/chains-info';
 import { Transform } from 'class-transformer';
 import { IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, Validate } from 'class-validator';
 import { toNumber } from 'lodash';
 import { LiquidityDescriptionValidator, makeValidatorMsg } from '../../common/validations/validation';
-import { getNetworks } from '../../network/common';
 
 class LiquidityDTO {
   @IsString({ message: makeValidatorMsg('must be a string', 'provider') })
@@ -14,7 +14,7 @@ class LiquidityDTO {
 }
 
 export class GetQueryDTO {
-  @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
+  @IsIn(getChainNames(), { message: makeValidatorMsg('network is unknown', 'net') })
   @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
   public net?: string;
 

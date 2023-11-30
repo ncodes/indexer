@@ -1,3 +1,4 @@
+import { isValidChain } from '@jointlabs/chains-info';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -15,7 +16,7 @@ import { Server, Socket } from 'socket.io';
 import { isTest } from '../../common/common';
 import { build400, build500, ok } from '../../common/responses/responses';
 import MineTask from '../../models/mine_task';
-import { MinerTaskDurations, isValidNetwork } from '../../network/common';
+import { MinerTaskDurations } from '../../network/common';
 
 type QueuedTask = {
   task: MineTask;
@@ -111,7 +112,7 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
       return build400('network is required');
     }
 
-    if (!isValidNetwork(network)) {
+    if (!isValidChain(network)) {
       return build400('network is invalid');
     }
 

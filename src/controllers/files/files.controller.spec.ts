@@ -1,3 +1,4 @@
+import { ChainNames } from '@jointlabs/chains-info';
 import { INestApplication } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -12,7 +13,6 @@ import Dispute from '../../models/dispute';
 import Draft from '../../models/draft';
 import Swap from '../../models/swap';
 import User from '../../models/user';
-import { SupportedNetworks } from '../../network/common';
 import { makeSession } from '../auth/utils';
 import { FilesController } from './files.controller';
 import { FilesService } from './files.service';
@@ -25,7 +25,7 @@ const ConfigServiceMock = jest.fn().mockImplementation(() => {
 describe('FilesController', () => {
   let app: INestApplication;
   const db = DBService.getForTest();
-  const net = SupportedNetworks.Ethereum;
+  const net: ChainNames = 'ethereum';
   let cfgObj = {};
 
   afterEach(async () => {

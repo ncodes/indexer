@@ -1,7 +1,7 @@
+import { getTokenInfo } from '@jointlabs/chains-info';
 import { Injectable, Logger } from '@nestjs/common';
 import * as _ from 'lodash';
 import { handleAxiosError } from '../../common/errors/http_response_error';
-import { getTokenInfo } from '../../common/token_list';
 import Liquidity from '../../models/liquidity';
 import Market from '../../models/market';
 import MarketPrice from '../../models/market_price';

@@ -1,13 +1,13 @@
+import { getChainNames } from '@jointlabs/chains-info';
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsEnum, IsIn, IsISO8601, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { toNumber } from 'lodash';
 import { toBoolean } from 'underscore.string';
 import { makeValidatorMsg } from '../../common/validations/validation';
 import { SearchStatus } from '../../models/dispute';
-import { getNetworks } from '../../network/common';
 
 export class ListQueryDTO {
-  @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
+  @IsIn(getChainNames(), { message: makeValidatorMsg('network is unknown', 'net') })
   @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
   public net?: string;
 

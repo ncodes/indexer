@@ -1,15 +1,15 @@
 import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
+import * as moment from 'moment';
 import { NoopLogger } from '../../../common/loggers/noop_logger';
 import { DBService } from '../../../db/DBService';
-import { NotificationID, NotifierService } from '../../mailer/NotifierService';
 import Dispute from '../../../models/dispute';
-import * as moment from 'moment';
-import Swap from '../../../models/swap';
 import Draft from '../../../models/draft';
-import OnCommitPeriodEnd from './on_commit_period_end';
 import Market from '../../../models/market';
+import Swap from '../../../models/swap';
+import { NotificationID, NotifierService } from '../../mailer/NotifierService';
+import OnCommitPeriodEnd from './on_commit_period_end';
 
 const mockNotify = jest.fn();
 const MockNotifierService = jest.fn().mockImplementation(() => {
@@ -20,7 +20,7 @@ describe('OnCommitPeriodEnd', () => {
   let app: INestApplication;
   const db = DBService.getForTest();
   let srv: OnCommitPeriodEnd;
-  const net = 'net';
+  const net = 'ethereum';
   const provider = '0xProvider';
   const taker = '0xTaker';
   const draftee = '0xDraftee';

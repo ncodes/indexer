@@ -1,28 +1,8 @@
+import { ChainNames } from '@jointlabs/chains-info';
 import Decimal from 'decimal.js';
-import { EnumValues } from 'enum-values';
-import { BigNumber, BigNumberish, Event } from 'ethers';
+import { BigNumber, BigNumberish, Event, Wallet } from 'ethers';
 import * as moment from 'moment/moment';
 import { toDec } from '../common/common';
-
-export type NetworkNames = 'ethereum' | 'polygon' | 'binance' | 'optimism' | 'localhost' | 'synthetic' | 'sepolia';
-
-export enum SupportedNetworks {
-  Ethereum = 'ethereum',
-  Polygon = 'polygon',
-  Optimism = 'optimism',
-  Binance = 'binance',
-  Sepolia = 'sepolia',
-  Localhost = 'localhost',
-}
-
-export enum ChainIDs {
-  Ethereum = 1,
-  Polygon = 137,
-  Optimism = 10,
-  Binance = 56,
-  Sepolia = 11155111,
-  Localhost = 31337,
-}
 
 // Map network or symbol name to corresponding CoinGecko network identifier
 export const CoinGeckoConfig = {
@@ -41,44 +21,20 @@ export const CoinGeckoConfig = {
   },
 };
 
-// MinerTaskDurations is the number of seconds a
-// miner has to complete a mining task for a given network
-export const MinerTaskDurations = {
-  [SupportedNetworks.Ethereum]: 60,
-  [SupportedNetworks.Localhost]: 30,
-  [SupportedNetworks.Polygon]: 30,
-  [SupportedNetworks.Optimism]: 30,
-  [SupportedNetworks.Sepolia]: 30,
-  [SupportedNetworks.Binance]: 60,
+type MinerTaskDuration = {
+  [key in ChainNames]?: number;
 };
 
-/**
- * Get supported networks
- * @returns
- */
-export function getNetworks() {
-  return Object.keys(SupportedNetworks).map((s) => {
-    return SupportedNetworks[s];
-  });
-}
-
-/**
- * Get chain ID of a network
- * @param network
- */
-export function getChainID(network: string): number {
-  const key = EnumValues.getNameFromValue(SupportedNetworks, network);
-  return ChainIDs[key];
-}
-
-/**
- * Check if a network is supported
- * @param network The network name
- * @returns
- */
-export function isValidNetwork(network: string) {
-  return getNetworks().includes(network);
-}
+// MinerTaskDurations is the number of seconds a
+// miner has to complete a mining task for a given network
+export const MinerTaskDurations: MinerTaskDuration = {
+  ethereum: 60,
+  localhost: 30,
+  polygon: 30,
+  optimism: 30,
+  sepolia: 30,
+  binance: 60,
+};
 
 /**
  * Return BigNumber equivalent of v
@@ -130,4 +86,8 @@ export async function getBlockTime(event: Event) {
   const now = moment().unix();
   const block = await event.getBlock();
   return block.timestamp > now ? now : block.timestamp;
+}
+
+export function genEthAddress() {
+  return Wallet.createRandom().address;
 }

@@ -5,14 +5,15 @@ import { AllExceptionsFilter } from '../../common/interceptors/exception_filter'
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { DBService } from '../../db/DBService';
 import MineTask, { MineTaskType } from '../../models/mine_task';
-import { SupportedNetworks } from '../../network/common';
+
+import { ChainNames } from '@jointlabs/chains-info';
 import { TasksGateway, makeMinerId } from './tasks.gateway';
 
 describe('TaskGateway', () => {
   let app: INestApplication;
   const db = DBService.getForTest();
   let gateway: TasksGateway;
-  const net = SupportedNetworks.Ethereum;
+  const net: ChainNames = 'ethereum';
 
   afterEach(async () => {
     await db.truncateTables();

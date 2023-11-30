@@ -1,10 +1,10 @@
+import { ChainNames, findTokenInLocalhost, findTokenInSynthetic } from '@jointlabs/chains-info';
 import { Logger } from '@nestjs/common';
 import { BigNumber, Event, providers } from 'ethers';
 import { Transaction } from 'objection';
 import * as erc20ABI from '../../../abi/ERC20.json';
 import * as erc721ABI from '../../../abi/ERC721.json';
 import { isDev } from '../../common/common';
-import { findInLocalhost, findInSynthetic } from '../../common/token_list';
 import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierService';
 import Liquidity from '../../models/liquidity';
 import Market from '../../models/market';
@@ -20,7 +20,7 @@ export class MarketCoreHandler extends Handler {
     private netSrv: NetworkService,
     private notifSrv: NotifierService,
     private provider: providers.JsonRpcProvider,
-    public network: string,
+    public network: ChainNames,
     private contracts: JointContracts,
   ) {
     super(MarketCoreHandler.name, netSrv.cfgSrv, network, contracts.marketCore);
@@ -256,19 +256,19 @@ export class MarketCoreHandler extends Handler {
       }
 
       if (Market.isSynth(baseType)) {
-        const token = findInSynthetic(baseAsset);
+        const token = findTokenInSynthetic(baseAsset);
         baseSymbol = token ? token.symbol.toUpperCase() : 'UNKNW';
         baseDecimals = token ? token.decimals : 18;
       }
 
       if (Market.isSynth(quoteType)) {
-        const token = findInSynthetic(quoteAsset);
+        const token = findTokenInSynthetic(quoteAsset);
         quoteSymbol = token ? token.symbol.toUpperCase() : 'UNKNW';
         quoteDecimals = token ? token.decimals : 18;
       }
     } else {
-      const base = findInLocalhost(baseAsset);
-      const quote = findInLocalhost(quoteAsset);
+      const base = findTokenInLocalhost(baseAsset);
+      const quote = findTokenInLocalhost(quoteAsset);
       baseSymbol = base?.symbol ?? 'UNKNW';
       baseDecimals = base?.decimals ?? 18;
       quoteSymbol = quote?.symbol ?? 'UNKNW';

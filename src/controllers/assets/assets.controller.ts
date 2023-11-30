@@ -1,13 +1,12 @@
+import { ChainNames, TokenLists, findTokenInLocalhost, getTokenInfo, isValidChain } from '@jointlabs/chains-info';
 import { Controller, Get, Logger, Param } from '@nestjs/common';
 import { toDec } from '../../common/common';
 import { FeaturedAssets } from '../../common/featured_assets';
 import { ErrServerError, ok, throw400, throw404 } from '../../common/responses/responses';
-import { TokenLists, findInLocalhost, getTokenInfo } from '../../common/token_list';
 import AssetRegistry from '../../models/asset_registry';
 import Liquidity from '../../models/liquidity';
 import MarketPrice from '../../models/market_price';
 import Swap from '../../models/swap';
-import { NetworkNames, isValidNetwork } from '../../network/common';
 import { MetadataService } from '../../services/metadata/metadata.service';
 
 @Controller('v1/assets')
@@ -55,8 +54,8 @@ export class AssetsController {
   // Get swappable token list
   @Get('/:net')
   async getTokenList(@Param('net') net: string) {
-    if (!isValidNetwork(net)) throw400('network is unknown');
-    let tokens = TokenLists[net as NetworkNames].tokens.concat(TokenLists['synthetic'].tokens);
+    if (!isValidChain(net)) throw400('network is unknown');
+    let tokens = TokenLists[net as ChainNames].tokens.concat(TokenLists['synthetic'].tokens);
     tokens = tokens.filter((token) => {
       if (!token.disabled) return token;
     });
@@ -69,8 +68,8 @@ export class AssetsController {
    * @param address The asset address
    */
   @Get(':net/:address')
-  async getAssetStats(@Param('net') net: string, @Param('address') address: string) {
-    let info = findInLocalhost(address);
+  async getAssetStats(@Param('net') net: ChainNames, @Param('address') address: string) {
+    let info = findTokenInLocalhost(address);
     if (!info && net) info = getTokenInfo(net, address);
     if (!info)
       info = await this.metadataSrv.getTokenInfo(net, address).catch((e) => {

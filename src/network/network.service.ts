@@ -1,3 +1,4 @@
+import { ChainNames } from '@jointlabs/chains-info';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Contract, providers } from 'ethers';
@@ -109,7 +110,7 @@ export default class NetworkService {
    * Connect and watch contracts.
    * @param network The name of the network
    */
-  private async watchNetwork(network: string) {
+  private async watchNetwork(network: ChainNames) {
     this.contracts = {};
 
     const rpcUrl = this.cfgSrv.get(`app.contractsAddress.rpcUrl`) as string;

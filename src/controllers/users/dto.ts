@@ -1,13 +1,13 @@
+import { getChainNames } from '@jointlabs/chains-info';
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsIn, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { toBoolean } from 'underscore.string';
 import { makeValidatorMsg } from '../../common/validations/validation';
-import { getNetworks } from '../../network/common';
 
 export type DeviceType = 'email';
 
 export class GetQueryDTO {
-  @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
+  @IsIn(getChainNames(), { message: makeValidatorMsg('network is unknown', 'net') })
   @IsOptional()
   public net?: string;
 
@@ -24,7 +24,7 @@ export class RegisterDeviceDTO {
 }
 
 export class LogOnlineStatusDTO {
-  @IsIn(getNetworks(), { message: makeValidatorMsg('network is unknown', 'net') })
+  @IsIn(getChainNames(), { message: makeValidatorMsg('network is unknown', 'net') })
   public net: string;
 
   @IsNumber(undefined, { message: makeValidatorMsg('must be a number', 'orderId') })

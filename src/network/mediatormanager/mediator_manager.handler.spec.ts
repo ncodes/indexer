@@ -32,7 +32,7 @@ const MockNetworkService = jest.fn().mockImplementation(() => {
 
 describe('MediatorManagerHandler', () => {
   const db = DBService.getForTest();
-  const net = 'net';
+  const net = 'ethereum';
   const owner = '0xOwner';
   const creator = '0xCreator';
   const marketAddress = '0xMarket';

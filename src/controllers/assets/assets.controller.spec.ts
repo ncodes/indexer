@@ -6,18 +6,30 @@ import * as request from 'supertest';
 import { setFeaturedAssets } from '../../common/featured_assets';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import { NoopLogger } from '../../common/loggers/noop_logger';
-import { TokenLists } from '../../common/token_list';
 import { DBService } from '../../db/DBService';
 import { NotifierService } from '../../jobs/mailer/NotifierService';
 import AssetRegistry from '../../models/asset_registry';
 import Liquidity from '../../models/liquidity';
 import MarketPrice from '../../models/market_price';
 import Swap from '../../models/swap';
+import { genEthAddress } from '../../network/common';
 import NetworkService from '../../network/network.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { RedisService } from '../../services/redis.service';
 import { AssetsController } from './assets.controller';
+
+// Note: We use var because const will not jest hoist correctly.
+// eslint-disable-next-line no-var
+var mockFindTokenInLocalhost: jest.Mock<any, any, any>;
+jest.mock('@jointlabs/chains-info', () => {
+  mockFindTokenInLocalhost = jest.fn();
+  const orig = jest.requireActual('@jointlabs/chains-info');
+  return {
+    ...orig,
+    findTokenInLocalhost: mockFindTokenInLocalhost,
+  };
+});
 
 const NotifierServiceMock = jest.fn().mockImplementation(() => {
   return {};
@@ -27,9 +39,9 @@ describe('AssetsController', () => {
   let app: INestApplication;
   const db = DBService.getForTest();
   const net = 'ethereum';
-  const net2 = 'bsc';
-  const baseAddress = '0xBase';
-  const baseAddress2 = '0xBase2';
+  const net2 = 'binance';
+  const baseAddress = genEthAddress();
+  const baseAddress2 = genEthAddress();
 
   afterEach(async () => {
     await db.truncateTables();
@@ -46,6 +58,7 @@ describe('AssetsController', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    jest.resetModules();
 
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
@@ -201,7 +214,7 @@ describe('AssetsController', () => {
     it('should return 500 when failure to get token info from metadata service', async () => {
       jest.spyOn(app.get(MetadataService), 'getTokenInfo').mockRejectedValue(new Error('error'));
       await request(app.getHttpServer())
-        .get(`/v1/assets/net1/abc`)
+        .get(`/v1/assets/net1/${genEthAddress()}`)
         .expect(500)
         .expect({ error: { type: 'api_error', message: 'server error' } });
     });
@@ -209,7 +222,7 @@ describe('AssetsController', () => {
     it('should return 404 when asset is unknown', async () => {
       jest.spyOn(app.get(MetadataService), 'getTokenInfo').mockResolvedValue(undefined);
       await request(app.getHttpServer())
-        .get(`/v1/assets/net1/0xBaseAddress`)
+        .get(`/v1/assets/net1/${genEthAddress()}`)
         .expect(404)
         .expect({ error: { message: 'token not found' } });
     });
@@ -224,7 +237,14 @@ describe('AssetsController', () => {
       });
       await MarketPrice.create({ network: net, baseAddress, price: '2' });
 
-      TokenLists[net].tokens = [{ address: baseAddress, symbol: 'ABC' }];
+      mockFindTokenInLocalhost.mockReturnValue({
+        address: baseAddress,
+        symbol: 'ABC',
+        volume24h: '0',
+        price24h: 0,
+        network: net,
+      });
+
       await request(app.getHttpServer())
         .get(`/v1/assets/${net}/${baseAddress}`)
         .expect(200)

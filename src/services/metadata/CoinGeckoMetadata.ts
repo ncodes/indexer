@@ -1,6 +1,7 @@
 // tslint:disable-next-line:max-classes-per-file
+import { getChainID } from '@jointlabs/chains-info';
 import axios from 'axios';
-import { CoinGeckoConfig, getChainID } from '../../network/common';
+import { CoinGeckoConfig } from '../../network/common';
 import { MetadataSource } from './metadata.service';
 
 export class CoinGeckoMetadata implements MetadataSource {
@@ -40,7 +41,7 @@ export class CoinGeckoMetadata implements MetadataSource {
     const data: CoinGecko.Asset = resp.data;
     return {
       name: data.name,
-      chainId: getChainID(network),
+      chainId: network ? getChainID(network) : -1,
       network,
       type: 'ERC20',
       address: !isSymbol ? symbolOrContract : null,

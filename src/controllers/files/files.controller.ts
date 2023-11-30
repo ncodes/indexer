@@ -1,3 +1,4 @@
+import { isValidChain } from '@jointlabs/chains-info';
 import { Controller, Param, ParseFilePipe, Post, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -7,7 +8,6 @@ import { ok, throw400, throw401 } from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import Swap from '../../models/swap';
-import { isValidNetwork } from '../../network/common';
 import { FilesService } from './files.service';
 import isNumeric = validator.isNumeric;
 
@@ -41,7 +41,7 @@ export class FilesController {
     file: Express.Multer.File,
   ) {
     // Validate network
-    if (!isValidNetwork(network)) throw400('network is unknown');
+    if (!isValidChain(network)) throw400('network is unknown');
 
     // Validate order ID
     if (!isNumeric(orderId)) throw400('order id is not a number');

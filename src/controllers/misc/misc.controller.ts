@@ -1,11 +1,9 @@
+import { ChainNames, MediatorPools, TokenLists, getTokenInfo, isValidChain } from '@jointlabs/chains-info';
 import { Controller, Get, Param, Query } from '@nestjs/common';
-import KnownMediatorPools from '../../common/mediator_pools';
 import { ok, throw400, throw404 } from '../../common/responses/responses';
-import { TokenLists, getTokenInfo } from '../../common/token_list';
 import { ConfigService } from '../../config/config.service';
 import AssetRegistry from '../../models/asset_registry';
 import Meta, { FeeName } from '../../models/meta';
-import { isValidNetwork } from '../../network/common';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { ErrTokenNotFound, MetadataService } from '../../services/metadata/metadata.service';
 
@@ -45,8 +43,8 @@ export class MiscController {
   async getTokenInfo(@Param('network') network: string, @Param('address') address: string) {
     let info: TokenList.Token;
     network = network !== '-' ? network : undefined;
-    if (network && !isValidNetwork(network)) throw400('network not supported');
-    if (network) info = getTokenInfo(network, address);
+    if (network && !isValidChain(network)) throw400('network not supported');
+    if (network) info = getTokenInfo(network as ChainNames, address);
     if (!info) info = await this.metadataSrv.getTokenInfo(network, address);
     return ok().data(info).build();
   }
@@ -147,6 +145,6 @@ export class MiscController {
    */
   @Get('/:network/mediator-pools')
   async getMediatorPools(@Param('network') network: string) {
-    return ok().data(KnownMediatorPools[network]).build();
+    return ok().data(MediatorPools[network]).build();
   }
 }

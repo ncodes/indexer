@@ -1,6 +1,6 @@
+import { ChainNames } from '@jointlabs/chains-info';
 import * as moment from 'moment';
 import { NoopLogger } from '../../common/loggers/noop_logger';
-import { TokenLists } from '../../common/token_list';
 import { DBService } from '../../db/DBService';
 import { NotificationID } from '../../jobs/mailer/NotifierService';
 import Liquidity from '../../models/liquidity';
@@ -9,6 +9,17 @@ import LiquidityProvider from '../../models/market_provider';
 import PermittedTrader from '../../models/permitted_trader';
 import { toBN } from '../common';
 import { MarketCoreHandler } from './market_core.handler';
+
+// eslint-disable-next-line no-var
+var mockFindTokenInSynthetic: jest.Mock<any, any, any>;
+jest.mock('@jointlabs/chains-info', () => {
+  mockFindTokenInSynthetic = jest.fn();
+  const orig = jest.requireActual('@jointlabs/chains-info');
+  return {
+    ...orig,
+    findTokenInSynthetic: mockFindTokenInSynthetic,
+  };
+});
 
 const mockGetMarket = jest.fn();
 const MarketCoreContract = jest.fn().mockImplementation(() => {
@@ -28,7 +39,7 @@ const MockNetworkService = jest.fn().mockImplementation(() => {
 
 describe('MarketCoreHandler', () => {
   const db = DBService.getForTest();
-  const net = 'net';
+  const net: ChainNames = 'ethereum';
   const marketAddress = '0xMarket';
   const txHash = '0xTxHash';
   const creator = '0xCreator';
@@ -51,6 +62,8 @@ describe('MarketCoreHandler', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     mockNotify.mockReset();
+    jest.resetModules();
+
     handler = new MarketCoreHandler(netSrv, new MockNotifierService(), null, net, contracts);
     handler.logger = new NoopLogger() as any;
     await db.truncateTables();
@@ -120,7 +133,15 @@ describe('MarketCoreHandler', () => {
 
     describe('new ERC20/SYNTH market', function () {
       it('should create market and fetch synthetic asset symbol and decimal from internal list', async () => {
-        TokenLists.synthetic.tokens = [{ address: quoteAsset, symbol: quote, decimals: 10 }];
+        mockFindTokenInSynthetic.mockReturnValue({
+          asset: '',
+          type: 'SYNTHETIC',
+          address: quoteAsset,
+          symbol: quote,
+          decimals: 10,
+          isSynthetic: true,
+        });
+
         await expect(
           handler.onNewMarket(
             marketAddress,
@@ -149,9 +170,9 @@ describe('MarketCoreHandler', () => {
         expect(market.pair).toEqual(`${base}${quote}`);
       });
 
-      describe('when SYNTH asset is known in the token list', function () {
+      describe('when SYNTH asset is unknown in the token list', function () {
         it('should create market and use defaults for synthetic-related fields', async () => {
-          TokenLists.synthetic.tokens = [];
+          mockFindTokenInSynthetic.mockReturnValue(undefined);
           await expect(
             handler.onNewMarket(
               marketAddress,

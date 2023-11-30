@@ -1,3 +1,4 @@
+import { ChainNames } from '@jointlabs/chains-info';
 import * as _ from 'lodash';
 import Objection, { QueryBuilderType, raw, Transaction } from 'objection';
 import { randStr } from '../common/common';
@@ -24,7 +25,7 @@ export default class Market extends BaseModel {
   // The creator of the market
   creator: string = undefined;
   // The network it exists in
-  network: string = undefined;
+  network: ChainNames = undefined;
   // The base asset symbol
   base: string = undefined;
   // The base asset token address

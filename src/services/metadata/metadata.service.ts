@@ -1,9 +1,9 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { findTokenInLocalhost, findTokenInSynthetic, isValidChain } from '@jointlabs/chains-info';
+import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { isDev, isProd, toDec } from '../../common/common';
-import { findInLocalhost, findInSynthetic } from '../../common/token_list';
-import { isValidNetwork, isZero, pow10D } from '../../network/common';
+import { isZero, pow10D } from '../../network/common';
 import NetworkService from '../../network/network.service';
 import { ExchangeRateService } from '../exchange_rate.service';
 import { RedisService } from '../redis.service';
@@ -60,8 +60,8 @@ export class MetadataService {
    */
   async getTokenLogo(symbolOrNetwork: string, contract: string): Promise<string> {
     // Check if address exist in local/synthetic list.
-    let info = findInLocalhost(contract);
-    if (!info) info = findInSynthetic(contract);
+    let info = findTokenInLocalhost(contract);
+    if (!info) info = findTokenInSynthetic(contract);
 
     // If not found, check redis cache
     if (!info) {
@@ -94,7 +94,7 @@ export class MetadataService {
    * @param contract The contract address
    */
   async getTokenInfo(symbolOrNetwork: string, contract: string): Promise<TokenMetadata> {
-    const local = findInSynthetic(contract) || findInLocalhost(contract);
+    const local = findTokenInSynthetic(contract) || findTokenInLocalhost(contract);
     if (local) {
       return {
         network: symbolOrNetwork,
@@ -132,7 +132,7 @@ export class MetadataService {
 
     // Ensure the network is valid
     const { network } = info;
-    if (network && !isValidNetwork(network)) return Promise.reject('network not supported');
+    if (network && !isValidChain(network)) return Promise.reject('network not supported');
 
     // If the token is a contract, try to get the decimals if not provided
     if (info.isContract && network && isProd() && !info.decimals)

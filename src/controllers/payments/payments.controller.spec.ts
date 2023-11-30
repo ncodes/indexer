@@ -1,3 +1,4 @@
+import { ChainNames } from '@jointlabs/chains-info';
 import { INestApplication } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -5,7 +6,6 @@ import * as request from 'supertest';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { DBService } from '../../db/DBService';
-import { SupportedNetworks } from '../../network/common';
 import NetworkService from '../../network/network.service';
 import { PaymentsController } from './payments.controller';
 import { PaymentsService } from './payments.service';
@@ -13,7 +13,7 @@ import { PaymentsService } from './payments.service';
 describe('PaymentsController', () => {
   let app: INestApplication;
   const db = DBService.getForTest();
-  const net = 'ethereum';
+  const net: ChainNames = 'ethereum';
 
   afterEach(async () => {
     await db.truncateTables();
@@ -76,7 +76,7 @@ describe('PaymentsController', () => {
     it('should return 200 and non-empty result when network is correct', async () => {
       await request(app.getHttpServer())
         .get(`/v1/payments/methods`)
-        .query({ net: SupportedNetworks.Ethereum })
+        .query({ net: 'ethereum' })
         .expect(200)
         .expect((res) => {
           expect(res.body.data.length).toBeGreaterThan(0);

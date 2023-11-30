@@ -1,9 +1,10 @@
+import { ChainNames } from '@jointlabs/chains-info';
 import { DBService } from '../db/DBService';
 import Market from './market';
 
 describe('Market', () => {
   const db = DBService.getForTest();
-  const net = 'net1';
+  const net: ChainNames = 'ethereum';
 
   afterEach(async () => {
     await db.truncateTables();
@@ -20,7 +21,7 @@ describe('Market', () => {
   describe('.search', function () {
     it('should return correct result when `network` is set', async () => {
       const mkt = await Market.create({ network: net, totalLiquidity: '1' });
-      await Market.create({ network: 'net2' });
+      await Market.create({ network: 'localhost' });
       const res = (await Market.search(
         net,
         undefined,

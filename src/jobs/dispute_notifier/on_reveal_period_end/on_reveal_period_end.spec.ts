@@ -22,7 +22,7 @@ describe('OnRevealPeriodEnd', () => {
   let app: INestApplication;
   const db = DBService.getForTest();
   let srv: OnRevealPeriodEnd;
-  const net = 'net';
+  const net = 'ethereum';
   const provider = '0xProvider';
   const taker = '0xTaker';
   const draftee = '0xDraftee';

@@ -1,4 +1,4 @@
-import { SupportedNetworks } from '../network/common';
+import { ChainNames } from '@jointlabs/chains-info';
 
 interface FeaturedAsset {
   // The asset symbol
@@ -8,7 +8,7 @@ interface FeaturedAsset {
   // The asset contracts
   contracts: {
     // The network name
-    net: string;
+    net: ChainNames;
     // The contract address
     addr: string;
     // Whether this is the primary network for the asset.
@@ -23,12 +23,12 @@ export let FeaturedAssets: FeaturedAsset[] = [
     dominantColor: '#000000',
     contracts: [
       {
-        net: SupportedNetworks.Ethereum,
+        net: 'ethereum',
         addr: '0x0B306BF915C4d645ff596e518fAf3F9669b97016',
         primary: true,
       },
       {
-        net: SupportedNetworks.Ethereum,
+        net: 'ethereum',
         addr: '0x0B306BF915C4d645ff596e518fAf3F9669b97016',
       },
     ],

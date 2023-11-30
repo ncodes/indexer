@@ -125,7 +125,7 @@ describe('MarketsService', () => {
     it(`should return correct value when select=['lowestPrice']`, async () => {
       market.lowestPrice = '20';
 
-      const tokenInfo = { decimals: 18, price: 5, network: net, logoURI: '', name: '' };
+      const tokenInfo = { decimals: 18, price: 5, network: net, logoURI: '', name: '', symbol: '', type: '' };
       const mockGetTokenInfo = jest.spyOn(module.get(MetadataService), 'getTokenInfo').mockResolvedValue(tokenInfo);
       const mockTryToUsd = jest.spyOn(module.get(MetadataService), 'tryToUsd').mockResolvedValue(100);
 
@@ -164,7 +164,7 @@ describe('MarketsService', () => {
 
       jest
         .spyOn(module.get(MetadataService), 'getTokenInfo')
-        .mockResolvedValue({ decimals: 18, price: 5, network: net, logoURI: '', name: '' });
+        .mockResolvedValue({ decimals: 18, price: 5, network: net, logoURI: '', name: '', symbol: '', type: '' });
 
       await service.extendMarket(market, ['volume24h']);
       expect(market.volume24h).toBe('3');
@@ -210,7 +210,7 @@ describe('MarketsService', () => {
       market.amountSwapped = pow10(18).mul(100).toString();
       jest
         .spyOn(module.get(MetadataService), 'getTokenInfo')
-        .mockResolvedValue({ decimals: 18, price: 5, network: net, logoURI: '', name: '' });
+        .mockResolvedValue({ decimals: 18, price: 5, network: net, logoURI: '', name: '', symbol: '', type: '' });
       await service.extendMarket(market, ['amountSwapped']);
       expect(market.amountSwappedUsd).toBe(500);
     });
@@ -218,7 +218,7 @@ describe('MarketsService', () => {
     it(`should return correct value when select=['totalLiquidity']`, async () => {
       market.totalLiquidity = '20';
 
-      const tokenInfo = { decimals: 18, price: 5, network: net, logoURI: '', name: '' };
+      const tokenInfo = { decimals: 18, price: 5, network: net, logoURI: '', name: '', symbol: '', type: '' };
       const mockGetTokenInfo = jest.spyOn(module.get(MetadataService), 'getTokenInfo').mockResolvedValue(tokenInfo);
       const mockTryToUsd = jest.spyOn(module.get(MetadataService), 'tryToUsd').mockResolvedValue(100);
 

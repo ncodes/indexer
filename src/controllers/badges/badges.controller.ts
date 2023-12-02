@@ -96,7 +96,14 @@ export class BadgesController {
   async getBadgeManifest(@Param('net') net: string, @Param('badge') badge: string) {
     const netManifests = BadgeManifest[net];
     if (!netManifests) throw404(`no manifest found for '${net}'`);
-    const manifest = netManifests[badge];
+
+    let manifest: BadgeManifest;
+    for (const key in netManifests) {
+      if (badge.match(new RegExp(key))) {
+        manifest = netManifests[key];
+      }
+    }
+
     if (!manifest) throw404(`no manifest found for '${badge}'`);
     return ok().data(manifest).build();
   }

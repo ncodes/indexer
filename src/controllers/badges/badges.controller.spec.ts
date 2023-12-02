@@ -16,6 +16,12 @@ import { makeSession } from '../auth/utils';
 import { BadgeService } from './badge.service';
 import { BadgesController } from './badges.controller';
 
+jest.mock('../../common/badge_manifest', () => {
+  return {
+    BadgeManifest: {},
+  };
+});
+
 describe('BadgesController', () => {
   let app: INestApplication;
   const db = DBService.getForTest();
@@ -35,6 +41,10 @@ describe('BadgesController', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    jest.resetModules();
+
+    BadgeManifest['localhost'] = {};
+
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [BadgesController],
@@ -315,18 +325,18 @@ describe('BadgesController', () => {
         });
     });
 
-    it('should return 404x when no manifest was found for the given badge', async () => {
+    it('should return 404 when no manifest was found for the given badge', async () => {
       await request(app.getHttpServer())
-        .get(`/v1/badges/localhost/kyc/nga/manifest`)
+        .get(`/v1/badges/localhost/kyb/nga/manifest`)
         .expect(404)
         .expect({
           error: {
-            message: "no manifest found for 'kyc/nga'",
+            message: "no manifest found for 'kyb/nga'",
           },
         });
     });
 
-    it('should return 404 when no manifest was found for badge', async () => {
+    it('should return 200 when a manifest was found', async () => {
       BadgeManifest['localhost']['kyc/abc'] = {
         name: 'kyc/abc',
         logoUrl: 'https://logo',
@@ -338,6 +348,24 @@ describe('BadgesController', () => {
       };
       await request(app.getHttpServer()).get(`/v1/badges/localhost/kyc/abc/manifest`).expect(200).expect({
         data: BadgeManifest['localhost']['kyc/abc'],
+      });
+    });
+
+    it('should return 200 when a manifest was found (using regex)', async () => {
+      BadgeManifest['localhost']['^ky(b|c)/abc$'] = {
+        name: 'kyc/abc',
+        logoUrl: 'https://logo',
+        shortDescription: 'short desc',
+        longDescriptions: ['long desc'],
+        issuer: 'issuer',
+        issuerAddress: '0xIssuer',
+        claimPageUrl: 'https://claim',
+      };
+      await request(app.getHttpServer()).get(`/v1/badges/localhost/kyc/abc/manifest`).expect(200).expect({
+        data: BadgeManifest['localhost']['^ky(b|c)/abc$'],
+      });
+      await request(app.getHttpServer()).get(`/v1/badges/localhost/kyb/abc/manifest`).expect(200).expect({
+        data: BadgeManifest['localhost']['^ky(b|c)/abc$'],
       });
     });
   });

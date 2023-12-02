@@ -1248,10 +1248,10 @@
     "@types/yargs" "^17.0.8"
     chalk "^4.0.0"
 
-"@jointlabs/chains-info@^0.0.9":
-  version "0.0.9"
-  resolved "https://registry.yarnpkg.com/@jointlabs/chains-info/-/chains-info-0.0.9.tgz#87b0c47012fb3171e9933d84db1e37f58d2b5a1e"
-  integrity sha512-OZXgKNQSrpFBLTHNxS4p/IocYkozwuKca8l9tcmhLX4d4QPGADT1ZQlpkDdgic09uAe5JlgXZwYYvB1mxbuDYA==
+"@jointlabs/chains-info@^0.0.13":
+  version "0.0.13"
+  resolved "https://registry.yarnpkg.com/@jointlabs/chains-info/-/chains-info-0.0.13.tgz#251d390f98bc0e59ea14e1cf2bb7cbf547cb3cd2"
+  integrity sha512-rbmGev+noSdOG3g/81BB2rZQU3EpRPa7FaMXCri32r+Q+na493KB9sBbkhiBAZGzVyYNyp0/pfnxwAYVX54VKg==
   dependencies:
     lodash "^4.17.21"
     react "^18.2.0"
@@ -1636,10 +1636,6 @@
   version "0.11.0"
   resolved "https://registry.npmjs.org/@pkgjs/parseargs/-/parseargs-0.11.0.tgz"
   integrity sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==
-
-"@relative-finance/coingecko-api@https://github.com/ncodes/CoinGecko-API":
-  version "1.1.11"
-  resolved "git+ssh://git@github.com/ncodes/CoinGecko-API.git#f67a4807cf1f4aca07e3e0c9354e32f494334d40"
 
 "@sapphire/async-queue@^1.5.0":
   version "1.5.0"

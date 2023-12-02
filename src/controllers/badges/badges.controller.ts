@@ -1,5 +1,5 @@
+import { BadgeManifest, parseBadgeLocals } from '@jointlabs/chains-info';
 import { Controller, Get, Logger, Param, Query, ValidationPipe } from '@nestjs/common';
-import { BadgeManifest, parseBadgeLocals } from '../../common/badge_manifest';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ok, throw404 } from '../../common/responses/responses';
 import Badge from '../../models/badge';

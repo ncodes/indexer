@@ -3,7 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as moment from 'moment/moment';
 import * as request from 'supertest';
-import { BadgeManifest } from '../../common/badge_manifest';
 import { randStr } from '../../common/common';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import { NoopLogger } from '../../common/loggers/noop_logger';
@@ -45,7 +44,7 @@ describe('BadgesController', () => {
     jest.clearAllMocks();
     jest.resetModules();
 
-    BadgeManifest['localhost'] = {};
+    BadgeManifests['localhost'] = {};
 
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
@@ -339,7 +338,7 @@ describe('BadgesController', () => {
     });
 
     it('should return 200 when a manifest was found', async () => {
-      BadgeManifest['localhost']['kyc/abc'] = {
+      BadgeManifests['localhost']['kyc/abc'] = {
         name: 'kyc/abc',
         logoUrl: 'https://logo',
         shortDescription: 'short desc',
@@ -349,12 +348,12 @@ describe('BadgesController', () => {
         claimPageUrl: 'https://claim',
       };
       await request(app.getHttpServer()).get(`/v1/badges/localhost/kyc/abc/manifest`).expect(200).expect({
-        data: BadgeManifest['localhost']['kyc/abc'],
+        data: BadgeManifests['localhost']['kyc/abc'],
       });
     });
 
     it('should return 200 when a manifest was found (using regex)', async () => {
-      BadgeManifest['localhost']['^ky(b|c)/abc$'] = {
+      BadgeManifests['localhost']['^ky(b|c)/abc$'] = {
         name: 'kyc/abc',
         logoUrl: 'https://logo',
         shortDescription: 'short desc',
@@ -364,16 +363,16 @@ describe('BadgesController', () => {
         claimPageUrl: 'https://claim',
       };
       await request(app.getHttpServer()).get(`/v1/badges/localhost/kyc/abc/manifest`).expect(200).expect({
-        data: BadgeManifest['localhost']['^ky(b|c)/abc$'],
+        data: BadgeManifests['localhost']['^ky(b|c)/abc$'],
       });
       await request(app.getHttpServer()).get(`/v1/badges/localhost/kyb/abc/manifest`).expect(200).expect({
-        data: BadgeManifest['localhost']['^ky(b|c)/abc$'],
+        data: BadgeManifests['localhost']['^ky(b|c)/abc$'],
       });
     });
 
     describe('check local variable parsing', () => {
       it('should return 200 when a manifest was found', async () => {
-        BadgeManifest['localhost']['^ky(b|c)/abc$'] = {
+        BadgeManifests['localhost']['^ky(b|c)/abc$'] = {
           name: '{badge}',
           logoUrl: 'https://logo',
           shortDescription: 'short desc {badge}',

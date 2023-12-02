@@ -17,7 +17,9 @@ import { BadgeService } from './badge.service';
 import { BadgesController } from './badges.controller';
 
 jest.mock('../../common/badge_manifest', () => {
+  const actual = jest.requireActual('../../common/badge_manifest');
   return {
+    ...actual,
     BadgeManifest: {},
   };
 });
@@ -366,6 +368,34 @@ describe('BadgesController', () => {
       });
       await request(app.getHttpServer()).get(`/v1/badges/localhost/kyb/abc/manifest`).expect(200).expect({
         data: BadgeManifest['localhost']['^ky(b|c)/abc$'],
+      });
+    });
+
+    describe('check local variable parsing', () => {
+      it('should return 200 when a manifest was found', async () => {
+        BadgeManifest['localhost']['^ky(b|c)/abc$'] = {
+          name: '{badge}',
+          logoUrl: 'https://logo',
+          shortDescription: 'short desc {badge}',
+          longDescriptions: ['long desc {badge}'],
+          issuer: 'issuer',
+          issuerAddress: '0xIssuer',
+          claimPageUrl: 'https://claim',
+        };
+        await request(app.getHttpServer())
+          .get(`/v1/badges/localhost/kyc/abc/manifest`)
+          .expect(200)
+          .expect({
+            data: {
+              name: 'kyc/abc',
+              logoUrl: 'https://logo',
+              shortDescription: 'short desc kyc/abc',
+              longDescriptions: ['long desc kyc/abc'],
+              issuer: 'issuer',
+              issuerAddress: '0xIssuer',
+              claimPageUrl: 'https://claim',
+            },
+          });
       });
     });
   });

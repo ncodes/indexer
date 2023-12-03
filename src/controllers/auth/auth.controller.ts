@@ -1,13 +1,17 @@
-import { Body, Controller, Get, Post, Put, Query, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Put, Query, Req, UseGuards, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { isEmail } from 'class-validator';
+import { Request } from 'express';
 import { transaction } from 'objection';
 import { authenticator, totp } from 'otplib';
 import { sha1 } from '../../common/common';
 import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
 import { ErrBadSignature, ErrorMessages, ErrorTypes, ok, throw400, throw404 } from '../../common/responses/responses';
 import { Roles } from '../../common/roles';
+import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
+import { HasKeyGuard } from '../../guards/has_token.guard';
 import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierService';
+import Session from '../../models/session';
 import User from '../../models/user';
 import { UserService } from '../users/user.service';
 import { AuthDTO, GetAuthorizerDTO, VerifyEmailDTO } from './dto';
@@ -117,6 +121,21 @@ export class AuthController {
     );
 
     return ok().data({ token, user }).build();
+  }
+
+  /**
+   * Delete current or all sessions
+   * @param req The request object
+   * @param all If set, deletes all sessions for the user
+   * @returns
+   */
+  @UseGuards(BeAuthenticatedGuard)
+  @UseGuards(HasKeyGuard)
+  @Delete('/session')
+  async deleteSession(@Req() req: Request, @Query('all') all: string) {
+    if (all) await Session.deleteByUserId(req.user.id);
+    else await Session.deleteById(req.session.id);
+    return ok().data({ deleted: true }).build();
   }
 
   /**

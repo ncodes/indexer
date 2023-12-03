@@ -77,4 +77,22 @@ export default class Session extends BaseModel {
         .catch(reject);
     });
   }
+
+  /**
+   * Delete sessions belonging to a user ID
+   * @param userId The user ID
+   * @returns
+   */
+  static deleteByUserId(userId: string) {
+    return this.query().where({ userId }).whereNotDeleted().delete();
+  }
+
+  /**
+   * Delete a session by ID
+   * @param id The session ID
+   * @returns
+   */
+  static deleteById(id: string) {
+    return this.query().where({ id }).whereNotDeleted().delete();
+  }
 }

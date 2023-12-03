@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 import * as moment from 'moment';
 import { authenticator, totp } from 'otplib';
 import * as request from 'supertest';
-import { sha1 } from '../../common/common';
+import { randStr, sha1 } from '../../common/common';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { ErrorMessages } from '../../common/responses/responses';
@@ -18,6 +18,7 @@ import { RedisService } from '../../services/redis.service';
 import ConvosService from '../convos/convos.service';
 import { UserService } from '../users/user.service';
 import { AuthController } from './auth.controller';
+import { makeSession } from './utils';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -88,8 +89,11 @@ describe('AuthController', () => {
     await app.init();
   });
 
+  let u: User;
+  let token: string;
   beforeEach(async () => {
-    await User.create({ role: Roles.User });
+    u = await User.create({ role: Roles.User, address: '0xAddress' });
+    token = await makeSession(u, randStr(), '5', mockCfgGet('auth.jwtSecret'));
   });
 
   describe('.auth', () => {
@@ -424,6 +428,70 @@ describe('AuthController', () => {
           expect(res.body.data.user.email).toEqual('person@gmail.com');
           expect(res.body.data.user.emailUnverified).toBeNull();
         });
+    });
+  });
+
+  describe('.deleteSession', () => {
+    it('should return error and status=401 when authorization header is missing', async () => {
+      await request(app.getHttpServer())
+        .delete(`/v1/auth/session`)
+        .expect(401)
+        .expect({
+          error: {
+            type: 'authentication_error',
+            message: 'authorization header is required',
+          },
+        });
+    });
+
+    it('should return error and status=401 when token is invalid', async () => {
+      await request(app.getHttpServer())
+        .delete(`/v1/auth/session`)
+        .set('Authorization', 'bearer abc')
+        .expect(401)
+        .expect({
+          error: {
+            type: 'authentication_error',
+            message: 'not permitted to perform this action',
+          },
+        });
+    });
+
+    it('should 200 and delete current session when `all` query param is unset', async () => {
+      let session = await Session.getByUserId(u.id);
+      expect(session).toBeDefined();
+
+      let otherSession = await Session.create(u.id, randStr());
+
+      await request(app.getHttpServer())
+        .delete(`/v1/auth/session`)
+        .set('Authorization', 'bearer ' + token)
+        .expect(200);
+
+      session = await Session.getById(session.id);
+      expect(session).toBeUndefined();
+
+      otherSession = await Session.getById(otherSession.id);
+      expect(otherSession).toBeDefined();
+    });
+
+    it('should 200 and delete all session when `all` query param is set', async () => {
+      let session = await Session.getByUserId(u.id);
+      expect(session).toBeDefined();
+
+      let otherSession = await Session.create(u.id, randStr());
+
+      await request(app.getHttpServer())
+        .delete(`/v1/auth/session`)
+        .query({ all: 'true' })
+        .set('Authorization', 'bearer ' + token)
+        .expect(200);
+
+      session = await Session.getById(session.id);
+      expect(session).toBeUndefined();
+
+      otherSession = await Session.getById(otherSession.id);
+      expect(otherSession).toBeUndefined();
     });
   });
 

@@ -1,6 +1,7 @@
 import { BigNumber } from 'ethers';
 import { NotificationID } from '../src/jobs/mailer/NotifierService';
 import Convo from '../src/models/convo';
+import Session from '../src/models/session';
 import Dispute from '../src/models/dispute';
 import Liquidity from '../src/models/liquidity';
 import Market from '../src/models/market';
@@ -25,6 +26,7 @@ declare global {
   namespace Express {
     export interface Request {
       user: User;
+      session: Session;
       parsedRawBody: Buffer;
     }
   }

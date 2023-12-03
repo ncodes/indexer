@@ -87,7 +87,7 @@ declare global {
   interface NotifyJob<T> {
     notifType: NotificationID;
     network: string;
-    recipient: string;
+    recipientAddr: string;
     appUrl: string;
     user?: User;
     data: T;
@@ -320,6 +320,11 @@ declare global {
   interface ChatNewMessageNotification {
     user: User;
     convo: Convo;
+  }
+
+  interface VerifyNewEmailNotification {
+    user: User;
+    otp: string;
   }
 
   interface NewUpdatedOfferNotification extends BaseOfferNotification {

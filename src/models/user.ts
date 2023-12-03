@@ -7,11 +7,13 @@ import { BaseModel } from './base';
  */
 export default class User extends BaseModel {
   email: string;
+  emailUnverified: string;
   address: string;
   locale: string;
   timezone: string;
   role: string;
   deviceTokenEmail: string;
+  otpSecret: string;
 
   // Not persisted
   totalSwaps: number;
@@ -34,6 +36,8 @@ export default class User extends BaseModel {
   $formatJson(json: Objection.Pojo): Objection.Pojo {
     const user = super.$formatJson(json) as User;
     user.object = 'user';
+    delete user.otpSecret;
+    delete user.deviceTokenEmail;
     return user;
   }
 

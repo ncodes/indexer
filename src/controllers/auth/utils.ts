@@ -14,12 +14,15 @@ export const SignatureError = new Error('signature is invalid or expired');
  * @param signature The signature to check
  */
 export async function hasSeenSignature(signature: string) {
-  const existingSig = await Session.getBySignature(sha1(signature));
+  const existingSig = await Session.getBySignature(signature);
   return Promise.resolve(existingSig);
 }
 
 /**
- * makeSession creates a session and generates a session token
+ * makeSession creates a session and generates a session token.
+ * If signature is provided, it will be used to create the session
+ * as long as it has not been used before.
+ *
  * @param {User} user - The user object
  * @param {string} signature - The authentication signature
  * @param {string} jwtExpMin - The session token expiry time in minutes.
@@ -33,10 +36,10 @@ export async function makeSession(
 ): Promise<string> {
   try {
     // Ensure the signature has not been used before
-    if (await hasSeenSignature(sha1(signature))) return Promise.reject(SignatureError);
+    if (signature && (await hasSeenSignature(sha1(signature)))) return Promise.reject(SignatureError);
 
     // Create session
-    const session = await Session.create(user.id, sha1(signature));
+    const session = await Session.create(user.id, signature ? sha1(signature) : null);
     const exp = moment().add(jwtExpMin, 'minutes').unix();
     const token = jwt.sign({ exp, id: session.id, type: 'session' }, jwtSecret);
 

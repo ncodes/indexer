@@ -1,9 +1,28 @@
 import { ethers } from 'ethers';
+import * as jwt from 'jsonwebtoken';
 import * as moment from 'moment';
+import { sha1 } from '../../common/common';
+import { DBService } from '../../db/DBService';
+import Session from '../../models/session';
+import User from '../../models/user';
 import { makeMsg } from './auth.controller.spec';
-import { parseWalletSignature } from './utils';
+import { makeSession, parseWalletSignature } from './utils';
 
 describe('Utils', () => {
+  const db = DBService.getForTest();
+
+  afterEach(async () => {
+    await db.truncateTables();
+  });
+
+  afterAll(async () => {
+    await db.destroy();
+  });
+
+  beforeEach(async () => {
+    await db.truncateTables();
+  });
+
   describe('.parseSignature', () => {
     it('should return correct data on successful parsing', async () => {
       const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
@@ -70,6 +89,42 @@ Address: "0x123"`);
       expect(() => {
         parseWalletSignature(msg.toString('hex'), sig, true);
       }).toThrowError('address mismatch');
+    });
+  });
+
+  describe('.makeSession', () => {
+    let user: User;
+
+    beforeEach(async () => {
+      user = await User.create({});
+    });
+
+    describe('signature is provided', () => {
+      it('should return a valid token', async () => {
+        const token = await makeSession(user, 'sig', '1', 'secret');
+        expect(token).toBeDefined();
+        jwt.verify(token, 'secret', (err) => {
+          expect(err).toBeNull();
+        });
+        const session = await Session.getBySignature(sha1('sig'));
+        expect(session).toBeDefined();
+        expect(session.userId).toEqual(user.id);
+      });
+
+      it('should fail if signature has been used before', async () => {
+        await Session.create(user.id, sha1('sig'));
+        await expect(makeSession(user, 'sig', '1', 'secret')).rejects.toThrowError('signature is invalid or expired');
+      });
+    });
+
+    describe('signature was not provided', () => {
+      it('should return a valid token', async () => {
+        const token = await makeSession(user, undefined, '1', 'secret');
+        expect(token).toBeDefined();
+        const session = await Session.getByUserId(user.id);
+        expect(session).toBeDefined();
+        expect(session.signature).toEqual(null);
+      });
     });
   });
 });

@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ethers } from 'ethers';
 import * as moment from 'moment';
+import { authenticator, totp } from 'otplib';
 import * as request from 'supertest';
 import { sha1 } from '../../common/common';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
@@ -10,6 +11,7 @@ import { NoopLogger } from '../../common/loggers/noop_logger';
 import { ErrorMessages } from '../../common/responses/responses';
 import { Roles } from '../../common/roles';
 import { DBService } from '../../db/DBService';
+import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierService';
 import Session from '../../models/session';
 import User from '../../models/user';
 import { RedisService } from '../../services/redis.service';
@@ -24,6 +26,13 @@ const ConfigServiceMock = jest.fn().mockImplementation(() => {
 
 const RedisServiceMock = jest.fn().mockImplementation(() => {
   return {};
+});
+
+const mockNotify = jest.fn();
+const NotifierServiceMock = jest.fn().mockImplementation(() => {
+  return {
+    notify: mockNotify,
+  };
 });
 
 export function makeMsg(address: string, email: string, timestamp: string) {
@@ -64,12 +73,14 @@ describe('AuthController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [AuthController],
-      providers: [ConfigService, RedisService, UserService, ConvosService],
+      providers: [ConfigService, RedisService, UserService, ConvosService, NotifierService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
       .overrideProvider(RedisService)
       .useValue(new RedisServiceMock())
+      .overrideProvider(NotifierService)
+      .useValue(new NotifierServiceMock())
       .compile();
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());
@@ -182,7 +193,7 @@ describe('AuthController', () => {
         });
     });
 
-    it('should return status=201, create user, session and return session token', async () => {
+    it('should return status=201, create new user, set OTP secret, send OTP message and create no session', async () => {
       const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
       const wallet = new ethers.Wallet(privateKey);
       const msg = Buffer.from(makeMsg(wallet.address, 'person@gmail.com', moment().toISOString()));
@@ -197,43 +208,96 @@ describe('AuthController', () => {
           msg: msg.toString('hex'),
         })
         .expect(201)
-        .expect((res) => {
-          expect(res.body.data.token).toBeDefined();
+        .expect(async (res) => {
           expect(res.body.data.user).toBeDefined();
           expect(res.body.data.user.address.toLowerCase()).toEqual(wallet.address.toLowerCase());
           expect(mockRegDevice).toBeCalledTimes(1);
-        });
 
-      const session = await Session.getBySignature(sha1(sig));
-      expect(session).toBeDefined();
+          expect(mockNotify.mock.calls[0][0]).toEqual(NotificationID.VerifyNewEmail);
+          expect(mockNotify.mock.calls[0][1]).toBeUndefined();
+          expect(mockNotify.mock.calls[0][2]).toBeUndefined();
+          const data = mockNotify.mock.calls[0][3];
+          expect(data.otp).toBeDefined();
+          expect(data.otp).toHaveLength(6);
+          expect(data.user).toBeDefined();
+          expect(data.user.address.toLowerCase()).toEqual(wallet.address.toLowerCase());
+          expect(data.user.email).toBeUndefined();
+          expect(data.user.emailUnverified).toEqual('person@gmail.com');
+          expect(data.user.otpSecret).toBeDefined();
+
+          const user = await User.getById(res.body.data.user.id);
+          expect(user).toBeDefined();
+
+          const session = await Session.getBySignature(sha1(sig));
+          expect(session).not.toBeDefined();
+        });
     });
 
-    it('should update existing user when there is a user with matching address', async () => {
-      const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
-      const wallet = new ethers.Wallet(privateKey);
-      const msg = Buffer.from(makeMsg(wallet.address, 'person@gmail.com', moment().subtract(1, 's').toISOString()));
-      const sig = await wallet.signMessage(msg.toString());
-      const existing = await User.create({ address: wallet.address });
+    describe('when user already exist but with no OTP secret', () => {
+      it('should return status=201, update new user, set OTP secret, send OTP and create no session', async () => {
+        const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
+        const wallet = new ethers.Wallet(privateKey);
+        const msg = Buffer.from(makeMsg(wallet.address, 'person@gmail.com', moment().toISOString()));
+        const sig = await wallet.signMessage(msg.toString());
 
-      jest.spyOn(app.get(UserService), 'registerDevice').mockResolvedValue(undefined);
+        let user = await User.create({ address: wallet.address });
+        const mockRegDevice = jest.spyOn(app.get(UserService), 'registerDevice').mockResolvedValue(undefined);
 
-      let user: User;
-      await request(app.getHttpServer())
-        .post(`/v1/auth`)
-        .send({
-          sig,
-          msg: msg.toString('hex'),
-          email: 'person@gmail.com',
-        })
-        .expect(201)
-        .expect((res) => {
-          expect(res.body.data.token).toBeDefined();
-          expect(res.body.data.user).toBeDefined();
-          expect(res.body.data.user.address.toLowerCase()).toEqual(wallet.address.toLowerCase());
-          user = res.body.data.user;
-        });
-      expect(existing.id).toEqual(user.id);
-      expect(user.email).toEqual('person@gmail.com');
+        await request(app.getHttpServer())
+          .post(`/v1/auth`)
+          .send({
+            sig,
+            msg: msg.toString('hex'),
+          })
+          .expect(201)
+          .expect(async (res) => {
+            expect(res.body.data.user).toBeDefined();
+            expect(res.body.data.user.address.toLowerCase()).toEqual(wallet.address.toLowerCase());
+            expect(mockRegDevice).toBeCalledTimes(1);
+            expect(mockNotify).toBeCalledTimes(1);
+
+            user = await User.getById(user.id);
+            expect(user.otpSecret).toBeDefined();
+            expect(user.emailUnverified).toEqual('person@gmail.com');
+
+            const session = await Session.getBySignature(sha1(sig));
+            expect(session).not.toBeDefined();
+          });
+      });
+    });
+
+    describe('when user already exist but with same email', () => {
+      it('should return status=201, create session and return token', async () => {
+        const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
+        const wallet = new ethers.Wallet(privateKey);
+        const msg = Buffer.from(makeMsg(wallet.address, 'person@gmail.com', moment().toISOString()));
+        const sig = await wallet.signMessage(msg.toString());
+
+        let user = await User.create({ address: wallet.address, email: 'person@gmail.com' });
+        const mockRegDevice = jest.spyOn(app.get(UserService), 'registerDevice').mockResolvedValue(undefined);
+
+        await request(app.getHttpServer())
+          .post(`/v1/auth`)
+          .send({
+            sig,
+            msg: msg.toString('hex'),
+          })
+          .expect(201)
+          .expect(async (res) => {
+            expect(res.body.data.token).toBeDefined();
+            expect(res.body.data.user).toBeDefined();
+            expect(res.body.data.user.address.toLowerCase()).toEqual(wallet.address.toLowerCase());
+            expect(mockRegDevice).toBeCalledTimes(1);
+            expect(mockNotify).toBeCalledTimes(0);
+
+            user = await User.getById(user.id);
+            expect(user.otpSecret).toBeDefined();
+            expect(user.emailUnverified).toBeNull();
+
+            const session = await Session.getBySignature(sha1(sig));
+            expect(session).toBeDefined();
+          });
+      });
     });
 
     it('should return status=401 if a session exist with matching signature', async () => {
@@ -259,6 +323,106 @@ describe('AuthController', () => {
             type: 'authentication_error',
             message: 'signature is invalid or expired',
           },
+        });
+    });
+  });
+
+  describe('.verifyEmail', () => {
+    it('should return error and status=400 when user ID was not provided', async () => {
+      await request(app.getHttpServer())
+        .put(`/v1/auth/verify-email`)
+        .send({})
+        .expect(400)
+        .expect({
+          error: {
+            message: 'user ID is required',
+            param: 'userId',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return error and status=400 when OTP was not provided', async () => {
+      await request(app.getHttpServer())
+        .put(`/v1/auth/verify-email`)
+        .send({
+          userId: 'user_123',
+        })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'otp is required',
+            param: 'otp',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return error and status=400 when user was not found', async () => {
+      await request(app.getHttpServer())
+        .put(`/v1/auth/verify-email`)
+        .send({
+          userId: 'user_123',
+          otp: '123456',
+        })
+        .expect(404)
+        .expect({
+          error: {
+            message: 'user not found',
+          },
+        });
+    });
+
+    it('should return error and status=400 when no unverified email', async () => {
+      const user = await User.create({ emailUnverified: null });
+      await request(app.getHttpServer())
+        .put(`/v1/auth/verify-email`)
+        .send({
+          userId: user.id,
+          otp: '123456',
+        })
+        .expect(400)
+        .expect({
+          error: {
+            type: 'invalid_request_error',
+            message: 'email is already verified',
+          },
+        });
+    });
+
+    it('should return error and status=400 when no unverified email', async () => {
+      const otpSecret = authenticator.generateSecret();
+      const user = await User.create({ emailUnverified: 'person@gmail.com', otpSecret });
+      await request(app.getHttpServer())
+        .put(`/v1/auth/verify-email`)
+        .send({
+          userId: user.id,
+          otp: '123456',
+        })
+        .expect(400)
+        .expect({
+          error: {
+            type: 'invalid_request_error',
+            message: 'invalid otp',
+          },
+        });
+    });
+
+    it('should status=200 and set email and nullify emailVerified field', async () => {
+      const otpSecret = authenticator.generateSecret();
+      const user = await User.create({ emailUnverified: 'person@gmail.com', otpSecret });
+      await request(app.getHttpServer())
+        .put(`/v1/auth/verify-email`)
+        .send({
+          userId: user.id,
+          otp: totp.generate(otpSecret),
+        })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data.token).toBeDefined();
+          expect(res.body.data.user).toBeDefined();
+          expect(res.body.data.user.email).toEqual('person@gmail.com');
+          expect(res.body.data.user.emailUnverified).toBeNull();
         });
     });
   });

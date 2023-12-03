@@ -5,9 +5,7 @@ require('dotenv').config();
 module.exports = {
   development: {
     client: 'postgres',
-    connection: {
-      connectionString: process.env.DATABASE_URL || undefined,
-    },
+    connection: process.env.DATABASE_URL || undefined,
   },
 
   test: {

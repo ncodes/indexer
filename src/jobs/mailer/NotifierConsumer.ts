@@ -25,7 +25,7 @@ export class NotifierConsumer {
   @Process()
   async notify(job: Job<NotifyJob<any>>) {
     if (!job.data.data.user) {
-      const user = await User.getByAddress(job.data.recipient);
+      const user = await User.getByAddress(job.data.recipientAddr);
       if (!user || !user.email) return Promise.resolve();
       job.data.user = user;
     } else {
@@ -53,10 +53,10 @@ export class NotifierConsumer {
     const locals: any = {
       ...job,
       ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
+      userAddrShort: shortenAddr(job.recipientAddr),
       title: 'New Instant Swap',
       btnValue: 'View Liquidity',
-      btnLink: `${job.appUrl}/market/${market.address}/liquidity/${job.recipient}/${swap.lid}`,
+      btnLink: `${job.appUrl}/market/${market.address}/liquidity/${job.recipientAddr}/${swap.lid}`,
     };
 
     // Check if market is for ERC20/ERC20
@@ -138,7 +138,7 @@ export class NotifierConsumer {
     const locals: any = {
       ...job,
       ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
+      userAddrShort: shortenAddr(job.recipientAddr),
       title: 'New Swap Order',
       btnValue: 'View Order',
       btnLink: `${job.appUrl}/order/${swap.orderId}`,
@@ -157,7 +157,7 @@ export class NotifierConsumer {
           .div(pow10D(quoteDecimals * 2)),
         8,
       );
-      locals.payer = isEqualStr(swap.getPayer(), job.recipient);
+      locals.payer = isEqualStr(swap.getPayer(), job.recipientAddr);
       locals.cancelAt = toTimezone(swap.cancelAt, user.timezone).fromNow(true);
       subject = await this.mailer.render(`${template}.subject`, locals);
       note = await this.mailer.render(`${template}.note`, locals);
@@ -230,7 +230,7 @@ export class NotifierConsumer {
     const locals: any = {
       ...job,
       ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
+      userAddrShort: shortenAddr(job.recipientAddr),
       title: 'Order Cancelled',
       btnValue: 'View Order',
       btnLink: `${job.appUrl}/order/${swap.orderId}`,
@@ -263,7 +263,7 @@ export class NotifierConsumer {
     const locals: any = {
       ...job,
       ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
+      userAddrShort: shortenAddr(job.recipientAddr),
       title: 'Order Paid',
       btnValue: 'View Order',
       btnLink: `${job.appUrl}/order/${swap.orderId}`,
@@ -297,7 +297,7 @@ export class NotifierConsumer {
     const locals: any = {
       ...job,
       ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
+      userAddrShort: shortenAddr(job.recipientAddr),
       title: 'Order Released',
       btnValue: 'View Order',
       btnLink: `${job.appUrl}/order/${swap.orderId}`,
@@ -330,7 +330,7 @@ export class NotifierConsumer {
     const locals: any = {
       ...job,
       ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
+      userAddrShort: shortenAddr(job.recipientAddr),
       title: 'Granted Liquidity Provider Permission',
       btnValue: 'View Market',
       marketLink: `${job.appUrl}/market/${market.address}`,
@@ -364,7 +364,7 @@ export class NotifierConsumer {
     const locals: any = {
       ...job,
       ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
+      userAddrShort: shortenAddr(job.recipientAddr),
       title: 'Revoked Liquidity Provider Permission',
       btnValue: 'View Market',
       marketLink: `${job.appUrl}/market/${market.address}`,
@@ -398,7 +398,7 @@ export class NotifierConsumer {
     const locals: any = {
       ...job,
       ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
+      userAddrShort: shortenAddr(job.recipientAddr),
       title: 'Granted Swap Permission',
       btnValue: 'View Market',
       marketLink: `${job.appUrl}/market/${market.address}`,
@@ -432,7 +432,7 @@ export class NotifierConsumer {
     const locals: any = {
       ...job,
       ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
+      userAddrShort: shortenAddr(job.recipientAddr),
       title: 'Revoked Swap Permission',
       btnValue: 'View Market',
       marketLink: `${job.appUrl}/market/${market.address}`,
@@ -466,7 +466,7 @@ export class NotifierConsumer {
     const locals: any = {
       ...job,
       ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
+      userAddrShort: shortenAddr(job.recipientAddr),
       providerShort: shortenAddr(job.data.provider),
       title: 'Granted Liquidity Manager Role',
       btnValue: 'View Market',
@@ -501,7 +501,7 @@ export class NotifierConsumer {
     const locals: any = {
       ...job,
       ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
+      userAddrShort: shortenAddr(job.recipientAddr),
       providerShort: shortenAddr(job.data.provider),
       title: 'Revoked Liquidity Manager Role',
       btnValue: 'View Market',
@@ -536,7 +536,7 @@ export class NotifierConsumer {
     const locals: any = {
       ...job,
       ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
+      userAddrShort: shortenAddr(job.recipientAddr),
       title: !dispute.redispute ? 'Order Disputed' : `Order Was Redisputed`,
       btnValue: 'View Order',
       creatorShort: shortenAddr(dispute.creator),
@@ -570,7 +570,7 @@ export class NotifierConsumer {
     const locals: any = {
       ...job,
       ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
+      userAddrShort: shortenAddr(job.recipientAddr),
       title: 'Ticket Was Drafted',
       btnValue: 'View Order',
       numDrafted: dispute.numMediatorsDrafted,
@@ -604,7 +604,7 @@ export class NotifierConsumer {
     const locals: any = {
       ...job,
       ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
+      userAddrShort: shortenAddr(job.recipientAddr),
       title: 'Evidence Submission Phase',
       btnValue: 'View Order',
       numDrafted: dispute.numMediatorsDrafted,
@@ -638,7 +638,7 @@ export class NotifierConsumer {
     const locals: any = {
       ...job,
       ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
+      userAddrShort: shortenAddr(job.recipientAddr),
       title: 'Evidence Request and Review',
       btnValue: 'View Order',
       orderLink: `${job.appUrl}/order/${dispute.orderId}`,
@@ -671,7 +671,7 @@ export class NotifierConsumer {
     const locals: any = {
       ...job,
       ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
+      userAddrShort: shortenAddr(job.recipientAddr),
       title: 'Ticket Was Slashed',
       reason: !voted ? 'not voting' : 'wrongful voting',
       explain: !voted ? 'You did not vote or complete the voting process' : 'You voted with the minority side',
@@ -706,7 +706,7 @@ export class NotifierConsumer {
     const locals: any = {
       ...job,
       ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
+      userAddrShort: shortenAddr(job.recipientAddr),
       title: 'Vote Commit Phase Begins',
       orderLink: `${job.appUrl}/order/${swap.orderId}`,
       btnValue: 'View Order',
@@ -739,7 +739,7 @@ export class NotifierConsumer {
     const locals: any = {
       ...job,
       ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
+      userAddrShort: shortenAddr(job.recipientAddr),
       title: 'Vote Reveal Phase Begins',
       orderLink: `${job.appUrl}/order/${swap.orderId}`,
       btnValue: 'View Order',
@@ -772,7 +772,7 @@ export class NotifierConsumer {
     const locals: any = {
       ...job,
       ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
+      userAddrShort: shortenAddr(job.recipientAddr),
       asset: 'P2P',
       title: 'Dispute Outcome',
       orderLink: `${job.appUrl}/order/${swap.orderId}`,
@@ -811,7 +811,7 @@ export class NotifierConsumer {
     const locals: any = {
       ...job,
       ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
+      userAddrShort: shortenAddr(job.recipientAddr),
       title: 'Dispute Result Executed',
       orderLink: `${job.appUrl}/order/${swap.orderId}`,
       btnValue: 'View Order',
@@ -849,7 +849,7 @@ export class NotifierConsumer {
     const locals: any = {
       ...job,
       ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
+      userAddrShort: shortenAddr(job.recipientAddr),
       title: !updated ? 'New Offer' : 'Offer Was Updated',
       creatorShort: shortenAddr(offer.creator),
       offersLink,
@@ -941,7 +941,7 @@ export class NotifierConsumer {
     const locals: any = {
       ...job,
       ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
+      userAddrShort: shortenAddr(job.recipientAddr),
       title: 'Offer Was Accepted',
       liquidityLink: `${job.appUrl}/market/${market.address}/liquidity/${liq.provider}/${liq.lid}`,
       providerShort: shortenAddr(liq.provider),
@@ -978,7 +978,7 @@ export class NotifierConsumer {
     const locals: any = {
       ...job,
       ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
+      userAddrShort: shortenAddr(job.recipientAddr),
       title: 'Offer Was Rejected',
       liquidityLink: `${job.appUrl}/market/${market.address}/liquidity/${liq.provider}/${liq.lid}`,
       offersLink,
@@ -1013,7 +1013,7 @@ export class NotifierConsumer {
     const locals: any = {
       ...job,
       ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
+      userAddrShort: shortenAddr(job.recipientAddr),
       title: 'Offer Was Withdrawn',
       liquidityLink: `${job.appUrl}/market/${market.address}/liquidity/${liq.provider}/${liq.lid}`,
       offersLink,
@@ -1048,7 +1048,7 @@ export class NotifierConsumer {
     const locals: any = {
       ...job,
       ...job.data,
-      userAddrShort: shortenAddr(job.recipient),
+      userAddrShort: shortenAddr(job.recipientAddr),
       title: 'Offer Was Executed',
       liquidityLink: `${job.appUrl}/market/${market.address}/liquidity/${liq.provider}/${liq.lid}`,
       offersLink,
@@ -1117,5 +1117,19 @@ export class NotifierConsumer {
 
     // Send email
     await this.mailer.send(template, subject, user.email, locals);
+  }
+
+  async notifyVerifyNewEmail(job: NotifyJob<VerifyNewEmailNotification>) {
+    const { user } = job.data;
+    const locals = {
+      otp: job.data.otp,
+      userAddrShort: shortenAddr(user.address),
+    };
+
+    const template = `auth/verify-email`;
+    const subject = await this.mailer.render(`${template}.subject`, locals);
+
+    // Send email
+    await this.mailer.send(template, subject, user.emailUnverified, locals);
   }
 }

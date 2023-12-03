@@ -1,5 +1,5 @@
-import { randStr } from '../common/common';
 import Objection, { Model } from 'objection';
+import { randStr } from '../common/common';
 import { BaseModel } from './base';
 import User from './user';
 
@@ -54,6 +54,11 @@ export default class Session extends BaseModel {
    */
   static getBySignature(signature: string) {
     return this.query().where({ signature }).whereNotDeleted().withGraphFetched('owner(notDeleted)').first();
+  }
+
+  // By user ID
+  static getByUserId(userId: string) {
+    return this.query().where({ userId }).whereNotDeleted().withGraphFetched('owner(notDeleted)').first();
   }
 
   /**

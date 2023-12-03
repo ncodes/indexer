@@ -33,6 +33,7 @@ export enum NotificationID {
   OfferUnaccepted = 'OfferUnaccepted',
   OfferExecuted = 'OfferExecuted',
   ChatNewMessage = 'ChatNewMessage',
+  VerifyNewEmail = 'VerifyNewEmail',
 }
 
 @Injectable()
@@ -51,17 +52,17 @@ export class NotifierService {
    * Schedule notification
    * @param notifType The notification type
    * @param network The network where the event occurred
-   * @param recipient The address of the recipient
+   * @param recipientAddr The address of the recipient
    * @param data The context data
    */
-  notify(notifType: NotificationID, network: string, recipient: string, data: { [key: string]: any }) {
+  notify(notifType: NotificationID, network: string, recipientAddr: string, data: { [key: string]: any }) {
     if (this.disable) return Promise.resolve();
-    if (isDev()) return this.notifyNow(notifType, network, recipient, data);
+    if (isDev()) return this.notifyNow(notifType, network, recipientAddr, data);
     return this.queue.add(
       {
         appUrl: this.cfgSrv.get('app.appUrl'),
         notifType,
-        recipient,
+        recipientAddr,
         network,
         data,
       },
@@ -77,16 +78,16 @@ export class NotifierService {
    * Send notification without queueing
    * @param notifType The notification type
    * @param network The network where the event occurred
-   * @param recipient The address of the recipient
+   * @param recipientAddr The address of the recipient
    * @param data The context data
    */
-  notifyNow(notifType: NotificationID, network: string, recipient: string, data: any) {
+  notifyNow(notifType: NotificationID, network: string, recipientAddr: string, data: any) {
     if (this.disable) return Promise.resolve();
     return this.notifier.notify({
       data: {
         appUrl: this.cfgSrv.get('app.appUrl'),
         notifType,
-        recipient,
+        recipientAddr,
         network,
         data,
       },

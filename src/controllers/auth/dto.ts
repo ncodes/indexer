@@ -31,3 +31,11 @@ export class GetAuthorizerDTO {
   @IsNotEmpty({ message: makeValidatorMsg('message is required', 'msg') })
   msg: string;
 }
+
+export class VerifyEmailDTO {
+  @IsNotEmpty({ message: makeValidatorMsg('user ID is required', 'userId') })
+  userId: string;
+
+  @IsNotEmpty({ message: makeValidatorMsg('otp is required', 'otp') })
+  otp: string;
+}

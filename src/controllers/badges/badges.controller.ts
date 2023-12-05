@@ -1,7 +1,6 @@
-import { BadgeManifest, parseBadgeLocals } from '@jointlabs/chains-info';
-import { Controller, Get, Logger, Param, Query, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Logger, Query, ValidationPipe } from '@nestjs/common';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
-import { ok, throw404 } from '../../common/responses/responses';
+import { ok } from '../../common/responses/responses';
 import Badge from '../../models/badge';
 import BadgeGrant from '../../models/badge_grant';
 import { BadgeService } from './badge.service';
@@ -82,30 +81,5 @@ export class BadgesController {
     }
 
     return ok().data(grants).build();
-  }
-
-  /**
-   * Get the manifest information about a badge.
-   * Manifest contains information about a badge, the issuer and
-   * information required by the client to grant, manage and revoke the badge.
-   * @param net The network name
-   * @param badge The badge name
-   * @returns
-   */
-  @Get('/:net/:badge((([\\w-]+)(/[\\w-]+)?))/manifest')
-  async getBadgeManifest(@Param('net') net: string, @Param('badge') badge: string) {
-    const netManifests = BadgeManifest[net];
-    if (!netManifests) throw404(`no manifest found for '${net}'`);
-
-    let manifest: BadgeManifest;
-    for (const key in netManifests) {
-      if (badge.match(new RegExp(key))) {
-        manifest = netManifests[key];
-      }
-    }
-
-    if (!manifest) throw404(`no manifest found for '${badge}'`);
-
-    return ok().data(parseBadgeLocals(manifest, { badge })).build();
   }
 }

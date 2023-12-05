@@ -67,10 +67,12 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     if (!isTest()) {
       setInterval(() => {
+        this.logger.debug('Producing tasks...');
         this.produceTasks();
       }, 5000);
 
       setInterval(() => {
+        this.logger.debug('Assigning tasks...');
         this.assignTask();
       }, 1000);
 
@@ -134,10 +136,21 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
       });
       this.minersQueue[network] = [...(this.minersQueue[network] || []), miner];
       this.knownMiners[miner.id] = miner;
-      this.logger.debug(`Miner registered`, JSON.stringify({ minerId: miner.id, clientId: client.id }));
+      this.logger.debug(
+        `handleRegisterMiner: Miner registered`,
+        JSON.stringify({ minerId: miner.id, clientId: client.id }),
+      );
     } else {
+      this.logger.debug(
+        `handleRegisterMiner: Miner already registered`,
+        JSON.stringify({ minerId: minerId, clientId: client.id }),
+      );
       const curTask = this.minerTask[minerId];
       if (curTask) {
+        this.logger.debug(
+          'handleRegisterMiner: Checking miner existing task',
+          JSON.stringify({ minerId: minerId, clientId: client.id }),
+        );
         this.checkTaskStatus(curTask);
       }
     }
@@ -151,13 +164,16 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
    */
   async produceTasks() {
     const tasks = await MineTask.fetchMineable(undefined, undefined, 100, 0);
+    this.logger.debug('produceTasks: Fetching new tasks', JSON.stringify({ count: tasks.length }));
     for (const t of tasks) {
       if (this.queuedTasks[t.id]) {
+        this.logger.debug('produceTasks: Checking existing task', JSON.stringify({ task: t.id }));
         this.checkTaskStatus(this.queuedTasks[t.id]);
         continue;
       }
       this.queuedTasks[t.id] = { task: t, queuedAt: Date.now() / 1000 };
       this.queue.push(t);
+      this.logger.debug('produceTasks: New task added to queue', JSON.stringify({ task: t.id }));
     }
   }
 
@@ -172,13 +188,14 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
   assignTask(queuedTask?: MineTask) {
     const task = queuedTask || this.queue.shift();
     if (!task) {
+      this.logger.debug('assignTask: No new task available');
       return 'No task available';
     }
 
     const miners = this.minersQueue[task.network] || [];
     const miner = miners.shift();
     if (!miner) {
-      this.logger.debug(`No miner available for ${task.network}`);
+      this.logger.debug(`assignTask: No miner available for ${task.network}`);
       if (!queuedTask) this.queue.push(task);
       return 'No miner available';
     } else if (!miner.socket.connected) {
@@ -189,7 +206,7 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
       miner.socket.emit('task', task, () => {
         this.queuedTasks[task.id].minerId = miner.id;
         this.minerTask[miner.id] = this.queuedTasks[task.id];
-        this.logger.debug(`Assigned task ${task.id} to ${miner.address}`);
+        this.logger.debug(`assignTask: Assigned task ${task.id} to ${miner.address}`);
       });
       return 'ok';
     } catch (error) {
@@ -208,24 +225,36 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
   async checkTaskStatus(queuedTask: QueuedTask) {
     // Wait for a period of time before checking task status
     if (Date.now() / 1000 - queuedTask.queuedAt <= (MinerTaskDurations[queuedTask.task.network] || 60)) {
+      const timeLeft = Date.now() / 1000 - queuedTask.queuedAt;
+      this.logger.debug(
+        `checkTaskStatus: Waiting for miner to complete task`,
+        JSON.stringify({ task: queuedTask.task.id, timeLeft }),
+      );
       return;
     }
 
-    this.logger.debug('Checking task status', queuedTask.task.id);
+    this.logger.debug(`checkTaskStatus: Checking miner's task status`, queuedTask.task.id);
 
     // If task is completed, remove it from queued list
     const task = await MineTask.getById(queuedTask.task.id);
     if (task.completed) {
-      this.logger.debug(`Task completed`, queuedTask.task.id);
+      this.logger.debug(`checkTaskStatus: Task completed`, queuedTask.task.id);
       delete this.queuedTasks[task.id];
     }
 
     // If not completed, reassign task to another miner
-    if (!task.completed && this.assignTask(task) instanceof Error) {
-      return;
+    if (!task.completed) {
+      const err = this.assignTask(task) instanceof Error;
+      if (err) {
+        this.logger.debug(
+          `checkTaskStatus: Failed to reassign task: ${err}`,
+          JSON.stringify({ task: queuedTask.task.id }),
+        );
+      }
     }
 
     // Add the previously assigned miner back to the pool
+    this.logger.debug('checkTaskStatus: Removing task from miner and adding miner back to queue');
     delete this.minerTask[queuedTask.minerId];
     this.minersQueue[task.network].push(this.knownMiners[queuedTask.minerId]);
   }
@@ -239,7 +268,7 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
       if (this.knownMiners[minerId].socket.id === clientId) {
         delete this.knownMiners[minerId];
         delete this.minerTask[minerId];
-        this.logger.debug(`Disconnected miner was removed`, minerId);
+        this.logger.debug(`cleanUpMiner: Disconnected miner was removed`, minerId);
       }
     }
   }

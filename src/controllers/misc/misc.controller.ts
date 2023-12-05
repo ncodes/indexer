@@ -1,4 +1,4 @@
-import { ChainNames, MediatorPools, TokenLists, getTokenInfo, isValidChain } from '@jointlabs/chains-info';
+import { ChainNames, TokenLists, getTokenInfo, isValidChain } from '@jointlabs/chains-info';
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ok, throw400, throw404 } from '../../common/responses/responses';
 import { ConfigService } from '../../config/config.service';
@@ -137,14 +137,5 @@ export class MiscController {
       [FeeName.InstantNFTSwapFeeBp]: await Meta.getProtocolFee(network, FeeName.InstantNFTSwapFeeBp),
     };
     return ok().data(data).build();
-  }
-
-  /**
-   * Get all known pools
-   * @returns
-   */
-  @Get('/:network/mediator-pools')
-  async getMediatorPools(@Param('network') network: string) {
-    return ok().data(MediatorPools[network]).build();
   }
 }

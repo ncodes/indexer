@@ -10,6 +10,11 @@ import OnRevealPeriodEnd from './dispute_notifier/on_reveal_period_end/on_reveal
 import ExchangeRateFetcher from './exchange_rate_cacher/exchange_rate_fetcher';
 import { NotifierModule } from './mailer/NotifierModule';
 
+let disputeNotifiers = [OnCommitPeriodEnd, OnEvidencePeriodEnd, OnRevealPeriodEnd];
+if (['1', 'true'].includes(process.env.DISABLE_DISPUTE_NOTIFIERS)) {
+  disputeNotifiers = [];
+}
+
 @Module({
   imports: [
     ScheduleModule.forRoot(),
@@ -23,6 +28,6 @@ import { NotifierModule } from './mailer/NotifierModule';
     NotifierModule,
     ExchangeRateServiceModule,
   ],
-  providers: [ConfigService, ExchangeRateFetcher, OnEvidencePeriodEnd, OnCommitPeriodEnd, OnRevealPeriodEnd],
+  providers: [ConfigService, ExchangeRateFetcher, ...disputeNotifiers],
 })
 export class JobsModule {}

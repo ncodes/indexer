@@ -254,9 +254,11 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     }
 
     // Add the previously assigned miner back to the pool
-    this.logger.debug('checkTaskStatus: Removing task from miner and adding miner back to queue');
-    delete this.minerTask[queuedTask.minerId];
-    this.minersQueue[task.network].push(this.knownMiners[queuedTask.minerId]);
+    if (queuedTask.minerId) {
+      this.logger.debug('checkTaskStatus: Removing task from miner and adding miner back to queue');
+      delete this.minerTask[queuedTask.minerId];
+      this.minersQueue[task.network].push(this.knownMiners[queuedTask.minerId]);
+    }
   }
 
   /**

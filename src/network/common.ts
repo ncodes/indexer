@@ -34,7 +34,7 @@ export const MinerTaskDurations: MinerTaskDuration = {
   optimism: 30,
   sepolia: 30,
   binance: 60,
-};
+} as const;
 
 /**
  * Return BigNumber equivalent of v

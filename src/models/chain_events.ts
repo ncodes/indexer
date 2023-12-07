@@ -1,5 +1,5 @@
-import { randStr } from '../common/common';
 import Objection, { Transaction } from 'objection';
+import { randStr } from '../common/common';
 import { BaseModel } from './base';
 
 /**
@@ -11,6 +11,7 @@ export default class ChainEvent extends BaseModel {
   blockNumber: number;
   txIndex: number;
   logIndex: number;
+  removed: boolean;
 
   constructor(init?: Partial<ChainEvent>) {
     super();

@@ -19,7 +19,7 @@ import MineTask from '../../models/mine_task';
 import { MinerTaskDurations } from '../../network/common';
 import { Miner, QueuedTask, makeMinerId } from './types';
 
-@WebSocketGateway({ namespace: '/v1/mining' })
+@WebSocketGateway({ namespace: '/v1/mining', pingTimeout: 30000 })
 export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private logger = new Logger('TasksWebSocket');
   disabled = false;
@@ -47,7 +47,7 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
       setInterval(() => {
         this.logger.debug('Assigning tasks...');
         this.assignTask();
-      }, 1000);
+      }, 3000);
 
       setInterval(() => {
         this.logger.log(`Miners: ${Object.keys(this.knownMiners).length} / Queue Size: ${this.queue.length}`);
@@ -137,7 +137,7 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
    */
   async produceTasks() {
     const tasks = await MineTask.fetchMineable(undefined, undefined, 100, 0);
-    this.logger.debug('produceTasks: Fetching new tasks', JSON.stringify({ count: tasks.length }));
+    this.logger.debug(`produceTasks: Fetched new tasks (Count: ${tasks.length})`);
     for (const t of tasks) {
       if (this.queuedTasks[t.id]) {
         this.logger.debug('produceTasks: Checking existing task', JSON.stringify({ task: t.id }));
@@ -161,8 +161,8 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
   assignTask(queuedTask?: MineTask) {
     const task = queuedTask || this.queue.shift();
     if (!task) {
-      this.logger.debug('assignTask: No new task available');
-      return 'No task available';
+      this.logger.debug('assignTask: Task queue is empty');
+      return 'Task queue is empty';
     }
 
     const miners = this.minersQueue[task.network] || [];
@@ -198,11 +198,12 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
    */
   async checkTaskStatus(task: QueuedTask) {
     // Wait for a period of time before checking task status
-    if (Date.now() / 1000 - task.assignedAt <= (MinerTaskDurations[task.task.network] || 60)) {
-      const timeLeft = Date.now() / 1000 - task.assignedAt;
+    const minerTaskDur = MinerTaskDurations[task.task.network] || 60;
+    if (Date.now() / 1000 - task.assignedAt <= minerTaskDur) {
+      const timeLeft = (minerTaskDur - (Date.now() / 1000 - task.assignedAt)).toFixed(1);
       this.logger.debug(
         `checkTaskStatus: Waiting for miner to complete task`,
-        JSON.stringify({ task: task.task.id, timeLeft }),
+        JSON.stringify({ task: task.task.id, timeLeft: `${timeLeft}s` }),
       );
       return;
     }

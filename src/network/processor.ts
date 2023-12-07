@@ -65,15 +65,21 @@ export default class Processor {
     const txn = await ChainEvent.startTransaction();
     await txn.raw('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE');
     const args = [...e.event.args.slice(0, e.event.args.length), e.event, txn];
+    const removed = e.event.removed;
 
     try {
       await ChainEvent.bindTransaction(txn).create({
         network: this.network,
         signature: e.event.eventSignature,
-        blockNumber: e.event.blockNumber,
-        txIndex: e.event.transactionIndex,
-        logIndex: e.event.logIndex,
+        blockNumber: e.block,
+        txIndex: e.txIndex,
+        logIndex: e.eventIndex,
+        removed,
       });
+
+      if (removed) {
+        e.event.event = `${e.event.event}Reverted`;
+      }
 
       this.logger.debug(`(Event:${e.event.event}, Contract: ${shortenAddr(e.contract)}): processing an event...`);
       await this.getHandler(e.contract).emitAsync(e.event.event, ...args);

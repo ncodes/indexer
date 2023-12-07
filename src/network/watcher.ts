@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import * as defer from 'defer-promise';
-import { ethers, providers } from 'ethers';
-import { isDev } from '../common/common';
+import { BigNumber, constants, ethers, providers } from 'ethers';
+import { isDev, isEqualStr } from '../common/common';
 import Meta from '../models/meta';
 import { Handler } from './handler';
 import Processor from './processor';
@@ -63,6 +63,45 @@ export class Watcher {
     } as ethers.Event;
   }
 
+  async fetchAndProcessEvents(prevBlock: number, curBlock: number) {
+    // Query latest logs for all contracts
+    const logs = await this.provider.send('eth_getLogs', [
+      {
+        fromBlock: ethers.utils.hexValue(prevBlock),
+        toBlock: ethers.utils.hexValue(curBlock),
+        topics: [],
+        address: this.handlers
+          .map((h) => h.getContract().address)
+          .filter((addr) => {
+            return !isEqualStr(constants.AddressZero, addr);
+          }),
+      },
+    ]);
+
+    // Extract the events from the logs
+    const events: ethers.Event[] = [
+      ...logs.map((log: ethers.providers.Log) => {
+        const handler = this.handlers.find((h) => isEqualStr(h.getContract().address, log.address));
+        return this.getEventFromLog(log, handler.getContract().interface);
+      }),
+    ];
+
+    return Promise.all(
+      events.map((e) => {
+        const deferred = defer();
+        this.processor.addEvent({
+          event: e,
+          block: BigNumber.from(e.blockNumber).toNumber(),
+          txIndex: BigNumber.from(e.transactionIndex).toNumber(),
+          eventIndex: BigNumber.from(e.logIndex).toNumber(),
+          contract: e.address,
+          promise: deferred,
+        });
+        return deferred.promise;
+      }),
+    );
+  }
+
   /**
    * Watch for event on new block
    */
@@ -71,43 +110,13 @@ export class Watcher {
       try {
         const key = this.makeSyncKey();
         let meta = await Meta.get(key);
-        if (!meta) {
-          meta = new Meta({ value: process.env[`LAUNCH_HEIGHT`] || '1' });
-        }
-
+        if (!meta) meta = new Meta({ value: process.env[`LAUNCH_HEIGHT`] || '1' });
         if (parseInt(meta.value) >= curBlock) return;
 
         this.logger.log(`New block: ${curBlock}`);
 
-        // Query events for all contracts within the start and end block height
-        const events: ethers.Event[] = [];
-        for (let i = 0; i < this.handlers.length; i++) {
-          const addr = this.handlers[i].getContract().address;
-          events.push(
-            ...(await this.provider.getLogs({ address: addr, fromBlock: parseInt(meta.value), toBlock: curBlock })).map(
-              (log) => {
-                return this.getEventFromLog(log, this.handlers[i].getContract().interface);
-              },
-            ),
-          );
-        }
-
-        if (events.length) {
-          const promises = [];
-          for (const e of events) {
-            const deferred = defer();
-            promises.push(deferred.promise);
-            this.processor.addEvent({
-              event: e,
-              block: e.blockNumber,
-              txIndex: e.transactionIndex,
-              eventIndex: e.logIndex,
-              contract: e.address,
-              promise: deferred,
-            });
-          }
-          await Promise.all(promises);
-        }
+        // Process events
+        await this.fetchAndProcessEvents(parseInt(meta.value), curBlock);
 
         // Update the last sync height
         await Meta.update(key, curBlock.toString());
@@ -117,15 +126,16 @@ export class Watcher {
         if (!this.isSyncing) this.interval = this.sync();
       }
     };
+
     this.provider.on('block', listener);
   }
 
   sync() {
-    if (this.isSyncing) return;
-    this.isSyncing = true;
-
     return setInterval(
       async () => {
+        if (this.isSyncing) return;
+        this.isSyncing = true;
+
         try {
           // Get last synced block height
           const key = this.makeSyncKey();
@@ -141,7 +151,6 @@ export class Watcher {
             this.watchBlock();
             clearInterval(this.interval);
             return;
-          } else {
           }
 
           // Determine the start and end block height
@@ -150,37 +159,11 @@ export class Watcher {
             : parseInt(meta.value) + 1;
           endBlock = endBlock > curBlock ? curBlock : endBlock;
           const startBlock = parseInt(meta.value) + 1;
+
           this.logger.log(`Syncing blocks between ${startBlock} and ${endBlock} (Current Head: ${curBlock})`);
 
-          // Query events for all contracts within the start and end block height
-          const events: ethers.Event[] = [];
-          for (let i = 0; i < this.handlers.length; i++) {
-            const addr = this.handlers[i].getContract().address;
-            events.push(
-              ...(await this.provider.getLogs({ address: addr, fromBlock: startBlock, toBlock: endBlock })).map(
-                (log) => {
-                  return this.getEventFromLog(log, this.handlers[i].getContract().interface);
-                },
-              ),
-            );
-          }
-
-          if (events.length) {
-            const promises = [];
-            for (const e of events) {
-              const deferred = defer();
-              promises.push(deferred.promise);
-              this.processor.addEvent({
-                event: e,
-                block: e.blockNumber,
-                txIndex: e.transactionIndex,
-                eventIndex: e.logIndex,
-                contract: e.address,
-                promise: deferred,
-              });
-            }
-            await Promise.all(promises);
-          }
+          // Process events
+          await this.fetchAndProcessEvents(startBlock, endBlock);
 
           // Update the last sync height
           await Meta.update(key, endBlock.toString());

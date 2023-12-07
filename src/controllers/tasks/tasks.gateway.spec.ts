@@ -208,9 +208,9 @@ describe('TaskGateway', () => {
       });
     });
 
-    it('should return `No task available` if no task is available', async () => {
+    it('should return `Task queue is empty` if no task is available', async () => {
       const resp = gateway.assignTask();
-      expect(resp).toEqual('No task available');
+      expect(resp).toEqual('Task queue is empty');
     });
 
     it('should return `No miner available` if no miner is available and add task back to queue', async () => {

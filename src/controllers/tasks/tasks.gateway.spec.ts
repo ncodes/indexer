@@ -7,7 +7,8 @@ import { DBService } from '../../db/DBService';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 
 import { ChainNames } from '@jointlabs/chains-info';
-import { TasksGateway, makeMinerId } from './tasks.gateway';
+import { TasksGateway } from './tasks.gateway';
+import { makeMinerId } from './types';
 
 describe('TaskGateway', () => {
   let app: INestApplication;
@@ -146,7 +147,7 @@ describe('TaskGateway', () => {
       });
 
       const miner = gateway.minersQueue[net][0];
-      gateway.minerTask[miner.id] = { task, minerId: miner.id, queuedAt: Date.now() / 1000 };
+      gateway.minerTask[miner.id] = { task, minerId: miner.id, assignedAt: Date.now() / 1000 };
 
       resp = await gateway.handleRegisterMiner(socket as any, net, '0xB24780438dD4DB52848A3A398B1A8A08223aBd83');
       expect(resp).toEqual({
@@ -176,7 +177,7 @@ describe('TaskGateway', () => {
       const queuedTask = gateway.queuedTasks[task.id];
       expect(queuedTask).toBeDefined();
       expect(queuedTask.task.id).toEqual(task.id);
-      expect(queuedTask.queuedAt).toBeCloseTo(Date.now() / 1000, 0);
+      expect(queuedTask.assignedAt).toBeCloseTo(Date.now() / 1000, 0);
       expect(gateway.queue).toHaveLength(1);
       expect(gateway.queue[0].id).toEqual(task.id);
     });

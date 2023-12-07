@@ -17,34 +17,7 @@ import { isTest } from '../../common/common';
 import { build400, build500, ok } from '../../common/responses/responses';
 import MineTask from '../../models/mine_task';
 import { MinerTaskDurations } from '../../network/common';
-
-type QueuedTask = {
-  task: MineTask;
-  queuedAt: number;
-  minerId?: string;
-};
-
-export function makeMinerId(network: string, address: string) {
-  return `miner_${network}_${address}`;
-}
-
-class Miner {
-  network: string;
-  address: string;
-  socket: Socket;
-  queueIndex: number;
-
-  constructor({ network, address, socket, queueIndex }: Partial<Miner>) {
-    this.network = network;
-    this.address = address;
-    this.socket = socket;
-    this.queueIndex = queueIndex;
-  }
-
-  get id() {
-    return makeMinerId(this.network, this.address);
-  }
-}
+import { Miner, QueuedTask, makeMinerId } from './types';
 
 @WebSocketGateway({ namespace: '/v1/mining' })
 export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
@@ -171,7 +144,7 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         this.checkTaskStatus(this.queuedTasks[t.id]);
         continue;
       }
-      this.queuedTasks[t.id] = { task: t, queuedAt: Date.now() / 1000 };
+      this.queuedTasks[t.id] = { task: t, assignedAt: 0 };
       this.queue.push(t);
       this.logger.debug('produceTasks: New task added to queue', JSON.stringify({ task: t.id }));
     }
@@ -205,6 +178,7 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     try {
       miner.socket.emit('task', task, () => {
         this.queuedTasks[task.id].minerId = miner.id;
+        this.queuedTasks[task.id].assignedAt = Date.now() / 1000;
         this.minerTask[miner.id] = this.queuedTasks[task.id];
         this.logger.debug(`assignTask: Assigned task ${task.id} to ${miner.address}`);
       });
@@ -220,44 +194,41 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
   /**
    * Check whether a task is completed.
    * If not completed after a period of time, reassign it to another miner.
-   * @param queuedTask The queued task
+   * @param task The queued task
    */
-  async checkTaskStatus(queuedTask: QueuedTask) {
+  async checkTaskStatus(task: QueuedTask) {
     // Wait for a period of time before checking task status
-    if (Date.now() / 1000 - queuedTask.queuedAt <= (MinerTaskDurations[queuedTask.task.network] || 60)) {
-      const timeLeft = Date.now() / 1000 - queuedTask.queuedAt;
+    if (Date.now() / 1000 - task.assignedAt <= (MinerTaskDurations[task.task.network] || 60)) {
+      const timeLeft = Date.now() / 1000 - task.assignedAt;
       this.logger.debug(
         `checkTaskStatus: Waiting for miner to complete task`,
-        JSON.stringify({ task: queuedTask.task.id, timeLeft }),
+        JSON.stringify({ task: task.task.id, timeLeft }),
       );
       return;
     }
 
-    this.logger.debug(`checkTaskStatus: Checking miner's task status`, queuedTask.task.id);
+    this.logger.debug(`checkTaskStatus: Checking miner's task status`, task.task.id);
 
     // If task is completed, remove it from queued list
-    const task = await MineTask.getById(queuedTask.task.id);
-    if (task.completed) {
-      this.logger.debug(`checkTaskStatus: Task completed`, queuedTask.task.id);
-      delete this.queuedTasks[task.id];
+    const taskInfo = await MineTask.getById(task.task.id);
+    if (taskInfo.completed) {
+      this.logger.debug(`checkTaskStatus: Task completed`, task.task.id);
+      delete this.queuedTasks[taskInfo.id];
     }
 
     // If not completed, reassign task to another miner
-    if (!task.completed) {
-      const err = this.assignTask(task) instanceof Error;
+    if (!taskInfo.completed) {
+      const err = this.assignTask(taskInfo) instanceof Error;
       if (err) {
-        this.logger.debug(
-          `checkTaskStatus: Failed to reassign task: ${err}`,
-          JSON.stringify({ task: queuedTask.task.id }),
-        );
+        this.logger.debug(`checkTaskStatus: Failed to reassign task: ${err}`, JSON.stringify({ task: task.task.id }));
       }
     }
 
     // Add the previously assigned miner back to the pool
-    if (queuedTask.minerId) {
+    if (task.minerId) {
       this.logger.debug('checkTaskStatus: Removing task from miner and adding miner back to queue');
-      delete this.minerTask[queuedTask.minerId];
-      this.minersQueue[task.network].push(this.knownMiners[queuedTask.minerId]);
+      delete this.minerTask[task.minerId];
+      this.minersQueue[taskInfo.network].push(this.knownMiners[task.minerId]);
     }
   }
 

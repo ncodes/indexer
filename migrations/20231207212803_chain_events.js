@@ -4,8 +4,8 @@
  */
 exports.up = function (knex) {
   return Promise.all([
-    knex.schema.table('chain_events', (table) => {
-      table.boolean('removed');
+    knex.schema.alterTable('chain_events', (table) => {
+      table.boolean('removed').defaultTo(false);
     }),
   ]);
 };
@@ -16,7 +16,7 @@ exports.up = function (knex) {
  */
 exports.down = function (knex) {
   return Promise.all([
-    knex.schema.table('chain_events', (table) => {
+    knex.schema.alterTable('chain_events', (table) => {
       table.dropColumn('removed');
     }),
   ]);

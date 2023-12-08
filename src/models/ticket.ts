@@ -159,7 +159,7 @@ export default class Ticket extends BaseModel {
 
   // Get total bonds of tickets. Optionally filter by network, poolId, owner
   static async getTotalBonds(network?: string, poolId?: number, owner?: string, drained?: boolean, txn?: Transaction) {
-    let q = this.query(txn).sum('bond as total').whereNotDeleted();
+    let q = this.query(txn).sum('bond as total').whereNotDeleted().where('drained', false);
     if (network) q = q.where({ network });
     if (poolId != undefined) q = q.where({ poolId });
     if (owner) q = q.where('owner', 'ilike', owner);
@@ -312,6 +312,8 @@ export default class Ticket extends BaseModel {
           .where('joinBy', '<', 'now()')
           .orWhere('drained', true);
       });
+    } else {
+      q = q.where('drained', false);
     }
     if (cancelled) q = q.where('cancelAt', 'is not', null).where('cancelAt', '<', 'now()');
     if (matured != undefined) {

@@ -610,6 +610,7 @@ describe('TicketsController', () => {
 
     it('should return correct values if "owner" is set', async () => {
       await Ticket.create({ network: net, bond: '10', owner: '0xOwner' });
+      await Ticket.create({ network: net, bond: '10', owner: '0xOwner', drained: true });
       await Ticket.create({ network: net, bond: '15', owner: '0xOwner2' });
 
       mockGetTicketPrice.mockResolvedValue(toBN(100));

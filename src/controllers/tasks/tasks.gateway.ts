@@ -157,9 +157,14 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         continue;
       }
       this.queuedTasks[t.id] = { task: t, assignedAt: 0 };
-      this.queue.push(t);
+      this.pushToQueue(t);
       this.logger.debug('produceTasks: New task added to queue', JSON.stringify({ task: t.id }));
     }
+  }
+
+  pushToQueue(task: MineTask) {
+    const found = this.queue.find((t) => t.id === task.id);
+    if (!found) this.queue.push(task);
   }
 
   /**
@@ -181,7 +186,7 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     const miner = miners.shift();
     if (!miner) {
       this.logger.debug(`assignTask: No miner available for ${task.network}`);
-      if (!queuedTask) this.queue.push(task);
+      if (!queuedTask) this.pushToQueue(task);
       return AssignFuncResult.NO_MINER;
     } else if (!miner.socket.connected) {
       return AssignFuncResult.MINER_DISCONNECTED;
@@ -198,7 +203,7 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     } catch (error) {
       this.minersQueue[task.network].splice(miner.queueIndex, 1);
       delete this.knownMiners[miner.id];
-      if (!queuedTask) this.queue.push(task);
+      if (!queuedTask) this.pushToQueue(task);
       return new Error('failed to emit');
     }
   }
@@ -235,13 +240,14 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
       this.logger.debug('checkTaskStatus: Adding miner back to the pool', task.minerId);
       delete this.minerTask[task.minerId];
       this.minersQueue[taskInfo.network].push(this.knownMiners[task.minerId]);
+      task.minerId = undefined;
     }
 
     // If not completed, add task back to the queue and initiate a
     // reassignment to another miner
     if (!taskInfo.completed) {
       this.logger.debug('checkTaskStatus: Moved task back to queue for reassignment');
-      this.queue.push(task.task);
+      this.pushToQueue(task.task);
 
       const err = this.assignTask(taskInfo) instanceof Error;
       if (err) {

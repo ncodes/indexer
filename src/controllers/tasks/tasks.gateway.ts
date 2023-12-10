@@ -19,6 +19,18 @@ import MineTask from '../../models/mine_task';
 import { MinerTaskDurations } from '../../network/common';
 import { Miner, QueuedTask, makeMinerId } from './types';
 
+export enum AssignFuncResult {
+  OK = 'ok',
+  NO_MINER = 'no miner available',
+  NO_TASK = 'no task available',
+  MINER_DISCONNECTED = 'miner disconnected',
+}
+
+export enum CheckStatusFuncResult {
+  OK = 'ok',
+  WAITING_FOR_MINER = 'waiting for miner',
+}
+
 @WebSocketGateway({ namespace: '/v1/mining', pingTimeout: 30000 })
 export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private logger = new Logger('TasksWebSocket');
@@ -162,7 +174,7 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     const task = queuedTask || this.queue.shift();
     if (!task) {
       this.logger.debug('assignTask: Task queue is empty');
-      return 'Task queue is empty';
+      return AssignFuncResult.NO_TASK;
     }
 
     const miners = this.minersQueue[task.network] || [];
@@ -170,9 +182,9 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     if (!miner) {
       this.logger.debug(`assignTask: No miner available for ${task.network}`);
       if (!queuedTask) this.queue.push(task);
-      return 'No miner available';
+      return AssignFuncResult.NO_MINER;
     } else if (!miner.socket.connected) {
-      return 'Miner disconnected';
+      return AssignFuncResult.MINER_DISCONNECTED;
     }
 
     try {
@@ -182,7 +194,7 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         this.minerTask[miner.id] = this.queuedTasks[task.id];
         this.logger.debug(`assignTask: Assigned task ${task.id} to ${miner.address}`);
       });
-      return 'ok';
+      return AssignFuncResult.OK;
     } catch (error) {
       this.minersQueue[task.network].splice(miner.queueIndex, 1);
       delete this.knownMiners[miner.id];
@@ -193,7 +205,8 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
   /**
    * Check whether a task is completed.
-   * If not completed after a period of time, reassign it to another miner.
+   * If not completed after a period of time, unassign it from the current miner
+   * and add the task back to the queue and the miner back to the pool.
    * @param task The queued task
    */
   async checkTaskStatus(task: QueuedTask) {
@@ -205,7 +218,7 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         `checkTaskStatus: Waiting for miner to complete task`,
         JSON.stringify({ task: task.task.id, timeLeft: `${timeLeft}s` }),
       );
-      return;
+      return CheckStatusFuncResult.WAITING_FOR_MINER;
     }
 
     this.logger.debug(`checkTaskStatus: Checking miner's task status`, task.task.id);
@@ -217,20 +230,26 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
       delete this.queuedTasks[taskInfo.id];
     }
 
-    // If not completed, reassign task to another miner
+    // If task is assigned to a miner, unassigned the miner and add it back to the pool.
+    if (task.minerId) {
+      this.logger.debug('checkTaskStatus: Adding miner back to the pool', task.minerId);
+      delete this.minerTask[task.minerId];
+      this.minersQueue[taskInfo.network].push(this.knownMiners[task.minerId]);
+    }
+
+    // If not completed, add task back to the queue and initiate a
+    // reassignment to another miner
     if (!taskInfo.completed) {
+      this.logger.debug('checkTaskStatus: Moved task back to queue for reassignment');
+      this.queue.push(task.task);
+
       const err = this.assignTask(taskInfo) instanceof Error;
       if (err) {
         this.logger.debug(`checkTaskStatus: Failed to reassign task: ${err}`, JSON.stringify({ task: task.task.id }));
       }
     }
 
-    // Add the previously assigned miner back to the pool
-    if (task.minerId) {
-      this.logger.debug('checkTaskStatus: Removing task from miner and adding miner back to queue');
-      delete this.minerTask[task.minerId];
-      this.minersQueue[taskInfo.network].push(this.knownMiners[task.minerId]);
-    }
+    return CheckStatusFuncResult.OK;
   }
 
   /**

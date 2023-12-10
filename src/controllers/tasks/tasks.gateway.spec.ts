@@ -7,8 +7,21 @@ import { DBService } from '../../db/DBService';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 
 import { ChainNames } from '@jointlabs/chains-info';
-import { TasksGateway } from './tasks.gateway';
-import { makeMinerId } from './types';
+import { AssignFuncResult, CheckStatusFuncResult, TasksGateway } from './tasks.gateway';
+import { QueuedTask, makeMinerId } from './types';
+
+// eslint-disable-next-line no-var
+var minerTaskDuration = 100;
+jest.mock('../../network/common', () => {
+  const actual = jest.requireActual('../../network/common');
+  return {
+    ...actual,
+    MinerTaskDurations: {
+      ...actual.MinerTaskDurations,
+      ethereum: minerTaskDuration,
+    },
+  };
+});
 
 describe('TaskGateway', () => {
   let app: INestApplication;
@@ -177,7 +190,7 @@ describe('TaskGateway', () => {
       const queuedTask = gateway.queuedTasks[task.id];
       expect(queuedTask).toBeDefined();
       expect(queuedTask.task.id).toEqual(task.id);
-      expect(queuedTask.assignedAt).toBeCloseTo(Date.now() / 1000, 0);
+      expect(queuedTask.assignedAt).toEqual(0);
       expect(gateway.queue).toHaveLength(1);
       expect(gateway.queue[0].id).toEqual(task.id);
     });
@@ -210,13 +223,13 @@ describe('TaskGateway', () => {
 
     it('should return `Task queue is empty` if no task is available', async () => {
       const resp = gateway.assignTask();
-      expect(resp).toEqual('Task queue is empty');
+      expect(resp).toEqual(AssignFuncResult.NO_TASK);
     });
 
     it('should return `No miner available` if no miner is available and add task back to queue', async () => {
       await gateway.produceTasks();
       const resp = gateway.assignTask();
-      expect(resp).toEqual('No miner available');
+      expect(resp).toEqual(AssignFuncResult.NO_MINER);
       expect(gateway.queue).toHaveLength(1);
     });
 
@@ -226,7 +239,7 @@ describe('TaskGateway', () => {
       gateway.queue = [];
 
       const resp = gateway.assignTask(task);
-      expect(resp).toEqual('No miner available');
+      expect(resp).toEqual(AssignFuncResult.NO_MINER);
       expect(gateway.queue).toHaveLength(0);
     });
 
@@ -239,7 +252,7 @@ describe('TaskGateway', () => {
       await gateway.handleRegisterMiner(socket as any, net, '0xB24780438dD4DB52848A3A398B1A8A08223aBd83');
       await gateway.produceTasks();
       const resp = gateway.assignTask();
-      expect(resp).toEqual('Miner disconnected');
+      expect(resp).toEqual(AssignFuncResult.MINER_DISCONNECTED);
     });
 
     it('should return `ok` when a miner is found and emit task to miner and update state correctly', async () => {
@@ -299,6 +312,68 @@ describe('TaskGateway', () => {
       expect(gateway.minersQueue[net]).toHaveLength(0);
       expect(gateway.knownMiners).toEqual({});
       expect(gateway.queue).toHaveLength(0);
+    });
+  });
+
+  describe('.checkTaskStatus', () => {
+    it('should wait for miner when task assign time has not passed miner task duration', async () => {
+      const task: QueuedTask = {
+        task: await MineTask.create({ network: 'ethereum' }),
+        assignedAt: Date.now() / 1000,
+      };
+      const resp = await gateway.checkTaskStatus(task);
+      expect(resp).toEqual(CheckStatusFuncResult.WAITING_FOR_MINER);
+    });
+
+    it('should delete task from queue index when completed', async () => {
+      const task: QueuedTask = {
+        task: await MineTask.create({ network: 'ethereum', completed: true }),
+        assignedAt: Date.now() / 1000 - minerTaskDuration,
+      };
+      gateway.queuedTasks[task.task.id] = task;
+      const resp = await gateway.checkTaskStatus(task);
+      expect(resp).toEqual(CheckStatusFuncResult.OK);
+      expect(gateway.queuedTasks).toEqual({});
+    });
+
+    it('should unassign task to miner and add miner back to queue when task is completed', async () => {
+      const task: QueuedTask = {
+        task: await MineTask.create({ network: 'ethereum', completed: true }),
+        assignedAt: Date.now() / 1000 - minerTaskDuration,
+        minerId: 'miner_123',
+      };
+
+      gateway.minerTask[task.minerId] = task;
+      gateway.queuedTasks[task.task.id] = task;
+      gateway.minersQueue[task.task.network] = [] as any;
+
+      const resp = await gateway.checkTaskStatus(task);
+      expect(resp).toEqual(CheckStatusFuncResult.OK);
+      expect(gateway.queuedTasks).toEqual({});
+      expect(gateway.minerTask).toEqual({});
+      expect(gateway.minersQueue[task.task.network]).toHaveLength(1);
+    });
+
+    it('should add task back to queue and reassign the task when task is uncompleted', async () => {
+      const task: QueuedTask = {
+        task: await MineTask.create({ network: 'ethereum', completed: false }),
+        assignedAt: Date.now() / 1000 - minerTaskDuration,
+        minerId: 'miner_123',
+      };
+
+      gateway.minerTask[task.minerId] = task;
+      gateway.queuedTasks[task.task.id] = task;
+      gateway.minersQueue[task.task.network] = [] as any;
+      const mockAssignTask = jest.fn();
+      gateway.assignTask = mockAssignTask;
+
+      const resp = await gateway.checkTaskStatus(task);
+      expect(resp).toEqual(CheckStatusFuncResult.OK);
+      expect(gateway.queuedTasks).toHaveProperty(task.task.id);
+      expect(gateway.minerTask).toEqual({});
+      expect(gateway.minersQueue[task.task.network]).toHaveLength(1);
+      expect(gateway.queue).toHaveLength(1);
+      expect(mockAssignTask).toHaveBeenCalledTimes(1);
     });
   });
 

@@ -111,12 +111,17 @@ export class Watcher {
         const key = this.makeSyncKey();
         let meta = await Meta.get(key);
         if (!meta) meta = new Meta({ value: process.env[`LAUNCH_HEIGHT`] || '1' });
-        if (parseInt(meta.value) >= curBlock) return;
+        if (parseInt(meta.value) >= curBlock) {
+          this.logger.log(`Block ${curBlock} already processed`);
+          return;
+        }
 
         this.logger.log(`New block: ${curBlock}`);
 
         // Process events
         await this.fetchAndProcessEvents(parseInt(meta.value), curBlock);
+
+        this.logger.log(`Finished processing block: ${curBlock}`);
 
         // Update the last sync height
         await Meta.update(key, curBlock.toString());

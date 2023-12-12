@@ -502,13 +502,8 @@ describe('MediatorManagerHandler', () => {
         joined: true,
       });
 
-      const now = moment().unix();
       const voted = true;
-      await expect(
-        handler.onTicketSlashed(owner, toBN(1), toBN(10), voted, true, {
-          getBlock: jest.fn().mockResolvedValue({ timestamp: now }),
-        } as any),
-      ).resolves.toBeUndefined();
+      await expect(handler.onTicketSlashed(owner, toBN(1), toBN(10), voted, true, {} as any)).resolves.toBeUndefined();
 
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.slashed).toBeTruthy();
@@ -516,8 +511,6 @@ describe('MediatorManagerHandler', () => {
       expect(ticket.orderId).toBeNull();
       expect(ticket.joined).toBeFalsy();
       expect(ticket.poolId).toEqual(null);
-      const expectedLeaveAt = moment.unix(now + ((await Meta.getContractParam(net, 'ticketExpireDur')) as number));
-      expect(moment(ticket.joinBy).unix()).toEqual(expectedLeaveAt.unix());
 
       const slash = await TicketSlash.find({
         network: net,

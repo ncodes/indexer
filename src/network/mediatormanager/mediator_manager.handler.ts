@@ -436,9 +436,6 @@ export class MediatorManagerHandler extends Handler {
     event: ethers.Event,
     txn?: Transaction,
   ) {
-    const blockTime = await getBlockTime(event);
-    const joinBy = blockTime + parseInt(await this.getParam('ticketExpireDur'));
-
     let ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, ticketId.toNumber(), undefined, txn);
     ticket = await Ticket.updateById(
       ticket.id,
@@ -449,7 +446,6 @@ export class MediatorManagerHandler extends Handler {
         joined: false,
         poolId: null,
         bond: toBN(ticket.bond).sub(amount).toString(),
-        joinBy: moment.unix(joinBy).toISOString(),
       },
       txn,
     );

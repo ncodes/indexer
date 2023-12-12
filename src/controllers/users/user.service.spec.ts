@@ -1,7 +1,7 @@
 import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as moment from 'moment';
-import { DBService } from '../../db/DBService';
+import { DBService } from '../../db/db.service';
 import BadgeGrant from '../../models/badge_grant';
 import Market, { AssetType } from '../../models/market';
 import Swap from '../../models/swap';

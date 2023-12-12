@@ -8,7 +8,7 @@ import { AllExceptionsFilter } from '../common/interceptors/exception_filter';
 import { NoopLogger } from '../common/loggers/noop_logger';
 import { Roles } from '../common/roles';
 import { makeSession } from '../controllers/auth/utils';
-import { DBService } from '../db/DBService';
+import { DBService } from '../db/db.service';
 import User from '../models/user';
 import NetworkService from '../network/network.service';
 import { InstructionsController } from './instructions.controller';

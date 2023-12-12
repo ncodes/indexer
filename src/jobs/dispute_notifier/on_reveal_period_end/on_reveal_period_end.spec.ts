@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import * as moment from 'moment';
 import { NoopLogger } from '../../../common/loggers/noop_logger';
 import { ConfigService } from '../../../config/config.service';
-import { DBService } from '../../../db/DBService';
+import { DBService } from '../../../db/db.service';
 import Dispute from '../../../models/dispute';
 import Draft from '../../../models/draft';
 import Market from '../../../models/market';

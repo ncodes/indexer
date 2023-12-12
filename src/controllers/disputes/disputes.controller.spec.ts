@@ -1,23 +1,23 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { DBService } from '../../db/DBService';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { NoopLogger } from '../../common/loggers/noop_logger';
-import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
-import User from '../../models/user';
-import { Roles } from '../../common/roles';
-import NetworkService from '../../network/network.service';
-import { makeSession } from '../auth/utils';
+import { Test, TestingModule } from '@nestjs/testing';
+import * as moment from 'moment';
 import * as request from 'supertest';
-import { MarketService } from '../markets/market.service';
-import { DisputesController } from './disputes.controller';
 import { randStr } from '../../common/common';
+import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
+import { NoopLogger } from '../../common/loggers/noop_logger';
+import { Roles } from '../../common/roles';
+import { DBService } from '../../db/db.service';
 import Dispute from '../../models/dispute';
+import Draft from '../../models/draft';
+import User from '../../models/user';
+import NetworkService from '../../network/network.service';
+import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { RedisService } from '../../services/redis.service';
-import { ExchangeRateService } from '../../services/exchange_rate.service';
-import * as moment from 'moment';
-import Draft from '../../models/draft';
+import { makeSession } from '../auth/utils';
+import { MarketService } from '../markets/market.service';
+import { DisputesController } from './disputes.controller';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {

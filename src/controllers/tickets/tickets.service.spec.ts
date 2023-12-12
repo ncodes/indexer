@@ -1,15 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import NetworkService from '../../network/network.service';
-import { MetadataService } from '../../services/metadata/metadata.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { DBService } from '../../db/DBService';
-import { TicketsService } from './tickets.service';
-import { MarketService } from '../markets/market.service';
-import Ticket from '../../models/ticket';
+import { Test, TestingModule } from '@nestjs/testing';
 import * as moment from 'moment';
-import { RedisService } from '../../services/redis.service';
-import { ExchangeRateService } from '../../services/exchange_rate.service';
+import { DBService } from '../../db/db.service';
+import Ticket from '../../models/ticket';
 import TicketSlash from '../../models/ticket_slash';
+import NetworkService from '../../network/network.service';
+import { ExchangeRateService } from '../../services/exchange_rate.service';
+import { MetadataService } from '../../services/metadata/metadata.service';
+import { RedisService } from '../../services/redis.service';
+import { MarketService } from '../markets/market.service';
+import { TicketsService } from './tickets.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {

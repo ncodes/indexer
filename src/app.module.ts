@@ -25,7 +25,7 @@ import { TasksModule } from './controllers/tasks/tasks.module';
 import { TicketsModule } from './controllers/tickets/tickets.module';
 import { TimelinesModule } from './controllers/timelines/timelines.module';
 import { UsersModule } from './controllers/users/users.module';
-import { DBService } from './db/DBService';
+import { DBService } from './db/db.service';
 import { InstructionsModule } from './instructions/instructions.module';
 import { JobsModule } from './jobs/jobs.module';
 import { NetworkModule } from './network/network.module';

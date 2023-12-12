@@ -6,7 +6,7 @@ import * as request from 'supertest';
 import { setFeaturedAssets } from '../../common/featured_assets';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import { NoopLogger } from '../../common/loggers/noop_logger';
-import { DBService } from '../../db/DBService';
+import { DBService } from '../../db/db.service';
 import { NotifierService } from '../../jobs/mailer/NotifierService';
 import AssetRegistry from '../../models/asset_registry';
 import Liquidity from '../../models/liquidity';

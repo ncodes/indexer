@@ -8,7 +8,7 @@ import { AllExceptionsFilter } from '../../common/interceptors/exception_filter'
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { Roles } from '../../common/roles';
 import { ConfigService } from '../../config/config.service';
-import { DBService } from '../../db/DBService';
+import { DBService } from '../../db/db.service';
 import BadgeGrant from '../../models/badge_grant';
 import Event, { Events } from '../../models/event';
 import Liquidity from '../../models/liquidity';

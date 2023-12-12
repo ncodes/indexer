@@ -1,7 +1,7 @@
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as moment from 'moment';
-import { DBService } from '../../db/DBService';
+import { DBService } from '../../db/db.service';
 import { NotifierService } from '../../jobs/mailer/NotifierService';
 import Liquidity from '../../models/liquidity';
 import Market from '../../models/market';

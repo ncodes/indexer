@@ -1,5 +1,5 @@
 import * as moment from 'moment';
-import { DBService } from '../db/DBService';
+import { DBService } from '../db/db.service';
 import OnlineStatus from './online_status';
 
 describe('OnlineStatus', () => {

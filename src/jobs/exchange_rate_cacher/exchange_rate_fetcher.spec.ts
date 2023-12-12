@@ -2,7 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { NoopLogger } from '../../common/loggers/noop_logger';
-import { DBService } from '../../db/DBService';
+import { DBService } from '../../db/db.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
 import ExchangeRateFetcher from './exchange_rate_fetcher';
 

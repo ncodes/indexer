@@ -1,6 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DBService } from '../../db/DBService';
+import { DBService } from '../../db/db.service';
 import Dispute from '../../models/dispute';
 import Draft from '../../models/draft';
 import Market, { AssetType } from '../../models/market';

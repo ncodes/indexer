@@ -1,5 +1,5 @@
 import * as moment from 'moment';
-import { DBService } from '../db/DBService';
+import { DBService } from '../db/db.service';
 import Market from './market';
 import Swap from './swap';
 

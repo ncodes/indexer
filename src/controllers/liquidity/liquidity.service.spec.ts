@@ -1,15 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigModule } from '@nestjs/config';
-import { DBService } from '../../db/DBService';
-import { LiquidityService } from './liquidity.service';
-import Market from '../../models/market';
-import Liquidity from '../../models/liquidity';
-import { MarketService } from '../markets/market.service';
-import Swap from '../../models/swap';
+import { Test, TestingModule } from '@nestjs/testing';
 import * as moment from 'moment';
+import { DBService } from '../../db/db.service';
+import Liquidity from '../../models/liquidity';
+import Market from '../../models/market';
 import MarketPrice from '../../models/market_price';
+import Swap from '../../models/swap';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { RedisService } from '../../services/redis.service';
+import { MarketService } from '../markets/market.service';
+import { LiquidityService } from './liquidity.service';
 
 const mockTryToUsd = jest.fn();
 const MetadataServiceMock = jest.fn().mockImplementation(() => {

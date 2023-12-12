@@ -5,7 +5,7 @@ import * as moment from 'moment';
 import * as request from 'supertest';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import { NoopLogger } from '../../common/loggers/noop_logger';
-import { DBService } from '../../db/DBService';
+import { DBService } from '../../db/db.service';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 import { TasksController } from './tasks.controller';
 

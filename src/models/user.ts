@@ -90,7 +90,7 @@ export default class User extends BaseModel {
    * @param txn
    * @returns
    */
-  static async getByToken(token: string, txn?: Transaction): Promise<User> {
+  static async getByDeviceToken(token: string, txn?: Transaction): Promise<User> {
     return this.query(txn).where('deviceTokenEmail', token).whereNotDeleted().first();
   }
 

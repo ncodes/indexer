@@ -1,6 +1,6 @@
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { DBService } from '../db/DBService';
+import { DBService } from '../db/db.service';
 import { NotifierService } from '../jobs/mailer/NotifierService';
 import { ExchangeRateService } from '../services/exchange_rate.service';
 import { MetadataService } from '../services/metadata/metadata.service';

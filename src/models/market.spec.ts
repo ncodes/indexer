@@ -1,5 +1,5 @@
 import { ChainNames } from '@jointlabs/chains-info';
-import { DBService } from '../db/DBService';
+import { DBService } from '../db/db.service';
 import Market from './market';
 
 describe('Market', () => {

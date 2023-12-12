@@ -1,6 +1,6 @@
 import * as moment from 'moment';
+import { DBService } from '../db/db.service';
 import MarketPrice from './market_price';
-import { DBService } from '../db/DBService';
 
 describe('MarketPrice', () => {
   const db = DBService.getForTest();

@@ -2,7 +2,7 @@ import { ethers } from 'ethers';
 import * as jwt from 'jsonwebtoken';
 import * as moment from 'moment';
 import { sha1 } from '../../common/common';
-import { DBService } from '../../db/DBService';
+import { DBService } from '../../db/db.service';
 import Session from '../../models/session';
 import User from '../../models/user';
 import { makeMsg } from './auth.controller.spec';

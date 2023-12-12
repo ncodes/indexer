@@ -5,7 +5,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import { NoopLogger } from '../../common/loggers/noop_logger';
-import { DBService } from '../../db/DBService';
+import { DBService } from '../../db/db.service';
 import NetworkService from '../../network/network.service';
 import { PaymentsController } from './payments.controller';
 import { PaymentsService } from './payments.service';

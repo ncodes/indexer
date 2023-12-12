@@ -1,6 +1,6 @@
 import * as moment from 'moment';
 import { NoopLogger } from '../../common/loggers/noop_logger';
-import { DBService } from '../../db/DBService';
+import { DBService } from '../../db/db.service';
 import { NotificationID } from '../../jobs/mailer/NotifierService';
 import Dispute from '../../models/dispute';
 import Draft from '../../models/draft';

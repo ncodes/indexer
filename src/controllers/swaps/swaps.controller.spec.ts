@@ -7,7 +7,7 @@ import { randStr } from '../../common/common';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { Roles } from '../../common/roles';
-import { DBService } from '../../db/DBService';
+import { DBService } from '../../db/db.service';
 import Dispute from '../../models/dispute';
 import Event, { Events } from '../../models/event';
 import Liquidity from '../../models/liquidity';

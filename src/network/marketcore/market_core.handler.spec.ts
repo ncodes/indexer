@@ -1,7 +1,7 @@
 import { ChainNames } from '@jointlabs/chains-info';
 import * as moment from 'moment';
 import { NoopLogger } from '../../common/loggers/noop_logger';
-import { DBService } from '../../db/DBService';
+import { DBService } from '../../db/db.service';
 import { NotificationID } from '../../jobs/mailer/NotifierService';
 import Liquidity from '../../models/liquidity';
 import Market, { AssetType } from '../../models/market';

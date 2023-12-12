@@ -79,7 +79,7 @@ export class NotificationsController {
     body: ChatNotificationDTO,
   ) {
     // Find user by token
-    const user = await User.getByToken(body.token);
+    const user = await User.getByDeviceToken(body.token);
     if (!user) throw404('user not found');
 
     // Find the convo; If convo is muted, return immediately

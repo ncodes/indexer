@@ -10,7 +10,7 @@ import { AllExceptionsFilter } from '../../common/interceptors/exception_filter'
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { ErrorMessages } from '../../common/responses/responses';
 import { Roles } from '../../common/roles';
-import { DBService } from '../../db/DBService';
+import { DBService } from '../../db/db.service';
 import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierService';
 import Session from '../../models/session';
 import User from '../../models/user';

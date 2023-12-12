@@ -1,6 +1,6 @@
 import { ChainNames } from '@jointlabs/chains-info';
 import * as moment from 'moment';
-import { DBService } from '../db/DBService';
+import { DBService } from '../db/db.service';
 import { powOf } from '../network/common';
 import BadgeGrant from './badge_grant';
 import Liquidity from './liquidity';

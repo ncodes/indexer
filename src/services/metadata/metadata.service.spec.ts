@@ -1,7 +1,7 @@
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { isLocal, toDec } from '../../common/common';
-import { DBService } from '../../db/DBService';
+import { DBService } from '../../db/db.service';
 import { NotifierService } from '../../jobs/mailer/NotifierService';
 import NetworkService from '../../network/network.service';
 import { ExchangeRateService } from '../exchange_rate.service';

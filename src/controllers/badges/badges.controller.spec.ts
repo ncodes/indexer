@@ -8,7 +8,7 @@ import { randStr } from '../../common/common';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { Roles } from '../../common/roles';
-import { DBService } from '../../db/DBService';
+import { DBService } from '../../db/db.service';
 import Badge from '../../models/badge';
 import BadgeGrant from '../../models/badge_grant';
 import User from '../../models/user';

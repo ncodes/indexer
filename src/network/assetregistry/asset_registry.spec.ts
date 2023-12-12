@@ -1,5 +1,5 @@
 import { NoopLogger } from '../../common/loggers/noop_logger';
-import { DBService } from '../../db/DBService';
+import { DBService } from '../../db/db.service';
 import AssetRegistry from '../../models/asset_registry';
 import { toBN } from '../common';
 import { AssetRegistryHandler } from './asset_registry.handler';

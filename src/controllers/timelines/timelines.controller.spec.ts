@@ -1,13 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { DBService } from '../../db/DBService';
 import { ConfigModule } from '@nestjs/config';
-import * as request from 'supertest';
-import { NoopLogger } from '../../common/loggers/noop_logger';
-import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
-import { TimelinesController } from './timelines.controller';
-import Event from '../../models/event';
+import { Test, TestingModule } from '@nestjs/testing';
 import * as moment from 'moment';
+import * as request from 'supertest';
+import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
+import { NoopLogger } from '../../common/loggers/noop_logger';
+import { DBService } from '../../db/db.service';
+import Event from '../../models/event';
+import { TimelinesController } from './timelines.controller';
 
 describe('TimelinesController', () => {
   let app: INestApplication;

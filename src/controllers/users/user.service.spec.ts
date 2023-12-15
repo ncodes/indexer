@@ -209,4 +209,33 @@ describe('UserService', () => {
       expect(mockUnregisterInstallation).toBeCalledWith(u.id);
     });
   });
+
+  describe('.enableReferrer', () => {
+    it(`should return true and set referrer when user is new`, async () => {
+      const referrer = '0xReferrer';
+      let u = await User.create({ address: user });
+      const res = await service.enableReferrer(true, referrer, u);
+      expect(res).toBeTruthy();
+      u = await User.getById(u.id);
+      expect(u.referrer).toEqual(referrer);
+      expect(u.refCode).toHaveLength(5);
+    });
+
+    it(`should return true and not set referrer when user is not new`, async () => {
+      const referrer = '0xReferrer';
+      let u = await User.create({ address: user });
+      const res = await service.enableReferrer(false, referrer, u);
+      expect(res).toBeTruthy();
+      u = await User.getById(u.id);
+      expect(u.referrer).toBeNull();
+      expect(u.refCode).toHaveLength(5);
+    });
+
+    it(`should return false when user already has a ref code`, async () => {
+      const referrer = '0xReferrer';
+      const u = await User.create({ address: user, refCode: '12345' });
+      const res = await service.enableReferrer(true, referrer, u);
+      expect(res).toBeFalsy();
+    });
+  });
 });

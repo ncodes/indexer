@@ -53,8 +53,10 @@ export class AuthController {
 
     let token: string;
     let user: User;
+    let isUserNew = false;
     await transaction(User, async (User) => {
       user = await User.getByAddress(sigData.address);
+      isUserNew = !user;
 
       // Create user if not found, Set email as unverified.
       // If user was found and email is different, update email as unverified.
@@ -89,6 +91,9 @@ export class AuthController {
 
     // Register device for notifications
     await this.userSrv.registerDevice(user);
+
+    // Enable referrer state for the user
+    await this.userSrv.enableReferrer(isUserNew, body.referrer, user);
 
     return ok().data({ token, user }).build();
   }

@@ -420,4 +420,45 @@ describe('UsersController', () => {
       });
     });
   });
+
+  describe('.getReferInfo', () => {
+    it('should return 400 when address is not associated with a user', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/users/unknown/referral-info`)
+        .expect(404)
+        .expect({
+          error: {
+            message: 'user not found',
+          },
+        });
+    });
+
+    it('should return 200 and zero referred users when address is associated with a user but no users were referred', async () => {
+      u = await User.updateById(u.id, { refCode: 'refCode' });
+      await request(app.getHttpServer())
+        .get(`/v1/users/${u.address}/referral-info`)
+        .expect(200)
+        .expect({
+          data: {
+            refCode: u.refCode,
+            numReferred: 0,
+          },
+        });
+    });
+
+    it('should return 200 and number of referred users when address is associated with a user and users were referred', async () => {
+      u = await User.updateById(u.id, { refCode: 'refCode' });
+      await User.create({ referrer: u.address, address: '0xAddress2' });
+      await User.create({ referrer: u.address, address: '0xAddress3' });
+      await request(app.getHttpServer())
+        .get(`/v1/users/${u.address}/referral-info`)
+        .expect(200)
+        .expect({
+          data: {
+            refCode: u.refCode,
+            numReferred: 2,
+          },
+        });
+    });
+  });
 });

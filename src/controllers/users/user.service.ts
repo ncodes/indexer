@@ -109,4 +109,21 @@ export class UserService {
 
     return true;
   }
+
+  /**
+   * Enable referrer state for a user
+   * @param isNewUser Whether the user is new
+   * @param referrer The referrer address
+   * @param user The user object
+   */
+  async enableReferrer(isNewUser: boolean, referrer: string, user: User) {
+    if (user.refCode) return false;
+    const upd = await User.updateById(user.id, {
+      refCode: randStr(5).toLowerCase(),
+      referrer: isNewUser ? referrer : undefined,
+    });
+    user.refCode = upd.refCode;
+    user.referrer = upd.referrer;
+    return true;
+  }
 }

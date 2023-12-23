@@ -12,6 +12,7 @@ import Draft from '../../models/draft';
 import Offer from '../../models/offer';
 import Swap from '../../models/swap';
 import User from '../../models/user';
+import { JointLinkService } from '../../services/joint_link.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { makeSession } from '../auth/utils';
 import ConvosService from '../convos/convos.service';
@@ -23,7 +24,6 @@ const ConfigServiceMock = jest.fn().mockImplementation(() => {
   return { get: mockCfgGet };
 });
 
-// mock metadata service
 const mockMetadataTryToUsd = jest.fn();
 const MetadataServiceMock = jest.fn().mockImplementation(() => {
   return { tryToUsd: mockMetadataTryToUsd };
@@ -60,7 +60,7 @@ describe('UsersController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [UsersController],
-      providers: [ConfigService, UserService, MetadataService, ConvosService],
+      providers: [ConfigService, UserService, MetadataService, ConvosService, JointLinkService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
@@ -418,47 +418,6 @@ describe('UsersController', () => {
             data: { ok: false },
           });
       });
-    });
-  });
-
-  describe('.getReferInfo', () => {
-    it('should return 400 when address is not associated with a user', async () => {
-      await request(app.getHttpServer())
-        .get(`/v1/users/unknown/referral-info`)
-        .expect(404)
-        .expect({
-          error: {
-            message: 'user not found',
-          },
-        });
-    });
-
-    it('should return 200 and zero referred users when address is associated with a user but no users were referred', async () => {
-      u = await User.updateById(u.id, { refCode: 'refCode' });
-      await request(app.getHttpServer())
-        .get(`/v1/users/${u.address}/referral-info`)
-        .expect(200)
-        .expect({
-          data: {
-            refCode: u.refCode,
-            numReferred: 0,
-          },
-        });
-    });
-
-    it('should return 200 and number of referred users when address is associated with a user and users were referred', async () => {
-      u = await User.updateById(u.id, { refCode: 'refCode' });
-      await User.create({ referrer: u.address, address: '0xAddress2' });
-      await User.create({ referrer: u.address, address: '0xAddress3' });
-      await request(app.getHttpServer())
-        .get(`/v1/users/${u.address}/referral-info`)
-        .expect(200)
-        .expect({
-          data: {
-            refCode: u.refCode,
-            numReferred: 2,
-          },
-        });
     });
   });
 });

@@ -1,14 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { transaction } from 'objection';
 import { isEqualStr, randStr } from '../../common/common';
 import BadgeGrant from '../../models/badge_grant';
 import Swap from '../../models/swap';
 import User from '../../models/user';
+import { JointLinkService } from '../../services/joint_link.service';
 import ConvosService from '../convos/convos.service';
 import { DeviceType } from './dto';
 
 @Injectable()
 export class UserService {
-  constructor(private chatNotifSrv: ConvosService) {}
+  logger = new Logger(UserService.name);
+
+  constructor(private chatNotifSrv: ConvosService, private jntLinkSrv: JointLinkService) {}
 
   /**
    * Extend user with peripheral and derived data
@@ -117,13 +121,23 @@ export class UserService {
    * @param user The user object
    */
   async enableReferrer(isNewUser: boolean, referrer: string, user: User) {
-    if (user.refCode) return false;
-    const upd = await User.updateById(user.id, {
-      refCode: randStr(5).toLowerCase(),
-      referrer: isNewUser ? referrer : undefined,
+    return transaction(User, async (User) => {
+      if (user.refCode) return false;
+
+      const upd = await User.updateById(user.id, {
+        refCode: randStr(5).toLowerCase(),
+        referrer: isNewUser ? referrer : undefined,
+      });
+
+      user.refCode = upd.refCode;
+      user.referrer = upd.referrer;
+
+      await this.jntLinkSrv.createLink(user.refCode).catch((e) => {
+        this.logger.error(`enableReferrer: failed to create joint link`, e);
+        throw e;
+      });
+
+      return true;
     });
-    user.refCode = upd.refCode;
-    user.referrer = upd.referrer;
-    return true;
   }
 }

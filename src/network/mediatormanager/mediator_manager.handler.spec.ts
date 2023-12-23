@@ -23,10 +23,18 @@ const MockNotifierService = jest.fn().mockImplementation(() => {
   return { notify: mockNotify };
 });
 
+const mockGrantPoint = jest.fn();
+const MockPointService = jest.fn().mockImplementation(() => {
+  return {
+    grantPoint: mockGrantPoint,
+  };
+});
+
 const mockGetContracts = jest.fn();
 const MockNetworkService = jest.fn().mockImplementation(() => {
   return {
     getContracts: mockGetContracts,
+    pointSrv: new MockPointService(),
   };
 });
 
@@ -75,10 +83,11 @@ describe('MediatorManagerHandler', () => {
   describe('.onTicketPurchased', () => {
     it('should create ticket', async () => {
       const now = moment().unix();
+      const evt = {
+        transactionHash: '0xTxHash',
+      } as any;
       await expect(
-        handler.onTicketPurchased(owner, toBN(1), toBN(0), toBN(10), toBN(now + 1), toBN(now + 1), {
-          transactionHash: '0xTxHash',
-        } as any),
+        handler.onTicketPurchased(owner, toBN(1), toBN(0), toBN(10), toBN(now + 1), toBN(now + 1), evt),
       ).resolves.toBeUndefined();
       const ticket = await Ticket.getByNetworkOwnerAndIndex(net, owner, 1);
       expect(ticket).toBeDefined();
@@ -87,6 +96,8 @@ describe('MediatorManagerHandler', () => {
       expect(ticket.joinBy).toBeDefined();
       expect(ticket.joinBy).toBeDefined();
       expect(ticket.txHash).toEqual('0xTxHash');
+
+      expect(mockGrantPoint).toHaveBeenCalledWith('ticket:purchased', net, owner, evt, undefined);
     });
   });
 
@@ -100,17 +111,18 @@ describe('MediatorManagerHandler', () => {
         poolId: 1,
       });
       const now = moment().unix();
-      await expect(
-        handler.onTicketCancelled(owner, toBN(1), {
-          getBlock: jest.fn().mockResolvedValue({ timestamp: now }),
-        } as any),
-      ).resolves.toBeUndefined();
+      const evt = {
+        getBlock: jest.fn().mockResolvedValue({ timestamp: now }),
+      } as any;
+      await expect(handler.onTicketCancelled(owner, toBN(1), evt)).resolves.toBeUndefined();
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.cancelAt).toBeDefined();
       expect(ticket.joined).toBeFalsy();
       expect(ticket.poolId).toBeNull();
       const expectedCancelAt = moment.unix(now + parseInt(await handler.getParam('ticketCancelDur')));
       expect(moment(ticket.cancelAt).unix()).toEqual(expectedCancelAt.unix());
+
+      expect(mockGrantPoint).toHaveBeenCalledWith('ticket:cancelled', net, owner, evt, undefined);
     });
   });
 
@@ -122,14 +134,15 @@ describe('MediatorManagerHandler', () => {
         owner: owner,
       });
       const now = moment().unix();
-      await expect(
-        handler.onTicketDrained(owner, toBN(1), toBN(10), {
-          getBlock: jest.fn().mockResolvedValue({ timestamp: now }),
-        } as any),
-      ).resolves.toBeUndefined();
+      const evt = {
+        getBlock: jest.fn().mockResolvedValue({ timestamp: now }),
+      } as any;
+      await expect(handler.onTicketDrained(owner, toBN(1), toBN(10), evt)).resolves.toBeUndefined();
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.drained).toBeTruthy();
       expect(ticket.drainedAt).toBeDefined();
+
+      expect(mockGrantPoint).toHaveBeenCalledWith('ticket:drained', net, owner, evt, undefined);
     });
   });
 
@@ -146,16 +159,18 @@ describe('MediatorManagerHandler', () => {
         owner: owner,
         bond: '100',
       });
+
       const now = moment().unix();
-      await expect(
-        handler.onJoinedPool(owner, toBN(1), toBN(1), {
-          getBlock: jest.fn().mockResolvedValue({ timestamp: now }),
-        } as any),
-      ).resolves.toBeUndefined();
+      const evt = {
+        getBlock: jest.fn().mockResolvedValue({ timestamp: now }),
+      } as any;
+      await expect(handler.onJoinedPool(owner, toBN(1), toBN(1), evt)).resolves.toBeUndefined();
 
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.poolId).toEqual(1);
       expect(ticket.joined).toBeTruthy();
+
+      expect(mockGrantPoint).toHaveBeenCalledWith('ticket:joined', net, owner, evt, undefined);
     });
   });
 
@@ -223,10 +238,11 @@ describe('MediatorManagerHandler', () => {
 
       const now = moment().unix();
       const getBlock = jest.fn().mockResolvedValue({ timestamp: now });
+      const evt = {
+        getBlock,
+      } as any;
       await expect(
-        handler.onDrafted(marketAddress, owner, ticketId, orderId, disputeId, drafter, {
-          getBlock,
-        } as any),
+        handler.onDrafted(marketAddress, owner, ticketId, orderId, disputeId, drafter, evt),
       ).resolves.toBeUndefined();
 
       // Ticket should be updated correctly
@@ -262,6 +278,9 @@ describe('MediatorManagerHandler', () => {
       expect(event.draftee).toEqual(owner);
       expect(event.disputeId).toEqual(draft.disputeIndex);
       expect(event.creator).toEqual(drafter);
+
+      expect(mockGrantPoint).toHaveBeenCalledWith('ticket:drafted', net, owner, evt, undefined);
+      expect(mockGrantPoint).toHaveBeenCalledWith('ticket:drafter', net, drafter, evt, undefined);
 
       expect(mockNotify).toBeCalledTimes(6);
 
@@ -453,8 +472,8 @@ describe('MediatorManagerHandler', () => {
         orderId: ticket.orderId,
         disputeId: ticket.disputeId,
       });
-
-      await expect(handler.onUndrafted(owner, toBN(1), true, undrafter, {} as any)).resolves.toBeUndefined();
+      const evt = {} as any;
+      await expect(handler.onUndrafted(owner, toBN(1), true, undrafter, evt)).resolves.toBeUndefined();
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.drafted).toBeFalsy();
       expect(ticket.draftedAt).toBeNull();
@@ -487,6 +506,9 @@ describe('MediatorManagerHandler', () => {
       expect(event.orderId).toEqual(23);
       expect(event.disputeId).toEqual(1);
       expect(event.creator).toEqual(undrafter);
+
+      expect(mockGrantPoint).toHaveBeenCalledWith('ticket:undrafted', net, owner, evt, undefined);
+      expect(mockGrantPoint).toHaveBeenCalledWith('ticket:undrafter', net, undrafter, evt, undefined);
     });
   });
 
@@ -503,7 +525,8 @@ describe('MediatorManagerHandler', () => {
       });
 
       const voted = true;
-      await expect(handler.onTicketSlashed(owner, toBN(1), toBN(10), voted, true, {} as any)).resolves.toBeUndefined();
+      const evt = {} as any;
+      await expect(handler.onTicketSlashed(owner, toBN(1), toBN(10), voted, true, evt)).resolves.toBeUndefined();
 
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.slashed).toBeTruthy();
@@ -522,6 +545,8 @@ describe('MediatorManagerHandler', () => {
       expect(slash.voted).toBeTruthy();
       expect(slash.winSide).toBeTruthy();
       expect(slash.orderId).toBeNull();
+
+      expect(mockGrantPoint).toHaveBeenCalledWith('ticket:slashed', net, owner, evt, undefined);
 
       // expect notification to have been sent
       expect(mockNotify).toHaveBeenCalledWith(NotificationID.TicketSlashed, net, owner, {

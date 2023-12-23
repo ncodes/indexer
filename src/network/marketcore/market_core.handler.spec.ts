@@ -33,8 +33,17 @@ const MockNotifierService = jest.fn().mockImplementation(() => {
   return { notify: mockNotify };
 });
 
+const mockGrantPoint = jest.fn();
+const MockPointService = jest.fn().mockImplementation(() => {
+  return {
+    grantPoint: mockGrantPoint,
+  };
+});
+
 const MockNetworkService = jest.fn().mockImplementation(() => {
-  return {};
+  return {
+    pointSrv: new MockPointService(),
+  };
 });
 
 describe('MarketCoreHandler', () => {
@@ -141,7 +150,7 @@ describe('MarketCoreHandler', () => {
           decimals: 10,
           isSynthetic: true,
         });
-
+        const evt = { transactionHash: txHash } as any;
         await expect(
           handler.onNewMarket(
             marketAddress,
@@ -154,7 +163,7 @@ describe('MarketCoreHandler', () => {
             true,
             toBN(1),
             toBN(1),
-            { transactionHash: txHash } as any,
+            evt,
           ),
         ).resolves.toBeUndefined();
         const market = await Market.getByAddress(marketAddress);
@@ -168,6 +177,8 @@ describe('MarketCoreHandler', () => {
         expect(market.quoteType).toEqual(AssetType.SYNTH);
         expect(market.quoteDecimals).toEqual(10);
         expect(market.pair).toEqual(`${base}${quote}`);
+
+        expect(mockGrantPoint).toHaveBeenCalledWith('market:created', net, creator, evt, undefined);
       });
 
       describe('when SYNTH asset is unknown in the token list', function () {

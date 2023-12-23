@@ -1,11 +1,11 @@
 import { BigNumber } from 'ethers';
 import { NotificationID } from '../src/jobs/mailer/NotifierService';
 import Convo from '../src/models/convo';
-import Session from '../src/models/session';
 import Dispute from '../src/models/dispute';
 import Liquidity from '../src/models/liquidity';
 import Market from '../src/models/market';
 import Offer from '../src/models/offer';
+import Session from '../src/models/session';
 import Swap from '../src/models/swap';
 import Ticket from '../src/models/ticket';
 import User from '../src/models/user';
@@ -14,10 +14,12 @@ import {
   BadgeManager,
   Core,
   DisputeManager,
+  Energon,
   FeePool,
   LPPool,
   MarketCore,
   MediatorManager,
+  NFT,
   Token,
   TokenPool,
 } from '../typechain';
@@ -54,6 +56,8 @@ declare global {
     lpPool?: LPPool;
     feePool?: FeePool;
     assetRegistry?: AssetRegistry;
+    energon?: Energon;
+    nft?: NFT;
   }
 
   interface ContractMarket {

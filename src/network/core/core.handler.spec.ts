@@ -1,6 +1,6 @@
 import { constants, ethers } from 'ethers';
 import * as moment from 'moment';
-import { toDec } from '../../common/common';
+import { randStr, toDec } from '../../common/common';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { DBService } from '../../db/db.service';
 import { NotificationID } from '../../jobs/mailer/NotifierService';
@@ -45,9 +45,22 @@ const MockExchangeRateService = jest.fn().mockImplementation(() => {
   };
 });
 
+const mockGrantOnSwap = jest.fn();
+const mockGrantOnLiquidityUpdate = jest.fn();
+const mockGrantPoint = jest.fn();
+const MockPointService = jest.fn().mockImplementation(() => {
+  return {
+    grantOnSwap: mockGrantOnSwap,
+    grantOnLiquidityUpdate: mockGrantOnLiquidityUpdate,
+    grantPoint: mockGrantPoint,
+  };
+});
+
 const mockComputeSwapFees = jest.fn();
 const MockNetworkService = jest.fn().mockImplementation(() => {
-  return {};
+  return {
+    pointSrv: new MockPointService(),
+  };
 });
 
 describe('CoreHandler', () => {
@@ -138,6 +151,7 @@ describe('CoreHandler', () => {
 
       mockTryToUsd.mockResolvedValue(5.6);
 
+      const amount = toBN(100);
       await expect(
         handler.onUpdatedFungibleLiquidity(
           provider,
@@ -146,7 +160,7 @@ describe('CoreHandler', () => {
           false,
           true,
           toBN(1),
-          toBN(100),
+          amount,
           toBN(300),
           [toBN(1)],
           [toBN(2)],
@@ -198,6 +212,8 @@ describe('CoreHandler', () => {
       expect(event.target).toEqual(liq.target);
       expect(event.timeToPay).toEqual(liq.timeToPay);
       expect(event.paused).toEqual(liq.paused);
+
+      expect(mockGrantOnLiquidityUpdate).toHaveBeenCalledWith(market, liq, true, provider, amount, undefined);
     });
 
     it('should update the liquidity if it already exist and deduction=false', async () => {
@@ -226,6 +242,7 @@ describe('CoreHandler', () => {
         maxSwap: '30',
       });
 
+      const amount = toBN(10);
       await expect(
         handler.onUpdatedFungibleLiquidity(
           provider,
@@ -234,7 +251,7 @@ describe('CoreHandler', () => {
           false,
           true,
           toBN(lid),
-          toBN(10),
+          amount,
           toBN(430),
           [toBN(3)],
           [toBN(4)],
@@ -312,6 +329,8 @@ describe('CoreHandler', () => {
       expect(eventMinSwap.creator).toEqual(provider);
       expect(eventMinSwap.minSwap).toEqual('2');
       expect(eventMinSwap.maxSwap).toEqual('20');
+
+      expect(mockGrantOnLiquidityUpdate).toBeCalled();
     });
 
     it('should update the liquidity if it already exist and deduction=true', async () => {
@@ -753,6 +772,7 @@ describe('CoreHandler', () => {
       it('should calculate correctly for NFT/*', async () => {
         const market = await Market.create({
           network: net,
+          address: randStr(),
           baseType: AssetType.ERC721,
           quoteType: AssetType.ERC20,
           baseAddress: baseAddress,
@@ -769,6 +789,7 @@ describe('CoreHandler', () => {
       it('should calculate correctly for ERC20/*', async () => {
         const market = await Market.create({
           network: net,
+          address: randStr(),
           baseType: AssetType.ERC20,
           quoteType: AssetType.ERC20,
           baseAddress: baseAddress,
@@ -787,6 +808,7 @@ describe('CoreHandler', () => {
       it('should calculate correctly for NFT/SYNTH', async () => {
         const market = await Market.create({
           network: net,
+          address: randStr(),
           baseType: AssetType.ERC721,
           quoteType: AssetType.SYNTH,
           baseAddress: baseAddress,
@@ -805,6 +827,7 @@ describe('CoreHandler', () => {
       it('should calculate correctly for ERC20/SYNTH', async () => {
         const market = await Market.create({
           network: net,
+          address: randStr(),
           baseType: AssetType.ERC20,
           quoteType: AssetType.SYNTH,
           baseAddress: baseAddress,
@@ -822,6 +845,7 @@ describe('CoreHandler', () => {
       it('should calculate correctly for SYNTH/*', async () => {
         const market = await Market.create({
           network: net,
+          address: randStr(),
           baseType: AssetType.SYNTH,
           quoteType: AssetType.ERC20,
           baseAddress: baseAddress,
@@ -1035,6 +1059,7 @@ describe('CoreHandler', () => {
 
         const numTypeInfo = [toBN(0), lid, toBN('1000000000000000000'), toBN(1), toBN(1), toBN(1)];
         const [, , amount, price, offerId, operator] = numTypeInfo;
+        const evt = { transactionHash: txHash } as any;
 
         await handler.onSwap(
           marketAddress,
@@ -1046,7 +1071,7 @@ describe('CoreHandler', () => {
           false,
           [toBN(1), toBN(2)],
           [toBN(3), toBN(4)],
-          { transactionHash: txHash } as any,
+          evt,
         );
 
         const swap = await Swap.find({ network: net, marketAddress: market.address, lid: liq.lid });
@@ -1092,6 +1117,8 @@ describe('CoreHandler', () => {
         expect(event.creator).toEqual(taker);
         expect(event.orderId).toEqual(0);
         expect(event.swapId).toEqual(swap.id);
+
+        expect(mockGrantOnSwap).toHaveBeenCalledWith(market, swap, undefined, evt);
 
         expect(mockNotify).toHaveBeenCalledWith(NotificationID.NewInstantSwap, net, provider, {
           market,
@@ -1193,6 +1220,7 @@ describe('CoreHandler', () => {
 
         const numTypeInfo = [orderId, toBN(liq.lid), toBN(swap.amount), toBN(liq.price), toBN(1), toBN(1)];
         const [, , amount, , ,] = numTypeInfo;
+        const evt = { transactionHash: txHash } as any;
 
         await handler.onSwap(
           marketAddress,
@@ -1204,7 +1232,7 @@ describe('CoreHandler', () => {
           true,
           [toBN(1), toBN(2)],
           [toBN(3), toBN(4)],
-          { transactionHash: txHash } as any,
+          evt,
         );
 
         swap = await Swap.find({ marketAddress: market.address });
@@ -1253,6 +1281,8 @@ describe('CoreHandler', () => {
         market = await Market.getById(market.id);
         swap = await Swap.find({ marketAddress: market.address });
         swap.market = market;
+
+        expect(mockGrantOnSwap).toHaveBeenCalledWith(market, swap, undefined, evt);
 
         expect(mockNotify).toHaveBeenCalledTimes(1);
         expect(mockNotify).toHaveBeenCalledWith(NotificationID.SwapOrderReleased, net, taker, {

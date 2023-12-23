@@ -138,4 +138,17 @@ export class MiscController {
     };
     return ok().data(data).build();
   }
+
+  /**
+   * Get points for energon
+   * @returns
+   */
+  @Get('points-per-energon')
+  async getPointsPerEnergon() {
+    return ok()
+      .data({
+        value: parseFloat(this.cfgSrv.get('app.pointsPerEnergon')),
+      })
+      .build();
+  }
 }

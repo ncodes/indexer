@@ -1248,14 +1248,14 @@
     "@types/yargs" "^17.0.8"
     chalk "^4.0.0"
 
-"@jointlabs/chains-info@^0.0.16":
-  version "0.0.16"
-  resolved "https://registry.yarnpkg.com/@jointlabs/chains-info/-/chains-info-0.0.16.tgz#e45da713025911949f81017d01395b25af8a9027"
-  integrity sha512-MdS7LL2usGkOesvL8V6JNMDS5Zh9JnxGDTuFjwTN62TgujqhlQPDSBHOSo4QjFQKeDMn4nXfKFbhb/7bSwczZQ==
+"@jointlabs/chains-info@^0.0.21":
+  version "0.0.21"
+  resolved "https://registry.yarnpkg.com/@jointlabs/chains-info/-/chains-info-0.0.21.tgz#91654f850c9b62913d515ac43bb1146de42a2eb0"
+  integrity sha512-6MDBBWISljOKc89j+8Q6Vu9E973UbMBHzYb0z+yWoLlg9xACLS23Lgbaiz+5hZJNUByUksb2UXscqPhntGlWLw==
   dependencies:
     lodash "^4.17.21"
     react "^18.2.0"
-    viem "^1.2.13"
+    viem "^1.20.0"
 
 "@jridgewell/gen-mapping@^0.3.0", "@jridgewell/gen-mapping@^0.3.2":
   version "0.3.3"
@@ -1998,12 +1998,12 @@
   dependencies:
     "@types/node" "*"
 
-"@types/knex-db-manager@^0.7.0":
-  version "0.7.0"
-  resolved "https://registry.npmjs.org/@types/knex-db-manager/-/knex-db-manager-0.7.0.tgz"
-  integrity sha512-5GmMGMxneWUBE7ZifoZNa0r1Y1TgnKD7611Cifmveyvk3OncOP+sf9WxocLkV2wwTi8og5nG0t6YzRd1BJEPBw==
+"@types/knex-db-manager@^0.7.3":
+  version "0.7.3"
+  resolved "https://registry.yarnpkg.com/@types/knex-db-manager/-/knex-db-manager-0.7.3.tgz#404ab6bdb31ed12568e47dbe3277377a4766d95f"
+  integrity sha512-wE9cSds4ke9KSDgfi5ljLzUJMVqB9EtMejWfKa7G/YKsg0xvUw4azX9XEaz4eWPWuEhtOyL+9+qGRyal4SzRSQ==
   dependencies:
-    "@types/node" "16.0.0"
+    "@types/node" "*"
     knex "2.1.0"
 
 "@types/lodash@^4.14.194":
@@ -2065,11 +2065,6 @@
   version "20.1.1"
   resolved "https://registry.npmjs.org/@types/node/-/node-20.1.1.tgz"
   integrity sha512-uKBEevTNb+l6/aCQaKVnUModfEMjAl98lw2Si9P5y4hLu9tm6AlX2ZIoXZX6Wh9lJueYPrGPKk5WMCNHg/u6/A==
-
-"@types/node@16.0.0":
-  version "16.0.0"
-  resolved "https://registry.npmjs.org/@types/node/-/node-16.0.0.tgz"
-  integrity sha512-TmCW5HoZ2o2/z2EYi109jLqIaPIi9y/lc2LmDCWzuCi35bcaQ+OtUh6nwBiFK7SOu25FAU5+YKdqFZUwtqGSdg==
 
 "@types/nodemailer@*":
   version "6.4.7"
@@ -4056,6 +4051,13 @@ css-what@^6.0.1:
   version "6.1.0"
   resolved "https://registry.npmjs.org/css-what/-/css-what-6.1.0.tgz"
   integrity sha512-HTUrgRJ7r4dsZKU6GjmpfRK1O76h97Z8MfS1G0FozR+oF2kG6Vfe8JE6zwrkbxigziPHinCJ+gCPjA9EaBDtRw==
+
+csv-parser@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/csv-parser/-/csv-parser-3.0.0.tgz#b88a6256d79e090a97a1b56451f9327b01d710e7"
+  integrity sha512-s6OYSXAK3IdKqYO33y09jhypG/bSDHPuyCme/IdEHfWpLf/jKcpitVFyOC6UemgGk8v7Q5u2XE0vvwmanxhGlQ==
+  dependencies:
+    minimist "^1.2.0"
 
 dargs@^7.0.0:
   version "7.0.0"
@@ -7191,7 +7193,7 @@ kleur@^3.0.3:
 
 knex-db-manager@^0.7.0:
   version "0.7.0"
-  resolved "https://registry.npmjs.org/knex-db-manager/-/knex-db-manager-0.7.0.tgz"
+  resolved "https://registry.yarnpkg.com/knex-db-manager/-/knex-db-manager-0.7.0.tgz#74adad5f180411b3d19564600bf34abc437e769e"
   integrity sha512-+RZiSYsMcXEHjy+IW4LV7YtgIHkIG5gVLeyamWqalQknNDBQhyJvuHjgBTZ6cN1Mv1fJBuk42BuPJplkzVEXWw==
   dependencies:
     bluebird "^3.7.2"
@@ -10699,10 +10701,10 @@ vary@^1, vary@~1.1.2:
   resolved "https://registry.npmjs.org/vary/-/vary-1.1.2.tgz"
   integrity sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==
 
-viem@^1.2.13:
-  version "1.19.11"
-  resolved "https://registry.yarnpkg.com/viem/-/viem-1.19.11.tgz#de4ee7537ee036894bd818aa316a8faecaf017e9"
-  integrity sha512-dbsXEWDBZkByuzJXAs/e01j7dpUJ5ICF5WcyntFwf8Y97n5vnC/91lAleSa6DA5V4WJvYZbhDpYeTctsMAQnhA==
+viem@^1.20.0:
+  version "1.20.0"
+  resolved "https://registry.yarnpkg.com/viem/-/viem-1.20.0.tgz#25cb019831f46aeecf2c8c5cdbad41e4f79b2e32"
+  integrity sha512-yPjV9pJr10xi28C/9LEvs5zdZNEMiru3Kz7nufghVYABJAfeSkoZQXb6b23n7MscS7c55JO5nmUI3xKkd9g6Yg==
   dependencies:
     "@adraffy/ens-normalize" "1.10.0"
     "@noble/curves" "1.2.0"

@@ -1,9 +1,13 @@
+/**
+ * @param { import("knex").Knex } knex
+ * @returns { Promise<void> }
+ */
 exports.up = function (knex) {
   return Promise.all([
     knex.schema.createTable('markets', (table) => {
       table.increments('sn', { primaryKey: false });
       table.string('id').primary();
-      table.string('address');
+      table.string('address').notNullable();
       table.string('creator');
       table.string('base');
       table.string('baseAddress');
@@ -17,7 +21,7 @@ exports.up = function (knex) {
       table.boolean('enabledZeroOfferPrice').defaultTo(false);
       table.boolean('offerOnly').defaultTo(false);
       table.string('pair');
-      table.string('network');
+      table.string('network').notNullable();
       table.integer('mediatorPoolId').defaultTo(0);
       table.integer('openDisputes').defaultTo(0);
       table.integer('totalDisputes').defaultTo(0);
@@ -53,6 +57,10 @@ exports.up = function (knex) {
   ]);
 };
 
+/**
+ * @param { import("knex").Knex } knex
+ * @returns { Promise<void> }
+ */
 exports.down = function (knex) {
   return Promise.all([knex.schema.dropTable('markets')]);
 };

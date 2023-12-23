@@ -99,7 +99,7 @@ export class DisputeManagerHandler extends Handler {
    * @param creator The address of the dispute creator
    * @param disputeId The dispute ID
    * @param wantRelease Indicate the creator wants dispute released
-   * @param _event The event object
+   * @param event The event object
    * @param txn The transaction object
    */
   async onDisputeCreated(
@@ -107,7 +107,7 @@ export class DisputeManagerHandler extends Handler {
     creator: string,
     disputeId: BigNumber,
     wantRelease: boolean,
-    _event: ChainEvent,
+    event: ChainEvent,
     txn?: Transaction,
   ) {
     const swap = await Swap.get(this.network, orderId.toNumber(), undefined, undefined, txn);
@@ -201,6 +201,8 @@ export class DisputeManagerHandler extends Handler {
       txn,
     );
 
+    await this.netSrv.pointSrv.grantPoint('dispute:created', this.network, creator, event, txn);
+
     // Send notification;
     const recipient = isEqualStr(swap.provider, creator) ? swap.taker : swap.provider;
     this.notifSrv.notify(NotificationID.DisputeCreated, this.network, recipient, {
@@ -217,7 +219,7 @@ export class DisputeManagerHandler extends Handler {
    * @param committer The address of the mediator
    * @param ticketIdx The index of the ticket
    * @param hash The hash committed
-   * @param _event The event object
+   * @param event The event object
    * @param txn The transaction object
    */
   async onCommitted(
@@ -227,7 +229,7 @@ export class DisputeManagerHandler extends Handler {
     committer: string,
     ticketIdx: BigNumber,
     hash: string,
-    _event: ChainEvent,
+    event: ChainEvent,
     txn?: Transaction,
   ) {
     await Commit.create(
@@ -255,6 +257,8 @@ export class DisputeManagerHandler extends Handler {
       },
       txn,
     );
+
+    await this.netSrv.pointSrv.grantPoint('dispute:committed', this.network, committer, event, txn);
   }
 
   /**
@@ -265,7 +269,7 @@ export class DisputeManagerHandler extends Handler {
    * @param revealer The address of the mediator
    * @param ticketIdx The index of the ticket
    * @param vote The revealed vote
-   * @param _event The event object
+   * @param event The event object
    * @param txn The transaction object
    */
   async onRevealed(
@@ -275,7 +279,7 @@ export class DisputeManagerHandler extends Handler {
     revealer: string,
     ticketIdx: BigNumber,
     vote: string,
-    _event: ChainEvent,
+    event: ChainEvent,
     txn?: Transaction,
   ) {
     await Reveal.create(
@@ -304,6 +308,8 @@ export class DisputeManagerHandler extends Handler {
       },
       txn,
     );
+
+    await this.netSrv.pointSrv.grantPoint('dispute:revealed', this.network, revealer, event, txn);
   }
 
   /**
@@ -314,7 +320,7 @@ export class DisputeManagerHandler extends Handler {
    * @param executor The address dispute outcome executed
    * @param abandoned Indicate the dispute was abandoned
    * @param winningVote The vote that was predicted by the majority.
-   * @param _event The event object
+   * @param event The event object
    * @param txn The transaction object
    */
   async onDecisionExecuted(
@@ -324,7 +330,7 @@ export class DisputeManagerHandler extends Handler {
     executor: string,
     abandoned: boolean,
     winningVote: string,
-    _event: ChainEvent,
+    event: ChainEvent,
     txn?: Transaction,
   ) {
     let dispute = await Dispute.get(this.network, marketAddress, orderId.toNumber(), disputeId.toNumber(), txn);
@@ -397,6 +403,8 @@ export class DisputeManagerHandler extends Handler {
       },
       txn,
     );
+
+    await this.netSrv.pointSrv.grantPoint('dispute:executed', this.network, executor, event, txn);
 
     // Collate notification recipients
     const recipients: { address: string; drafted?: boolean }[] = [];

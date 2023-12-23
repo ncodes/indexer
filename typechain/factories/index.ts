@@ -7,6 +7,7 @@ export { Core__factory } from "./Core__factory";
 export { DisputeManager__factory } from "./DisputeManager__factory";
 export { ERC20__factory } from "./ERC20__factory";
 export { ERC721__factory } from "./ERC721__factory";
+export { Energon__factory } from "./Energon__factory";
 export { FeePool__factory } from "./FeePool__factory";
 export { LPPool__factory } from "./LPPool__factory";
 export { MarketCore__factory } from "./MarketCore__factory";

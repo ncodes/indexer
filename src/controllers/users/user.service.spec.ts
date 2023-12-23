@@ -6,6 +6,7 @@ import BadgeGrant from '../../models/badge_grant';
 import Market, { AssetType } from '../../models/market';
 import Swap from '../../models/swap';
 import User from '../../models/user';
+import { JointLinkService } from '../../services/joint_link.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { RedisService } from '../../services/redis.service';
 import ConvosService from '../convos/convos.service';
@@ -16,6 +17,15 @@ const mockTryToUsd = jest.fn();
 const MetadataServiceMock = jest.fn().mockImplementation(() => {
   return {
     tryToUsd: mockTryToUsd,
+  };
+});
+
+const mockCreateLink = jest
+  .fn()
+  .mockResolvedValue({ url: 'url', normalizedUrl: 'normalizedUrl', shortUrl: 'shortUrl' });
+const MockJointLinkService = jest.fn().mockImplementation(() => {
+  return {
+    createLink: mockCreateLink,
   };
 });
 
@@ -45,12 +55,14 @@ describe('UserService', () => {
 
     module = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
-      providers: [UserService, MarketService, MetadataService, RedisService, ConvosService],
+      providers: [UserService, MarketService, MetadataService, RedisService, ConvosService, JointLinkService],
     })
       .overrideProvider(MetadataService)
       .useValue(new MetadataServiceMock())
       .overrideProvider(RedisService)
       .useValue(new (jest.fn())())
+      .overrideProvider(JointLinkService)
+      .useValue(new MockJointLinkService())
       .compile();
 
     service = module.get<UserService>(UserService);
@@ -219,6 +231,7 @@ describe('UserService', () => {
       u = await User.getById(u.id);
       expect(u.referrer).toEqual(referrer);
       expect(u.refCode).toHaveLength(5);
+      expect(mockCreateLink).toBeCalledWith(u.refCode);
     });
 
     it(`should return true and not set referrer when user is not new`, async () => {
@@ -229,6 +242,7 @@ describe('UserService', () => {
       u = await User.getById(u.id);
       expect(u.referrer).toBeNull();
       expect(u.refCode).toHaveLength(5);
+      expect(mockCreateLink).toBeCalledWith(u.refCode);
     });
 
     it(`should return false when user already has a ref code`, async () => {
@@ -236,6 +250,7 @@ describe('UserService', () => {
       const u = await User.create({ address: user, refCode: '12345' });
       const res = await service.enableReferrer(true, referrer, u);
       expect(res).toBeFalsy();
+      expect(mockCreateLink).not.toBeCalled();
     });
   });
 });

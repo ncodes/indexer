@@ -138,21 +138,5 @@ export class UsersController {
     return ok(res).status(201).data({ ok: true }).build();
   }
 
-  /**
-   * List users referred by an address
-   * @param user The user object
-   */
-  @Get('/:address/referral-info')
-  async getReferInfo(@Param('address') address: string) {
-    const referrer = await User.getByAddress(address);
-    if (!referrer) throw404(ErrorMessages.UserNotFound);
-
-    const numReferred = await User.countReferred(address);
-    return ok()
-      .data({
-        refCode: referrer.refCode,
-        numReferred,
-      })
-      .build();
-  }
+  
 }

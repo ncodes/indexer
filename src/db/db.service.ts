@@ -44,7 +44,7 @@ export class DBService {
   /**
    * truncateTables truncates one or more tables
    */
-  truncateTables() {
+  async truncateTables() {
     return this.dbManager.truncateDb(['knex_migrations']);
   }
 

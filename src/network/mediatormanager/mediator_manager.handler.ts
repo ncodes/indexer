@@ -185,6 +185,8 @@ export class MediatorManagerHandler extends Handler {
       },
       txn,
     );
+
+    await this.netSrv.pointSrv.grantPoint('ticket:purchased', this.network, owner, event, txn);
   }
 
   /**
@@ -207,6 +209,8 @@ export class MediatorManagerHandler extends Handler {
       },
       txn,
     );
+
+    await this.netSrv.pointSrv.grantPoint('ticket:cancelled', this.network, owner, event, txn);
   }
 
   /**
@@ -214,12 +218,13 @@ export class MediatorManagerHandler extends Handler {
    * @param owner The ticket owner
    * @param id The unique id of the ticket
    * @param _amount The amount drained from the ticket
-   * @param _event The event object
+   * @param event The event object
    * @param txn The database transaction handle
    */
-  async onTicketDrained(owner: string, id: BigNumber, _amount: BigNumber, _event: ethers.Event, txn?: Transaction) {
+  async onTicketDrained(owner: string, id: BigNumber, _amount: BigNumber, event: ethers.Event, txn?: Transaction) {
     const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, id.toNumber(), undefined, txn);
     await Ticket.updateById(ticket.id, { bond: '0', drained: true, drainedAt: moment().toISOString() }, txn);
+    await this.netSrv.pointSrv.grantPoint('ticket:drained', this.network, owner, event, txn);
   }
 
   /**
@@ -227,12 +232,13 @@ export class MediatorManagerHandler extends Handler {
    * @param owner The ticket owner
    * @param poolId The pool ID of the ticket
    * @param ticketId The unique id of the ticket
-   * @param _event The event object
+   * @param event The event object
    * @param txn The database transaction handle
    */
-  async onJoinedPool(owner: string, poolId: BigNumber, ticketId: BigNumber, _event: ethers.Event, txn?: Transaction) {
+  async onJoinedPool(owner: string, poolId: BigNumber, ticketId: BigNumber, event: ethers.Event, txn?: Transaction) {
     const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, ticketId.toNumber(), undefined, txn);
     await Ticket.updateById(ticket.id, { poolId: poolId.toNumber(), joined: true }, txn);
+    await this.netSrv.pointSrv.grantPoint('ticket:joined', this.network, owner, event, txn);
   }
 
   /**
@@ -339,6 +345,9 @@ export class MediatorManagerHandler extends Handler {
       action: Events.SwapDrafted,
     });
 
+    await this.netSrv.pointSrv.grantPoint('ticket:drafted', this.network, owner, event, txn);
+    await this.netSrv.pointSrv.grantPoint('ticket:drafter', this.network, drafter, event, txn);
+
     // Send notification
     this.notifSrv.notify(NotificationID.TicketDrafted, this.network, owner, {
       owner,
@@ -367,7 +376,7 @@ export class MediatorManagerHandler extends Handler {
    * @param ticketId The unique id of the ticket
    * @param slashed Indicates whether the ticket was slashed
    * @param undrafter The address of the caller
-   * @param _event The event object
+   * @param event The event object
    * @param txn The database transaction handle
    */
   async onUndrafted(
@@ -375,7 +384,7 @@ export class MediatorManagerHandler extends Handler {
     ticketId: BigNumber,
     slashed: boolean,
     undrafter: string,
-    _event: ethers.Event,
+    event: ethers.Event,
     txn?: Transaction,
   ) {
     const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, ticketId.toNumber(), undefined, txn);
@@ -397,6 +406,9 @@ export class MediatorManagerHandler extends Handler {
       },
       txn,
     );
+
+    await this.netSrv.pointSrv.grantPoint('ticket:undrafted', this.network, owner, event, txn);
+    await this.netSrv.pointSrv.grantPoint('ticket:undrafter', this.network, undrafter, event, txn);
 
     // Complete an undraft mining task
     await MineTask.completeOneUndraftTask(this.network, ticket.orderId, ticket.disputeId, txn);
@@ -465,6 +477,8 @@ export class MediatorManagerHandler extends Handler {
       },
       txn,
     );
+
+    await this.netSrv.pointSrv.grantPoint('ticket:slashed', this.network, owner, event, txn);
 
     // Send notification
     this.notifSrv.notify(NotificationID.TicketSlashed, this.network, owner, {

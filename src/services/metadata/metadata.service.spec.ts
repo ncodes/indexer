@@ -1,6 +1,7 @@
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { isLocal, toDec } from '../../common/common';
+import { PointService } from '../../controllers/points/point.service';
 import { DBService } from '../../db/db.service';
 import { NotifierService } from '../../jobs/mailer/NotifierService';
 import NetworkService from '../../network/network.service';
@@ -74,7 +75,15 @@ if (process.env.TEST_EXTERNAL_API == 'true' || isLocal()) {
 
       module = await Test.createTestingModule({
         imports: [ConfigModule.forRoot({})],
-        providers: [ConfigService, NetworkService, MetadataService, ExchangeRateService, RedisService, NotifierService],
+        providers: [
+          ConfigService,
+          NetworkService,
+          MetadataService,
+          ExchangeRateService,
+          RedisService,
+          NotifierService,
+          PointService,
+        ],
       })
         .overrideProvider(RedisService)
         .useValue(new mockRedisService())

@@ -20,8 +20,8 @@ describe('Market', () => {
 
   describe('.search', function () {
     it('should return correct result when `network` is set', async () => {
-      const mkt = await Market.create({ network: net, totalLiquidity: '1' });
-      await Market.create({ network: 'localhost' });
+      const mkt = await Market.create({ address: '0xMarket', network: net, totalLiquidity: '1' });
+      await Market.create({ address: '0xMarket', network: 'localhost' });
       const res = (await Market.search(
         net,
         undefined,
@@ -51,8 +51,13 @@ describe('Market', () => {
     });
 
     it('should return correct result when `creator` is set', async () => {
-      const mkt = await Market.create({ totalLiquidity: '1', creator: '0xCreator' });
-      await Market.create({ totalLiquidity: '1', creator: '0xCreator2' });
+      const mkt = await Market.create({
+        network: 'ethereum',
+        address: '0xMarket',
+        totalLiquidity: '1',
+        creator: '0xCreator',
+      });
+      await Market.create({ network: 'ethereum', address: '0xMarket2', totalLiquidity: '1', creator: '0xCreator2' });
       const res = (await Market.search(
         undefined,
         '0xCreator',
@@ -82,8 +87,12 @@ describe('Market', () => {
     });
 
     it('should return correct result when `address` is set', async () => {
-      const mkt = await Market.create({ totalLiquidity: '1', address: '0xAddress' });
-      await Market.create({ totalLiquidity: '1', address: '0xAddress2' });
+      const mkt = await Market.create({
+        network: 'ethereum',
+        totalLiquidity: '1',
+        address: '0xAddress',
+      });
+      await Market.create({ network: 'ethereum', totalLiquidity: '1', address: '0xAddress2' });
       const res = (await Market.search(
         undefined,
         undefined,
@@ -113,8 +122,20 @@ describe('Market', () => {
     });
 
     it('should return correct result when `base` is set', async () => {
-      await Market.create({ totalLiquidity: '1', baseAddress: '0xBase', base: 'BASE' });
-      await Market.create({ totalLiquidity: '1', baseAddress: '0xBase', base: 'BAZE' });
+      await Market.create({
+        network: 'ethereum',
+        address: '0xMarket',
+        totalLiquidity: '1',
+        baseAddress: '0xBase',
+        base: 'BASE',
+      });
+      await Market.create({
+        network: 'ethereum',
+        address: '0xMarket2',
+        totalLiquidity: '1',
+        baseAddress: '0xBase',
+        base: 'BAZE',
+      });
       let res = (await Market.search(
         undefined,
         undefined,
@@ -170,8 +191,20 @@ describe('Market', () => {
     });
 
     it('should return correct result when `quote` is set', async () => {
-      const mkt = await Market.create({ totalLiquidity: '1', quoteAddress: '0xQuote', quote: 'QUOTE' });
-      const mkt2 = await Market.create({ totalLiquidity: '1', quoteAddress: '0xQuote2', quote: 'QUOTE2' });
+      const mkt = await Market.create({
+        network: 'ethereum',
+        address: '0xMarket',
+        totalLiquidity: '1',
+        quoteAddress: '0xQuote',
+        quote: 'QUOTE',
+      });
+      const mkt2 = await Market.create({
+        network: 'ethereum',
+        address: '0xMarket2',
+        totalLiquidity: '1',
+        quoteAddress: '0xQuote2',
+        quote: 'QUOTE2',
+      });
       let res = (await Market.search(
         undefined,
         undefined,
@@ -228,8 +261,14 @@ describe('Market', () => {
     });
 
     it('should return correct result when `queryStr` is set', async () => {
-      const mkt = await Market.create({ totalLiquidity: '1', base: 'BTC', quoteAddress: '0xQuote' });
-      await Market.create({ totalLiquidity: '1', quoteAddress: '0xQuote2' });
+      const mkt = await Market.create({
+        network: 'ethereum',
+        address: '0xMarket',
+        totalLiquidity: '1',
+        base: 'BTC',
+        quoteAddress: '0xQuote',
+      });
+      await Market.create({ network: 'ethereum', address: '0xMarket2', totalLiquidity: '1', quoteAddress: '0xQuote2' });
       const res = (await Market.search(
         undefined,
         undefined,
@@ -259,9 +298,9 @@ describe('Market', () => {
     });
 
     it('should return correct result when `price` is set', async () => {
-      const mkt = await Market.create({ lowestPrice: '9' });
-      const mkt2 = await Market.create({ lowestPrice: '10' });
-      const mkt3 = await Market.create({ lowestPrice: '11' });
+      const mkt = await Market.create({ network: 'ethereum', address: '0xMarket', lowestPrice: '9' });
+      const mkt2 = await Market.create({ network: 'ethereum', address: '0xMarket2', lowestPrice: '10' });
+      const mkt3 = await Market.create({ network: 'ethereum', address: '0xMarket3', lowestPrice: '11' });
       let res = (await Market.search(
         undefined,
         undefined,
@@ -348,9 +387,19 @@ describe('Market', () => {
     });
 
     it('should return correct result when `priceUsd` is set', async () => {
-      const mkt = await Market.create({ quoteDecimals: 0, lowestPrice: '9' }); // 4.5
-      const mkt2 = await Market.create({ quoteDecimals: 0, lowestPrice: '10' }); // 5.0
-      const mkt3 = await Market.create({ quoteDecimals: 0, lowestPrice: '11' }); // 5.5
+      const mkt = await Market.create({ network: 'ethereum', address: '0xMarket', quoteDecimals: 0, lowestPrice: '9' }); // 4.5
+      const mkt2 = await Market.create({
+        network: 'ethereum',
+        address: '0xMarket2',
+        quoteDecimals: 0,
+        lowestPrice: '10',
+      }); // 5.0
+      const mkt3 = await Market.create({
+        network: 'ethereum',
+        address: '0xMarket3',
+        quoteDecimals: 0,
+        lowestPrice: '11',
+      }); // 5.5
       let res = (await Market.search(
         undefined,
         undefined,
@@ -436,9 +485,9 @@ describe('Market', () => {
     });
 
     it('should return correct result when `liquidity` is set', async () => {
-      const mkt = await Market.create({ totalLiquidity: '9' });
-      const mkt2 = await Market.create({ totalLiquidity: '10' });
-      const mkt3 = await Market.create({ totalLiquidity: '11' });
+      const mkt = await Market.create({ network: 'ethereum', address: '0xMarket', totalLiquidity: '9' });
+      const mkt2 = await Market.create({ network: 'ethereum', address: '0xMarket2', totalLiquidity: '10' });
+      const mkt3 = await Market.create({ network: 'ethereum', address: '0xMarket3', totalLiquidity: '11' });
       let res = (await Market.search(
         undefined,
         undefined,
@@ -525,9 +574,24 @@ describe('Market', () => {
     });
 
     it('should return correct result when `liquidityUsd` is set', async () => {
-      const mkt = await Market.create({ quoteDecimals: 0, totalLiquidity: '9' }); // 4.5
-      const mkt2 = await Market.create({ quoteDecimals: 0, totalLiquidity: '10' }); // 5.0
-      const mkt3 = await Market.create({ quoteDecimals: 0, totalLiquidity: '11' }); // 5.5
+      const mkt = await Market.create({
+        network: 'ethereum',
+        address: '0xMarket',
+        quoteDecimals: 0,
+        totalLiquidity: '9',
+      }); // 4.5
+      const mkt2 = await Market.create({
+        network: 'ethereum',
+        address: '0xMarket2',
+        quoteDecimals: 0,
+        totalLiquidity: '10',
+      }); // 5.0
+      const mkt3 = await Market.create({
+        network: 'ethereum',
+        address: '0xMarket3',
+        quoteDecimals: 0,
+        totalLiquidity: '11',
+      }); // 5.5
       let res = (await Market.search(
         undefined,
         undefined,
@@ -613,8 +677,18 @@ describe('Market', () => {
     });
 
     it('should return correct result when `permSwap` is set', async () => {
-      const mkt = await Market.create({ totalLiquidity: '1', permSwap: false });
-      const mkt2 = await Market.create({ totalLiquidity: '1', permSwap: true });
+      const mkt = await Market.create({
+        network: 'ethereum',
+        address: '0xMarket',
+        totalLiquidity: '1',
+        permSwap: false,
+      });
+      const mkt2 = await Market.create({
+        network: 'ethereum',
+        address: '0xMarket2',
+        totalLiquidity: '1',
+        permSwap: true,
+      });
       let res = (await Market.search(
         undefined,
         undefined,
@@ -697,8 +771,18 @@ describe('Market', () => {
     });
 
     it('should return correct result when `permPut` is set', async () => {
-      const mkt = await Market.create({ totalLiquidity: '1', permPut: false });
-      const mkt2 = await Market.create({ totalLiquidity: '1', permPut: true });
+      const mkt = await Market.create({
+        network: 'ethereum',
+        address: '0xMarket',
+        totalLiquidity: '1',
+        permPut: false,
+      });
+      const mkt2 = await Market.create({
+        network: 'ethereum',
+        address: '0xMarket2',
+        totalLiquidity: '1',
+        permPut: true,
+      });
       let res = (await Market.search(
         undefined,
         undefined,
@@ -781,8 +865,13 @@ describe('Market', () => {
     });
 
     it('should return correct result when `instant` is set', async () => {
-      const mkt = await Market.create({ totalLiquidity: '1', instant: true });
-      const mkt2 = await Market.create({ totalLiquidity: '1', instant: false });
+      const mkt = await Market.create({ network: 'ethereum', address: '0xMarket', totalLiquidity: '1', instant: true });
+      const mkt2 = await Market.create({
+        network: 'ethereum',
+        address: '0xMarket2',
+        totalLiquidity: '1',
+        instant: false,
+      });
       let res = (await Market.search(
         undefined,
         undefined,
@@ -839,8 +928,8 @@ describe('Market', () => {
     });
 
     it('should return correct result when `countOnly` is set', async () => {
-      await Market.create({ totalLiquidity: '1', amountSwapped: '2' });
-      await Market.create({ totalLiquidity: '1', amountSwapped: '1' });
+      await Market.create({ network: 'ethereum', address: '0xMarket', totalLiquidity: '1', amountSwapped: '2' });
+      await Market.create({ network: 'ethereum', address: '0xMarket2', totalLiquidity: '1', amountSwapped: '1' });
       const res = (await Market.search(
         undefined,
         undefined,
@@ -869,8 +958,13 @@ describe('Market', () => {
     });
 
     it('should return correct result when `limit` is set', async () => {
-      const mkt = await Market.create({ totalLiquidity: '1', amountSwapped: '2' });
-      await Market.create({ totalLiquidity: '1', amountSwapped: '1' });
+      const mkt = await Market.create({
+        network: 'ethereum',
+        address: '0xMarket',
+        totalLiquidity: '1',
+        amountSwapped: '2',
+      });
+      await Market.create({ network: 'ethereum', address: '0xMarket2', totalLiquidity: '1', amountSwapped: '1' });
       let res = (await Market.search(
         undefined,
         undefined,
@@ -926,8 +1020,18 @@ describe('Market', () => {
     });
 
     it('should return correct result when `offset` is set', async () => {
-      const mkt = await Market.create({ totalLiquidity: '1', amountSwapped: '2' });
-      const mkt2 = await Market.create({ totalLiquidity: '1', amountSwapped: '1' });
+      const mkt = await Market.create({
+        network: 'ethereum',
+        address: '0xMarket',
+        totalLiquidity: '1',
+        amountSwapped: '2',
+      });
+      const mkt2 = await Market.create({
+        network: 'ethereum',
+        address: '0xMarket2',
+        totalLiquidity: '1',
+        amountSwapped: '1',
+      });
       let res = (await Market.search(
         undefined,
         undefined,
@@ -984,8 +1088,18 @@ describe('Market', () => {
     });
 
     it('should return correct result when `regions` is set', async () => {
-      const mkt = await Market.create({ totalLiquidity: '1', regions: ['region/nga', 'region/europe'] });
-      const mkt2 = await Market.create({ totalLiquidity: '1', regions: ['region/asia'] });
+      const mkt = await Market.create({
+        network: 'ethereum',
+        address: '0xMarket',
+        totalLiquidity: '1',
+        regions: ['region/nga', 'region/europe'],
+      });
+      const mkt2 = await Market.create({
+        network: 'ethereum',
+        address: '0xMarket2',
+        totalLiquidity: '1',
+        regions: ['region/asia'],
+      });
       let res = (await Market.search(
         undefined,
         undefined,
@@ -1123,8 +1237,18 @@ describe('Market', () => {
     });
 
     it('should return correct result when `reqSwapBadges` is set', async () => {
-      const mkt = await Market.create({ totalLiquidity: '1', requiredSwapBadges: ['merchant'] });
-      const mkt2 = await Market.create({ totalLiquidity: '1', requiredSwapBadges: ['bitcoiner'] });
+      const mkt = await Market.create({
+        network: 'ethereum',
+        address: '0xMarket',
+        totalLiquidity: '1',
+        requiredSwapBadges: ['merchant'],
+      });
+      const mkt2 = await Market.create({
+        network: 'ethereum',
+        address: '0xMarket2',
+        totalLiquidity: '1',
+        requiredSwapBadges: ['bitcoiner'],
+      });
       let res = (await Market.search(
         undefined,
         undefined,
@@ -1207,8 +1331,18 @@ describe('Market', () => {
     });
 
     it('should return correct result when `reqPutBadges` is set', async () => {
-      const mkt = await Market.create({ totalLiquidity: '1', requiredPutBadges: ['merchant'] });
-      const mkt2 = await Market.create({ totalLiquidity: '1', requiredPutBadges: ['bitcoiner'] });
+      const mkt = await Market.create({
+        network: 'ethereum',
+        address: '0xMarket',
+        totalLiquidity: '1',
+        requiredPutBadges: ['merchant'],
+      });
+      const mkt2 = await Market.create({
+        network: 'ethereum',
+        address: '0xMarket2',
+        totalLiquidity: '1',
+        requiredPutBadges: ['bitcoiner'],
+      });
       let res = (await Market.search(
         undefined,
         undefined,
@@ -1291,8 +1425,18 @@ describe('Market', () => {
     });
 
     it('should return correct result when `offer` is set', async () => {
-      const mkt = await Market.create({ totalLiquidity: '1', offerOnly: true });
-      const mkt2 = await Market.create({ totalLiquidity: '1', offerOnly: false });
+      const mkt = await Market.create({
+        network: 'ethereum',
+        address: '0xMarket',
+        totalLiquidity: '1',
+        offerOnly: true,
+      });
+      const mkt2 = await Market.create({
+        totalLiquidity: '1',
+        network: 'ethereum',
+        address: '0xMarket2',
+        offerOnly: false,
+      });
       let res = (await Market.search(
         undefined,
         undefined,

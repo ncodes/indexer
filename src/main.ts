@@ -1,3 +1,4 @@
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import * as dayjs from 'dayjs';
 import * as utc from 'dayjs/plugin/utc';
@@ -6,6 +7,7 @@ import * as webpush from 'web-push';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/interceptors/exception_filter';
 import { appLogger } from './common/loggers/logger';
+import { CommonValidationPipeOpt } from './common/pipes/common.pipe';
 
 dayjs.extend(utc);
 
@@ -17,6 +19,7 @@ async function bootstrap() {
     bodyParser: false,
   });
 
+  app.useGlobalPipes(new ValidationPipe(CommonValidationPipeOpt));
   app.enableCors();
   app.useGlobalFilters(new AllExceptionsFilter());
 

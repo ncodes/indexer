@@ -172,6 +172,10 @@ export default class Market extends BaseModel {
     );
   }
 
+  involvesERC20() {
+    return Market.isERC20(this.baseType) || Market.isERC20(this.quoteType);
+  }
+
   static isERC20(assetType: AssetType) {
     return assetType == AssetType.ERC20;
   }

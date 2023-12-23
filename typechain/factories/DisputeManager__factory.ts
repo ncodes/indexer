@@ -75,6 +75,12 @@ const _abi = [
       },
       {
         indexed: false,
+        internalType: "uint256",
+        name: "ticketIdx",
+        type: "uint256",
+      },
+      {
+        indexed: false,
         internalType: "bytes32",
         name: "hash",
         type: "bytes32",
@@ -291,6 +297,12 @@ const _abi = [
       },
       {
         indexed: false,
+        internalType: "uint256",
+        name: "ticketIdx",
+        type: "uint256",
+      },
+      {
+        indexed: false,
         internalType: "bytes1",
         name: "vote",
         type: "bytes1",
@@ -454,6 +466,11 @@ const _abi = [
         type: "uint256",
       },
       {
+        internalType: "uint256",
+        name: "ticketIdx",
+        type: "uint256",
+      },
+      {
         internalType: "bytes32",
         name: "_hash",
         type: "bytes32",
@@ -472,6 +489,25 @@ const _abi = [
         internalType: "contract ICore",
         name: "",
         type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "orderId",
+        type: "uint256",
+      },
+    ],
+    name: "countDisputes",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
       },
     ],
     stateMutability: "view",
@@ -619,6 +655,102 @@ const _abi = [
     type: "function",
   },
   {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "orderId",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "dispIdx",
+        type: "uint256",
+      },
+    ],
+    name: "getDispute",
+    outputs: [
+      {
+        components: [
+          {
+            internalType: "uint256",
+            name: "commitEndAt",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "predictEndAt",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "evidenceEndAt",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "nRelease",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "nCancel",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "undrafted",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256[]",
+            name: "ticketIndexes",
+            type: "uint256[]",
+          },
+          {
+            internalType: "address",
+            name: "marketId",
+            type: "address",
+          },
+          {
+            internalType: "address",
+            name: "creator",
+            type: "address",
+          },
+          {
+            internalType: "address",
+            name: "defendant",
+            type: "address",
+          },
+          {
+            internalType: "address[]",
+            name: "ticketOwners",
+            type: "address[]",
+          },
+          {
+            internalType: "bool",
+            name: "executed",
+            type: "bool",
+          },
+          {
+            internalType: "bool",
+            name: "wantRelease",
+            type: "bool",
+          },
+          {
+            internalType: "bool",
+            name: "abandoned",
+            type: "bool",
+          },
+        ],
+        internalType: "struct Dispute",
+        name: "",
+        type: "tuple",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [],
     name: "marketCore",
     outputs: [
@@ -687,6 +819,11 @@ const _abi = [
         name: "",
         type: "address",
       },
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
     ],
     name: "predictions",
     outputs: [
@@ -721,6 +858,11 @@ const _abi = [
       {
         internalType: "uint256",
         name: "orderId",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "ticketIdx",
         type: "uint256",
       },
       {

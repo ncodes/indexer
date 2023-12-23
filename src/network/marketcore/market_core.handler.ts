@@ -299,6 +299,8 @@ export class MarketCoreHandler extends Handler {
       txn,
     );
 
+    await this.netSrv.pointSrv.grantPoint('market:created', this.network, owner, event, txn);
+
     return Promise.resolve(undefined);
   }
 

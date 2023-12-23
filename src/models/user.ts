@@ -14,6 +14,8 @@ export default class User extends BaseModel {
   role: string;
   deviceTokenEmail: string;
   otpSecret: string;
+  referrer: string;
+  refCode: string;
 
   // Not persisted
   totalSwaps: number;
@@ -140,5 +142,30 @@ export default class User extends BaseModel {
    */
   static updateById(id: string, udp: Partial<User>) {
     return this.query().whereNotDeleted().patchAndFetchById(id, udp);
+  }
+
+  /**
+   * Count the number of users referred by an address
+   * @param address The address of the referrer
+   */
+  static countReferred(address: string) {
+    return this.query()
+      .where('referrer', 'ilike', address)
+      .whereNotDeleted()
+      .count('id')
+      .first()
+      .then((res: any) => {
+        return parseInt(res.count);
+      });
+  }
+
+  /**
+   * Get the addresses referred by an address
+   * @param address The address of the referrer
+   * @param limit The limit of addresses to get
+   * @param txn Optional transaction object
+   */
+  static getReferred(address: string, limit: number, txn?: Transaction) {
+    return this.query(txn).where('referrer', 'ilike', address).whereNotDeleted().select('address').limit(limit);
   }
 }

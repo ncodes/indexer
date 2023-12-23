@@ -83,13 +83,13 @@ export declare namespace Structs {
   };
 
   export type MarketDurStruct = {
-    disputeDelayTime: BigNumberish;
+    disputeDelayDur: BigNumberish;
     evidenceDur: BigNumberish;
     predictDur: BigNumberish;
   };
 
   export type MarketDurStructOutput = [BigNumber, BigNumber, BigNumber] & {
-    disputeDelayTime: BigNumber;
+    disputeDelayDur: BigNumber;
     evidenceDur: BigNumber;
     predictDur: BigNumber;
   };
@@ -332,7 +332,7 @@ export interface CoreInterface extends utils.Interface {
     "computeSwapFee(address,address,uint256,address,uint256,uint256)": FunctionFragment;
     "configureFeePool(uint256)": FunctionFragment;
     "createOffer(address,address,address,uint256,uint256,uint256,uint256[],uint256,uint256)": FunctionFragment;
-    "executeOffer(uint256)": FunctionFragment;
+    "executeOffer(uint256,uint256)": FunctionFragment;
     "feeBalanceOf(address,address)": FunctionFragment;
     "getFeeBPs()": FunctionFragment;
     "getLiquidity(address,address,uint256)": FunctionFragment;
@@ -515,7 +515,7 @@ export interface CoreInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "executeOffer",
-    values: [BigNumberish]
+    values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "feeBalanceOf",
@@ -1120,7 +1120,7 @@ export interface NewOfferEventObject {
   amount: BigNumber;
   price: BigNumber;
   ids: BigNumber[];
-  deadline: BigNumber;
+  expireDuration: BigNumber;
 }
 export type NewOfferEvent = TypedEvent<
   [
@@ -1190,7 +1190,7 @@ export interface OfferUpdatedEventObject {
   amount: BigNumber;
   price: BigNumber;
   ids: BigNumber[];
-  deadline: BigNumber;
+  execDelayDur: BigNumber;
 }
 export type OfferUpdatedEvent = TypedEvent<
   [BigNumber, string, BigNumber, BigNumber, BigNumber[], BigNumber],
@@ -1298,7 +1298,7 @@ export type SwapOrderEventFilter = TypedEventFilter<SwapOrderEvent>;
 
 export interface SwapOrderPaidEventObject {
   orderID: BigNumber;
-  disputeFrom: BigNumber;
+  disputeDelayDur: BigNumber;
 }
 export type SwapOrderPaidEvent = TypedEvent<
   [BigNumber, BigNumber],
@@ -1694,7 +1694,7 @@ export interface Core extends BaseContract {
       orderAmt: BigNumberish,
       orderPrice: BigNumberish,
       overrides?: CallOverrides
-    ): Promise<[BigNumber, BigNumber]>;
+    ): Promise<[BigNumber, BigNumber, BigNumber, BigNumber]>;
 
     configureFeePool(
       interval: BigNumberish,
@@ -1716,6 +1716,7 @@ export interface Core extends BaseContract {
 
     executeOffer(
       offerId: BigNumberish,
+      txDeadline: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<ContractTransaction>;
 
@@ -2163,7 +2164,7 @@ export interface Core extends BaseContract {
     orderAmt: BigNumberish,
     orderPrice: BigNumberish,
     overrides?: CallOverrides
-  ): Promise<[BigNumber, BigNumber]>;
+  ): Promise<[BigNumber, BigNumber, BigNumber, BigNumber]>;
 
   configureFeePool(
     interval: BigNumberish,
@@ -2185,6 +2186,7 @@ export interface Core extends BaseContract {
 
   executeOffer(
     offerId: BigNumberish,
+    txDeadline: BigNumberish,
     overrides?: Overrides & { from?: string }
   ): Promise<ContractTransaction>;
 
@@ -2629,7 +2631,7 @@ export interface Core extends BaseContract {
       orderAmt: BigNumberish,
       orderPrice: BigNumberish,
       overrides?: CallOverrides
-    ): Promise<[BigNumber, BigNumber]>;
+    ): Promise<[BigNumber, BigNumber, BigNumber, BigNumber]>;
 
     configureFeePool(
       interval: BigNumberish,
@@ -2651,6 +2653,7 @@ export interface Core extends BaseContract {
 
     executeOffer(
       offerId: BigNumberish,
+      txDeadline: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -3038,7 +3041,7 @@ export interface Core extends BaseContract {
       amount?: null,
       price?: null,
       ids?: null,
-      deadline?: null
+      expireDuration?: null
     ): NewOfferEventFilter;
     NewOffer(
       marketId?: null,
@@ -3049,7 +3052,7 @@ export interface Core extends BaseContract {
       amount?: null,
       price?: null,
       ids?: null,
-      deadline?: null
+      expireDuration?: null
     ): NewOfferEventFilter;
 
     "OfferAccepted(uint256,address,uint256)"(
@@ -3096,7 +3099,7 @@ export interface Core extends BaseContract {
       amount?: null,
       price?: null,
       ids?: null,
-      deadline?: null
+      execDelayDur?: null
     ): OfferUpdatedEventFilter;
     OfferUpdated(
       offerId?: BigNumberish | null,
@@ -3104,7 +3107,7 @@ export interface Core extends BaseContract {
       amount?: null,
       price?: null,
       ids?: null,
-      deadline?: null
+      execDelayDur?: null
     ): OfferUpdatedEventFilter;
 
     "OrderCancelled(uint256,address,bool)"(
@@ -3199,11 +3202,11 @@ export interface Core extends BaseContract {
 
     "SwapOrderPaid(uint256,uint256)"(
       orderID?: BigNumberish | null,
-      disputeFrom?: null
+      disputeDelayDur?: null
     ): SwapOrderPaidEventFilter;
     SwapOrderPaid(
       orderID?: BigNumberish | null,
-      disputeFrom?: null
+      disputeDelayDur?: null
     ): SwapOrderPaidEventFilter;
 
     "TogglePause(address,address,uint256,bool)"(
@@ -3482,6 +3485,7 @@ export interface Core extends BaseContract {
 
     executeOffer(
       offerId: BigNumberish,
+      txDeadline: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<BigNumber>;
 
@@ -3893,6 +3897,7 @@ export interface Core extends BaseContract {
 
     executeOffer(
       offerId: BigNumberish,
+      txDeadline: BigNumberish,
       overrides?: Overrides & { from?: string }
     ): Promise<PopulatedTransaction>;
 

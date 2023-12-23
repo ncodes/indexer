@@ -1,4 +1,3 @@
-import { BadgeManifest } from '@jointlabs/chains-info';
 import { INestApplication } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -44,8 +43,6 @@ describe('BadgesController', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.resetModules();
-
-    BadgeManifest['localhost'] = {};
 
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],

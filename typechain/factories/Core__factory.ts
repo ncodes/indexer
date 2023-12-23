@@ -141,7 +141,7 @@ const _abi = [
       {
         indexed: false,
         internalType: "uint256",
-        name: "deadline",
+        name: "expireDuration",
         type: "uint256",
       },
     ],
@@ -266,7 +266,7 @@ const _abi = [
       {
         indexed: false,
         internalType: "uint256",
-        name: "deadline",
+        name: "execDelayDur",
         type: "uint256",
       },
     ],
@@ -507,7 +507,7 @@ const _abi = [
       {
         indexed: false,
         internalType: "uint256",
-        name: "disputeFrom",
+        name: "disputeDelayDur",
         type: "uint256",
       },
     ],
@@ -1233,6 +1233,16 @@ const _abi = [
         name: "",
         type: "uint256",
       },
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
     ],
     stateMutability: "view",
     type: "function",
@@ -1308,6 +1318,11 @@ const _abi = [
       {
         internalType: "uint256",
         name: "offerId",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "txDeadline",
         type: "uint256",
       },
     ],
@@ -1534,7 +1549,7 @@ const _abi = [
             components: [
               {
                 internalType: "uint256",
-                name: "disputeDelayTime",
+                name: "disputeDelayDur",
                 type: "uint256",
               },
               {

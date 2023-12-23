@@ -284,7 +284,7 @@ describe('MarketsController', () => {
           address: '0x123',
           creator: '0xCreator',
         });
-        await Market.create({});
+        await Market.create({ network: net, address: randStr() });
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
@@ -379,8 +379,8 @@ describe('MarketsController', () => {
 
     describe('filter by permPut', () => {
       it('should 200 and correct market', async () => {
-        const market = await Market.create({ network: net, permPut: true });
-        const market2 = await Market.create({ network: net, permPut: false });
+        const market = await Market.create({ network: net, address: randStr(), permPut: true });
+        const market2 = await Market.create({ network: net, address: randStr(), permPut: false });
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
@@ -417,6 +417,7 @@ describe('MarketsController', () => {
       it('should 200 and correct market', async () => {
         const m1 = await Market.create({
           network: net,
+          address: randStr(),
           baseType: AssetType.ERC20,
           quoteType: AssetType.ERC20,
           instant: true,
@@ -424,6 +425,7 @@ describe('MarketsController', () => {
         });
         const m2 = await Market.create({
           network: net,
+          address: randStr(),
           baseType: AssetType.ERC20,
           quoteType: AssetType.ERC20,
           instant: true,
@@ -431,6 +433,7 @@ describe('MarketsController', () => {
         });
         const m3 = await Market.create({
           network: net,
+          address: randStr(),
           baseType: AssetType.ERC20,
           quoteType: AssetType.SYNTH,
           updatedAt: moment().subtract(1, 's').toISOString(),
@@ -475,7 +478,7 @@ describe('MarketsController', () => {
           address: '0x123',
           baseAddress: '0xBaseAddr',
         });
-        await Market.create({});
+        await Market.create({ network: net, address: randStr() });
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
@@ -496,7 +499,7 @@ describe('MarketsController', () => {
           address: '0x123',
           quoteAddress: '0xQuoteAddr',
         });
-        await Market.create({});
+        await Market.create({ network: net, address: randStr() });
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
@@ -517,7 +520,7 @@ describe('MarketsController', () => {
           address: '0x123',
           creator: '0xCreator',
         });
-        await Market.create({});
+        await Market.create({ network: net, address: randStr() });
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
@@ -537,7 +540,7 @@ describe('MarketsController', () => {
           network: net,
           address: '0x123',
         });
-        await Market.create({});
+        await Market.create({ network: net, address: randStr() });
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
@@ -555,9 +558,10 @@ describe('MarketsController', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({
           network: net,
+          address: randStr(),
           base: 'BTC',
         });
-        await Market.create({});
+        await Market.create({ network: net, address: randStr() });
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
@@ -575,9 +579,10 @@ describe('MarketsController', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({
           network: net,
+          address: randStr(),
           baseAddress: '0xBaseAddress',
         });
-        await Market.create({});
+        await Market.create({ network: net, address: randStr() });
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
@@ -595,9 +600,10 @@ describe('MarketsController', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({
           network: net,
+          address: randStr(),
           quote: 'BTC',
         });
-        await Market.create({});
+        await Market.create({ network: net, address: randStr() });
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
@@ -615,9 +621,10 @@ describe('MarketsController', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({
           network: net,
+          address: randStr(),
           quoteAddress: '0xQuoteAddress',
         });
-        await Market.create({});
+        await Market.create({ network: net, address: randStr() });
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
@@ -635,9 +642,10 @@ describe('MarketsController', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({
           network: net,
+          address: randStr(),
           pair: 'BTCUSDT',
         });
-        await Market.create({});
+        await Market.create({ network: net, address: randStr() });
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
@@ -683,8 +691,13 @@ describe('MarketsController', () => {
 
     describe('filter by price', () => {
       it('should 200 and correct market', async () => {
-        const market = await Market.create({ network: net, lowestPrice: '10', amountSwapped: '2' });
-        const market2 = await Market.create({ network: net, lowestPrice: '11', amountSwapped: '1' });
+        const market = await Market.create({ network: net, address: randStr(), lowestPrice: '10', amountSwapped: '2' });
+        const market2 = await Market.create({
+          network: net,
+          address: randStr(),
+          lowestPrice: '11',
+          amountSwapped: '1',
+        });
 
         await request(app.getHttpServer())
           .get(`/v1/markets`)
@@ -776,6 +789,7 @@ describe('MarketsController', () => {
       beforeEach(async () => {
         market = await Market.create({
           network: net,
+          address: randStr(),
           baseAddress: '0xBase',
           quoteAddress: '0xQuote',
           baseDecimals: 18,
@@ -785,6 +799,7 @@ describe('MarketsController', () => {
         });
         market2 = await Market.create({
           network: net,
+          address: randStr(),
           baseAddress: '0xBase',
           quoteAddress: '0xQuote',
           baseDecimals: 18,
@@ -894,8 +909,18 @@ describe('MarketsController', () => {
 
     describe('filter by liquidity', () => {
       it('should 200 and correct market', async () => {
-        const market = await Market.create({ network: net, totalLiquidity: '10', amountSwapped: '2' });
-        const market2 = await Market.create({ network: net, totalLiquidity: '11', amountSwapped: '1' });
+        const market = await Market.create({
+          network: net,
+          address: randStr(),
+          totalLiquidity: '10',
+          amountSwapped: '2',
+        });
+        const market2 = await Market.create({
+          network: net,
+          address: randStr(),
+          totalLiquidity: '11',
+          amountSwapped: '1',
+        });
 
         jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
 
@@ -989,6 +1014,7 @@ describe('MarketsController', () => {
       beforeEach(async () => {
         market = await Market.create({
           network: net,
+          address: randStr(),
           baseAddress: '0xBase',
           quoteAddress: '0xQuote',
           baseDecimals: 18,
@@ -998,6 +1024,7 @@ describe('MarketsController', () => {
         });
         market2 = await Market.create({
           network: net,
+          address: randStr(),
           baseAddress: '0xBase',
           quoteAddress: '0xQuote',
           baseDecimals: 18,
@@ -1109,8 +1136,8 @@ describe('MarketsController', () => {
 
     describe('filter by merchantLp', () => {
       it('should 200 and correct market', async () => {
-        const market = await Market.create({ network: net, requiredPutBadges: ['merchant'] });
-        await Market.create({ network: net });
+        const market = await Market.create({ network: net, address: randStr(), requiredPutBadges: ['merchant'] });
+        await Market.create({ network: net, address: randStr() });
 
         jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
 
@@ -1128,8 +1155,8 @@ describe('MarketsController', () => {
 
     describe('filter by kycLp', () => {
       it('should 200 and correct market', async () => {
-        const market = await Market.create({ network: net, requiredPutBadges: ['kyc'] });
-        await Market.create({ network: net });
+        const market = await Market.create({ network: net, address: randStr(), requiredPutBadges: ['kyc'] });
+        await Market.create({ network: net, address: randStr() });
 
         jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
 
@@ -1147,8 +1174,8 @@ describe('MarketsController', () => {
 
     describe('filter by kycTaker', () => {
       it('should 200 and correct market', async () => {
-        const market = await Market.create({ network: net, requiredSwapBadges: ['kyc'] });
-        await Market.create({ network: net });
+        const market = await Market.create({ network: net, address: randStr(), requiredSwapBadges: ['kyc'] });
+        await Market.create({ network: net, address: randStr() });
 
         jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
 
@@ -1166,8 +1193,12 @@ describe('MarketsController', () => {
 
     describe('filter by putBadges', () => {
       it('should 200 and correct market', async () => {
-        const market = await Market.create({ network: net, requiredPutBadges: ['kyc'] });
-        const market2 = await Market.create({ network: net, requiredPutBadges: ['merchant/africa'] });
+        const market = await Market.create({ network: net, address: randStr(), requiredPutBadges: ['kyc'] });
+        const market2 = await Market.create({
+          network: net,
+          address: randStr(),
+          requiredPutBadges: ['merchant/africa'],
+        });
 
         jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
 
@@ -1206,11 +1237,13 @@ describe('MarketsController', () => {
       it('should 200 and correct market', async () => {
         const market = await Market.create({
           network: net,
+          address: randStr(),
           quoteAddress: '0xQuoteAddress',
           updatedAt: moment().subtract(2, 's').toISOString(),
         });
         await Market.create({
           network: net,
+          address: randStr(),
           updatedAt: moment().subtract(3, 's').toISOString(),
         });
 
@@ -1232,11 +1265,13 @@ describe('MarketsController', () => {
       it('should 200 and correct market', async () => {
         await Market.create({
           network: net,
+          address: randStr(),
           quoteAddress: '0xQuoteAddress',
           updatedAt: moment().subtract(2, 's').toISOString(),
         });
         const market = await Market.create({
           network: net,
+          address: randStr(),
           updatedAt: moment().subtract(3, 's').toISOString(),
         });
 

@@ -20,6 +20,8 @@ import { MiscModule } from './controllers/misc/misc.module';
 import { NotificationsModule } from './controllers/notifications/notifications.module';
 import { OffersModule } from './controllers/offers/offers.module';
 import { PaymentsModule } from './controllers/payments/payments.module';
+import { PointModule } from './controllers/points/point.module';
+import { ReferralModule } from './controllers/referrals/referral.module';
 import { SwapsModule } from './controllers/swaps/swaps.module';
 import { TasksModule } from './controllers/tasks/tasks.module';
 import { TicketsModule } from './controllers/tickets/tickets.module';
@@ -90,6 +92,8 @@ function getProviders() {
     InstructionsModule,
     PaymentsModule,
     FilesModule,
+    PointModule,
+    ReferralModule,
   ],
   providers: getProviders(),
   controllers: [],

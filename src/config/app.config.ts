@@ -44,6 +44,8 @@ function getContractsAddress() {
     feePoolAddr: process.env[`FEE_POOL_ADDRESS`],
     badgeMgrAddr: process.env[`BADGE_MGR_ADDRESS`],
     assetRegAddr: process.env[`ASSET_REG_ADDRESS`],
+    nftAddr: process.env[`NFT_ADDRESS`],
+    energonAddr: process.env[`ENERGON_ADDRESS`],
   };
 }
 
@@ -59,9 +61,13 @@ export default () => ({
     rootAdminPass: process.env.ROOT_ADMIN_PASS,
     disableNotifications: process.env.DISABLE_NOTIFICATIONS,
     disableWatcher: process.env.DISABLE_WATCHER,
+    disabledWatchers: process.env.DISABLED_WATCHERS,
     disableMineTaskProcessing: process.env.DISABLE_MINE_TASK_PROCESSING,
     disableCurrencyRateFetcher: process.env.DISABLE_CURRENCY_RATE_FETCHER,
     tokenMetadataSource: process.env.TOKEN_METADATA_SOURCE,
+    jntLinkApiUrl: process.env.JNT_LINK_API_URL,
+    jntLinkApiKey: process.env.JNT_LINK_API_KEY,
+    pointsPerEnergon: process.env.POINTS_PER_ENERGON,
     exchangeRateSource: process.env.EXCHANGE_RATE_SOURCE,
     maxSwapImageSize: process.env.MAX_SWAP_IMAGE_SIZE,
     maxSwapVideoSize: process.env.MAX_SWAP_VIDEO_SIZE,

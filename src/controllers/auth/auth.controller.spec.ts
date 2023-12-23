@@ -14,6 +14,7 @@ import { DBService } from '../../db/db.service';
 import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierService';
 import Session from '../../models/session';
 import User from '../../models/user';
+import { JointLinkService } from '../../services/joint_link.service';
 import { RedisService } from '../../services/redis.service';
 import ConvosService from '../convos/convos.service';
 import { UserService } from '../users/user.service';
@@ -33,6 +34,15 @@ const mockNotify = jest.fn();
 const NotifierServiceMock = jest.fn().mockImplementation(() => {
   return {
     notify: mockNotify,
+  };
+});
+
+const mockCreateLink = jest
+  .fn()
+  .mockResolvedValue({ url: 'url', normalizedUrl: 'normalizedUrl', shortUrl: 'shortUrl' });
+const MockJointLinkService = jest.fn().mockImplementation(() => {
+  return {
+    createLink: mockCreateLink,
   };
 });
 
@@ -74,7 +84,7 @@ describe('AuthController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [AuthController],
-      providers: [ConfigService, RedisService, UserService, ConvosService, NotifierService],
+      providers: [ConfigService, RedisService, UserService, ConvosService, NotifierService, JointLinkService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
@@ -82,6 +92,8 @@ describe('AuthController', () => {
       .useValue(new RedisServiceMock())
       .overrideProvider(NotifierService)
       .useValue(new NotifierServiceMock())
+      .overrideProvider(JointLinkService)
+      .useValue(new MockJointLinkService())
       .compile();
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());
@@ -399,6 +411,7 @@ describe('AuthController', () => {
             expect(res.body.data.user).toBeDefined();
             expect(res.body.data.user.referrer).toEqual('0x14791697260E4c9A71f18484C9f997B308e59325');
             expect(res.body.data.user.refCode).toHaveLength(5);
+            expect(mockCreateLink).toHaveBeenCalledTimes(1);
           });
       });
 

@@ -23,12 +23,18 @@ export class Watcher {
 
   /**
    * Initialize the watcher
+   * @param name The watcher name
    * @param network The network name
    * @param provider The network provider
    * @param processor The processor object
    * @param notifierService The notification service
    */
-  constructor(public network: string, private provider: providers.JsonRpcProvider, private processor: Processor) {}
+  constructor(
+    public name: string,
+    public network: string,
+    private provider: providers.JsonRpcProvider,
+    private processor: Processor,
+  ) {}
 
   /**
    * Add handlers and start synchronizing them
@@ -44,9 +50,34 @@ export class Watcher {
    * @private
    */
   private makeSyncKey() {
-    return `sync_height:${this.network}`;
+    return !this.name ? `sync_height:${this.network}` : `sync_height:${this.name}:${this.network}`;
   }
 
+  /**
+   * Get launch height
+   * @private
+   */
+  private getLaunchHeight() {
+    const key = !this.name ? 'LAUNCH_HEIGHT' : `LAUNCH_HEIGHT_${this.name}`;
+    return process.env[key] || '1';
+  }
+
+  private logInfo(message: any, context?: string) {
+    const watcherId = this.name ? `:${this.name}` : '';
+    this.logger.log(`Watcher${watcherId}: ${message}`, context);
+  }
+
+  private logError(message: any, context?: string) {
+    const watcherId = this.name ? `:${this.name}` : '';
+    this.logger.error(`Watcher${watcherId}: ${message}`, context);
+  }
+
+  /**
+   * Get event from log
+   * @param log The log object
+   * @param iface The contract interface
+   * @returns
+   */
   getEventFromLog(log: ethers.providers.Log, iface: ethers.utils.Interface) {
     const parsed = iface.parseLog(log);
     return {
@@ -63,6 +94,12 @@ export class Watcher {
     } as ethers.Event;
   }
 
+  /**
+   * Fetch and process events
+   * @param prevBlock The previous block
+   * @param curBlock The current block
+   * @returns
+   */
   async fetchAndProcessEvents(prevBlock: number, curBlock: number) {
     // Query latest logs for all contracts
     const logs = await this.provider.send('eth_getLogs', [
@@ -110,23 +147,23 @@ export class Watcher {
       try {
         const key = this.makeSyncKey();
         let meta = await Meta.get(key);
-        if (!meta) meta = new Meta({ value: process.env[`LAUNCH_HEIGHT`] || '1' });
+        if (!meta) meta = new Meta({ value: this.getLaunchHeight() });
         if (parseInt(meta.value) >= curBlock) {
-          this.logger.log(`Block ${curBlock} already processed`);
+          this.logInfo(`Block ${curBlock} already processed`);
           return;
         }
 
-        this.logger.log(`New block: ${curBlock}`);
+        this.logInfo(`New block: ${curBlock}`);
 
         // Process events
         await this.fetchAndProcessEvents(parseInt(meta.value), curBlock);
 
-        this.logger.log(`Finished processing block: ${curBlock}`);
+        this.logInfo(`Finished processing block: ${curBlock}`);
 
         // Update the last sync height
         await Meta.update(key, curBlock.toString());
       } catch (e) {
-        this.logger.error('WatchBlock(): ', e);
+        this.logError(e);
         this.provider.off('block', listener);
         if (!this.isSyncing) this.interval = this.sync();
       }
@@ -146,7 +183,7 @@ export class Watcher {
           const key = this.makeSyncKey();
           let meta = await Meta.get(key);
           if (!meta) {
-            meta = new Meta({ value: process.env[`LAUNCH_HEIGHT`] || '1' });
+            meta = new Meta({ value: this.getLaunchHeight() });
           }
 
           // Ensure we are not fully synchronized yet.
@@ -165,7 +202,7 @@ export class Watcher {
           endBlock = endBlock > curBlock ? curBlock : endBlock;
           const startBlock = parseInt(meta.value) + 1;
 
-          this.logger.log(`Syncing blocks between ${startBlock} and ${endBlock} (Current Head: ${curBlock})`);
+          this.logInfo(`Syncing blocks between ${startBlock} and ${endBlock} (Current Head: ${curBlock})`);
 
           // Process events
           await this.fetchAndProcessEvents(startBlock, endBlock);
@@ -173,7 +210,7 @@ export class Watcher {
           // Update the last sync height
           await Meta.update(key, endBlock.toString());
         } catch (e) {
-          this.logger.error(`watch error: ` + e.message, e.stack);
+          this.logError(e.message, e.stack);
         } finally {
           this.isSyncing = false;
         }

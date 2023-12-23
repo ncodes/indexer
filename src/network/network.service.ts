@@ -11,6 +11,7 @@ import * as feePoolABI from '../../abi/FeePool.json';
 import * as lpPoolABI from '../../abi/LPPool.json';
 import * as marketCoreABI from '../../abi/MarketCore.json';
 import * as mediatorManagerABI from '../../abi/MediatorManager.json';
+import * as nftABI from '../../abi/NFT.json';
 import * as p2pTokenABI from '../../abi/Token.json';
 import * as tokenPoolABI from '../../abi/TokenPool.json';
 import {
@@ -18,15 +19,18 @@ import {
   BadgeManager,
   Core,
   DisputeManager,
+  Energon,
   ERC20,
   FeePool,
   LPPool,
   MarketCore,
   MediatorManager,
+  NFT,
   Token,
   TokenPool,
 } from '../../typechain';
 import { isTest } from '../common/common';
+import { PointService } from '../controllers/points/point.service';
 import { NotifierService } from '../jobs/mailer/NotifierService';
 import Meta, { MetaKeys } from '../models/meta';
 import { ExchangeRateService } from '../services/exchange_rate.service';
@@ -39,6 +43,7 @@ import { FeePoolHandler } from './feepool/fee_pool.handler';
 import { LPPoolHandler } from './lppool/lp_pool.handler';
 import { MarketCoreHandler } from './marketcore/market_core.handler';
 import { MediatorManagerHandler } from './mediatormanager/mediator_manager.handler';
+import { NFTHandler } from './nft/nft.handler';
 import Processor from './processor';
 import { TokenPoolHandler } from './tokenpool/token_pool.handler';
 import { Watcher } from './watcher';
@@ -55,6 +60,7 @@ export default class NetworkService {
     @Inject(forwardRef(() => MetadataService))
     private metadataSrv: MetadataService,
     private exrSrv: ExchangeRateService,
+    public pointSrv: PointService,
   ) {
     if (isTest()) return;
     this.watch().catch((e) => {
@@ -66,7 +72,9 @@ export default class NetworkService {
    * Watch event
    */
   private async watch() {
-    await this.watchNetwork(this.cfgSrv.get('app.network'));
+    const net = this.cfgSrv.get('app.network');
+    await this.startGeneralWatcher(net);
+    await this.startNFTWatcher(net);
   }
 
   /**
@@ -98,11 +106,10 @@ export default class NetworkService {
    * @param network The network name
    */
   private async loadInitialContractParams(network: string) {
-    const contractsParams = this.cfgSrv.get(`app.contractsParams`);
     const key = Meta.makeNetKey(network, MetaKeys.ContractsParams);
     const params = await Meta.get(key);
     if (params && params.value) return;
-    await Meta.create(key, JSON.stringify(contractsParams));
+    await Meta.create(key, JSON.stringify(this.cfgSrv.get(`app.contractsParams`)));
     this.logger.log('Loaded initial contracts parameters');
   }
 
@@ -110,11 +117,9 @@ export default class NetworkService {
    * Connect and watch contracts.
    * @param network The name of the network
    */
-  private async watchNetwork(network: ChainNames) {
-    this.contracts = {};
-
+  private async startGeneralWatcher(network: ChainNames) {
     const rpcUrl = this.cfgSrv.get(`app.contractsAddress.rpcUrl`) as string;
-    if (!rpcUrl) throw new Error('rpcUrl is not defined');
+    if (!rpcUrl) throw new Error('startDefaultWatcher: rpcUrl is not defined');
 
     this.provider = rpcUrl.startsWith('ws')
       ? new providers.WebSocketProvider(rpcUrl)
@@ -155,6 +160,9 @@ export default class NetworkService {
     if (assetRegAddr)
       this.contracts.assetRegistry = new Contract(assetRegAddr, assetRegABI, this.provider) as AssetRegistry;
 
+    const energonAddr = this.cfgSrv.get(`app.contractsAddress.energonAddr`);
+    if (energonAddr) this.contracts.energon = new Contract(energonAddr, erc20TokenABI, this.provider) as Energon;
+
     // Load initial contract params
     await this.loadInitialContractParams(network);
 
@@ -176,11 +184,62 @@ export default class NetworkService {
     await processor.add(...handlers);
 
     // Create event watcher
-    if (!['true', '1'].includes(this.cfgSrv.get('app.disableWatcher'))) {
-      const watcher = new Watcher(network, this.provider, processor);
+    if (!this.isWatcherDisabled()) {
+      const watcher = new Watcher('', network, this.provider, processor);
       await watcher.add(...handlers);
     } else {
-      this.logger.log('Watcher disabled');
+      this.logger.log('General Watcher is disabled');
     }
+  }
+
+  /**
+   * Connect and watch NFT contracts.
+   * @param network The name of the network
+   */
+  private async startNFTWatcher(network: ChainNames) {
+    const rpcUrl = this.cfgSrv.get(`app.contractsAddress.rpcUrl`) as string;
+    if (!rpcUrl) throw new Error('startNFTWatcher: rpcUrl is not defined');
+
+    this.provider = this.provider
+      ? this.provider
+      : rpcUrl.startsWith('ws')
+      ? new providers.WebSocketProvider(rpcUrl)
+      : new providers.JsonRpcProvider(rpcUrl);
+
+    // Initialize contracts
+    const nftAddress = this.cfgSrv.get(`app.contractsAddress.nftAddr`);
+    if (nftAddress) this.contracts.nft = new Contract(nftAddress, nftABI, this.provider) as NFT;
+
+    // Load initial contract params
+    await this.loadInitialContractParams(network);
+
+    // Initialize handlers
+    const handlers = [new NFTHandler(this, this.provider, network, this.contracts)];
+
+    // Create event processor
+    const processor = new Processor(network);
+    await processor.add(...handlers);
+
+    // Create event watcher
+    if (!this.isWatcherDisabled('NFT_WATCHER')) {
+      const watcher = new Watcher('NFT_WATCHER', network, this.provider, processor);
+      await watcher.add(...handlers);
+    } else {
+      this.logger.log('NFT watcher is disabled');
+    }
+  }
+
+  /**
+   * Check if a watcher is disabled
+   * @param name The watcher name
+   * @returns
+   */
+  isWatcherDisabled(name?: string) {
+    let disabled = ['true', '1'].includes(this.cfgSrv.get('app.disableWatcher'));
+    if (!disabled && name) {
+      const disabledWatchers = this.cfgSrv.get('app.disabledWatchers');
+      disabled = disabledWatchers && disabledWatchers.split(',').includes(name);
+    }
+    return disabled;
   }
 }

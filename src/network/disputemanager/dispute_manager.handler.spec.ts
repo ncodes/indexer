@@ -23,8 +23,17 @@ const MockNotifierService = jest.fn().mockImplementation(() => {
   return { notify: mockNotify };
 });
 
+const mockGrantPoint = jest.fn();
+const MockPointService = jest.fn().mockImplementation(() => {
+  return {
+    grantPoint: mockGrantPoint,
+  };
+});
+
 const MockNetworkService = jest.fn().mockImplementation(() => {
-  return {};
+  return {
+    pointSrv: new MockPointService(),
+  };
 });
 
 describe('DisputeManagerHandler', () => {
@@ -96,7 +105,8 @@ describe('DisputeManagerHandler', () => {
           }),
         );
 
-        await expect(handler.onDisputeCreated(orderId, provider, disputeId, true, {} as any)).resolves.toBeUndefined();
+        const evt = {} as any;
+        await expect(handler.onDisputeCreated(orderId, provider, disputeId, true, evt)).resolves.toBeUndefined();
 
         // Expect dispute to be created
         const dispute = await Dispute.get(net, marketAddress, orderId.toNumber(), disputeId.toNumber());
@@ -142,6 +152,8 @@ describe('DisputeManagerHandler', () => {
         expect(event.orderId).toEqual(orderId.toNumber());
         expect(event.creator).toEqual(provider);
         expect(event.disputeId).toEqual(disputeId.toNumber());
+
+        expect(mockGrantPoint).toHaveBeenCalledWith('dispute:created', net, provider, evt, undefined);
       });
     });
 
@@ -234,8 +246,9 @@ describe('DisputeManagerHandler', () => {
       const orderId = toBN(1);
       const marketAddress = '0xMarket';
       const disputeId = toBN(1);
+      const evt = {} as any;
       await expect(
-        handler.onCommitted(marketAddress, orderId, disputeId, '0xCommitter', toBN(1), '0xHash', {} as any),
+        handler.onCommitted(marketAddress, orderId, disputeId, '0xCommitter', toBN(1), '0xHash', evt),
       ).resolves.toBeUndefined();
 
       const commit = await Commit.find({
@@ -253,6 +266,8 @@ describe('DisputeManagerHandler', () => {
       expect(event.orderId).toEqual(orderId.toNumber());
       expect(event.creator).toEqual('0xCommitter');
       expect(event.disputeId).toEqual(disputeId.toNumber());
+
+      expect(mockGrantPoint).toHaveBeenCalledWith('dispute:committed', net, '0xCommitter', evt, undefined);
     });
   });
 
@@ -261,8 +276,9 @@ describe('DisputeManagerHandler', () => {
       const orderId = toBN(1);
       const marketAddress = '0xMarket';
       const disputeId = toBN(1);
+      const evt = {} as any;
       await expect(
-        handler.onRevealed(marketAddress, orderId, disputeId, '0xRevealer', toBN(1), '1vote', {} as any),
+        handler.onRevealed(marketAddress, orderId, disputeId, '0xRevealer', toBN(1), '1vote', evt),
       ).resolves.toBeUndefined();
 
       const reveal = await Reveal.find({ marketAddress, orderId: orderId.toNumber() });
@@ -277,6 +293,8 @@ describe('DisputeManagerHandler', () => {
       expect(event.creator).toEqual('0xRevealer');
       expect(event.disputeId).toEqual(disputeId.toNumber());
       expect(event.vote).toEqual('1vote');
+
+      expect(mockGrantPoint).toHaveBeenCalledWith('dispute:revealed', net, '0xRevealer', evt, undefined);
     });
   });
 
@@ -342,8 +360,9 @@ describe('DisputeManagerHandler', () => {
 
     describe('when winningVote=0x31', () => {
       it('should consider dispute as released', async () => {
+        const evt = {} as any;
         await expect(
-          handler.onDecisionExecuted(marketAddress, orderId, disputeId, '0xExecutor', true, '0x31', {} as any),
+          handler.onDecisionExecuted(marketAddress, orderId, disputeId, '0xExecutor', true, '0x31', evt),
         ).resolves.toBeUndefined();
 
         const dispute = await Dispute.get(net, marketAddress, orderId.toNumber(), disputeId.toNumber());
@@ -388,6 +407,8 @@ describe('DisputeManagerHandler', () => {
         // expect execute task to be marked complete
         const task = await MineTask.getById(executeTask.id);
         expect(task.completed).toBeTruthy();
+
+        expect(mockGrantPoint).toHaveBeenCalledWith('dispute:executed', net, '0xExecutor', evt, undefined);
       });
     });
 

@@ -2,7 +2,7 @@ import * as crypto from 'crypto';
 import * as dayjs from 'dayjs';
 import * as utc from 'dayjs/plugin/utc';
 import Decimal from 'decimal.js';
-import { BigNumberish } from 'ethers';
+import { BigNumberish, ethers } from 'ethers';
 import * as moment from 'moment';
 import * as notifier from 'node-notifier';
 import { uid } from 'uid';
@@ -121,4 +121,8 @@ export function notify(format: string, ...param: any[]) {
     title: 'Debug',
     message: util.format(format, ...param),
   });
+}
+
+export function randomEthAddr() {
+  return ethers.Wallet.createRandom().address;
 }

@@ -17,6 +17,7 @@ import NetworkService from '../../network/network.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { RedisService } from '../../services/redis.service';
+import { PointService } from '../points/point.service';
 import { AssetsController } from './assets.controller';
 
 // Note: We use var because const will not jest hoist correctly.
@@ -63,7 +64,15 @@ describe('AssetsController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [AssetsController],
-      providers: [ConfigService, MetadataService, NetworkService, NotifierService, ExchangeRateService, RedisService],
+      providers: [
+        ConfigService,
+        MetadataService,
+        NetworkService,
+        NotifierService,
+        ExchangeRateService,
+        RedisService,
+        PointService,
+      ],
     })
       .overrideProvider(NotifierService)
       .useValue(new NotifierServiceMock())

@@ -269,6 +269,7 @@ export class PointService {
     amount: BigNumber,
     txn?: Transaction,
   ) {
+    // Only grant points to market that involves ERC20 and whose base token is not a synthetic token
     if (!market.involvesERC20() || Market.isSynth(market.baseType)) return false;
 
     const pointPerUnit =

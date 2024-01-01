@@ -24,7 +24,9 @@ export class ListQueryDTO {
   public creator?: string;
 
   // Transform to string array
-  @Transform(({ value }: { value: string }) => (value || '').split(',').map((x) => x.trim()))
+  @Transform(({ value }: { value: string }) => {
+    return (value || '').split(',').map((x) => x.trim());
+  })
   @IsOptional()
   public address?: string[];
 

@@ -1,10 +1,9 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import { NoopLogger } from '../../common/loggers/noop_logger';
-import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
 import { Roles } from '../../common/roles';
 import { DBService } from '../../db/db.service';
 import Point, { PointAction } from '../../models/point';
@@ -53,7 +52,6 @@ describe('ReferralController', () => {
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());
     app.useGlobalFilters(new AllExceptionsFilter());
-    app.useGlobalPipes(new ValidationPipe(CommonValidationPipeOpt));
     await app.init();
   });
 

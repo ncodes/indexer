@@ -1,4 +1,5 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, ValidationPipe } from '@nestjs/common';
+import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
 import { ErrorMessages, ok, throw404 } from '../../common/responses/responses';
 import Point from '../../models/point';
 import User from '../../models/user';
@@ -37,7 +38,7 @@ export class ReferralController {
    * @returns
    */
   @Get('/leaderboard')
-  async getLeaderboard(@Query() query: GetLeaderboardDTO) {
+  async getLeaderboard(@Query(new ValidationPipe(CommonValidationPipeOpt)) query: GetLeaderboardDTO) {
     const result = await Point.getTopRefereesOfReferrer(parseInt(query.limit) || 100, query.referrer, query.referee);
     const countAddresses = await Point.countDistinctRefereesOfReferrer(query.referrer, query.referee);
 
@@ -71,7 +72,7 @@ export class ReferralController {
    * @returns
    */
   @Get('/latest')
-  async getLatestPoints(@Query() query: GetRecentPoints) {
+  async getLatestPoints(@Query(new ValidationPipe(CommonValidationPipeOpt)) query: GetRecentPoints) {
     const points = await Point.getReferrerPointsAfterDate(query.referrer, query.from, parseInt(query.limit) || 100);
     return ok().data(points.reverse()).build();
   }

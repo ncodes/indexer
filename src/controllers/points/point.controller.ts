@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { recoverMessageAddress } from 'viem';
 import { isEqualStr, toDec } from '../../common/common';
+import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
 import { ErrorTypes, ok, throw400 } from '../../common/responses/responses';
 import { IsRootAdmin } from '../../guards/is_basic_admin';
 import Point, { PointAction } from '../../models/point';
@@ -26,7 +27,7 @@ export class PointController {
    * @returns
    */
   @Get('/leaderboard')
-  async getLeaderboard(@Query() query: GetLeaderboardDTO) {
+  async getLeaderboard(@Query(new ValidationPipe(CommonValidationPipeOpt)) query: GetLeaderboardDTO) {
     const result = await Point.getTopAddresses(parseInt(query.limit) || 100, query.address);
     const countAddresses = await Point.countDistinctAddresses(query.address);
 
@@ -59,7 +60,7 @@ export class PointController {
    */
   @UseGuards(IsRootAdmin)
   @Post('/from-csv')
-  async createPointsFromCSV(@Body() body: CreatePointsFromCSV) {
+  async createPointsFromCSV(@Body(new ValidationPipe(CommonValidationPipeOpt)) body: CreatePointsFromCSV) {
     const csvBody = await axios(body.csvUrl).then((res) => res.data);
     await this.pointSrv.grantPointsFromCSV(csvBody);
     return ok().data({ ok: true }).build();
@@ -74,7 +75,9 @@ export class PointController {
    * @returns
    */
   @Post('/from-energon-balance')
-  async createPointFromEnergonBalance(@Body() body: CreatePointFromEnergonBalance) {
+  async createPointFromEnergonBalance(
+    @Body(new ValidationPipe(CommonValidationPipeOpt)) body: CreatePointFromEnergonBalance,
+  ) {
     try {
       const address = await recoverMessageAddress({
         message: `beneficiary: ${body.beneficiary}`,
@@ -142,7 +145,7 @@ export class PointController {
    * @returns
    */
   @Get('/latest')
-  async getLatestPoints(@Query() query: GetRecentPoints) {
+  async getLatestPoints(@Query(new ValidationPipe(CommonValidationPipeOpt)) query: GetRecentPoints) {
     const points = await Point.getPointsAfterDate(query.from, parseInt(query.limit) || 100);
     return ok().data(points.reverse()).build();
   }

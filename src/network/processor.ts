@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import * as LRUCache from 'lru-cache';
 import * as sortArray from 'sort-array';
 import { isDev, isEqualStr, isTest, shortenAddr } from '../common/common';
 import ChainEvent from '../models/chain_events';
@@ -10,6 +11,7 @@ import { UnprocessedEvent } from './watcher';
  */
 export default class Processor {
   logger = new Logger(Processor.name);
+  private seen = new LRUCache({ max: 500 });
   private processing = false;
 
   // The collection of unprocessed events
@@ -50,6 +52,10 @@ export default class Processor {
    * @param event The target event
    */
   addEvent(event: UnprocessedEvent) {
+    const eventId = `${event.block}-${event.txIndex}-${event.eventIndex}`;
+    if (this.seen.has(eventId)) return;
+    this.seen.set(eventId, true);
+
     this.unprocessed.push(event);
     sortArray(this.unprocessed, {
       by: ['block', 'txIndex', 'eventIndex'],
@@ -74,7 +80,7 @@ export default class Processor {
         blockNumber: e.block,
         txIndex: e.txIndex,
         logIndex: e.eventIndex,
-        removed,
+        removed: !!removed,
       });
 
       if (removed) {

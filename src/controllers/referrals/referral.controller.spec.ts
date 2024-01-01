@@ -2,7 +2,6 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
-import { randStr } from '../../common/common';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
@@ -10,7 +9,6 @@ import { Roles } from '../../common/roles';
 import { DBService } from '../../db/db.service';
 import Point, { PointAction } from '../../models/point';
 import User from '../../models/user';
-import { makeSession } from '../auth/utils';
 import { ReferralController } from './referral.controller';
 
 const mockCfgGet = jest.fn();
@@ -60,10 +58,8 @@ describe('ReferralController', () => {
   });
 
   let u: User;
-  let token: string;
   beforeEach(async () => {
     u = await User.create({ role: Roles.User, address: '0xAddress' });
-    token = await makeSession(u, randStr(), '5', mockCfgGet('auth.jwtSecret'));
   });
 
   describe('.getInfo', () => {

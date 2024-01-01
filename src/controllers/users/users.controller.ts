@@ -137,6 +137,4 @@ export class UsersController {
 
     return ok(res).status(201).data({ ok: true }).build();
   }
-
-  
 }

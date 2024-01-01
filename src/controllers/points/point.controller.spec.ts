@@ -5,17 +5,13 @@ import * as request from 'supertest';
 import { createWalletClient, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { hardhat } from 'viem/chains';
-import { randStr } from '../../common/common';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
-import { Roles } from '../../common/roles';
 import { DBService } from '../../db/db.service';
 import Point, { PointAction } from '../../models/point';
-import User from '../../models/user';
 import { powOf } from '../../network/common';
 import NetworkService from '../../network/network.service';
-import { makeSession } from '../auth/utils';
 import { PointController } from './point.controller';
 import { PointService } from './point.service';
 
@@ -94,13 +90,6 @@ describe('PointController', () => {
     app.useGlobalFilters(new AllExceptionsFilter());
     app.useGlobalPipes(new ValidationPipe(CommonValidationPipeOpt));
     await app.init();
-  });
-
-  let u: User;
-  let token: string;
-  beforeEach(async () => {
-    u = await User.create({ role: Roles.User, address: '0xAddress' });
-    token = await makeSession(u, randStr(), '5', mockCfgGet('auth.jwtSecret'));
   });
 
   describe('.getLeaderboard', () => {

@@ -8,6 +8,7 @@ import Point, { PointAction, PointValue } from '../../models/point';
 import Swap from '../../models/swap';
 import User from '../../models/user';
 import { pow10, powOf, toBN } from '../../network/common';
+import { AuthService } from '../auth/auth.service';
 import { NFTAllocations } from './data/nft_allocation';
 import {
   MultiplierActivationTokenId,
@@ -37,6 +38,12 @@ jest.mock('./data/points.ts', () => {
       generic: 10,
     },
   };
+});
+
+// mock AuthService
+const mockIsInPrivateAllowlist = jest.fn().mockReturnValue(true);
+const AuthServiceMock = jest.fn().mockImplementation(() => {
+  return { isInPrivateAllowlist: mockIsInPrivateAllowlist };
 });
 
 describe('PointService', () => {
@@ -71,10 +78,12 @@ describe('PointService', () => {
 
     module = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
-      providers: [ConfigService, PointService],
+      providers: [ConfigService, PointService, AuthService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
+      .overrideProvider(AuthService)
+      .useValue(new AuthServiceMock())
       .compile();
 
     service = module.get<PointService>(PointService);
@@ -124,6 +133,26 @@ describe('PointService', () => {
   });
 
   describe('.grantSwap', () => {
+    it('should return false if recipient is not allowed', async () => {
+      const market = await Market.create({
+        network: 'ethereum',
+        instant: true,
+        address: marketAddr,
+        baseDecimals: 18,
+        baseType: AssetType.ERC20,
+        quoteType: AssetType.ERC20,
+      });
+      const swap = await Swap.create({
+        amount: powOf(2000, 18).toString(),
+        provider: '0xProvider',
+        taker: '0xTaker',
+      });
+      const event = { transactionHash: '0xHash' };
+
+      mockIsInPrivateAllowlist.mockReturnValue(false);
+      expect(service.grantOnSwap(market, swap, undefined, event as any)).resolves.toBeFalsy();
+    });
+
     describe('market is instant and counterparts have no referrer', () => {
       it('should grant correct point when market has a specific point per unit', async () => {
         const market = await Market.create({
@@ -500,6 +529,30 @@ describe('PointService', () => {
   });
 
   describe('.grantOnLiquidityUpdate', () => {
+    it('should return false if recipient is not allowed', async () => {
+      mockIsInPrivateAllowlist.mockReturnValue(false);
+      const market = await Market.create({
+        network: 'ethereum',
+        instant: true,
+        address: marketAddr,
+        baseDecimals: 18,
+        baseType: AssetType.SYNTH,
+        quoteType: AssetType.SYNTH,
+        quoteDecimals: 18,
+      });
+
+      const liq = await Liquidity.create({
+        amount: powOf(0, 18).toString(),
+        provider: '0xProvider',
+        marketAddress: market.address,
+        lid: 1,
+      });
+
+      await expect(
+        service.grantOnLiquidityUpdate(market, liq, true, '0xProvider', toBN(powOf(10, 18))),
+      ).resolves.toBeFalsy();
+    });
+
     it('should return false when market neither base or quote assets are ERC20', async () => {
       const market = await Market.create({
         network: 'ethereum',

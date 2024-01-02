@@ -12,6 +12,7 @@ import Point, { PointAction, PointValue } from '../../models/point';
 import Swap from '../../models/swap';
 import User from '../../models/user';
 import { pow10D } from '../../network/common';
+import { AuthService } from './../auth/auth.service';
 import { NFTAllocations } from './data/nft_allocation';
 import { MarketPoints } from './data/points';
 
@@ -36,7 +37,11 @@ export function makeCSVPointName(csvHash: string, recipient: string) {
 
 @Injectable()
 export class PointService {
-  constructor(private cfg: ConfigService) {}
+  constructor(private cfg: ConfigService, private authSrv: AuthService) {}
+
+  isAddrAllowed(addr: string) {
+    return this.authSrv.isInPrivateAllowlist(addr);
+  }
 
   /**
    * Grant point for NFT ownership
@@ -102,6 +107,8 @@ export class PointService {
    * @param txn Optional transaction object
    */
   async grantOnSwap(market: Market, swap: Swap, txn?: Transaction, event?: Event) {
+    if (!this.isAddrAllowed(swap.taker) || !this.isAddrAllowed(swap.provider)) return false;
+
     const pointPerUnit =
       MarketPoints['swap:' + market.address] ?? MarketPoints[market.instant ? 'swap:instant' : 'swap:interactive'];
 
@@ -269,6 +276,8 @@ export class PointService {
     amount: BigNumber,
     txn?: Transaction,
   ) {
+    if (!this.isAddrAllowed(provider)) return false;
+
     // Only grant points to market that involves ERC20 and whose base token is not a synthetic token
     if (!market.involvesERC20() || Market.isSynth(market.baseType)) return false;
 
@@ -362,7 +371,9 @@ export class PointService {
    * @param event
    * @param txn Optional transaction object
    */
-  async grantPoint(id: string, net: string, recipient, event: Event, txn?: Transaction) {
+  async grantPoint(id: string, net: string, recipient: string, event: Event, txn?: Transaction) {
+    if (!this.isAddrAllowed(recipient)) return false;
+
     const point = MarketPoints[id];
     if (!point || point == 0) return false;
 

@@ -19,6 +19,7 @@ import { RedisService } from '../../services/redis.service';
 import ConvosService from '../convos/convos.service';
 import { UserService } from '../users/user.service';
 import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
 import { makeSession } from './utils';
 
 const mockCfgGet = jest.fn();
@@ -84,7 +85,15 @@ describe('AuthController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [AuthController],
-      providers: [ConfigService, RedisService, UserService, ConvosService, NotifierService, JointLinkService],
+      providers: [
+        ConfigService,
+        RedisService,
+        UserService,
+        ConvosService,
+        NotifierService,
+        JointLinkService,
+        AuthService,
+      ],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())

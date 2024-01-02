@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Post, Put, Query, Req, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, Req, UseGuards, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { isEmail } from 'class-validator';
 import { Request } from 'express';
@@ -14,6 +14,7 @@ import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierServi
 import Session from '../../models/session';
 import User from '../../models/user';
 import { UserService } from '../users/user.service';
+import { AuthService } from './auth.service';
 import { AuthDTO, GetAuthorizerDTO, VerifyEmailDTO } from './dto';
 import { hasSeenSignature, makeSession, parseWalletSignature } from './utils';
 
@@ -22,7 +23,12 @@ import { hasSeenSignature, makeSession, parseWalletSignature } from './utils';
  */
 @Controller('v1/auth')
 export class AuthController {
-  constructor(private cfgSrv: ConfigService, private userSrv: UserService, private notifSrv: NotifierService) {}
+  constructor(
+    private cfgSrv: ConfigService,
+    private authSrv: AuthService,
+    private userSrv: UserService,
+    private notifSrv: NotifierService,
+  ) {}
 
   /**
    * Authenticate signature and generate session token
@@ -167,5 +173,16 @@ export class AuthController {
     if (!user) throw404(ErrorMessages.UserNotFound);
 
     return ok().data(user).build<User>();
+  }
+
+  /**
+   * Check if an address is allowed to use the app
+   * @param address The address to check
+   */
+  @Get('/:address/allowed')
+  isAllowed(@Param('address') address: string) {
+    return ok()
+      .data({ allowed: this.authSrv.isInPrivateAllowlist(address) })
+      .build();
   }
 }

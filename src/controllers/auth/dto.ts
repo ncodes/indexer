@@ -1,5 +1,5 @@
 /* tslint:disable:max-classes-per-file */
-import { IsEthereumAddress, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsOptional } from 'class-validator';
 import { makeValidatorMsg } from '../../common/validations/validation';
 
 /**
@@ -16,9 +16,8 @@ export class AuthDTO {
   @IsNotEmpty({ message: makeValidatorMsg('message is required', 'msg') })
   msg: string;
 
-  @IsEthereumAddress({ message: makeValidatorMsg('referrer is not valid', 'referrer') })
   @IsOptional()
-  referrer: string;
+  refCode: string;
 }
 
 /**

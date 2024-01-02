@@ -108,6 +108,16 @@ export default class User extends BaseModel {
   }
 
   /**
+   * Get a user by ref code
+   * @param refCode The referrer code
+   * @param txn Optional transaction object
+   * @returns
+   */
+  static getByRefCode(refCode: string, txn?: Transaction) {
+    return this.query(txn).select('address').where('refCode', 'ILIKE', refCode).whereNotDeleted().first();
+  }
+
+  /**
    * find finds a user
    * @param q the query parameter
    */

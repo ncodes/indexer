@@ -99,7 +99,7 @@ export class AuthController {
     await this.userSrv.registerDevice(user);
 
     // Enable referrer state for the user
-    await this.userSrv.enableReferrer(isUserNew, body.referrer, user);
+    await this.userSrv.enableReferrer(isUserNew, body.refCode, user);
 
     return ok().data({ token, user }).build();
   }

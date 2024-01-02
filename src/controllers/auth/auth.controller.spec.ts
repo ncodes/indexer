@@ -377,29 +377,6 @@ describe('AuthController', () => {
     });
 
     describe('when referrer is set', () => {
-      it('should return error when referrer is not a valid ethereum address', async () => {
-        const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
-        const wallet = new ethers.Wallet(privateKey);
-        const msg = Buffer.from(makeMsg(wallet.address, 'person@gmail.com', moment().toISOString()));
-        const sig = await wallet.signMessage(msg.toString());
-
-        await request(app.getHttpServer())
-          .post(`/v1/auth`)
-          .send({
-            sig,
-            msg: msg.toString('hex'),
-            referrer: '0x123',
-          })
-          .expect(400)
-          .expect({
-            error: {
-              message: 'referrer is not valid',
-              param: 'referrer',
-              type: 'invalid_request_error',
-            },
-          });
-      });
-
       it('should set referrer if user did not already exist', async () => {
         const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
         const wallet = new ethers.Wallet(privateKey);
@@ -408,17 +385,19 @@ describe('AuthController', () => {
 
         jest.spyOn(app.get(UserService), 'registerDevice').mockResolvedValue(undefined);
 
+        const referrer = await User.create({ address: '0xReferrer', refCode: '12345' });
+
         await request(app.getHttpServer())
           .post(`/v1/auth`)
           .send({
             sig,
             msg: msg.toString('hex'),
-            referrer: '0x14791697260E4c9A71f18484C9f997B308e59325',
+            refCode: referrer.refCode,
           })
           .expect(201)
           .expect(async (res) => {
             expect(res.body.data.user).toBeDefined();
-            expect(res.body.data.user.referrer).toEqual('0x14791697260E4c9A71f18484C9f997B308e59325');
+            expect(res.body.data.user.referrer).toEqual(referrer.address);
             expect(res.body.data.user.refCode).toHaveLength(5);
             expect(mockCreateLink).toHaveBeenCalledTimes(1);
           });
@@ -430,20 +409,27 @@ describe('AuthController', () => {
         const msg = Buffer.from(makeMsg(wallet.address, 'person@gmail.com', moment().toISOString()));
         const sig = await wallet.signMessage(msg.toString());
 
-        await User.create({ address: wallet.address, email: 'person@gmail.com', refCode: 'abcde', referrer: '0x123' });
+        const user = await User.create({
+          address: wallet.address,
+          email: 'person@gmail.com',
+          refCode: 'abcde',
+          referrer: '0x123',
+        });
         jest.spyOn(app.get(UserService), 'registerDevice').mockResolvedValue(undefined);
+
+        const referrer = await User.create({ address: '0xReferrer', refCode: '12345' });
 
         await request(app.getHttpServer())
           .post(`/v1/auth`)
           .send({
             sig,
             msg: msg.toString('hex'),
-            referrer: '0x14791697260E4c9A71f18484C9f997B308e59325',
+            refCode: referrer.refCode,
           })
           .expect(201)
           .expect(async (res) => {
             expect(res.body.data.user).toBeDefined();
-            expect(res.body.data.user.referrer).toEqual('0x123');
+            expect(res.body.data.user.referrer).toEqual(user.referrer);
             expect(res.body.data.user.refCode).toHaveLength(5);
           });
       });

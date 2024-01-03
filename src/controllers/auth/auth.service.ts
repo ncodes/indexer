@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import * as appRoot from 'app-root-path';
 import * as fs from 'fs';
 import * as path from 'path';
+import { isEqualStr } from '../../common/common';
 
 @Injectable()
 export class AuthService {
@@ -16,6 +17,6 @@ export class AuthService {
   isInPrivateAllowlist(address: string) {
     const allowlist = fs.readFileSync(path.join(appRoot.path, 'allowlist/private_test.txt'), 'utf8');
     const lines = allowlist.split('\n');
-    return lines.some((line) => line.trim() === address);
+    return lines.some((line) => isEqualStr(line.trim(), address.trim()));
   }
 }

@@ -141,8 +141,8 @@ export class NotifierConsumer {
       userAddrShort: shortenAddr(job.recipientAddr),
       title: 'New Swap Order',
       btnValue: 'View Order',
-      btnLink: `${job.appUrl}/order/${swap.orderId}`,
-      orderLink: `${job.appUrl}/order/${swap.orderId}`,
+      btnLink: `${job.appUrl}/swap/${swap.orderId}`,
+      orderLink: `${job.appUrl}/swap/${swap.orderId}`,
     };
 
     // Check if market is for ERC20/SYNTH or SYNTH/ERC20
@@ -233,8 +233,8 @@ export class NotifierConsumer {
       userAddrShort: shortenAddr(job.recipientAddr),
       title: 'Order Cancelled',
       btnValue: 'View Order',
-      btnLink: `${job.appUrl}/order/${swap.orderId}`,
-      orderLink: `${job.appUrl}/order/${swap.orderId}`,
+      btnLink: `${job.appUrl}/swap/${swap.orderId}`,
+      orderLink: `${job.appUrl}/swap/${swap.orderId}`,
     };
 
     const template = `order/cancelled`;
@@ -266,8 +266,8 @@ export class NotifierConsumer {
       userAddrShort: shortenAddr(job.recipientAddr),
       title: 'Order Paid',
       btnValue: 'View Order',
-      btnLink: `${job.appUrl}/order/${swap.orderId}`,
-      orderLink: `${job.appUrl}/order/${swap.orderId}`,
+      btnLink: `${job.appUrl}/swap/${swap.orderId}`,
+      orderLink: `${job.appUrl}/swap/${swap.orderId}`,
     };
 
     const template = `order/paid`;
@@ -300,8 +300,8 @@ export class NotifierConsumer {
       userAddrShort: shortenAddr(job.recipientAddr),
       title: 'Order Released',
       btnValue: 'View Order',
-      btnLink: `${job.appUrl}/order/${swap.orderId}`,
-      orderLink: `${job.appUrl}/order/${swap.orderId}`,
+      btnLink: `${job.appUrl}/swap/${swap.orderId}`,
+      orderLink: `${job.appUrl}/swap/${swap.orderId}`,
     };
 
     const template = `order/released`;
@@ -540,8 +540,8 @@ export class NotifierConsumer {
       title: !dispute.redispute ? 'Order Disputed' : `Order Was Redisputed`,
       btnValue: 'View Order',
       creatorShort: shortenAddr(dispute.creator),
-      orderLink: `${job.appUrl}/order/${swap.orderId}`,
-      btnLink: `${job.appUrl}/order/${swap.orderId}`,
+      orderLink: `${job.appUrl}/swap/${swap.orderId}`,
+      btnLink: `${job.appUrl}/swap/${swap.orderId}`,
     };
 
     const template = `dispute/dispute-created`;
@@ -574,8 +574,8 @@ export class NotifierConsumer {
       title: 'Ticket Was Drafted',
       btnValue: 'View Order',
       numDrafted: dispute.numMediatorsDrafted,
-      orderLink: `${job.appUrl}/order/${dispute.orderId}`,
-      btnLink: `${job.appUrl}/order/${dispute.orderId}`,
+      orderLink: `${job.appUrl}/swap/${dispute.orderId}`,
+      btnLink: `${job.appUrl}/swap/${dispute.orderId}`,
     };
 
     const template = `dispute/ticket-drafted`;
@@ -608,8 +608,8 @@ export class NotifierConsumer {
       title: 'Evidence Submission Phase',
       btnValue: 'View Order',
       numDrafted: dispute.numMediatorsDrafted,
-      orderLink: `${job.appUrl}/order/${dispute.orderId}`,
-      btnLink: `${job.appUrl}/order/${dispute.orderId}`,
+      orderLink: `${job.appUrl}/swap/${dispute.orderId}`,
+      btnLink: `${job.appUrl}/swap/${dispute.orderId}`,
     };
 
     const template = `dispute/mediators-drafted`;
@@ -641,8 +641,8 @@ export class NotifierConsumer {
       userAddrShort: shortenAddr(job.recipientAddr),
       title: 'Evidence Request and Review',
       btnValue: 'View Order',
-      orderLink: `${job.appUrl}/order/${dispute.orderId}`,
-      btnLink: `${job.appUrl}/order/${dispute.orderId}`,
+      orderLink: `${job.appUrl}/swap/${dispute.orderId}`,
+      btnLink: `${job.appUrl}/swap/${dispute.orderId}`,
     };
 
     const template = `dispute/evidence-phase-started`;
@@ -708,9 +708,9 @@ export class NotifierConsumer {
       ...job.data,
       userAddrShort: shortenAddr(job.recipientAddr),
       title: 'Vote Commit Phase Begins',
-      orderLink: `${job.appUrl}/order/${swap.orderId}`,
+      orderLink: `${job.appUrl}/swap/${swap.orderId}`,
       btnValue: 'View Order',
-      btnLink: `${job.appUrl}/order/${swap.orderId}`,
+      btnLink: `${job.appUrl}/swap/${swap.orderId}`,
     };
 
     const template = `dispute/evidence-phase-ended`;
@@ -741,9 +741,9 @@ export class NotifierConsumer {
       ...job.data,
       userAddrShort: shortenAddr(job.recipientAddr),
       title: 'Vote Reveal Phase Begins',
-      orderLink: `${job.appUrl}/order/${swap.orderId}`,
+      orderLink: `${job.appUrl}/swap/${swap.orderId}`,
       btnValue: 'View Order',
-      btnLink: `${job.appUrl}/order/${swap.orderId}`,
+      btnLink: `${job.appUrl}/swap/${swap.orderId}`,
     };
 
     const template = `dispute/commit-phase-ended`;
@@ -775,9 +775,9 @@ export class NotifierConsumer {
       userAddrShort: shortenAddr(job.recipientAddr),
       asset: 'P2P',
       title: 'Dispute Outcome',
-      orderLink: `${job.appUrl}/order/${swap.orderId}`,
+      orderLink: `${job.appUrl}/swap/${swap.orderId}`,
       btnValue: 'View Order',
-      btnLink: `${job.appUrl}/order/${swap.orderId}`,
+      btnLink: `${job.appUrl}/swap/${swap.orderId}`,
       pluralStr: numMediators > 1 ? 's' : '',
       pluralWhereWasStr: numMediators > 1 ? 'were' : 'was',
     };
@@ -813,9 +813,9 @@ export class NotifierConsumer {
       ...job.data,
       userAddrShort: shortenAddr(job.recipientAddr),
       title: 'Dispute Result Executed',
-      orderLink: `${job.appUrl}/order/${swap.orderId}`,
+      orderLink: `${job.appUrl}/swap/${swap.orderId}`,
       btnValue: 'View Order',
-      btnLink: `${job.appUrl}/order/${swap.orderId}`,
+      btnLink: `${job.appUrl}/swap/${swap.orderId}`,
     };
 
     const template = `dispute/dispute-executed`;

@@ -20,6 +20,7 @@ export class Watcher {
   private interval: NodeJS.Timeout;
   handlers: Handler[] = [];
   private isSyncing = false;
+  private lastActiveTime = Date.now();
 
   /**
    * Initialize the watcher
@@ -42,7 +43,7 @@ export class Watcher {
    */
   async add(...handlers: Handler[]) {
     this.handlers = handlers;
-    this.interval = this.sync();
+    this.sync();
   }
 
   /**
@@ -51,6 +52,14 @@ export class Watcher {
    */
   private makeSyncKey() {
     return !this.name ? `sync_height:${this.network}` : `sync_height:${this.name}:${this.network}`;
+  }
+
+  /**
+   * Get last active time
+   * @returns The last active time
+   */
+  getLastActiveTime() {
+    return this.lastActiveTime;
   }
 
   /**
@@ -123,6 +132,8 @@ export class Watcher {
       }),
     ];
 
+    this.lastActiveTime = Date.now();
+
     return Promise.all(
       events.map((e) => {
         const deferred = defer();
@@ -169,11 +180,11 @@ export class Watcher {
       }
     };
 
-    this.provider.on('block', listener);
+    this.provider.off('block', listener).on('block', listener);
   }
 
   sync() {
-    return setInterval(
+    this.interval = setInterval(
       async () => {
         if (this.isSyncing) return;
         this.isSyncing = true;
@@ -217,5 +228,6 @@ export class Watcher {
       },
       isDev() ? 100 : 1000,
     );
+    return this.interval;
   }
 }

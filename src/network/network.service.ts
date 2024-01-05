@@ -53,6 +53,7 @@ export default class NetworkService {
   private logger = new Logger(NetworkService.name);
   private contracts: JointContracts = {};
   private provider: providers.JsonRpcProvider;
+  private watchers: Watcher[] = [];
 
   constructor(
     public cfgSrv: ConfigService,
@@ -75,6 +76,7 @@ export default class NetworkService {
     const net = this.cfgSrv.get('app.network');
     await this.startGeneralWatcher(net);
     await this.startNFTWatcher(net);
+    await this.restartWatcherSync();
   }
 
   /**
@@ -99,6 +101,19 @@ export default class NetworkService {
    */
   getERC20Contract(address: string): ERC20 {
     return new Contract(address, erc20TokenABI, this.provider) as ERC20;
+  }
+
+  /**
+   * Restart watcher sync when it's not active.
+   */
+  restartWatcherSync() {
+    setInterval(() => {
+      for (const watcher of this.watchers) {
+        if (Date.now() - watcher.getLastActiveTime() >= 60000) {
+          watcher.sync();
+        }
+      }
+    }, 10000);
   }
 
   /**
@@ -187,6 +202,7 @@ export default class NetworkService {
     if (!this.isWatcherDisabled()) {
       const watcher = new Watcher('', network, this.provider, processor);
       await watcher.add(...handlers);
+      this.watchers.push(watcher);
     } else {
       this.logger.log('General Watcher is disabled');
     }
@@ -224,6 +240,7 @@ export default class NetworkService {
     if (!this.isWatcherDisabled('NFT_WATCHER')) {
       const watcher = new Watcher('NFT_WATCHER', network, this.provider, processor);
       await watcher.add(...handlers);
+      this.watchers.push(watcher);
     } else {
       this.logger.log('NFT watcher is disabled');
     }

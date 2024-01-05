@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as Knex from 'knex';
 import * as dbMgr from 'knex-db-manager';
@@ -8,6 +8,7 @@ import { isProd } from '../common/common';
 
 @Injectable()
 export class DBService {
+  private logger = new Logger(DBService.name);
   private knex: Knex.Knex;
   private dbManager: dbMgr.KnexDbManager;
 
@@ -15,13 +16,28 @@ export class DBService {
    * Initialize the service
    * @param cfgService - use the config service
    */
-  constructor(cfgService: ConfigService) {
+  constructor(private cfgService: ConfigService) {
     if (!cfgService) return;
-    const config = cfgService.get('knex')[process.env.NODE_ENV];
+    this.getForProd();
+  }
+
+  /**
+   * Get DB services suitable for production environment
+   * @returns {DBService}
+   */
+  getForProd() {
+    const config = this.cfgService.get('knex')[process.env.NODE_ENV];
     this.knex = Knex.knex(config);
     Model.knex(this.knex);
-
     if (isProd()) this.knex.migrate.latest();
+
+    this.knex.on('error', (err) => {
+      this.logger.error('DB_ERROR', err);
+      if (err.message.includes('ECONNRESET') || err.message.includes('connection reset')) {
+        this.logger.log('RECONNECTING TO DB');
+        this.getForProd();
+      }
+    });
   }
 
   /**
@@ -38,6 +54,7 @@ export class DBService {
       knex: config,
       dbManager: {},
     });
+
     return srv;
   }
 

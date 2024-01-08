@@ -1248,10 +1248,10 @@
     "@types/yargs" "^17.0.8"
     chalk "^4.0.0"
 
-"@jointlabs/chains-info@^0.0.24":
-  version "0.0.24"
-  resolved "https://registry.yarnpkg.com/@jointlabs/chains-info/-/chains-info-0.0.24.tgz#60718d370fcc2d1166b9dac02dfbe2e97359bb87"
-  integrity sha512-kH1BUD08GrkRks1UUB6qe+4nfazzfRNolp7Enn7n1DOZhyoIb0WNKd9mlxZQxjQrv9tZlMMuiAB1yPhxCzbQkQ==
+"@jointlabs/chains-info@^0.0.25":
+  version "0.0.25"
+  resolved "https://registry.yarnpkg.com/@jointlabs/chains-info/-/chains-info-0.0.25.tgz#bfc7f8a023a0bddf467e5a7641cf00b0970241a2"
+  integrity sha512-JWWrQ5asr4nXC2/x/A05QYwzDAurRXI1jEYYKbvpDbyqXJyVmsco9fmsYmlzN0S3QLDzt0ceTr5AXl8Yyf7GEA==
   dependencies:
     lodash "^4.17.21"
     react "^18.2.0"

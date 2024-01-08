@@ -110,6 +110,7 @@ export default class NetworkService {
     setInterval(() => {
       for (const watcher of this.watchers) {
         if (Date.now() - watcher.getLastActiveTime() >= 60000) {
+          this.logger.log(`Restarting watcher ${watcher.name}`);
           watcher.sync();
         }
       }

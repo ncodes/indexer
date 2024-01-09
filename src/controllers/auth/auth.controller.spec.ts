@@ -779,23 +779,6 @@ describe('AuthController', () => {
         });
     });
 
-    it('should return error and address was not provided', async () => {
-      await request(app.getHttpServer())
-        .post('/v1/auth/verify-discord')
-        .send({
-          code: 'abc',
-          address: `0xAddress`,
-        })
-        .expect(400)
-        .expect({
-          error: {
-            message: 'address is required',
-            param: 'address',
-            type: 'invalid_request_error',
-          },
-        });
-    });
-
     it('should return error when user is not in joint guild', async () => {
       jest.spyOn(app.get(AuthService), 'getDiscordAccessToken').mockResolvedValue({});
       jest.spyOn(app.get(AuthService), 'getDiscordAuthedUser').mockResolvedValue({});

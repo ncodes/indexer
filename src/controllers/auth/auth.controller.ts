@@ -204,13 +204,12 @@ export class AuthController {
    */
   @Get('/:address/allowed')
   async isAllowed(@Param('address') address: string) {
-    let allowed = this.authSrv.isInPrivateAllowlist(address);
+    const allowed = this.authSrv.isInPrivateAllowlist(address);
     let code = allowed ? 1 : -1;
 
     if (allowed) {
       const user = await User.getByAddress(address);
-      if (!user || !user.discordId) allowed = false;
-      if (!user.discordId) code = -2;
+      if (!user || !user.discordId) code = -2;
     }
 
     return ok().data({ code }).build();

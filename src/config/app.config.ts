@@ -102,6 +102,12 @@ export default () => ({
       smtpUsername: process.env.AWS_SMTP_USERNAME,
       smtpPassword: process.env.AWS_SMTP_PASSWORD,
     },
+    discord: {
+      clientId: process.env.DISCORD_CLIENT_ID,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET,
+      redirectUri: process.env.DISCORD_REDIRECT_URI,
+      jointGuildId: process.env.DISCORD_JOINT_GUILD_ID,
+    },
     contractsAddress: getContractsAddress(),
     contractsParams: getContractsParams(),
     badges: {

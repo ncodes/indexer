@@ -81,6 +81,7 @@
     "decimal.js": "^10.4.3",
     "defer-promise": "^3.0.0",
     "delay": "^5.0.0",
+    "discord.js": "^14.14.1",
     "email-templates": "^11.0.3",
     "enum-values": "^1.2.1",
     "ethers": "^5.7.2",

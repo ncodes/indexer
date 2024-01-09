@@ -77,7 +77,10 @@ describe('AuthController', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
 
-    cfgObj = { 'auth.jwtSecret': 'secret_secret' };
+    cfgObj = {
+      'auth.jwtSecret': 'secret_secret',
+      'app.discord.jointGuildId': '123',
+    };
     mockCfgGet.mockReset().mockImplementation((args) => {
       return cfgObj[args];
     });
@@ -696,6 +699,137 @@ describe('AuthController', () => {
         .expect((res) => {
           expect(res.body.data.id).toEqual(user.id);
         });
+    });
+  });
+
+  describe('.isAllowed', () => {
+    it('should return false when address is not in the allowlist', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/auth/0xAddress/allowed`)
+        .query({})
+        .expect(200)
+        .expect({
+          data: { code: -1 },
+        });
+    });
+
+    it('should return false when address is not in the allowlist', async () => {
+      jest.spyOn(app.get(AuthService), 'isInPrivateAllowlist').mockReturnValue(false);
+      await request(app.getHttpServer())
+        .get(`/v1/auth/0xAddress/allowed`)
+        .query({})
+        .expect(200)
+        .expect({
+          data: { code: -1 },
+        });
+    });
+
+    it('should return false when address is in the allowlist but has no discord id', async () => {
+      jest.spyOn(app.get(AuthService), 'isInPrivateAllowlist').mockReturnValue(true);
+      await request(app.getHttpServer())
+        .get(`/v1/auth/${u.address}/allowed`)
+        .query({})
+        .expect(200)
+        .expect({
+          data: { code: -2 },
+        });
+    });
+
+    it('should return true when address is in the allowlist and has discord id', async () => {
+      jest.spyOn(app.get(AuthService), 'isInPrivateAllowlist').mockReturnValue(true);
+      await User.updateById(u.id, { discordId: 'user' });
+      await request(app.getHttpServer())
+        .get(`/v1/auth/${u.address}/allowed`)
+        .query({})
+        .expect(200)
+        .expect({
+          data: { code: 1 },
+        });
+    });
+  });
+
+  describe('.verifyDiscord', () => {
+    it('should return error and auth code was not provided', async () => {
+      await request(app.getHttpServer())
+        .post('/v1/auth/verify-discord')
+        .send({})
+        .expect(400)
+        .expect({
+          error: {
+            message: 'discord auth code is required',
+            param: 'code',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return error and address was not provided', async () => {
+      await request(app.getHttpServer())
+        .post('/v1/auth/verify-discord')
+        .send({
+          code: 'abc',
+        })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'address is required',
+            param: 'address',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return error and address was not provided', async () => {
+      await request(app.getHttpServer())
+        .post('/v1/auth/verify-discord')
+        .send({
+          code: 'abc',
+          address: `0xAddress`,
+        })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'address is required',
+            param: 'address',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return error when user is not in joint guild', async () => {
+      jest.spyOn(app.get(AuthService), 'getDiscordAccessToken').mockResolvedValue({});
+      jest.spyOn(app.get(AuthService), 'getDiscordAuthedUser').mockResolvedValue({});
+      jest.spyOn(app.get(AuthService), 'getAuthedUserDiscordGuilds').mockResolvedValue([]);
+      await request(app.getHttpServer())
+        .post('/v1/auth/verify-discord')
+        .send({
+          code: 'abc',
+          address: `0xAddress`,
+        })
+        .expect(404)
+        .expect({
+          error: {
+            message: 'not a member of Joint discord server',
+          },
+        });
+    });
+
+    it('should succeed and update user discord ID when user is in joint guild', async () => {
+      jest.spyOn(app.get(AuthService), 'getDiscordAccessToken').mockResolvedValue({});
+      jest.spyOn(app.get(AuthService), 'getDiscordAuthedUser').mockResolvedValue({
+        username: '0xUser',
+      });
+      jest.spyOn(app.get(AuthService), 'getAuthedUserDiscordGuilds').mockResolvedValue([{ id: '123' }]);
+      await request(app.getHttpServer())
+        .post('/v1/auth/verify-discord')
+        .send({
+          code: 'abc',
+          address: `0xAddress`,
+        })
+        .expect(200)
+        .expect({ data: { ok: true } });
+      const updUser = await User.getByAddress('0xAddress');
+      expect(updUser.discordId).toEqual('0xUser');
     });
   });
 });

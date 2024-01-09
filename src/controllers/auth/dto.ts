@@ -42,3 +42,11 @@ export class VerifyEmailDTO {
   @IsNotEmpty({ message: makeValidatorMsg('otp is required', 'otp') })
   otp: string;
 }
+
+export class AuthByDiscordDTO {
+  @IsNotEmpty({ message: makeValidatorMsg('discord auth code is required', 'code') })
+  code: string;
+
+  @IsNotEmpty({ message: makeValidatorMsg('address is required', 'address') })
+  address: string;
+}

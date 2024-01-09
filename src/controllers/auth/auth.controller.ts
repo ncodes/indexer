@@ -180,9 +180,14 @@ export class AuthController {
    * @param address The address to check
    */
   @Get('/:address/allowed')
-  isAllowed(@Param('address') address: string) {
-    return ok()
-      .data({ allowed: this.authSrv.isInPrivateAllowlist(address) })
-      .build();
+  async isAllowed(@Param('address') address: string) {
+    let allowed = this.authSrv.isInPrivateAllowlist(address);
+
+    if (allowed) {
+      const user = await User.getByAddress(address);
+      if (!user || !user.discordId) allowed = false;
+    }
+
+    return ok().data({ allowed }).build();
   }
 }

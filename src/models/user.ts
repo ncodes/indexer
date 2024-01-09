@@ -16,6 +16,7 @@ export default class User extends BaseModel {
   otpSecret: string;
   referrer: string;
   refCode: string;
+  discordId: string;
 
   // Not persisted
   totalSwaps: number;

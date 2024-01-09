@@ -9,7 +9,6 @@ import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import Swap from '../../models/swap';
 import { FilesService } from './files.service';
-import isNumeric = validator.isNumeric;
 
 @Controller('v1/files')
 export class FilesController {
@@ -44,7 +43,7 @@ export class FilesController {
     if (!isValidChain(network)) throw400('network is unknown');
 
     // Validate order ID
-    if (!isNumeric(orderId)) throw400('order id is not a number');
+    if (!validator.isNumeric(orderId)) throw400('order id is not a number');
 
     // Validate images
     if (file.mimetype.startsWith('image')) {

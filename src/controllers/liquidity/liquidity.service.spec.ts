@@ -7,7 +7,7 @@ import Market from '../../models/market';
 import MarketPrice from '../../models/market_price';
 import Swap from '../../models/swap';
 import { MetadataService } from '../../services/metadata/metadata.service';
-import { RedisService } from '../../services/redis.service';
+import { RedisService } from '../../services/redis/redis.service';
 import { MarketService } from '../markets/market.service';
 import { LiquidityService } from './liquidity.service';
 

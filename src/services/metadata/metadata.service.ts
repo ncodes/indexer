@@ -6,7 +6,7 @@ import { isDev, isProd, toDec } from '../../common/common';
 import { isZero, pow10D } from '../../network/common';
 import NetworkService from '../../network/network.service';
 import { ExchangeRateService } from '../exchange_rate.service';
-import { RedisService } from '../redis.service';
+import { RedisService } from '../redis/redis.service';
 import { CoinGeckoMetadata } from './CoinGeckoMetadata';
 import { CoinMarketCapMetadata } from './CoinMarketCapMetadata';
 

@@ -12,7 +12,8 @@ import { pow10 } from '../../network/common';
 import NetworkService from '../../network/network.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
-import { RedisService } from '../../services/redis.service';
+import { RedisService } from '../../services/redis/redis.service';
+import { AuthService } from '../auth/auth.service';
 import { PointService } from '../points/point.service';
 import { MarketService } from './market.service';
 
@@ -74,6 +75,7 @@ describe('MarketsService', () => {
         ConfigService,
         ExchangeRateService,
         RedisService,
+        AuthService,
         PointService,
       ],
     })

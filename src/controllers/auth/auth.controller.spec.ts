@@ -15,7 +15,7 @@ import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierServi
 import Session from '../../models/session';
 import User from '../../models/user';
 import { JointLinkService } from '../../services/joint_link.service';
-import { RedisService } from '../../services/redis.service';
+import { RedisService } from '../../services/redis/redis.service';
 import ConvosService from '../convos/convos.service';
 import { UserService } from '../users/user.service';
 import { AuthController } from './auth.controller';

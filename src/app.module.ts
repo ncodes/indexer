@@ -31,47 +31,16 @@ import { DBService } from './db/db.service';
 import { InstructionsModule } from './instructions/instructions.module';
 import { JobsModule } from './jobs/jobs.module';
 import { NetworkModule } from './network/network.module';
+import { RedisModule } from './services/redis/redis.module';
 
 /**
- * Returns the configurations to be loaded.
- * We use this method instead of directly specifying the configs so
- * that we can apply custom logic here to determine which
- * configurations to load.
+ * Get a list of modules to be loaded.
+ * If process.env.OFF is set, we return an empty array.
  * @returns
  */
-function getConfigs() {
-  return [KnexConfig, AppConfig, AuthConfig];
-}
-
-/**
- * Returns the providers to be loaded.
- * We use this method instead of directly specifying the providers so
- * that we can apply custom logic here to determine which
- * providers to load.
- * @returns
- */
-function getProviders() {
-  return [DBService, Logger, { provide: APP_GUARD, useClass: ThrottlerGuard }];
-}
-
-@Module({
-  imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: ['.env', '.env.local'],
-      load: getConfigs(),
-    }),
-    ThrottlerModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (cfgSrv: ConfigService) => [
-        {
-          ttl: parseInt(cfgSrv.get('app.throttle_ttl')),
-          limit: parseInt(cfgSrv.get('app.throttle_limit')),
-          storage: new ThrottlerStorageRedisService(cfgSrv.get('app.redis.url')),
-        },
-      ],
-    }),
+function getModules() {
+  const modules = [
+    RedisModule,
     JobsModule,
     AuthModule,
     NetworkModule,
@@ -94,18 +63,37 @@ function getProviders() {
     FilesModule,
     PointModule,
     ReferralModule,
+  ];
+
+  return process.env.OFF != 'true' ? modules : [];
+}
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ['.env', '.env.local'],
+      load: [KnexConfig, AppConfig, AuthConfig],
+    }),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (cfgSrv: ConfigService) => [
+        {
+          ttl: parseInt(cfgSrv.get('app.throttle_ttl')),
+          limit: parseInt(cfgSrv.get('app.throttle_limit')),
+          storage: new ThrottlerStorageRedisService(cfgSrv.get('app.redis.url')),
+        },
+      ],
+    }),
+    ...getModules(),
   ],
-  providers: getProviders(),
+  providers: [DBService, Logger, { provide: APP_GUARD, useClass: ThrottlerGuard }],
   controllers: [],
 })
 export class AppModule implements NestModule {
   public configure(consumer: MiddlewareConsumer): MiddlewareConsumer | void {
     consumer
-      // .apply(RawBodyMiddleware)
-      // .forRoutes({
-      //   path: '/v1/..',
-      //   method: RequestMethod.POST,
-      // })
       .apply(RequestLoggerMiddleware)
       .forRoutes('*')
       .apply(JsonBodyMiddleware)

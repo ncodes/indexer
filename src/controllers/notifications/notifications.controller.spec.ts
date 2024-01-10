@@ -13,7 +13,7 @@ import Offer from '../../models/offer';
 import OnlineStatus from '../../models/online_status';
 import Swap from '../../models/swap';
 import User from '../../models/user';
-import { RedisService } from '../../services/redis.service';
+import { RedisService } from '../../services/redis/redis.service';
 import { makeSession } from '../auth/utils';
 import { NotificationID, NotifierService } from './../../jobs/mailer/NotifierService';
 import { NotificationsController } from './notifications.controller';

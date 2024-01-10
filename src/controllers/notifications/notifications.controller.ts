@@ -14,7 +14,7 @@ import Notification from '../../models/notification';
 import OnlineStatus from '../../models/online_status';
 import User from '../../models/user';
 import WebPushSubscription from '../../models/web_push_subscription';
-import { RedisService } from '../../services/redis.service';
+import { RedisService } from '../../services/redis/redis.service';
 import { ChatNotificationDTO, ListQueryDTO, MarkReadDTO, WebPushSubscribeDTO } from './dto';
 
 @Controller('v1/notifications')

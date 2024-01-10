@@ -17,7 +17,7 @@ import User from '../../models/user';
 import NetworkService from '../../network/network.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
-import { RedisService } from '../../services/redis.service';
+import { RedisService } from '../../services/redis/redis.service';
 import { makeSession } from '../auth/utils';
 import { LiquidityService } from '../liquidity/liquidity.service';
 import { MarketService } from '../markets/market.service';

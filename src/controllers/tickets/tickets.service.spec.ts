@@ -7,7 +7,7 @@ import TicketSlash from '../../models/ticket_slash';
 import NetworkService from '../../network/network.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
-import { RedisService } from '../../services/redis.service';
+import { RedisService } from '../../services/redis/redis.service';
 import { MarketService } from '../markets/market.service';
 import { TicketsService } from './tickets.service';
 

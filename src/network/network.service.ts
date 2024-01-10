@@ -35,7 +35,7 @@ import { NotifierService } from '../jobs/mailer/NotifierService';
 import Meta, { MetaKeys } from '../models/meta';
 import { ExchangeRateService } from '../services/exchange_rate.service';
 import { MetadataService } from '../services/metadata/metadata.service';
-import { RedisService } from '../services/redis.service';
+import { RedisService } from '../services/redis/redis.service';
 import { AssetRegistryHandler } from './assetregistry/asset_registry.handler';
 import { BadgeManagerHandler } from './badge/badge_manager.handler';
 import { CoreHandler } from './core/core.handler';

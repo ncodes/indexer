@@ -8,7 +8,7 @@ import Swap from '../../models/swap';
 import User from '../../models/user';
 import { JointLinkService } from '../../services/joint_link.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
-import { RedisService } from '../../services/redis.service';
+import { RedisService } from '../../services/redis/redis.service';
 import ConvosService from '../convos/convos.service';
 import { MarketService } from '../markets/market.service';
 import { UserService } from './user.service';
@@ -223,13 +223,21 @@ describe('UserService', () => {
   });
 
   describe('.enableReferrer', () => {
-    it(`should return true and set referrer when user is new`, async () => {
+    it(`should return false when user already has a ref code`, async () => {
       const referrer = '0xReferrer';
-      let u = await User.create({ address: user });
+      const u = await User.create({ address: user, refCode: '12345' });
       const res = await service.enableReferrer(true, referrer, u);
+      expect(res).toBeFalsy();
+      expect(mockCreateLink).not.toBeCalled();
+    });
+
+    it(`should return true and set referrer when user is new`, async () => {
+      let u = await User.create({ address: user });
+      const referrer = await User.create({ address: '0xReferrer', refCode: '0xReferrerCode' });
+      const res = await service.enableReferrer(true, '0xReferrerCode', u);
       expect(res).toBeTruthy();
       u = await User.getById(u.id);
-      expect(u.referrer).toEqual(referrer);
+      expect(u.referrer).toEqual(referrer.address);
       expect(u.refCode).toHaveLength(5);
       expect(mockCreateLink).toBeCalledWith(u.refCode);
     });
@@ -243,14 +251,6 @@ describe('UserService', () => {
       expect(u.referrer).toBeNull();
       expect(u.refCode).toHaveLength(5);
       expect(mockCreateLink).toBeCalledWith(u.refCode);
-    });
-
-    it(`should return false when user already has a ref code`, async () => {
-      const referrer = '0xReferrer';
-      const u = await User.create({ address: user, refCode: '12345' });
-      const res = await service.enableReferrer(true, referrer, u);
-      expect(res).toBeFalsy();
-      expect(mockCreateLink).not.toBeCalled();
     });
   });
 });

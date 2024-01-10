@@ -1,15 +1,15 @@
 import { Module } from '@nestjs/common';
-import { SwapsController } from './swaps.controller';
-import { MarketService } from '../markets/market.service';
 import { NetworkModule } from '../../network/network.module';
 import { MetadataService } from '../../services/metadata/metadata.service';
+import { RedisModule } from '../../services/redis/redis.module';
 import { LiquidityService } from '../liquidity/liquidity.service';
+import { MarketService } from '../markets/market.service';
 import SwapService from './swap.service';
-import { RedisService } from '../../services/redis.service';
+import { SwapsController } from './swaps.controller';
 
 @Module({
-  imports: [NetworkModule],
+  imports: [NetworkModule, RedisModule],
   controllers: [SwapsController],
-  providers: [MarketService, MetadataService, LiquidityService, SwapService, RedisService],
+  providers: [MarketService, MetadataService, LiquidityService, SwapService],
 })
 export class SwapsModule {}

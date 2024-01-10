@@ -14,7 +14,7 @@ import User from '../../models/user';
 import { toBN } from '../../network/common';
 import NetworkService from '../../network/network.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
-import { RedisService } from '../../services/redis.service';
+import { RedisService } from '../../services/redis/redis.service';
 import { makeSession } from '../auth/utils';
 import { MarketService } from '../markets/market.service';
 import { TicketsController } from './tickets.controller';

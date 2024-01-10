@@ -3,7 +3,7 @@ import * as defer from 'defer-promise';
 import { BigNumber, constants, ethers, providers } from 'ethers';
 import { isEqualStr } from '../common/common';
 import Meta from '../models/meta';
-import { RedisService } from '../services/redis.service';
+import { RedisService } from '../services/redis/redis.service';
 import { Handler } from './handler';
 import Processor from './processor';
 

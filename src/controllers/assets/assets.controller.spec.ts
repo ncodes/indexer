@@ -16,9 +16,10 @@ import { genEthAddress } from '../../network/common';
 import NetworkService from '../../network/network.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
-import { RedisService } from '../../services/redis.service';
+import { RedisService } from '../../services/redis/redis.service';
 import { PointService } from '../points/point.service';
 import { AssetsController } from './assets.controller';
+import { AuthService } from '../auth/auth.service';
 
 // Note: We use var because const will not jest hoist correctly.
 // eslint-disable-next-line no-var
@@ -70,6 +71,7 @@ describe('AssetsController', () => {
         NetworkService,
         NotifierService,
         ExchangeRateService,
+        AuthService,
         RedisService,
         PointService,
       ],

@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
-import { DisputesController } from './disputes.controller';
 import { NetworkModule } from '../../network/network.module';
-import { MarketService } from '../markets/market.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
-import { RedisService } from '../../services/redis.service';
+import { RedisModule } from '../../services/redis/redis.module';
+import { MarketService } from '../markets/market.service';
+import { DisputesController } from './disputes.controller';
 
 @Module({
-  imports: [NetworkModule],
+  imports: [NetworkModule, RedisModule],
   controllers: [DisputesController],
-  providers: [MarketService, MetadataService, RedisService],
+  providers: [MarketService, MetadataService],
 })
 export class DisputesModule {}

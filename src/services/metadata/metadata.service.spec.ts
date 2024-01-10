@@ -6,7 +6,7 @@ import { DBService } from '../../db/db.service';
 import { NotifierService } from '../../jobs/mailer/NotifierService';
 import NetworkService from '../../network/network.service';
 import { ExchangeRateService } from '../exchange_rate.service';
-import { RedisService } from '../redis.service';
+import { RedisService } from '../redis/redis.service';
 import { CoinGeckoMetadata } from './CoinGeckoMetadata';
 import { CoinMarketCapMetadata } from './CoinMarketCapMetadata';
 import { MetadataService } from './metadata.service';

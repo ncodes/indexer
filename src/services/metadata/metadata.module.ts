@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
-import { MetadataService } from './metadata.service';
-import { ConfigService } from '../../config/config.service';
 import { ConfigModule } from '@nestjs/config';
+import { ConfigService } from '../../config/config.service';
 import { NotifierModule } from '../../jobs/mailer/NotifierModule';
-import { RedisService } from '../redis.service';
 import { NetworkModule } from '../../network/network.module';
+import { RedisModule } from '../redis/redis.module';
+import { MetadataService } from './metadata.service';
 
 @Module({
-  imports: [ConfigModule, NotifierModule, NetworkModule],
-  providers: [ConfigService, MetadataService, RedisService],
+  imports: [ConfigModule, NotifierModule, NetworkModule, RedisModule],
+  providers: [ConfigService, MetadataService],
 })
 export class MetadataModule {}

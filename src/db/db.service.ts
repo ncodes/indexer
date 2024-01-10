@@ -29,15 +29,24 @@ export class DBService {
     const config = this.cfgService.get('knex')[process.env.NODE_ENV];
     this.knex = Knex.knex(config);
     Model.knex(this.knex);
+
+    this.knex.client.on('error', (e) => {
+      console.log('DB ERROR', e);
+    });
+
+    this.knex.client.on('connection-error', (e) => {
+      console.log('DB CONN ERROR', e);
+    });
+
     if (isProd()) this.knex.migrate.latest();
 
-    this.knex.on('error', (err) => {
-      this.logger.error('DB_ERROR', err);
-      if (err.message.includes('ECONNRESET') || err.message.includes('connection reset')) {
-        this.logger.log('RECONNECTING TO DB');
-        this.getForProd();
-      }
-    });
+    // this.knex.on('error', (err) => {
+    //   this.logger.error('DB_ERROR', err);
+    //   if (err.message.includes('ECONNRESET') || err.message.includes('connection reset')) {
+    //     this.logger.log('RECONNECTING TO DB');
+    //     this.getForProd();
+    //   }
+    // });
   }
 
   /**

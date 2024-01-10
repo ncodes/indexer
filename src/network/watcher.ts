@@ -1,8 +1,9 @@
 import { Logger } from '@nestjs/common';
 import * as defer from 'defer-promise';
 import { BigNumber, constants, ethers, providers } from 'ethers';
-import { isDev, isEqualStr } from '../common/common';
+import { isEqualStr } from '../common/common';
 import Meta from '../models/meta';
+import { RedisService } from '../services/redis.service';
 import { Handler } from './handler';
 import Processor from './processor';
 
@@ -17,7 +18,6 @@ export interface UnprocessedEvent {
 
 export class Watcher {
   logger = new Logger(Watcher.name);
-  private interval: NodeJS.Timeout;
   handlers: Handler[] = [];
   private isSyncing = false;
   private lastActiveTime = Date.now();
@@ -35,6 +35,7 @@ export class Watcher {
     public network: string,
     private provider: providers.JsonRpcProvider,
     private processor: Processor,
+    private redisSrv: RedisService,
   ) {}
 
   /**
@@ -176,64 +177,56 @@ export class Watcher {
       } catch (e) {
         this.logError('Error:watchBlock: ', e);
         this.provider.off('block', listener);
-        if (!this.isSyncing) {
-          this.logError('Restarting sync after watchBlock error');
-          this.sync();
-        }
+        this.logError('Attempt to restarting sync after watchBlock error');
+        this.sync();
       }
     };
 
     this.provider.off('block', listener).on('block', listener);
   }
 
-  sync() {
+  async sync() {
     if (this.isSyncing) return;
-    const interval = setInterval(
-      async () => {
-        if (this.isSyncing) {
-          clearInterval(interval);
-          return;
-        }
-        this.isSyncing = true;
-        this.interval = interval;
+    this.isSyncing = true;
 
-        try {
-          // Get last synced block height
-          const key = this.makeSyncKey();
-          let meta = await Meta.get(key);
-          if (!meta) meta = new Meta({ value: this.getLaunchHeight() });
+    try {
+      // Get last synced block height
+      const key = this.makeSyncKey();
+      let meta = await Meta.get(key);
+      if (!meta) meta = new Meta({ value: this.getLaunchHeight() });
 
-          // Ensure we are not fully synchronized yet.
-          // If we are, stop watching on interval. Instead, watch on new block.
-          const curBlock = await this.provider.getBlockNumber();
-          if (parseInt(meta.value) == curBlock) {
-            this.logInfo(`Watcher is fully synchronized at block ${curBlock}`);
-            this.watchBlock();
-            clearInterval(this.interval);
-            return;
-          }
+      // Ensure we are not fully synchronized yet.
+      // If we are, stop watching on interval. Instead, watch on new block.
+      const curBlock = await this.provider.getBlockNumber();
+      if (parseInt(meta.value) == curBlock) {
+        this.logInfo(`Watcher is fully synchronized at block ${curBlock}`);
+        this.watchBlock();
+        this.isSyncing = false;
+        return;
+      }
 
-          // Determine the start and end block height
-          let endBlock = process.env.WATCH_RANGE
-            ? parseInt(process.env.WATCH_RANGE) + parseInt(meta.value)
-            : parseInt(meta.value) + 1;
-          endBlock = endBlock > curBlock ? curBlock : endBlock;
-          const startBlock = parseInt(meta.value) + 1;
+      // Determine the start and end block height
+      let endBlock = process.env.WATCH_RANGE
+        ? parseInt(process.env.WATCH_RANGE) + parseInt(meta.value)
+        : parseInt(meta.value) + 1;
+      endBlock = endBlock > curBlock ? curBlock : endBlock;
+      const startBlock = parseInt(meta.value) + 1;
 
-          this.logInfo(`Syncing blocks between ${startBlock} and ${endBlock} (Current Head: ${curBlock})`);
+      this.logInfo(`Syncing blocks between ${startBlock} and ${endBlock} (Current Head: ${curBlock})`);
 
-          // Process events
-          await this.fetchAndProcessEvents(startBlock, endBlock);
+      // Process events
+      await this.fetchAndProcessEvents(startBlock, endBlock);
 
-          // Update the last sync height
-          await Meta.update(key, endBlock.toString());
-        } catch (e) {
-          this.logError(`Error:sync(): ` + e.message, e.stack);
-        } finally {
-          this.isSyncing = false;
-        }
-      },
-      isDev() ? 100 : 1000,
-    );
+      // Update the last sync height
+      await Meta.update(key, endBlock.toString());
+
+      this.isSyncing = false;
+      this.sync();
+    } catch (e) {
+      this.logError(`Error:sync(): ` + e.message, e.stack);
+      this.logInfo('Attempt to restarting sync() after sync error');
+      this.isSyncing = false;
+      this.sync();
+    }
   }
 }

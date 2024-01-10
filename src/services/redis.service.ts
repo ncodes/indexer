@@ -1,11 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
+import Redlock, { RedlockAbortSignal } from 'redlock';
 
 @Injectable()
 export class RedisService {
   private logger = new Logger(RedisService.name);
   private client: Redis;
+  private redlock: Redlock;
 
   constructor(private cfg: ConfigService) {
     this.client = new Redis(cfg.get('app.redis.url'), {
@@ -18,6 +20,13 @@ export class RedisService {
 
     this.client.on('ready', () => {
       this.logger.log('Redis connected');
+      this.redlock = new Redlock([this.client], {
+        driftFactor: 0.01,
+        retryCount: 10,
+        retryDelay: 200,
+        retryJitter: 200,
+        automaticExtensionThreshold: 500,
+      });
     });
   }
 
@@ -76,5 +85,16 @@ export class RedisService {
    */
   async lPop(key: string): Promise<string> {
     return this.client.lpop(key);
+  }
+
+  /**
+   * Lock a resource
+   * @param resources The resources to lock
+   * @param duration The duration to lock the resources for
+   * @param routine The routine to run while the resources are locked
+   * @returns
+   */
+  async lock(resources: string[], duration: number, routine: (signal: RedlockAbortSignal) => Promise<void>) {
+    return this.redlock.using(resources, duration, routine);
   }
 }

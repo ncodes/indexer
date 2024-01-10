@@ -35,6 +35,7 @@ import { NotifierService } from '../jobs/mailer/NotifierService';
 import Meta, { MetaKeys } from '../models/meta';
 import { ExchangeRateService } from '../services/exchange_rate.service';
 import { MetadataService } from '../services/metadata/metadata.service';
+import { RedisService } from '../services/redis.service';
 import { AssetRegistryHandler } from './assetregistry/asset_registry.handler';
 import { BadgeManagerHandler } from './badge/badge_manager.handler';
 import { CoreHandler } from './core/core.handler';
@@ -57,6 +58,7 @@ export default class NetworkService {
 
   constructor(
     public cfgSrv: ConfigService,
+    public redisSrv: RedisService,
     private notifSrv: NotifierService,
     @Inject(forwardRef(() => MetadataService))
     private metadataSrv: MetadataService,
@@ -201,7 +203,7 @@ export default class NetworkService {
 
     // Create event watcher
     if (!this.isWatcherDisabled()) {
-      const watcher = new Watcher('', network, this.provider, processor);
+      const watcher = new Watcher('', network, this.provider, processor, this.redisSrv);
       await watcher.add(...handlers);
       this.watchers.push(watcher);
     } else {
@@ -239,7 +241,7 @@ export default class NetworkService {
 
     // Create event watcher
     if (!this.isWatcherDisabled('NFT_WATCHER')) {
-      const watcher = new Watcher('NFT_WATCHER', network, this.provider, processor);
+      const watcher = new Watcher('NFT_WATCHER', network, this.provider, processor, this.redisSrv);
       await watcher.add(...handlers);
       this.watchers.push(watcher);
     } else {

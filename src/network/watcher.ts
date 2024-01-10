@@ -174,11 +174,11 @@ export class Watcher {
         // Update the last sync height
         await Meta.update(key, curBlock.toString());
       } catch (e) {
-        this.logError('Err:watchBlock', e);
+        this.logError('Error:watchBlock: ', e);
         this.provider.off('block', listener);
         if (!this.isSyncing) {
           this.logError('Restarting sync after watchBlock error');
-          this.interval = this.sync();
+          this.sync();
         }
       }
     };
@@ -187,22 +187,21 @@ export class Watcher {
   }
 
   sync() {
-    this.interval = setInterval(
+    if (this.isSyncing) return;
+    const interval = setInterval(
       async () => {
         if (this.isSyncing) {
-          this.logInfo('Skipped sync restart. Already syncing.');
+          clearInterval(interval);
           return;
         }
-
         this.isSyncing = true;
+        this.interval = interval;
 
         try {
           // Get last synced block height
           const key = this.makeSyncKey();
           let meta = await Meta.get(key);
-          if (!meta) {
-            meta = new Meta({ value: this.getLaunchHeight() });
-          }
+          if (!meta) meta = new Meta({ value: this.getLaunchHeight() });
 
           // Ensure we are not fully synchronized yet.
           // If we are, stop watching on interval. Instead, watch on new block.
@@ -229,13 +228,12 @@ export class Watcher {
           // Update the last sync height
           await Meta.update(key, endBlock.toString());
         } catch (e) {
-          this.logError(e.message, e.stack);
+          this.logError(`Error:sync(): ` + e.message, e.stack);
         } finally {
           this.isSyncing = false;
         }
       },
       isDev() ? 100 : 1000,
     );
-    return this.interval;
   }
 }

@@ -49,4 +49,7 @@ export class AuthByDiscordDTO {
 
   @IsNotEmpty({ message: makeValidatorMsg('address is required', 'address') })
   address: string;
+
+  @IsOptional()
+  refCode: string;
 }

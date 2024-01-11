@@ -226,7 +226,7 @@ describe('UserService', () => {
     it(`should return false when user already has a ref code`, async () => {
       const referrer = '0xReferrer';
       const u = await User.create({ address: user, refCode: '12345' });
-      const res = await service.enableReferrer(true, referrer, u);
+      const res = await service.enableReferrerOps(true, referrer, u);
       expect(res).toBeFalsy();
       expect(mockCreateLink).not.toBeCalled();
     });
@@ -234,7 +234,7 @@ describe('UserService', () => {
     it(`should return true and set referrer when user is new`, async () => {
       let u = await User.create({ address: user });
       const referrer = await User.create({ address: '0xReferrer', refCode: '0xReferrerCode' });
-      const res = await service.enableReferrer(true, '0xReferrerCode', u);
+      const res = await service.enableReferrerOps(true, '0xReferrerCode', u);
       expect(res).toBeTruthy();
       u = await User.getById(u.id);
       expect(u.referrer).toEqual(referrer.address);
@@ -245,7 +245,7 @@ describe('UserService', () => {
     it(`should return true and not set referrer when user is not new`, async () => {
       const referrer = '0xReferrer';
       let u = await User.create({ address: user });
-      const res = await service.enableReferrer(false, referrer, u);
+      const res = await service.enableReferrerOps(false, referrer, u);
       expect(res).toBeTruthy();
       u = await User.getById(u.id);
       expect(u.referrer).toBeNull();

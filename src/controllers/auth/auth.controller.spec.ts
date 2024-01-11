@@ -814,5 +814,25 @@ describe('AuthController', () => {
       const updUser = await User.getByAddress('0xAddress');
       expect(updUser.discordId).toEqual('0xUser');
     });
+
+    it('should succeed and generate user refCode and referrer when refCode is provided', async () => {
+      const referrer = await User.create({ address: '0xReferrer', refCode: '12345' });
+      jest.spyOn(app.get(AuthService), 'getDiscordAccessToken').mockResolvedValue({});
+      jest.spyOn(app.get(AuthService), 'getDiscordAuthedUser').mockResolvedValue({ username: '0xUser' });
+      jest.spyOn(app.get(AuthService), 'getAuthedUserDiscordGuilds').mockResolvedValue([{ id: '123' }]);
+      await request(app.getHttpServer())
+        .post('/v1/auth/verify-discord')
+        .send({
+          code: 'abc',
+          address: '0xAddress2',
+          refCode: referrer.refCode,
+        })
+        .expect(200)
+        .expect({ data: { ok: true } });
+      const updUser = await User.getByAddress('0xAddress2');
+      expect(updUser.discordId).toEqual('0xUser');
+      expect(updUser.refCode).toHaveLength(5);
+      expect(updUser.referrer).toEqual(referrer.address);
+    });
   });
 });

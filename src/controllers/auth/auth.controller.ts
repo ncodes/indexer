@@ -122,7 +122,7 @@ export class AuthController {
     await this.userSrv.registerDevice(user);
 
     // Enable referrer state for the user
-    await this.userSrv.enableReferrer(isUserNew, body.refCode, user);
+    await this.userSrv.enableReferrerOps(isUserNew, body.refCode, user);
 
     return ok().data({ token, user }).build();
   }
@@ -226,11 +226,10 @@ export class AuthController {
     let user = await User.getByAddress(body.address);
 
     // Create user if not found
+    // Enable referrer state for the user
     if (!user) {
-      user = await User.create({
-        role: Roles.User,
-        address: body.address,
-      });
+      user = await User.create({ role: Roles.User, address: body.address });
+      await this.userSrv.enableReferrerOps(true, body.refCode, user);
     }
 
     // Get access token

@@ -120,12 +120,11 @@ export class UserService {
    * @param referrerRefCode The referrer code
    * @param user The user object
    */
-  async enableReferrer(isNewUser: boolean, referrerRefCode: string, user: User) {
+  async enableReferrerOps(isNewUser: boolean, referrerRefCode: string, user: User) {
     return transaction(User, async (User) => {
       if (user.refCode) return false;
 
       const referrer = referrerRefCode ? await User.getByRefCode(referrerRefCode) : undefined;
-
       const upd = await User.updateById(user.id, {
         refCode: randStr(5).toLowerCase(),
         referrer: isNewUser && referrer ? referrer.address : null,

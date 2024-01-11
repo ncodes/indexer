@@ -203,7 +203,9 @@ export class Watcher {
       let meta = await Meta.get(key);
       this.logInfo('2');
       if (!meta) meta = new Meta({ value: this.getLaunchHeight() });
+      this.logInfo('3');
       const curBlock = await this.provider.getBlockNumber();
+      this.logInfo('4');
       this.logInfo(`Last synced block: ${meta.value}`, { 'Current Head': curBlock });
 
       // Ensure we are not fully synchronized yet.

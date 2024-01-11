@@ -143,6 +143,10 @@ export default class NetworkService {
       ? new providers.WebSocketProvider(rpcUrl)
       : new providers.JsonRpcProvider(rpcUrl);
 
+    this.provider.on('error', (e) => {
+      this.logger.error('Provider error', e);
+    });
+
     // Initialize contracts
     const p2pTokenAddr = this.cfgSrv.get(`app.contractsAddress.p2pTokenAddr`);
     if (p2pTokenAddr) this.contracts.p2pToken = new Contract(p2pTokenAddr, p2pTokenABI, this.provider) as Token;

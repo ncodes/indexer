@@ -781,7 +781,9 @@ describe('AuthController', () => {
 
     it('should return error when user is not in joint guild', async () => {
       jest.spyOn(app.get(AuthService), 'getDiscordAccessToken').mockResolvedValue({});
-      jest.spyOn(app.get(AuthService), 'getDiscordAuthedUser').mockResolvedValue({});
+      jest.spyOn(app.get(AuthService), 'getDiscordAuthedUser').mockResolvedValue({
+        username: '0xUser',
+      });
       jest.spyOn(app.get(AuthService), 'getAuthedUserDiscordGuilds').mockResolvedValue([]);
       await request(app.getHttpServer())
         .post('/v1/auth/verify-discord')
@@ -792,7 +794,29 @@ describe('AuthController', () => {
         .expect(404)
         .expect({
           error: {
-            message: 'not a member of Joint discord server',
+            message: 'Not a member of Joint discord server',
+          },
+        });
+    });
+
+    it('should return error when discord ID is used by another user', async () => {
+      await User.create({ address: '0xAddress2', discordId: '0xUser' });
+      jest.spyOn(app.get(AuthService), 'getDiscordAccessToken').mockResolvedValue({});
+      jest.spyOn(app.get(AuthService), 'getDiscordAuthedUser').mockResolvedValue({
+        username: '0xUser',
+      });
+      jest.spyOn(app.get(AuthService), 'getAuthedUserDiscordGuilds').mockResolvedValue([{ id: '123' }]);
+      await request(app.getHttpServer())
+        .post('/v1/auth/verify-discord')
+        .send({
+          code: 'abc',
+          address: `0xAddress`,
+        })
+        .expect(400)
+        .expect({
+          error: {
+            type: 'authentication_error',
+            message: 'Discord account is already linked to another user',
           },
         });
     });
@@ -813,6 +837,23 @@ describe('AuthController', () => {
         .expect({ data: { ok: true } });
       const updUser = await User.getByAddress('0xAddress');
       expect(updUser.discordId).toEqual('0xUser');
+    });
+
+    it('should succeed when discord ID is used by self', async () => {
+      await User.create({ address: '0xAddress', discordId: '0xUser' });
+      jest.spyOn(app.get(AuthService), 'getDiscordAccessToken').mockResolvedValue({});
+      jest.spyOn(app.get(AuthService), 'getDiscordAuthedUser').mockResolvedValue({
+        username: '0xUser',
+      });
+      jest.spyOn(app.get(AuthService), 'getAuthedUserDiscordGuilds').mockResolvedValue([{ id: '123' }]);
+      await request(app.getHttpServer())
+        .post('/v1/auth/verify-discord')
+        .send({
+          code: 'abc',
+          address: `0xAddress`,
+        })
+        .expect(200)
+        .expect({ data: { ok: true } });
     });
 
     it('should succeed and generate user refCode and referrer when refCode is provided', async () => {

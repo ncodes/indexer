@@ -18,7 +18,7 @@ import { isEmail } from 'class-validator';
 import { Request, Response } from 'express';
 import { transaction } from 'objection';
 import { authenticator, totp } from 'otplib';
-import { sha1 } from '../../common/common';
+import { isEqualStr, sha1 } from '../../common/common';
 import { handleAxiosError } from '../../common/errors/http_response_error';
 import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
 import {
@@ -261,9 +261,15 @@ export class AuthController {
       throw500('server error');
     }
 
+    // Find existing user with the same discord ID
+    const existingUser = await User.getByDiscordId(getUserResp.username);
+    if (existingUser && !isEqualStr(existingUser.address, user.address)) {
+      throw400('Discord account is already linked to another user', ErrorTypes.Auth);
+    }
+
     // Find guild with a specific ID
     const guild = guildsListResp.find((guild: { id: any }) => guild.id === this.cfgSrv.get('app.discord.jointGuildId'));
-    if (!guild) throw404('not a member of Joint discord server');
+    if (!guild) throw404('Not a member of Joint discord server');
 
     // Update the user's discord ID
     await User.updateById(user.id, {

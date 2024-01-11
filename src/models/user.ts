@@ -119,6 +119,16 @@ export default class User extends BaseModel {
   }
 
   /**
+   * Get a user by discord ID
+   * @param discordId The discord ID
+   * @param txn Optional transaction object
+   * @returns
+   */
+  static getByDiscordId(discordId: string, txn?: Transaction) {
+    return this.query(txn).where('discordId', 'ILIKE', discordId).whereNotDeleted().first();
+  }
+
+  /**
    * find finds a user
    * @param q the query parameter
    */

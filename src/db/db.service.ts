@@ -30,13 +30,13 @@ export class DBService {
     this.knex = Knex.knex(config);
     Model.knex(this.knex);
 
-    this.knex.client.on('error', (e) => {
-      console.log('DB ERROR', e);
-    });
+    // this.knex.client.on('error', (e) => {
+    //   console.log('DB ERROR', e);
+    // });
 
-    this.knex.client.on('connection-error', (e) => {
-      console.log('DB CONN ERROR', e);
-    });
+    // this.knex.client.on('connection-error', (e) => {
+    //   console.log('DB CONN ERROR', e);
+    // });
 
     if (isProd()) this.knex.migrate.latest();
 

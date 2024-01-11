@@ -201,28 +201,34 @@ export class Watcher {
       const key = this.makeSyncKey();
       let meta = await Meta.get(key);
       if (!meta) meta = new Meta({ value: this.getLaunchHeight() });
-      this.logInfo(`Last synced block: ${meta.value}`);
+      const curBlock = await this.provider.getBlockNumber();
+      this.logInfo(`Last synced block: ${meta.value}`, { 'Current Head': curBlock });
 
       // Ensure we are not fully synchronized yet.
       // If we are, stop watching on interval. Instead, watch on new block.
-      const curBlock = await this.provider.getBlockNumber();
       if (parseInt(meta.value) == curBlock) {
+        this.logInfo('X');
         this.logInfo(`Watcher is fully synchronized at block ${curBlock}`);
         this.watchBlock();
         this.isSyncing = false;
         return;
       }
+      this.logInfo('A');
 
       // Determine the start and end block height
       let endBlock = process.env.WATCH_RANGE
         ? parseInt(process.env.WATCH_RANGE) + parseInt(meta.value)
         : parseInt(meta.value) + 1;
+      this.logInfo('B');
       endBlock = endBlock > curBlock ? curBlock : endBlock;
+      this.logInfo('C');
       const startBlock = parseInt(meta.value) + 1;
+      this.logInfo('D');
 
       this.logInfo(`Syncing blocks between ${startBlock} and ${endBlock} (Current Head: ${curBlock})`);
 
       // Process events
+      this.logInfo('E');
       await this.fetchAndProcessEvents(startBlock, endBlock);
 
       // Update the last sync height
@@ -231,6 +237,7 @@ export class Watcher {
       this.isSyncing = false;
       this.sync();
     } catch (e) {
+      this.logInfo('F');
       this.logError(`Error:sync(): ` + e.message, e.stack);
       this.logInfo('Attempt to restarting sync() after sync error');
       this.isSyncing = false;

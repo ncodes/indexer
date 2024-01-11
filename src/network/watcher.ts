@@ -114,18 +114,25 @@ export class Watcher {
     this.logInfo(`Fetching events`);
 
     // Query latest logs for all contracts
-    const logs = await this.provider.send('eth_getLogs', [
-      {
-        fromBlock: ethers.utils.hexValue(prevBlock),
-        toBlock: ethers.utils.hexValue(curBlock),
-        topics: [],
-        address: this.handlers
-          .map((h) => h.getContract().address)
-          .filter((addr) => {
-            return !isEqualStr(constants.AddressZero, addr);
-          }),
-      },
-    ]);
+    const logs = await this.provider
+      .send('eth_getLogs', [
+        {
+          fromBlock: ethers.utils.hexValue(prevBlock),
+          toBlock: ethers.utils.hexValue(curBlock),
+          topics: [],
+          address: this.handlers
+            .map((h) => h.getContract().address)
+            .filter((addr) => {
+              return !isEqualStr(constants.AddressZero, addr);
+            }),
+        },
+      ])
+      .catch((e) => {
+        this.logError('Error:fetchAndProcessEvents: ', e);
+        throw e;
+      });
+
+    this.logInfo(`Found ${logs.length} logs`);
 
     // Extract the events from the logs
     const events: ethers.Event[] = [
@@ -134,6 +141,8 @@ export class Watcher {
         return this.getEventFromLog(log, handler.getContract().interface);
       }),
     ];
+
+    this.logInfo(`Extracted ${events.length} events`);
 
     this.lastActiveTime = Date.now();
 
@@ -199,7 +208,9 @@ export class Watcher {
     try {
       // Get last synced block height
       const key = this.makeSyncKey();
+      this.logInfo('1');
       let meta = await Meta.get(key);
+      this.logInfo('2');
       if (!meta) meta = new Meta({ value: this.getLaunchHeight() });
       const curBlock = await this.provider.getBlockNumber();
       this.logInfo(`Last synced block: ${meta.value}`, { 'Current Head': curBlock });

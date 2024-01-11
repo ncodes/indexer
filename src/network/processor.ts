@@ -53,14 +53,24 @@ export default class Processor {
    */
   addEvent(event: UnprocessedEvent) {
     const eventId = `${event.block}-${event.txIndex}-${event.eventIndex}`;
-    if (this.seen.has(eventId)) return;
+    if (this.seen.has(eventId)) {
+      this.logger.debug('Event already seen');
+      return;
+    }
     this.seen.set(eventId, true);
 
     this.unprocessed.push(event);
+
+    this.logger.debug(`(Event:${event.event.event}, Contract: ${shortenAddr(event.contract)}): added to queue`, {
+      size: this.unprocessed.length,
+    });
+
     sortArray(this.unprocessed, {
       by: ['block', 'txIndex', 'eventIndex'],
       order: 'asc',
     });
+
+    this.logger.debug('Sorted unprocessed events');
   }
 
   /**

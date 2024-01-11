@@ -111,7 +111,7 @@ export class Watcher {
    * @returns
    */
   async fetchAndProcessEvents(prevBlock: number, curBlock: number) {
-    this.logInfo(`Fetching events`);
+    this.logInfo(`Fetching events`, { prevBlock, curBlock });
 
     // Query latest logs for all contracts
     const logs = await this.provider

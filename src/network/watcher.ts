@@ -1,5 +1,4 @@
 import { Logger } from '@nestjs/common';
-import * as defer from 'defer-promise';
 import { BigNumber, constants, ethers, providers } from 'ethers';
 import { isEqualStr } from '../common/common';
 import Meta from '../models/meta';
@@ -13,7 +12,7 @@ export interface UnprocessedEvent {
   txIndex: number;
   eventIndex: number;
   contract: string;
-  promise: any;
+  promise?: any;
 }
 
 export class Watcher {
@@ -111,26 +110,21 @@ export class Watcher {
    * @returns
    */
   async fetchAndProcessEvents(prevBlock: number, curBlock: number) {
-    this.logInfo(`Fetching events`, { prevBlock, curBlock });
+    this.logInfo(`Fetching events`, { curBlock });
 
     // Query latest logs for all contracts
-    const logs = await this.provider
-      .send('eth_getLogs', [
-        {
-          fromBlock: ethers.utils.hexValue(prevBlock),
-          toBlock: ethers.utils.hexValue(curBlock),
-          topics: [],
-          address: this.handlers
-            .map((h) => h.getContract().address)
-            .filter((addr) => {
-              return !isEqualStr(constants.AddressZero, addr);
-            }),
-        },
-      ])
-      .catch((e) => {
-        this.logError('Error:fetchAndProcessEvents: ', e);
-        throw e;
-      });
+    const logs = await this.provider.send('eth_getLogs', [
+      {
+        fromBlock: prevBlock ? ethers.utils.hexValue(prevBlock) : ethers.utils.hexValue(curBlock),
+        toBlock: ethers.utils.hexValue(curBlock),
+        topics: [],
+        address: this.handlers
+          .map((h) => h.getContract().address)
+          .filter((addr) => {
+            return !isEqualStr(constants.AddressZero, addr);
+          }),
+      },
+    ]);
 
     this.logInfo(`Found ${logs.length} logs`);
 
@@ -150,16 +144,13 @@ export class Watcher {
 
     return Promise.all(
       events.map((e) => {
-        const deferred = defer();
-        this.processor.addEvent({
+        return this.processor.addEvent({
           event: e,
           block: BigNumber.from(e.blockNumber).toNumber(),
           txIndex: BigNumber.from(e.transactionIndex).toNumber(),
           eventIndex: BigNumber.from(e.logIndex).toNumber(),
           contract: e.address,
-          promise: deferred,
         });
-        return deferred.promise;
       }),
     );
   }
@@ -181,7 +172,7 @@ export class Watcher {
         this.logInfo(`New block: ${curBlock}`, { isSyncing: this.isSyncing });
 
         // Process events
-        await this.fetchAndProcessEvents(parseInt(meta.value), curBlock);
+        await this.fetchAndProcessEvents(0, curBlock);
 
         this.logInfo(`Finished processing block: ${curBlock}`);
 

@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import * as defer from 'defer-promise';
 import * as LRUCache from 'lru-cache';
 import * as sortArray from 'sort-array';
 import { isDev, isEqualStr, isTest, shortenAddr } from '../common/common';
@@ -48,29 +49,26 @@ export default class Processor {
   }
 
   /**
-   * Add an event to the unprocessed collection
+   * Add an event to the unprocessed queue
    * @param event The target event
    */
-  addEvent(event: UnprocessedEvent) {
+  addEvent(event: UnprocessedEvent): Promise<any> {
     const eventId = `${event.block}-${event.txIndex}-${event.eventIndex}`;
-    if (this.seen.has(eventId)) {
-      this.logger.debug('Event already seen');
-      return;
-    }
+    if (this.seen.has(eventId)) return;
     this.seen.set(eventId, true);
 
+    // Add a promise to the event and push it to the queue
+    const deferred = defer();
+    event.promise = deferred;
     this.unprocessed.push(event);
 
-    this.logger.debug(`(Event:${event.event.event}, Contract: ${shortenAddr(event.contract)}): added to queue`, {
-      size: this.unprocessed.length,
-    });
-
+    // Sort the queue to ensure correct order
     sortArray(this.unprocessed, {
       by: ['block', 'txIndex', 'eventIndex'],
       order: 'asc',
     });
 
-    this.logger.debug('Sorted unprocessed events');
+    return deferred.promise;
   }
 
   /**

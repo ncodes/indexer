@@ -109,11 +109,11 @@ export default class NetworkService {
    * Restart watcher sync when it's not active.
    */
   restartWatcherSync() {
-    setInterval(() => {
+    setInterval(async () => {
       for (const watcher of this.watchers) {
         if (Date.now() - watcher.getLastActiveTime() >= 120000) {
           this.logger.log(`Restarting watcher ${watcher.name}`);
-          watcher.sync();
+          await watcher.sync();
         }
       }
     }, 10000);

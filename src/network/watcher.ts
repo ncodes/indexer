@@ -72,9 +72,9 @@ export class Watcher {
     return process.env[key] || '1';
   }
 
-  private logInfo(message: any, context?: string) {
+  private logInfo(message: any, context?: any) {
     const watcherId = this.name ? `:${this.name}` : '';
-    this.logger.log(`Watcher${watcherId}: ${message}`, context);
+    this.logger.log(`Watcher${watcherId}: ${message}`, JSON.stringify(context));
   }
 
   private logError(message: any, context?: string) {
@@ -111,6 +111,8 @@ export class Watcher {
    * @returns
    */
   async fetchAndProcessEvents(prevBlock: number, curBlock: number) {
+    this.logInfo(`Fetching events`);
+
     // Query latest logs for all contracts
     const logs = await this.provider.send('eth_getLogs', [
       {
@@ -134,6 +136,8 @@ export class Watcher {
     ];
 
     this.lastActiveTime = Date.now();
+
+    this.logInfo(`Found ${events.length} events`);
 
     return Promise.all(
       events.map((e) => {
@@ -165,7 +169,7 @@ export class Watcher {
           return;
         }
 
-        this.logInfo(`New block: ${curBlock}`);
+        this.logInfo(`New block: ${curBlock}`, { isSyncing: this.isSyncing });
 
         // Process events
         await this.fetchAndProcessEvents(parseInt(meta.value), curBlock);
@@ -186,7 +190,10 @@ export class Watcher {
   }
 
   async sync() {
-    if (this.isSyncing) return;
+    if (this.isSyncing) {
+      this.logInfo('Watcher is already synchronizing');
+      return;
+    }
     this.isSyncing = true;
 
     try {
@@ -194,6 +201,7 @@ export class Watcher {
       const key = this.makeSyncKey();
       let meta = await Meta.get(key);
       if (!meta) meta = new Meta({ value: this.getLaunchHeight() });
+      this.logInfo(`Last synced block: ${meta.value}`);
 
       // Ensure we are not fully synchronized yet.
       // If we are, stop watching on interval. Instead, watch on new block.

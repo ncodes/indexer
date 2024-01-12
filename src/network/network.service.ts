@@ -109,13 +109,16 @@ export default class NetworkService {
    * Restart watcher sync when it's not active.
    */
   restartWatcherSync() {
+    let restarting = false;
     setInterval(async () => {
+      if (restarting) return;
+      restarting = true;
       for (const watcher of this.watchers) {
-        if (Date.now() - watcher.getLastActiveTime() >= 120000) {
-          this.logger.log(`Restarting watcher ${watcher.name}`);
-          await watcher.sync();
-        }
+        if (Date.now() - watcher.getLastActiveTime() < 120000) continue;
+        this.logger.log(`Restarting watcher ${watcher.name}`);
+        await watcher.sync();
       }
+      restarting = false;
     }, 10000);
   }
 
@@ -142,10 +145,6 @@ export default class NetworkService {
     this.provider = rpcUrl.startsWith('ws')
       ? new providers.WebSocketProvider(rpcUrl)
       : new providers.JsonRpcProvider(rpcUrl);
-
-    this.provider.on('error', (e) => {
-      this.logger.error('Provider error', e);
-    });
 
     // Initialize contracts
     const p2pTokenAddr = this.cfgSrv.get(`app.contractsAddress.p2pTokenAddr`);

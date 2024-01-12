@@ -186,7 +186,8 @@ export class Watcher {
       }
     };
 
-    this.provider.off('block', listener).on('block', listener);
+    // remove all listeners for 'block' event and add a new one
+    this.provider.removeAllListeners('block').on('block', listener);
   }
 
   async sync() {

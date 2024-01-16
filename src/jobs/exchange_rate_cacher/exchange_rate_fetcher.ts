@@ -13,11 +13,6 @@ export default class ExchangeRateFetcher extends Base {
 
   constructor(private exRateSrv: ExchangeRateService, private cfgSrv: ConfigService) {
     super();
-    const disabled = this.cfgSrv.get('app.disableCurrencyRateFetcher') == 'true';
-    if (disabled) {
-      this.logger.log('Exchange Rate Fetcher is disabled');
-      return;
-    }
     this.schedule();
   }
 

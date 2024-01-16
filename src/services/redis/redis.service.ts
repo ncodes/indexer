@@ -44,6 +44,15 @@ export class RedisService {
   }
 
   /**
+   * Set a key
+   * @param key The target key
+   * @param value The value stored with the key.
+   */
+  async set(key: string, value: string): Promise<void> {
+    await this.client.set(key, value);
+  }
+
+  /**
    * setWithExpire sets a key that expires
    * @param key The target key
    * @param value The value stored with the key.

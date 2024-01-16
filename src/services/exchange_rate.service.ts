@@ -3,17 +3,38 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { Decimal } from 'decimal.js';
 import { toDec } from '../common/common';
+import { RedisModule } from './redis/redis.module';
+import { RedisService } from './redis/redis.service';
 
 interface Rates {
   [key: string]: number;
 }
 
+const REDIS_KEY = 'exchange_rate_service';
+
 @Injectable()
 export class ExchangeRateService {
-  private rates: Rates;
   private logger = new Logger(ExchangeRateService.name);
 
-  constructor(private cfgSrv: ConfigService) {}
+  constructor(private cfgSrv: ConfigService, private redisSrv: RedisService) {}
+
+  /**
+   * Get the rates
+   * @param rates The rates
+   * @returns
+   */
+  async saveRates(rates: Rates) {
+    return this.redisSrv.set(REDIS_KEY, JSON.stringify(rates));
+  }
+
+  /**
+   * Get the rates
+   * @returns
+   */
+  async getRates(): Promise<Rates> {
+    const ratesStr = await this.redisSrv.get(REDIS_KEY);
+    return Promise.resolve(JSON.parse(ratesStr));
+  }
 
   /**
    * Updates the rates
@@ -21,18 +42,23 @@ export class ExchangeRateService {
    */
   async updateCache(): Promise<Rates> {
     try {
+      let result: Rates;
+
       if (this.cfgSrv.get('app.exchangeRateSource') == 'openexchangerates') {
         const key = this.cfgSrv.get('app.openexchangerates.key');
         const url = `https://openexchangerates.org/api/latest.json?app_id=${key}`;
         const resp = await axios.get(url);
-        this.rates = resp.data.rates;
+        result = resp.data.rates;
+        this.saveRates(result);
       } else if (this.cfgSrv.get('app.exchangeRateSource') == 'fastforex') {
         const key = this.cfgSrv.get('app.fastforex.key');
         const url = `https://api.fastforex.io/fetch-all?api_key=${key}`;
         const resp = await axios.get(url);
-        this.rates = resp.data.results;
+        result = resp.data.results;
+        this.saveRates(result);
       }
-      return Promise.resolve(this.rates);
+
+      return Promise.resolve(result);
     } catch (error) {
       return Promise.reject(error);
     }
@@ -43,8 +69,12 @@ export class ExchangeRateService {
    * @param symbol The symbol (ex: USD, NGN)
    */
   async get(symbol: string): Promise<Decimal> {
-    if (!this.rates) await this.updateCache();
-    const rate = this.rates[symbol.toUpperCase()];
+    let rates = await this.getRates();
+    if (!rates) rates = await this.updateCache();
+
+    if (!rates) await this.updateCache();
+    const rate = rates[symbol.toUpperCase()];
+
     if (!rate) return Promise.resolve(undefined);
     return Promise.resolve(toDec(rate));
   }
@@ -65,6 +95,7 @@ export class ExchangeRateService {
 
 // tslint:disable-next-line:max-classes-per-file
 @Module({
+  imports: [RedisModule],
   providers: [ExchangeRateService, ConfigService],
   exports: [ExchangeRateService, ConfigService],
 })

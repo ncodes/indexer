@@ -63,7 +63,6 @@ export default () => ({
     disableWatcher: process.env.DISABLE_WATCHER,
     disabledWatchers: process.env.DISABLED_WATCHERS,
     disableMineTaskProcessing: process.env.DISABLE_MINE_TASK_PROCESSING,
-    disableCurrencyRateFetcher: process.env.DISABLE_CURRENCY_RATE_FETCHER,
     tokenMetadataSource: process.env.TOKEN_METADATA_SOURCE,
     jntLinkApiUrl: process.env.JNT_LINK_API_URL,
     jntLinkApiKey: process.env.JNT_LINK_API_KEY,

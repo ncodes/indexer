@@ -10,9 +10,14 @@ import OnRevealPeriodEnd from './dispute_notifier/on_reveal_period_end/on_reveal
 import ExchangeRateFetcher from './exchange_rate_cacher/exchange_rate_fetcher';
 import { NotifierModule } from './mailer/NotifierModule';
 
-let disputeNotifiers = [OnCommitPeriodEnd, OnEvidencePeriodEnd, OnRevealPeriodEnd];
-if (['1', 'true'].includes(process.env.DISABLE_DISPUTE_NOTIFIERS)) {
-  disputeNotifiers = [];
+const providers = [];
+
+if (!['1', 'true'].includes(process.env.DISABLE_DISPUTE_NOTIFIERS)) {
+  providers.push(...[OnCommitPeriodEnd, OnEvidencePeriodEnd, OnRevealPeriodEnd]);
+}
+
+if (!['1', 'true'].includes(process.env.DISABLE_CURRENCY_RATE_FETCHER)) {
+  providers.push(ExchangeRateFetcher);
 }
 
 @Module({
@@ -28,6 +33,6 @@ if (['1', 'true'].includes(process.env.DISABLE_DISPUTE_NOTIFIERS)) {
     NotifierModule,
     ExchangeRateServiceModule,
   ],
-  providers: [ConfigService, ExchangeRateFetcher, ...disputeNotifiers],
+  providers: [ConfigService, ...providers],
 })
 export class JobsModule {}

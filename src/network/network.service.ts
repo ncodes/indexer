@@ -110,14 +110,17 @@ export default class NetworkService {
    */
   restartWatcherSync() {
     let restarting = false;
+
     setInterval(async () => {
       if (restarting) return;
       restarting = true;
+
       for (const watcher of this.watchers) {
         if (Date.now() - watcher.getLastActiveTime() < 120000) continue;
         this.logger.log(`Restarting watcher ${watcher.name}`);
         await watcher.sync();
       }
+
       restarting = false;
     }, 10000);
   }
@@ -130,6 +133,7 @@ export default class NetworkService {
     const key = Meta.makeNetKey(network, MetaKeys.ContractsParams);
     const params = await Meta.get(key);
     if (params && params.value) return;
+
     await Meta.create(key, JSON.stringify(this.cfgSrv.get(`app.contractsParams`)));
     this.logger.log('Loaded initial contracts parameters');
   }
@@ -263,6 +267,7 @@ export default class NetworkService {
       const disabledWatchers = this.cfgSrv.get('app.disabledWatchers');
       disabled = disabledWatchers && disabledWatchers.split(',').includes(name);
     }
+
     return disabled;
   }
 }

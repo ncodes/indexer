@@ -1,9 +1,15 @@
+import { BullModule } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { MailerService } from '../../services/mailer/mailer.service';
 import { NotifierConsumer } from './NotifierConsumer';
 import { NotifierService } from './NotifierService';
-import { MailerService } from '../../services/mailer/mailer.service';
-import { BullModule } from '@nestjs/bull';
-import { ConfigService } from '@nestjs/config';
+
+const providers = [];
+
+if (!['1', 'true'].includes(process.env.DISABLE_NOTIFICATIONS_PROCESSING)) {
+  providers.push(NotifierConsumer);
+}
 
 @Module({
   imports: [
@@ -11,7 +17,7 @@ import { ConfigService } from '@nestjs/config';
       name: 'notifier',
     }),
   ],
-  providers: [NotifierConsumer, NotifierService, MailerService, ConfigService],
+  providers: [NotifierService, MailerService, ConfigService, ...providers],
   exports: [MailerService, NotifierService],
 })
 export class NotifierModule {}

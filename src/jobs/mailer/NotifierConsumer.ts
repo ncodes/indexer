@@ -11,7 +11,6 @@ import WebPushSubscription from '../../models/web_push_subscription';
 import { pow10D, toFixed } from '../../network/common';
 import { MailerService } from '../../services/mailer/mailer.service';
 
-// noinspection JSUnusedGlobalSymbols
 @Processor('notifier')
 export class NotifierConsumer {
   logger = new Logger(NotifierConsumer.name);

@@ -73,7 +73,6 @@ describe('TicketsController', () => {
     jest.clearAllMocks();
 
     cfgObj = { 'auth.jwtSecret': 'secret_secret' };
-    cfgObj[`app.contractsAddress.p2pTokenAddr`] = '0xP2PToken';
 
     mockCfgGet.mockReset().mockImplementation((args) => {
       return cfgObj[args];

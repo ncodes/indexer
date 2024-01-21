@@ -1,4 +1,11 @@
-import { ChainNames, TokenLists, getTokenInfo, isValidChain } from '@jointlabs/chains-info';
+import {
+  ChainNames,
+  TokenLists,
+  contractsParams,
+  getChainByName,
+  getTokenInfo,
+  isValidChain,
+} from '@jointlabs/chains-info';
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ok, throw400, throw404 } from '../../common/responses/responses';
 import { ConfigService } from '../../config/config.service';
@@ -85,9 +92,16 @@ export class MiscController {
   /**
    * Get all contract addresses
    */
-  @Get('contracts-address')
-  async getContractAddresses() {
-    return ok().data(this.cfgSrv.get('app.contractsAddress')).build();
+  @Get(':net/contracts-address')
+  async getContractAddresses(@Param('net') net: string) {
+    const chainInfo = getChainByName(net);
+
+    const contractsAddress = {};
+    for (const contract of Object.keys(chainInfo.contracts)) {
+      contractsAddress[contract] = chainInfo.contracts[contract].address;
+    }
+
+    return ok().data(contractsAddress).build();
   }
 
   /**
@@ -95,7 +109,7 @@ export class MiscController {
    */
   @Get('contracts-params')
   async getContractsParams() {
-    return ok().data(this.cfgSrv.get('app.contractsParams')).build();
+    return ok().data(contractsParams).build();
   }
 
   /**

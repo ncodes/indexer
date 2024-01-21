@@ -10,6 +10,11 @@ import { powOf } from '../../network/common';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import SwapService from './swap.service';
 
+jest.mock('../../common/common', () => ({
+  ...jest.requireActual('../../common/common'),
+  getContractsAddress: jest.fn().mockReturnValue('0xP2PAddress'),
+}));
+
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
   return { get: mockCfgGet };
@@ -48,7 +53,6 @@ describe('SwapsService', () => {
     jest.clearAllMocks();
 
     cfgObj = {};
-    cfgObj[`app.contractsAddress.p2pTokenAddr`] = '0xP2PAddress';
 
     mockCfgGet.mockReset().mockImplementation((args) => {
       return cfgObj[args];

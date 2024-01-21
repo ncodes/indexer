@@ -1,5 +1,5 @@
-import { ChainNames } from '@jointlabs/chains-info';
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { ChainNames, getChainByName } from '@jointlabs/chains-info';
+import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Contract, providers } from 'ethers';
 import * as assetRegABI from '../../abi/AssetRegistry.json';
@@ -7,27 +7,21 @@ import * as badgeMgrABI from '../../abi/BadgeManager.json';
 import * as coreABI from '../../abi/Core.json';
 import * as disputeManagerABI from '../../abi/DisputeManager.json';
 import * as erc20TokenABI from '../../abi/ERC20.json';
-import * as feePoolABI from '../../abi/FeePool.json';
-import * as lpPoolABI from '../../abi/LPPool.json';
 import * as marketCoreABI from '../../abi/MarketCore.json';
 import * as mediatorManagerABI from '../../abi/MediatorManager.json';
 import * as nftABI from '../../abi/NFT.json';
 import * as p2pTokenABI from '../../abi/Token.json';
-import * as tokenPoolABI from '../../abi/TokenPool.json';
 import {
   AssetRegistry,
   BadgeManager,
   Core,
   DisputeManager,
-  Energon,
   ERC20,
-  FeePool,
-  LPPool,
+  Energon,
   MarketCore,
   MediatorManager,
   NFT,
   Token,
-  TokenPool,
 } from '../../typechain';
 import { isTest } from '../common/common';
 import { PointService } from '../controllers/points/point.service';
@@ -55,6 +49,7 @@ export default class NetworkService {
   private contracts: JointContracts = {};
   private provider: providers.JsonRpcProvider;
   private watchers: Watcher[] = [];
+  private net: ChainNames;
 
   constructor(
     public cfgSrv: ConfigService,
@@ -67,7 +62,7 @@ export default class NetworkService {
   ) {
     if (isTest()) return;
     this.watch().catch((e) => {
-      this.logger.error('Watcher error', e);
+      this.logger.error(e);
     });
   }
 
@@ -75,9 +70,9 @@ export default class NetworkService {
    * Watch event
    */
   private async watch() {
-    const net = this.cfgSrv.get('app.network');
-    await this.startGeneralWatcher(net);
-    await this.startNFTWatcher(net);
+    this.net = this.cfgSrv.get('app.network');
+    await this.startGeneralWatcher(this.net);
+    await this.startNFTWatcher(this.net);
     await this.restartWatcherSync();
   }
 
@@ -134,7 +129,7 @@ export default class NetworkService {
     const params = await Meta.get(key);
     if (params && params.value) return;
 
-    await Meta.create(key, JSON.stringify(this.cfgSrv.get(`app.contractsParams`)));
+    await Meta.create(key, JSON.stringify(params));
     this.logger.log('Loaded initial contracts parameters');
   }
 
@@ -143,7 +138,7 @@ export default class NetworkService {
    * @param network The name of the network
    */
   private async startGeneralWatcher(network: ChainNames) {
-    const rpcUrl = this.cfgSrv.get(`app.contractsAddress.rpcUrl`) as string;
+    const rpcUrl = getChainByName(network).rpcUrl;
     if (!rpcUrl) throw new Error('startDefaultWatcher: rpcUrl is not defined');
 
     this.provider = rpcUrl.startsWith('ws')
@@ -151,37 +146,28 @@ export default class NetworkService {
       : new providers.JsonRpcProvider(rpcUrl);
 
     // Initialize contracts
-    const p2pTokenAddr = this.cfgSrv.get(`app.contractsAddress.p2pTokenAddr`);
+    const p2pTokenAddr = getChainByName(network).contracts['token'].address;
     if (p2pTokenAddr) this.contracts.p2pToken = new Contract(p2pTokenAddr, p2pTokenABI, this.provider) as Token;
 
-    const marketCoreAddr = this.cfgSrv.get(`app.contractsAddress.marketCoreAddr`);
+    const marketCoreAddr = getChainByName(network).contracts['marketCore'].address;
     if (marketCoreAddr)
       this.contracts.marketCore = new Contract(marketCoreAddr, marketCoreABI, this.provider) as MarketCore;
 
-    const coreAddr = this.cfgSrv.get(`app.contractsAddress.coreAddr`);
+    const coreAddr = getChainByName(network).contracts['core'].address;
     if (coreAddr) this.contracts.core = new Contract(coreAddr, coreABI, this.provider) as Core;
 
-    const mediatorMgr = this.cfgSrv.get(`app.contractsAddress.mediatorMgrAddr`);
+    const mediatorMgr = getChainByName(network).contracts['mediatorManager'].address;
     if (mediatorMgr)
       this.contracts.mediatorMgr = new Contract(mediatorMgr, mediatorManagerABI, this.provider) as MediatorManager;
 
-    const disputeMgrAddr = this.cfgSrv.get(`app.contractsAddress.disputeMgrAddr`);
+    const disputeMgrAddr = getChainByName(network).contracts['disputeManager'].address;
     if (disputeMgrAddr)
       this.contracts.disputeMgr = new Contract(disputeMgrAddr, disputeManagerABI, this.provider) as DisputeManager;
 
-    const tokenPoolAddr = this.cfgSrv.get(`app.contractsAddress.tokenPoolAddr`);
-    if (tokenPoolAddr) this.contracts.tokenPool = new Contract(tokenPoolAddr, tokenPoolABI, this.provider) as TokenPool;
-
-    const lpPoolAddr = this.cfgSrv.get(`app.contractsAddress.lpPoolAddr`);
-    if (lpPoolAddr) this.contracts.lpPool = new Contract(lpPoolAddr, lpPoolABI, this.provider) as LPPool;
-
-    const feePoolAddr = this.cfgSrv.get(`app.contractsAddress.feePoolAddr`);
-    if (feePoolAddr) this.contracts.feePool = new Contract(feePoolAddr, feePoolABI, this.provider) as FeePool;
-
-    const badgeMgrAddr = this.cfgSrv.get(`app.contractsAddress.badgeMgrAddr`);
+    const badgeMgrAddr = getChainByName(network).contracts['badgeManager'].address;
     if (badgeMgrAddr) this.contracts.badgeMgr = new Contract(badgeMgrAddr, badgeMgrABI, this.provider) as BadgeManager;
 
-    const assetRegAddr = this.cfgSrv.get(`app.contractsAddress.assetRegAddr`);
+    const assetRegAddr = getChainByName(network).contracts['assetRegistry'].address;
     if (assetRegAddr)
       this.contracts.assetRegistry = new Contract(assetRegAddr, assetRegABI, this.provider) as AssetRegistry;
 
@@ -223,7 +209,7 @@ export default class NetworkService {
    * @param network The name of the network
    */
   private async startNFTWatcher(network: ChainNames) {
-    const rpcUrl = this.cfgSrv.get(`app.contractsAddress.rpcUrl`) as string;
+    const rpcUrl = getChainByName(network).rpcUrl;
     if (!rpcUrl) throw new Error('startNFTWatcher: rpcUrl is not defined');
 
     this.provider = this.provider

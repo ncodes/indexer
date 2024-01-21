@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as _ from 'lodash';
-import { toDec } from '../../common/common';
+import { getContractsAddress, toDec } from '../../common/common';
 import Dispute from '../../models/dispute';
 import Draft from '../../models/draft';
 import Market from '../../models/market';
@@ -86,7 +86,7 @@ export default class SwapService {
     if (Market.isSynth(baseType) && Market.isSynth(quoteType)) {
       info.symbol = 'P2P';
       info.fee = toBN(swap.marketCreatorFee).add(swap.protocolFee).toString();
-      info.address = this.cfgSrv.get(`app.contractsAddress.p2pTokenAddr`);
+      info.address = getContractsAddress('token');
     }
 
     return info;

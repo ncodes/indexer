@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as _ from 'lodash';
 import * as moment from 'moment';
+import { getContractsAddress } from '../../common/common';
 import Ticket from '../../models/ticket';
 import TicketSlash from '../../models/ticket_slash';
 import { isZero } from '../../network/common';
@@ -43,12 +44,12 @@ export class TicketsService {
       }
 
       if ((select.includes(`slashedAmtUsd`) && !isZero(ticket.slashedAmt)) || !select.length) {
-        const p2pTokenAddr = this.cfgSrv.get(`app.contractsAddress.p2pTokenAddr`);
+        const p2pTokenAddr = getContractsAddress('token');
         ticket.slashedAmtUsd = await this.metadataSrv.tryToUsd(ticket.network, ticket.slashedAmt, p2pTokenAddr);
       }
 
       if ((select.includes(`bondUsd`) && !isZero(ticket.bond)) || !select.length) {
-        const p2pTokenAddr = this.cfgSrv.get(`app.contractsAddress.p2pTokenAddr`);
+        const p2pTokenAddr = getContractsAddress('token');
         ticket.bondUsd = await this.metadataSrv.tryToUsd(ticket.network, ticket.bond, p2pTokenAddr);
       }
 

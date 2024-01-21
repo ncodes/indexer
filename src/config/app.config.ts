@@ -1,54 +1,3 @@
-import { parseInt } from 'lodash';
-
-function getContractsParams(): ContractsParams {
-  return {
-    minTimeToPay: parseInt(process.env[`OC_MIN_TIME_TO_PAY`]),
-    orderGraceDur: parseInt(process.env[`OC_ORDER_GRACE_DUR`]),
-    maxOpenOrders: parseInt(process.env[`OC_MAX_OPEN_ORDERS`]),
-    maxOpenDisputes: parseInt(process.env[`OC_MAX_OPEN_DISPUTES`]),
-    transferToFeePoolInterval: parseInt(process.env[`OC_TRANSFER_TO_FEE_POOL_INTERVAL`]),
-    nftDiscountBP: parseInt(process.env[`OC_NFT_DISCOUNT_BP`]),
-    defaultDisputeDelayDur: parseInt(process.env[`MC_DEFAULT_DISPUTE_DELAY_DUR`]),
-    baseTicketPrice: process.env[`MM_BASE_TICKET_PRICE`],
-    ticketWindowDur: parseInt(process.env[`MM_TICKET_WINDOW_DUR`]),
-    ticketsPerWindow: parseInt(process.env[`MM_TICKETS_PER_WINDOW`]),
-    ticketSupply: parseInt(process.env[`MM_TICKET_SUPPLY`]),
-    priceSupplyDeltaBP: parseInt(process.env[`MM_PRICE_SUPPLY_DELTA_BP`]),
-    minInactiveWindowBeforeReset: parseInt(process.env[`MM_MIN_INACTIVE_WINDOW_BEFORE_RESET`]),
-    soldOutBP: parseInt(process.env[`MM_SOLD_OUT_BP`]),
-    ticketMatureDur: parseInt(process.env[`MM_TICKET_MATURE_DUR`]),
-    ticketCancelDur: parseInt(process.env[`MM_TICKET_CANCEL_DUR`]),
-    ticketExpireDur: parseInt(process.env[`MM_TICKET_EXPIRE_DUR`]),
-    reqPoolBond: process.env[`MM_POOL_REQ_BOND`],
-    poolDraftReward: process.env[`MM_POOL_DRAFT_REWARD`],
-    poolWinReward: process.env[`MM_POOL_WIN_REWARD`],
-    poolNumDraftee: parseInt(process.env[`MM_POOL_NUM_DRAFTEE`]),
-    poolNoVoteSlashBP: parseInt(process.env[`MM_POOL_NO_VOTE_SLASH_BP`]),
-    poolLoseVoteSlashBP: parseInt(process.env[`MM_POOL_LOSE_VOTE_SLASH_BP`]),
-    evidenceDur: parseInt(process.env[`DM_EVIDENCE_DUR`]),
-    predictDur: parseInt(process.env[`DM_PREDICT_DUR`]),
-    operatorBond: process.env[`OP_OPERATOR_BOND`],
-  };
-}
-
-function getContractsAddress() {
-  return {
-    rpcUrl: process.env[`RPC_URL`],
-    p2pTokenAddr: process.env[`TOKEN_ADDRESS`],
-    marketCoreAddr: process.env[`MARKET_CORE_ADDRESS`],
-    coreAddr: process.env[`CORE_ADDRESS`],
-    mediatorMgrAddr: process.env[`MEDIATOR_MGR_ADDRESS`],
-    disputeMgrAddr: process.env[`DISPUTE_MGR_ADDRESS`],
-    tokenPoolAddr: process.env[`TOKEN_POOL_ADDRESS`],
-    lpPoolAddr: process.env[`LP_POOL_ADDRESS`],
-    feePoolAddr: process.env[`FEE_POOL_ADDRESS`],
-    badgeMgrAddr: process.env[`BADGE_MGR_ADDRESS`],
-    assetRegAddr: process.env[`ASSET_REG_ADDRESS`],
-    nftAddr: process.env[`NFT_ADDRESS`],
-    energonAddr: process.env[`ENERGON_ADDRESS`],
-  };
-}
-
 export default () => ({
   app: {
     network: process.env.NETWORK,
@@ -108,8 +57,6 @@ export default () => ({
       redirectUri: process.env.DISCORD_REDIRECT_URI,
       jointGuildId: process.env.DISCORD_JOINT_GUILD_ID,
     },
-    contractsAddress: getContractsAddress(),
-    contractsParams: getContractsParams(),
     badges: {
       merchant: process.env.MERCHANT_BADGE,
       kyc: process.env.KYC_BADGE,

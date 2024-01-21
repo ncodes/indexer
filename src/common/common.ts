@@ -1,3 +1,4 @@
+import { ContractNames, getChainByName } from '@jointlabs/chains-info';
 import * as crypto from 'crypto';
 import * as dayjs from 'dayjs';
 import * as utc from 'dayjs/plugin/utc';
@@ -125,4 +126,16 @@ export function notify(format: string, ...param: any[]) {
 
 export function randomEthAddr() {
   return ethers.Wallet.createRandom().address;
+}
+
+/**
+ * Get a contract address by name for the current network.
+ * Expects NETWORK env var to be set.
+ * @param name The contract name
+ * @returns
+ */
+export function getContractsAddress(name: ContractNames) {
+  const net = process.env.NETWORK;
+  if (!net) throw new Error('NETWORK is not set');
+  return getChainByName(net).contracts[name].address;
 }

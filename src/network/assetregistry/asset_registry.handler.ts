@@ -1,7 +1,7 @@
 import { BigNumber, Event, providers } from 'ethers';
-import { Handler } from '../handler';
 import { Transaction } from 'objection';
 import AssetRegistry from '../../models/asset_registry';
+import { Handler } from '../handler';
 
 export class AssetRegistryHandler extends Handler {
   constructor(private provider: providers.JsonRpcProvider, public network: string, private contracts: JointContracts) {
@@ -22,7 +22,7 @@ export class AssetRegistryHandler extends Handler {
         amountPerRewardPoint: BigNumber,
         verified: boolean,
         stable: boolean,
-        sharable: boolean,
+        shareable: boolean,
         event: Event,
         txn?: Transaction,
       ) => {
@@ -34,7 +34,7 @@ export class AssetRegistryHandler extends Handler {
           amountPerRewardPoint,
           verified,
           stable,
-          sharable,
+          shareable,
           event,
           txn,
         );
@@ -51,7 +51,7 @@ export class AssetRegistryHandler extends Handler {
    * @param amountPerRewardPoint How much unit equates to 1 reward point (denominated in the asset)
    * @param verified Indicates whether the asset is verified
    * @param stable Indicates whether the asset is a stablecoin
-   * @param sharable Indicates whether fee earned on the asset are sharable
+   * @param shareable Indicates whether fee earned on the asset are shareable
    * @param event The event object
    * @param txn The db transaction object
    */

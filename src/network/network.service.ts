@@ -34,13 +34,10 @@ import { AssetRegistryHandler } from './assetregistry/asset_registry.handler';
 import { BadgeManagerHandler } from './badge/badge_manager.handler';
 import { CoreHandler } from './core/core.handler';
 import { DisputeManagerHandler } from './disputemanager/dispute_manager.handler';
-import { FeePoolHandler } from './feepool/fee_pool.handler';
-import { LPPoolHandler } from './lppool/lp_pool.handler';
 import { MarketCoreHandler } from './marketcore/market_core.handler';
 import { MediatorManagerHandler } from './mediatormanager/mediator_manager.handler';
 import { NFTHandler } from './nft/nft.handler';
 import Processor from './processor';
-import { TokenPoolHandler } from './tokenpool/token_pool.handler';
 import { Watcher } from './watcher';
 
 @Injectable()
@@ -185,9 +182,6 @@ export default class NetworkService {
       new DisputeManagerHandler(this, this.notifSrv, this.provider, network, this.contracts),
       new CoreHandler(this, this.notifSrv, this.metadataSrv, this.exrSrv, this.provider, network, this.contracts),
       new BadgeManagerHandler(this, this.provider, network, this.contracts),
-      new TokenPoolHandler(this.provider, network, this.contracts),
-      new LPPoolHandler(this.provider, network, this.contracts),
-      new FeePoolHandler(this.provider, network, this.contracts),
       new AssetRegistryHandler(this.provider, network, this.contracts),
     ];
 
@@ -220,7 +214,7 @@ export default class NetworkService {
       : new providers.JsonRpcProvider(rpcUrl);
 
     // Initialize contracts
-    const nftAddress = this.cfgSrv.get(`app.contractsAddress.nftAddr`);
+    const nftAddress = getChainByName(network).contracts['nft'].address;
     if (nftAddress) this.contracts.nft = new Contract(nftAddress, nftABI, this.provider) as NFT;
 
     // Load initial contract params

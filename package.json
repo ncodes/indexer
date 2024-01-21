@@ -48,7 +48,7 @@
     "@ethersproject/abstract-provider": "^5.7.0",
     "@ethersproject/abstract-signer": "^5.7.0",
     "@ethersproject/contracts": "^5.7.0",
-    "@jointlabs/chains-info": "^0.0.26",
+    "@jointlabs/chains-info": "^0.0.27",
     "@ladjs/consolidate": "^1.0.1",
     "@nestjs/bull": "^10.0.1",
     "@nestjs/common": "^10.2.8",

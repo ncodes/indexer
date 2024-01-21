@@ -163,7 +163,7 @@ export class Watcher {
       try {
         const key = this.makeSyncKey();
         let meta = await Meta.get(key);
-        if (!meta) meta = new Meta({ value: this.getLaunchHeight() });
+        if (!meta || meta.value == '0') meta = new Meta({ value: this.getLaunchHeight() });
         if (parseInt(meta.value) >= curBlock) {
           this.logInfo(`Block ${curBlock} already processed`);
           return;
@@ -201,7 +201,7 @@ export class Watcher {
       // Get last synced block height
       const key = this.makeSyncKey();
       let meta = await Meta.get(key);
-      if (!meta) meta = new Meta({ value: this.getLaunchHeight() });
+      if (!meta || meta.value == '0') meta = new Meta({ value: this.getLaunchHeight() });
       const curBlock = await this.provider.getBlockNumber();
       this.logInfo(`Last synced block: ${meta.value}`, { 'Current Head': curBlock });
 

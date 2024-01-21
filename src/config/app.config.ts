@@ -59,6 +59,7 @@ export default () => ({
     throttle_limit: process.env.THROTTLE_LIMIT,
     rootAdminUser: process.env.ROOT_ADMIN_USER,
     rootAdminPass: process.env.ROOT_ADMIN_PASS,
+    off: process.env.OFF,
     disableNotifications: process.env.DISABLE_NOTIFICATIONS,
     disableWatcher: process.env.DISABLE_WATCHER,
     disabledWatchers: process.env.DISABLED_WATCHERS,

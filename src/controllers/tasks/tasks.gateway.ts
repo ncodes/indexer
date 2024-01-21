@@ -44,6 +44,7 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
   clientAddress: { [clientId: string]: string } = {};
 
   constructor(private cfgSrv: ConfigService) {
+    if (this.cfgSrv.get('app.off') == 'true') return;
     this.disabled = this.cfgSrv.get('app.disableMineTaskProcessing') == 'true';
     if (this.disabled) {
       this.logger.log('Task processing is disabled');

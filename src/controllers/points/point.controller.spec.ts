@@ -11,6 +11,7 @@ import { DBService } from '../../db/db.service';
 import Point, { PointAction } from '../../models/point';
 import { powOf } from '../../network/common';
 import NetworkService from '../../network/network.service';
+import { AuthService } from '../auth/auth.service';
 import { PointController } from './point.controller';
 import { PointService } from './point.service';
 
@@ -77,7 +78,7 @@ describe('PointController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [PointController],
-      providers: [ConfigService, PointService, NetworkService],
+      providers: [ConfigService, PointService, NetworkService, AuthService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())

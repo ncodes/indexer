@@ -37,6 +37,7 @@ import { DisputeManagerHandler } from './disputemanager/dispute_manager.handler'
 import { MarketCoreHandler } from './marketcore/market_core.handler';
 import { MediatorManagerHandler } from './mediatormanager/mediator_manager.handler';
 import { NFTHandler } from './nft/nft.handler';
+import { getNetworkParams } from './params';
 import Processor from './processor';
 import { Watcher } from './watcher';
 
@@ -122,12 +123,12 @@ export default class NetworkService {
    * Load initial contracts params for a given network
    * @param network The network name
    */
-  private async loadInitialContractParams(network: string) {
-    const key = Meta.makeNetKey(network, MetaKeys.ContractsParams);
+  private async loadInitialContractParams() {
+    const key = Meta.makeNetKey(this.net, MetaKeys.ContractsParams);
     const params = await Meta.get(key);
     if (params && params.value) return;
 
-    await Meta.create(key, JSON.stringify(params));
+    await Meta.create(key, JSON.stringify(getNetworkParams(this.net)));
     this.logger.log('Loaded initial contracts parameters');
   }
 
@@ -173,7 +174,7 @@ export default class NetworkService {
     if (energonAddr) this.contracts.energon = new Contract(energonAddr, erc20TokenABI, this.provider) as Energon;
 
     // Load initial contract params
-    await this.loadInitialContractParams(network);
+    await this.loadInitialContractParams();
 
     // Initialize handlers
     const handlers = [
@@ -218,7 +219,7 @@ export default class NetworkService {
     if (nftAddress) this.contracts.nft = new Contract(nftAddress, nftABI, this.provider) as NFT;
 
     // Load initial contract params
-    await this.loadInitialContractParams(network);
+    await this.loadInitialContractParams();
 
     // Initialize handlers
     const handlers = [new NFTHandler(this, this.provider, network, this.contracts)];

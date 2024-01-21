@@ -71,6 +71,7 @@ export default class NetworkService {
    */
   private async watch() {
     this.net = this.cfgSrv.get('app.network');
+    if (!this.net) throw new Error('Network is not defined');
     await this.startGeneralWatcher(this.net);
     await this.startNFTWatcher(this.net);
     await this.restartWatcherSync();

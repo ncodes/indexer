@@ -172,7 +172,7 @@ export default class NetworkService {
     if (assetRegAddr)
       this.contracts.assetRegistry = new Contract(assetRegAddr, assetRegABI, this.provider) as AssetRegistry;
 
-    const energonAddr = this.cfgSrv.get(`app.contractsAddress.energonAddr`);
+    const energonAddr = getChainByName(network).contracts['energon'].address;
     if (energonAddr) this.contracts.energon = new Contract(energonAddr, erc20TokenABI, this.provider) as Energon;
 
     // Load initial contract params

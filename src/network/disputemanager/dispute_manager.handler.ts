@@ -91,6 +91,14 @@ export class DisputeManagerHandler extends Handler {
         return this.onDecisionExecuted(marketAddress, orderId, disputeId, executor, abandoned, winningVote, event);
       },
     );
+
+    this.on('UpdatedPredictDur', async (value: BigNumber, event: ChainEvent, txn?: Transaction) => {
+      return this.onParameterUpdate('predictDur', value.toString(), event, txn);
+    });
+
+    this.on('UpdatedEvidenceDur', async (value: BigNumber, event: ChainEvent, txn?: Transaction) => {
+      return this.onParameterUpdate('evidenceDur', value.toString(), event, txn);
+    });
   }
 
   /**
@@ -428,5 +436,16 @@ export class DisputeManagerHandler extends Handler {
         drafted: recipient.drafted,
       });
     }
+  }
+
+  /**
+   * Updated a parameter
+   * @param param The parameter name
+   * @param value The updated value
+   * @param _event The event object
+   * @param txn The transaction object
+   */
+  async onParameterUpdate(param: keyof ContractsParams, value: string, _event: ChainEvent, txn?: Transaction) {
+    await Meta.updateContractsParams(this.network, txn, (params) => (params[param] = value));
   }
 }

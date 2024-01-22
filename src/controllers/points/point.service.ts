@@ -115,8 +115,8 @@ export class PointService {
     // Handle ERC20/ERC20.
     // Award points to both taker and provider
     if (market.instant && market.involvesERC20()) {
-      const amount = toDec(swap.amount).div(pow10D(market.baseDecimals));
-      const point = amount.mul(pointPerUnit);
+      const amountHD = toDec(swap.amount).div(pow10D(market.baseDecimals));
+      const point = amountHD.mul(pointPerUnit);
       const unitPerLevel = toDec(MarketPoints[`swap:level:${market.address}`] ?? point);
       const level = Math.max(1, point.div(unitPerLevel).toNumber());
       const takerPoint = await Point.create(

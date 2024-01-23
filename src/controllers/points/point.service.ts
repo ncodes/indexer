@@ -117,7 +117,7 @@ export class PointService {
     if (market.instant && market.involvesERC20()) {
       const amountHD = toDec(swap.amount).div(pow10D(market.baseDecimals));
       const point = amountHD.mul(pointPerUnit);
-      const unitPerLevel = toDec(MarketPoints[`swap:level:${market.address}`] ?? point);
+      const unitPerLevel = toDec(MarketPoints[`swap:level:${market.address}`] || point);
       const level = Math.max(1, point.div(unitPerLevel).toNumber());
       const takerPoint = await Point.create(
         {
@@ -193,7 +193,7 @@ export class PointService {
       }
 
       const point = amount.mul(pointPerUnit);
-      const unitPerLevel = toDec(MarketPoints[`swap:level:${market.address}`] ?? point);
+      const unitPerLevel = toDec(MarketPoints[`swap:level:${market.address}`] || point);
       const level = Math.max(1, point.div(unitPerLevel).toNumber());
       const takerPoint = await Point.create(
         {
@@ -286,7 +286,7 @@ export class PointService {
 
     const amountHD = toDec(amount).div(pow10D(market.baseDecimals));
     const point = amountHD.mul(pointPerUnit);
-    const unitPerLevel = toDec(MarketPoints[`liq:level:${market.address}`] ?? point);
+    const unitPerLevel = toDec(MarketPoints[`liq:level:${market.address}`] || point);
     const level = Math.max(1, point.div(unitPerLevel).toNumber());
     const name = `${PointAction.LiquidityAdd}:${market.address}:${provider}:${liq.lid}`;
     const existingPoint = await Point.getByName(name);

@@ -121,6 +121,17 @@ export class PointService {
       const point = amountHD.mul(pointPerUnit);
       const unitPerLevel = toDec(MarketPoints[`swap:level:${market.address}`] || point);
       const level = Math.max(1, point.div(unitPerLevel).toNumber());
+
+      this.logger.log(
+        'Grant Swap',
+        'amount',
+        swap.amount.toString(),
+        'amountHD',
+        amountHD.toFixed(),
+        'point',
+        point.toFixed(),
+      );
+
       const takerPoint = await Point.create(
         {
           network: market.network,
@@ -197,6 +208,17 @@ export class PointService {
       const point = amount.mul(pointPerUnit);
       const unitPerLevel = toDec(MarketPoints[`swap:level:${market.address}`] || point);
       const level = Math.max(1, point.div(unitPerLevel).toNumber());
+
+      this.logger.log(
+        'Grant Swap (Interactive)',
+        'amount',
+        swap.amount.toString(),
+        'amountHD',
+        amount.toFixed(),
+        'point',
+        point.toFixed(),
+      );
+
       const takerPoint = await Point.create(
         {
           network: market.network,

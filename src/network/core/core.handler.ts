@@ -1211,7 +1211,7 @@ export class CoreHandler extends Handler {
       market = await Market.updateById(
         market.id,
         {
-          totalLiquidity: toBN(market.totalLiquidity).add(amount).toString(),
+          totalLiquidity: !paused ? toBN(market.totalLiquidity).add(amount).toString() : market.totalLiquidity,
           lowestPrice: await Liquidity.getLowestPrice(this.network, marketAddress, undefined, undefined, txn),
         },
         txn,
@@ -1255,6 +1255,18 @@ export class CoreHandler extends Handler {
 
       if (liq.paused != paused) {
         ch.paused = paused;
+
+        // Update market total liquidity.
+        // Deduct liquidity from total if the liquidity is paused.
+        // Otherwise, add liquidity to total liquidity.
+        if (ch.paused) {
+          const liqAmt = ch.amount ? toBN(ch.amount) : toBN(liq.amount);
+          mktCh.totalLiquidity = toBN(market.totalLiquidity).sub(liqAmt).toString();
+        } else if (ch.paused == false) {
+          const liqAmt = ch.amount ? toBN(ch.amount) : toBN(liq.amount);
+          mktCh.totalLiquidity = toBN(market.totalLiquidity).add(liqAmt).toString();
+        }
+
         await Event.create({ ...common, paused: ch.paused, action: Events.LiquidityPause }, txn);
       }
 

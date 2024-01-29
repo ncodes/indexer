@@ -158,7 +158,7 @@ describe('CoreHandler', () => {
           marketAddress,
           constants.AddressZero,
           false,
-          true,
+          false,
           toBN(1),
           amount,
           toBN(300),
@@ -179,7 +179,7 @@ describe('CoreHandler', () => {
       expect(liq.quoteAddress).toEqual(market.quoteAddress);
       expect(liq.provider).toEqual(provider);
       expect(liq.target).toEqual(constants.AddressZero);
-      expect(liq.paused).toEqual(true);
+      expect(liq.paused).toEqual(false);
       expect(liq.amount).toEqual('100');
       expect(liq.price).toEqual('300');
       expect(liq.wantAndIds).toEqual([2]);
@@ -216,6 +216,47 @@ describe('CoreHandler', () => {
       expect(mockGrantOnLiquidityUpdate).toHaveBeenCalledWith(market, liq, true, provider, amount, undefined);
     });
 
+    it('should not update market total liquidity when liquidity has paused=true', async () => {
+      let market = await Market.create({
+        network: net,
+        address: marketAddress,
+        base: BASE,
+        baseType: AssetType.ERC20,
+        baseAddress: baseAddress,
+        quote: QUOTE,
+        quoteType: AssetType.SYNTH,
+        quoteAddress: quoteAddress,
+      });
+
+      mockTryToUsd.mockResolvedValue(5.6);
+
+      const amount = toBN(100);
+      await expect(
+        handler.onUpdatedFungibleLiquidity(
+          provider,
+          marketAddress,
+          constants.AddressZero,
+          false,
+          true,
+          toBN(1),
+          amount,
+          toBN(300),
+          [toBN(1)],
+          [toBN(2)],
+          toBN(1),
+          toBN(20),
+          toBN(10),
+          undefined,
+        ),
+      ).resolves.toBeUndefined();
+      const liq = await Liquidity.getLiquidity(handler.network, marketAddress, provider, 1);
+      expect(liq).toBeDefined();
+      expect(liq.lid).toEqual(1);
+
+      market = await Market.getById(market.id);
+      expect(market.totalLiquidity).toEqual('0');
+    });
+
     it('should update the liquidity if it already exist and deduction=false', async () => {
       let market = await Market.create({
         network: net,
@@ -249,7 +290,7 @@ describe('CoreHandler', () => {
           marketAddress,
           '0xNewTarget',
           false,
-          true,
+          false,
           toBN(lid),
           amount,
           toBN(430),
@@ -265,7 +306,7 @@ describe('CoreHandler', () => {
       expect(liq).toBeDefined();
       expect(liq.provider).toEqual(provider);
       expect(liq.amount).toEqual('110');
-      expect(liq.paused).toEqual(true);
+      expect(liq.paused).toEqual(false);
       expect(liq.price).toEqual('430');
       expect(liq.wantOrIds).toEqual([3]);
       expect(liq.wantAndIds).toEqual([4]);
@@ -296,14 +337,6 @@ describe('CoreHandler', () => {
       expect(eventPriceUpdate.provider).toEqual(provider);
       expect(eventPriceUpdate.creator).toEqual(provider);
       expect(eventPriceUpdate.price).toEqual(liq.price);
-
-      const eventPause = await Event.find({ network: net, action: Events.LiquidityPause });
-      expect(eventPause).toBeDefined();
-      expect(eventPause.marketAddress).toEqual(market.address);
-      expect(eventPause.lid).toEqual(liq.lid);
-      expect(eventPause.provider).toEqual(provider);
-      expect(eventPause.creator).toEqual(provider);
-      expect(eventPause.paused).toBeTruthy();
 
       const eventTarget = await Event.find({ network: net, action: Events.LiquidityTargetUpdate });
       expect(eventTarget).toBeDefined();
@@ -381,6 +414,84 @@ describe('CoreHandler', () => {
       market = await Market.getById(market.id);
       expect(market.totalLiquidity).toEqual('90');
       expect(market.lowestPrice).toEqual('430');
+    });
+
+    it('should remove liquidity amount from market total liquidity if paused=true and the reverse if paused=false', async () => {
+      let market = await Market.create({
+        network: net,
+        address: marketAddress,
+        base: BASE,
+        baseAddress: baseAddress,
+        quote: QUOTE,
+        quoteAddress: quoteAddress,
+        totalLiquidity: '220',
+      });
+      const lid = 1;
+      await Liquidity.create({
+        network: net,
+        marketAddress: market.address,
+        provider: provider,
+        amount: '100',
+        price: '400',
+        wantOrIds: [1],
+        wantAndIds: [2],
+        lid: lid,
+      });
+
+      await expect(
+        handler.onUpdatedFungibleLiquidity(
+          provider,
+          marketAddress,
+          constants.AddressZero,
+          false,
+          true,
+          toBN(lid),
+          toBN(0),
+          toBN(430),
+          [toBN(3)],
+          [toBN(4)],
+          toBN(2),
+          toBN(20),
+          toBN(10),
+          undefined,
+        ),
+      ).resolves.toBeUndefined();
+      let liq = await Liquidity.getLiquidity(handler.network, marketAddress, provider, 1);
+      expect(liq).toBeDefined();
+      expect(liq.provider).toEqual(provider);
+      expect(liq.amount).toEqual('100');
+      expect(liq.paused).toEqual(true);
+
+      market = await Market.getById(market.id);
+      expect(market.totalLiquidity).toEqual('120');
+
+      // unpause the liquidity
+      await expect(
+        handler.onUpdatedFungibleLiquidity(
+          provider,
+          marketAddress,
+          constants.AddressZero,
+          false,
+          false,
+          toBN(lid),
+          toBN(0),
+          toBN(430),
+          [toBN(3)],
+          [toBN(4)],
+          toBN(2),
+          toBN(20),
+          toBN(10),
+          undefined,
+        ),
+      ).resolves.toBeUndefined();
+
+      liq = await Liquidity.getLiquidity(handler.network, marketAddress, provider, 1);
+      expect(liq).toBeDefined();
+      expect(liq.provider).toEqual(provider);
+      expect(liq.paused).toEqual(false);
+
+      market = await Market.getById(market.id);
+      expect(market.totalLiquidity).toEqual('220');
     });
 
     describe('quote asset type is NFT', () => {

@@ -1,11 +1,11 @@
-import { isEqualStr, randStr, toDec } from '../common/common';
-import Objection, { Model, raw, Transaction } from 'objection';
-import { BaseModel } from './base';
-import * as moment from 'moment';
-import Market from './market';
-import Liquidity from './liquidity';
 import * as _ from 'lodash';
+import * as moment from 'moment';
+import Objection, { Model, Transaction, raw } from 'objection';
+import { isEqualStr, randStr, toDec } from '../common/common';
+import { BaseModel } from './base';
 import Dispute from './dispute';
+import Liquidity from './liquidity';
+import Market from './market';
 
 export enum SearchStatus {
   Unpaid = 'unpaid',
@@ -123,8 +123,8 @@ export default class Swap extends BaseModel {
         relation: Model.BelongsToOneRelation,
         modelClass: Liquidity,
         join: {
-          from: ['swaps.network', 'swaps.provider', 'swaps.lid'],
-          to: ['liquidities.network', 'liquidities.provider', 'liquidities.lid'],
+          from: ['swaps.network', 'swaps.marketAddress', 'swaps.provider', 'swaps.lid'],
+          to: ['liquidities.network', 'liquidities.marketAddress', 'liquidities.provider', 'liquidities.lid'],
         },
       },
       disputes: {

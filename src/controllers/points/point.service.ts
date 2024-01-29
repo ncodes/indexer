@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as csv from 'csv-parser';
 import { BigNumber, Event } from 'ethers';
@@ -37,6 +37,8 @@ export function makeCSVPointName(csvHash: string, recipient: string) {
 
 @Injectable()
 export class PointService {
+  logger = new Logger(PointService.name);
+
   constructor(private cfg: ConfigService, private authSrv: AuthService) {}
 
   isAddrAllowed(addr: string) {
@@ -294,7 +296,20 @@ export class PointService {
     if (!existingPoint && add) {
       let actual = point.mul(level);
       if (actual.isZero() || actual.isNaN()) actual = toDec(0);
-      console.log('point', point.toFixed(), 'level', level.toFixed(), 'actual', actual.toFixed());
+
+      this.logger.log(
+        'PointLog(AddLiq)',
+        'amount',
+        amount.toString(),
+        amountHD.toFixed(),
+        'point',
+        point.toFixed(),
+        'level',
+        level.toFixed(),
+        'actual',
+        actual.toFixed(),
+      );
+
       const providerPoint = await Point.create(
         {
           network: market.network,

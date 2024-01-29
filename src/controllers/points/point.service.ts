@@ -288,6 +288,17 @@ export class PointService {
 
     const amountHD = toDec(amount).div(pow10D(market.baseDecimals));
     const point = amountHD.mul(pointPerUnit);
+
+    this.logger.log(
+      'Grant Liquidity',
+      'amount',
+      amount.toString(),
+      'amountHD',
+      amountHD.toFixed(),
+      'point',
+      point.toFixed(),
+    );
+
     const unitPerLevel = toDec(MarketPoints[`liq:level:${market.address}`] || point);
     const level = Math.max(1, point.div(unitPerLevel).toNumber()) || 1;
     const name = `${PointAction.LiquidityAdd}:${market.address}:${provider}:${liq.lid}`;

@@ -2,10 +2,10 @@ export const MarketPoints = {
   'market:created': 10,
 
   // Set swap point per unit in a market
-  'swap:0x951e9E4389c5F135E3391022a61936fb2b426a7B': 300,
-  'swap:0xc3839eAfD5Caf380456b4736C361bd3C61c743E5': 300,
-  'swap:0x0593D8cE5586b68423b31732713435F4f62f44BF': 300,
-  'swap:0x09aF70C8d985Db633562b7d6A24cAdFdDa265B73': 300,
+  'swap:0x951e9E4389c5F135E3391022a61936fb2b426a7B': 200,
+  'swap:0xc3839eAfD5Caf380456b4736C361bd3C61c743E5': 200,
+  'swap:0x0593D8cE5586b68423b31732713435F4f62f44BF': 150,
+  'swap:0x09aF70C8d985Db633562b7d6A24cAdFdDa265B73': 150,
 
   // Set swap points per unit for all instant markets.
   // Set to zero to not incentivize unknown instant markets
@@ -25,10 +25,10 @@ export const MarketPoints = {
   'swap:paid': 100,
 
   // Set the point per unit of liquidity added to a specific market
-  'liq:0x951e9E4389c5F135E3391022a61936fb2b426a7B': 300,
-  'liq:0xc3839eAfD5Caf380456b4736C361bd3C61c743E5': 300,
-  'liq:0x0593D8cE5586b68423b31732713435F4f62f44BF': 300,
-  'liq:0x09aF70C8d985Db633562b7d6A24cAdFdDa265B73': 300,
+  'liq:0x951e9E4389c5F135E3391022a61936fb2b426a7B': 200,
+  'liq:0xc3839eAfD5Caf380456b4736C361bd3C61c743E5': 200,
+  'liq:0x0593D8cE5586b68423b31732713435F4f62f44BF': 150,
+  'liq:0x09aF70C8d985Db633562b7d6A24cAdFdDa265B73': 150,
 
   // Set the point per unit of liquidity added to all instant markets.
   // Set to zero to not incentivize unknown instant markets

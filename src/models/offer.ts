@@ -101,8 +101,8 @@ export default class Offer extends BaseModel {
         relation: Model.BelongsToOneRelation,
         modelClass: Liquidity,
         join: {
-          from: ['offers.network', 'offers.provider', 'offers.lid'],
-          to: ['liquidities.network', 'liquidities.provider', 'liquidities.lid'],
+          from: ['offers.network', 'offers.marketAddress', 'offers.provider', 'offers.lid'],
+          to: ['liquidities.network', 'liquidities.marketAddress', 'liquidities.provider', 'liquidities.lid'],
         },
       },
       swap: {

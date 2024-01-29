@@ -160,33 +160,33 @@ export class PointService {
         );
       }
 
-      await Point.create(
-        {
-          network: market.network,
-          name: `${PointAction.InstantSwap}:${event.transactionHash}:provider:${swap.provider}`,
-          address: swap.provider,
-          point: point.mul(level).toString(),
-          action: PointAction.InstantSwap,
-        },
-        txn,
-      );
+      // await Point.create(
+      //   {
+      //     network: market.network,
+      //     name: `${PointAction.InstantSwap}:${event.transactionHash}:provider:${swap.provider}`,
+      //     address: swap.provider,
+      //     point: point.mul(level).toString(),
+      //     action: PointAction.InstantSwap,
+      //   },
+      //   txn,
+      // );
 
-      // Give providers's referrer a share of the point
-      const provider = await User.getByAddress(swap.provider);
-      if (provider && provider.referrer) {
-        await Point.create(
-          {
-            network: market.network,
-            name: `${PointAction.InstantSwapRef}:${event.transactionHash}:provider:${swap.provider}:ref`,
-            address: provider.referrer,
-            referrer: provider.referrer,
-            referee: provider.address,
-            point: toDec(takerPoint.point).mul(ReferrerPointSharePct).toFixed(),
-            action: PointAction.InstantSwapRef,
-          },
-          txn,
-        );
-      }
+      // // Give providers's referrer a share of the point
+      // const provider = await User.getByAddress(swap.provider);
+      // if (provider && provider.referrer) {
+      //   await Point.create(
+      //     {
+      //       network: market.network,
+      //       name: `${PointAction.InstantSwapRef}:${event.transactionHash}:provider:${swap.provider}:ref`,
+      //       address: provider.referrer,
+      //       referrer: provider.referrer,
+      //       referee: provider.address,
+      //       point: toDec(takerPoint.point).mul(ReferrerPointSharePct).toFixed(),
+      //       action: PointAction.InstantSwapRef,
+      //     },
+      //     txn,
+      //   );
+      // }
 
       return true;
     }
@@ -247,33 +247,33 @@ export class PointService {
         );
       }
 
-      await Point.create(
-        {
-          network: market.network,
-          name: `${PointAction.InteractiveSwap}:${event.transactionHash}:provider:${swap.provider}`,
-          address: swap.provider,
-          point: point.mul(level).toString(),
-          action: PointAction.InteractiveSwap,
-        },
-        txn,
-      );
+      // await Point.create(
+      //   {
+      //     network: market.network,
+      //     name: `${PointAction.InteractiveSwap}:${event.transactionHash}:provider:${swap.provider}`,
+      //     address: swap.provider,
+      //     point: point.mul(level).toString(),
+      //     action: PointAction.InteractiveSwap,
+      //   },
+      //   txn,
+      // );
 
-      // Give provider's referrer a share of the point
-      const provider = await User.getByAddress(swap.provider);
-      if (provider && provider.referrer) {
-        await Point.create(
-          {
-            network: market.network,
-            name: `${PointAction.InteractiveSwapRef}:${event.transactionHash}:provider:${swap.provider}:ref`,
-            address: provider.referrer,
-            referrer: provider.referrer,
-            referee: provider.address,
-            point: toDec(takerPoint.point).mul(ReferrerPointSharePct).toFixed(),
-            action: PointAction.InteractiveSwapRef,
-          },
-          txn,
-        );
-      }
+      // // Give provider's referrer a share of the point
+      // const provider = await User.getByAddress(swap.provider);
+      // if (provider && provider.referrer) {
+      //   await Point.create(
+      //     {
+      //       network: market.network,
+      //       name: `${PointAction.InteractiveSwapRef}:${event.transactionHash}:provider:${swap.provider}:ref`,
+      //       address: provider.referrer,
+      //       referrer: provider.referrer,
+      //       referee: provider.address,
+      //       point: toDec(takerPoint.point).mul(ReferrerPointSharePct).toFixed(),
+      //       action: PointAction.InteractiveSwapRef,
+      //     },
+      //     txn,
+      //   );
+      // }
 
       return true;
     }

@@ -180,15 +180,15 @@ describe('PointService', () => {
         expect(parseFloat(takerPoint.point)).toEqual(((2000 * 20) / 1000) * (2000 * 20));
         expect(takerPoint.action).toEqual(PointAction.InstantSwap);
 
-        const providerPoint = await Point.getByAddress('0xProvider');
-        expect(providerPoint).not.toBeUndefined();
-        expect(providerPoint.name).toEqual(
-          `${PointAction.InstantSwap}:${event.transactionHash}:provider:${swap.provider}`,
-        );
-        expect(providerPoint.network).toEqual('ethereum');
-        expect(providerPoint.address).toEqual('0xProvider');
-        expect(parseFloat(providerPoint.point)).toEqual(((2000 * 20) / 1000) * (2000 * 20));
-        expect(providerPoint.action).toEqual(PointAction.InstantSwap);
+        // const providerPoint = await Point.getByAddress('0xProvider');
+        // expect(providerPoint).not.toBeUndefined();
+        // expect(providerPoint.name).toEqual(
+        //   `${PointAction.InstantSwap}:${event.transactionHash}:provider:${swap.provider}`,
+        // );
+        // expect(providerPoint.network).toEqual('ethereum');
+        // expect(providerPoint.address).toEqual('0xProvider');
+        // expect(parseFloat(providerPoint.point)).toEqual(((2000 * 20) / 1000) * (2000 * 20));
+        // expect(providerPoint.action).toEqual(PointAction.InstantSwap);
       });
 
       it.skip('should grant correct point when market does not have a specific point per unit', async () => {
@@ -260,17 +260,17 @@ describe('PointService', () => {
         expect(takerRefPoint.referee).toEqual('0xTaker');
         expect(parseFloat(takerRefPoint.point)).toEqual(((2000 * 20) / 1000) * (2000 * 20) * ReferrerPointSharePct);
 
-        const providerPoint = await Point.getByAddress('0xProvider');
-        expect(providerPoint).not.toBeUndefined();
-        expect(providerPoint.network).toEqual('ethereum');
-        expect(parseFloat(providerPoint.point)).toEqual(((2000 * 20) / 1000) * (2000 * 20));
+        // const providerPoint = await Point.getByAddress('0xProvider');
+        // expect(providerPoint).not.toBeUndefined();
+        // expect(providerPoint.network).toEqual('ethereum');
+        // expect(parseFloat(providerPoint.point)).toEqual(((2000 * 20) / 1000) * (2000 * 20));
 
-        const providerRefPoint = await Point.getByAddress('0xProviderRef');
-        expect(providerRefPoint).not.toBeUndefined();
-        expect(providerRefPoint.address).toEqual('0xProviderRef');
-        expect(providerRefPoint.referrer).toEqual('0xProviderRef');
-        expect(providerRefPoint.referee).toEqual('0xProvider');
-        expect(parseFloat(providerRefPoint.point)).toEqual(((2000 * 20) / 1000) * (2000 * 20) * ReferrerPointSharePct);
+        // const providerRefPoint = await Point.getByAddress('0xProviderRef');
+        // expect(providerRefPoint).not.toBeUndefined();
+        // expect(providerRefPoint.address).toEqual('0xProviderRef');
+        // expect(providerRefPoint.referrer).toEqual('0xProviderRef');
+        // expect(providerRefPoint.referee).toEqual('0xProvider');
+        // expect(parseFloat(providerRefPoint.point)).toEqual(((2000 * 20) / 1000) * (2000 * 20) * ReferrerPointSharePct);
       });
     });
 
@@ -301,15 +301,15 @@ describe('PointService', () => {
         expect(parseFloat(takerPoint.point)).toEqual(((2000 * 20) / 1000) * (2000 * 20));
         expect(takerPoint.action).toEqual(PointAction.InteractiveSwap);
 
-        const providerPoint = await Point.getByAddress('0xProvider');
-        expect(providerPoint).not.toBeUndefined();
-        expect(providerPoint.name).toEqual(
-          `${PointAction.InteractiveSwap}:${event.transactionHash}:provider:${swap.provider}`,
-        );
-        expect(providerPoint.network).toEqual('ethereum');
-        expect(providerPoint.address).toEqual('0xProvider');
-        expect(parseFloat(providerPoint.point)).toEqual(((2000 * 20) / 1000) * (2000 * 20));
-        expect(providerPoint.action).toEqual(PointAction.InteractiveSwap);
+        // const providerPoint = await Point.getByAddress('0xProvider');
+        // expect(providerPoint).not.toBeUndefined();
+        // expect(providerPoint.name).toEqual(
+        //   `${PointAction.InteractiveSwap}:${event.transactionHash}:provider:${swap.provider}`,
+        // );
+        // expect(providerPoint.network).toEqual('ethereum');
+        // expect(providerPoint.address).toEqual('0xProvider');
+        // expect(parseFloat(providerPoint.point)).toEqual(((2000 * 20) / 1000) * (2000 * 20));
+        // expect(providerPoint.action).toEqual(PointAction.InteractiveSwap);
       });
 
       it('should grant correct point when market does not have a specific point per unit', async () => {
@@ -338,15 +338,15 @@ describe('PointService', () => {
         expect(parseFloat(takerPoint.point)).toEqual(2000 * 15);
         expect(takerPoint.action).toEqual(PointAction.InteractiveSwap);
 
-        const providerPoint = await Point.getByAddress('0xProvider');
-        expect(providerPoint).not.toBeUndefined();
-        expect(providerPoint.name).toEqual(
-          `${PointAction.InteractiveSwap}:${event.transactionHash}:provider:${swap.provider}`,
-        );
-        expect(providerPoint.network).toEqual('ethereum');
-        expect(providerPoint.address).toEqual('0xProvider');
-        expect(parseFloat(providerPoint.point)).toEqual(2000 * 15);
-        expect(providerPoint.action).toEqual(PointAction.InteractiveSwap);
+        // const providerPoint = await Point.getByAddress('0xProvider');
+        // expect(providerPoint).not.toBeUndefined();
+        // expect(providerPoint.name).toEqual(
+        //   `${PointAction.InteractiveSwap}:${event.transactionHash}:provider:${swap.provider}`,
+        // );
+        // expect(providerPoint.network).toEqual('ethereum');
+        // expect(providerPoint.address).toEqual('0xProvider');
+        // expect(parseFloat(providerPoint.point)).toEqual(2000 * 15);
+        // expect(providerPoint.action).toEqual(PointAction.InteractiveSwap);
       });
     });
 
@@ -383,16 +383,16 @@ describe('PointService', () => {
         expect(takerRefPoint.referee).toEqual('0xTaker');
         expect(parseFloat(takerRefPoint.point)).toEqual(((2000 * 20) / 1000) * (2000 * 20) * ReferrerPointSharePct);
 
-        const providerPoint = await Point.getByAddress('0xProvider');
-        expect(providerPoint).not.toBeUndefined();
-        expect(parseFloat(providerPoint.point)).toEqual(((2000 * 20) / 1000) * (2000 * 20));
+        // const providerPoint = await Point.getByAddress('0xProvider');
+        // expect(providerPoint).not.toBeUndefined();
+        // expect(parseFloat(providerPoint.point)).toEqual(((2000 * 20) / 1000) * (2000 * 20));
 
-        const providerRefPoint = await Point.getByAddress('0xProviderRef');
-        expect(providerRefPoint).not.toBeUndefined();
-        expect(providerRefPoint.address).toEqual('0xProviderRef');
-        expect(providerRefPoint.referrer).toEqual('0xProviderRef');
-        expect(providerRefPoint.referee).toEqual('0xProvider');
-        expect(parseFloat(providerRefPoint.point)).toEqual(((2000 * 20) / 1000) * (2000 * 20) * ReferrerPointSharePct);
+        // const providerRefPoint = await Point.getByAddress('0xProviderRef');
+        // expect(providerRefPoint).not.toBeUndefined();
+        // expect(providerRefPoint.address).toEqual('0xProviderRef');
+        // expect(providerRefPoint.referrer).toEqual('0xProviderRef');
+        // expect(providerRefPoint.referee).toEqual('0xProvider');
+        // expect(parseFloat(providerRefPoint.point)).toEqual(((2000 * 20) / 1000) * (2000 * 20) * ReferrerPointSharePct);
       });
     });
 
@@ -428,15 +428,15 @@ describe('PointService', () => {
         expect(parseFloat(takerPoint.point)).toEqual(((cost * 20) / 1000) * (cost * 20));
         expect(takerPoint.action).toEqual(PointAction.InteractiveSwap);
 
-        const providerPoint = await Point.getByAddress('0xProvider');
-        expect(providerPoint).not.toBeUndefined();
-        expect(providerPoint.name).toEqual(
-          `${PointAction.InteractiveSwap}:${event.transactionHash}:provider:${swap.provider}`,
-        );
-        expect(providerPoint.network).toEqual('ethereum');
-        expect(providerPoint.address).toEqual('0xProvider');
-        expect(parseFloat(providerPoint.point)).toEqual(((cost * 20) / 1000) * (cost * 20));
-        expect(providerPoint.action).toEqual(PointAction.InteractiveSwap);
+        // const providerPoint = await Point.getByAddress('0xProvider');
+        // expect(providerPoint).not.toBeUndefined();
+        // expect(providerPoint.name).toEqual(
+        //   `${PointAction.InteractiveSwap}:${event.transactionHash}:provider:${swap.provider}`,
+        // );
+        // expect(providerPoint.network).toEqual('ethereum');
+        // expect(providerPoint.address).toEqual('0xProvider');
+        // expect(parseFloat(providerPoint.point)).toEqual(((cost * 20) / 1000) * (cost * 20));
+        // expect(providerPoint.action).toEqual(PointAction.InteractiveSwap);
       });
 
       it('should grant correct point when market does not have a specific point per unit', async () => {
@@ -470,15 +470,15 @@ describe('PointService', () => {
         expect(parseFloat(takerPoint.point)).toEqual(cost * 15);
         expect(takerPoint.action).toEqual(PointAction.InteractiveSwap);
 
-        const providerPoint = await Point.getByAddress('0xProvider');
-        expect(providerPoint).not.toBeUndefined();
-        expect(providerPoint.name).toEqual(
-          `${PointAction.InteractiveSwap}:${event.transactionHash}:provider:${swap.provider}`,
-        );
-        expect(providerPoint.network).toEqual('ethereum');
-        expect(providerPoint.address).toEqual('0xProvider');
-        expect(parseFloat(providerPoint.point)).toEqual(cost * 15);
-        expect(providerPoint.action).toEqual(PointAction.InteractiveSwap);
+        // const providerPoint = await Point.getByAddress('0xProvider');
+        // expect(providerPoint).not.toBeUndefined();
+        // expect(providerPoint.name).toEqual(
+        //   `${PointAction.InteractiveSwap}:${event.transactionHash}:provider:${swap.provider}`,
+        // );
+        // expect(providerPoint.network).toEqual('ethereum');
+        // expect(providerPoint.address).toEqual('0xProvider');
+        // expect(parseFloat(providerPoint.point)).toEqual(cost * 15);
+        // expect(providerPoint.action).toEqual(PointAction.InteractiveSwap);
       });
     });
 

@@ -287,17 +287,20 @@ export class PointService {
     const amountHD = toDec(amount).div(pow10D(market.baseDecimals));
     const point = amountHD.mul(pointPerUnit);
     const unitPerLevel = toDec(MarketPoints[`liq:level:${market.address}`] || point);
-    const level = Math.max(1, point.div(unitPerLevel).toNumber());
+    const level = Math.max(1, point.div(unitPerLevel).toNumber()) || 1;
     const name = `${PointAction.LiquidityAdd}:${market.address}:${provider}:${liq.lid}`;
     const existingPoint = await Point.getByName(name);
 
     if (!existingPoint && add) {
+      let actual = point.mul(level);
+      if (actual.isZero() || actual.isNaN()) actual = toDec(0);
+      console.log('point', point.toFixed(), 'level', level.toFixed(), 'actual', actual.toFixed());
       const providerPoint = await Point.create(
         {
           network: market.network,
           name,
           address: provider,
-          point: point.mul(level).toString(),
+          point: actual.toFixed(),
           action: PointAction.LiquidityAdd,
         },
         txn,

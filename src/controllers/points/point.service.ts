@@ -41,10 +41,6 @@ export class PointService {
 
   constructor(private cfg: ConfigService, private authSrv: AuthService) {}
 
-  isAddrAllowed(addr: string) {
-    return this.authSrv.isInPrivateAllowlist(addr);
-  }
-
   /**
    * Grant point for NFT ownership
    * @param receiver The receiver address
@@ -109,8 +105,6 @@ export class PointService {
    * @param txn Optional transaction object
    */
   async grantOnSwap(market: Market, swap: Swap, txn?: Transaction, event?: Event) {
-    if (!this.isAddrAllowed(swap.taker) || !this.isAddrAllowed(swap.provider)) return false;
-
     const pointPerUnit =
       MarketPoints['swap:' + market.address] ?? MarketPoints[market.instant ? 'swap:instant' : 'swap:interactive'];
 
@@ -300,8 +294,6 @@ export class PointService {
     amount: BigNumber,
     txn?: Transaction,
   ) {
-    if (!this.isAddrAllowed(provider)) return false;
-
     // Only grant points to market that involves ERC20 and whose base token is not a synthetic token
     if (!market.involvesERC20() || Market.isSynth(market.baseType)) return false;
 
@@ -423,8 +415,6 @@ export class PointService {
    * @param txn Optional transaction object
    */
   async grantPoint(id: string, net: string, recipient: string, event: Event, txn?: Transaction) {
-    if (!this.isAddrAllowed(recipient)) return false;
-
     const point = MarketPoints[id];
     if (!point || point == 0) return false;
 

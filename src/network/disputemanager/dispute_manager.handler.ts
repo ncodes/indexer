@@ -196,7 +196,7 @@ export class DisputeManagerHandler extends Handler {
       txn,
     );
 
-    // Create swap event
+    // Create a swap event
     await Event.create(
       {
         network: this.network,

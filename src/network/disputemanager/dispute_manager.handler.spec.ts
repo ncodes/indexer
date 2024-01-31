@@ -1,6 +1,6 @@
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { DBService } from '../../db/db.service';
-import { NotificationID } from '../../jobs/mailer/NotifierService';
+import { NotificationID } from '../../jobs/mailer/common';
 import Commit from '../../models/commit';
 import Dispute from '../../models/dispute';
 import Draft from '../../models/draft';

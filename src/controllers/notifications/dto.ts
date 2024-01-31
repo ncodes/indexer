@@ -88,3 +88,25 @@ export class WebPushSubscribeDTO {
     };
   };
 }
+
+export class UpdateNotificationSettingsDTO {
+  @Transform(({ value }) => toBoolean(value))
+  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'disabled') })
+  @IsOptional()
+  disabled: boolean;
+
+  @Transform(({ value }) => toBoolean(value))
+  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'disabledSwap') })
+  @IsOptional()
+  disabledSwap: boolean;
+
+  @Transform(({ value }) => toBoolean(value))
+  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'disabledLiq') })
+  @IsOptional()
+  disabledLiq: boolean;
+
+  @Transform(({ value }) => toBoolean(value))
+  @IsBoolean({ message: makeValidatorMsg('must be boolean', 'disabledOffer') })
+  @IsOptional()
+  disabledOffer: boolean;
+}

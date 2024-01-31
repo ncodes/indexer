@@ -4,37 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { Queue } from 'bull';
 import { isDev } from '../../common/common';
 import { NotifierConsumer } from './NotifierConsumer';
-
-export enum NotificationID {
-  PutApproved = 'PutApproved',
-  PutRevoked = 'PutRevoked',
-  SwapApproved = 'SwapApproved',
-  SwapRevoked = 'SwapRevoked',
-  UpdatedLiquidityManager = 'UpdatedLiquidityManager',
-  RemoveLiquidityManager = 'RemoveLiquidityManager',
-  NewInstantSwap = 'NewInstantSwap',
-  NewInteractiveSwap = 'NewInteractiveSwap',
-  SwapOrderReleased = 'SwapOrderReleased',
-  SwapOrderCancelled = 'SwapOrderCancelled',
-  SwapOrderPaid = 'SwapOrderPaid',
-  TicketSlashed = 'TicketSlashed',
-  TicketDrafted = 'TicketDrafted',
-  DisputeCreated = 'DisputeCreated',
-  FullyDrafted = 'FullyDrafted',
-  EvidencePhaseStarted = 'EvidencePhaseStarted',
-  EvidencePhaseEnded = 'EvidencePhaseEnded',
-  CommitPhaseEnded = 'CommitPhaseEnded',
-  RevealPhaseEnded = 'RevealPhaseEnded',
-  DisputeExecuted = 'DisputeExecuted',
-  NewOffer = 'NewOffer',
-  OfferUpdated = 'OfferUpdated',
-  OfferAccepted = 'OfferAccepted',
-  OfferCancelled = 'OfferCancelled',
-  OfferUnaccepted = 'OfferUnaccepted',
-  OfferExecuted = 'OfferExecuted',
-  ChatNewMessage = 'ChatNewMessage',
-  VerifyNewEmail = 'VerifyNewEmail',
-}
+import { NotificationID } from './common';
 
 @Injectable()
 export class NotifierService {
@@ -50,18 +20,18 @@ export class NotifierService {
 
   /**
    * Schedule notification
-   * @param notifType The notification type
+   * @param notifId The notification ID
    * @param network The network where the event occurred
    * @param recipientAddr The address of the recipient
    * @param data The context data
    */
-  notify(notifType: NotificationID, network: string, recipientAddr: string, data: { [key: string]: any }) {
+  notify(notifId: NotificationID, network: string, recipientAddr: string, data: { [key: string]: any }) {
     if (this.disable) return Promise.resolve();
-    if (isDev()) return this.notifyNow(notifType, network, recipientAddr, data);
+    if (isDev()) return this.notifyNow(notifId, network, recipientAddr, data);
     return this.queue.add(
       {
         appUrl: this.cfgSrv.get('app.appUrl'),
-        notifType,
+        notifId,
         recipientAddr,
         network,
         data,
@@ -76,17 +46,17 @@ export class NotifierService {
 
   /**
    * Send notification without queueing
-   * @param notifType The notification type
+   * @param notifId The notification type
    * @param network The network where the event occurred
    * @param recipientAddr The address of the recipient
    * @param data The context data
    */
-  notifyNow(notifType: NotificationID, network: string, recipientAddr: string, data: any) {
+  notifyNow(notifId: NotificationID, network: string, recipientAddr: string, data: any) {
     if (this.disable) return Promise.resolve();
     return this.notifier.notify({
       data: {
         appUrl: this.cfgSrv.get('app.appUrl'),
-        notifType,
+        notifId,
         recipientAddr,
         network,
         data,

@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { transaction } from 'objection';
 import { isEqualStr, randStr } from '../../common/common';
 import BadgeGrant from '../../models/badge_grant';
+import { defaultNotificationSettings } from '../../models/notification_setting';
 import Swap from '../../models/swap';
 import User from '../../models/user';
 import { JointLinkService } from '../../services/joint_link.service';
@@ -71,6 +72,10 @@ export class UserService {
                 : lastSwap.createdAt;
           }
         }
+      }
+
+      if (!user.notificationSettings) {
+        user.notificationSettings = defaultNotificationSettings;
       }
     } catch (e) {
       return Promise.reject(e);

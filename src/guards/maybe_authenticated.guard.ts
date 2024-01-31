@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as jwt from 'jsonwebtoken';
-import { error, ErrorMessages, ErrorTypes } from '../common/responses/responses';
+import { ErrorMessages, ErrorTypes, error } from '../common/responses/responses';
 import Session from '../models/session';
 
 export const notPermitted = error()

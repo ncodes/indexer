@@ -7,7 +7,8 @@ import Dispute from '../../../models/dispute';
 import Draft from '../../../models/draft';
 import Swap from '../../../models/swap';
 import { Base } from '../../base';
-import { NotificationID, NotifierService } from '../../mailer/NotifierService';
+import { NotifierService } from '../../mailer/NotifierService';
+import { NotificationID } from '../../mailer/common';
 
 /**
  * OnEvidencePeriodEnd finds disputes whose evidence period has ended

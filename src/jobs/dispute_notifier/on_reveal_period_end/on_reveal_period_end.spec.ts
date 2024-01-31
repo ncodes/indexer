@@ -10,7 +10,8 @@ import Market from '../../../models/market';
 import Meta, { MetaKeys } from '../../../models/meta';
 import Reveal from '../../../models/reveal';
 import Swap from '../../../models/swap';
-import { NotificationID, NotifierService } from '../../mailer/NotifierService';
+import { NotifierService } from '../../mailer/NotifierService';
+import { NotificationID } from '../../mailer/common';
 import OnRevealPeriodEnd from './on_reveal_period_end';
 
 const mockNotify = jest.fn();

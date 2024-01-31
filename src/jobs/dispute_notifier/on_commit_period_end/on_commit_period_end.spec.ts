@@ -8,7 +8,8 @@ import Dispute from '../../../models/dispute';
 import Draft from '../../../models/draft';
 import Market from '../../../models/market';
 import Swap from '../../../models/swap';
-import { NotificationID, NotifierService } from '../../mailer/NotifierService';
+import { NotifierService } from '../../mailer/NotifierService';
+import { NotificationID } from '../../mailer/common';
 import OnCommitPeriodEnd from './on_commit_period_end';
 
 const mockNotify = jest.fn();

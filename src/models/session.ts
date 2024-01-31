@@ -45,7 +45,7 @@ export default class Session extends BaseModel {
    * @param id The user id
    */
   static getById(id: string) {
-    return this.query().whereNotDeleted().findById(id).withGraphFetched('owner(notDeleted)');
+    return this.query().whereNotDeleted().findById(id).withGraphFetched('owner(notDeleted).notificationSettings');
   }
 
   /**

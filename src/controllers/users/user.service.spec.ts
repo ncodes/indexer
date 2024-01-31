@@ -4,6 +4,7 @@ import * as moment from 'moment';
 import { DBService } from '../../db/db.service';
 import BadgeGrant from '../../models/badge_grant';
 import Market, { AssetType } from '../../models/market';
+import { defaultNotificationSettings } from '../../models/notification_setting';
 import Swap from '../../models/swap';
 import User from '../../models/user';
 import { JointLinkService } from '../../services/joint_link.service';
@@ -180,6 +181,11 @@ describe('UserService', () => {
       });
       await expect(service.extendUser(u2, net)).resolves.toBeUndefined();
       expect(u2.lastActiveAt).toEqual(swap2.createdAt);
+    });
+
+    it(`should set default notification settings when not loaded`, async () => {
+      await expect(service.extendUser(u, net)).resolves.toBeUndefined();
+      expect(u.notificationSettings).toEqual(defaultNotificationSettings);
     });
   });
 

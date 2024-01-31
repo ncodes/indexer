@@ -10,6 +10,7 @@ import User from '../../models/user';
 import WebPushSubscription from '../../models/web_push_subscription';
 import { pow10D, toFixed } from '../../network/common';
 import { MailerService } from '../../services/mailer/mailer.service';
+import { canSendNotification } from './common';
 
 @Processor('notifier')
 export class NotifierConsumer {
@@ -23,20 +24,27 @@ export class NotifierConsumer {
    */
   @Process()
   async notify(job: Job<NotifyJob<any>>) {
-    if (!job.data.data.user) {
-      const user = await User.getByAddress(job.data.recipientAddr);
-      if (!user || !user.email) return Promise.resolve();
-      job.data.user = user;
-    } else {
-      job.data.user = job.data.data.user;
+    let user = job.data.data.user;
+
+    if (!user) {
+      user = await User.getByAddress(job.data.recipientAddr);
+      if (!user || !user.email) return;
     }
 
-    const handler = this[`notify${job.data.notifType}`];
+    job.data.user = user;
+
+    // Check if user can receive notifications
+    if (!canSendNotification(user, job.data.notifId)) {
+      this.logger.debug(`User ${user.id} cannot receive notification ${job.data.notifId}`);
+      return;
+    }
+
+    const handler = this[`notify${job.data.notifId}`];
     if (!handler) {
-      throw new Error(`No notification handler for ${job.data.notifType}`);
+      throw new Error(`No notification handler for ${job.data.notifId}`);
     }
 
-    return this[`notify${job.data.notifType}`](job.data);
+    return this[`notify${job.data.notifId}`](job.data);
   }
 
   /**

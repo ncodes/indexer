@@ -7,15 +7,17 @@ import { AllExceptionsFilter } from '../../common/interceptors/exception_filter'
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { Roles } from '../../common/roles';
 import { DBService } from '../../db/db.service';
+import { NotificationID } from '../../jobs/mailer/common';
 import Convo from '../../models/convo';
 import Notification, { NotificationType } from '../../models/notification';
+import NotificationSetting from '../../models/notification_setting';
 import Offer from '../../models/offer';
 import OnlineStatus from '../../models/online_status';
 import Swap from '../../models/swap';
 import User from '../../models/user';
 import { RedisService } from '../../services/redis/redis.service';
 import { makeSession } from '../auth/utils';
-import { NotificationID, NotifierService } from './../../jobs/mailer/NotifierService';
+import { NotifierService } from './../../jobs/mailer/NotifierService';
 import { NotificationsController } from './notifications.controller';
 
 const mockCfgGet = jest.fn();
@@ -758,6 +760,86 @@ describe('NotificationsController', () => {
             expect(call[3].convo.id).toEqual(convo.id);
           });
       });
+    });
+  });
+
+  describe('.updateSettings', () => {
+    it('should return 401 when not authorized', async () => {
+      await request(app.getHttpServer())
+        .put(`/v1/notifications/settings`)
+        .send({})
+        .expect(401)
+        .expect({
+          error: {
+            type: 'authentication_error',
+            message: 'authorization header is required',
+          },
+        });
+    });
+
+    it('should return when token is invalid', async () => {
+      await request(app.getHttpServer())
+        .put(`/v1/notifications/settings`)
+        .set('Authorization', 'bearer invalid')
+        .expect(401)
+        .expect({
+          error: {
+            type: 'authentication_error',
+            message: 'not permitted to perform this action',
+          },
+        });
+    });
+
+    it('should return when token is invalid', async () => {
+      await request(app.getHttpServer())
+        .put(`/v1/notifications/settings`)
+        .set('Authorization', 'bearer ' + token)
+        .send({
+          disabled: true,
+          disabledSwap: true,
+          disabledOffer: true,
+          disabledLiq: true,
+        })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data.id).toBeDefined();
+          expect(res.body.data.userId).toEqual(u.id);
+          expect(res.body.data.disabled).toBeTruthy();
+          expect(res.body.data.disabledSwap).toBeTruthy();
+          expect(res.body.data.disabledOffer).toBeTruthy();
+          expect(res.body.data.disabledLiq).toBeTruthy();
+        });
+
+      let notifSet = await NotificationSetting.getByUserId(u.id);
+      expect(notifSet.disabled).toBeTruthy();
+      expect(notifSet.disabledSwap).toBeTruthy();
+      expect(notifSet.disabledOffer).toBeTruthy();
+      expect(notifSet.disabledLiq).toBeTruthy();
+
+      await request(app.getHttpServer())
+        .put(`/v1/notifications/settings`)
+        .set('Authorization', 'bearer ' + token)
+        .send({
+          disabled: false,
+          disabledSwap: false,
+          disabledOffer: false,
+          disabledLiq: false,
+        })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data.id).toBeDefined();
+          expect(res.body.data.userId).toEqual(u.id);
+          expect(res.body.data.disabled).toBeFalsy();
+          expect(res.body.data.disabledSwap).toBeFalsy();
+          expect(res.body.data.disabledOffer).toBeFalsy();
+          expect(res.body.data.disabledLiq).toBeFalsy();
+        });
+
+      notifSet = await NotificationSetting.getByUserId(u.id);
+      expect(notifSet.disabled).toBeFalsy();
+      expect(notifSet.disabledSwap).toBeFalsy();
+      expect(notifSet.disabledOffer).toBeFalsy();
+      expect(notifSet.disabledLiq).toBeFalsy();
     });
   });
 });

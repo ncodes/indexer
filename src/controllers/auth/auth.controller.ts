@@ -33,7 +33,9 @@ import {
 import { Roles } from '../../common/roles';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
-import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierService';
+import { NotifierService } from '../../jobs/mailer/NotifierService';
+import { NotificationID } from '../../jobs/mailer/common';
+import NotificationSetting, { defaultNotificationSettings } from '../../models/notification_setting';
 import Session from '../../models/session';
 import User from '../../models/user';
 import { UserService } from '../users/user.service';
@@ -83,8 +85,10 @@ export class AuthController {
     let token: string;
     let user: User;
     let isUserNew = false;
+    let notifSettings: Partial<NotificationSetting>;
     await transaction(User, async (User) => {
       user = await User.getByAddress(sigData.address);
+      notifSettings = user ? user.notificationSettings : defaultNotificationSettings;
       isUserNew = !user;
 
       // Create user if not found, Set email as unverified.
@@ -103,6 +107,7 @@ export class AuthController {
           otpSecret: user.otpSecret ?? otpSecret,
           emailUnverified: user.email !== sigData.email ? sigData.email : null,
         });
+        user.notificationSettings = notifSettings;
       }
     });
 

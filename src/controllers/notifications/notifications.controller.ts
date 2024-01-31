@@ -8,14 +8,22 @@ import { ok, throw404 } from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import { IsRootAdmin } from '../../guards/is_basic_admin';
-import { NotificationID, NotifierService } from '../../jobs/mailer/NotifierService';
+import { NotifierService } from '../../jobs/mailer/NotifierService';
+import { NotificationID } from '../../jobs/mailer/common';
 import Convo from '../../models/convo';
 import Notification from '../../models/notification';
+import NotificationSetting from '../../models/notification_setting';
 import OnlineStatus from '../../models/online_status';
 import User from '../../models/user';
 import WebPushSubscription from '../../models/web_push_subscription';
 import { RedisService } from '../../services/redis/redis.service';
-import { ChatNotificationDTO, ListQueryDTO, MarkReadDTO, WebPushSubscribeDTO } from './dto';
+import {
+  ChatNotificationDTO,
+  ListQueryDTO,
+  MarkReadDTO,
+  UpdateNotificationSettingsDTO,
+  WebPushSubscribeDTO,
+} from './dto';
 
 @Controller('v1/notifications')
 export class NotificationsController {
@@ -131,6 +139,52 @@ export class NotificationsController {
     }
 
     return ok().data({ ok: isOk }).build();
+  }
+
+  /**
+   * Update notification settings
+   * @param req The request object
+   * @param body The request body
+   */
+  @UseGuards(BeAuthenticatedGuard)
+  @UseGuards(HasKeyGuard)
+  @Put('/settings')
+  async updateSettings(
+    @Req() req: Request,
+    @Body(new ValidationPipe(CommonValidationPipeOpt))
+    body: UpdateNotificationSettingsDTO,
+  ) {
+    const user = req.user;
+
+    // Get current notification settings
+    let curSettings = await NotificationSetting.getByUserId(user.id);
+    if (!curSettings) {
+      curSettings = new NotificationSetting({ userId: user.id });
+    }
+
+    if (curSettings.disabled !== body.disabled) {
+      curSettings.disabled = body.disabled;
+    }
+
+    if (curSettings.disabledSwap !== body.disabledSwap) {
+      curSettings.disabledSwap = body.disabledSwap;
+    }
+
+    if (curSettings.disabledOffer !== body.disabledOffer) {
+      curSettings.disabledOffer = body.disabledOffer;
+    }
+
+    if (curSettings.disabledLiq !== body.disabledLiq) {
+      curSettings.disabledLiq = body.disabledLiq;
+    }
+
+    if (curSettings.id) {
+      curSettings = await NotificationSetting.updateById(curSettings.id, curSettings);
+    } else {
+      curSettings = await NotificationSetting.create(curSettings);
+    }
+
+    return ok().data(curSettings).build<OKResponse>();
   }
 
   /**

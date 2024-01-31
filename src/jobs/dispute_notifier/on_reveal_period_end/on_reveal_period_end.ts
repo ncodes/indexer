@@ -7,7 +7,8 @@ import Draft from '../../../models/draft';
 import Reveal from '../../../models/reveal';
 import Swap from '../../../models/swap';
 import { Base } from '../../base';
-import { NotificationID, NotifierService } from '../../mailer/NotifierService';
+import { NotifierService } from '../../mailer/NotifierService';
+import { NotificationID } from '../../mailer/common';
 
 /**
  * OnRevealPeriodEnd finds disputes whose reveal period has ended

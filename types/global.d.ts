@@ -1,5 +1,5 @@
 import { BigNumber } from 'ethers';
-import { NotificationID } from '../src/jobs/mailer/NotifierService';
+import { NotificationID } from '../src/jobs/mailer/common';
 import Convo from '../src/models/convo';
 import Dispute from '../src/models/dispute';
 import Liquidity from '../src/models/liquidity';
@@ -91,7 +91,7 @@ declare global {
   }
 
   interface NotifyJob<T> {
-    notifType: NotificationID;
+    notifId: NotificationID;
     network: string;
     recipientAddr: string;
     appUrl: string;

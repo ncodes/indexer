@@ -1,6 +1,7 @@
-import Objection, { Transaction } from 'objection';
+import Objection, { Model, Transaction } from 'objection';
 import { randStr } from '../common/common';
 import { BaseModel } from './base';
+import NotificationSetting from './notification_setting';
 
 /**
  * User represents a user model
@@ -25,6 +26,7 @@ export default class User extends BaseModel {
   volume: string;
   volumeUsd: number;
   lastActiveAt: string;
+  notificationSettings: Partial<NotificationSetting>;
 
   constructor(init?: Partial<User>) {
     super();
@@ -55,7 +57,16 @@ export default class User extends BaseModel {
   }
 
   static get relationMappings() {
-    return {};
+    return {
+      notificationSettings: {
+        relation: Model.HasOneRelation,
+        modelClass: NotificationSetting,
+        join: {
+          from: 'users.id',
+          to: 'notification_settings.userId',
+        },
+      },
+    };
   }
 
   /**
@@ -73,7 +84,7 @@ export default class User extends BaseModel {
    * @param id The user id
    */
   static getById(id: string) {
-    return this.query().whereNotDeleted().findById(id);
+    return this.query().whereNotDeleted().withGraphFetched('notificationSettings').findById(id);
   }
 
   /**
@@ -81,10 +92,12 @@ export default class User extends BaseModel {
    * @param email The user's email address
    * @param txn Optional transaction object
    */
-  static getByEmail(email: string, txn?: Transaction): Promise<User> {
-    return new Promise((resolve, reject) => {
-      this.query(txn).where('email', 'ILIKE', email).whereNotDeleted().first().then(resolve).catch(reject);
-    });
+  static getByEmail(email: string, txn?: Transaction) {
+    return this.query(txn)
+      .where('email', 'ILIKE', email)
+      .whereNotDeleted()
+      .withGraphFetched('notificationSettings')
+      .first();
   }
 
   /**
@@ -94,7 +107,11 @@ export default class User extends BaseModel {
    * @returns
    */
   static async getByDeviceToken(token: string, txn?: Transaction): Promise<User> {
-    return this.query(txn).where('deviceTokenEmail', token).whereNotDeleted().first();
+    return this.query(txn)
+      .where('deviceTokenEmail', token)
+      .whereNotDeleted()
+      .withGraphFetched('notificationSettings')
+      .first();
   }
 
   /**
@@ -102,10 +119,12 @@ export default class User extends BaseModel {
    * @param address The user's address
    * @param txn Optional transaction object
    */
-  static getByAddress(address: string, txn?: Transaction): Promise<User> {
-    return new Promise((resolve, reject) => {
-      this.query(txn).where('address', 'ILIKE', address).whereNotDeleted().first().then(resolve).catch(reject);
-    });
+  static getByAddress(address: string, txn?: Transaction) {
+    return this.query(txn)
+      .where('address', 'ILIKE', address)
+      .whereNotDeleted()
+      .withGraphFetched('notificationSettings')
+      .first();
   }
 
   /**
@@ -115,7 +134,12 @@ export default class User extends BaseModel {
    * @returns
    */
   static getByRefCode(refCode: string, txn?: Transaction) {
-    return this.query(txn).select('address').where('refCode', 'ILIKE', refCode).whereNotDeleted().first();
+    return this.query(txn)
+      .select('address')
+      .where('refCode', 'ILIKE', refCode)
+      .whereNotDeleted()
+      .withGraphFetched('notificationSettings')
+      .first();
   }
 
   /**
@@ -125,17 +149,19 @@ export default class User extends BaseModel {
    * @returns
    */
   static getByDiscordId(discordId: string, txn?: Transaction) {
-    return this.query(txn).where('discordId', 'ILIKE', discordId).whereNotDeleted().first();
+    return this.query(txn)
+      .where('discordId', 'ILIKE', discordId)
+      .whereNotDeleted()
+      .withGraphFetched('notificationSettings')
+      .first();
   }
 
   /**
    * find finds a user
    * @param q the query parameter
    */
-  static find(q: Partial<User>): Promise<User> {
-    return new Promise((resolve, reject) => {
-      this.query().where(q).whereNotDeleted().first().then(resolve).catch(reject);
-    });
+  static find(q: Partial<User>) {
+    return this.query().where(q).whereNotDeleted().first();
   }
 
   /**
@@ -169,7 +195,7 @@ export default class User extends BaseModel {
    * Count the number of users referred by an address
    * @param address The address of the referrer
    */
-  static countReferred(address: string) {
+  static async countReferred(address: string) {
     return this.query()
       .where('referrer', 'ilike', address)
       .whereNotDeleted()

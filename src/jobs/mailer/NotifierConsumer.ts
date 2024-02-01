@@ -34,9 +34,10 @@ export class NotifierConsumer {
     job.data.user = user;
 
     // Check if user can receive notifications
+    let skipEmail = false;
     if (!canSendNotification(user, job.data.notifId)) {
-      this.logger.debug(`User ${user.id} cannot receive notification ${job.data.notifId}`);
-      return;
+      this.logger.debug(`User ${user.id} cannot email notification ${job.data.notifId}`);
+      skipEmail = true;
     }
 
     const handler = this[`notify${job.data.notifId}`];
@@ -44,14 +45,15 @@ export class NotifierConsumer {
       throw new Error(`No notification handler for ${job.data.notifId}`);
     }
 
-    return this[`notify${job.data.notifId}`](job.data);
+    return this[`notify${job.data.notifId}`](job.data, skipEmail);
   }
 
   /**
    * Notify user about new swap on their liquidity
    * @param job The job data
+   * @param skipEmail Whether to skip sending email
    */
-  async notifyNewInstantSwap(job: NotifyJob<InstantSwapNotificationData>) {
+  async notifyNewInstantSwap(job: NotifyJob<InstantSwapNotificationData>, skipEmail = false) {
     const { user } = job;
     const { market, swap } = job.data;
     let template;
@@ -129,14 +131,17 @@ export class NotifierConsumer {
     });
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) {
+      await this.mailer.send(template, subject, user.email, locals);
+    }
   }
 
   /**
    * Notify user about new interactive swap on their liquidity
    * @param job The job data
+   * @param skipEmail Whether to skip sending email
    */
-  async notifyNewInteractiveSwap(job: NotifyJob<SwapOrderNotificationData>) {
+  async notifyNewInteractiveSwap(job: NotifyJob<SwapOrderNotificationData>, skipEmail = false) {
     const { user } = job;
     const { market, swap } = job.data;
     let template;
@@ -224,14 +229,15 @@ export class NotifierConsumer {
     });
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) await this.mailer.send(template, subject, user.email, locals);
   }
 
   /**
    * Notify user about a swap order being cancelled
    * @param job The job data
+   * @param skipEmail Whether to skip sending email
    */
-  async notifySwapOrderCancelled(job: NotifyJob<CancelledOrderNotification>) {
+  async notifySwapOrderCancelled(job: NotifyJob<CancelledOrderNotification>, skipEmail = false) {
     const { user } = job;
     const { swap } = job.data;
     const locals: any = {
@@ -257,14 +263,15 @@ export class NotifierConsumer {
     });
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) await this.mailer.send(template, subject, user.email, locals);
   }
 
   /**
    * Notify user that a swap order has been marked as paid
    * @param job The job data
+   * @param skipEmail Whether to skip sending email
    */
-  async notifySwapOrderPaid(job: NotifyJob<OrderPaidNotification>) {
+  async notifySwapOrderPaid(job: NotifyJob<OrderPaidNotification>, skipEmail = false) {
     const { user } = job;
     const { swap } = job.data;
     const locals: any = {
@@ -291,14 +298,15 @@ export class NotifierConsumer {
     });
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) await this.mailer.send(template, subject, user.email, locals);
   }
 
   /**
    * Notify user about swap order being released
    * @param job The job data
+   * @param skipEmail Whether to skip sending email
    */
-  async notifySwapOrderReleased(job: NotifyJob<OrderReleasedNotification>) {
+  async notifySwapOrderReleased(job: NotifyJob<OrderReleasedNotification>, skipEmail = false) {
     const { user } = job;
     const { swap } = job.data;
     const locals: any = {
@@ -324,14 +332,15 @@ export class NotifierConsumer {
     });
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) await this.mailer.send(template, subject, user.email, locals);
   }
 
   /**
    * Notify user of liquidity provisioning approval
    * @param job The job data
+   * @param skipEmail Whether to skip sending email
    */
-  async notifyPutApproved(job: NotifyJob<PutApprovedNotification>) {
+  async notifyPutApproved(job: NotifyJob<PutApprovedNotification>, skipEmail = false) {
     const { user } = job;
     const { market } = job.data;
     const locals: any = {
@@ -358,14 +367,15 @@ export class NotifierConsumer {
     });
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) await this.mailer.send(template, subject, user.email, locals);
   }
 
   /**
    * Notify user of liquidity provisioning access revocation
    * @param job The job data
+   * @param skipEmail Whether to skip sending email
    */
-  async notifyPutRevoked(job: NotifyJob<PutRevokedNotification>) {
+  async notifyPutRevoked(job: NotifyJob<PutRevokedNotification>, skipEmail = false) {
     const { user } = job;
     const { market } = job.data;
     const locals: any = {
@@ -392,14 +402,15 @@ export class NotifierConsumer {
     });
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) await this.mailer.send(template, subject, user.email, locals);
   }
 
   /**
    * Notify user of trade permission grant
    * @param job The job data
+   * @param skipEmail Whether to skip sending email
    */
-  async notifySwapApproved(job: NotifyJob<SwapApprovedNotification>) {
+  async notifySwapApproved(job: NotifyJob<SwapApprovedNotification>, skipEmail = false) {
     const { user } = job;
     const { market } = job.data;
     const locals: any = {
@@ -426,14 +437,15 @@ export class NotifierConsumer {
     });
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) await this.mailer.send(template, subject, user.email, locals);
   }
 
   /**
    * Notify user of trade permission revocation
    * @param job The job data
+   * @param skipEmail Whether to skip sending email
    */
-  async notifySwapRevoked(job: NotifyJob<SwapRevokedNotification>) {
+  async notifySwapRevoked(job: NotifyJob<SwapRevokedNotification>, skipEmail = false) {
     const { user } = job;
     const { market } = job.data;
     const locals: any = {
@@ -460,14 +472,15 @@ export class NotifierConsumer {
     });
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) await this.mailer.send(template, subject, user.email, locals);
   }
 
   /**
    * Notify user about being added as a liquidity manager
    * @param job The job data
+   * @param skipEmail Whether to skip sending email
    */
-  async notifyUpdatedLiquidityManager(job: NotifyJob<UpdatedLiquidityManagerNotification>) {
+  async notifyUpdatedLiquidityManager(job: NotifyJob<UpdatedLiquidityManagerNotification>, skipEmail = false) {
     const { user } = job;
     const { market } = job.data;
     const locals: any = {
@@ -495,14 +508,15 @@ export class NotifierConsumer {
     });
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) await this.mailer.send(template, subject, user.email, locals);
   }
 
   /**
    * Notify user about being removed as a liquidity manager
    * @param job The job data
+   * @param skipEmail Whether to skip sending email
    */
-  async notifyRemoveLiquidityManager(job: NotifyJob<RemoveLiquidityManagerNotification>) {
+  async notifyRemoveLiquidityManager(job: NotifyJob<RemoveLiquidityManagerNotification>, skipEmail = false) {
     const { user } = job;
     const { market } = job.data;
     const locals: any = {
@@ -530,14 +544,15 @@ export class NotifierConsumer {
     });
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) await this.mailer.send(template, subject, user.email, locals);
   }
 
   /**
    * Notify user of new dispute created
    * @param job
+   * @param skipEmail Whether to skip sending email
    */
-  async notifyDisputeCreated(job: NotifyJob<DisputeCreatedNotification>) {
+  async notifyDisputeCreated(job: NotifyJob<DisputeCreatedNotification>, skipEmail = false) {
     const { user } = job;
     const { dispute, swap } = job.data;
     const locals: any = {
@@ -564,14 +579,15 @@ export class NotifierConsumer {
     });
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) await this.mailer.send(template, subject, user.email, locals);
   }
 
   /**
    * Notify ticket owner of a ticket on new draft event
    * @param job The job data
+   * @param skipEmail Whether to skip sending email
    */
-  async notifyTicketDrafted(job: NotifyJob<TicketDraftedNotification>) {
+  async notifyTicketDrafted(job: NotifyJob<TicketDraftedNotification>, skipEmail: boolean) {
     const { user } = job;
     const { dispute } = job.data;
     const locals: any = {
@@ -598,14 +614,14 @@ export class NotifierConsumer {
     });
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) await this.mailer.send(template, subject, user.email, locals);
   }
 
   /**
    * Notify order participants about a fully drafted dispute
    * @param job
    */
-  async notifyFullyDrafted(job: NotifyJob<FullyDraftedNotification>) {
+  async notifyFullyDrafted(job: NotifyJob<FullyDraftedNotification>, skipEmail: boolean) {
     const { user } = job;
     const { dispute } = job.data;
     const locals: any = {
@@ -632,14 +648,15 @@ export class NotifierConsumer {
     });
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) await this.mailer.send(template, subject, user.email, locals);
   }
 
   /**
    * Notify drafted mediators that the evidence phase has started
    * @param job The job data
+   * @param skipEmail Whether to skip sending email
    */
-  async notifyEvidencePhaseStarted(job: NotifyJob<FullyDraftedNotification>) {
+  async notifyEvidencePhaseStarted(job: NotifyJob<FullyDraftedNotification>, skipEmail: boolean) {
     const { user } = job;
     const { dispute } = job.data;
     const locals: any = {
@@ -665,14 +682,15 @@ export class NotifierConsumer {
     });
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) await this.mailer.send(template, subject, user.email, locals);
   }
 
   /**
    * Notify ticket owner of a ticket slash event
    * @param job The job data
+   * @param skipEmail Whether to skip sending email
    */
-  async notifyTicketSlashed(job: NotifyJob<TicketSlashedNotification>) {
+  async notifyTicketSlashed(job: NotifyJob<TicketSlashedNotification>, skipEmail: boolean) {
     const { user } = job;
     const { voted } = job.data;
     const locals: any = {
@@ -700,14 +718,15 @@ export class NotifierConsumer {
     });
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) await this.mailer.send(template, subject, user.email, locals);
   }
 
   /**
    * Notify order dispute participants of the end of the evidence phase
    * @param job The job data
+   * @param skipEmail Whether to skip sending email
    */
-  async notifyEvidencePhaseEnded(job: NotifyJob<EvidencePeriodEndedNotification>) {
+  async notifyEvidencePhaseEnded(job: NotifyJob<EvidencePeriodEndedNotification>, skipEmail: boolean) {
     const { user } = job;
     const { swap } = job.data;
     const locals: any = {
@@ -733,14 +752,15 @@ export class NotifierConsumer {
     });
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) await this.mailer.send(template, subject, user.email, locals);
   }
 
   /**
    * Notify order dispute participants of the end of the commit phase
    * @param job The job data
+   * @param skipEmail Whether to skip sending email
    */
-  async notifyCommitPhaseEnded(job: NotifyJob<CommitPhaseEndedNotification>) {
+  async notifyCommitPhaseEnded(job: NotifyJob<CommitPhaseEndedNotification>, skipEmail: boolean) {
     const { user } = job;
     const { swap } = job.data;
     const locals: any = {
@@ -766,14 +786,15 @@ export class NotifierConsumer {
     });
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) await this.mailer.send(template, subject, user.email, locals);
   }
 
   /**
    * Notify order dispute participants of end of reveal phase
    * @param job The job data
+   * @param skipEmail Whether to skip sending email
    */
-  async notifyRevealPhaseEnded(job: NotifyJob<RevealPhaseEndedNotification>) {
+  async notifyRevealPhaseEnded(job: NotifyJob<RevealPhaseEndedNotification>, skipEmail: boolean) {
     const { user } = job;
     const { swap, nRelease, numMediators, nCancel, majority } = job.data;
     const locals: any = {
@@ -805,14 +826,15 @@ export class NotifierConsumer {
     });
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) await this.mailer.send(template, subject, user.email, locals);
   }
 
   /**
    * Notify user about dispute outcome execution
    * @param job The job data
+   * @param skipEmail Whether to skip sending email
    */
-  async notifyDisputeExecuted(job: NotifyJob<DisputeExecutedNotification>) {
+  async notifyDisputeExecuted(job: NotifyJob<DisputeExecutedNotification>, skipEmail: boolean) {
     const { user } = job;
     const { swap, dispute } = job.data;
     const locals: any = {
@@ -839,14 +861,14 @@ export class NotifierConsumer {
     });
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) await this.mailer.send(template, subject, user.email, locals);
   }
 
   /**
    * Notify user of a new or updated offer on their liquidity
    * @param job
    */
-  async notifyNewUpdatedOffer(job: NotifyJob<NewUpdatedOfferNotification>) {
+  async notifyNewUpdatedOffer(job: NotifyJob<NewUpdatedOfferNotification>, skipEmail: boolean) {
     const { user } = job;
     const { liq, offer, market, updated } = job.data;
     let template,
@@ -918,30 +940,33 @@ export class NotifierConsumer {
     });
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) await this.mailer.send(template, subject, user.email, locals);
   }
 
   /**
    * Notify user of a new offer
    * @param job The job data
+   * @param skipEmail Whether to skip sending email
    */
-  async notifyNewOffer(job: NotifyJob<NewUpdatedOfferNotification>) {
-    return this.notifyNewUpdatedOffer(job);
+  async notifyNewOffer(job: NotifyJob<NewUpdatedOfferNotification>, skipEmail: boolean) {
+    return this.notifyNewUpdatedOffer(job, skipEmail);
   }
 
   /**
    * Notify user of an updated offer
    * @param job The job data
+   * @param skipEmail Whether to skip sending email
    */
-  async notifyOfferUpdated(job: NotifyJob<NewUpdatedOfferNotification>) {
-    return this.notifyNewOffer(job);
+  async notifyOfferUpdated(job: NotifyJob<NewUpdatedOfferNotification>, skipEmail: boolean) {
+    return this.notifyNewOffer(job, skipEmail);
   }
 
   /**
    * Notify user about offer acceptance
    * @param job The job data
+   * @param skipEmail Whether to skip sending email
    */
-  async notifyOfferAccepted(job: NotifyJob<BaseOfferNotification>) {
+  async notifyOfferAccepted(job: NotifyJob<BaseOfferNotification>, skipEmail: boolean) {
     const { user } = job;
     const { offer, market, liq } = job.data;
     const offersLink = `${job.appUrl}/market/${market.address}/liquidity/${liq.provider}/${liq.lid}/#offers`;
@@ -971,14 +996,15 @@ export class NotifierConsumer {
     });
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) await this.mailer.send(template, subject, user.email, locals);
   }
 
   /**
    * Notify user about offer unaccepted
    * @param job The job data
+   * @param skipEmail Whether to skip sending email
    */
-  async notifyOfferUnaccepted(job: NotifyJob<BaseOfferNotification>) {
+  async notifyOfferUnaccepted(job: NotifyJob<BaseOfferNotification>, skipEmail: boolean) {
     const { user } = job;
     const { market, liq } = job.data;
     const offersLink = `${job.appUrl}/market/${market.address}/liquidity/${liq.provider}/${liq.lid}/#offers`;
@@ -1006,14 +1032,15 @@ export class NotifierConsumer {
     });
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) await this.mailer.send(template, subject, user.email, locals);
   }
 
   /**
    * Notify user about offer cancellation
    * @param job The job data
+   * @param skipEmail Whether to skip sending email
    */
-  async notifyOfferCancelled(job: NotifyJob<BaseOfferNotification>) {
+  async notifyOfferCancelled(job: NotifyJob<BaseOfferNotification>, skipEmail: boolean) {
     const { user } = job;
     const { market, liq } = job.data;
     const offersLink = `${job.appUrl}/market/${market.address}/liquidity/${liq.provider}/${liq.lid}/#offers`;
@@ -1041,14 +1068,15 @@ export class NotifierConsumer {
     });
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) await this.mailer.send(template, subject, user.email, locals);
   }
 
   /**
    * Notify user about offer execution
    * @param job The job data
+   * @param skipEmail Whether to skip sending email
    */
-  async notifyOfferExecuted(job: NotifyJob<BaseOfferNotification>) {
+  async notifyOfferExecuted(job: NotifyJob<BaseOfferNotification>, skipEmail: boolean) {
     const { user } = job;
     const { market, liq } = job.data;
     const offersLink = `${job.appUrl}/market/${market.address}/liquidity/${liq.provider}/${liq.lid}/#offers`;
@@ -1076,10 +1104,15 @@ export class NotifierConsumer {
     });
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) await this.mailer.send(template, subject, user.email, locals);
   }
 
-  async notifyChatNewMessage(job: NotifyJob<ChatNewMessageNotification>) {
+  /**
+   * Notify a new chat message
+   * @param job The job data
+   * @param skipEmail Whether to skip sending email
+   */
+  async notifyChatNewMessage(job: NotifyJob<ChatNewMessageNotification>, skipEmail: boolean) {
     const { user } = job;
     const { convo } = job.data;
     const locals = {
@@ -1123,10 +1156,15 @@ export class NotifierConsumer {
     }
 
     // Send email
-    await this.mailer.send(template, subject, user.email, locals);
+    if (!skipEmail) await this.mailer.send(template, subject, user.email, locals);
   }
 
-  async notifyVerifyNewEmail(job: NotifyJob<VerifyNewEmailNotification>) {
+  /**
+   * Notify user of wallet link verification email
+   * @param job The job data
+   * @param skipEmail Whether to skip sending email
+   */
+  async notifyVerifyNewEmail(job: NotifyJob<VerifyNewEmailNotification>, skipEmail: boolean) {
     const { user } = job.data;
     const locals = {
       otp: job.data.otp,
@@ -1137,6 +1175,6 @@ export class NotifierConsumer {
     const subject = await this.mailer.render(`${template}.subject`, locals);
 
     // Send email
-    await this.mailer.send(template, subject, user.emailUnverified, locals);
+    if (!skipEmail) this.mailer.send(template, subject, user.emailUnverified, locals);
   }
 }

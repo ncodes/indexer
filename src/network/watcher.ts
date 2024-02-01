@@ -112,7 +112,6 @@ export class Watcher {
     const logs = await this.provider.getLogs({
       fromBlock: prevBlock ? prevBlock : curBlock,
       toBlock: curBlock,
-      topics: [],
       address: this.handlers
         .map((h) => h.getContract().target)
         .filter((addr) => {
@@ -130,11 +129,7 @@ export class Watcher {
       }),
     ];
 
-    this.logInfo(`Extracted ${events.length} events`);
-
     this.lastActiveTime = Date.now();
-
-    this.logInfo(`Found ${events.length} events`);
 
     return Promise.all(
       events.map((e) => {
@@ -159,7 +154,6 @@ export class Watcher {
         let meta = await Meta.get(key);
         if (!meta || meta.value == '0') meta = new Meta({ value: this.getLaunchHeight() });
         if (parseInt(meta.value) >= curBlock) {
-          this.logInfo(`Block ${curBlock} already processed`);
           return;
         }
 

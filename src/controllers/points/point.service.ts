@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as csv from 'csv-parser';
 import { random } from 'lodash';
@@ -36,8 +36,6 @@ export function makeCSVPointName(csvHash: string, recipient: string) {
 
 @Injectable()
 export class PointService {
-  logger = new Logger(PointService.name);
-
   constructor(private cfg: ConfigService, private authSrv: AuthService) {}
 
   isAddrAllowed(addr: string) {
@@ -121,16 +119,6 @@ export class PointService {
       const unitPerLevel = toDec(MarketPoints[`swap:level:${market.address}`] || point);
       const level = Math.max(1, point.div(unitPerLevel).toNumber());
 
-      this.logger.log(
-        'Grant Swap',
-        'amount',
-        swap.amount.toString(),
-        'amountHD',
-        amountHD.toFixed(),
-        'point',
-        point.toFixed(),
-      );
-
       const takerPoint = await Point.create(
         {
           network: market.network,
@@ -207,16 +195,6 @@ export class PointService {
       const point = amount.mul(pointPerUnit);
       const unitPerLevel = toDec(MarketPoints[`swap:level:${market.address}`] || point);
       const level = Math.max(1, point.div(unitPerLevel).toNumber());
-
-      this.logger.log(
-        'Grant Swap (Interactive)',
-        'amount',
-        swap.amount.toString(),
-        'amountHD',
-        amount.toFixed(),
-        'point',
-        point.toFixed(),
-      );
 
       const takerPoint = await Point.create(
         {
@@ -310,16 +288,6 @@ export class PointService {
     const amountHD = toDec(amount).div(pow10(market.baseDecimals));
     const point = amountHD.mul(pointPerUnit);
 
-    this.logger.log(
-      'Grant Liquidity',
-      'amount',
-      amount.toString(),
-      'amountHD',
-      amountHD.toFixed(),
-      'point',
-      point.toFixed(),
-    );
-
     const unitPerLevel = toDec(MarketPoints[`liq:level:${market.address}`] || point);
     const level = Math.max(1, point.div(unitPerLevel).toNumber()) || 1;
     const name = `${PointAction.LiquidityAdd}:${market.address}:${provider}:${liq.lid}`;
@@ -328,19 +296,6 @@ export class PointService {
     if (!existingPoint && add) {
       let actual = point.mul(level);
       if (actual.isZero() || actual.isNaN()) actual = toDec(0);
-
-      this.logger.log(
-        'PointLog(AddLiq)',
-        'amount',
-        amount.toString(),
-        amountHD.toFixed(),
-        'point',
-        point.toFixed(),
-        'level',
-        level.toFixed(),
-        'actual',
-        actual.toFixed(),
-      );
 
       const providerPoint = await Point.create(
         {

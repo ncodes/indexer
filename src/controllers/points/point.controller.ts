@@ -7,7 +7,7 @@ import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
 import { ErrorTypes, ok, throw400 } from '../../common/responses/responses';
 import { IsRootAdmin } from '../../guards/is_basic_admin';
 import Point, { PointAction } from '../../models/point';
-import { pow10D } from '../../network/common';
+import { isZero, pow10 } from '../../network/common';
 import NetworkService from '../../network/network.service';
 import { CreatePointFromEnergonBalance, CreatePointsFromCSV, GetLeaderboardDTO, GetRecentPoints } from './dto';
 import { PointService } from './point.service';
@@ -102,13 +102,13 @@ export class PointController {
     const engBal = await this.netSrv.getContracts().energon?.balanceOf(body.signer);
 
     // Make sure the signer has a non-zero ENG balance
-    if (engBal.isZero()) {
+    if (isZero(engBal)) {
       throw400('zero energon balance', ErrorTypes.InvalidRequest);
     }
 
     // Calculate the points to grant
     const pointPerEng = parseFloat(this.cfgSrv.get('app.pointsPerEnergon'));
-    const pointsToGrant = toDec(engBal).div(pow10D(18)).mul(pointPerEng).toNumber();
+    const pointsToGrant = toDec(engBal).div(pow10(18)).mul(pointPerEng).toNumber();
     if (pointsToGrant <= 0) {
       throw400('zero points to grant', ErrorTypes.InvalidRequest);
     }

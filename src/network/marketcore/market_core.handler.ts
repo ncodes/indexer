@@ -1,6 +1,6 @@
 import { ChainNames, findTokenInLocalhost, findTokenInSynthetic } from '@jointlabs/chains-info';
 import { Logger } from '@nestjs/common';
-import { BigNumber, Event, providers } from 'ethers';
+import { Provider } from 'ethers';
 import { Transaction } from 'objection';
 import * as erc20ABI from '../../../abi/ERC20.json';
 import * as erc721ABI from '../../../abi/ERC721.json';
@@ -11,6 +11,7 @@ import Liquidity from '../../models/liquidity';
 import Market from '../../models/market';
 import LiquidityProvider from '../../models/market_provider';
 import PermittedTrader from '../../models/permitted_trader';
+import { ContractCallEvent, toNumber } from '../common';
 import { Handler } from '../handler';
 import NetworkService from '../network.service';
 
@@ -20,7 +21,7 @@ export class MarketCoreHandler extends Handler {
   constructor(
     private netSrv: NetworkService,
     private notifSrv: NotifierService,
-    private provider: providers.JsonRpcProvider,
+    private provider: Provider,
     public network: ChainNames,
     private contracts: JointContracts,
   ) {
@@ -42,9 +43,9 @@ export class MarketCoreHandler extends Handler {
         quoteType: number,
         permPut: boolean,
         permSwap: boolean,
-        commission: BigNumber,
-        mediatorPoolId: BigNumber,
-        event: Event,
+        commission: bigint,
+        mediatorPoolId: bigint,
+        event: ContractCallEvent,
         txn: Transaction,
       ) => {
         return this.onNewMarket(
@@ -64,45 +65,54 @@ export class MarketCoreHandler extends Handler {
       },
     );
 
-    this.on('AllowedPut', async (id: string, address: string, event: Event, txn: Transaction) => {
+    this.on('AllowedPut', async (id: string, address: string, event: ContractCallEvent, txn: Transaction) => {
       return this.onMarketPutAllowed(id, address, event, txn);
     });
 
-    this.on('RevokedPut', async (id: string, address: string, event: Event, txn: Transaction) => {
+    this.on('RevokedPut', async (id: string, address: string, event: ContractCallEvent, txn: Transaction) => {
       return this.onMarketPutRevoked(id, address, event, txn);
     });
 
-    this.on('AllowedSwap', async (id: string, address: string, event: Event) => {
+    this.on('AllowedSwap', async (id: string, address: string, event: ContractCallEvent) => {
       return this.onAllowedSwap(id, address, event);
     });
 
-    this.on('RevokedSwap', async (id: string, address: string, event: Event) => {
+    this.on('RevokedSwap', async (id: string, address: string, event: ContractCallEvent) => {
       return this.onRevokedSwap(id, address, event);
     });
 
-    this.on('UpdatedCommission', async (id: string, value: BigNumber, event: Event) => {
+    this.on('UpdatedCommission', async (id: string, value: bigint, event: ContractCallEvent) => {
       return this.onUpdatedCommission(id, value, event);
     });
 
-    this.on('OfferOnlyEnabled', async (id: string, event: Event) => {
+    this.on('OfferOnlyEnabled', async (id: string, event: ContractCallEvent) => {
       return this.onOfferOnlyEnabled(id, event);
     });
 
-    this.on('TransferredOwnership', async (id: string, oldOwner: string, newOwner: string, event: Event) => {
-      return this.onTransferredOwnership(id, oldOwner, newOwner, event);
-    });
+    this.on(
+      'TransferredOwnership',
+      async (id: string, oldOwner: string, newOwner: string, event: ContractCallEvent) => {
+        return this.onTransferredOwnership(id, oldOwner, newOwner, event);
+      },
+    );
 
-    this.on('RenouncedMarket', async (id: string, renouncer: string, event: Event) => {
+    this.on('RenouncedMarket', async (id: string, renouncer: string, event: ContractCallEvent) => {
       return this.onRenouncedMarket(id, renouncer, event);
     });
 
-    this.on('EnabledZeroOfferPrice', async (id: string, event: Event) => {
+    this.on('EnabledZeroOfferPrice', async (id: string, event: ContractCallEvent) => {
       return this.onEnabledZeroOfferPrice(id, event);
     });
 
     this.on(
       'UpdatedMarketBadges',
-      async (id: string, put: [string, string][], swap: [string, string][], event: Event, txn: Transaction) => {
+      async (
+        id: string,
+        put: [string, string][],
+        swap: [string, string][],
+        event: ContractCallEvent,
+        txn: Transaction,
+      ) => {
         return this.onUpdatedMarketBadges(id, put, swap, event, txn);
       },
     );
@@ -111,19 +121,22 @@ export class MarketCoreHandler extends Handler {
       'UpdatedDisputeDurations',
       async (
         id: string,
-        disputeDelayDur: BigNumber,
-        evidenceDur: BigNumber,
-        predictDur: BigNumber,
-        event: Event,
+        disputeDelayDur: bigint,
+        evidenceDur: bigint,
+        predictDur: bigint,
+        event: ContractCallEvent,
         txn: Transaction,
       ) => {
         return this.onUpdatedDisputeDurations(id, disputeDelayDur, evidenceDur, predictDur, event, txn);
       },
     );
 
-    this.on('UpdatedMarketManager', async (id: string, managerAddr: string, event: Event, txn?: Transaction) => {
-      return this.onUpdatedMarketManager(id, managerAddr, event, txn);
-    });
+    this.on(
+      'UpdatedMarketManager',
+      async (id: string, managerAddr: string, event: ContractCallEvent, txn?: Transaction) => {
+        return this.onUpdatedMarketManager(id, managerAddr, event, txn);
+      },
+    );
   }
 
   /**
@@ -138,7 +151,7 @@ export class MarketCoreHandler extends Handler {
     id: string,
     put: [string, string][],
     swap: [string, string][],
-    event: Event,
+    event: ContractCallEvent,
     txn?: Transaction,
   ) {
     await Market.updateByNetworkAddress(
@@ -158,7 +171,7 @@ export class MarketCoreHandler extends Handler {
    * @param event The event object
    * @param txn The db transaction object
    */
-  async onEnabledZeroOfferPrice(id: string, event: Event, txn?: Transaction) {
+  async onEnabledZeroOfferPrice(id: string, event: ContractCallEvent, txn?: Transaction) {
     await Market.updateByNetworkAddress(this.network, id, { enabledZeroOfferPrice: true }, txn);
   }
 
@@ -170,7 +183,13 @@ export class MarketCoreHandler extends Handler {
    * @param event The event object
    * @param txn The db transaction object
    */
-  async onTransferredOwnership(id: string, oldOwner: string, newOwner: string, event: Event, txn?: Transaction) {
+  async onTransferredOwnership(
+    id: string,
+    oldOwner: string,
+    newOwner: string,
+    event: ContractCallEvent,
+    txn?: Transaction,
+  ) {
     await Market.updateByNetworkAddress(this.network, id, { creator: newOwner }, txn);
   }
 
@@ -181,7 +200,7 @@ export class MarketCoreHandler extends Handler {
    * @param _event The event object
    * @param txn The db transaction object
    */
-  async onRenouncedMarket(id: string, _renouncer: string, _event: Event, txn?: Transaction) {
+  async onRenouncedMarket(id: string, _renouncer: string, _event: ContractCallEvent, txn?: Transaction) {
     await Market.updateByNetworkAddress(this.network, id, { renounced: true }, txn);
   }
 
@@ -191,7 +210,7 @@ export class MarketCoreHandler extends Handler {
    * @param event The event object
    * @param txn The db transaction object
    */
-  async onOfferOnlyEnabled(id: string, event: Event, txn?: Transaction) {
+  async onOfferOnlyEnabled(id: string, event: ContractCallEvent, txn?: Transaction) {
     await Market.updateByNetworkAddress(this.network, id, { offerOnly: true }, txn);
   }
 
@@ -219,9 +238,9 @@ export class MarketCoreHandler extends Handler {
     quoteType: number,
     permPut: boolean,
     permSwap: boolean,
-    commission: BigNumber,
-    mediatorPoolId: BigNumber,
-    event: Event,
+    commission: bigint,
+    mediatorPoolId: bigint,
+    event: ContractCallEvent,
     txn?: Transaction,
   ) {
     this.logger.log(`NewMarket: processing...`);
@@ -291,9 +310,9 @@ export class MarketCoreHandler extends Handler {
         instant: Market.isInstant(baseType, quoteType),
         pair: `${baseSymbol}${quoteSymbol}`,
         network: this.network,
-        commission: commission.toNumber(),
+        commission: toNumber(commission),
         txHash: event.transactionHash,
-        mediatorPoolId: mediatorPoolId.toNumber(),
+        mediatorPoolId: toNumber(mediatorPoolId),
         permPut: permPut,
         permSwap: permSwap,
       },
@@ -310,7 +329,7 @@ export class MarketCoreHandler extends Handler {
    * @param event The event object
    * @param txn The db transaction object
    */
-  async onMarketPutAllowed(marketAddress: string, address: string, event: Event, txn?: Transaction) {
+  async onMarketPutAllowed(marketAddress: string, address: string, event: ContractCallEvent, txn?: Transaction) {
     await LiquidityProvider.create(
       {
         network: this.network,
@@ -337,7 +356,7 @@ export class MarketCoreHandler extends Handler {
    * @param event The event object
    * @param txn The db transaction object
    */
-  async onMarketPutRevoked(marketAddress: string, address: string, event: Event, txn?: Transaction) {
+  async onMarketPutRevoked(marketAddress: string, address: string, event: ContractCallEvent, txn?: Transaction) {
     await LiquidityProvider.remove(this.network, marketAddress, address, txn);
 
     // Disable all liquidity created by the revoked user
@@ -355,7 +374,7 @@ export class MarketCoreHandler extends Handler {
    * @param event The event object
    * @param txn The db transaction object
    */
-  async onAllowedSwap(marketAddress: string, address: string, event: Event, txn?: Transaction) {
+  async onAllowedSwap(marketAddress: string, address: string, event: ContractCallEvent, txn?: Transaction) {
     await PermittedTrader.create({ network: this.network, marketAddress, address }, txn);
 
     // Notify approved user
@@ -370,7 +389,7 @@ export class MarketCoreHandler extends Handler {
    * @param event The event object
    * @param txn The db transaction object
    */
-  async onRevokedSwap(marketAddress: string, address: string, event: Event, txn?: Transaction) {
+  async onRevokedSwap(marketAddress: string, address: string, event: ContractCallEvent, txn?: Transaction) {
     await PermittedTrader.remove(this.network, marketAddress, address, txn);
 
     // Notify revoked user
@@ -385,8 +404,8 @@ export class MarketCoreHandler extends Handler {
    * @param event The event object
    * @param txn The db transaction object
    */
-  async onUpdatedCommission(id: string, value: BigNumber, event: Event, txn?: Transaction) {
-    await Market.updateByNetworkAddress(this.network, id, { commission: value.toNumber() }, txn);
+  async onUpdatedCommission(id: string, value: bigint, event: ContractCallEvent, txn?: Transaction) {
+    await Market.updateByNetworkAddress(this.network, id, { commission: toNumber(value) }, txn);
   }
 
   /**
@@ -400,19 +419,19 @@ export class MarketCoreHandler extends Handler {
    */
   async onUpdatedDisputeDurations(
     id: string,
-    disputeDelayDur: BigNumber,
-    evidenceDur: BigNumber,
-    predictDur: BigNumber,
-    event: Event,
+    disputeDelayDur: bigint,
+    evidenceDur: bigint,
+    predictDur: bigint,
+    event: ContractCallEvent,
     txn?: Transaction,
   ) {
     await Market.updateByNetworkAddress(
       this.network,
       id,
       {
-        disputeDelayDur: disputeDelayDur.toNumber(),
-        evidenceDur: evidenceDur.toNumber(),
-        predictDur: predictDur.toNumber(),
+        disputeDelayDur: toNumber(disputeDelayDur),
+        evidenceDur: toNumber(evidenceDur),
+        predictDur: toNumber(predictDur),
       },
       txn,
     );
@@ -425,7 +444,7 @@ export class MarketCoreHandler extends Handler {
    * @param event The event object
    * @param txn The db transaction object
    */
-  async onUpdatedMarketManager(id: string, managerAddr: string, event: Event, txn?: Transaction) {
+  async onUpdatedMarketManager(id: string, managerAddr: string, event: ContractCallEvent, txn?: Transaction) {
     await Market.updateByNetworkAddress(this.network, id, { manager: managerAddr }, txn);
   }
 }

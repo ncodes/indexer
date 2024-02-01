@@ -1,4 +1,4 @@
-import { constants, ethers } from 'ethers';
+import { ZeroAddress, ethers } from 'ethers';
 import * as moment from 'moment';
 import { randStr, toDec } from '../../common/common';
 import { NoopLogger } from '../../common/loggers/noop_logger';
@@ -13,7 +13,7 @@ import Meta, { FeeName, MetaKeys, ProtocolFeeBeneficiary } from '../../models/me
 import MineTask, { MineTaskType } from '../../models/mine_task';
 import Offer from '../../models/offer';
 import Swap from '../../models/swap';
-import { pow10, powOf, toBN } from '../common';
+import { pow10, powOf, toBigInt, toNumber } from '../common';
 import { CoreHandler } from './core.handler';
 
 const mockGetOrder = jest.fn();
@@ -118,7 +118,7 @@ describe('CoreHandler', () => {
 
   describe('.computeSwapFees', function () {
     it('should return expected values', async function () {
-      mockComputeSwapFees.mockResolvedValue([toBN(1), toBN(2)]);
+      mockComputeSwapFees.mockResolvedValue([toBigInt(1), toBigInt(2)]);
 
       const swap = await Swap.create({
         network: net,
@@ -132,7 +132,7 @@ describe('CoreHandler', () => {
 
       const result = await handler.computeSwapFees(swap);
       expect(mockComputeSwapFees).toBeCalledTimes(1);
-      expect(result).toEqual([toBN(1), toBN(2)]);
+      expect(result).toEqual([toBigInt(1), toBigInt(2)]);
     });
   });
 
@@ -151,22 +151,22 @@ describe('CoreHandler', () => {
 
       mockTryToUsd.mockResolvedValue(5.6);
 
-      const amount = toBN(100);
+      const amount = toBigInt(100);
       await expect(
         handler.onUpdatedFungibleLiquidity(
           provider,
           marketAddress,
-          constants.AddressZero,
+          ZeroAddress,
           false,
           false,
-          toBN(1),
+          toBigInt(1),
           amount,
-          toBN(300),
-          [toBN(1)],
-          [toBN(2)],
-          toBN(1),
-          toBN(20),
-          toBN(10),
+          toBigInt(300),
+          [toBigInt(1)],
+          [toBigInt(2)],
+          toBigInt(1),
+          toBigInt(20),
+          toBigInt(10),
           undefined,
         ),
       ).resolves.toBeUndefined();
@@ -178,7 +178,7 @@ describe('CoreHandler', () => {
       expect(liq.quote).toEqual(market.quote);
       expect(liq.quoteAddress).toEqual(market.quoteAddress);
       expect(liq.provider).toEqual(provider);
-      expect(liq.target).toEqual(constants.AddressZero);
+      expect(liq.target).toEqual(ZeroAddress);
       expect(liq.paused).toEqual(false);
       expect(liq.amount).toEqual('100');
       expect(liq.price).toEqual('300');
@@ -230,22 +230,22 @@ describe('CoreHandler', () => {
 
       mockTryToUsd.mockResolvedValue(5.6);
 
-      const amount = toBN(100);
+      const amount = toBigInt(100);
       await expect(
         handler.onUpdatedFungibleLiquidity(
           provider,
           marketAddress,
-          constants.AddressZero,
+          ZeroAddress,
           false,
           true,
-          toBN(1),
+          toBigInt(1),
           amount,
-          toBN(300),
-          [toBN(1)],
-          [toBN(2)],
-          toBN(1),
-          toBN(20),
-          toBN(10),
+          toBigInt(300),
+          [toBigInt(1)],
+          [toBigInt(2)],
+          toBigInt(1),
+          toBigInt(20),
+          toBigInt(10),
           undefined,
         ),
       ).resolves.toBeUndefined();
@@ -283,7 +283,7 @@ describe('CoreHandler', () => {
         maxSwap: '30',
       });
 
-      const amount = toBN(10);
+      const amount = toBigInt(10);
       await expect(
         handler.onUpdatedFungibleLiquidity(
           provider,
@@ -291,14 +291,14 @@ describe('CoreHandler', () => {
           '0xNewTarget',
           false,
           false,
-          toBN(lid),
+          toBigInt(lid),
           amount,
-          toBN(430),
-          [toBN(3)],
-          [toBN(4)],
-          toBN(2),
-          toBN(20),
-          toBN(10),
+          toBigInt(430),
+          [toBigInt(3)],
+          [toBigInt(4)],
+          toBigInt(2),
+          toBigInt(20),
+          toBigInt(10),
           undefined,
         ),
       ).resolves.toBeUndefined();
@@ -392,17 +392,17 @@ describe('CoreHandler', () => {
         handler.onUpdatedFungibleLiquidity(
           provider,
           marketAddress,
-          constants.AddressZero,
+          ZeroAddress,
           true,
           false,
-          toBN(lid),
-          toBN(10),
-          toBN(430),
-          [toBN(3)],
-          [toBN(4)],
-          toBN(2),
-          toBN(20),
-          toBN(10),
+          toBigInt(lid),
+          toBigInt(10),
+          toBigInt(430),
+          [toBigInt(3)],
+          [toBigInt(4)],
+          toBigInt(2),
+          toBigInt(20),
+          toBigInt(10),
           undefined,
         ),
       ).resolves.toBeUndefined();
@@ -442,17 +442,17 @@ describe('CoreHandler', () => {
         handler.onUpdatedFungibleLiquidity(
           provider,
           marketAddress,
-          constants.AddressZero,
+          ZeroAddress,
           false,
           true,
-          toBN(lid),
-          toBN(0),
-          toBN(430),
-          [toBN(3)],
-          [toBN(4)],
-          toBN(2),
-          toBN(20),
-          toBN(10),
+          toBigInt(lid),
+          toBigInt(0),
+          toBigInt(430),
+          [toBigInt(3)],
+          [toBigInt(4)],
+          toBigInt(2),
+          toBigInt(20),
+          toBigInt(10),
           undefined,
         ),
       ).resolves.toBeUndefined();
@@ -470,17 +470,17 @@ describe('CoreHandler', () => {
         handler.onUpdatedFungibleLiquidity(
           provider,
           marketAddress,
-          constants.AddressZero,
+          ZeroAddress,
           false,
           false,
-          toBN(lid),
-          toBN(0),
-          toBN(430),
-          [toBN(3)],
-          [toBN(4)],
-          toBN(2),
-          toBN(20),
-          toBN(10),
+          toBigInt(lid),
+          toBigInt(0),
+          toBigInt(430),
+          [toBigInt(3)],
+          [toBigInt(4)],
+          toBigInt(2),
+          toBigInt(20),
+          toBigInt(10),
           undefined,
         ),
       ).resolves.toBeUndefined();
@@ -520,17 +520,17 @@ describe('CoreHandler', () => {
           handler.onUpdatedFungibleLiquidity(
             provider,
             marketAddress,
-            constants.AddressZero,
+            ZeroAddress,
             true,
             false,
-            toBN(lid),
-            toBN(10),
-            toBN(430),
-            [toBN(3)],
-            [toBN(4)],
-            toBN(2),
-            toBN(20),
-            toBN(10),
+            toBigInt(lid),
+            toBigInt(10),
+            toBigInt(430),
+            [toBigInt(3)],
+            [toBigInt(4)],
+            toBigInt(2),
+            toBigInt(20),
+            toBigInt(10),
             undefined,
           ),
         ).resolves.toBeUndefined();
@@ -557,15 +557,15 @@ describe('CoreHandler', () => {
         handler.onUpdatedNonFungibleLiquidity(
           provider,
           marketAddress,
-          constants.AddressZero,
+          ZeroAddress,
           false,
           true,
-          toBN(1),
-          [toBN(1)],
-          toBN(300),
-          [toBN(1)],
-          [toBN(2)],
-          toBN(1),
+          toBigInt(1),
+          [toBigInt(1)],
+          toBigInt(300),
+          [toBigInt(1)],
+          [toBigInt(2)],
+          toBigInt(1),
           undefined,
         ),
       ).resolves.toBeUndefined();
@@ -576,7 +576,7 @@ describe('CoreHandler', () => {
       expect(liq.quote).toEqual(market.quote);
       expect(liq.quoteAddress).toEqual(market.quoteAddress);
       expect(liq.provider).toEqual(provider);
-      expect(liq.target).toEqual(constants.AddressZero);
+      expect(liq.target).toEqual(ZeroAddress);
       expect(liq.paused).toEqual(true);
       expect(liq.ids).toEqual([1]);
       expect(liq.amount).toEqual(liq.ids.length.toString());
@@ -624,15 +624,15 @@ describe('CoreHandler', () => {
         handler.onUpdatedNonFungibleLiquidity(
           provider,
           marketAddress,
-          constants.AddressZero,
+          ZeroAddress,
           false,
           false,
-          toBN(lid),
-          [toBN(2)],
-          toBN(10),
-          [toBN(3)],
-          [toBN(4)],
-          toBN(2),
+          toBigInt(lid),
+          [toBigInt(2)],
+          toBigInt(10),
+          [toBigInt(3)],
+          [toBigInt(4)],
+          toBigInt(2),
           undefined,
         ),
       ).resolves.toBeUndefined();
@@ -678,15 +678,15 @@ describe('CoreHandler', () => {
         handler.onUpdatedNonFungibleLiquidity(
           provider,
           marketAddress,
-          constants.AddressZero,
+          ZeroAddress,
           true,
           false,
-          toBN(lid),
-          [toBN(2), toBN(3)],
-          toBN(10),
-          [toBN(3)],
-          [toBN(4)],
-          toBN(2),
+          toBigInt(lid),
+          [toBigInt(2), toBigInt(3)],
+          toBigInt(10),
+          [toBigInt(3)],
+          [toBigInt(4)],
+          toBigInt(2),
           undefined,
         ),
       ).resolves.toBeUndefined();
@@ -715,15 +715,15 @@ describe('CoreHandler', () => {
           handler.onUpdatedNonFungibleLiquidity(
             provider,
             marketAddress,
-            constants.AddressZero,
+            ZeroAddress,
             false,
             true,
-            toBN(1),
-            [toBN(1)],
-            toBN(300),
-            [toBN(1)],
-            [toBN(2)],
-            toBN(1),
+            toBigInt(1),
+            [toBigInt(1)],
+            toBigInt(300),
+            [toBigInt(1)],
+            [toBigInt(2)],
+            toBigInt(1),
             undefined,
           ),
         ).resolves.toBeUndefined();
@@ -754,7 +754,7 @@ describe('CoreHandler', () => {
       });
 
       await expect(
-        handler.onUpdatedPrice(marketAddress, provider, manager, toBN(liq.lid), toBN(100), {} as any),
+        handler.onUpdatedPrice(marketAddress, provider, manager, toBigInt(liq.lid), toBigInt(100), {} as any),
       ).resolves.toBeUndefined();
 
       liq = await Liquidity.find({ id: liq.id });
@@ -793,7 +793,7 @@ describe('CoreHandler', () => {
 
     it('should update manager of all liquidity belonging to the provider in the target market', async () => {
       await expect(
-        handler.onUpdatedLiquidityManager(marketAddress, provider, manager, constants.AddressZero, {} as any),
+        handler.onUpdatedLiquidityManager(marketAddress, provider, manager, ZeroAddress, {} as any),
       ).resolves.toBeUndefined();
 
       liq = await Liquidity.getLiquidity(handler.network, marketAddress, provider, 0);
@@ -868,7 +868,15 @@ describe('CoreHandler', () => {
 
   describe('.onProtocolFeeUpdated', () => {
     it('should update correctly', async () => {
-      await handler.onProtocolFeeUpdated(toBN(10), toBN(2), toBN(12), toBN(1), toBN(2), toBN(3), {} as any);
+      await handler.onProtocolFeeUpdated(
+        toBigInt(10),
+        toBigInt(2),
+        toBigInt(12),
+        toBigInt(1),
+        toBigInt(2),
+        toBigInt(3),
+        {} as any,
+      );
       expect((await Meta.get(Meta.makeNetKey(net, FeeName.InstantSwapFeeBp))).value).toEqual('10');
       expect((await Meta.get(Meta.makeNetKey(net, FeeName.SynthSwapFeeBp))).value).toEqual('2');
       expect((await Meta.get(Meta.makeNetKey(net, FeeName.StableSwapFeeBp))).value).toEqual('12');
@@ -892,7 +900,7 @@ describe('CoreHandler', () => {
         mockTryToUsd.mockResolvedValue(5.6);
         const amount = pow10(18).mul(10);
         const price = pow10(18).mul(2);
-        const value = await handler.computeSwapUsdValue(market, amount, price);
+        const value = await handler.computeSwapUsdValue(market, toBigInt(amount), toBigInt(price));
         expect(mockTryToUsd).toHaveBeenCalledWith(net, price.toString(), quoteAddress);
         expect(value).toEqual('5.6');
       });
@@ -909,7 +917,7 @@ describe('CoreHandler', () => {
         mockTryToUsd.mockResolvedValue(5.6);
         const amount = pow10(18).mul(10);
         const price = pow10(18).mul(2);
-        const value = await handler.computeSwapUsdValue(market, amount, price);
+        const value = await handler.computeSwapUsdValue(market, toBigInt(amount), toBigInt(price));
         expect(mockTryToUsd).toHaveBeenCalledWith(net, amount.toString(), baseAddress);
         expect(value).toEqual('5.6');
       });
@@ -930,7 +938,7 @@ describe('CoreHandler', () => {
         mockGet.mockResolvedValue(toDec(400));
         const amount = pow10(18).mul(10);
         const price = pow10(18).mul(2);
-        const value = await handler.computeSwapUsdValue(market, amount, price);
+        const value = await handler.computeSwapUsdValue(market, toBigInt(amount), toBigInt(price));
         expect(value).toEqual('0.005');
         expect(mockGet).toHaveBeenCalledWith('BASE');
       });
@@ -948,7 +956,7 @@ describe('CoreHandler', () => {
         mockTryToUsd.mockResolvedValue(5.6);
         const amount = pow10(18).mul(10);
         const price = pow10(18).mul(2);
-        const value = await handler.computeSwapUsdValue(market, amount, price);
+        const value = await handler.computeSwapUsdValue(market, toBigInt(amount), toBigInt(price));
         expect(mockTryToUsd).toHaveBeenCalledWith(net, amount.toString(), baseAddress);
         expect(value).toEqual('5.6');
       });
@@ -967,7 +975,7 @@ describe('CoreHandler', () => {
         mockGet.mockResolvedValue(toDec(400));
         const amount = pow10(18).mul(10);
         const price = pow10(18).mul(2);
-        const value = await handler.computeSwapUsdValue(market, amount, price);
+        const value = await handler.computeSwapUsdValue(market, toBigInt(amount), toBigInt(price));
         expect(value).toEqual('0.025');
         expect(mockGet).toHaveBeenCalledWith('BASE');
       });
@@ -975,7 +983,7 @@ describe('CoreHandler', () => {
   });
 
   describe('.onSwapOrder', () => {
-    const lid = toBN(0);
+    const lid = toBigInt(0);
     const liqAmt = powOf(200, 18);
     let market: Market;
     let liq: Liquidity;
@@ -995,7 +1003,7 @@ describe('CoreHandler', () => {
         network: net,
         marketAddress: marketAddress,
         provider: provider,
-        lid: lid.toNumber(),
+        lid: toNumber(lid),
         amount: liqAmt.toString(),
         totalSwaps: 1,
       });
@@ -1004,7 +1012,15 @@ describe('CoreHandler', () => {
     it('should create swap correctly and send notification to liquidity provider', async () => {
       mockComputeSwapFees.mockResolvedValue({ protocolFee: 2, marketCreatorFee: 3 });
       const cancelDuration = 300;
-      const numTypeInfo = [toBN(2), lid, toBN(100), toBN(1), toBN(1), toBN(1), toBN(cancelDuration)];
+      const numTypeInfo = [
+        toBigInt(2),
+        lid,
+        toBigInt(100),
+        toBigInt(1),
+        toBigInt(1),
+        toBigInt(1),
+        toBigInt(cancelDuration),
+      ];
       const [orderId, , amount, , , operator] = numTypeInfo;
 
       mockTryToUsd.mockResolvedValue(5.6);
@@ -1013,19 +1029,19 @@ describe('CoreHandler', () => {
         marketAddress,
         provider,
         taker,
-        constants.AddressZero,
+        ZeroAddress,
         numTypeInfo,
-        [toBN(1)],
-        [toBN(2)],
+        [toBigInt(1)],
+        [toBigInt(2)],
         {
           transactionHash: '0xTxHash',
           getBlock: jest.fn().mockResolvedValue({ timestamp: moment().unix() as any }),
         } as any,
       );
-      const swap = await Swap.getByOrderId(orderId.toNumber());
+      const swap = await Swap.getByOrderId(toNumber(orderId));
       expect(swap).toBeDefined();
       expect(swap.marketAddress).toEqual(market.address);
-      expect(swap.lid).toEqual(lid.toNumber());
+      expect(swap.lid).toEqual(toNumber(lid));
       expect(swap.provider).toEqual(provider);
       expect(swap.taker).toEqual(taker);
       expect(swap.base).toEqual(market.base);
@@ -1038,20 +1054,20 @@ describe('CoreHandler', () => {
       expect(swap.offerId).toEqual(0);
       expect(swap.providerIds).toEqual([1]);
       expect(swap.takerIds).toEqual([2]);
-      expect(swap.operator).toEqual(operator.toNumber());
+      expect(swap.operator).toEqual(toNumber(operator));
       expect(swap.protocolFee).toEqual('2');
       expect(swap.marketCreatorFee).toEqual('3');
       expect(moment(swap.cancelAt).diff(moment(), 's')).toBeGreaterThanOrEqual(299);
 
-      const liq = await Liquidity.getLiquidity(net, marketAddress, provider, lid.toNumber());
+      const liq = await Liquidity.getLiquidity(net, marketAddress, provider, toNumber(lid));
       expect(liq.openOrders).toEqual(1);
-      expect(liq.amount).toEqual(liqAmt.sub(amount).toString());
+      expect(liq.amount).toEqual(toDec(liqAmt).sub(amount.toString()).toString());
       expect(liq.totalSwaps).toEqual(2);
 
       const event = await Event.find({ network: net, action: Events.LiquiditySwap });
       expect(event).toBeDefined();
       expect(event.marketAddress).toEqual(market.address);
-      expect(event.lid).toEqual(lid.toNumber());
+      expect(event.lid).toEqual(toNumber(lid));
       expect(event.provider).toEqual(provider);
       expect(event.creator).toEqual(taker);
       expect(event.orderId).toEqual(swap.orderId);
@@ -1059,7 +1075,7 @@ describe('CoreHandler', () => {
 
       market = await Market.getById(market.id);
       expect(market.totalSwaps).toEqual(1);
-      expect(market.totalLiquidity).toEqual(liqAmt.sub(amount).toString());
+      expect(market.totalLiquidity).toEqual(toDec(liqAmt).sub(amount.toString()).toString());
       swap.market = market;
 
       expect(mockNotify).toHaveBeenCalledWith(NotificationID.NewInteractiveSwap, net, provider, {
@@ -1076,22 +1092,30 @@ describe('CoreHandler', () => {
         await Market.updateById(market.id, { quoteType: AssetType.ERC721 });
         mockComputeSwapFees.mockResolvedValue({ protocolFee: 2, marketCreatorFee: 3 });
         const cancelDuration = 300;
-        const numTypeInfo = [toBN(2), lid, toBN(100), toBN(1), toBN(1), toBN(1), toBN(cancelDuration)];
+        const numTypeInfo = [
+          toBigInt(2),
+          lid,
+          toBigInt(100),
+          toBigInt(1),
+          toBigInt(1),
+          toBigInt(1),
+          toBigInt(cancelDuration),
+        ];
         const [orderId, , , , ,] = numTypeInfo;
         await handler.onSwapOrder(
           marketAddress,
           provider,
           taker,
-          constants.AddressZero,
+          ZeroAddress,
           numTypeInfo,
-          [toBN(1)],
-          [toBN(2)],
+          [toBigInt(1)],
+          [toBigInt(2)],
           {
             transactionHash: '0xTxHash',
             getBlock: jest.fn().mockResolvedValue({ timestamp: moment().unix() as any }),
           } as any,
         );
-        const swap = await Swap.getByOrderId(orderId.toNumber());
+        const swap = await Swap.getByOrderId(toNumber(orderId));
         expect(swap).toBeDefined();
         expect(swap.amount).toEqual(liq.amount);
       });
@@ -1102,22 +1126,30 @@ describe('CoreHandler', () => {
         await Market.updateById(market.id, { baseType: AssetType.ERC721 });
         mockComputeSwapFees.mockResolvedValue({ protocolFee: 2, marketCreatorFee: 3 });
         const cancelDuration = 300;
-        const numTypeInfo = [toBN(2), lid, toBN(100), toBN(1), toBN(1), toBN(1), toBN(cancelDuration)];
+        const numTypeInfo = [
+          toBigInt(2),
+          lid,
+          toBigInt(100),
+          toBigInt(1),
+          toBigInt(1),
+          toBigInt(1),
+          toBigInt(cancelDuration),
+        ];
         const [orderId, , , , ,] = numTypeInfo;
         await handler.onSwapOrder(
           marketAddress,
           provider,
           taker,
-          constants.AddressZero,
+          ZeroAddress,
           numTypeInfo,
-          [toBN(1)],
-          [toBN(2)],
+          [toBigInt(1)],
+          [toBigInt(2)],
           {
             transactionHash: '0xTxHash',
             getBlock: jest.fn().mockResolvedValue({ timestamp: moment().unix() as any }),
           } as any,
         );
-        const swap = await Swap.getByOrderId(orderId.toNumber());
+        const swap = await Swap.getByOrderId(toNumber(orderId));
         expect(swap).toBeDefined();
         expect(swap.amount).toEqual(liq.amount);
       });
@@ -1125,7 +1157,7 @@ describe('CoreHandler', () => {
   });
 
   describe('.onSwap', () => {
-    const lid = toBN(0);
+    const lid = toBigInt(0);
     let market: Market;
     let liq: Liquidity;
     const liqAmt = powOf(1000, 18);
@@ -1149,7 +1181,7 @@ describe('CoreHandler', () => {
         baseAddress,
         quoteAddress,
         provider: provider,
-        lid: lid.toNumber(),
+        lid: toNumber(lid),
         price: powOf(1, 18).toString(),
         amount: liqAmt.toString(),
         amountSwapped: powOf(10, 18).toString(),
@@ -1168,7 +1200,7 @@ describe('CoreHandler', () => {
         mockComputeSwapFees.mockResolvedValue({ protocolFee: 2, marketCreatorFee: 3 });
         mockTryToUsd.mockResolvedValue(0.5);
 
-        const numTypeInfo = [toBN(0), lid, toBN('1000000000000000000'), toBN(1), toBN(1), toBN(1)];
+        const numTypeInfo = [BigInt(0), lid, BigInt('1000000000000000000'), BigInt(1), BigInt(1), BigInt(1)];
         const [, , amount, price, offerId, operator] = numTypeInfo;
         const evt = { transactionHash: txHash } as any;
 
@@ -1176,12 +1208,12 @@ describe('CoreHandler', () => {
           marketAddress,
           provider,
           taker,
-          constants.AddressZero,
+          ZeroAddress,
           releaser,
           numTypeInfo,
           false,
-          [toBN(1), toBN(2)],
-          [toBN(3), toBN(4)],
+          [toBigInt(1), toBigInt(2)],
+          [toBigInt(3), toBigInt(4)],
           evt,
         );
 
@@ -1200,8 +1232,8 @@ describe('CoreHandler', () => {
         expect(swap.instant).toBeTruthy();
         expect(swap.paid).toBeTruthy();
         expect(swap.released).toBeTruthy();
-        expect(swap.offerId).toEqual(offerId.sub(1).toNumber());
-        expect(swap.operator).toEqual(operator.toNumber());
+        expect(swap.offerId).toEqual(toNumber(offerId - BigInt(1)));
+        expect(swap.operator).toEqual(toNumber(operator));
         expect(swap.providerIds).toEqual([1, 2]);
         expect(swap.takerIds).toEqual([3, 4]);
         expect(swap.protocolFee).toEqual('2');
@@ -1209,7 +1241,7 @@ describe('CoreHandler', () => {
         expect(swap.txHash).toEqual(txHash);
 
         liq = await Liquidity.getById(liq.id);
-        expect(liq.amount).toEqual(liqAmt.sub(amount).toString());
+        expect(liq.amount).toEqual(toDec(liqAmt).sub(amount.toString()).toString());
         expect(liq.lastSwapAt).toBeDefined();
         expect(liq.amountSwapped).toEqual('11000000000000000000');
         expect(liq.totalSwaps).toEqual(1);
@@ -1218,12 +1250,12 @@ describe('CoreHandler', () => {
         expect(market.lastSwapAt).toBeDefined();
         expect(market.amountSwapped).toEqual('2000000000000000000');
         expect(market.totalSwaps).toEqual(2);
-        expect(market.totalLiquidity).toEqual(liqAmt.sub(amount).toString());
+        expect(market.totalLiquidity).toEqual(toDec(liqAmt).sub(amount.toString()).toString());
 
         const event = await Event.find({ network: net, action: Events.LiquiditySwap });
         expect(event).toBeDefined();
         expect(event.marketAddress).toEqual(market.address);
-        expect(event.lid).toEqual(lid.toNumber());
+        expect(event.lid).toEqual(toNumber(lid));
         expect(event.provider).toEqual(provider);
         expect(event.creator).toEqual(taker);
         expect(event.orderId).toEqual(0);
@@ -1244,17 +1276,24 @@ describe('CoreHandler', () => {
           mockComputeSwapFees.mockResolvedValue({ protocolFee: 2, marketCreatorFee: 3 });
 
           await Market.updateById(market.id, { quoteType: AssetType.ERC721 });
-          const numTypeInfo = [toBN(0), lid, toBN('1000000000000000000'), toBN(1), toBN(1), toBN(1)];
+          const numTypeInfo = [
+            toBigInt(0),
+            lid,
+            toBigInt('1000000000000000000'),
+            toBigInt(1),
+            toBigInt(1),
+            toBigInt(1),
+          ];
           await handler.onSwap(
             marketAddress,
             provider,
             taker,
-            constants.AddressZero,
+            ZeroAddress,
             releaser,
             numTypeInfo,
             false,
-            [toBN(1), toBN(2)],
-            [toBN(3), toBN(4)],
+            [toBigInt(1), toBigInt(2)],
+            [toBigInt(3), toBigInt(4)],
             { transactionHash: txHash } as any,
           );
           const swap = await Swap.find({ network: net, marketAddress: market.address, lid: liq.lid });
@@ -1268,17 +1307,24 @@ describe('CoreHandler', () => {
           mockComputeSwapFees.mockResolvedValue({ protocolFee: 2, marketCreatorFee: 3 });
 
           await Market.updateById(market.id, { baseType: AssetType.ERC721 });
-          const numTypeInfo = [toBN(0), lid, toBN('1000000000000000000'), toBN(1), toBN(1), toBN(1)];
+          const numTypeInfo = [
+            toBigInt(0),
+            lid,
+            toBigInt('1000000000000000000'),
+            toBigInt(1),
+            toBigInt(1),
+            toBigInt(1),
+          ];
           await handler.onSwap(
             marketAddress,
             provider,
             taker,
-            constants.AddressZero,
+            ZeroAddress,
             releaser,
             numTypeInfo,
             false,
-            [toBN(1), toBN(2)],
-            [toBN(3), toBN(4)],
+            [toBigInt(1), toBigInt(2)],
+            [toBigInt(3), toBigInt(4)],
             { transactionHash: txHash } as any,
           );
           const swap = await Swap.find({ network: net, marketAddress: market.address, lid: liq.lid });
@@ -1290,7 +1336,7 @@ describe('CoreHandler', () => {
     describe('when orderId is set (interactive swap)', () => {
       let swap: Swap;
       let dispute: Dispute;
-      const orderId = toBN(1);
+      const orderId = toBigInt(1);
       let now: moment.Moment;
 
       beforeEach(async () => {
@@ -1301,10 +1347,10 @@ describe('CoreHandler', () => {
         swap = await Swap.create({
           network: net,
           marketAddress: market.address,
-          orderId: orderId.toNumber() - 1,
+          orderId: toNumber(orderId) - 1,
           amount: powOf(10, 18).toString(),
           provider,
-          lid: lid.toNumber(),
+          lid: toNumber(lid),
           taker,
           createdAt: now.clone().subtract('1', 'day').toISOString(),
           paidAt: now.clone().subtract('1', 'day').toISOString(),
@@ -1313,14 +1359,14 @@ describe('CoreHandler', () => {
         await Dispute.create({
           network: net,
           marketAddress: market.address,
-          orderId: orderId.toNumber() - 1,
+          orderId: toNumber(orderId) - 1,
           disputeId: 0,
         });
 
         dispute = await Dispute.create({
           network: net,
           marketAddress: market.address,
-          orderId: orderId.toNumber() - 1,
+          orderId: toNumber(orderId) - 1,
           disputeId: 1,
         });
       });
@@ -1329,7 +1375,14 @@ describe('CoreHandler', () => {
         await Market.updateById(market.id, { baseType: AssetType.ERC20, quoteType: AssetType.SYNTH });
         await Liquidity.updateById(liq.id, { amount: powOf(1000, 18).toString(), totalSwaps: 1, openOrders: 2 });
 
-        const numTypeInfo = [orderId, toBN(liq.lid), toBN(swap.amount), toBN(liq.price), toBN(1), toBN(1)];
+        const numTypeInfo = [
+          orderId,
+          toBigInt(liq.lid),
+          toBigInt(swap.amount),
+          toBigInt(liq.price),
+          toBigInt(1),
+          toBigInt(1),
+        ];
         const [, , amount, , ,] = numTypeInfo;
         const evt = { transactionHash: txHash } as any;
 
@@ -1337,12 +1390,12 @@ describe('CoreHandler', () => {
           marketAddress,
           provider,
           taker,
-          constants.AddressZero,
+          ZeroAddress,
           provider,
           numTypeInfo,
           true,
-          [toBN(1), toBN(2)],
-          [toBN(3), toBN(4)],
+          [toBigInt(1), toBigInt(2)],
+          [toBigInt(3), toBigInt(4)],
           evt,
         );
 
@@ -1356,10 +1409,10 @@ describe('CoreHandler', () => {
         expect(swap.finalizedAt).toBeDefined();
         expect(swap.valueUsd).toEqual('6.5');
 
-        const liqUpd = await Liquidity.getLiquidity(net, marketAddress, provider, lid.toNumber());
+        const liqUpd = await Liquidity.getLiquidity(net, marketAddress, provider, toNumber(lid));
         expect(liqUpd.openOrders).toEqual(1);
         expect(liqUpd.lastSwapAt).toBeDefined();
-        expect(liqUpd.amountSwapped).toEqual(toBN(liq.amountSwapped).add(amount).toString());
+        expect(liqUpd.amountSwapped).toEqual(toDec(liq.amountSwapped).add(amount.toString()).toString());
         expect(liqUpd.totalSwaps).toEqual(1);
         expect(liqUpd.avgFinalizeDur).toBeGreaterThan(0);
         expect(liqUpd.avgReleaseDur).toBeGreaterThan(0);
@@ -1369,7 +1422,7 @@ describe('CoreHandler', () => {
 
         const marketUpd = await Market.getById(market.id);
         expect(marketUpd.lastSwapAt).toBeDefined();
-        expect(marketUpd.amountSwapped).toEqual(toBN(market.amountSwapped).add(amount).toString());
+        expect(marketUpd.amountSwapped).toEqual(toDec(market.amountSwapped).add(amount.toString()).toString());
         expect(marketUpd.totalSwaps).toEqual(market.totalSwaps);
         expect(marketUpd.avgFinalizeDur).toBeGreaterThan(0);
         expect(marketUpd.avgReleaseDur).toBeGreaterThan(0);
@@ -1381,7 +1434,7 @@ describe('CoreHandler', () => {
         expect(event).toBeDefined();
         expect(event.network).toEqual(net);
         expect(event.marketAddress).toEqual(marketAddress);
-        expect(event.orderId).toEqual(orderId.sub(1).toNumber());
+        expect(event.orderId).toEqual(toNumber(orderId - BigInt(1)));
         expect(event.creator).toEqual(provider);
 
         // mark recent dispute as released
@@ -1411,12 +1464,12 @@ describe('CoreHandler', () => {
             marketAddress,
             provider,
             taker,
-            constants.AddressZero,
+            ZeroAddress,
             releaser,
-            [orderId, toBN(liq.lid), toBN(swap.amount), toBN(liq.price), toBN(1), toBN(1)],
+            [orderId, toBigInt(liq.lid), toBigInt(swap.amount), toBigInt(liq.price), toBigInt(1), toBigInt(1)],
             true,
-            [toBN(1), toBN(2)],
-            [toBN(3), toBN(4)],
+            [toBigInt(1), toBigInt(2)],
+            [toBigInt(3), toBigInt(4)],
             { transactionHash: txHash } as any,
           );
 
@@ -1438,7 +1491,7 @@ describe('CoreHandler', () => {
   describe('.onOrderCancelled', () => {
     const lid = 0;
     let now: moment.Moment;
-    const orderId = toBN(1);
+    const orderId = toBigInt(1);
     const amount = powOf(10, 18);
     const liqAmt = powOf(990, 18);
     let market: Market;
@@ -1472,7 +1525,7 @@ describe('CoreHandler', () => {
       swap = await Swap.create({
         network: net,
         marketAddress: market.address,
-        orderId: orderId.toNumber(),
+        orderId: toNumber(orderId),
         amount: amount.toString(),
         provider: provider,
         taker: taker,
@@ -1498,18 +1551,18 @@ describe('CoreHandler', () => {
       // decrement open orders by 1 and add swap amount back to liquidity amount
       liq = await Liquidity.getById(liq.id);
       expect(liq.openOrders).toEqual(0);
-      expect(liq.amount).toEqual(liqAmt.add(amount).toString());
+      expect(liq.amount).toEqual(toDec(liqAmt).add(amount.toString()).toFixed());
       expect(liq.avgFinalizeDur).toBeGreaterThan(0);
 
       market = await Market.getById(market.id);
       expect(market.avgFinalizeDur).toBeGreaterThan(0);
-      expect(market.totalLiquidity).toEqual(liqAmt.add(amount).toString());
+      expect(market.totalLiquidity).toEqual(toDec(liqAmt).add(amount.toString()).toFixed());
 
       const event = await Event.find({ action: Events.SwapCancelled });
       expect(event).toBeDefined();
       expect(event.network).toEqual(net);
       expect(event.marketAddress).toEqual(marketAddress);
-      expect(event.orderId).toEqual(orderId.toNumber());
+      expect(event.orderId).toEqual(toNumber(orderId));
       expect(event.creator).toEqual(taker);
 
       // Should send notification to counterparty
@@ -1565,12 +1618,12 @@ describe('CoreHandler', () => {
         lid: 0,
       });
 
-      const orderId = toBN(1);
+      const orderId = toBigInt(1);
       const amount = powOf(10, 18);
       await Swap.create({
         network: net,
         marketAddress,
-        orderId: orderId.toNumber(),
+        orderId: toNumber(orderId),
         lid: liq.lid,
         amount: amount.toString(),
         provider,
@@ -1579,7 +1632,7 @@ describe('CoreHandler', () => {
 
       const disputeFrom = 300;
       const now = moment();
-      await handler.onSwapOrderPaid(orderId, toBN(disputeFrom), {
+      await handler.onSwapOrderPaid(orderId, toBigInt(disputeFrom), {
         getBlock: jest.fn().mockResolvedValue({ timestamp: now.unix() }),
       } as any);
 
@@ -1595,7 +1648,7 @@ describe('CoreHandler', () => {
       expect(event).toBeDefined();
       expect(event.network).toEqual(net);
       expect(event.marketAddress).toEqual(marketAddress);
-      expect(event.orderId).toEqual(orderId.toNumber());
+      expect(event.orderId).toEqual(toNumber(orderId));
       expect(event.creator).toEqual(swap.payer);
 
       liq = await Liquidity.getById(liq.id);
@@ -1612,7 +1665,7 @@ describe('CoreHandler', () => {
 
       // Should send notification to taker when base is SYNTH and quote ERC20
       market = await Market.updateById(market.id, { baseType: AssetType.SYNTH, quoteType: AssetType.ERC20 });
-      await handler.onSwapOrderPaid(orderId, toBN(disputeFrom), {
+      await handler.onSwapOrderPaid(orderId, toBigInt(disputeFrom), {
         getBlock: jest.fn().mockResolvedValue({ timestamp: now.unix() }),
       } as any);
       swap = await Swap.find({ marketAddress: market.address });
@@ -1635,7 +1688,9 @@ describe('CoreHandler', () => {
         lid,
         paused: false,
       });
-      await expect(handler.onTogglePause(marketAddress, provider, toBN(lid), true, {} as any)).resolves.toBeUndefined();
+      await expect(
+        handler.onTogglePause(marketAddress, provider, toBigInt(lid), true, {} as any),
+      ).resolves.toBeUndefined();
       liq = await Liquidity.getById(liq.id);
       expect(liq.paused).toBeTruthy();
 
@@ -1653,8 +1708,8 @@ describe('CoreHandler', () => {
     it('should create mine task', async () => {
       const token = '0xToken';
       const convToken = '0xConvToken';
-      const convAmount = toBN(100);
-      const amount = toBN(10);
+      const convAmount = toBigInt(100);
+      const amount = toBigInt(10);
       const now = moment().unix();
       await expect(
         handler.onTransferredToFeePool(token, amount, convToken, convAmount, {
@@ -1671,7 +1726,9 @@ describe('CoreHandler', () => {
 
   describe('.onProtocolFeeSplitUpdated', function () {
     it('should save correct meta values', async () => {
-      await expect(handler.onProtocolFeeSplitUpdated(toBN(1), toBN(2), toBN(3), {} as any)).resolves.toBeUndefined();
+      await expect(
+        handler.onProtocolFeeSplitUpdated(toBigInt(1), toBigInt(2), toBigInt(3), {} as any),
+      ).resolves.toBeUndefined();
       expect(await Meta.get(Meta.makeNetKey(net, ProtocolFeeBeneficiary.Inventor))).toHaveProperty('value', '1');
       expect(await Meta.get(Meta.makeNetKey(net, ProtocolFeeBeneficiary.Shared))).toHaveProperty('value', '2');
       expect(await Meta.get(Meta.makeNetKey(net, ProtocolFeeBeneficiary.Operator))).toHaveProperty('value', '3');
@@ -1680,7 +1737,7 @@ describe('CoreHandler', () => {
 
   describe('.onNFTDiscountUpdated', function () {
     it('should save correct meta value', async () => {
-      await expect(handler.onNFTDiscountUpdated(toBN(1), {} as any)).resolves.toBeUndefined();
+      await expect(handler.onNFTDiscountUpdated(toBigInt(1), {} as any)).resolves.toBeUndefined();
       expect(await Meta.getContractParam(net, 'nftDiscountBP')).toEqual('1');
     });
   });
@@ -1693,37 +1750,37 @@ describe('CoreHandler', () => {
         manager: userAddr,
       });
 
-      const lid = toBN(0);
+      const lid = toBigInt(0);
       const liq = await Liquidity.create({
         network: net,
         marketAddress,
-        lid: lid.toNumber(),
+        lid: toNumber(lid),
         provider,
       });
 
-      const offerId = toBN(1);
+      const offerId = toBigInt(1);
       const amount = powOf(10, 18);
       const price = powOf(1, 18);
-      const ids = [toBN(1), toBN(2)];
-      const dur = toBN(200);
+      const ids = [toBigInt(1), toBigInt(2)];
+      const dur = toBigInt(200);
       const now = moment().unix();
       await expect(
-        handler.onNewOffer(marketAddress, provider, lid, taker, offerId, amount, price, ids, dur, {
+        handler.onNewOffer(marketAddress, provider, lid, taker, offerId, toBigInt(amount), toBigInt(price), ids, dur, {
           transactionHash: '0xTxHash',
           getBlock: jest.fn().mockResolvedValue({ timestamp: now as any }),
         } as any),
       ).resolves.toBeUndefined();
 
-      const offer = await Offer.getByOfferId(offerId.sub(1).toNumber());
+      const offer = await Offer.getByOfferId(toNumber(offerId - BigInt(1)));
       expect(offer.network).toEqual(net);
       expect(offer.marketAddress).toEqual(marketAddress);
       expect(offer.provider).toEqual(provider);
-      expect(offer.lid).toEqual(lid.toNumber());
+      expect(offer.lid).toEqual(toNumber(lid));
       expect(offer.creator).toEqual(taker);
       expect(offer.amount).toEqual(amount.toString());
       expect(offer.price).toEqual(price.toString());
-      expect(offer.ids).toEqual(ids.map((id) => id.toNumber()));
-      expect(moment(offer.deadline).toISOString()).toEqual(moment.unix(dur.toNumber() + now).toISOString());
+      expect(offer.ids).toEqual(ids.map((id) => toNumber(id)));
+      expect(moment(offer.deadline).toISOString()).toEqual(moment.unix(toNumber(dur) + now).toISOString());
 
       const offerEvent = await Event.find({ network: net, offerId: offer.offerId, action: Events.OfferCreate });
       expect(offerEvent).toBeDefined();
@@ -1740,7 +1797,7 @@ describe('CoreHandler', () => {
       expect(liqEventOffer.lid).toEqual(liq.lid);
       expect(liqEventOffer.provider).toEqual(provider);
       expect(liqEventOffer.creator).toEqual(taker);
-      expect(liqEventOffer.offerId).toEqual(offerId.toNumber() - 1);
+      expect(liqEventOffer.offerId).toEqual(toNumber(offerId) - 1);
 
       expect(mockNotify).toHaveBeenCalledWith(NotificationID.NewOffer, net, provider, {
         offer,
@@ -1776,7 +1833,7 @@ describe('CoreHandler', () => {
       const now = moment().unix();
       const dur = 200;
       await expect(
-        handler.onOfferUpdated(toBN(1), taker, toBN(2), toBN(3), [toBN(4)], toBN(dur), {
+        handler.onOfferUpdated(toBigInt(1), taker, toBigInt(2), toBigInt(3), [toBigInt(4)], toBigInt(dur), {
           transactionHash: '0xTxHash',
           getBlock: jest.fn().mockResolvedValue({ timestamp: now as any }),
         } as any),
@@ -1833,7 +1890,7 @@ describe('CoreHandler', () => {
       const now = moment().unix();
       const execDelayDur = 200;
       await expect(
-        handler.onOfferAccepted(toBN(1), provider, toBN(execDelayDur), {
+        handler.onOfferAccepted(toBigInt(1), provider, toBigInt(execDelayDur), {
           transactionHash: '0xTxHash',
           getBlock: jest.fn().mockResolvedValue({ timestamp: now }),
         } as any),
@@ -1881,7 +1938,7 @@ describe('CoreHandler', () => {
         creator: taker,
       });
 
-      await expect(handler.onOfferCancelled(toBN(1), taker, {} as any)).resolves.toBeUndefined();
+      await expect(handler.onOfferCancelled(toBigInt(1), taker, {} as any)).resolves.toBeUndefined();
 
       offer = await Offer.getByOfferId(offer.offerId);
       expect(offer).toBeDefined();
@@ -1926,7 +1983,7 @@ describe('CoreHandler', () => {
         execAt: moment().toISOString(),
       });
 
-      await expect(handler.onOfferUnaccepted(toBN(1), taker, {} as any)).resolves.toBeUndefined();
+      await expect(handler.onOfferUnaccepted(toBigInt(1), taker, {} as any)).resolves.toBeUndefined();
 
       offer = await Offer.getByOfferId(offer.offerId);
       expect(offer).toBeDefined();
@@ -1970,7 +2027,7 @@ describe('CoreHandler', () => {
         creator: taker,
       });
 
-      await expect(handler.onOfferExecuted(toBN(1), taker, {} as any)).resolves.toBeUndefined();
+      await expect(handler.onOfferExecuted(toBigInt(1), taker, {} as any)).resolves.toBeUndefined();
 
       offer = await Offer.getByOfferId(offer.offerId);
       expect(offer).toBeDefined();
@@ -1992,12 +2049,12 @@ describe('CoreHandler', () => {
 
   describe('.onUpdatedLiquiditySwapBadges', function () {
     it("should update liquidity provider's badges", async () => {
-      const lid = toBN(0);
+      const lid = toBigInt(0);
       let liq = await Liquidity.create({
         network: net,
         marketAddress,
         provider,
-        lid: lid.toNumber(),
+        lid: toNumber(lid),
       });
 
       await expect(

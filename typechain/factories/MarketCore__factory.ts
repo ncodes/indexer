@@ -2,8 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import { Contract, Signer, utils } from "ethers";
-import type { Provider } from "@ethersproject/providers";
+import { Contract, Interface, type ContractRunner } from "ethers";
 import type { MarketCore, MarketCoreInterface } from "../MarketCore";
 
 const _abi = [
@@ -1453,12 +1452,9 @@ const _abi = [
 export class MarketCore__factory {
   static readonly abi = _abi;
   static createInterface(): MarketCoreInterface {
-    return new utils.Interface(_abi) as MarketCoreInterface;
+    return new Interface(_abi) as MarketCoreInterface;
   }
-  static connect(
-    address: string,
-    signerOrProvider: Signer | Provider
-  ): MarketCore {
-    return new Contract(address, _abi, signerOrProvider) as MarketCore;
+  static connect(address: string, runner?: ContractRunner | null): MarketCore {
+    return new Contract(address, _abi, runner) as unknown as MarketCore;
   }
 }

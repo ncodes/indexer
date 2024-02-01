@@ -2,8 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import { Contract, Signer, utils } from "ethers";
-import type { Provider } from "@ethersproject/providers";
+import { Contract, Interface, type ContractRunner } from "ethers";
 import type { BadgeManager, BadgeManagerInterface } from "../BadgeManager";
 
 const _abi = [
@@ -1236,12 +1235,12 @@ const _abi = [
 export class BadgeManager__factory {
   static readonly abi = _abi;
   static createInterface(): BadgeManagerInterface {
-    return new utils.Interface(_abi) as BadgeManagerInterface;
+    return new Interface(_abi) as BadgeManagerInterface;
   }
   static connect(
     address: string,
-    signerOrProvider: Signer | Provider
+    runner?: ContractRunner | null
   ): BadgeManager {
-    return new Contract(address, _abi, signerOrProvider) as BadgeManager;
+    return new Contract(address, _abi, runner) as unknown as BadgeManager;
   }
 }

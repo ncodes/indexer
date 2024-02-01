@@ -11,7 +11,7 @@ import Meta from '../../models/meta';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 import Reveal from '../../models/reveal';
 import Swap from '../../models/swap';
-import { toBN } from '../common';
+import { toBigInt, toNumber } from '../common';
 import { DisputeManagerHandler } from './dispute_manager.handler';
 
 const MarketCoreContract = jest.fn().mockImplementation(() => {
@@ -72,8 +72,8 @@ describe('DisputeManagerHandler', () => {
   describe('.onDisputeCreated', () => {
     describe('with no previous existing dispute for the order', () => {
       it('should create dispute with correct fields', async () => {
-        const orderId = toBN(1);
-        const disputeId = toBN(1);
+        const orderId = toBigInt(1);
+        const disputeId = toBigInt(1);
 
         let market = await Market.create({
           network: net,
@@ -90,7 +90,7 @@ describe('DisputeManagerHandler', () => {
 
         const swap = await Swap.create({
           network: net,
-          orderId: orderId.toNumber(),
+          orderId: toNumber(orderId),
           marketAddress,
           provider: provider,
           taker: taker,
@@ -109,7 +109,7 @@ describe('DisputeManagerHandler', () => {
         await expect(handler.onDisputeCreated(orderId, provider, disputeId, true, evt)).resolves.toBeUndefined();
 
         // Expect dispute to be created
-        const dispute = await Dispute.get(net, marketAddress, orderId.toNumber(), disputeId.toNumber());
+        const dispute = await Dispute.get(net, marketAddress, toNumber(orderId), toNumber(disputeId));
         expect(dispute).toBeDefined();
         expect(dispute.wantRelease).toBeTruthy();
         expect(dispute.defendant).toEqual(taker);
@@ -140,8 +140,8 @@ describe('DisputeManagerHandler', () => {
           type: MineTaskType.Draft,
           network: net,
           marketAddress: market.address,
-          orderId: orderId.toNumber(),
-          disputeId: disputeId.toNumber(),
+          orderId: toNumber(orderId),
+          disputeId: toNumber(disputeId),
         };
         expect(await MineTask.count(q)).toEqual(3);
 
@@ -149,9 +149,9 @@ describe('DisputeManagerHandler', () => {
         expect(event).toBeDefined();
         expect(event.network).toEqual(net);
         expect(event.marketAddress).toEqual(marketAddress);
-        expect(event.orderId).toEqual(orderId.toNumber());
+        expect(event.orderId).toEqual(toNumber(orderId));
         expect(event.creator).toEqual(provider);
-        expect(event.disputeId).toEqual(disputeId.toNumber());
+        expect(event.disputeId).toEqual(toNumber(disputeId));
 
         expect(mockGrantPoint).toHaveBeenCalledWith('dispute:created', net, provider, evt, undefined);
       });
@@ -159,9 +159,9 @@ describe('DisputeManagerHandler', () => {
 
     describe('with there is an existing dispute for the order', () => {
       it('should create dispute with correct fields', async () => {
-        const orderId = toBN(1);
+        const orderId = toBigInt(1);
         const marketAddress = '0xMarket';
-        const disputeId = toBN(1);
+        const disputeId = toBigInt(1);
 
         let market = await Market.create({
           network: net,
@@ -181,12 +181,12 @@ describe('DisputeManagerHandler', () => {
         await Dispute.create({
           network: net,
           marketAddress,
-          orderId: orderId.toNumber(),
+          orderId: toNumber(orderId),
         });
 
         const swap = await Swap.create({
           network: net,
-          orderId: orderId.toNumber(),
+          orderId: toNumber(orderId),
           marketAddress,
           provider: provider,
           taker: taker,
@@ -204,7 +204,7 @@ describe('DisputeManagerHandler', () => {
         await expect(handler.onDisputeCreated(orderId, taker, disputeId, true, {} as any)).resolves.toBeUndefined();
 
         // Expect dispute to be created
-        const dispute = await Dispute.get(net, marketAddress, orderId.toNumber(), disputeId.toNumber());
+        const dispute = await Dispute.get(net, marketAddress, toNumber(orderId), toNumber(disputeId));
         expect(dispute).toBeDefined();
         expect(dispute.wantRelease).toBeTruthy();
         expect(dispute.defendant).toEqual(provider);
@@ -233,8 +233,8 @@ describe('DisputeManagerHandler', () => {
           type: MineTaskType.Draft,
           network: net,
           marketAddress: market.address,
-          orderId: orderId.toNumber(),
-          disputeId: disputeId.toNumber(),
+          orderId: toNumber(orderId),
+          disputeId: toNumber(disputeId),
         };
         expect(await MineTask.count(q)).toEqual(3);
       });
@@ -243,17 +243,17 @@ describe('DisputeManagerHandler', () => {
 
   describe('.onCommitted', () => {
     it('should create a commit', async () => {
-      const orderId = toBN(1);
+      const orderId = toBigInt(1);
       const marketAddress = '0xMarket';
-      const disputeId = toBN(1);
+      const disputeId = toBigInt(1);
       const evt = {} as any;
       await expect(
-        handler.onCommitted(marketAddress, orderId, disputeId, '0xCommitter', toBN(1), '0xHash', evt),
+        handler.onCommitted(marketAddress, orderId, disputeId, '0xCommitter', toBigInt(1), '0xHash', evt),
       ).resolves.toBeUndefined();
 
       const commit = await Commit.find({
         marketAddress,
-        orderId: orderId.toNumber(),
+        orderId: toNumber(orderId),
       });
       expect(commit).toBeDefined();
       expect(commit.committer).toEqual('0xCommitter');
@@ -263,9 +263,9 @@ describe('DisputeManagerHandler', () => {
       expect(event).toBeDefined();
       expect(event.network).toEqual(net);
       expect(event.marketAddress).toEqual(marketAddress);
-      expect(event.orderId).toEqual(orderId.toNumber());
+      expect(event.orderId).toEqual(toNumber(orderId));
       expect(event.creator).toEqual('0xCommitter');
-      expect(event.disputeId).toEqual(disputeId.toNumber());
+      expect(event.disputeId).toEqual(toNumber(disputeId));
 
       expect(mockGrantPoint).toHaveBeenCalledWith('dispute:committed', net, '0xCommitter', evt, undefined);
     });
@@ -273,15 +273,15 @@ describe('DisputeManagerHandler', () => {
 
   describe('.onRevealed', () => {
     it('should create a commit', async () => {
-      const orderId = toBN(1);
+      const orderId = toBigInt(1);
       const marketAddress = '0xMarket';
-      const disputeId = toBN(1);
+      const disputeId = toBigInt(1);
       const evt = {} as any;
       await expect(
-        handler.onRevealed(marketAddress, orderId, disputeId, '0xRevealer', toBN(1), '1vote', evt),
+        handler.onRevealed(marketAddress, orderId, disputeId, '0xRevealer', toBigInt(1), '1vote', evt),
       ).resolves.toBeUndefined();
 
-      const reveal = await Reveal.find({ marketAddress, orderId: orderId.toNumber() });
+      const reveal = await Reveal.find({ marketAddress, orderId: toNumber(orderId) });
       expect(reveal).toBeDefined();
       expect(reveal.ticketIndex).toEqual(1);
 
@@ -289,9 +289,9 @@ describe('DisputeManagerHandler', () => {
       expect(event).toBeDefined();
       expect(event.network).toEqual(net);
       expect(event.marketAddress).toEqual(marketAddress);
-      expect(event.orderId).toEqual(orderId.toNumber());
+      expect(event.orderId).toEqual(toNumber(orderId));
       expect(event.creator).toEqual('0xRevealer');
-      expect(event.disputeId).toEqual(disputeId.toNumber());
+      expect(event.disputeId).toEqual(toNumber(disputeId));
       expect(event.vote).toEqual('1vote');
 
       expect(mockGrantPoint).toHaveBeenCalledWith('dispute:revealed', net, '0xRevealer', evt, undefined);
@@ -299,9 +299,9 @@ describe('DisputeManagerHandler', () => {
   });
 
   describe('.onDecisionExecuted', () => {
-    const orderId = toBN(1);
+    const orderId = toBigInt(1);
     const marketAddress = '0xMarket';
-    const disputeId = toBN(1);
+    const disputeId = toBigInt(1);
     let market: Market;
     let swap: Swap;
     let liquidity: Liquidity;
@@ -326,15 +326,15 @@ describe('DisputeManagerHandler', () => {
       await Dispute.create({
         network: net,
         marketAddress,
-        orderId: orderId.toNumber(),
-        disputeId: disputeId.toNumber(),
+        orderId: toNumber(orderId),
+        disputeId: toNumber(disputeId),
         numMediators,
       });
 
       swap = await Swap.create({
         network: net,
         marketAddress,
-        orderId: orderId.toNumber(),
+        orderId: toNumber(orderId),
         provider: provider,
         taker: taker,
         base: 'BASE',
@@ -344,16 +344,16 @@ describe('DisputeManagerHandler', () => {
       await Draft.create({
         network: net,
         marketAddress,
-        orderId: orderId.toNumber(),
-        disputeIndex: disputeId.toNumber(),
+        orderId: toNumber(orderId),
+        disputeIndex: toNumber(disputeId),
         owner: userAddr,
       });
 
       executeTask = await MineTask.create({
         network: net,
         marketAddress,
-        orderId: orderId.toNumber(),
-        disputeId: disputeId.toNumber(),
+        orderId: toNumber(orderId),
+        disputeId: toNumber(disputeId),
         type: MineTaskType.Execute,
       });
     });
@@ -365,7 +365,7 @@ describe('DisputeManagerHandler', () => {
           handler.onDecisionExecuted(marketAddress, orderId, disputeId, '0xExecutor', true, '0x31', evt),
         ).resolves.toBeUndefined();
 
-        const dispute = await Dispute.get(net, marketAddress, orderId.toNumber(), disputeId.toNumber());
+        const dispute = await Dispute.get(net, marketAddress, toNumber(orderId), toNumber(disputeId));
         expect(dispute.executed).toBeTruthy();
         expect(dispute.released).toBeTruthy();
 
@@ -378,9 +378,9 @@ describe('DisputeManagerHandler', () => {
         expect(event).toBeDefined();
         expect(event.network).toEqual(net);
         expect(event.marketAddress).toEqual(marketAddress);
-        expect(event.orderId).toEqual(orderId.toNumber());
+        expect(event.orderId).toEqual(toNumber(orderId));
         expect(event.creator).toEqual('0xExecutor');
-        expect(event.disputeId).toEqual(disputeId.toNumber());
+        expect(event.disputeId).toEqual(toNumber(disputeId));
 
         // expect notification to have been sent
         swap.market = market;
@@ -399,8 +399,8 @@ describe('DisputeManagerHandler', () => {
           type: MineTaskType.Undraft,
           network: net,
           marketAddress: market.address,
-          orderId: orderId.toNumber(),
-          disputeId: disputeId.toNumber(),
+          orderId: toNumber(orderId),
+          disputeId: toNumber(disputeId),
         };
         expect(await MineTask.count(q)).toEqual(numMediators);
 
@@ -418,7 +418,7 @@ describe('DisputeManagerHandler', () => {
           handler.onDecisionExecuted(marketAddress, orderId, disputeId, '0xExecutor', true, '0x30', {} as any),
         ).resolves.toBeUndefined();
 
-        const dispute = await Dispute.get(net, marketAddress, orderId.toNumber(), disputeId.toNumber());
+        const dispute = await Dispute.get(net, marketAddress, toNumber(orderId), toNumber(disputeId));
         expect(dispute.executed).toBeTruthy();
         expect(dispute.released).toBeFalsy();
 
@@ -444,7 +444,7 @@ describe('DisputeManagerHandler', () => {
           handler.onDecisionExecuted(marketAddress, orderId, disputeId, '0xExecutor', true, '0x00', {} as any),
         ).resolves.toBeUndefined();
 
-        const dispute = await Dispute.get(net, marketAddress, orderId.toNumber(), disputeId.toNumber());
+        const dispute = await Dispute.get(net, marketAddress, toNumber(orderId), toNumber(disputeId));
         expect(dispute.executed).toBeTruthy();
         expect(dispute.released).toBeNull();
 

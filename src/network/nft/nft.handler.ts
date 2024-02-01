@@ -1,12 +1,14 @@
-import { BigNumber, ethers, Event, providers } from 'ethers';
+import { Provider } from 'ethers';
+import { toNumber } from 'lodash';
 import { Transaction } from 'objection';
+import { ContractCallEvent } from '../common';
 import { Handler } from '../handler';
 import NetworkService from '../network.service';
 
 export class NFTHandler extends Handler {
   constructor(
     private netSrv: NetworkService,
-    private provider: providers.JsonRpcProvider,
+    private provider: Provider,
     public network: string,
     private contracts: JointContracts,
   ) {
@@ -17,9 +19,12 @@ export class NFTHandler extends Handler {
    * Listen for events
    */
   listen() {
-    this.on('Transfer', async (from: string, to: string, tokenId: BigNumber, event: Event, txn?: Transaction) => {
-      return this.onTransfer(from, to, tokenId, event, txn);
-    });
+    this.on(
+      'Transfer',
+      async (from: string, to: string, tokenId: bigint, event: ContractCallEvent, txn?: Transaction) => {
+        return this.onTransfer(from, to, tokenId, event, txn);
+      },
+    );
   }
 
   /**
@@ -30,7 +35,7 @@ export class NFTHandler extends Handler {
    * @param _event The event object
    * @param txn The transaction object
    */
-  async onTransfer(from: string, to: string, tokenId: BigNumber, _event: ethers.Event, txn?: Transaction) {
-    await this.netSrv.pointSrv.grantOnNFTOwnership(this.network, to, tokenId.toNumber(), txn);
+  async onTransfer(from: string, to: string, tokenId: bigint, _event: ContractCallEvent, txn?: Transaction) {
+    await this.netSrv.pointSrv.grantOnNFTOwnership(this.network, to, toNumber(tokenId.toString()), txn);
   }
 }

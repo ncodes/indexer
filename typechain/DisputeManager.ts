@@ -3,27 +3,24 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BigNumber,
   BigNumberish,
   BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  Overrides,
-  PopulatedTransaction,
-  Signer,
-  utils,
-} from "ethers";
-import type {
   FunctionFragment,
   Result,
+  Interface,
   EventFragment,
-} from "@ethersproject/abi";
-import type { Listener, Provider } from "@ethersproject/providers";
+  AddressLike,
+  ContractRunner,
+  ContractMethod,
+  Listener,
+} from "ethers";
 import type {
-  TypedEventFilter,
-  TypedEvent,
+  TypedContractEvent,
+  TypedDeferredTopicFilter,
+  TypedEventLog,
+  TypedLogDescription,
   TypedListener,
-  OnEvent,
+  TypedContractMethod,
 } from "./common";
 
 export type DisputeStruct = {
@@ -34,38 +31,38 @@ export type DisputeStruct = {
   nCancel: BigNumberish;
   undrafted: BigNumberish;
   ticketIndexes: BigNumberish[];
-  marketId: string;
-  creator: string;
-  defendant: string;
-  ticketOwners: string[];
+  marketId: AddressLike;
+  creator: AddressLike;
+  defendant: AddressLike;
+  ticketOwners: AddressLike[];
   executed: boolean;
   wantRelease: boolean;
   abandoned: boolean;
 };
 
 export type DisputeStructOutput = [
-  BigNumber,
-  BigNumber,
-  BigNumber,
-  BigNumber,
-  BigNumber,
-  BigNumber,
-  BigNumber[],
-  string,
-  string,
-  string,
-  string[],
-  boolean,
-  boolean,
-  boolean
+  commitEndAt: bigint,
+  predictEndAt: bigint,
+  evidenceEndAt: bigint,
+  nRelease: bigint,
+  nCancel: bigint,
+  undrafted: bigint,
+  ticketIndexes: bigint[],
+  marketId: string,
+  creator: string,
+  defendant: string,
+  ticketOwners: string[],
+  executed: boolean,
+  wantRelease: boolean,
+  abandoned: boolean
 ] & {
-  commitEndAt: BigNumber;
-  predictEndAt: BigNumber;
-  evidenceEndAt: BigNumber;
-  nRelease: BigNumber;
-  nCancel: BigNumber;
-  undrafted: BigNumber;
-  ticketIndexes: BigNumber[];
+  commitEndAt: bigint;
+  predictEndAt: bigint;
+  evidenceEndAt: bigint;
+  nRelease: bigint;
+  nCancel: bigint;
+  undrafted: bigint;
+  ticketIndexes: bigint[];
   marketId: string;
   creator: string;
   defendant: string;
@@ -75,42 +72,9 @@ export type DisputeStructOutput = [
   abandoned: boolean;
 };
 
-export interface DisputeManagerInterface extends utils.Interface {
-  functions: {
-    "commitVote(uint256,uint256,bytes32)": FunctionFragment;
-    "core()": FunctionFragment;
-    "countDisputes(uint256)": FunctionFragment;
-    "createDispute(uint256,bool)": FunctionFragment;
-    "disputes(uint256,uint256)": FunctionFragment;
-    "draftMediator(uint256)": FunctionFragment;
-    "evidenceDur()": FunctionFragment;
-    "executeDecision(uint256,uint256)": FunctionFragment;
-    "getDispute(uint256,uint256)": FunctionFragment;
-    "marketCore()": FunctionFragment;
-    "mediatorMgr()": FunctionFragment;
-    "owner()": FunctionFragment;
-    "predictDur()": FunctionFragment;
-    "predictions(uint256,uint256,address,uint256)": FunctionFragment;
-    "renounceOwnership()": FunctionFragment;
-    "revealVote(uint256,uint256,string,bytes32)": FunctionFragment;
-    "rewardBalanceOf(address)": FunctionFragment;
-    "rewards(address)": FunctionFragment;
-    "seenCommits(bytes32)": FunctionFragment;
-    "setCore(address)": FunctionFragment;
-    "setEvidenceDur(uint256)": FunctionFragment;
-    "setMarketCore(address)": FunctionFragment;
-    "setMediatorManager(address)": FunctionFragment;
-    "setPredictDur(uint256)": FunctionFragment;
-    "setSharedSlashPortion(uint256)": FunctionFragment;
-    "sharedSlashPortionBP()": FunctionFragment;
-    "token()": FunctionFragment;
-    "transferOwnership(address)": FunctionFragment;
-    "undraftMediator(uint256,uint256)": FunctionFragment;
-    "withdrawReward()": FunctionFragment;
-  };
-
+export interface DisputeManagerInterface extends Interface {
   getFunction(
-    nameOrSignatureOrTopic:
+    nameOrSignature:
       | "commitVote"
       | "core"
       | "countDisputes"
@@ -142,6 +106,26 @@ export interface DisputeManagerInterface extends utils.Interface {
       | "undraftMediator"
       | "withdrawReward"
   ): FunctionFragment;
+
+  getEvent(
+    nameOrSignatureOrTopic:
+      | "Committed"
+      | "DecisionExecuted"
+      | "DisputeCreated"
+      | "Drafted"
+      | "DraftedMediator"
+      | "OwnershipTransferred"
+      | "Revealed"
+      | "Undrafted"
+      | "UpdatedCore"
+      | "UpdatedEvidenceDur"
+      | "UpdatedMarketCore"
+      | "UpdatedMediatorManager"
+      | "UpdatedPredictDur"
+      | "UpdatedSharedSlashPortion"
+      | "WithdrawnMediatorReward"
+      | "WithdrawnReward"
+  ): EventFragment;
 
   encodeFunctionData(
     functionFragment: "commitVote",
@@ -191,7 +175,7 @@ export interface DisputeManagerInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "predictions",
-    values: [BigNumberish, BigNumberish, string, BigNumberish]
+    values: [BigNumberish, BigNumberish, AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -203,25 +187,31 @@ export interface DisputeManagerInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "rewardBalanceOf",
-    values: [string]
+    values: [AddressLike]
   ): string;
-  encodeFunctionData(functionFragment: "rewards", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "rewards",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "seenCommits",
     values: [BytesLike]
   ): string;
-  encodeFunctionData(functionFragment: "setCore", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "setCore",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "setEvidenceDur",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "setMarketCore",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "setMediatorManager",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "setPredictDur",
@@ -238,7 +228,7 @@ export interface DisputeManagerInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "token", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "undraftMediator",
@@ -336,631 +326,393 @@ export interface DisputeManagerInterface extends utils.Interface {
     functionFragment: "withdrawReward",
     data: BytesLike
   ): Result;
-
-  events: {
-    "Committed(address,uint256,uint256,address,uint256,bytes32)": EventFragment;
-    "DecisionExecuted(address,uint256,uint256,address,bool,bytes1)": EventFragment;
-    "DisputeCreated(uint256,address,uint256,bool)": EventFragment;
-    "Drafted(address,address,uint256,uint256,uint256,address)": EventFragment;
-    "DraftedMediator(address,uint256,uint256,uint256,address,address)": EventFragment;
-    "OwnershipTransferred(address,address)": EventFragment;
-    "Revealed(address,uint256,uint256,address,uint256,bytes1)": EventFragment;
-    "Undrafted(address,uint256,bool,address)": EventFragment;
-    "UpdatedCore(address)": EventFragment;
-    "UpdatedEvidenceDur(uint256)": EventFragment;
-    "UpdatedMarketCore(address)": EventFragment;
-    "UpdatedMediatorManager(address)": EventFragment;
-    "UpdatedPredictDur(uint256)": EventFragment;
-    "UpdatedSharedSlashPortion(uint256)": EventFragment;
-    "WithdrawnMediatorReward(address,uint256)": EventFragment;
-    "WithdrawnReward(address,uint256)": EventFragment;
-  };
-
-  getEvent(nameOrSignatureOrTopic: "Committed"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "DecisionExecuted"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "DisputeCreated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Drafted"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "DraftedMediator"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Revealed"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Undrafted"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedCore"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedEvidenceDur"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedMarketCore"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedMediatorManager"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedPredictDur"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedSharedSlashPortion"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "WithdrawnMediatorReward"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "WithdrawnReward"): EventFragment;
 }
 
-export interface CommittedEventObject {
-  marketId: string;
-  orderId: BigNumber;
-  disputeId: BigNumber;
-  committer: string;
-  ticketIdx: BigNumber;
-  hash: string;
+export namespace CommittedEvent {
+  export type InputTuple = [
+    marketId: AddressLike,
+    orderId: BigNumberish,
+    disputeId: BigNumberish,
+    committer: AddressLike,
+    ticketIdx: BigNumberish,
+    hash: BytesLike
+  ];
+  export type OutputTuple = [
+    marketId: string,
+    orderId: bigint,
+    disputeId: bigint,
+    committer: string,
+    ticketIdx: bigint,
+    hash: string
+  ];
+  export interface OutputObject {
+    marketId: string;
+    orderId: bigint;
+    disputeId: bigint;
+    committer: string;
+    ticketIdx: bigint;
+    hash: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type CommittedEvent = TypedEvent<
-  [string, BigNumber, BigNumber, string, BigNumber, string],
-  CommittedEventObject
->;
 
-export type CommittedEventFilter = TypedEventFilter<CommittedEvent>;
-
-export interface DecisionExecutedEventObject {
-  marketId: string;
-  orderId: BigNumber;
-  disputeId: BigNumber;
-  executor: string;
-  abandoned: boolean;
-  winningVote: string;
+export namespace DecisionExecutedEvent {
+  export type InputTuple = [
+    marketId: AddressLike,
+    orderId: BigNumberish,
+    disputeId: BigNumberish,
+    executor: AddressLike,
+    abandoned: boolean,
+    winningVote: BytesLike
+  ];
+  export type OutputTuple = [
+    marketId: string,
+    orderId: bigint,
+    disputeId: bigint,
+    executor: string,
+    abandoned: boolean,
+    winningVote: string
+  ];
+  export interface OutputObject {
+    marketId: string;
+    orderId: bigint;
+    disputeId: bigint;
+    executor: string;
+    abandoned: boolean;
+    winningVote: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type DecisionExecutedEvent = TypedEvent<
-  [string, BigNumber, BigNumber, string, boolean, string],
-  DecisionExecutedEventObject
->;
 
-export type DecisionExecutedEventFilter =
-  TypedEventFilter<DecisionExecutedEvent>;
-
-export interface DisputeCreatedEventObject {
-  orderId: BigNumber;
-  creator: string;
-  index: BigNumber;
-  wantRelease: boolean;
+export namespace DisputeCreatedEvent {
+  export type InputTuple = [
+    orderId: BigNumberish,
+    creator: AddressLike,
+    index: BigNumberish,
+    wantRelease: boolean
+  ];
+  export type OutputTuple = [
+    orderId: bigint,
+    creator: string,
+    index: bigint,
+    wantRelease: boolean
+  ];
+  export interface OutputObject {
+    orderId: bigint;
+    creator: string;
+    index: bigint;
+    wantRelease: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type DisputeCreatedEvent = TypedEvent<
-  [BigNumber, string, BigNumber, boolean],
-  DisputeCreatedEventObject
->;
 
-export type DisputeCreatedEventFilter = TypedEventFilter<DisputeCreatedEvent>;
-
-export interface DraftedEventObject {
-  marketId: string;
-  owner: string;
-  ticketId: BigNumber;
-  orderID: BigNumber;
-  disputeID: BigNumber;
-  drafter: string;
+export namespace DraftedEvent {
+  export type InputTuple = [
+    marketId: AddressLike,
+    owner: AddressLike,
+    ticketId: BigNumberish,
+    orderID: BigNumberish,
+    disputeID: BigNumberish,
+    drafter: AddressLike
+  ];
+  export type OutputTuple = [
+    marketId: string,
+    owner: string,
+    ticketId: bigint,
+    orderID: bigint,
+    disputeID: bigint,
+    drafter: string
+  ];
+  export interface OutputObject {
+    marketId: string;
+    owner: string;
+    ticketId: bigint;
+    orderID: bigint;
+    disputeID: bigint;
+    drafter: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type DraftedEvent = TypedEvent<
-  [string, string, BigNumber, BigNumber, BigNumber, string],
-  DraftedEventObject
->;
 
-export type DraftedEventFilter = TypedEventFilter<DraftedEvent>;
-
-export interface DraftedMediatorEventObject {
-  marketId: string;
-  poolId: BigNumber;
-  orderId: BigNumber;
-  ticketId: BigNumber;
-  mediator: string;
-  drafter: string;
+export namespace DraftedMediatorEvent {
+  export type InputTuple = [
+    marketId: AddressLike,
+    poolId: BigNumberish,
+    orderId: BigNumberish,
+    ticketId: BigNumberish,
+    mediator: AddressLike,
+    drafter: AddressLike
+  ];
+  export type OutputTuple = [
+    marketId: string,
+    poolId: bigint,
+    orderId: bigint,
+    ticketId: bigint,
+    mediator: string,
+    drafter: string
+  ];
+  export interface OutputObject {
+    marketId: string;
+    poolId: bigint;
+    orderId: bigint;
+    ticketId: bigint;
+    mediator: string;
+    drafter: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type DraftedMediatorEvent = TypedEvent<
-  [string, BigNumber, BigNumber, BigNumber, string, string],
-  DraftedMediatorEventObject
->;
 
-export type DraftedMediatorEventFilter = TypedEventFilter<DraftedMediatorEvent>;
-
-export interface OwnershipTransferredEventObject {
-  previousOwner: string;
-  newOwner: string;
+export namespace OwnershipTransferredEvent {
+  export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
+  export type OutputTuple = [previousOwner: string, newOwner: string];
+  export interface OutputObject {
+    previousOwner: string;
+    newOwner: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type OwnershipTransferredEvent = TypedEvent<
-  [string, string],
-  OwnershipTransferredEventObject
->;
 
-export type OwnershipTransferredEventFilter =
-  TypedEventFilter<OwnershipTransferredEvent>;
-
-export interface RevealedEventObject {
-  marketId: string;
-  orderId: BigNumber;
-  disputeId: BigNumber;
-  revealer: string;
-  ticketIdx: BigNumber;
-  vote: string;
+export namespace RevealedEvent {
+  export type InputTuple = [
+    marketId: AddressLike,
+    orderId: BigNumberish,
+    disputeId: BigNumberish,
+    revealer: AddressLike,
+    ticketIdx: BigNumberish,
+    vote: BytesLike
+  ];
+  export type OutputTuple = [
+    marketId: string,
+    orderId: bigint,
+    disputeId: bigint,
+    revealer: string,
+    ticketIdx: bigint,
+    vote: string
+  ];
+  export interface OutputObject {
+    marketId: string;
+    orderId: bigint;
+    disputeId: bigint;
+    revealer: string;
+    ticketIdx: bigint;
+    vote: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type RevealedEvent = TypedEvent<
-  [string, BigNumber, BigNumber, string, BigNumber, string],
-  RevealedEventObject
->;
 
-export type RevealedEventFilter = TypedEventFilter<RevealedEvent>;
-
-export interface UndraftedEventObject {
-  owner: string;
-  ticketId: BigNumber;
-  slashed: boolean;
-  undrafter: string;
+export namespace UndraftedEvent {
+  export type InputTuple = [
+    owner: AddressLike,
+    ticketId: BigNumberish,
+    slashed: boolean,
+    undrafter: AddressLike
+  ];
+  export type OutputTuple = [
+    owner: string,
+    ticketId: bigint,
+    slashed: boolean,
+    undrafter: string
+  ];
+  export interface OutputObject {
+    owner: string;
+    ticketId: bigint;
+    slashed: boolean;
+    undrafter: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UndraftedEvent = TypedEvent<
-  [string, BigNumber, boolean, string],
-  UndraftedEventObject
->;
 
-export type UndraftedEventFilter = TypedEventFilter<UndraftedEvent>;
-
-export interface UpdatedCoreEventObject {
-  addr: string;
+export namespace UpdatedCoreEvent {
+  export type InputTuple = [addr: AddressLike];
+  export type OutputTuple = [addr: string];
+  export interface OutputObject {
+    addr: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedCoreEvent = TypedEvent<[string], UpdatedCoreEventObject>;
 
-export type UpdatedCoreEventFilter = TypedEventFilter<UpdatedCoreEvent>;
-
-export interface UpdatedEvidenceDurEventObject {
-  val: BigNumber;
+export namespace UpdatedEvidenceDurEvent {
+  export type InputTuple = [val: BigNumberish];
+  export type OutputTuple = [val: bigint];
+  export interface OutputObject {
+    val: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedEvidenceDurEvent = TypedEvent<
-  [BigNumber],
-  UpdatedEvidenceDurEventObject
->;
 
-export type UpdatedEvidenceDurEventFilter =
-  TypedEventFilter<UpdatedEvidenceDurEvent>;
-
-export interface UpdatedMarketCoreEventObject {
-  addr: string;
+export namespace UpdatedMarketCoreEvent {
+  export type InputTuple = [addr: AddressLike];
+  export type OutputTuple = [addr: string];
+  export interface OutputObject {
+    addr: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedMarketCoreEvent = TypedEvent<
-  [string],
-  UpdatedMarketCoreEventObject
->;
 
-export type UpdatedMarketCoreEventFilter =
-  TypedEventFilter<UpdatedMarketCoreEvent>;
-
-export interface UpdatedMediatorManagerEventObject {
-  addr: string;
+export namespace UpdatedMediatorManagerEvent {
+  export type InputTuple = [addr: AddressLike];
+  export type OutputTuple = [addr: string];
+  export interface OutputObject {
+    addr: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedMediatorManagerEvent = TypedEvent<
-  [string],
-  UpdatedMediatorManagerEventObject
->;
 
-export type UpdatedMediatorManagerEventFilter =
-  TypedEventFilter<UpdatedMediatorManagerEvent>;
-
-export interface UpdatedPredictDurEventObject {
-  val: BigNumber;
+export namespace UpdatedPredictDurEvent {
+  export type InputTuple = [val: BigNumberish];
+  export type OutputTuple = [val: bigint];
+  export interface OutputObject {
+    val: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedPredictDurEvent = TypedEvent<
-  [BigNumber],
-  UpdatedPredictDurEventObject
->;
 
-export type UpdatedPredictDurEventFilter =
-  TypedEventFilter<UpdatedPredictDurEvent>;
-
-export interface UpdatedSharedSlashPortionEventObject {
-  val: BigNumber;
+export namespace UpdatedSharedSlashPortionEvent {
+  export type InputTuple = [val: BigNumberish];
+  export type OutputTuple = [val: bigint];
+  export interface OutputObject {
+    val: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedSharedSlashPortionEvent = TypedEvent<
-  [BigNumber],
-  UpdatedSharedSlashPortionEventObject
->;
 
-export type UpdatedSharedSlashPortionEventFilter =
-  TypedEventFilter<UpdatedSharedSlashPortionEvent>;
-
-export interface WithdrawnMediatorRewardEventObject {
-  claimer: string;
-  amount: BigNumber;
+export namespace WithdrawnMediatorRewardEvent {
+  export type InputTuple = [claimer: AddressLike, amount: BigNumberish];
+  export type OutputTuple = [claimer: string, amount: bigint];
+  export interface OutputObject {
+    claimer: string;
+    amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type WithdrawnMediatorRewardEvent = TypedEvent<
-  [string, BigNumber],
-  WithdrawnMediatorRewardEventObject
->;
 
-export type WithdrawnMediatorRewardEventFilter =
-  TypedEventFilter<WithdrawnMediatorRewardEvent>;
-
-export interface WithdrawnRewardEventObject {
-  claimer: string;
-  amount: BigNumber;
+export namespace WithdrawnRewardEvent {
+  export type InputTuple = [claimer: AddressLike, amount: BigNumberish];
+  export type OutputTuple = [claimer: string, amount: bigint];
+  export interface OutputObject {
+    claimer: string;
+    amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type WithdrawnRewardEvent = TypedEvent<
-  [string, BigNumber],
-  WithdrawnRewardEventObject
->;
-
-export type WithdrawnRewardEventFilter = TypedEventFilter<WithdrawnRewardEvent>;
 
 export interface DisputeManager extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
-  deployed(): Promise<this>;
+  connect(runner?: ContractRunner | null): DisputeManager;
+  waitForDeployment(): Promise<this>;
 
   interface: DisputeManagerInterface;
 
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
+  queryFilter<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+  queryFilter<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    fromBlockOrBlockhash?: string | number | undefined,
+    toBlock?: string | number | undefined
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
 
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
+  on<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  on<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-  functions: {
-    commitVote(
-      orderId: BigNumberish,
-      ticketIdx: BigNumberish,
-      _hash: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+  once<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  once<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-    core(overrides?: CallOverrides): Promise<[string]>;
+  listeners<TCEvent extends TypedContractEvent>(
+    event: TCEvent
+  ): Promise<Array<TypedListener<TCEvent>>>;
+  listeners(eventName?: string): Promise<Array<Listener>>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(
+    event?: TCEvent
+  ): Promise<this>;
 
-    countDisputes(
-      orderId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
+  commitVote: TypedContractMethod<
+    [orderId: BigNumberish, ticketIdx: BigNumberish, _hash: BytesLike],
+    [void],
+    "nonpayable"
+  >;
 
-    createDispute(
-      orderId: BigNumberish,
-      wantRelease: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+  core: TypedContractMethod<[], [string], "view">;
 
-    disputes(
-      arg0: BigNumberish,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<
-      [
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        string,
-        string,
-        string,
-        boolean,
-        boolean,
-        boolean
-      ] & {
-        commitEndAt: BigNumber;
-        predictEndAt: BigNumber;
-        evidenceEndAt: BigNumber;
-        nRelease: BigNumber;
-        nCancel: BigNumber;
-        undrafted: BigNumber;
-        marketId: string;
-        creator: string;
-        defendant: string;
-        executed: boolean;
-        wantRelease: boolean;
-        abandoned: boolean;
-      }
-    >;
+  countDisputes: TypedContractMethod<[orderId: BigNumberish], [bigint], "view">;
 
-    draftMediator(
-      orderId: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+  createDispute: TypedContractMethod<
+    [orderId: BigNumberish, wantRelease: boolean],
+    [void],
+    "nonpayable"
+  >;
 
-    evidenceDur(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    executeDecision(
-      orderId: BigNumberish,
-      dispIdx: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    getDispute(
-      orderId: BigNumberish,
-      dispIdx: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[DisputeStructOutput]>;
-
-    marketCore(overrides?: CallOverrides): Promise<[string]>;
-
-    mediatorMgr(overrides?: CallOverrides): Promise<[string]>;
-
-    owner(overrides?: CallOverrides): Promise<[string]>;
-
-    predictDur(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    predictions(
-      arg0: BigNumberish,
-      arg1: BigNumberish,
-      arg2: string,
-      arg3: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<
-      [boolean, string, string] & {
-        revealed: boolean;
-        committed: string;
-        vote: string;
-      }
-    >;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    revealVote(
-      orderId: BigNumberish,
-      ticketIdx: BigNumberish,
-      vote: string,
-      _hash: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    rewardBalanceOf(
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    rewards(arg0: string, overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    seenCommits(arg0: BytesLike, overrides?: CallOverrides): Promise<[boolean]>;
-
-    setCore(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setEvidenceDur(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setMarketCore(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setMediatorManager(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setPredictDur(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setSharedSlashPortion(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    sharedSlashPortionBP(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    token(overrides?: CallOverrides): Promise<[string]>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    undraftMediator(
-      orderId: BigNumberish,
-      dispIdx: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    withdrawReward(
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-  };
-
-  commitVote(
-    orderId: BigNumberish,
-    ticketIdx: BigNumberish,
-    _hash: BytesLike,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  core(overrides?: CallOverrides): Promise<string>;
-
-  countDisputes(
-    orderId: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  createDispute(
-    orderId: BigNumberish,
-    wantRelease: boolean,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  disputes(
-    arg0: BigNumberish,
-    arg1: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<
+  disputes: TypedContractMethod<
+    [arg0: BigNumberish, arg1: BigNumberish],
     [
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      string,
-      string,
-      string,
-      boolean,
-      boolean,
-      boolean
-    ] & {
-      commitEndAt: BigNumber;
-      predictEndAt: BigNumber;
-      evidenceEndAt: BigNumber;
-      nRelease: BigNumber;
-      nCancel: BigNumber;
-      undrafted: BigNumber;
-      marketId: string;
-      creator: string;
-      defendant: string;
-      executed: boolean;
-      wantRelease: boolean;
-      abandoned: boolean;
-    }
-  >;
-
-  draftMediator(
-    orderId: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  evidenceDur(overrides?: CallOverrides): Promise<BigNumber>;
-
-  executeDecision(
-    orderId: BigNumberish,
-    dispIdx: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  getDispute(
-    orderId: BigNumberish,
-    dispIdx: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<DisputeStructOutput>;
-
-  marketCore(overrides?: CallOverrides): Promise<string>;
-
-  mediatorMgr(overrides?: CallOverrides): Promise<string>;
-
-  owner(overrides?: CallOverrides): Promise<string>;
-
-  predictDur(overrides?: CallOverrides): Promise<BigNumber>;
-
-  predictions(
-    arg0: BigNumberish,
-    arg1: BigNumberish,
-    arg2: string,
-    arg3: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<
-    [boolean, string, string] & {
-      revealed: boolean;
-      committed: string;
-      vote: string;
-    }
-  >;
-
-  renounceOwnership(
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  revealVote(
-    orderId: BigNumberish,
-    ticketIdx: BigNumberish,
-    vote: string,
-    _hash: BytesLike,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  rewardBalanceOf(addr: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-  rewards(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-  seenCommits(arg0: BytesLike, overrides?: CallOverrides): Promise<boolean>;
-
-  setCore(
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setEvidenceDur(
-    val: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setMarketCore(
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setMediatorManager(
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setPredictDur(
-    val: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setSharedSlashPortion(
-    val: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  sharedSlashPortionBP(overrides?: CallOverrides): Promise<BigNumber>;
-
-  token(overrides?: CallOverrides): Promise<string>;
-
-  transferOwnership(
-    newOwner: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  undraftMediator(
-    orderId: BigNumberish,
-    dispIdx: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  withdrawReward(
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  callStatic: {
-    commitVote(
-      orderId: BigNumberish,
-      ticketIdx: BigNumberish,
-      _hash: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    core(overrides?: CallOverrides): Promise<string>;
-
-    countDisputes(
-      orderId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    createDispute(
-      orderId: BigNumberish,
-      wantRelease: boolean,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    disputes(
-      arg0: BigNumberish,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<
       [
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
         string,
         string,
         string,
@@ -968,12 +720,12 @@ export interface DisputeManager extends BaseContract {
         boolean,
         boolean
       ] & {
-        commitEndAt: BigNumber;
-        predictEndAt: BigNumber;
-        evidenceEndAt: BigNumber;
-        nRelease: BigNumber;
-        nCancel: BigNumber;
-        undrafted: BigNumber;
+        commitEndAt: bigint;
+        predictEndAt: bigint;
+        evidenceEndAt: bigint;
+        nRelease: bigint;
+        nCancel: bigint;
+        undrafted: bigint;
         marketId: string;
         creator: string;
         defendant: string;
@@ -981,531 +733,575 @@ export interface DisputeManager extends BaseContract {
         wantRelease: boolean;
         abandoned: boolean;
       }
-    >;
+    ],
+    "view"
+  >;
 
-    draftMediator(
-      orderId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  draftMediator: TypedContractMethod<
+    [orderId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    evidenceDur(overrides?: CallOverrides): Promise<BigNumber>;
+  evidenceDur: TypedContractMethod<[], [bigint], "view">;
 
-    executeDecision(
-      orderId: BigNumberish,
-      dispIdx: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  executeDecision: TypedContractMethod<
+    [orderId: BigNumberish, dispIdx: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    getDispute(
-      orderId: BigNumberish,
-      dispIdx: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<DisputeStructOutput>;
+  getDispute: TypedContractMethod<
+    [orderId: BigNumberish, dispIdx: BigNumberish],
+    [DisputeStructOutput],
+    "view"
+  >;
 
-    marketCore(overrides?: CallOverrides): Promise<string>;
+  marketCore: TypedContractMethod<[], [string], "view">;
 
-    mediatorMgr(overrides?: CallOverrides): Promise<string>;
+  mediatorMgr: TypedContractMethod<[], [string], "view">;
 
-    owner(overrides?: CallOverrides): Promise<string>;
+  owner: TypedContractMethod<[], [string], "view">;
 
-    predictDur(overrides?: CallOverrides): Promise<BigNumber>;
+  predictDur: TypedContractMethod<[], [bigint], "view">;
 
-    predictions(
+  predictions: TypedContractMethod<
+    [
       arg0: BigNumberish,
       arg1: BigNumberish,
-      arg2: string,
-      arg3: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<
+      arg2: AddressLike,
+      arg3: BigNumberish
+    ],
+    [
       [boolean, string, string] & {
         revealed: boolean;
         committed: string;
         vote: string;
       }
-    >;
+    ],
+    "view"
+  >;
 
-    renounceOwnership(overrides?: CallOverrides): Promise<void>;
+  renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
-    revealVote(
+  revealVote: TypedContractMethod<
+    [
       orderId: BigNumberish,
       ticketIdx: BigNumberish,
       vote: string,
-      _hash: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<void>;
+      _hash: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    rewardBalanceOf(
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+  rewardBalanceOf: TypedContractMethod<[addr: AddressLike], [bigint], "view">;
 
-    rewards(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
+  rewards: TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
 
-    seenCommits(arg0: BytesLike, overrides?: CallOverrides): Promise<boolean>;
+  seenCommits: TypedContractMethod<[arg0: BytesLike], [boolean], "view">;
 
-    setCore(addr: string, overrides?: CallOverrides): Promise<void>;
+  setCore: TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
 
-    setEvidenceDur(val: BigNumberish, overrides?: CallOverrides): Promise<void>;
+  setEvidenceDur: TypedContractMethod<
+    [val: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    setMarketCore(addr: string, overrides?: CallOverrides): Promise<void>;
+  setMarketCore: TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
 
-    setMediatorManager(addr: string, overrides?: CallOverrides): Promise<void>;
+  setMediatorManager: TypedContractMethod<
+    [addr: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    setPredictDur(val: BigNumberish, overrides?: CallOverrides): Promise<void>;
+  setPredictDur: TypedContractMethod<[val: BigNumberish], [void], "nonpayable">;
 
-    setSharedSlashPortion(
-      val: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  setSharedSlashPortion: TypedContractMethod<
+    [val: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    sharedSlashPortionBP(overrides?: CallOverrides): Promise<BigNumber>;
+  sharedSlashPortionBP: TypedContractMethod<[], [bigint], "view">;
 
-    token(overrides?: CallOverrides): Promise<string>;
+  token: TypedContractMethod<[], [string], "view">;
 
-    transferOwnership(
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  transferOwnership: TypedContractMethod<
+    [newOwner: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    undraftMediator(
+  undraftMediator: TypedContractMethod<
+    [orderId: BigNumberish, dispIdx: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  withdrawReward: TypedContractMethod<[], [void], "nonpayable">;
+
+  getFunction<T extends ContractMethod = ContractMethod>(
+    key: string | FunctionFragment
+  ): T;
+
+  getFunction(
+    nameOrSignature: "commitVote"
+  ): TypedContractMethod<
+    [orderId: BigNumberish, ticketIdx: BigNumberish, _hash: BytesLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "core"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "countDisputes"
+  ): TypedContractMethod<[orderId: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "createDispute"
+  ): TypedContractMethod<
+    [orderId: BigNumberish, wantRelease: boolean],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "disputes"
+  ): TypedContractMethod<
+    [arg0: BigNumberish, arg1: BigNumberish],
+    [
+      [
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        string,
+        string,
+        string,
+        boolean,
+        boolean,
+        boolean
+      ] & {
+        commitEndAt: bigint;
+        predictEndAt: bigint;
+        evidenceEndAt: bigint;
+        nRelease: bigint;
+        nCancel: bigint;
+        undrafted: bigint;
+        marketId: string;
+        creator: string;
+        defendant: string;
+        executed: boolean;
+        wantRelease: boolean;
+        abandoned: boolean;
+      }
+    ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "draftMediator"
+  ): TypedContractMethod<[orderId: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "evidenceDur"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "executeDecision"
+  ): TypedContractMethod<
+    [orderId: BigNumberish, dispIdx: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "getDispute"
+  ): TypedContractMethod<
+    [orderId: BigNumberish, dispIdx: BigNumberish],
+    [DisputeStructOutput],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "marketCore"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "mediatorMgr"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "owner"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "predictDur"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "predictions"
+  ): TypedContractMethod<
+    [
+      arg0: BigNumberish,
+      arg1: BigNumberish,
+      arg2: AddressLike,
+      arg3: BigNumberish
+    ],
+    [
+      [boolean, string, string] & {
+        revealed: boolean;
+        committed: string;
+        vote: string;
+      }
+    ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "renounceOwnership"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "revealVote"
+  ): TypedContractMethod<
+    [
       orderId: BigNumberish,
-      dispIdx: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+      ticketIdx: BigNumberish,
+      vote: string,
+      _hash: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "rewardBalanceOf"
+  ): TypedContractMethod<[addr: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "rewards"
+  ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "seenCommits"
+  ): TypedContractMethod<[arg0: BytesLike], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "setCore"
+  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setEvidenceDur"
+  ): TypedContractMethod<[val: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setMarketCore"
+  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setMediatorManager"
+  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setPredictDur"
+  ): TypedContractMethod<[val: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setSharedSlashPortion"
+  ): TypedContractMethod<[val: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "sharedSlashPortionBP"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "token"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "transferOwnership"
+  ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "undraftMediator"
+  ): TypedContractMethod<
+    [orderId: BigNumberish, dispIdx: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "withdrawReward"
+  ): TypedContractMethod<[], [void], "nonpayable">;
 
-    withdrawReward(overrides?: CallOverrides): Promise<void>;
-  };
+  getEvent(
+    key: "Committed"
+  ): TypedContractEvent<
+    CommittedEvent.InputTuple,
+    CommittedEvent.OutputTuple,
+    CommittedEvent.OutputObject
+  >;
+  getEvent(
+    key: "DecisionExecuted"
+  ): TypedContractEvent<
+    DecisionExecutedEvent.InputTuple,
+    DecisionExecutedEvent.OutputTuple,
+    DecisionExecutedEvent.OutputObject
+  >;
+  getEvent(
+    key: "DisputeCreated"
+  ): TypedContractEvent<
+    DisputeCreatedEvent.InputTuple,
+    DisputeCreatedEvent.OutputTuple,
+    DisputeCreatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Drafted"
+  ): TypedContractEvent<
+    DraftedEvent.InputTuple,
+    DraftedEvent.OutputTuple,
+    DraftedEvent.OutputObject
+  >;
+  getEvent(
+    key: "DraftedMediator"
+  ): TypedContractEvent<
+    DraftedMediatorEvent.InputTuple,
+    DraftedMediatorEvent.OutputTuple,
+    DraftedMediatorEvent.OutputObject
+  >;
+  getEvent(
+    key: "OwnershipTransferred"
+  ): TypedContractEvent<
+    OwnershipTransferredEvent.InputTuple,
+    OwnershipTransferredEvent.OutputTuple,
+    OwnershipTransferredEvent.OutputObject
+  >;
+  getEvent(
+    key: "Revealed"
+  ): TypedContractEvent<
+    RevealedEvent.InputTuple,
+    RevealedEvent.OutputTuple,
+    RevealedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Undrafted"
+  ): TypedContractEvent<
+    UndraftedEvent.InputTuple,
+    UndraftedEvent.OutputTuple,
+    UndraftedEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedCore"
+  ): TypedContractEvent<
+    UpdatedCoreEvent.InputTuple,
+    UpdatedCoreEvent.OutputTuple,
+    UpdatedCoreEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedEvidenceDur"
+  ): TypedContractEvent<
+    UpdatedEvidenceDurEvent.InputTuple,
+    UpdatedEvidenceDurEvent.OutputTuple,
+    UpdatedEvidenceDurEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedMarketCore"
+  ): TypedContractEvent<
+    UpdatedMarketCoreEvent.InputTuple,
+    UpdatedMarketCoreEvent.OutputTuple,
+    UpdatedMarketCoreEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedMediatorManager"
+  ): TypedContractEvent<
+    UpdatedMediatorManagerEvent.InputTuple,
+    UpdatedMediatorManagerEvent.OutputTuple,
+    UpdatedMediatorManagerEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedPredictDur"
+  ): TypedContractEvent<
+    UpdatedPredictDurEvent.InputTuple,
+    UpdatedPredictDurEvent.OutputTuple,
+    UpdatedPredictDurEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedSharedSlashPortion"
+  ): TypedContractEvent<
+    UpdatedSharedSlashPortionEvent.InputTuple,
+    UpdatedSharedSlashPortionEvent.OutputTuple,
+    UpdatedSharedSlashPortionEvent.OutputObject
+  >;
+  getEvent(
+    key: "WithdrawnMediatorReward"
+  ): TypedContractEvent<
+    WithdrawnMediatorRewardEvent.InputTuple,
+    WithdrawnMediatorRewardEvent.OutputTuple,
+    WithdrawnMediatorRewardEvent.OutputObject
+  >;
+  getEvent(
+    key: "WithdrawnReward"
+  ): TypedContractEvent<
+    WithdrawnRewardEvent.InputTuple,
+    WithdrawnRewardEvent.OutputTuple,
+    WithdrawnRewardEvent.OutputObject
+  >;
 
   filters: {
-    "Committed(address,uint256,uint256,address,uint256,bytes32)"(
-      marketId?: null,
-      orderId?: null,
-      disputeId?: null,
-      committer?: null,
-      ticketIdx?: null,
-      hash?: null
-    ): CommittedEventFilter;
-    Committed(
-      marketId?: null,
-      orderId?: null,
-      disputeId?: null,
-      committer?: null,
-      ticketIdx?: null,
-      hash?: null
-    ): CommittedEventFilter;
-
-    "DecisionExecuted(address,uint256,uint256,address,bool,bytes1)"(
-      marketId?: null,
-      orderId?: null,
-      disputeId?: null,
-      executor?: null,
-      abandoned?: null,
-      winningVote?: null
-    ): DecisionExecutedEventFilter;
-    DecisionExecuted(
-      marketId?: null,
-      orderId?: null,
-      disputeId?: null,
-      executor?: null,
-      abandoned?: null,
-      winningVote?: null
-    ): DecisionExecutedEventFilter;
-
-    "DisputeCreated(uint256,address,uint256,bool)"(
-      orderId?: null,
-      creator?: null,
-      index?: null,
-      wantRelease?: null
-    ): DisputeCreatedEventFilter;
-    DisputeCreated(
-      orderId?: null,
-      creator?: null,
-      index?: null,
-      wantRelease?: null
-    ): DisputeCreatedEventFilter;
-
-    "Drafted(address,address,uint256,uint256,uint256,address)"(
-      marketId?: null,
-      owner?: null,
-      ticketId?: null,
-      orderID?: null,
-      disputeID?: null,
-      drafter?: null
-    ): DraftedEventFilter;
-    Drafted(
-      marketId?: null,
-      owner?: null,
-      ticketId?: null,
-      orderID?: null,
-      disputeID?: null,
-      drafter?: null
-    ): DraftedEventFilter;
-
-    "DraftedMediator(address,uint256,uint256,uint256,address,address)"(
-      marketId?: null,
-      poolId?: null,
-      orderId?: null,
-      ticketId?: null,
-      mediator?: null,
-      drafter?: null
-    ): DraftedMediatorEventFilter;
-    DraftedMediator(
-      marketId?: null,
-      poolId?: null,
-      orderId?: null,
-      ticketId?: null,
-      mediator?: null,
-      drafter?: null
-    ): DraftedMediatorEventFilter;
-
-    "OwnershipTransferred(address,address)"(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
-    OwnershipTransferred(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
-
-    "Revealed(address,uint256,uint256,address,uint256,bytes1)"(
-      marketId?: null,
-      orderId?: null,
-      disputeId?: null,
-      revealer?: null,
-      ticketIdx?: null,
-      vote?: null
-    ): RevealedEventFilter;
-    Revealed(
-      marketId?: null,
-      orderId?: null,
-      disputeId?: null,
-      revealer?: null,
-      ticketIdx?: null,
-      vote?: null
-    ): RevealedEventFilter;
-
-    "Undrafted(address,uint256,bool,address)"(
-      owner?: null,
-      ticketId?: null,
-      slashed?: null,
-      undrafter?: null
-    ): UndraftedEventFilter;
-    Undrafted(
-      owner?: null,
-      ticketId?: null,
-      slashed?: null,
-      undrafter?: null
-    ): UndraftedEventFilter;
-
-    "UpdatedCore(address)"(addr?: null): UpdatedCoreEventFilter;
-    UpdatedCore(addr?: null): UpdatedCoreEventFilter;
-
-    "UpdatedEvidenceDur(uint256)"(val?: null): UpdatedEvidenceDurEventFilter;
-    UpdatedEvidenceDur(val?: null): UpdatedEvidenceDurEventFilter;
-
-    "UpdatedMarketCore(address)"(addr?: null): UpdatedMarketCoreEventFilter;
-    UpdatedMarketCore(addr?: null): UpdatedMarketCoreEventFilter;
-
-    "UpdatedMediatorManager(address)"(
-      addr?: null
-    ): UpdatedMediatorManagerEventFilter;
-    UpdatedMediatorManager(addr?: null): UpdatedMediatorManagerEventFilter;
-
-    "UpdatedPredictDur(uint256)"(val?: null): UpdatedPredictDurEventFilter;
-    UpdatedPredictDur(val?: null): UpdatedPredictDurEventFilter;
-
-    "UpdatedSharedSlashPortion(uint256)"(
-      val?: null
-    ): UpdatedSharedSlashPortionEventFilter;
-    UpdatedSharedSlashPortion(val?: null): UpdatedSharedSlashPortionEventFilter;
-
-    "WithdrawnMediatorReward(address,uint256)"(
-      claimer?: null,
-      amount?: null
-    ): WithdrawnMediatorRewardEventFilter;
-    WithdrawnMediatorReward(
-      claimer?: null,
-      amount?: null
-    ): WithdrawnMediatorRewardEventFilter;
-
-    "WithdrawnReward(address,uint256)"(
-      claimer?: null,
-      amount?: null
-    ): WithdrawnRewardEventFilter;
-    WithdrawnReward(claimer?: null, amount?: null): WithdrawnRewardEventFilter;
-  };
-
-  estimateGas: {
-    commitVote(
-      orderId: BigNumberish,
-      ticketIdx: BigNumberish,
-      _hash: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    core(overrides?: CallOverrides): Promise<BigNumber>;
-
-    countDisputes(
-      orderId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    createDispute(
-      orderId: BigNumberish,
-      wantRelease: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    disputes(
-      arg0: BigNumberish,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    draftMediator(
-      orderId: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    evidenceDur(overrides?: CallOverrides): Promise<BigNumber>;
-
-    executeDecision(
-      orderId: BigNumberish,
-      dispIdx: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    getDispute(
-      orderId: BigNumberish,
-      dispIdx: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    marketCore(overrides?: CallOverrides): Promise<BigNumber>;
-
-    mediatorMgr(overrides?: CallOverrides): Promise<BigNumber>;
-
-    owner(overrides?: CallOverrides): Promise<BigNumber>;
-
-    predictDur(overrides?: CallOverrides): Promise<BigNumber>;
-
-    predictions(
-      arg0: BigNumberish,
-      arg1: BigNumberish,
-      arg2: string,
-      arg3: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    revealVote(
-      orderId: BigNumberish,
-      ticketIdx: BigNumberish,
-      vote: string,
-      _hash: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    rewardBalanceOf(
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    rewards(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    seenCommits(arg0: BytesLike, overrides?: CallOverrides): Promise<BigNumber>;
-
-    setCore(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setEvidenceDur(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setMarketCore(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setMediatorManager(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setPredictDur(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setSharedSlashPortion(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    sharedSlashPortionBP(overrides?: CallOverrides): Promise<BigNumber>;
-
-    token(overrides?: CallOverrides): Promise<BigNumber>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    undraftMediator(
-      orderId: BigNumberish,
-      dispIdx: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    withdrawReward(
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-  };
-
-  populateTransaction: {
-    commitVote(
-      orderId: BigNumberish,
-      ticketIdx: BigNumberish,
-      _hash: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    core(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    countDisputes(
-      orderId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    createDispute(
-      orderId: BigNumberish,
-      wantRelease: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    disputes(
-      arg0: BigNumberish,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    draftMediator(
-      orderId: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    evidenceDur(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    executeDecision(
-      orderId: BigNumberish,
-      dispIdx: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    getDispute(
-      orderId: BigNumberish,
-      dispIdx: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    marketCore(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    mediatorMgr(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    predictDur(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    predictions(
-      arg0: BigNumberish,
-      arg1: BigNumberish,
-      arg2: string,
-      arg3: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    revealVote(
-      orderId: BigNumberish,
-      ticketIdx: BigNumberish,
-      vote: string,
-      _hash: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    rewardBalanceOf(
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    rewards(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    seenCommits(
-      arg0: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    setCore(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setEvidenceDur(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setMarketCore(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setMediatorManager(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setPredictDur(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setSharedSlashPortion(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    sharedSlashPortionBP(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    token(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    undraftMediator(
-      orderId: BigNumberish,
-      dispIdx: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    withdrawReward(
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
+    "Committed(address,uint256,uint256,address,uint256,bytes32)": TypedContractEvent<
+      CommittedEvent.InputTuple,
+      CommittedEvent.OutputTuple,
+      CommittedEvent.OutputObject
+    >;
+    Committed: TypedContractEvent<
+      CommittedEvent.InputTuple,
+      CommittedEvent.OutputTuple,
+      CommittedEvent.OutputObject
+    >;
+
+    "DecisionExecuted(address,uint256,uint256,address,bool,bytes1)": TypedContractEvent<
+      DecisionExecutedEvent.InputTuple,
+      DecisionExecutedEvent.OutputTuple,
+      DecisionExecutedEvent.OutputObject
+    >;
+    DecisionExecuted: TypedContractEvent<
+      DecisionExecutedEvent.InputTuple,
+      DecisionExecutedEvent.OutputTuple,
+      DecisionExecutedEvent.OutputObject
+    >;
+
+    "DisputeCreated(uint256,address,uint256,bool)": TypedContractEvent<
+      DisputeCreatedEvent.InputTuple,
+      DisputeCreatedEvent.OutputTuple,
+      DisputeCreatedEvent.OutputObject
+    >;
+    DisputeCreated: TypedContractEvent<
+      DisputeCreatedEvent.InputTuple,
+      DisputeCreatedEvent.OutputTuple,
+      DisputeCreatedEvent.OutputObject
+    >;
+
+    "Drafted(address,address,uint256,uint256,uint256,address)": TypedContractEvent<
+      DraftedEvent.InputTuple,
+      DraftedEvent.OutputTuple,
+      DraftedEvent.OutputObject
+    >;
+    Drafted: TypedContractEvent<
+      DraftedEvent.InputTuple,
+      DraftedEvent.OutputTuple,
+      DraftedEvent.OutputObject
+    >;
+
+    "DraftedMediator(address,uint256,uint256,uint256,address,address)": TypedContractEvent<
+      DraftedMediatorEvent.InputTuple,
+      DraftedMediatorEvent.OutputTuple,
+      DraftedMediatorEvent.OutputObject
+    >;
+    DraftedMediator: TypedContractEvent<
+      DraftedMediatorEvent.InputTuple,
+      DraftedMediatorEvent.OutputTuple,
+      DraftedMediatorEvent.OutputObject
+    >;
+
+    "OwnershipTransferred(address,address)": TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
+    OwnershipTransferred: TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
+
+    "Revealed(address,uint256,uint256,address,uint256,bytes1)": TypedContractEvent<
+      RevealedEvent.InputTuple,
+      RevealedEvent.OutputTuple,
+      RevealedEvent.OutputObject
+    >;
+    Revealed: TypedContractEvent<
+      RevealedEvent.InputTuple,
+      RevealedEvent.OutputTuple,
+      RevealedEvent.OutputObject
+    >;
+
+    "Undrafted(address,uint256,bool,address)": TypedContractEvent<
+      UndraftedEvent.InputTuple,
+      UndraftedEvent.OutputTuple,
+      UndraftedEvent.OutputObject
+    >;
+    Undrafted: TypedContractEvent<
+      UndraftedEvent.InputTuple,
+      UndraftedEvent.OutputTuple,
+      UndraftedEvent.OutputObject
+    >;
+
+    "UpdatedCore(address)": TypedContractEvent<
+      UpdatedCoreEvent.InputTuple,
+      UpdatedCoreEvent.OutputTuple,
+      UpdatedCoreEvent.OutputObject
+    >;
+    UpdatedCore: TypedContractEvent<
+      UpdatedCoreEvent.InputTuple,
+      UpdatedCoreEvent.OutputTuple,
+      UpdatedCoreEvent.OutputObject
+    >;
+
+    "UpdatedEvidenceDur(uint256)": TypedContractEvent<
+      UpdatedEvidenceDurEvent.InputTuple,
+      UpdatedEvidenceDurEvent.OutputTuple,
+      UpdatedEvidenceDurEvent.OutputObject
+    >;
+    UpdatedEvidenceDur: TypedContractEvent<
+      UpdatedEvidenceDurEvent.InputTuple,
+      UpdatedEvidenceDurEvent.OutputTuple,
+      UpdatedEvidenceDurEvent.OutputObject
+    >;
+
+    "UpdatedMarketCore(address)": TypedContractEvent<
+      UpdatedMarketCoreEvent.InputTuple,
+      UpdatedMarketCoreEvent.OutputTuple,
+      UpdatedMarketCoreEvent.OutputObject
+    >;
+    UpdatedMarketCore: TypedContractEvent<
+      UpdatedMarketCoreEvent.InputTuple,
+      UpdatedMarketCoreEvent.OutputTuple,
+      UpdatedMarketCoreEvent.OutputObject
+    >;
+
+    "UpdatedMediatorManager(address)": TypedContractEvent<
+      UpdatedMediatorManagerEvent.InputTuple,
+      UpdatedMediatorManagerEvent.OutputTuple,
+      UpdatedMediatorManagerEvent.OutputObject
+    >;
+    UpdatedMediatorManager: TypedContractEvent<
+      UpdatedMediatorManagerEvent.InputTuple,
+      UpdatedMediatorManagerEvent.OutputTuple,
+      UpdatedMediatorManagerEvent.OutputObject
+    >;
+
+    "UpdatedPredictDur(uint256)": TypedContractEvent<
+      UpdatedPredictDurEvent.InputTuple,
+      UpdatedPredictDurEvent.OutputTuple,
+      UpdatedPredictDurEvent.OutputObject
+    >;
+    UpdatedPredictDur: TypedContractEvent<
+      UpdatedPredictDurEvent.InputTuple,
+      UpdatedPredictDurEvent.OutputTuple,
+      UpdatedPredictDurEvent.OutputObject
+    >;
+
+    "UpdatedSharedSlashPortion(uint256)": TypedContractEvent<
+      UpdatedSharedSlashPortionEvent.InputTuple,
+      UpdatedSharedSlashPortionEvent.OutputTuple,
+      UpdatedSharedSlashPortionEvent.OutputObject
+    >;
+    UpdatedSharedSlashPortion: TypedContractEvent<
+      UpdatedSharedSlashPortionEvent.InputTuple,
+      UpdatedSharedSlashPortionEvent.OutputTuple,
+      UpdatedSharedSlashPortionEvent.OutputObject
+    >;
+
+    "WithdrawnMediatorReward(address,uint256)": TypedContractEvent<
+      WithdrawnMediatorRewardEvent.InputTuple,
+      WithdrawnMediatorRewardEvent.OutputTuple,
+      WithdrawnMediatorRewardEvent.OutputObject
+    >;
+    WithdrawnMediatorReward: TypedContractEvent<
+      WithdrawnMediatorRewardEvent.InputTuple,
+      WithdrawnMediatorRewardEvent.OutputTuple,
+      WithdrawnMediatorRewardEvent.OutputObject
+    >;
+
+    "WithdrawnReward(address,uint256)": TypedContractEvent<
+      WithdrawnRewardEvent.InputTuple,
+      WithdrawnRewardEvent.OutputTuple,
+      WithdrawnRewardEvent.OutputObject
+    >;
+    WithdrawnReward: TypedContractEvent<
+      WithdrawnRewardEvent.InputTuple,
+      WithdrawnRewardEvent.OutputTuple,
+      WithdrawnRewardEvent.OutputObject
+    >;
   };
 }

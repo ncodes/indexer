@@ -2,8 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import { Contract, Signer, utils } from "ethers";
-import type { Provider } from "@ethersproject/providers";
+import { Contract, Interface, type ContractRunner } from "ethers";
 import type {
   MediatorManager,
   MediatorManagerInterface,
@@ -1376,12 +1375,12 @@ const _abi = [
 export class MediatorManager__factory {
   static readonly abi = _abi;
   static createInterface(): MediatorManagerInterface {
-    return new utils.Interface(_abi) as MediatorManagerInterface;
+    return new Interface(_abi) as MediatorManagerInterface;
   }
   static connect(
     address: string,
-    signerOrProvider: Signer | Provider
+    runner?: ContractRunner | null
   ): MediatorManager {
-    return new Contract(address, _abi, signerOrProvider) as MediatorManager;
+    return new Contract(address, _abi, runner) as unknown as MediatorManager;
   }
 }

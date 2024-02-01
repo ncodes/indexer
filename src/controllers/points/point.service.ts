@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as csv from 'csv-parser';
-import { BigNumber, Event } from 'ethers';
 import { random } from 'lodash';
 import { Transaction, transaction } from 'objection';
 import { Readable } from 'stream';
@@ -11,7 +10,7 @@ import Market from '../../models/market';
 import Point, { PointAction, PointValue } from '../../models/point';
 import Swap from '../../models/swap';
 import User from '../../models/user';
-import { pow10D } from '../../network/common';
+import { ContractCallEvent, pow10 } from '../../network/common';
 import { AuthService } from './../auth/auth.service';
 import { NFTAllocations } from './data/nft_allocation';
 import { MarketPoints } from './data/points';
@@ -108,7 +107,7 @@ export class PointService {
    * @param amount The swap amount
    * @param txn Optional transaction object
    */
-  async grantOnSwap(market: Market, swap: Swap, txn?: Transaction, event?: Event) {
+  async grantOnSwap(market: Market, swap: Swap, txn?: Transaction, event?: ContractCallEvent) {
     if (!this.isAddrAllowed(swap.taker) || !this.isAddrAllowed(swap.provider)) return false;
 
     const pointPerUnit =
@@ -117,7 +116,7 @@ export class PointService {
     // Handle ERC20/ERC20.
     // Award points to both taker and provider
     if (market.instant && market.involvesERC20()) {
-      const amountHD = toDec(swap.amount).div(pow10D(market.baseDecimals));
+      const amountHD = toDec(swap.amount).div(pow10(market.baseDecimals));
       const point = amountHD.mul(pointPerUnit);
       const unitPerLevel = toDec(MarketPoints[`swap:level:${market.address}`] || point);
       const level = Math.max(1, point.div(unitPerLevel).toNumber());
@@ -198,11 +197,11 @@ export class PointService {
       // If the base token is ERC20, the amount is the swap amount.
       // If the quote token is ERC20, the amount is the swap amount * price (cost in quote token)
       if (Market.isERC20(market.baseType)) {
-        amount = toDec(swap.amount).div(pow10D(market.baseDecimals));
+        amount = toDec(swap.amount).div(pow10(market.baseDecimals));
       } else if (Market.isERC20(market.quoteType)) {
         amount = toDec(swap.amount)
           .mul(swap.price)
-          .div(pow10D(market.quoteDecimals + market.baseDecimals));
+          .div(pow10(market.quoteDecimals + market.baseDecimals));
       }
 
       const point = amount.mul(pointPerUnit);
@@ -297,7 +296,7 @@ export class PointService {
     liq: Liquidity,
     add: boolean,
     provider: string,
-    amount: BigNumber,
+    amount: bigint,
     txn?: Transaction,
   ) {
     if (!this.isAddrAllowed(provider)) return false;
@@ -308,7 +307,7 @@ export class PointService {
     const pointPerUnit =
       MarketPoints['liq:' + market.address] ?? MarketPoints[market.instant ? 'liq:instant' : 'liq:interactive'];
 
-    const amountHD = toDec(amount).div(pow10D(market.baseDecimals));
+    const amountHD = toDec(amount).div(pow10(market.baseDecimals));
     const point = amountHD.mul(pointPerUnit);
 
     this.logger.log(
@@ -422,7 +421,7 @@ export class PointService {
    * @param event
    * @param txn Optional transaction object
    */
-  async grantPoint(id: string, net: string, recipient: string, event: Event, txn?: Transaction) {
+  async grantPoint(id: string, net: string, recipient: string, event: ContractCallEvent, txn?: Transaction) {
     if (!this.isAddrAllowed(recipient)) return false;
 
     const point = MarketPoints[id];

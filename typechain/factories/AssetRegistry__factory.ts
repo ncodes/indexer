@@ -2,8 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import { Contract, Signer, utils } from "ethers";
-import type { Provider } from "@ethersproject/providers";
+import { Contract, Interface, type ContractRunner } from "ethers";
 import type { AssetRegistry, AssetRegistryInterface } from "../AssetRegistry";
 
 const _abi = [
@@ -410,12 +409,12 @@ const _abi = [
 export class AssetRegistry__factory {
   static readonly abi = _abi;
   static createInterface(): AssetRegistryInterface {
-    return new utils.Interface(_abi) as AssetRegistryInterface;
+    return new Interface(_abi) as AssetRegistryInterface;
   }
   static connect(
     address: string,
-    signerOrProvider: Signer | Provider
+    runner?: ContractRunner | null
   ): AssetRegistry {
-    return new Contract(address, _abi, signerOrProvider) as AssetRegistry;
+    return new Contract(address, _abi, runner) as unknown as AssetRegistry;
   }
 }

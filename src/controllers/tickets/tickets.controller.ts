@@ -1,12 +1,14 @@
 import { Controller, Get, Query, ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ok, throw404 } from '../../common/responses/responses';
 import Ticket from '../../models/ticket';
-import { TicketsService } from './tickets.service';
-import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
-import { GetQueryDTO, ListQueryDTO, StatsQueryDTO } from './query.dto';
+import { toNumber } from '../../network/common';
 import NetworkService from '../../network/network.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
-import { ConfigService } from '@nestjs/config';
+import { toDec } from './../../common/common';
+import { GetQueryDTO, ListQueryDTO, StatsQueryDTO } from './query.dto';
+import { TicketsService } from './tickets.service';
 
 interface StatsResponse {
   totalBonds: string;
@@ -130,8 +132,8 @@ export class TicketsController {
       totalBondsUsd,
       price: price?.toString(),
       priceUsd,
-      ticketSupply: ticketSupply?.toNumber(),
-      ticketAvailable: ticketSupply?.sub(ticketSold).toNumber(),
+      ticketSupply: toNumber(ticketSupply || '0'),
+      ticketAvailable: toDec(ticketSupply).sub(ticketSold.toString()).toNumber(),
     };
 
     if (q.owner) {

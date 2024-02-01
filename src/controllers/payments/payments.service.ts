@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ethers, Wallet } from 'ethers';
-import NetworkService from '../../network/network.service';
+import { AbiCoder, Wallet, keccak256 } from 'ethers';
 import * as moment from 'moment';
+import NetworkService from '../../network/network.service';
 
 @Injectable()
 export class PaymentsService {
@@ -36,7 +36,7 @@ export class PaymentsService {
     if (!hasBadge) {
       types = ['string', 'string', 'address', 'uint256', 'string[]', 'string[]', 'uint256'];
       sigInfo.values = [badgePath[0], badgePath[1], granteeAddr, 0, [metaKey], [metaValue], sigExp.unix()];
-      const msgHash = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(types, sigInfo.values));
+      const msgHash = keccak256(AbiCoder.defaultAbiCoder().encode(types, sigInfo.values));
       const msgHashBytes = Buffer.from(msgHash.substring(2), 'hex');
       sigInfo.sig = await signer.signMessage(msgHashBytes);
       sigInfo.isNew = true;
@@ -46,7 +46,7 @@ export class PaymentsService {
     // Generate signature for upsertGranteeMetaBySig
     types = ['string', 'string', 'address', 'string', 'string', 'uint256'];
     sigInfo.values = [badgePath[0], badgePath[1], granteeAddr, metaKey, metaValue, sigExp.unix()];
-    const msgHash = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(types, sigInfo.values));
+    const msgHash = keccak256(AbiCoder.defaultAbiCoder().encode(types, sigInfo.values));
     const msgHashBytes = Buffer.from(msgHash.substring(2), 'hex');
     sigInfo.sig = await signer.signMessage(msgHashBytes);
     sigInfo.isNew = false;

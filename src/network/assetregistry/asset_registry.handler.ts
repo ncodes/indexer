@@ -1,10 +1,11 @@
-import { BigNumber, Event, providers } from 'ethers';
+import { Provider } from 'ethers';
+import { toNumber } from 'lodash';
 import { Transaction } from 'objection';
 import AssetRegistry from '../../models/asset_registry';
 import { Handler } from '../handler';
 
 export class AssetRegistryHandler extends Handler {
-  constructor(private provider: providers.JsonRpcProvider, public network: string, private contracts: JointContracts) {
+  constructor(private provider: Provider, public network: string, private contracts: JointContracts) {
     super(AssetRegistryHandler.name, null, network, contracts.assetRegistry);
   }
 
@@ -16,10 +17,10 @@ export class AssetRegistryHandler extends Handler {
       'AssetRegistryUpdated',
       async (
         address: string,
-        curRate: BigNumber,
-        feeBp: BigNumber,
-        feeFixed: BigNumber,
-        amountPerRewardPoint: BigNumber,
+        curRate: bigint,
+        feeBp: bigint,
+        feeFixed: bigint,
+        amountPerRewardPoint: bigint,
         verified: boolean,
         stable: boolean,
         shareable: boolean,
@@ -57,10 +58,10 @@ export class AssetRegistryHandler extends Handler {
    */
   async onAssetRegistryUpdated(
     address: string,
-    curRate: BigNumber,
-    feeBp: BigNumber,
-    feeFixed: BigNumber,
-    amountPerRewardPoint: BigNumber,
+    curRate: bigint,
+    feeBp: bigint,
+    feeFixed: bigint,
+    amountPerRewardPoint: bigint,
     verified: boolean,
     stable: boolean,
     sharable: boolean,
@@ -73,7 +74,7 @@ export class AssetRegistryHandler extends Handler {
         network: this.network,
         address,
         curRate: curRate.toString(),
-        feeBp: feeBp.toNumber(),
+        feeBp: toNumber(feeBp.toString()),
         feeFixed: feeFixed.toString(),
         amountPerRewardPoint: amountPerRewardPoint.toString(),
         verified,

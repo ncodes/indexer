@@ -1,8 +1,22 @@
 import { ChainNames } from '@jointlabs/chains-info';
 import Decimal from 'decimal.js';
-import { BigNumber, BigNumberish, Event, Wallet } from 'ethers';
+import { BigNumberish, Block, TransactionResponse, Wallet } from 'ethers';
 import * as moment from 'moment/moment';
 import { toDec } from '../common/common';
+
+export interface ContractCallEvent {
+  event: string;
+  args: any;
+  blockNumber: number;
+  logIndex: number;
+  transactionIndex: number;
+  transactionHash: string;
+  address: string;
+  eventSignature: string;
+  removed: boolean;
+  getBlock: () => Promise<Block>;
+  getTransaction: () => Promise<TransactionResponse>;
+}
 
 // Map network or symbol name to corresponding CoinGecko network identifier
 export const CoinGeckoConfig = {
@@ -40,27 +54,18 @@ export const MinerTaskDurations: MinerTaskDuration = {
  * Return BigNumber equivalent of v
  * @param v
  */
-export function toBN(v) {
-  return BigNumber.from(v || 0);
+export function toBigInt(v: number | string | bigint | Decimal) {
+  return BigInt(toDec(v).toFixed(0));
 }
 
 // pow10 returns 10^decimals
 export function pow10(decimals: number) {
-  return BigNumber.from(10).pow(decimals);
-}
-
-// pow10D returns 10^decimals as a Decimal object
-export function pow10D(decimals: number) {
   return toDec(10).pow(decimals);
 }
 
 // powOf returns n * 10^power
 export function powOf(n: BigNumberish, power: number) {
-  return toBN(
-    toDec(n)
-      .mul(toDec(pow10(power)))
-      .toFixed(0),
-  );
+  return toBigInt(toDec(n).mul(pow10(power)).toFixed(0));
 }
 
 // toFixed returns n with up to places decimal places.
@@ -73,16 +78,28 @@ export function toFixed(n: Decimal, places?: number): string {
   return n.toFixed();
 }
 
-// isZero checks if amt is zero or undefined
+/**
+ * Check if a number is zero
+ * @param amt The number to check
+ * @returns True if amt is zero or undefined
+ */
 export function isZero(amt: BigNumberish) {
   return !amt || toDec(amt).eq(0);
+}
+
+/**
+ * Convert a big number to number
+ * @param v The number to convert
+ */
+export function toNumber(v: BigNumberish) {
+  return toDec(v).toNumber();
 }
 
 /**
  * Get block time but defaults to unix time if block time is in the future
  * @param event The blockchain event
  */
-export async function getBlockTime(event: Event) {
+export async function getBlockTime(event: ContractCallEvent) {
   const now = moment().unix();
   const block = await event.getBlock();
   return block.timestamp > now ? now : block.timestamp;
@@ -90,4 +107,22 @@ export async function getBlockTime(event: Event) {
 
 export function genEthAddress() {
   return Wallet.createRandom().address;
+}
+
+/**
+ * Commify a number
+ * @param value The number to commify
+ * @returns
+ */
+export function commify(value) {
+  const match = value.match(/^(-?)([0-9]*)(\.?)([0-9]*)$/);
+  if (!match || (!match[2] && !match[4])) {
+    throw new Error(`bad formatted number: ${JSON.stringify(value)}`);
+  }
+
+  const neg = match[1];
+  const whole = BigInt(match[2] || 0).toLocaleString('en-us');
+  const frac = match[4] ? match[4].match(/^(.*?)0*$/)[1] : '0';
+
+  return `${neg}${whole}.${frac}`;
 }

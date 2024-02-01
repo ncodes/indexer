@@ -1,8 +1,9 @@
-import { BigNumber, Event, providers } from 'ethers';
+import { JsonRpcProvider } from 'ethers';
+import { ContractCallEvent } from '../common';
 import { Handler } from '../handler';
 
 export class FeePoolHandler extends Handler {
-  constructor(private provider: providers.JsonRpcProvider, public network: string, private contracts: JointContracts) {
+  constructor(private provider: JsonRpcProvider, public network: string, private contracts: JointContracts) {
     super(FeePoolHandler.name, null, network, contracts.feePool);
   }
 
@@ -10,15 +11,15 @@ export class FeePoolHandler extends Handler {
    * Listen for events
    */
   listen() {
-    this.on('RewardAdded', async (token: string, amount: BigNumber, event: Event) => {
+    this.on('RewardAdded', async (token: string, amount: bigint, event: ContractCallEvent) => {
       return this.onRewardAdded(token, amount, event);
     });
 
-    this.on('RewardWithdrawn', async (token: string, account: string, amount: BigNumber, event: Event) => {
+    this.on('RewardWithdrawn', async (token: string, account: string, amount: bigint, event: ContractCallEvent) => {
       return this.onRewardWithdrawn(token, account, amount, event);
     });
 
-    this.on('Recovered', async (token: string, amount: BigNumber, event: Event) => {
+    this.on('Recovered', async (token: string, amount: bigint, event: ContractCallEvent) => {
       return this.onRecovered(token, amount, event);
     });
   }
@@ -29,7 +30,7 @@ export class FeePoolHandler extends Handler {
    * @param _amount The amount transferred
    * @param _event The event object
    */
-  async onRewardAdded(_token: string, _amount: BigNumber, _event: Event) {
+  async onRewardAdded(_token: string, _amount: bigint, _event: ContractCallEvent) {
     //
   }
 
@@ -40,7 +41,7 @@ export class FeePoolHandler extends Handler {
    * @param _amount The amount of reward withdrawn
    * @param _event The event object
    */
-  async onRewardWithdrawn(_token: string, _account: string, _amount: BigNumber, _event: Event) {
+  async onRewardWithdrawn(_token: string, _account: string, _amount: bigint, _event: ContractCallEvent) {
     //
   }
 
@@ -50,7 +51,7 @@ export class FeePoolHandler extends Handler {
    * @param _amount The amount recovered
    * @param _event The event object
    */
-  async onRecovered(_token: string, _amount: BigNumber, _event: Event) {
+  async onRecovered(_token: string, _amount: bigint, _event: ContractCallEvent) {
     //
   }
 }

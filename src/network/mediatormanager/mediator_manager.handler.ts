@@ -1,8 +1,7 @@
-import * as ethers from 'ethers';
-import { BigNumber } from 'ethers';
-import { commify, formatEther } from 'ethers/lib/utils';
+import { Provider, formatEther } from 'ethers';
 import * as moment from 'moment';
 import { Transaction } from 'objection';
+import { toDec } from '../../common/common';
 import { NotifierService } from '../../jobs/mailer/NotifierService';
 import { NotificationID } from '../../jobs/mailer/common';
 import Dispute from '../../models/dispute';
@@ -14,7 +13,7 @@ import MineTask, { MineTaskType } from '../../models/mine_task';
 import Swap from '../../models/swap';
 import Ticket from '../../models/ticket';
 import TicketSlash from '../../models/ticket_slash';
-import { getBlockTime, toBN } from '../common';
+import { ContractCallEvent, commify, getBlockTime, toNumber } from '../common';
 import { Handler } from '../handler';
 import NetworkService from '../network.service';
 
@@ -22,7 +21,7 @@ export class MediatorManagerHandler extends Handler {
   constructor(
     private netSrv: NetworkService,
     private notifSrv: NotifierService,
-    private provider: ethers.providers.JsonRpcProvider,
+    private provider: Provider,
     public network: string,
     private contracts: JointContracts,
   ) {
@@ -37,32 +36,32 @@ export class MediatorManagerHandler extends Handler {
       'TicketPurchased',
       async (
         owner: string,
-        id: BigNumber,
-        poolId: BigNumber,
-        amount: BigNumber,
-        matureAt: BigNumber,
-        joinBy: BigNumber,
-        event: ethers.Event,
+        id: bigint,
+        poolId: bigint,
+        amount: bigint,
+        matureAt: bigint,
+        joinBy: bigint,
+        event: ContractCallEvent,
         txn?: Transaction,
       ) => {
         return this.onTicketPurchased(owner, id, poolId, amount, matureAt, joinBy, event, txn);
       },
     );
 
-    this.on('TicketCancelled', async (owner: string, id: BigNumber, event: ethers.Event, txn?: Transaction) => {
+    this.on('TicketCancelled', async (owner: string, id: bigint, event: ContractCallEvent, txn?: Transaction) => {
       return this.onTicketCancelled(owner, id, event, txn);
     });
 
     this.on(
       'TicketDrained',
-      async (owner: string, id: BigNumber, amount: BigNumber, event: ethers.Event, txn?: Transaction) => {
+      async (owner: string, id: bigint, amount: bigint, event: ContractCallEvent, txn?: Transaction) => {
         return this.onTicketDrained(owner, id, amount, event, txn);
       },
     );
 
     this.on(
       'JoinedPool',
-      async (owner: string, pooldId: BigNumber, ticketId: BigNumber, event: ethers.Event, txn?: Transaction) => {
+      async (owner: string, pooldId: bigint, ticketId: bigint, event: ContractCallEvent, txn?: Transaction) => {
         return this.onJoinedPool(owner, pooldId, ticketId, event, txn);
       },
     );
@@ -72,11 +71,11 @@ export class MediatorManagerHandler extends Handler {
       async (
         marketAddress: string,
         owner: string,
-        ticketId: BigNumber,
-        orderId: BigNumber,
-        disputeId: BigNumber,
+        ticketId: bigint,
+        orderId: bigint,
+        disputeId: bigint,
         drafter: string,
-        event: ethers.Event,
+        event: ContractCallEvent,
         txn?: Transaction,
       ) => {
         return this.onDrafted(marketAddress, owner, ticketId, orderId, disputeId, drafter, event, txn);
@@ -87,10 +86,10 @@ export class MediatorManagerHandler extends Handler {
       'Undrafted',
       async (
         owner: string,
-        ticketId: BigNumber,
+        ticketId: bigint,
         slashed: boolean,
         undrafter: string,
-        event: ethers.Event,
+        event: ContractCallEvent,
         txn?: Transaction,
       ) => {
         return this.onUndrafted(owner, ticketId, slashed, undrafter, event, txn);
@@ -101,11 +100,11 @@ export class MediatorManagerHandler extends Handler {
       'TicketSlashed',
       async (
         owner: string,
-        ticketId: BigNumber,
-        amount: BigNumber,
+        ticketId: bigint,
+        amount: bigint,
         voted: boolean,
         winSide: boolean,
-        event: ethers.Event,
+        event: ContractCallEvent,
         txn?: Transaction,
       ) => {
         return this.onTicketSlashed(owner, ticketId, amount, voted, winSide, event, txn);
@@ -115,14 +114,14 @@ export class MediatorManagerHandler extends Handler {
     this.on(
       'UpdatedTicketPool',
       async (
-        poolId: BigNumber,
-        reqBond: BigNumber,
-        draftReward: BigNumber,
-        winReward: BigNumber,
-        noVoteSlashBP: BigNumber,
-        loseVoteSlashBP: BigNumber,
-        numDraftees: BigNumber,
-        event: ethers.Event,
+        poolId: bigint,
+        reqBond: bigint,
+        draftReward: bigint,
+        winReward: bigint,
+        noVoteSlashBP: bigint,
+        loseVoteSlashBP: bigint,
+        numDraftees: bigint,
+        event: ContractCallEvent,
         txn?: Transaction,
       ) => {
         return this.onUpdatedTicketPool(
@@ -139,15 +138,15 @@ export class MediatorManagerHandler extends Handler {
       },
     );
 
-    this.on('UpdatedTicketCancelDuration', async (duration: BigNumber, event: ethers.Event, txn?: Transaction) => {
+    this.on('UpdatedTicketCancelDuration', async (duration: bigint, event: ContractCallEvent, txn?: Transaction) => {
       return this.onParameterUpdate('ticketCancelDur', duration.toString(), event, txn);
     });
 
-    this.on('UpdatedTicketMatureDuration', async (duration: BigNumber, event: ethers.Event, txn?: Transaction) => {
+    this.on('UpdatedTicketMatureDuration', async (duration: bigint, event: ContractCallEvent, txn?: Transaction) => {
       return this.onParameterUpdate('ticketMatureDur', duration.toString(), event, txn);
     });
 
-    this.on('UpdatedTicketExpireDuration', async (duration: BigNumber, event: ethers.Event, txn?: Transaction) => {
+    this.on('UpdatedTicketExpireDuration', async (duration: bigint, event: ContractCallEvent, txn?: Transaction) => {
       return this.onParameterUpdate('ticketExpireDur', duration.toString(), event, txn);
     });
   }
@@ -165,23 +164,23 @@ export class MediatorManagerHandler extends Handler {
    */
   async onTicketPurchased(
     owner: string,
-    id: BigNumber,
-    poolId: BigNumber,
-    amount: BigNumber,
-    matureAt: BigNumber,
-    joinBy: BigNumber,
-    event: ethers.Event,
+    id: bigint,
+    poolId: bigint,
+    amount: bigint,
+    matureAt: bigint,
+    joinBy: bigint,
+    event: ContractCallEvent,
     txn?: Transaction,
   ) {
     await Ticket.create(
       {
         network: this.network,
         owner,
-        index: id.toNumber(),
-        poolId: poolId.toNumber(),
+        index: toNumber(id),
+        poolId: toNumber(poolId),
         bond: amount.toString(),
-        matureAt: moment.unix(matureAt.toNumber()).toISOString(),
-        joinBy: moment.unix(joinBy.toNumber()).toISOString(),
+        matureAt: moment.unix(toNumber(matureAt)).toISOString(),
+        joinBy: moment.unix(toNumber(joinBy)).toISOString(),
         txHash: event.transactionHash,
       },
       txn,
@@ -197,8 +196,8 @@ export class MediatorManagerHandler extends Handler {
    * @param event The event object
    * @param txn The database transaction handle
    */
-  async onTicketCancelled(owner: string, id: BigNumber, event: ethers.Event, txn?: Transaction) {
-    const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, id.toNumber(), undefined, txn);
+  async onTicketCancelled(owner: string, id: bigint, event: ContractCallEvent, txn?: Transaction) {
+    const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, toNumber(id), undefined, txn);
     const blockTime = await getBlockTime(event);
     const cancelAt = blockTime + parseInt(await this.getParam('ticketCancelDur'));
     await Ticket.updateById(
@@ -222,8 +221,8 @@ export class MediatorManagerHandler extends Handler {
    * @param event The event object
    * @param txn The database transaction handle
    */
-  async onTicketDrained(owner: string, id: BigNumber, _amount: BigNumber, event: ethers.Event, txn?: Transaction) {
-    const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, id.toNumber(), undefined, txn);
+  async onTicketDrained(owner: string, id: bigint, _amount: bigint, event: ContractCallEvent, txn?: Transaction) {
+    const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, toNumber(id), undefined, txn);
     await Ticket.updateById(ticket.id, { bond: '0', drained: true, drainedAt: moment().toISOString() }, txn);
     await this.netSrv.pointSrv.grantPoint('ticket:drained', this.network, owner, event, txn);
   }
@@ -236,9 +235,9 @@ export class MediatorManagerHandler extends Handler {
    * @param event The event object
    * @param txn The database transaction handle
    */
-  async onJoinedPool(owner: string, poolId: BigNumber, ticketId: BigNumber, event: ethers.Event, txn?: Transaction) {
-    const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, ticketId.toNumber(), undefined, txn);
-    await Ticket.updateById(ticket.id, { poolId: poolId.toNumber(), joined: true }, txn);
+  async onJoinedPool(owner: string, poolId: bigint, ticketId: bigint, event: ContractCallEvent, txn?: Transaction) {
+    const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, toNumber(ticketId), undefined, txn);
+    await Ticket.updateById(ticket.id, { poolId: toNumber(poolId), joined: true }, txn);
     await this.netSrv.pointSrv.grantPoint('ticket:joined', this.network, owner, event, txn);
   }
 
@@ -256,39 +255,39 @@ export class MediatorManagerHandler extends Handler {
   async onDrafted(
     marketAddress: string,
     owner: string,
-    ticketId: BigNumber,
-    orderId: BigNumber,
-    disputeId: BigNumber,
+    ticketId: bigint,
+    orderId: bigint,
+    disputeId: bigint,
     drafter: string,
-    event: ethers.Event,
+    event: ContractCallEvent,
     txn?: Transaction,
   ) {
     // Update ticket status
-    const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, ticketId.toNumber(), undefined, txn);
+    const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, toNumber(ticketId), undefined, txn);
     await Ticket.updateById(
       ticket.id,
       {
-        orderId: orderId.toNumber(),
+        orderId: toNumber(orderId),
         drafted: true,
         draftedAt: moment().toISOString(),
-        disputeId: disputeId.toNumber(),
+        disputeId: toNumber(disputeId),
       },
       txn,
     );
 
     // Get the dispute
-    let dispute = await Dispute.get(this.network, marketAddress, orderId.toNumber(), disputeId.toNumber(), txn);
+    let dispute = await Dispute.get(this.network, marketAddress, toNumber(orderId), toNumber(disputeId), txn);
 
     // Create new draft
     await Draft.create(
       {
         network: this.network,
         owner,
-        index: ticketId.toNumber(),
+        index: toNumber(ticketId),
         marketAddress,
         ticketId: ticket.id,
-        orderId: orderId.toNumber(),
-        disputeIndex: disputeId.toNumber(),
+        orderId: toNumber(orderId),
+        disputeIndex: toNumber(disputeId),
         disputeId: dispute.id,
       },
       txn,
@@ -318,7 +317,7 @@ export class MediatorManagerHandler extends Handler {
     );
 
     // Complete a draft mining task
-    await MineTask.completeOneDraftTask(ticket.network, marketAddress, orderId.toNumber(), disputeId.toNumber(), txn);
+    await MineTask.completeOneDraftTask(ticket.network, marketAddress, toNumber(orderId), toNumber(disputeId), txn);
 
     // Create execution task when fully drafted
     if (fullyDrafted) {
@@ -327,8 +326,8 @@ export class MediatorManagerHandler extends Handler {
           type: MineTaskType.Execute,
           network: dispute.network,
           marketAddress,
-          orderId: orderId.toNumber(),
-          disputeId: disputeId.toNumber(),
+          orderId: toNumber(orderId),
+          disputeId: toNumber(disputeId),
           mineAt: dispute.revealEndAt,
         },
         txn,
@@ -339,9 +338,9 @@ export class MediatorManagerHandler extends Handler {
     await Event.create({
       network: this.network,
       marketAddress,
-      orderId: orderId.toNumber(),
+      orderId: toNumber(orderId),
       creator: drafter,
-      disputeId: disputeId.toNumber(),
+      disputeId: toNumber(disputeId),
       draftee: owner,
       action: Events.SwapDrafted,
     });
@@ -352,19 +351,19 @@ export class MediatorManagerHandler extends Handler {
     // Send notification
     this.notifSrv.notify(NotificationID.TicketDrafted, this.network, owner, {
       owner,
-      ticketId: ticketId.toNumber(),
+      ticketId: toNumber(ticketId),
       dispute,
     });
 
     if (fullyDrafted) {
       // Send notification to provider and taker when fully drafted
-      const swap = await Swap.get(this.network, orderId.toNumber(), undefined, undefined, txn);
+      const swap = await Swap.get(this.network, toNumber(orderId), undefined, undefined, txn);
       const locals = { dispute, evidencePhaseHoursLeft: moment(dispute.evidenceEndAt).fromNow(true) };
       this.notifSrv.notify(NotificationID.FullyDrafted, this.network, swap.provider, locals);
       this.notifSrv.notify(NotificationID.FullyDrafted, this.network, swap.taker, locals);
 
       // Send notification to drafted mediators
-      const drafted = await Draft.getAll(this.network, marketAddress, orderId.toNumber(), disputeId.toNumber(), txn);
+      const drafted = await Draft.getAll(this.network, marketAddress, toNumber(orderId), toNumber(disputeId), txn);
       for (const draft of drafted) {
         this.notifSrv.notify(NotificationID.EvidencePhaseStarted, this.network, draft.owner, locals);
       }
@@ -382,13 +381,13 @@ export class MediatorManagerHandler extends Handler {
    */
   async onUndrafted(
     owner: string,
-    ticketId: BigNumber,
+    ticketId: bigint,
     slashed: boolean,
     undrafter: string,
-    event: ethers.Event,
+    event: ContractCallEvent,
     txn?: Transaction,
   ) {
-    const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, ticketId.toNumber(), undefined, txn);
+    const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, toNumber(ticketId), undefined, txn);
     const order = await Swap.get(this.network, ticket.orderId, undefined, undefined, txn);
 
     // Update dispute
@@ -442,14 +441,14 @@ export class MediatorManagerHandler extends Handler {
    */
   async onTicketSlashed(
     owner: string,
-    ticketId: BigNumber,
-    amount: BigNumber,
+    ticketId: bigint,
+    amount: bigint,
     voted: boolean,
     winSide: boolean,
-    event: ethers.Event,
+    event: ContractCallEvent,
     txn?: Transaction,
   ) {
-    let ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, ticketId.toNumber(), undefined, txn);
+    let ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, toNumber(ticketId), undefined, txn);
     ticket = await Ticket.updateById(
       ticket.id,
       {
@@ -458,7 +457,7 @@ export class MediatorManagerHandler extends Handler {
         slashed: true,
         joined: false,
         poolId: null,
-        bond: toBN(ticket.bond).sub(amount).toString(),
+        bond: toDec(ticket.bond).sub(amount.toString()).toString(),
       },
       txn,
     );
@@ -504,26 +503,26 @@ export class MediatorManagerHandler extends Handler {
    * @param txn The database transaction handle
    */
   async onUpdatedTicketPool(
-    poolId: BigNumber,
-    reqBond: BigNumber,
-    draftReward: BigNumber,
-    winReward: BigNumber,
-    noVoteSlashBP: BigNumber,
-    loseVoteSlashBP: BigNumber,
-    numDraftees: BigNumber,
-    _event: ethers.Event,
+    poolId: bigint,
+    reqBond: bigint,
+    draftReward: bigint,
+    winReward: bigint,
+    noVoteSlashBP: bigint,
+    loseVoteSlashBP: bigint,
+    numDraftees: bigint,
+    _event: ContractCallEvent,
     txn?: Transaction,
   ) {
     await Meta.update(
-      Meta.makeMediatorPoolKey(this.network, poolId.toNumber()),
+      Meta.makeMediatorPoolKey(this.network, toNumber(poolId)),
       JSON.stringify(<PoolParams>{
-        poolId: poolId.toNumber(),
+        poolId: toNumber(poolId),
         reqBond: reqBond.toString(),
         draftReward: draftReward.toString(),
         winReward: winReward.toString(),
         noVoteSlashBP: noVoteSlashBP.toString(),
         loseVoteSlashBP: loseVoteSlashBP.toString(),
-        numDraftees: numDraftees.toNumber(),
+        numDraftees: toNumber(numDraftees),
       }),
       txn,
     );
@@ -536,7 +535,7 @@ export class MediatorManagerHandler extends Handler {
    * @param _event The event object
    * @param txn The transaction object
    */
-  async onParameterUpdate(param: keyof ContractsParams, value: string, _event: ethers.Event, txn?: Transaction) {
+  async onParameterUpdate(param: keyof ContractsParams, value: string, _event: ContractCallEvent, txn?: Transaction) {
     await Meta.updateContractsParams(this.network, txn, (params) => (params[param] = value));
   }
 }

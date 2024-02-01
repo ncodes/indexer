@@ -3,71 +3,29 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BigNumber,
   BigNumberish,
   BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  Overrides,
-  PopulatedTransaction,
-  Signer,
-  utils,
-} from "ethers";
-import type {
   FunctionFragment,
   Result,
+  Interface,
   EventFragment,
-} from "@ethersproject/abi";
-import type { Listener, Provider } from "@ethersproject/providers";
+  AddressLike,
+  ContractRunner,
+  ContractMethod,
+  Listener,
+} from "ethers";
 import type {
-  TypedEventFilter,
-  TypedEvent,
+  TypedContractEvent,
+  TypedDeferredTopicFilter,
+  TypedEventLog,
+  TypedLogDescription,
   TypedListener,
-  OnEvent,
+  TypedContractMethod,
 } from "./common";
 
-export interface TokenPoolInterface extends utils.Interface {
-  functions: {
-    "badge()": FunctionFragment;
-    "balanceOf(address)": FunctionFragment;
-    "canStake(address)": FunctionFragment;
-    "earned(address)": FunctionFragment;
-    "exit()": FunctionFragment;
-    "feePool()": FunctionFragment;
-    "getRewardForDuration()": FunctionFragment;
-    "lastTimeRewardApplicable()": FunctionFragment;
-    "lastUpdateTime()": FunctionFragment;
-    "notifyRewardAmount(uint256,uint256)": FunctionFragment;
-    "owner()": FunctionFragment;
-    "pause()": FunctionFragment;
-    "paused()": FunctionFragment;
-    "periodFinish()": FunctionFragment;
-    "recoverERC20(address,uint256)": FunctionFragment;
-    "renounceOwnership()": FunctionFragment;
-    "requiredBadges(uint256,uint256)": FunctionFragment;
-    "rewardPerToken()": FunctionFragment;
-    "rewardPerTokenStored()": FunctionFragment;
-    "rewardRate()": FunctionFragment;
-    "rewards(address)": FunctionFragment;
-    "rewardsDuration()": FunctionFragment;
-    "rewardsToken()": FunctionFragment;
-    "setBadgeManager(address)": FunctionFragment;
-    "setFeePool(address)": FunctionFragment;
-    "setRequiredBadges(string[2][])": FunctionFragment;
-    "stake(uint256)": FunctionFragment;
-    "stakeVested(address,uint256,uint256,uint256)": FunctionFragment;
-    "stakingToken()": FunctionFragment;
-    "totalSupply()": FunctionFragment;
-    "transferOwnership(address)": FunctionFragment;
-    "unpause()": FunctionFragment;
-    "userRewardPerTokenPaid(address)": FunctionFragment;
-    "vesting(address)": FunctionFragment;
-    "withdraw(uint256)": FunctionFragment;
-    "withdrawReward(uint256)": FunctionFragment;
-  };
-
+export interface TokenPoolInterface extends Interface {
   getFunction(
-    nameOrSignatureOrTopic:
+    nameOrSignature:
       | "badge"
       | "balanceOf"
       | "canStake"
@@ -106,10 +64,32 @@ export interface TokenPoolInterface extends utils.Interface {
       | "withdrawReward"
   ): FunctionFragment;
 
+  getEvent(
+    nameOrSignatureOrTopic:
+      | "OwnershipTransferred"
+      | "Paused"
+      | "Recovered"
+      | "RewardAdded"
+      | "RewardWithdrawn"
+      | "StakeWithdrawn"
+      | "Staked"
+      | "Unpaused"
+      | "UpdatedBadgeManager"
+      | "UpdatedFeePool"
+      | "UpdatedReqBadges"
+      | "VestStaked"
+  ): EventFragment;
+
   encodeFunctionData(functionFragment: "badge", values?: undefined): string;
-  encodeFunctionData(functionFragment: "balanceOf", values: [string]): string;
-  encodeFunctionData(functionFragment: "canStake", values: [string]): string;
-  encodeFunctionData(functionFragment: "earned", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "balanceOf",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "canStake",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(functionFragment: "earned", values: [AddressLike]): string;
   encodeFunctionData(functionFragment: "exit", values?: undefined): string;
   encodeFunctionData(functionFragment: "feePool", values?: undefined): string;
   encodeFunctionData(
@@ -137,7 +117,7 @@ export interface TokenPoolInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "recoverERC20",
-    values: [string, BigNumberish]
+    values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -159,7 +139,10 @@ export interface TokenPoolInterface extends utils.Interface {
     functionFragment: "rewardRate",
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "rewards", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "rewards",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "rewardsDuration",
     values?: undefined
@@ -170,9 +153,12 @@ export interface TokenPoolInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "setBadgeManager",
-    values: [string]
+    values: [AddressLike]
   ): string;
-  encodeFunctionData(functionFragment: "setFeePool", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "setFeePool",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "setRequiredBadges",
     values: [[string, string][]]
@@ -180,7 +166,7 @@ export interface TokenPoolInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "stake", values: [BigNumberish]): string;
   encodeFunctionData(
     functionFragment: "stakeVested",
-    values: [string, BigNumberish, BigNumberish, BigNumberish]
+    values: [AddressLike, BigNumberish, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "stakingToken",
@@ -192,14 +178,17 @@ export interface TokenPoolInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "unpause", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "userRewardPerTokenPaid",
-    values: [string]
+    values: [AddressLike]
   ): string;
-  encodeFunctionData(functionFragment: "vesting", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "vesting",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "withdraw",
     values: [BigNumberish]
@@ -305,882 +294,686 @@ export interface TokenPoolInterface extends utils.Interface {
     functionFragment: "withdrawReward",
     data: BytesLike
   ): Result;
-
-  events: {
-    "OwnershipTransferred(address,address)": EventFragment;
-    "Paused(address)": EventFragment;
-    "Recovered(address,uint256)": EventFragment;
-    "RewardAdded(uint256)": EventFragment;
-    "RewardWithdrawn(address,uint256)": EventFragment;
-    "StakeWithdrawn(address,uint256)": EventFragment;
-    "Staked(address,uint256)": EventFragment;
-    "Unpaused(address)": EventFragment;
-    "UpdatedBadgeManager(address)": EventFragment;
-    "UpdatedFeePool(address)": EventFragment;
-    "UpdatedReqBadges(string[2][])": EventFragment;
-    "VestStaked(address,uint256)": EventFragment;
-  };
-
-  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Paused"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Recovered"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RewardAdded"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RewardWithdrawn"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "StakeWithdrawn"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Staked"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Unpaused"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedBadgeManager"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedFeePool"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedReqBadges"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "VestStaked"): EventFragment;
 }
 
-export interface OwnershipTransferredEventObject {
-  previousOwner: string;
-  newOwner: string;
+export namespace OwnershipTransferredEvent {
+  export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
+  export type OutputTuple = [previousOwner: string, newOwner: string];
+  export interface OutputObject {
+    previousOwner: string;
+    newOwner: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type OwnershipTransferredEvent = TypedEvent<
-  [string, string],
-  OwnershipTransferredEventObject
->;
 
-export type OwnershipTransferredEventFilter =
-  TypedEventFilter<OwnershipTransferredEvent>;
-
-export interface PausedEventObject {
-  account: string;
+export namespace PausedEvent {
+  export type InputTuple = [account: AddressLike];
+  export type OutputTuple = [account: string];
+  export interface OutputObject {
+    account: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type PausedEvent = TypedEvent<[string], PausedEventObject>;
 
-export type PausedEventFilter = TypedEventFilter<PausedEvent>;
-
-export interface RecoveredEventObject {
-  token: string;
-  amount: BigNumber;
+export namespace RecoveredEvent {
+  export type InputTuple = [token: AddressLike, amount: BigNumberish];
+  export type OutputTuple = [token: string, amount: bigint];
+  export interface OutputObject {
+    token: string;
+    amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type RecoveredEvent = TypedEvent<
-  [string, BigNumber],
-  RecoveredEventObject
->;
 
-export type RecoveredEventFilter = TypedEventFilter<RecoveredEvent>;
-
-export interface RewardAddedEventObject {
-  reward: BigNumber;
+export namespace RewardAddedEvent {
+  export type InputTuple = [reward: BigNumberish];
+  export type OutputTuple = [reward: bigint];
+  export interface OutputObject {
+    reward: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type RewardAddedEvent = TypedEvent<[BigNumber], RewardAddedEventObject>;
 
-export type RewardAddedEventFilter = TypedEventFilter<RewardAddedEvent>;
-
-export interface RewardWithdrawnEventObject {
-  user: string;
-  reward: BigNumber;
+export namespace RewardWithdrawnEvent {
+  export type InputTuple = [user: AddressLike, reward: BigNumberish];
+  export type OutputTuple = [user: string, reward: bigint];
+  export interface OutputObject {
+    user: string;
+    reward: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type RewardWithdrawnEvent = TypedEvent<
-  [string, BigNumber],
-  RewardWithdrawnEventObject
->;
 
-export type RewardWithdrawnEventFilter = TypedEventFilter<RewardWithdrawnEvent>;
-
-export interface StakeWithdrawnEventObject {
-  user: string;
-  amount: BigNumber;
+export namespace StakeWithdrawnEvent {
+  export type InputTuple = [user: AddressLike, amount: BigNumberish];
+  export type OutputTuple = [user: string, amount: bigint];
+  export interface OutputObject {
+    user: string;
+    amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type StakeWithdrawnEvent = TypedEvent<
-  [string, BigNumber],
-  StakeWithdrawnEventObject
->;
 
-export type StakeWithdrawnEventFilter = TypedEventFilter<StakeWithdrawnEvent>;
-
-export interface StakedEventObject {
-  user: string;
-  amount: BigNumber;
+export namespace StakedEvent {
+  export type InputTuple = [user: AddressLike, amount: BigNumberish];
+  export type OutputTuple = [user: string, amount: bigint];
+  export interface OutputObject {
+    user: string;
+    amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type StakedEvent = TypedEvent<[string, BigNumber], StakedEventObject>;
 
-export type StakedEventFilter = TypedEventFilter<StakedEvent>;
-
-export interface UnpausedEventObject {
-  account: string;
+export namespace UnpausedEvent {
+  export type InputTuple = [account: AddressLike];
+  export type OutputTuple = [account: string];
+  export interface OutputObject {
+    account: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UnpausedEvent = TypedEvent<[string], UnpausedEventObject>;
 
-export type UnpausedEventFilter = TypedEventFilter<UnpausedEvent>;
-
-export interface UpdatedBadgeManagerEventObject {
-  addr: string;
+export namespace UpdatedBadgeManagerEvent {
+  export type InputTuple = [addr: AddressLike];
+  export type OutputTuple = [addr: string];
+  export interface OutputObject {
+    addr: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedBadgeManagerEvent = TypedEvent<
-  [string],
-  UpdatedBadgeManagerEventObject
->;
 
-export type UpdatedBadgeManagerEventFilter =
-  TypedEventFilter<UpdatedBadgeManagerEvent>;
-
-export interface UpdatedFeePoolEventObject {
-  addr: string;
+export namespace UpdatedFeePoolEvent {
+  export type InputTuple = [addr: AddressLike];
+  export type OutputTuple = [addr: string];
+  export interface OutputObject {
+    addr: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedFeePoolEvent = TypedEvent<
-  [string],
-  UpdatedFeePoolEventObject
->;
 
-export type UpdatedFeePoolEventFilter = TypedEventFilter<UpdatedFeePoolEvent>;
-
-export interface UpdatedReqBadgesEventObject {
-  badges: [string, string][];
+export namespace UpdatedReqBadgesEvent {
+  export type InputTuple = [badges: [string, string][]];
+  export type OutputTuple = [badges: [string, string][]];
+  export interface OutputObject {
+    badges: [string, string][];
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedReqBadgesEvent = TypedEvent<
-  [[string, string][]],
-  UpdatedReqBadgesEventObject
->;
 
-export type UpdatedReqBadgesEventFilter =
-  TypedEventFilter<UpdatedReqBadgesEvent>;
-
-export interface VestStakedEventObject {
-  user: string;
-  amount: BigNumber;
+export namespace VestStakedEvent {
+  export type InputTuple = [user: AddressLike, amount: BigNumberish];
+  export type OutputTuple = [user: string, amount: bigint];
+  export interface OutputObject {
+    user: string;
+    amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type VestStakedEvent = TypedEvent<
-  [string, BigNumber],
-  VestStakedEventObject
->;
-
-export type VestStakedEventFilter = TypedEventFilter<VestStakedEvent>;
 
 export interface TokenPool extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
-  deployed(): Promise<this>;
+  connect(runner?: ContractRunner | null): TokenPool;
+  waitForDeployment(): Promise<this>;
 
   interface: TokenPoolInterface;
 
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
+  queryFilter<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
-
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
-
-  functions: {
-    badge(overrides?: CallOverrides): Promise<[string]>;
-
-    balanceOf(account: string, overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    canStake(addr: string, overrides?: CallOverrides): Promise<[boolean]>;
-
-    earned(account: string, overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    exit(
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    feePool(overrides?: CallOverrides): Promise<[string]>;
-
-    getRewardForDuration(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    lastTimeRewardApplicable(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    lastUpdateTime(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    notifyRewardAmount(
-      _reward: BigNumberish,
-      _rewardsDuration: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    owner(overrides?: CallOverrides): Promise<[string]>;
-
-    pause(
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    paused(overrides?: CallOverrides): Promise<[boolean]>;
-
-    periodFinish(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    recoverERC20(
-      tokenAddress: string,
-      tokenAmount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    requiredBadges(
-      arg0: BigNumberish,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    rewardPerToken(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    rewardPerTokenStored(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    rewardRate(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    rewards(arg0: string, overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    rewardsDuration(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    rewardsToken(overrides?: CallOverrides): Promise<[string]>;
-
-    setBadgeManager(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setFeePool(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setRequiredBadges(
-      badges: [string, string][],
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    stake(
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    stakeVested(
-      _owner: string,
-      _amount: BigNumberish,
-      _cliffEndAt: BigNumberish,
-      _vestedAt: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    stakingToken(overrides?: CallOverrides): Promise<[string]>;
-
-    totalSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    unpause(
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    userRewardPerTokenPaid(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    vesting(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, BigNumber, BigNumber, BigNumber] & {
-        amount: BigNumber;
-        cliffEndAt: BigNumber;
-        vestedAt: BigNumber;
-        withdrawn: BigNumber;
-      }
-    >;
-
-    withdraw(
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    withdrawReward(
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-  };
-
-  badge(overrides?: CallOverrides): Promise<string>;
-
-  balanceOf(account: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-  canStake(addr: string, overrides?: CallOverrides): Promise<boolean>;
-
-  earned(account: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-  exit(overrides?: Overrides & { from?: string }): Promise<ContractTransaction>;
-
-  feePool(overrides?: CallOverrides): Promise<string>;
-
-  getRewardForDuration(overrides?: CallOverrides): Promise<BigNumber>;
-
-  lastTimeRewardApplicable(overrides?: CallOverrides): Promise<BigNumber>;
-
-  lastUpdateTime(overrides?: CallOverrides): Promise<BigNumber>;
-
-  notifyRewardAmount(
-    _reward: BigNumberish,
-    _rewardsDuration: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  owner(overrides?: CallOverrides): Promise<string>;
-
-  pause(
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  paused(overrides?: CallOverrides): Promise<boolean>;
-
-  periodFinish(overrides?: CallOverrides): Promise<BigNumber>;
-
-  recoverERC20(
-    tokenAddress: string,
-    tokenAmount: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  renounceOwnership(
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  requiredBadges(
-    arg0: BigNumberish,
-    arg1: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  rewardPerToken(overrides?: CallOverrides): Promise<BigNumber>;
-
-  rewardPerTokenStored(overrides?: CallOverrides): Promise<BigNumber>;
-
-  rewardRate(overrides?: CallOverrides): Promise<BigNumber>;
-
-  rewards(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-  rewardsDuration(overrides?: CallOverrides): Promise<BigNumber>;
-
-  rewardsToken(overrides?: CallOverrides): Promise<string>;
-
-  setBadgeManager(
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setFeePool(
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setRequiredBadges(
-    badges: [string, string][],
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  stake(
-    _amount: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  stakeVested(
-    _owner: string,
-    _amount: BigNumberish,
-    _cliffEndAt: BigNumberish,
-    _vestedAt: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  stakingToken(overrides?: CallOverrides): Promise<string>;
-
-  totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-  transferOwnership(
-    newOwner: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  unpause(
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  userRewardPerTokenPaid(
-    arg0: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  vesting(
-    arg0: string,
-    overrides?: CallOverrides
-  ): Promise<
-    [BigNumber, BigNumber, BigNumber, BigNumber] & {
-      amount: BigNumber;
-      cliffEndAt: BigNumber;
-      vestedAt: BigNumber;
-      withdrawn: BigNumber;
-    }
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+  queryFilter<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    fromBlockOrBlockhash?: string | number | undefined,
+    toBlock?: string | number | undefined
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+
+  on<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  on<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+
+  once<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  once<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+
+  listeners<TCEvent extends TypedContractEvent>(
+    event: TCEvent
+  ): Promise<Array<TypedListener<TCEvent>>>;
+  listeners(eventName?: string): Promise<Array<Listener>>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(
+    event?: TCEvent
+  ): Promise<this>;
+
+  badge: TypedContractMethod<[], [string], "view">;
+
+  balanceOf: TypedContractMethod<[account: AddressLike], [bigint], "view">;
+
+  canStake: TypedContractMethod<[addr: AddressLike], [boolean], "view">;
+
+  earned: TypedContractMethod<[account: AddressLike], [bigint], "view">;
+
+  exit: TypedContractMethod<[], [void], "nonpayable">;
+
+  feePool: TypedContractMethod<[], [string], "view">;
+
+  getRewardForDuration: TypedContractMethod<[], [bigint], "view">;
+
+  lastTimeRewardApplicable: TypedContractMethod<[], [bigint], "view">;
+
+  lastUpdateTime: TypedContractMethod<[], [bigint], "view">;
+
+  notifyRewardAmount: TypedContractMethod<
+    [_reward: BigNumberish, _rewardsDuration: BigNumberish],
+    [void],
+    "nonpayable"
   >;
 
-  withdraw(
-    _amount: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+  owner: TypedContractMethod<[], [string], "view">;
 
-  withdrawReward(
-    _amount: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+  pause: TypedContractMethod<[], [void], "nonpayable">;
 
-  callStatic: {
-    badge(overrides?: CallOverrides): Promise<string>;
+  paused: TypedContractMethod<[], [boolean], "view">;
 
-    balanceOf(account: string, overrides?: CallOverrides): Promise<BigNumber>;
+  periodFinish: TypedContractMethod<[], [bigint], "view">;
 
-    canStake(addr: string, overrides?: CallOverrides): Promise<boolean>;
+  recoverERC20: TypedContractMethod<
+    [tokenAddress: AddressLike, tokenAmount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    earned(account: string, overrides?: CallOverrides): Promise<BigNumber>;
+  renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
-    exit(overrides?: CallOverrides): Promise<void>;
+  requiredBadges: TypedContractMethod<
+    [arg0: BigNumberish, arg1: BigNumberish],
+    [string],
+    "view"
+  >;
 
-    feePool(overrides?: CallOverrides): Promise<string>;
+  rewardPerToken: TypedContractMethod<[], [bigint], "view">;
 
-    getRewardForDuration(overrides?: CallOverrides): Promise<BigNumber>;
+  rewardPerTokenStored: TypedContractMethod<[], [bigint], "view">;
 
-    lastTimeRewardApplicable(overrides?: CallOverrides): Promise<BigNumber>;
+  rewardRate: TypedContractMethod<[], [bigint], "view">;
 
-    lastUpdateTime(overrides?: CallOverrides): Promise<BigNumber>;
+  rewards: TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
 
-    notifyRewardAmount(
-      _reward: BigNumberish,
-      _rewardsDuration: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  rewardsDuration: TypedContractMethod<[], [bigint], "view">;
 
-    owner(overrides?: CallOverrides): Promise<string>;
+  rewardsToken: TypedContractMethod<[], [string], "view">;
 
-    pause(overrides?: CallOverrides): Promise<void>;
+  setBadgeManager: TypedContractMethod<
+    [addr: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    paused(overrides?: CallOverrides): Promise<boolean>;
+  setFeePool: TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
 
-    periodFinish(overrides?: CallOverrides): Promise<BigNumber>;
+  setRequiredBadges: TypedContractMethod<
+    [badges: [string, string][]],
+    [void],
+    "nonpayable"
+  >;
 
-    recoverERC20(
-      tokenAddress: string,
-      tokenAmount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  stake: TypedContractMethod<[_amount: BigNumberish], [void], "nonpayable">;
 
-    renounceOwnership(overrides?: CallOverrides): Promise<void>;
-
-    requiredBadges(
-      arg0: BigNumberish,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    rewardPerToken(overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewardPerTokenStored(overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewardRate(overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewards(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewardsDuration(overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewardsToken(overrides?: CallOverrides): Promise<string>;
-
-    setBadgeManager(addr: string, overrides?: CallOverrides): Promise<void>;
-
-    setFeePool(addr: string, overrides?: CallOverrides): Promise<void>;
-
-    setRequiredBadges(
-      badges: [string, string][],
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    stake(_amount: BigNumberish, overrides?: CallOverrides): Promise<void>;
-
-    stakeVested(
-      _owner: string,
+  stakeVested: TypedContractMethod<
+    [
+      _owner: AddressLike,
       _amount: BigNumberish,
       _cliffEndAt: BigNumberish,
-      _vestedAt: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+      _vestedAt: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    stakingToken(overrides?: CallOverrides): Promise<string>;
+  stakingToken: TypedContractMethod<[], [string], "view">;
 
-    totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
+  totalSupply: TypedContractMethod<[], [bigint], "view">;
 
-    transferOwnership(
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  transferOwnership: TypedContractMethod<
+    [newOwner: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    unpause(overrides?: CallOverrides): Promise<void>;
+  unpause: TypedContractMethod<[], [void], "nonpayable">;
 
-    userRewardPerTokenPaid(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+  userRewardPerTokenPaid: TypedContractMethod<
+    [arg0: AddressLike],
+    [bigint],
+    "view"
+  >;
 
-    vesting(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, BigNumber, BigNumber, BigNumber] & {
-        amount: BigNumber;
-        cliffEndAt: BigNumber;
-        vestedAt: BigNumber;
-        withdrawn: BigNumber;
+  vesting: TypedContractMethod<
+    [arg0: AddressLike],
+    [
+      [bigint, bigint, bigint, bigint] & {
+        amount: bigint;
+        cliffEndAt: bigint;
+        vestedAt: bigint;
+        withdrawn: bigint;
       }
-    >;
+    ],
+    "view"
+  >;
 
-    withdraw(_amount: BigNumberish, overrides?: CallOverrides): Promise<void>;
+  withdraw: TypedContractMethod<[_amount: BigNumberish], [void], "nonpayable">;
 
-    withdrawReward(
+  withdrawReward: TypedContractMethod<
+    [_amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  getFunction<T extends ContractMethod = ContractMethod>(
+    key: string | FunctionFragment
+  ): T;
+
+  getFunction(
+    nameOrSignature: "badge"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "balanceOf"
+  ): TypedContractMethod<[account: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "canStake"
+  ): TypedContractMethod<[addr: AddressLike], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "earned"
+  ): TypedContractMethod<[account: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "exit"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "feePool"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "getRewardForDuration"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "lastTimeRewardApplicable"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "lastUpdateTime"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "notifyRewardAmount"
+  ): TypedContractMethod<
+    [_reward: BigNumberish, _rewardsDuration: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "owner"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "pause"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "paused"
+  ): TypedContractMethod<[], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "periodFinish"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "recoverERC20"
+  ): TypedContractMethod<
+    [tokenAddress: AddressLike, tokenAmount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "renounceOwnership"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "requiredBadges"
+  ): TypedContractMethod<
+    [arg0: BigNumberish, arg1: BigNumberish],
+    [string],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "rewardPerToken"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "rewardPerTokenStored"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "rewardRate"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "rewards"
+  ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "rewardsDuration"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "rewardsToken"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "setBadgeManager"
+  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setFeePool"
+  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setRequiredBadges"
+  ): TypedContractMethod<[badges: [string, string][]], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "stake"
+  ): TypedContractMethod<[_amount: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "stakeVested"
+  ): TypedContractMethod<
+    [
+      _owner: AddressLike,
       _amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-  };
+      _cliffEndAt: BigNumberish,
+      _vestedAt: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "stakingToken"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "totalSupply"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "transferOwnership"
+  ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "unpause"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "userRewardPerTokenPaid"
+  ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "vesting"
+  ): TypedContractMethod<
+    [arg0: AddressLike],
+    [
+      [bigint, bigint, bigint, bigint] & {
+        amount: bigint;
+        cliffEndAt: bigint;
+        vestedAt: bigint;
+        withdrawn: bigint;
+      }
+    ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "withdraw"
+  ): TypedContractMethod<[_amount: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "withdrawReward"
+  ): TypedContractMethod<[_amount: BigNumberish], [void], "nonpayable">;
+
+  getEvent(
+    key: "OwnershipTransferred"
+  ): TypedContractEvent<
+    OwnershipTransferredEvent.InputTuple,
+    OwnershipTransferredEvent.OutputTuple,
+    OwnershipTransferredEvent.OutputObject
+  >;
+  getEvent(
+    key: "Paused"
+  ): TypedContractEvent<
+    PausedEvent.InputTuple,
+    PausedEvent.OutputTuple,
+    PausedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Recovered"
+  ): TypedContractEvent<
+    RecoveredEvent.InputTuple,
+    RecoveredEvent.OutputTuple,
+    RecoveredEvent.OutputObject
+  >;
+  getEvent(
+    key: "RewardAdded"
+  ): TypedContractEvent<
+    RewardAddedEvent.InputTuple,
+    RewardAddedEvent.OutputTuple,
+    RewardAddedEvent.OutputObject
+  >;
+  getEvent(
+    key: "RewardWithdrawn"
+  ): TypedContractEvent<
+    RewardWithdrawnEvent.InputTuple,
+    RewardWithdrawnEvent.OutputTuple,
+    RewardWithdrawnEvent.OutputObject
+  >;
+  getEvent(
+    key: "StakeWithdrawn"
+  ): TypedContractEvent<
+    StakeWithdrawnEvent.InputTuple,
+    StakeWithdrawnEvent.OutputTuple,
+    StakeWithdrawnEvent.OutputObject
+  >;
+  getEvent(
+    key: "Staked"
+  ): TypedContractEvent<
+    StakedEvent.InputTuple,
+    StakedEvent.OutputTuple,
+    StakedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Unpaused"
+  ): TypedContractEvent<
+    UnpausedEvent.InputTuple,
+    UnpausedEvent.OutputTuple,
+    UnpausedEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedBadgeManager"
+  ): TypedContractEvent<
+    UpdatedBadgeManagerEvent.InputTuple,
+    UpdatedBadgeManagerEvent.OutputTuple,
+    UpdatedBadgeManagerEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedFeePool"
+  ): TypedContractEvent<
+    UpdatedFeePoolEvent.InputTuple,
+    UpdatedFeePoolEvent.OutputTuple,
+    UpdatedFeePoolEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedReqBadges"
+  ): TypedContractEvent<
+    UpdatedReqBadgesEvent.InputTuple,
+    UpdatedReqBadgesEvent.OutputTuple,
+    UpdatedReqBadgesEvent.OutputObject
+  >;
+  getEvent(
+    key: "VestStaked"
+  ): TypedContractEvent<
+    VestStakedEvent.InputTuple,
+    VestStakedEvent.OutputTuple,
+    VestStakedEvent.OutputObject
+  >;
 
   filters: {
-    "OwnershipTransferred(address,address)"(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
-    OwnershipTransferred(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
-
-    "Paused(address)"(account?: null): PausedEventFilter;
-    Paused(account?: null): PausedEventFilter;
-
-    "Recovered(address,uint256)"(
-      token?: null,
-      amount?: null
-    ): RecoveredEventFilter;
-    Recovered(token?: null, amount?: null): RecoveredEventFilter;
-
-    "RewardAdded(uint256)"(reward?: null): RewardAddedEventFilter;
-    RewardAdded(reward?: null): RewardAddedEventFilter;
-
-    "RewardWithdrawn(address,uint256)"(
-      user?: string | null,
-      reward?: null
-    ): RewardWithdrawnEventFilter;
-    RewardWithdrawn(
-      user?: string | null,
-      reward?: null
-    ): RewardWithdrawnEventFilter;
-
-    "StakeWithdrawn(address,uint256)"(
-      user?: string | null,
-      amount?: null
-    ): StakeWithdrawnEventFilter;
-    StakeWithdrawn(
-      user?: string | null,
-      amount?: null
-    ): StakeWithdrawnEventFilter;
-
-    "Staked(address,uint256)"(
-      user?: string | null,
-      amount?: null
-    ): StakedEventFilter;
-    Staked(user?: string | null, amount?: null): StakedEventFilter;
-
-    "Unpaused(address)"(account?: null): UnpausedEventFilter;
-    Unpaused(account?: null): UnpausedEventFilter;
-
-    "UpdatedBadgeManager(address)"(addr?: null): UpdatedBadgeManagerEventFilter;
-    UpdatedBadgeManager(addr?: null): UpdatedBadgeManagerEventFilter;
-
-    "UpdatedFeePool(address)"(addr?: null): UpdatedFeePoolEventFilter;
-    UpdatedFeePool(addr?: null): UpdatedFeePoolEventFilter;
-
-    "UpdatedReqBadges(string[2][])"(badges?: null): UpdatedReqBadgesEventFilter;
-    UpdatedReqBadges(badges?: null): UpdatedReqBadgesEventFilter;
-
-    "VestStaked(address,uint256)"(
-      user?: string | null,
-      amount?: null
-    ): VestStakedEventFilter;
-    VestStaked(user?: string | null, amount?: null): VestStakedEventFilter;
-  };
-
-  estimateGas: {
-    badge(overrides?: CallOverrides): Promise<BigNumber>;
-
-    balanceOf(account: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    canStake(addr: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    earned(account: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    exit(overrides?: Overrides & { from?: string }): Promise<BigNumber>;
-
-    feePool(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getRewardForDuration(overrides?: CallOverrides): Promise<BigNumber>;
-
-    lastTimeRewardApplicable(overrides?: CallOverrides): Promise<BigNumber>;
-
-    lastUpdateTime(overrides?: CallOverrides): Promise<BigNumber>;
-
-    notifyRewardAmount(
-      _reward: BigNumberish,
-      _rewardsDuration: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    owner(overrides?: CallOverrides): Promise<BigNumber>;
-
-    pause(overrides?: Overrides & { from?: string }): Promise<BigNumber>;
-
-    paused(overrides?: CallOverrides): Promise<BigNumber>;
-
-    periodFinish(overrides?: CallOverrides): Promise<BigNumber>;
-
-    recoverERC20(
-      tokenAddress: string,
-      tokenAmount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    requiredBadges(
-      arg0: BigNumberish,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    rewardPerToken(overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewardPerTokenStored(overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewardRate(overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewards(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewardsDuration(overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewardsToken(overrides?: CallOverrides): Promise<BigNumber>;
-
-    setBadgeManager(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setFeePool(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setRequiredBadges(
-      badges: [string, string][],
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    stake(
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    stakeVested(
-      _owner: string,
-      _amount: BigNumberish,
-      _cliffEndAt: BigNumberish,
-      _vestedAt: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    stakingToken(overrides?: CallOverrides): Promise<BigNumber>;
-
-    totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    unpause(overrides?: Overrides & { from?: string }): Promise<BigNumber>;
-
-    userRewardPerTokenPaid(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    vesting(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    withdraw(
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    withdrawReward(
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-  };
-
-  populateTransaction: {
-    badge(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    balanceOf(
-      account: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    canStake(
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    earned(
-      account: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    exit(
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    feePool(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    getRewardForDuration(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    lastTimeRewardApplicable(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    lastUpdateTime(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    notifyRewardAmount(
-      _reward: BigNumberish,
-      _rewardsDuration: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    pause(
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    paused(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    periodFinish(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    recoverERC20(
-      tokenAddress: string,
-      tokenAmount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    requiredBadges(
-      arg0: BigNumberish,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    rewardPerToken(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    rewardPerTokenStored(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    rewardRate(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    rewards(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    rewardsDuration(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    rewardsToken(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    setBadgeManager(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setFeePool(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setRequiredBadges(
-      badges: [string, string][],
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    stake(
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    stakeVested(
-      _owner: string,
-      _amount: BigNumberish,
-      _cliffEndAt: BigNumberish,
-      _vestedAt: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    stakingToken(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    totalSupply(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    unpause(
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    userRewardPerTokenPaid(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    vesting(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    withdraw(
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    withdrawReward(
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
+    "OwnershipTransferred(address,address)": TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
+    OwnershipTransferred: TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
+
+    "Paused(address)": TypedContractEvent<
+      PausedEvent.InputTuple,
+      PausedEvent.OutputTuple,
+      PausedEvent.OutputObject
+    >;
+    Paused: TypedContractEvent<
+      PausedEvent.InputTuple,
+      PausedEvent.OutputTuple,
+      PausedEvent.OutputObject
+    >;
+
+    "Recovered(address,uint256)": TypedContractEvent<
+      RecoveredEvent.InputTuple,
+      RecoveredEvent.OutputTuple,
+      RecoveredEvent.OutputObject
+    >;
+    Recovered: TypedContractEvent<
+      RecoveredEvent.InputTuple,
+      RecoveredEvent.OutputTuple,
+      RecoveredEvent.OutputObject
+    >;
+
+    "RewardAdded(uint256)": TypedContractEvent<
+      RewardAddedEvent.InputTuple,
+      RewardAddedEvent.OutputTuple,
+      RewardAddedEvent.OutputObject
+    >;
+    RewardAdded: TypedContractEvent<
+      RewardAddedEvent.InputTuple,
+      RewardAddedEvent.OutputTuple,
+      RewardAddedEvent.OutputObject
+    >;
+
+    "RewardWithdrawn(address,uint256)": TypedContractEvent<
+      RewardWithdrawnEvent.InputTuple,
+      RewardWithdrawnEvent.OutputTuple,
+      RewardWithdrawnEvent.OutputObject
+    >;
+    RewardWithdrawn: TypedContractEvent<
+      RewardWithdrawnEvent.InputTuple,
+      RewardWithdrawnEvent.OutputTuple,
+      RewardWithdrawnEvent.OutputObject
+    >;
+
+    "StakeWithdrawn(address,uint256)": TypedContractEvent<
+      StakeWithdrawnEvent.InputTuple,
+      StakeWithdrawnEvent.OutputTuple,
+      StakeWithdrawnEvent.OutputObject
+    >;
+    StakeWithdrawn: TypedContractEvent<
+      StakeWithdrawnEvent.InputTuple,
+      StakeWithdrawnEvent.OutputTuple,
+      StakeWithdrawnEvent.OutputObject
+    >;
+
+    "Staked(address,uint256)": TypedContractEvent<
+      StakedEvent.InputTuple,
+      StakedEvent.OutputTuple,
+      StakedEvent.OutputObject
+    >;
+    Staked: TypedContractEvent<
+      StakedEvent.InputTuple,
+      StakedEvent.OutputTuple,
+      StakedEvent.OutputObject
+    >;
+
+    "Unpaused(address)": TypedContractEvent<
+      UnpausedEvent.InputTuple,
+      UnpausedEvent.OutputTuple,
+      UnpausedEvent.OutputObject
+    >;
+    Unpaused: TypedContractEvent<
+      UnpausedEvent.InputTuple,
+      UnpausedEvent.OutputTuple,
+      UnpausedEvent.OutputObject
+    >;
+
+    "UpdatedBadgeManager(address)": TypedContractEvent<
+      UpdatedBadgeManagerEvent.InputTuple,
+      UpdatedBadgeManagerEvent.OutputTuple,
+      UpdatedBadgeManagerEvent.OutputObject
+    >;
+    UpdatedBadgeManager: TypedContractEvent<
+      UpdatedBadgeManagerEvent.InputTuple,
+      UpdatedBadgeManagerEvent.OutputTuple,
+      UpdatedBadgeManagerEvent.OutputObject
+    >;
+
+    "UpdatedFeePool(address)": TypedContractEvent<
+      UpdatedFeePoolEvent.InputTuple,
+      UpdatedFeePoolEvent.OutputTuple,
+      UpdatedFeePoolEvent.OutputObject
+    >;
+    UpdatedFeePool: TypedContractEvent<
+      UpdatedFeePoolEvent.InputTuple,
+      UpdatedFeePoolEvent.OutputTuple,
+      UpdatedFeePoolEvent.OutputObject
+    >;
+
+    "UpdatedReqBadges(string[2][])": TypedContractEvent<
+      UpdatedReqBadgesEvent.InputTuple,
+      UpdatedReqBadgesEvent.OutputTuple,
+      UpdatedReqBadgesEvent.OutputObject
+    >;
+    UpdatedReqBadges: TypedContractEvent<
+      UpdatedReqBadgesEvent.InputTuple,
+      UpdatedReqBadgesEvent.OutputTuple,
+      UpdatedReqBadgesEvent.OutputObject
+    >;
+
+    "VestStaked(address,uint256)": TypedContractEvent<
+      VestStakedEvent.InputTuple,
+      VestStakedEvent.OutputTuple,
+      VestStakedEvent.OutputObject
+    >;
+    VestStaked: TypedContractEvent<
+      VestStakedEvent.InputTuple,
+      VestStakedEvent.OutputTuple,
+      VestStakedEvent.OutputObject
+    >;
   };
 }

@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { BigNumber, Event as ChainEvent, constants, providers } from 'ethers';
+import { BlockTag, Provider, ZeroAddress } from 'ethers';
 import * as _ from 'lodash';
 import * as moment from 'moment';
 import { Transaction } from 'objection';
@@ -17,7 +17,7 @@ import Offer from '../../models/offer';
 import Swap from '../../models/swap';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
-import { getBlockTime, pow10D, toBN } from '../common';
+import { ContractCallEvent, getBlockTime, isZero, pow10, toBigInt, toNumber } from '../common';
 import { Handler } from '../handler';
 import NetworkService from '../network.service';
 
@@ -29,7 +29,7 @@ export class CoreHandler extends Handler {
     private notifSrv: NotifierService,
     private metadataSrv: MetadataService,
     private exrSrv: ExchangeRateService,
-    private provider: providers.JsonRpcProvider,
+    private provider: Provider,
     public network: string,
     private contracts: JointContracts,
   ) {
@@ -47,10 +47,10 @@ export class CoreHandler extends Handler {
         provider: string,
         swapper: string,
         recipient: string,
-        numTypeInfo: BigNumber[],
-        idsFromProvider: BigNumber[],
-        idsFromTaker: BigNumber[],
-        event: ChainEvent,
+        numTypeInfo: bigint[],
+        idsFromProvider: bigint[],
+        idsFromTaker: bigint[],
+        event: ContractCallEvent,
         txn?: Transaction,
       ) => {
         return this.onSwapOrder(
@@ -75,11 +75,11 @@ export class CoreHandler extends Handler {
         swapper: string,
         recipient: string,
         releaser: string,
-        numTypeInfo: BigNumber[],
+        numTypeInfo: bigint[],
         byDispute: boolean,
-        idsFromProvider: BigNumber[],
-        idsFromTaker: BigNumber[],
-        event: ChainEvent,
+        idsFromProvider: bigint[],
+        idsFromTaker: bigint[],
+        event: ContractCallEvent,
         txn?: Transaction,
       ) => {
         return this.onSwap(
@@ -100,14 +100,14 @@ export class CoreHandler extends Handler {
 
     this.on(
       'OrderCancelled',
-      async (orderId: BigNumber, canceller: string, byDispute: boolean, event: ChainEvent, txn?: Transaction) => {
+      async (orderId: bigint, canceller: string, byDispute: boolean, event: ContractCallEvent, txn?: Transaction) => {
         return this.onOrderCancelled(orderId, canceller, byDispute, event, txn);
       },
     );
 
     this.on(
       'SwapOrderPaid',
-      async (orderId: BigNumber, disputeFrom: BigNumber, event: ChainEvent, txn?: Transaction) => {
+      async (orderId: bigint, disputeFrom: bigint, event: ContractCallEvent, txn?: Transaction) => {
         return this.onSwapOrderPaid(orderId, disputeFrom, event, txn);
       },
     );
@@ -116,10 +116,10 @@ export class CoreHandler extends Handler {
       'TransferredToFeePool',
       async (
         token: string,
-        amount: BigNumber,
+        amount: bigint,
         convAsset: string,
-        convAmount: BigNumber,
-        event: ChainEvent,
+        convAmount: bigint,
+        event: ContractCallEvent,
         txn?: Transaction,
       ) => {
         return this.onTransferredToFeePool(token, amount, convAsset, convAmount, event, txn);
@@ -129,13 +129,13 @@ export class CoreHandler extends Handler {
     this.on(
       'ProtocolFeeUpdated',
       async (
-        instantSwapFeeBp: BigNumber,
-        syntheticSwapFeeBp: BigNumber,
-        stableSwapFeeBp: BigNumber,
-        fixedSynthSwapFee: BigNumber,
-        fixedNFTSwapFee: BigNumber,
-        instantNFTSwapFeeBp: BigNumber,
-        event: ChainEvent,
+        instantSwapFeeBp: bigint,
+        syntheticSwapFeeBp: bigint,
+        stableSwapFeeBp: bigint,
+        fixedSynthSwapFee: bigint,
+        fixedNFTSwapFee: bigint,
+        instantNFTSwapFeeBp: bigint,
+        event: ContractCallEvent,
         txn?: Transaction,
       ) => {
         return this.onProtocolFeeUpdated(
@@ -159,13 +159,13 @@ export class CoreHandler extends Handler {
         target: string,
         deduct: boolean,
         paused: boolean,
-        lid: BigNumber,
-        ids: BigNumber[],
-        price: BigNumber,
-        wantOrIds: BigNumber[],
-        wantAndIds: BigNumber[],
-        timeToPay: BigNumber,
-        event: ChainEvent,
+        lid: bigint,
+        ids: bigint[],
+        price: bigint,
+        wantOrIds: bigint[],
+        wantAndIds: bigint[],
+        timeToPay: bigint,
+        event: ContractCallEvent,
         txn: Transaction,
       ) => {
         return this.onUpdatedNonFungibleLiquidity(
@@ -194,15 +194,15 @@ export class CoreHandler extends Handler {
         target: string,
         deduct: boolean,
         paused: boolean,
-        lid: BigNumber,
-        amount: BigNumber,
-        price: BigNumber,
-        wantOrIds: BigNumber[],
-        wantAndIds: BigNumber[],
-        minSwap: BigNumber,
-        maxSwap: BigNumber,
-        timeToPay: BigNumber,
-        event: ChainEvent,
+        lid: bigint,
+        amount: bigint,
+        price: bigint,
+        wantOrIds: bigint[],
+        wantAndIds: bigint[],
+        minSwap: bigint,
+        maxSwap: bigint,
+        timeToPay: bigint,
+        event: ContractCallEvent,
         txn: Transaction,
       ) => {
         return this.onUpdatedFungibleLiquidity(
@@ -231,9 +231,9 @@ export class CoreHandler extends Handler {
         marketAddress: string,
         provider: string,
         manager: string,
-        lid: BigNumber,
-        price: BigNumber,
-        event: ChainEvent,
+        lid: bigint,
+        price: bigint,
+        event: ContractCallEvent,
         txn: Transaction,
       ) => {
         return this.onUpdatedPrice(marketAddress, provider, manager, lid, price, event, txn);
@@ -245,9 +245,9 @@ export class CoreHandler extends Handler {
       async (
         marketAddress: string,
         provider: string,
-        lid: BigNumber,
+        lid: bigint,
         paused: boolean,
-        event: ChainEvent,
+        event: ContractCallEvent,
         txn?: Transaction,
       ) => {
         return this.onTogglePause(marketAddress, provider, lid, paused, event, txn);
@@ -261,7 +261,7 @@ export class CoreHandler extends Handler {
         provider: string,
         manager: string,
         oldManager: string,
-        event: ChainEvent,
+        event: ContractCallEvent,
         txn?: Transaction,
       ) => {
         return this.onUpdatedLiquidityManager(marketAddress, provider, manager, oldManager, event, txn);
@@ -270,12 +270,12 @@ export class CoreHandler extends Handler {
 
     this.on(
       'ProtocolFeeSplitUpdated',
-      async (inventor: BigNumber, shared: BigNumber, operator: BigNumber, event: ChainEvent, txn?: Transaction) => {
+      async (inventor: bigint, shared: bigint, operator: bigint, event: ContractCallEvent, txn?: Transaction) => {
         return this.onProtocolFeeSplitUpdated(inventor, shared, operator, event, txn);
       },
     );
 
-    this.on('NFTDiscountUpdated', async (discountBp: BigNumber, event: ChainEvent, txn?: Transaction) => {
+    this.on('NFTDiscountUpdated', async (discountBp: bigint, event: ContractCallEvent, txn?: Transaction) => {
       return this.onNFTDiscountUpdated(discountBp, event, txn);
     });
 
@@ -284,14 +284,14 @@ export class CoreHandler extends Handler {
       async (
         marketAddress: string,
         provider: string,
-        lid: BigNumber,
+        lid: bigint,
         offerer: string,
-        offerId: BigNumber,
-        amount: BigNumber,
-        price: BigNumber,
-        ids: BigNumber[],
-        expireDuration: BigNumber,
-        event: ChainEvent,
+        offerId: bigint,
+        amount: bigint,
+        price: bigint,
+        ids: bigint[],
+        expireDuration: bigint,
+        event: ContractCallEvent,
         txn?: Transaction,
       ) => {
         return this.onNewOffer(
@@ -313,13 +313,13 @@ export class CoreHandler extends Handler {
     this.on(
       'OfferUpdated',
       async (
-        offerId: BigNumber,
+        offerId: bigint,
         offerer: string,
-        amount: BigNumber,
-        price: BigNumber,
-        ids: BigNumber[],
-        expireDuration: BigNumber,
-        event: ChainEvent,
+        amount: bigint,
+        price: bigint,
+        ids: bigint[],
+        expireDuration: bigint,
+        event: ContractCallEvent,
         txn?: Transaction,
       ) => {
         return this.onOfferUpdated(offerId, offerer, amount, price, ids, expireDuration, event, txn);
@@ -328,20 +328,26 @@ export class CoreHandler extends Handler {
 
     this.on(
       'OfferAccepted',
-      async (offerId: BigNumber, acceptor: string, execDelayDur: BigNumber, event: ChainEvent, txn?: Transaction) => {
+      async (offerId: bigint, acceptor: string, execDelayDur: bigint, event: ContractCallEvent, txn?: Transaction) => {
         return this.onOfferAccepted(offerId, acceptor, execDelayDur, event, txn);
       },
     );
 
-    this.on('OfferCancelled', async (offerId: BigNumber, canceller: string, event: ChainEvent, txn?: Transaction) => {
-      return this.onOfferCancelled(offerId, canceller, event, txn);
-    });
+    this.on(
+      'OfferCancelled',
+      async (offerId: bigint, canceller: string, event: ContractCallEvent, txn?: Transaction) => {
+        return this.onOfferCancelled(offerId, canceller, event, txn);
+      },
+    );
 
-    this.on('OfferUnaccepted', async (offerId: BigNumber, unacceptor: string, event: ChainEvent, txn?: Transaction) => {
-      return this.onOfferUnaccepted(offerId, unacceptor, event, txn);
-    });
+    this.on(
+      'OfferUnaccepted',
+      async (offerId: bigint, unacceptor: string, event: ContractCallEvent, txn?: Transaction) => {
+        return this.onOfferUnaccepted(offerId, unacceptor, event, txn);
+      },
+    );
 
-    this.on('OfferExecuted', async (offerId: BigNumber, executor: string, event: ChainEvent, txn?: Transaction) => {
+    this.on('OfferExecuted', async (offerId: bigint, executor: string, event: ContractCallEvent, txn?: Transaction) => {
       return this.onOfferExecuted(offerId, executor, event, txn);
     });
 
@@ -350,28 +356,28 @@ export class CoreHandler extends Handler {
       async (
         marketAddress: string,
         provider: string,
-        lid: BigNumber,
+        lid: bigint,
         badges: [string, string][],
-        event: ChainEvent,
+        event: ContractCallEvent,
         txn?: Transaction,
       ) => {
         return this.onUpdatedLiquiditySwapBadges(marketAddress, provider, lid, badges, event, txn);
       },
     );
 
-    this.on('UpdatedMinTimeToPay', async (value: BigNumber, event: ChainEvent, txn?: Transaction) => {
+    this.on('UpdatedMinTimeToPay', async (value: bigint, event: ContractCallEvent, txn?: Transaction) => {
       return this.onParameterUpdate('minTimeToPay', value.toString(), event, txn);
     });
 
-    this.on('UpdatedOrderGraceDur', async (value: BigNumber, event: ChainEvent, txn?: Transaction) => {
+    this.on('UpdatedOrderGraceDur', async (value: bigint, event: ContractCallEvent, txn?: Transaction) => {
       return this.onParameterUpdate('orderGraceDur', value.toString(), event, txn);
     });
 
-    this.on('UpdatedMaxOpenOrders', async (value: BigNumber, event: ChainEvent, txn?: Transaction) => {
+    this.on('UpdatedMaxOpenOrders', async (value: bigint, event: ContractCallEvent, txn?: Transaction) => {
       return this.onParameterUpdate('maxOpenOrders', value.toString(), event, txn);
     });
 
-    this.on('UpdatedMaxOpenDisputes', async (value: BigNumber, event: ChainEvent, txn?: Transaction) => {
+    this.on('UpdatedMaxOpenDisputes', async (value: bigint, event: ContractCallEvent, txn?: Transaction) => {
       return this.onParameterUpdate('maxOpenDisputes', value.toString(), event, txn);
     });
   }
@@ -384,10 +390,10 @@ export class CoreHandler extends Handler {
    */
   async computeSwapFees(
     swap: Partial<Swap>,
-    blockTag?: providers.BlockTag,
+    blockTag?: BlockTag,
   ): Promise<{ protocolFee: string; marketCreatorFee: string }> {
     const core = this.contracts.core;
-    const fees: BigNumber[] = await core.computeSwapFee(
+    const fees: bigint[] = await core.computeSwapFee(
       swap.marketAddress,
       swap.provider,
       swap.lid,
@@ -408,33 +414,34 @@ export class CoreHandler extends Handler {
    * @param amount The swap amount
    * @param price The swap price
    */
-  async computeSwapUsdValue(market: Market, amount: BigNumber, price: BigNumber) {
+  async computeSwapUsdValue(market: Market, amount: bigint, price: bigint) {
     const { baseType, base, quoteAddress, baseAddress, baseDecimals, quoteDecimals } = market;
 
     if (market.isInstant()) {
       const value = Market.isNFT(baseType)
         ? await this.metadataSrv.tryToUsd(this.network, price.toString(), quoteAddress)
         : await this.metadataSrv.tryToUsd(this.network, amount.toString(), baseAddress);
-      return value.toString();
+      return toDec(value).toFixed();
     }
 
     // ex: NFT/SYNTH
     if (Market.isNFT(baseType)) {
       const rate = await this.exrSrv.get(base);
       const toUsdRate = rate ? toDec(1).div(rate) : toDec(0);
-      const priceHD = toDec(price.toString()).div(pow10D(quoteDecimals));
+      const priceHD = toDec(price.toString()).div(pow10(quoteDecimals));
       return priceHD.mul(toUsdRate).toFixed();
     }
 
     // ex: ERC20/SYNTH
     if (Market.isERC20(baseType)) {
-      return (await this.metadataSrv.tryToUsd(this.network, amount.toString(), baseAddress)).toString();
+      const value = await this.metadataSrv.tryToUsd(this.network, amount.toString(), baseAddress);
+      return toDec(value).toFixed();
     }
 
     // SYNTH/*
     const rate = await this.exrSrv.get(base);
     const toUsdRate = rate ? toDec(1).div(rate) : toDec(0);
-    const priceHD = toDec(amount.toString()).div(pow10D(baseDecimals));
+    const priceHD = toDec(amount.toString()).div(pow10(baseDecimals));
     return priceHD.mul(toUsdRate).toFixed();
   }
 
@@ -455,10 +462,10 @@ export class CoreHandler extends Handler {
     provider: string,
     swapper: string,
     _recipient: string,
-    numTypeInfo: BigNumber[],
-    idsFromProvider: BigNumber[],
-    idsFromTaker: BigNumber[],
-    event: ChainEvent,
+    numTypeInfo: bigint[],
+    idsFromProvider: bigint[],
+    idsFromTaker: bigint[],
+    event: ContractCallEvent,
     txn?: Transaction,
   ) {
     const [orderId, lid, , price, offerId, operator, cancelDuration] = numTypeInfo;
@@ -469,37 +476,37 @@ export class CoreHandler extends Handler {
       this.network,
       marketAddress,
       provider,
-      lid.toNumber(),
+      toNumber(lid),
       undefined,
       undefined,
       txn,
     );
 
     // If base or quote is NFT, use the whole amount of the liquidity
-    amount = Market.isNFT(market.baseType) || Market.isNFT(market.quoteType) ? toBN(liq.amount) : amount;
+    amount = Market.isNFT(market.baseType) || Market.isNFT(market.quoteType) ? toBigInt(liq.amount) : amount;
 
     // Create swap
     let swap: Partial<Swap> = {
       network: this.network,
       marketAddress,
-      lid: lid.toNumber(),
+      lid: toNumber(lid),
       provider,
       taker: swapper,
       base: market.base,
       baseAddress: market.baseAddress,
       quote: market.quote,
       quoteAddress: market.quoteAddress,
-      orderId: orderId.toNumber(),
+      orderId: toNumber(orderId),
       amount: amount.toString(),
       price: price.toString(),
-      offerId: !offerId.isZero() ? offerId.sub(1).toNumber() : undefined,
-      providerIds: idsFromProvider.map((id) => id.toNumber()),
-      takerIds: idsFromTaker.map((id) => id.toNumber()),
-      operator: operator.toNumber(),
+      offerId: !isZero(offerId) ? toDec(offerId).sub(1).toNumber() : undefined,
+      providerIds: idsFromProvider.map((id) => toNumber(id)),
+      takerIds: idsFromTaker.map((id) => toNumber(id)),
+      operator: toNumber(operator),
       txHash: event.transactionHash,
       cancelAt: moment
         .unix(await getBlockTime(event))
-        .add(cancelDuration.toNumber(), 'seconds')
+        .add(toNumber(cancelDuration), 'seconds')
         .toISOString(),
     };
 
@@ -514,7 +521,7 @@ export class CoreHandler extends Handler {
       liq.id,
       {
         openOrders: liq.openOrders + 1,
-        amount: toBN(liq.amount).sub(swap.amount).toString(),
+        amount: toDec(liq.amount).sub(swap.amount).toFixed(),
         totalSwaps: liq.totalSwaps + 1,
       },
       txn,
@@ -524,7 +531,7 @@ export class CoreHandler extends Handler {
     market = await Market.updateById(
       market.id,
       {
-        totalLiquidity: toBN(market.totalLiquidity).sub(swap.amount).toString(),
+        totalLiquidity: toDec(market.totalLiquidity).sub(swap.amount).toFixed(),
         totalSwaps: market.totalSwaps + 1,
       },
       txn,
@@ -536,9 +543,9 @@ export class CoreHandler extends Handler {
         network: this.network,
         marketAddress,
         provider,
-        lid: lid.toNumber(),
+        lid: toNumber(lid),
         creator: swapper,
-        orderId: orderId.toNumber(),
+        orderId: toNumber(orderId),
         action: Events.LiquiditySwap,
         swapId: swap.id,
       },
@@ -576,31 +583,31 @@ export class CoreHandler extends Handler {
     swapper: string,
     _recipient: string,
     releaser: string,
-    numTypeInfo: BigNumber[],
+    numTypeInfo: bigint[],
     byDispute: boolean,
-    idsFromProvider: BigNumber[],
-    idsFromTaker: BigNumber[],
-    event: ChainEvent,
+    idsFromProvider: bigint[],
+    idsFromTaker: bigint[],
+    event: ContractCallEvent,
     txn?: Transaction,
   ) {
     let [orderId] = numTypeInfo;
     const [, lid, , price, offerId, operator] = numTypeInfo;
     let amount = numTypeInfo[2];
 
-    if (orderId.isZero()) {
+    if (isZero(orderId)) {
       let market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
       let liq = await Liquidity.getLiquidity(
         this.network,
         marketAddress,
         provider,
-        lid.toNumber(),
+        toNumber(lid),
         undefined,
         undefined,
         txn,
       );
 
       // If base or quote is NFT, use the whole amount of the liquidity
-      amount = Market.isNFT(market.baseType) || Market.isNFT(market.quoteType) ? toBN(liq.amount) : amount;
+      amount = Market.isNFT(market.baseType) || Market.isNFT(market.quoteType) ? toBigInt(liq.amount) : amount;
 
       // Compute USD value of the swap
       const valueUsd = await this.computeSwapUsdValue(market, amount, price);
@@ -608,7 +615,7 @@ export class CoreHandler extends Handler {
       // Get USD equivalent of the swap value
       let swap: Partial<Swap> = {
         network: this.network,
-        lid: lid.toNumber(),
+        lid: toNumber(lid),
         marketAddress,
         provider,
         taker: swapper,
@@ -616,17 +623,17 @@ export class CoreHandler extends Handler {
         baseAddress: market.baseAddress,
         quote: market.quote,
         quoteAddress: market.quoteAddress,
-        orderId: !orderId.isZero() ? orderId.toNumber() - 1 : undefined,
+        orderId: !isZero(orderId) ? toNumber(orderId) - 1 : undefined,
         amount: amount.toString(),
         valueUsd,
         price: price.toString(),
-        instant: orderId.isZero(),
-        paid: orderId.isZero(),
-        released: orderId.isZero(),
-        offerId: !offerId.isZero() ? offerId.sub(1).toNumber() : undefined,
-        operator: operator.toNumber(),
-        providerIds: idsFromProvider.map((id) => id.toNumber()),
-        takerIds: idsFromTaker.map((id) => id.toNumber()),
+        instant: isZero(orderId),
+        paid: isZero(orderId),
+        released: isZero(orderId),
+        offerId: !isZero(offerId) ? toDec(offerId).sub(1).toNumber() : undefined,
+        operator: toNumber(operator),
+        providerIds: idsFromProvider.map((id) => toNumber(id)),
+        takerIds: idsFromTaker.map((id) => toNumber(id)),
         txHash: event.transactionHash,
       };
       const info = await this.computeSwapFees(swap, event.blockNumber);
@@ -637,8 +644,8 @@ export class CoreHandler extends Handler {
       liq = await Liquidity.updateById(
         liq.id,
         {
-          amount: toBN(liq.amount).sub(amount).toString(),
-          amountSwapped: toBN(liq.amountSwapped).add(amount).toString(),
+          amount: toDec(liq.amount).sub(amount.toString()).toFixed(),
+          amountSwapped: toDec(liq.amountSwapped).add(amount.toString()).toFixed(),
           lastSwapAt: now,
           totalSwaps: liq.totalSwaps + 1,
         },
@@ -650,9 +657,9 @@ export class CoreHandler extends Handler {
         market.id,
         {
           lastSwapAt: now,
-          amountSwapped: toBN(market.amountSwapped).add(amount).toString(),
+          amountSwapped: toDec(market.amountSwapped).add(amount.toString()).toFixed(),
           totalSwaps: market.totalSwaps + 1,
-          totalLiquidity: toBN(market.totalLiquidity).sub(amount).toString(),
+          totalLiquidity: toDec(market.totalLiquidity).sub(amount.toString()).toFixed(),
         },
         txn,
       );
@@ -663,9 +670,9 @@ export class CoreHandler extends Handler {
           network: this.network,
           marketAddress,
           provider,
-          lid: lid.toNumber(),
+          lid: toNumber(lid),
           creator: swapper,
-          orderId: orderId.toNumber(),
+          orderId: toNumber(orderId),
           action: Events.LiquiditySwap,
           swapId: swap.id,
         },
@@ -682,14 +689,14 @@ export class CoreHandler extends Handler {
         liq,
       });
     } else {
-      orderId = orderId.sub(1);
+      orderId = orderId - BigInt(1);
       const now = moment();
-      let swap = await Swap.get(this.network, orderId.toNumber(), undefined, undefined, txn);
+      let swap = await Swap.get(this.network, toNumber(orderId), undefined, undefined, txn);
       const { marketAddress, provider } = swap;
       let market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
 
       // Compute USD value of the swap
-      const valueUsd = await this.computeSwapUsdValue(market, toBN(swap.amount), price);
+      const valueUsd = await this.computeSwapUsdValue(market, toBigInt(swap.amount), price);
 
       // Update the swap
       swap = await Swap.updateById(
@@ -705,7 +712,7 @@ export class CoreHandler extends Handler {
       );
 
       // Mark the last dispute as `orderReleased` if there is any
-      const dispute = await Dispute.getRecentOfOrder(this.network, marketAddress, orderId.toNumber(), txn);
+      const dispute = await Dispute.getRecentOfOrder(this.network, marketAddress, toNumber(orderId), txn);
       if (dispute && !dispute.orderReleased) {
         await Dispute.updateById(dispute.id, { orderReleased: true }, txn);
       }
@@ -715,7 +722,7 @@ export class CoreHandler extends Handler {
         this.network,
         marketAddress,
         provider,
-        lid.toNumber(),
+        toNumber(lid),
         undefined,
         undefined,
         txn,
@@ -726,14 +733,14 @@ export class CoreHandler extends Handler {
         {
           openOrders: liq.openOrders - 1,
           lastSwapAt: now.toISOString(),
-          amountSwapped: toBN(liq.amountSwapped).add(amount).toString(),
+          amountSwapped: toDec(liq.amountSwapped).add(amount.toString()).toFixed(),
           completionRate: dispute ? liq.completionRate : newCompletionRate,
-          avgFinalizeDur: await Swap.getAvgFinalizeDuration(this.network, marketAddress, provider, lid.toNumber(), txn),
+          avgFinalizeDur: await Swap.getAvgFinalizeDuration(this.network, marketAddress, provider, toNumber(lid), txn),
           avgReleaseDur: await Swap.getAvgReleaseDuration(
             this.network,
             marketAddress,
             provider,
-            lid.toNumber(),
+            toNumber(lid),
             undefined,
             txn,
           ),
@@ -747,7 +754,7 @@ export class CoreHandler extends Handler {
         market.id,
         {
           lastSwapAt: now.toISOString(),
-          amountSwapped: toBN(market.amountSwapped).add(amount).toString(),
+          amountSwapped: toDec(market.amountSwapped).add(amount.toString()).toFixed(),
           completionRate: dispute ? market.completionRate : newCompletionRate,
           avgFinalizeDur: await Swap.getAvgFinalizeDuration(this.network, marketAddress, undefined, undefined, txn),
           avgReleaseDur: await Swap.getAvgReleaseDuration(
@@ -768,7 +775,7 @@ export class CoreHandler extends Handler {
         {
           network: this.network,
           marketAddress,
-          orderId: orderId.toNumber(),
+          orderId: toNumber(orderId),
           creator: releaser,
           action: Events.SwapReleased,
         },
@@ -799,16 +806,16 @@ export class CoreHandler extends Handler {
    * @param txn The transaction object
    */
   async onOrderCancelled(
-    orderId: BigNumber,
+    orderId: bigint,
     canceller: string,
     byDispute: boolean,
-    event: ChainEvent,
+    event: ContractCallEvent,
     txn?: Transaction,
   ) {
     const now = moment();
 
     // Mark swap order as `cancelled`
-    let swap = await Swap.get(this.network, orderId.toNumber(), undefined, undefined, txn);
+    let swap = await Swap.get(this.network, toNumber(orderId), undefined, undefined, txn);
     swap = await Swap.updateById(
       swap.id,
       {
@@ -825,7 +832,7 @@ export class CoreHandler extends Handler {
     let liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, undefined, txn);
     liq = await Liquidity.updateById(liq.id, {
       openOrders: liq.openOrders - 1,
-      amount: toBN(liq.amount).add(swap.amount).toString(),
+      amount: toDec(liq.amount).add(swap.amount).toFixed(),
       avgFinalizeDur: await Swap.getAvgFinalizeDuration(this.network, marketAddress, provider, lid, txn),
     });
 
@@ -834,7 +841,7 @@ export class CoreHandler extends Handler {
     market = await Market.updateById(
       market.id,
       {
-        totalLiquidity: toBN(market.totalLiquidity).add(swap.amount).toString(),
+        totalLiquidity: toDec(market.totalLiquidity).add(swap.amount).toFixed(),
         avgFinalizeDur: await Swap.getAvgFinalizeDuration(this.network, marketAddress, undefined, undefined, txn),
       },
       txn,
@@ -845,7 +852,7 @@ export class CoreHandler extends Handler {
       {
         network: this.network,
         marketAddress,
-        orderId: orderId.toNumber(),
+        orderId: toNumber(orderId),
         creator: canceller,
         action: Events.SwapCancelled,
       },
@@ -875,8 +882,8 @@ export class CoreHandler extends Handler {
    * @param event The event object
    * @param txn The transaction object
    */
-  async onSwapOrderPaid(orderId: BigNumber, disputeFrom: BigNumber, event: ChainEvent, txn?: Transaction) {
-    let swap = await Swap.get(this.network, orderId.toNumber(), undefined, undefined, txn);
+  async onSwapOrderPaid(orderId: bigint, disputeFrom: bigint, event: ContractCallEvent, txn?: Transaction) {
+    let swap = await Swap.get(this.network, toNumber(orderId), undefined, undefined, txn);
 
     // Update the order
     swap = await Swap.updateById(
@@ -887,7 +894,7 @@ export class CoreHandler extends Handler {
         paidAt: moment().toISOString(),
         disputeFrom: moment
           .unix(await getBlockTime(event))
-          .add(disputeFrom.toNumber(), 'seconds')
+          .add(toNumber(disputeFrom), 'seconds')
           .toISOString(),
       },
       txn,
@@ -925,7 +932,7 @@ export class CoreHandler extends Handler {
       {
         network: this.network,
         marketAddress,
-        orderId: orderId.toNumber(),
+        orderId: toNumber(orderId),
         creator: swap.payer,
         action: Events.SwapPaid,
       },
@@ -953,10 +960,10 @@ export class CoreHandler extends Handler {
    */
   async onTransferredToFeePool(
     token: string,
-    _amount: BigNumber,
+    _amount: bigint,
     _convAsset: string,
-    _convAmount: BigNumber,
-    event: ChainEvent,
+    _convAmount: bigint,
+    event: ContractCallEvent,
     txn?: Transaction,
   ) {
     // Add a task for the future
@@ -985,13 +992,13 @@ export class CoreHandler extends Handler {
    * @param txn The transaction object
    */
   async onProtocolFeeUpdated(
-    instantSwapFeeBp: BigNumber,
-    syntheticSwapFeeBp: BigNumber,
-    stableSwapFeeBp: BigNumber,
-    fixedSynthSwapFee: BigNumber,
-    fixedNFTSwapFee: BigNumber,
-    instantNFTSwapFeeBp: BigNumber,
-    _event: ChainEvent,
+    instantSwapFeeBp: bigint,
+    syntheticSwapFeeBp: bigint,
+    stableSwapFeeBp: bigint,
+    fixedSynthSwapFee: bigint,
+    fixedNFTSwapFee: bigint,
+    instantNFTSwapFeeBp: bigint,
+    _event: ContractCallEvent,
     txn?: Transaction,
   ) {
     await Meta.update(Meta.makeNetKey(this.network, FeeName.InstantSwapFeeBp), instantSwapFeeBp.toString(), txn);
@@ -1024,20 +1031,20 @@ export class CoreHandler extends Handler {
     target: string,
     deduct: boolean,
     paused: boolean,
-    lid: BigNumber,
-    ids: BigNumber[],
-    price: BigNumber,
-    wantOrIds: BigNumber[],
-    wantAndIds: BigNumber[],
-    timeToPay: BigNumber,
-    _event: ChainEvent,
+    lid: bigint,
+    ids: bigint[],
+    price: bigint,
+    wantOrIds: bigint[],
+    wantAndIds: bigint[],
+    timeToPay: bigint,
+    _event: ContractCallEvent,
     txn?: Transaction,
   ) {
     const liq = await Liquidity.getLiquidity(
       this.network,
       marketAddress,
       provider,
-      lid.toNumber(),
+      toNumber(lid),
       undefined,
       undefined,
       txn,
@@ -1050,22 +1057,22 @@ export class CoreHandler extends Handler {
           network: this.network,
           provider,
           marketAddress,
-          address: makeLiqAddress(marketAddress, provider, lid.toNumber()),
+          address: makeLiqAddress(marketAddress, provider, toNumber(lid)),
           target,
           paused,
-          lid: lid.toNumber(),
+          lid: toNumber(lid),
           base: market.base,
           baseAddress: market.baseAddress,
           baseType: market.baseType,
           quote: market.quote,
           quoteAddress: market.quoteAddress,
           quoteType: market.quoteType,
-          ids: ids.map((id) => id.toNumber()),
+          ids: ids.map((id) => toNumber(id)),
           price: price.toString(),
           amount: ids.length.toString(),
-          wantAndIds: wantAndIds.map((id) => id.toNumber()),
-          wantOrIds: wantOrIds.map((id) => id.toNumber()),
-          timeToPay: timeToPay.toNumber(),
+          wantAndIds: wantAndIds.map((id) => toNumber(id)),
+          wantOrIds: wantOrIds.map((id) => toNumber(id)),
+          timeToPay: toNumber(timeToPay),
         },
         txn,
       );
@@ -1079,22 +1086,22 @@ export class CoreHandler extends Handler {
     } else {
       const upd: Partial<Liquidity> = {};
 
-      const _ids = ids.map((id) => id.toNumber());
+      const _ids = ids.map((id) => toNumber(id));
       if (!_.isEqual(liq.ids, _ids)) {
         if (deduct) upd.ids = _.difference(liq.ids, _ids);
         else upd.ids = _.union(liq.ids, _ids);
-        upd.amount = upd.ids.length.toString();
+        upd.amount = upd.ids.length.toFixed();
       }
 
       if (liq.target != target) upd.target = target;
       if (liq.paused != paused) upd.paused = paused;
       if (liq.price !== price.toString()) upd.price = price.toString();
-      if (liq.timeToPay !== timeToPay.toNumber()) upd.timeToPay = timeToPay.toNumber();
+      if (liq.timeToPay !== toNumber(timeToPay)) upd.timeToPay = toNumber(timeToPay);
 
-      const _wantAndIds = wantAndIds.map((id) => id.toNumber());
+      const _wantAndIds = wantAndIds.map((id) => toNumber(id));
       if (!_.isEqual(liq.wantAndIds, _wantAndIds)) upd.wantAndIds = _wantAndIds;
 
-      const _wantOrIds = wantOrIds.map((id) => id.toNumber());
+      const _wantOrIds = wantOrIds.map((id) => toNumber(id));
       if (!_.isEqual(liq.wantOrIds, _wantOrIds)) upd.wantOrIds = _wantOrIds;
 
       // Update liquidity
@@ -1118,7 +1125,7 @@ export class CoreHandler extends Handler {
           baseAddress: market.baseAddress,
           quoteAddress: market.quoteAddress,
           provider,
-          lid: lid.toNumber(),
+          lid: toNumber(lid),
           price: await Liquidity.getLowestPrice(this.network, marketAddress, undefined, undefined, txn),
         },
         txn,
@@ -1150,22 +1157,22 @@ export class CoreHandler extends Handler {
     target: string,
     deduct: boolean,
     paused: boolean,
-    lid: BigNumber,
-    amount: BigNumber,
-    price: BigNumber,
-    wantOrIds: BigNumber[],
-    wantAndIds: BigNumber[],
-    minSwap: BigNumber,
-    maxSwap: BigNumber,
-    timeToPay: BigNumber,
-    _event: ChainEvent,
+    lid: bigint,
+    amount: bigint,
+    price: bigint,
+    wantOrIds: bigint[],
+    wantAndIds: bigint[],
+    minSwap: bigint,
+    maxSwap: bigint,
+    timeToPay: bigint,
+    _event: ContractCallEvent,
     txn?: Transaction,
   ) {
     let liq = await Liquidity.getLiquidity(
       this.network,
       marketAddress,
       provider,
-      lid.toNumber(),
+      toNumber(lid),
       undefined,
       undefined,
       txn,
@@ -1177,7 +1184,7 @@ export class CoreHandler extends Handler {
       network: this.network,
       marketAddress,
       provider,
-      lid: lid.toNumber(),
+      lid: toNumber(lid),
       creator: provider,
     };
 
@@ -1187,8 +1194,8 @@ export class CoreHandler extends Handler {
           network: this.network,
           marketAddress,
           provider,
-          lid: lid.toNumber(),
-          address: makeLiqAddress(marketAddress, provider, lid.toNumber()),
+          lid: toNumber(lid),
+          address: makeLiqAddress(marketAddress, provider, toNumber(lid)),
           target,
           paused,
           base: market.base,
@@ -1199,20 +1206,21 @@ export class CoreHandler extends Handler {
           quoteType: market.quoteType,
           amount: amount.toString(),
           price: price.toString(),
-          wantAndIds: wantAndIds.map((id) => id.toNumber()),
-          wantOrIds: wantOrIds.map((id) => id.toNumber()),
+          wantAndIds: wantAndIds.map((id) => toNumber(id)),
+          wantOrIds: wantOrIds.map((id) => toNumber(id)),
           minSwap: minSwap.toString(),
           maxSwap: maxSwap.toString(),
-          timeToPay: timeToPay.toNumber(),
+          timeToPay: toNumber(timeToPay),
         },
         txn,
       );
 
       // Update market
+      const { totalLiquidity, id: marketId } = market;
       market = await Market.updateById(
-        market.id,
+        marketId,
         {
-          totalLiquidity: !paused ? toBN(market.totalLiquidity).add(amount).toString() : market.totalLiquidity,
+          totalLiquidity: !paused ? toDec(totalLiquidity).add(amount.toString()).toFixed() : totalLiquidity,
           lowestPrice: await Liquidity.getLowestPrice(this.network, marketAddress, undefined, undefined, txn),
         },
         txn,
@@ -1238,11 +1246,13 @@ export class CoreHandler extends Handler {
       const ch: Partial<Liquidity> = {};
       const mktCh: Partial<Market> = {};
 
-      if (!amount.isZero()) {
-        ch.amount = deduct ? toBN(liq.amount).sub(amount).toString() : toBN(liq.amount).add(amount).toString();
+      if (!isZero(amount)) {
+        ch.amount = deduct
+          ? toDec(liq.amount).sub(amount.toString()).toFixed()
+          : toDec(liq.amount).add(amount.toString()).toFixed();
         mktCh.totalLiquidity = deduct
-          ? toBN(market.totalLiquidity).sub(amount).toString()
-          : toBN(market.totalLiquidity).add(amount).toString();
+          ? toDec(market.totalLiquidity).sub(amount.toString()).toFixed()
+          : toDec(market.totalLiquidity).add(amount.toString()).toFixed();
 
         const action = deduct ? Events.LiquidityRemove : Events.LiquidityAdd;
         await Event.create({ ...common, amount: amount.toString(), action }, txn);
@@ -1261,11 +1271,11 @@ export class CoreHandler extends Handler {
         // Deduct liquidity from total if the liquidity is paused.
         // Otherwise, add liquidity to total liquidity.
         if (ch.paused) {
-          const liqAmt = ch.amount ? toBN(ch.amount) : toBN(liq.amount);
-          mktCh.totalLiquidity = toBN(market.totalLiquidity).sub(liqAmt).toString();
+          const liqAmt = ch.amount ? toBigInt(ch.amount) : toBigInt(liq.amount);
+          mktCh.totalLiquidity = toDec(market.totalLiquidity).sub(liqAmt.toString()).toFixed();
         } else if (ch.paused == false) {
-          const liqAmt = ch.amount ? toBN(ch.amount) : toBN(liq.amount);
-          mktCh.totalLiquidity = toBN(market.totalLiquidity).add(liqAmt).toString();
+          const liqAmt = ch.amount ? toBigInt(ch.amount) : toBigInt(liq.amount);
+          mktCh.totalLiquidity = toDec(market.totalLiquidity).add(liqAmt.toString()).toFixed();
         }
 
         await Event.create({ ...common, paused: ch.paused, action: Events.LiquidityPause }, txn);
@@ -1290,15 +1300,15 @@ export class CoreHandler extends Handler {
         );
       }
 
-      if (liq.timeToPay !== timeToPay.toNumber()) {
-        ch.timeToPay = timeToPay.toNumber();
+      if (liq.timeToPay !== toNumber(timeToPay)) {
+        ch.timeToPay = toNumber(timeToPay);
         await Event.create({ ...common, timeToPay: ch.timeToPay, action: Events.LiquidityTimeToPayUpdate }, txn);
       }
 
-      const _wantAndIds = wantAndIds.map((id) => id.toNumber());
+      const _wantAndIds = wantAndIds.map((id) => toNumber(id));
       if (!_.isEqual(liq.wantAndIds, _wantAndIds)) ch.wantAndIds = _wantAndIds;
 
-      const _wantOrIds = wantOrIds.map((id) => id.toNumber());
+      const _wantOrIds = wantOrIds.map((id) => toNumber(id));
       if (!_.isEqual(liq.wantOrIds, _wantOrIds)) ch.wantOrIds = _wantOrIds;
 
       await Liquidity.updateById(liq.id, ch, txn);
@@ -1317,7 +1327,7 @@ export class CoreHandler extends Handler {
           provider,
           baseAddress: market.baseAddress,
           quoteAddress: market.quoteAddress,
-          lid: lid.toNumber(),
+          lid: toNumber(lid),
           price: await Liquidity.getLowestPrice(this.network, marketAddress, undefined, undefined, txn),
         },
         txn,
@@ -1339,16 +1349,16 @@ export class CoreHandler extends Handler {
     marketAddress: string,
     provider: string,
     manager: string,
-    lid: BigNumber,
-    price: BigNumber,
-    event: ChainEvent,
+    lid: bigint,
+    price: bigint,
+    event: ContractCallEvent,
     txn?: Transaction,
   ) {
     const liq = await Liquidity.getLiquidity(
       this.network,
       marketAddress,
       provider,
-      lid.toNumber(),
+      toNumber(lid),
       undefined,
       undefined,
       txn,
@@ -1365,7 +1375,7 @@ export class CoreHandler extends Handler {
         provider,
         baseAddress: liq.baseAddress,
         quoteAddress: liq.quoteAddress,
-        lid: lid.toNumber(),
+        lid: toNumber(lid),
         price: await Liquidity.getLowestPrice(this.network, marketAddress, undefined, undefined, txn),
       },
       txn,
@@ -1383,7 +1393,7 @@ export class CoreHandler extends Handler {
           network: this.network,
           marketAddress,
           provider,
-          lid: lid.toNumber(),
+          lid: toNumber(lid),
           creator: manager,
           price: price.toString(),
           action: Events.LiquidityPriceUpdate,
@@ -1407,16 +1417,16 @@ export class CoreHandler extends Handler {
   async onTogglePause(
     marketAddress: string,
     provider: string,
-    lid: BigNumber,
+    lid: bigint,
     paused: boolean,
-    event: ChainEvent,
+    event: ContractCallEvent,
     txn?: Transaction,
   ) {
     const liq = await Liquidity.getLiquidity(
       this.network,
       marketAddress,
       provider,
-      lid.toNumber(),
+      toNumber(lid),
       undefined,
       undefined,
       txn,
@@ -1431,7 +1441,7 @@ export class CoreHandler extends Handler {
           network: this.network,
           marketAddress,
           provider,
-          lid: lid.toNumber(),
+          lid: toNumber(lid),
           creator: provider,
           paused,
           action: Events.LiquidityPause,
@@ -1457,7 +1467,7 @@ export class CoreHandler extends Handler {
     provider: string,
     manager: string,
     oldManager: string,
-    _event: ChainEvent,
+    _event: ContractCallEvent,
     txn?: Transaction,
   ) {
     if (isEqualStr(manager, oldManager)) return;
@@ -1482,7 +1492,7 @@ export class CoreHandler extends Handler {
     // Notify the old manager
     const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
     const notifData = { market, provider };
-    if (oldManager != constants.AddressZero && !isEqualStr(manager, oldManager)) {
+    if (oldManager != ZeroAddress && !isEqualStr(manager, oldManager)) {
       this.notifSrv.notify(NotificationID.RemoveLiquidityManager, this.network, oldManager, notifData);
     }
 
@@ -1499,10 +1509,10 @@ export class CoreHandler extends Handler {
    * @param txn The transaction object
    */
   async onProtocolFeeSplitUpdated(
-    inventor: BigNumber,
-    shared: BigNumber,
-    operator: BigNumber,
-    _event: ChainEvent,
+    inventor: bigint,
+    shared: bigint,
+    operator: bigint,
+    _event: ContractCallEvent,
     txn?: Transaction,
   ) {
     await Meta.update(Meta.makeNetKey(this.network, ProtocolFeeBeneficiary.Inventor), inventor.toString(), txn);
@@ -1516,7 +1526,7 @@ export class CoreHandler extends Handler {
    * @param event The event object
    * @param txn The transaction object
    */
-  async onNFTDiscountUpdated(discountBp: BigNumber, event: ChainEvent, txn?: Transaction) {
+  async onNFTDiscountUpdated(discountBp: bigint, event: ContractCallEvent, txn?: Transaction) {
     await this.onParameterUpdate('nftDiscountBP', discountBp.toString(), event, txn);
   }
 
@@ -1537,14 +1547,14 @@ export class CoreHandler extends Handler {
   async onNewOffer(
     marketAddress: string,
     provider: string,
-    lid: BigNumber,
+    lid: bigint,
     offerer: string,
-    offerId: BigNumber,
-    amount: BigNumber,
-    price: BigNumber,
-    ids: BigNumber[],
-    expireDuration: BigNumber,
-    event: ChainEvent,
+    offerId: bigint,
+    amount: bigint,
+    price: bigint,
+    ids: bigint[],
+    expireDuration: bigint,
+    event: ContractCallEvent,
     txn?: Transaction,
   ) {
     // Save the offer
@@ -1553,15 +1563,15 @@ export class CoreHandler extends Handler {
         network: this.network,
         marketAddress,
         provider,
-        lid: lid.toNumber(),
-        offerId: offerId.sub(1).toNumber(),
+        lid: toNumber(lid),
+        offerId: toDec(offerId).sub(1).toNumber(),
         creator: offerer,
         amount: amount.toString(),
         price: price.toString(),
-        ids: ids.map((id) => id.toNumber()),
+        ids: ids.map((id) => toNumber(id)),
         deadline: moment
           .unix(await getBlockTime(event))
-          .add(expireDuration.toNumber(), 'seconds')
+          .add(toNumber(expireDuration), 'seconds')
           .toISOString(),
       },
       txn,
@@ -1585,7 +1595,7 @@ export class CoreHandler extends Handler {
       this.network,
       marketAddress,
       provider,
-      lid.toNumber(),
+      toNumber(lid),
       undefined,
       undefined,
       txn,
@@ -1595,7 +1605,7 @@ export class CoreHandler extends Handler {
         network: this.network,
         marketAddress,
         provider,
-        lid: lid.toNumber(),
+        lid: toNumber(lid),
         creator: offerer,
         offerId: offer.offerId,
         action: Events.LiquidityOffer,
@@ -1627,25 +1637,25 @@ export class CoreHandler extends Handler {
    * @param txn The transaction object
    */
   async onOfferUpdated(
-    offerId: BigNumber,
+    offerId: bigint,
     offerer: string,
-    amount: BigNumber,
-    price: BigNumber,
-    ids: BigNumber[],
-    expireDuration: BigNumber,
-    event: ChainEvent,
+    amount: bigint,
+    price: bigint,
+    ids: bigint[],
+    expireDuration: bigint,
+    event: ContractCallEvent,
     txn?: Transaction,
   ) {
     const offer = await Offer.updateByOfferId(
-      offerId.toNumber(),
+      toNumber(offerId),
       {
         amount: amount.toString(),
         price: price.toString(),
-        ids: ids.map((id) => id.toNumber()),
+        ids: ids.map((id) => toNumber(id)),
         accepted: false,
         deadline: moment
           .unix(await getBlockTime(event))
-          .add(expireDuration.toNumber(), 'seconds')
+          .add(toNumber(expireDuration), 'seconds')
           .toISOString(),
       },
       txn,
@@ -1689,23 +1699,23 @@ export class CoreHandler extends Handler {
    * @param txn The transaction object
    */
   async onOfferAccepted(
-    offerId: BigNumber,
+    offerId: bigint,
     acceptor: string,
-    execDelayDur: BigNumber,
-    event: ChainEvent,
+    execDelayDur: bigint,
+    event: ContractCallEvent,
     txn?: Transaction,
   ) {
-    let offer = await Offer.getByNetworkAndOfferId(this.network, offerId.toNumber(), undefined, undefined, txn);
+    let offer = await Offer.getByNetworkAndOfferId(this.network, toNumber(offerId), undefined, undefined, txn);
     if (!offer) throw new Error('Offer not found');
 
     // Update the offer
     offer = await Offer.updateByOfferId(
-      offerId.toNumber(),
+      toNumber(offerId),
       {
         accepted: true,
         execAt: moment
           .unix(await getBlockTime(event))
-          .add(execDelayDur.toNumber(), 'seconds')
+          .add(toNumber(execDelayDur), 'seconds')
           .toISOString(),
       },
       txn,
@@ -1743,12 +1753,12 @@ export class CoreHandler extends Handler {
    * @param event The event object
    * @param txn The transaction object
    */
-  async onOfferUnaccepted(offerId: BigNumber, unacceptor: string, event: ChainEvent, txn?: Transaction) {
-    let offer = await Offer.getByNetworkAndOfferId(this.network, offerId.toNumber(), undefined, undefined, txn);
+  async onOfferUnaccepted(offerId: bigint, unacceptor: string, event: ContractCallEvent, txn?: Transaction) {
+    let offer = await Offer.getByNetworkAndOfferId(this.network, toNumber(offerId), undefined, undefined, txn);
     if (!offer) throw new Error('Offer not found');
 
     // Update the offer
-    offer = await Offer.updateByOfferId(offerId.toNumber(), { accepted: false, execAt: null }, txn);
+    offer = await Offer.updateByOfferId(toNumber(offerId), { accepted: false, execAt: null }, txn);
 
     const { marketAddress, provider, lid } = offer;
     const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
@@ -1782,12 +1792,12 @@ export class CoreHandler extends Handler {
    * @param event The event object
    * @param txn The transaction object
    */
-  async onOfferCancelled(offerId: BigNumber, canceller: string, event: ChainEvent, txn?: Transaction) {
-    let offer = await Offer.getByNetworkAndOfferId(this.network, offerId.toNumber(), undefined, undefined, txn);
+  async onOfferCancelled(offerId: bigint, canceller: string, event: ContractCallEvent, txn?: Transaction) {
+    let offer = await Offer.getByNetworkAndOfferId(this.network, toNumber(offerId), undefined, undefined, txn);
     if (!offer) throw new Error('Offer not found');
 
     // Update the offer
-    offer = await Offer.updateByOfferId(offerId.toNumber(), { cancelled: true }, txn);
+    offer = await Offer.updateByOfferId(toNumber(offerId), { cancelled: true }, txn);
 
     await Event.create(
       {
@@ -1821,12 +1831,12 @@ export class CoreHandler extends Handler {
    * @param event The event object
    * @param txn The transaction object
    */
-  async onOfferExecuted(offerId: BigNumber, executor: string, event: ChainEvent, txn?: Transaction) {
-    let offer = await Offer.getByNetworkAndOfferId(this.network, offerId.toNumber(), undefined, undefined, txn);
+  async onOfferExecuted(offerId: bigint, executor: string, event: ContractCallEvent, txn?: Transaction) {
+    let offer = await Offer.getByNetworkAndOfferId(this.network, toNumber(offerId), undefined, undefined, txn);
     if (!offer) throw new Error('Offer not found');
 
     // Update the offer
-    offer = await Offer.updateByOfferId(offerId.toNumber(), { executed: true }, txn);
+    offer = await Offer.updateByOfferId(toNumber(offerId), { executed: true }, txn);
 
     await Event.create(
       {
@@ -1865,16 +1875,16 @@ export class CoreHandler extends Handler {
   async onUpdatedLiquiditySwapBadges(
     marketAddress: string,
     provider: string,
-    lid: BigNumber,
+    lid: bigint,
     badges: [string, string][],
-    _event: ChainEvent,
+    _event: ContractCallEvent,
     txn?: Transaction,
   ) {
     await Liquidity.update(
       this.network,
       marketAddress,
       provider,
-      lid.toNumber(),
+      toNumber(lid),
       { requiredSwapBadges: badges.map((b) => b.join('/').replace(/\/$/, '')) },
       txn,
     );
@@ -1887,7 +1897,7 @@ export class CoreHandler extends Handler {
    * @param _event The event object
    * @param txn The transaction object
    */
-  async onParameterUpdate(param: keyof ContractsParams, value: string, _event: ChainEvent, txn?: Transaction) {
+  async onParameterUpdate(param: keyof ContractsParams, value: string, _event: ContractCallEvent, txn?: Transaction) {
     await Meta.updateContractsParams(this.network, txn, (params) => (params[param] = value));
   }
 }

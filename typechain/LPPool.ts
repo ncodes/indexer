@@ -3,62 +3,29 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BigNumber,
   BigNumberish,
   BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  Overrides,
-  PopulatedTransaction,
-  Signer,
-  utils,
-} from "ethers";
-import type {
   FunctionFragment,
   Result,
+  Interface,
   EventFragment,
-} from "@ethersproject/abi";
-import type { Listener, Provider } from "@ethersproject/providers";
+  AddressLike,
+  ContractRunner,
+  ContractMethod,
+  Listener,
+} from "ethers";
 import type {
-  TypedEventFilter,
-  TypedEvent,
+  TypedContractEvent,
+  TypedDeferredTopicFilter,
+  TypedEventLog,
+  TypedLogDescription,
   TypedListener,
-  OnEvent,
+  TypedContractMethod,
 } from "./common";
 
-export interface LPPoolInterface extends utils.Interface {
-  functions: {
-    "balanceOf(address)": FunctionFragment;
-    "earned(address)": FunctionFragment;
-    "getRewardForDuration()": FunctionFragment;
-    "lastTimeRewardApplicable()": FunctionFragment;
-    "lastUpdateTime()": FunctionFragment;
-    "lock()": FunctionFragment;
-    "notifyRewardDeposit(uint256,uint256)": FunctionFragment;
-    "owner()": FunctionFragment;
-    "pause()": FunctionFragment;
-    "paused()": FunctionFragment;
-    "periodFinish()": FunctionFragment;
-    "poolToken()": FunctionFragment;
-    "recoverERC20(address,uint256)": FunctionFragment;
-    "renounceOwnership()": FunctionFragment;
-    "rewardPerToken()": FunctionFragment;
-    "rewardPerTokenStored()": FunctionFragment;
-    "rewardRate()": FunctionFragment;
-    "rewards(address)": FunctionFragment;
-    "rewardsDuration()": FunctionFragment;
-    "rewardsToken()": FunctionFragment;
-    "setPoolToken(address)": FunctionFragment;
-    "totalSupply()": FunctionFragment;
-    "transferOwnership(address)": FunctionFragment;
-    "unlock()": FunctionFragment;
-    "unpause()": FunctionFragment;
-    "userRewardPerTokenPaid(address)": FunctionFragment;
-    "withdrawReward(uint256)": FunctionFragment;
-  };
-
+export interface LPPoolInterface extends Interface {
   getFunction(
-    nameOrSignatureOrTopic:
+    nameOrSignature:
       | "balanceOf"
       | "earned"
       | "getRewardForDuration"
@@ -88,8 +55,23 @@ export interface LPPoolInterface extends utils.Interface {
       | "withdrawReward"
   ): FunctionFragment;
 
-  encodeFunctionData(functionFragment: "balanceOf", values: [string]): string;
-  encodeFunctionData(functionFragment: "earned", values: [string]): string;
+  getEvent(
+    nameOrSignatureOrTopic:
+      | "Locked"
+      | "OwnershipTransferred"
+      | "Paused"
+      | "Recovered"
+      | "RewardAdded"
+      | "RewardWithdrawn"
+      | "Unlocked"
+      | "Unpaused"
+  ): EventFragment;
+
+  encodeFunctionData(
+    functionFragment: "balanceOf",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(functionFragment: "earned", values: [AddressLike]): string;
   encodeFunctionData(
     functionFragment: "getRewardForDuration",
     values?: undefined
@@ -117,7 +99,7 @@ export interface LPPoolInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "poolToken", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "recoverERC20",
-    values: [string, BigNumberish]
+    values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -135,7 +117,10 @@ export interface LPPoolInterface extends utils.Interface {
     functionFragment: "rewardRate",
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "rewards", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "rewards",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "rewardsDuration",
     values?: undefined
@@ -146,7 +131,7 @@ export interface LPPoolInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "setPoolToken",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "totalSupply",
@@ -154,13 +139,13 @@ export interface LPPoolInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "unlock", values?: undefined): string;
   encodeFunctionData(functionFragment: "unpause", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "userRewardPerTokenPaid",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "withdrawReward",
@@ -242,592 +227,464 @@ export interface LPPoolInterface extends utils.Interface {
     functionFragment: "withdrawReward",
     data: BytesLike
   ): Result;
-
-  events: {
-    "Locked(address,uint256)": EventFragment;
-    "OwnershipTransferred(address,address)": EventFragment;
-    "Paused(address)": EventFragment;
-    "Recovered(address,uint256)": EventFragment;
-    "RewardAdded(uint256)": EventFragment;
-    "RewardWithdrawn(address,uint256)": EventFragment;
-    "Unlocked(address,uint256)": EventFragment;
-    "Unpaused(address)": EventFragment;
-  };
-
-  getEvent(nameOrSignatureOrTopic: "Locked"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Paused"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Recovered"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RewardAdded"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RewardWithdrawn"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Unlocked"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Unpaused"): EventFragment;
 }
 
-export interface LockedEventObject {
-  sender: string;
-  amount: BigNumber;
+export namespace LockedEvent {
+  export type InputTuple = [sender: AddressLike, amount: BigNumberish];
+  export type OutputTuple = [sender: string, amount: bigint];
+  export interface OutputObject {
+    sender: string;
+    amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type LockedEvent = TypedEvent<[string, BigNumber], LockedEventObject>;
 
-export type LockedEventFilter = TypedEventFilter<LockedEvent>;
-
-export interface OwnershipTransferredEventObject {
-  previousOwner: string;
-  newOwner: string;
+export namespace OwnershipTransferredEvent {
+  export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
+  export type OutputTuple = [previousOwner: string, newOwner: string];
+  export interface OutputObject {
+    previousOwner: string;
+    newOwner: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type OwnershipTransferredEvent = TypedEvent<
-  [string, string],
-  OwnershipTransferredEventObject
->;
 
-export type OwnershipTransferredEventFilter =
-  TypedEventFilter<OwnershipTransferredEvent>;
-
-export interface PausedEventObject {
-  account: string;
+export namespace PausedEvent {
+  export type InputTuple = [account: AddressLike];
+  export type OutputTuple = [account: string];
+  export interface OutputObject {
+    account: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type PausedEvent = TypedEvent<[string], PausedEventObject>;
 
-export type PausedEventFilter = TypedEventFilter<PausedEvent>;
-
-export interface RecoveredEventObject {
-  token: string;
-  amount: BigNumber;
+export namespace RecoveredEvent {
+  export type InputTuple = [token: AddressLike, amount: BigNumberish];
+  export type OutputTuple = [token: string, amount: bigint];
+  export interface OutputObject {
+    token: string;
+    amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type RecoveredEvent = TypedEvent<
-  [string, BigNumber],
-  RecoveredEventObject
->;
 
-export type RecoveredEventFilter = TypedEventFilter<RecoveredEvent>;
-
-export interface RewardAddedEventObject {
-  reward: BigNumber;
+export namespace RewardAddedEvent {
+  export type InputTuple = [reward: BigNumberish];
+  export type OutputTuple = [reward: bigint];
+  export interface OutputObject {
+    reward: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type RewardAddedEvent = TypedEvent<[BigNumber], RewardAddedEventObject>;
 
-export type RewardAddedEventFilter = TypedEventFilter<RewardAddedEvent>;
-
-export interface RewardWithdrawnEventObject {
-  user: string;
-  reward: BigNumber;
+export namespace RewardWithdrawnEvent {
+  export type InputTuple = [user: AddressLike, reward: BigNumberish];
+  export type OutputTuple = [user: string, reward: bigint];
+  export interface OutputObject {
+    user: string;
+    reward: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type RewardWithdrawnEvent = TypedEvent<
-  [string, BigNumber],
-  RewardWithdrawnEventObject
->;
 
-export type RewardWithdrawnEventFilter = TypedEventFilter<RewardWithdrawnEvent>;
-
-export interface UnlockedEventObject {
-  sender: string;
-  amount: BigNumber;
+export namespace UnlockedEvent {
+  export type InputTuple = [sender: AddressLike, amount: BigNumberish];
+  export type OutputTuple = [sender: string, amount: bigint];
+  export interface OutputObject {
+    sender: string;
+    amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UnlockedEvent = TypedEvent<
-  [string, BigNumber],
-  UnlockedEventObject
->;
 
-export type UnlockedEventFilter = TypedEventFilter<UnlockedEvent>;
-
-export interface UnpausedEventObject {
-  account: string;
+export namespace UnpausedEvent {
+  export type InputTuple = [account: AddressLike];
+  export type OutputTuple = [account: string];
+  export interface OutputObject {
+    account: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UnpausedEvent = TypedEvent<[string], UnpausedEventObject>;
-
-export type UnpausedEventFilter = TypedEventFilter<UnpausedEvent>;
 
 export interface LPPool extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
-  deployed(): Promise<this>;
+  connect(runner?: ContractRunner | null): LPPool;
+  waitForDeployment(): Promise<this>;
 
   interface: LPPoolInterface;
 
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
+  queryFilter<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+  queryFilter<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    fromBlockOrBlockhash?: string | number | undefined,
+    toBlock?: string | number | undefined
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
 
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
+  on<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  on<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-  functions: {
-    balanceOf(account: string, overrides?: CallOverrides): Promise<[BigNumber]>;
+  once<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  once<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-    earned(account: string, overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    getRewardForDuration(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    lastTimeRewardApplicable(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    lastUpdateTime(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    lock(
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    notifyRewardDeposit(
-      _rewardAmount: BigNumberish,
-      _rewardsDuration: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    owner(overrides?: CallOverrides): Promise<[string]>;
-
-    pause(
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    paused(overrides?: CallOverrides): Promise<[boolean]>;
-
-    periodFinish(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    poolToken(overrides?: CallOverrides): Promise<[string]>;
-
-    recoverERC20(
-      tokenAddress: string,
-      tokenAmount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    rewardPerToken(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    rewardPerTokenStored(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    rewardRate(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    rewards(arg0: string, overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    rewardsDuration(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    rewardsToken(overrides?: CallOverrides): Promise<[string]>;
-
-    setPoolToken(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    totalSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    unlock(
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    unpause(
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    userRewardPerTokenPaid(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    withdrawReward(
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-  };
-
-  balanceOf(account: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-  earned(account: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-  getRewardForDuration(overrides?: CallOverrides): Promise<BigNumber>;
-
-  lastTimeRewardApplicable(overrides?: CallOverrides): Promise<BigNumber>;
-
-  lastUpdateTime(overrides?: CallOverrides): Promise<BigNumber>;
-
-  lock(overrides?: Overrides & { from?: string }): Promise<ContractTransaction>;
-
-  notifyRewardDeposit(
-    _rewardAmount: BigNumberish,
-    _rewardsDuration: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  owner(overrides?: CallOverrides): Promise<string>;
-
-  pause(
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  paused(overrides?: CallOverrides): Promise<boolean>;
-
-  periodFinish(overrides?: CallOverrides): Promise<BigNumber>;
-
-  poolToken(overrides?: CallOverrides): Promise<string>;
-
-  recoverERC20(
-    tokenAddress: string,
-    tokenAmount: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  renounceOwnership(
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  rewardPerToken(overrides?: CallOverrides): Promise<BigNumber>;
-
-  rewardPerTokenStored(overrides?: CallOverrides): Promise<BigNumber>;
-
-  rewardRate(overrides?: CallOverrides): Promise<BigNumber>;
-
-  rewards(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-  rewardsDuration(overrides?: CallOverrides): Promise<BigNumber>;
-
-  rewardsToken(overrides?: CallOverrides): Promise<string>;
-
-  setPoolToken(
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-  transferOwnership(
-    newOwner: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  unlock(
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  unpause(
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  userRewardPerTokenPaid(
-    arg0: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  withdrawReward(
-    _amount: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  callStatic: {
-    balanceOf(account: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    earned(account: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    getRewardForDuration(overrides?: CallOverrides): Promise<BigNumber>;
-
-    lastTimeRewardApplicable(overrides?: CallOverrides): Promise<BigNumber>;
-
-    lastUpdateTime(overrides?: CallOverrides): Promise<BigNumber>;
-
-    lock(overrides?: CallOverrides): Promise<void>;
-
-    notifyRewardDeposit(
-      _rewardAmount: BigNumberish,
-      _rewardsDuration: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    owner(overrides?: CallOverrides): Promise<string>;
-
-    pause(overrides?: CallOverrides): Promise<void>;
-
-    paused(overrides?: CallOverrides): Promise<boolean>;
-
-    periodFinish(overrides?: CallOverrides): Promise<BigNumber>;
-
-    poolToken(overrides?: CallOverrides): Promise<string>;
-
-    recoverERC20(
-      tokenAddress: string,
-      tokenAmount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    renounceOwnership(overrides?: CallOverrides): Promise<void>;
-
-    rewardPerToken(overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewardPerTokenStored(overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewardRate(overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewards(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewardsDuration(overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewardsToken(overrides?: CallOverrides): Promise<string>;
-
-    setPoolToken(addr: string, overrides?: CallOverrides): Promise<void>;
-
-    totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    unlock(overrides?: CallOverrides): Promise<void>;
-
-    unpause(overrides?: CallOverrides): Promise<void>;
-
-    userRewardPerTokenPaid(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    withdrawReward(
-      _amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-  };
+  listeners<TCEvent extends TypedContractEvent>(
+    event: TCEvent
+  ): Promise<Array<TypedListener<TCEvent>>>;
+  listeners(eventName?: string): Promise<Array<Listener>>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(
+    event?: TCEvent
+  ): Promise<this>;
+
+  balanceOf: TypedContractMethod<[account: AddressLike], [bigint], "view">;
+
+  earned: TypedContractMethod<[account: AddressLike], [bigint], "view">;
+
+  getRewardForDuration: TypedContractMethod<[], [bigint], "view">;
+
+  lastTimeRewardApplicable: TypedContractMethod<[], [bigint], "view">;
+
+  lastUpdateTime: TypedContractMethod<[], [bigint], "view">;
+
+  lock: TypedContractMethod<[], [void], "nonpayable">;
+
+  notifyRewardDeposit: TypedContractMethod<
+    [_rewardAmount: BigNumberish, _rewardsDuration: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  owner: TypedContractMethod<[], [string], "view">;
+
+  pause: TypedContractMethod<[], [void], "nonpayable">;
+
+  paused: TypedContractMethod<[], [boolean], "view">;
+
+  periodFinish: TypedContractMethod<[], [bigint], "view">;
+
+  poolToken: TypedContractMethod<[], [string], "view">;
+
+  recoverERC20: TypedContractMethod<
+    [tokenAddress: AddressLike, tokenAmount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
+
+  rewardPerToken: TypedContractMethod<[], [bigint], "view">;
+
+  rewardPerTokenStored: TypedContractMethod<[], [bigint], "view">;
+
+  rewardRate: TypedContractMethod<[], [bigint], "view">;
+
+  rewards: TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+
+  rewardsDuration: TypedContractMethod<[], [bigint], "view">;
+
+  rewardsToken: TypedContractMethod<[], [string], "view">;
+
+  setPoolToken: TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+
+  totalSupply: TypedContractMethod<[], [bigint], "view">;
+
+  transferOwnership: TypedContractMethod<
+    [newOwner: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  unlock: TypedContractMethod<[], [void], "nonpayable">;
+
+  unpause: TypedContractMethod<[], [void], "nonpayable">;
+
+  userRewardPerTokenPaid: TypedContractMethod<
+    [arg0: AddressLike],
+    [bigint],
+    "view"
+  >;
+
+  withdrawReward: TypedContractMethod<
+    [_amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  getFunction<T extends ContractMethod = ContractMethod>(
+    key: string | FunctionFragment
+  ): T;
+
+  getFunction(
+    nameOrSignature: "balanceOf"
+  ): TypedContractMethod<[account: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "earned"
+  ): TypedContractMethod<[account: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "getRewardForDuration"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "lastTimeRewardApplicable"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "lastUpdateTime"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "lock"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "notifyRewardDeposit"
+  ): TypedContractMethod<
+    [_rewardAmount: BigNumberish, _rewardsDuration: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "owner"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "pause"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "paused"
+  ): TypedContractMethod<[], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "periodFinish"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "poolToken"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "recoverERC20"
+  ): TypedContractMethod<
+    [tokenAddress: AddressLike, tokenAmount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "renounceOwnership"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "rewardPerToken"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "rewardPerTokenStored"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "rewardRate"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "rewards"
+  ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "rewardsDuration"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "rewardsToken"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "setPoolToken"
+  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "totalSupply"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "transferOwnership"
+  ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "unlock"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "unpause"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "userRewardPerTokenPaid"
+  ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "withdrawReward"
+  ): TypedContractMethod<[_amount: BigNumberish], [void], "nonpayable">;
+
+  getEvent(
+    key: "Locked"
+  ): TypedContractEvent<
+    LockedEvent.InputTuple,
+    LockedEvent.OutputTuple,
+    LockedEvent.OutputObject
+  >;
+  getEvent(
+    key: "OwnershipTransferred"
+  ): TypedContractEvent<
+    OwnershipTransferredEvent.InputTuple,
+    OwnershipTransferredEvent.OutputTuple,
+    OwnershipTransferredEvent.OutputObject
+  >;
+  getEvent(
+    key: "Paused"
+  ): TypedContractEvent<
+    PausedEvent.InputTuple,
+    PausedEvent.OutputTuple,
+    PausedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Recovered"
+  ): TypedContractEvent<
+    RecoveredEvent.InputTuple,
+    RecoveredEvent.OutputTuple,
+    RecoveredEvent.OutputObject
+  >;
+  getEvent(
+    key: "RewardAdded"
+  ): TypedContractEvent<
+    RewardAddedEvent.InputTuple,
+    RewardAddedEvent.OutputTuple,
+    RewardAddedEvent.OutputObject
+  >;
+  getEvent(
+    key: "RewardWithdrawn"
+  ): TypedContractEvent<
+    RewardWithdrawnEvent.InputTuple,
+    RewardWithdrawnEvent.OutputTuple,
+    RewardWithdrawnEvent.OutputObject
+  >;
+  getEvent(
+    key: "Unlocked"
+  ): TypedContractEvent<
+    UnlockedEvent.InputTuple,
+    UnlockedEvent.OutputTuple,
+    UnlockedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Unpaused"
+  ): TypedContractEvent<
+    UnpausedEvent.InputTuple,
+    UnpausedEvent.OutputTuple,
+    UnpausedEvent.OutputObject
+  >;
 
   filters: {
-    "Locked(address,uint256)"(
-      sender?: string | null,
-      amount?: null
-    ): LockedEventFilter;
-    Locked(sender?: string | null, amount?: null): LockedEventFilter;
+    "Locked(address,uint256)": TypedContractEvent<
+      LockedEvent.InputTuple,
+      LockedEvent.OutputTuple,
+      LockedEvent.OutputObject
+    >;
+    Locked: TypedContractEvent<
+      LockedEvent.InputTuple,
+      LockedEvent.OutputTuple,
+      LockedEvent.OutputObject
+    >;
 
-    "OwnershipTransferred(address,address)"(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
-    OwnershipTransferred(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
+    "OwnershipTransferred(address,address)": TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
+    OwnershipTransferred: TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
 
-    "Paused(address)"(account?: null): PausedEventFilter;
-    Paused(account?: null): PausedEventFilter;
+    "Paused(address)": TypedContractEvent<
+      PausedEvent.InputTuple,
+      PausedEvent.OutputTuple,
+      PausedEvent.OutputObject
+    >;
+    Paused: TypedContractEvent<
+      PausedEvent.InputTuple,
+      PausedEvent.OutputTuple,
+      PausedEvent.OutputObject
+    >;
 
-    "Recovered(address,uint256)"(
-      token?: null,
-      amount?: null
-    ): RecoveredEventFilter;
-    Recovered(token?: null, amount?: null): RecoveredEventFilter;
+    "Recovered(address,uint256)": TypedContractEvent<
+      RecoveredEvent.InputTuple,
+      RecoveredEvent.OutputTuple,
+      RecoveredEvent.OutputObject
+    >;
+    Recovered: TypedContractEvent<
+      RecoveredEvent.InputTuple,
+      RecoveredEvent.OutputTuple,
+      RecoveredEvent.OutputObject
+    >;
 
-    "RewardAdded(uint256)"(reward?: null): RewardAddedEventFilter;
-    RewardAdded(reward?: null): RewardAddedEventFilter;
+    "RewardAdded(uint256)": TypedContractEvent<
+      RewardAddedEvent.InputTuple,
+      RewardAddedEvent.OutputTuple,
+      RewardAddedEvent.OutputObject
+    >;
+    RewardAdded: TypedContractEvent<
+      RewardAddedEvent.InputTuple,
+      RewardAddedEvent.OutputTuple,
+      RewardAddedEvent.OutputObject
+    >;
 
-    "RewardWithdrawn(address,uint256)"(
-      user?: string | null,
-      reward?: null
-    ): RewardWithdrawnEventFilter;
-    RewardWithdrawn(
-      user?: string | null,
-      reward?: null
-    ): RewardWithdrawnEventFilter;
+    "RewardWithdrawn(address,uint256)": TypedContractEvent<
+      RewardWithdrawnEvent.InputTuple,
+      RewardWithdrawnEvent.OutputTuple,
+      RewardWithdrawnEvent.OutputObject
+    >;
+    RewardWithdrawn: TypedContractEvent<
+      RewardWithdrawnEvent.InputTuple,
+      RewardWithdrawnEvent.OutputTuple,
+      RewardWithdrawnEvent.OutputObject
+    >;
 
-    "Unlocked(address,uint256)"(
-      sender?: string | null,
-      amount?: null
-    ): UnlockedEventFilter;
-    Unlocked(sender?: string | null, amount?: null): UnlockedEventFilter;
+    "Unlocked(address,uint256)": TypedContractEvent<
+      UnlockedEvent.InputTuple,
+      UnlockedEvent.OutputTuple,
+      UnlockedEvent.OutputObject
+    >;
+    Unlocked: TypedContractEvent<
+      UnlockedEvent.InputTuple,
+      UnlockedEvent.OutputTuple,
+      UnlockedEvent.OutputObject
+    >;
 
-    "Unpaused(address)"(account?: null): UnpausedEventFilter;
-    Unpaused(account?: null): UnpausedEventFilter;
-  };
-
-  estimateGas: {
-    balanceOf(account: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    earned(account: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    getRewardForDuration(overrides?: CallOverrides): Promise<BigNumber>;
-
-    lastTimeRewardApplicable(overrides?: CallOverrides): Promise<BigNumber>;
-
-    lastUpdateTime(overrides?: CallOverrides): Promise<BigNumber>;
-
-    lock(overrides?: Overrides & { from?: string }): Promise<BigNumber>;
-
-    notifyRewardDeposit(
-      _rewardAmount: BigNumberish,
-      _rewardsDuration: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    owner(overrides?: CallOverrides): Promise<BigNumber>;
-
-    pause(overrides?: Overrides & { from?: string }): Promise<BigNumber>;
-
-    paused(overrides?: CallOverrides): Promise<BigNumber>;
-
-    periodFinish(overrides?: CallOverrides): Promise<BigNumber>;
-
-    poolToken(overrides?: CallOverrides): Promise<BigNumber>;
-
-    recoverERC20(
-      tokenAddress: string,
-      tokenAmount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    rewardPerToken(overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewardPerTokenStored(overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewardRate(overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewards(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewardsDuration(overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewardsToken(overrides?: CallOverrides): Promise<BigNumber>;
-
-    setPoolToken(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    unlock(overrides?: Overrides & { from?: string }): Promise<BigNumber>;
-
-    unpause(overrides?: Overrides & { from?: string }): Promise<BigNumber>;
-
-    userRewardPerTokenPaid(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    withdrawReward(
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-  };
-
-  populateTransaction: {
-    balanceOf(
-      account: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    earned(
-      account: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getRewardForDuration(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    lastTimeRewardApplicable(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    lastUpdateTime(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    lock(
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    notifyRewardDeposit(
-      _rewardAmount: BigNumberish,
-      _rewardsDuration: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    pause(
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    paused(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    periodFinish(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    poolToken(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    recoverERC20(
-      tokenAddress: string,
-      tokenAmount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    rewardPerToken(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    rewardPerTokenStored(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    rewardRate(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    rewards(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    rewardsDuration(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    rewardsToken(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    setPoolToken(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    totalSupply(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    unlock(
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    unpause(
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    userRewardPerTokenPaid(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    withdrawReward(
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
+    "Unpaused(address)": TypedContractEvent<
+      UnpausedEvent.InputTuple,
+      UnpausedEvent.OutputTuple,
+      UnpausedEvent.OutputObject
+    >;
+    Unpaused: TypedContractEvent<
+      UnpausedEvent.InputTuple,
+      UnpausedEvent.OutputTuple,
+      UnpausedEvent.OutputObject
+    >;
   };
 }

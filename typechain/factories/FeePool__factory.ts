@@ -2,8 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import { Contract, Signer, utils } from "ethers";
-import type { Provider } from "@ethersproject/providers";
+import { Contract, Interface, type ContractRunner } from "ethers";
 import type { FeePool, FeePoolInterface } from "../FeePool";
 
 const _abi = [
@@ -931,12 +930,9 @@ const _abi = [
 export class FeePool__factory {
   static readonly abi = _abi;
   static createInterface(): FeePoolInterface {
-    return new utils.Interface(_abi) as FeePoolInterface;
+    return new Interface(_abi) as FeePoolInterface;
   }
-  static connect(
-    address: string,
-    signerOrProvider: Signer | Provider
-  ): FeePool {
-    return new Contract(address, _abi, signerOrProvider) as FeePool;
+  static connect(address: string, runner?: ContractRunner | null): FeePool {
+    return new Contract(address, _abi, runner) as unknown as FeePool;
   }
 }

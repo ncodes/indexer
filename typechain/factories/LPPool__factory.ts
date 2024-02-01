@@ -2,8 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import { Contract, Signer, utils } from "ethers";
-import type { Provider } from "@ethersproject/providers";
+import { Contract, Interface, type ContractRunner } from "ethers";
 import type { LPPool, LPPoolInterface } from "../LPPool";
 
 const _abi = [
@@ -517,9 +516,9 @@ const _abi = [
 export class LPPool__factory {
   static readonly abi = _abi;
   static createInterface(): LPPoolInterface {
-    return new utils.Interface(_abi) as LPPoolInterface;
+    return new Interface(_abi) as LPPoolInterface;
   }
-  static connect(address: string, signerOrProvider: Signer | Provider): LPPool {
-    return new Contract(address, _abi, signerOrProvider) as LPPool;
+  static connect(address: string, runner?: ContractRunner | null): LPPool {
+    return new Contract(address, _abi, runner) as unknown as LPPool;
   }
 }

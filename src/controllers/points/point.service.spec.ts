@@ -7,7 +7,7 @@ import Market, { AssetType } from '../../models/market';
 import Point, { PointAction, PointValue } from '../../models/point';
 import Swap from '../../models/swap';
 import User from '../../models/user';
-import { pow10, powOf, toBN } from '../../network/common';
+import { pow10, powOf, toBigInt } from '../../network/common';
 import { AuthService } from '../auth/auth.service';
 import { NFTAllocations } from './data/nft_allocation';
 import {
@@ -421,7 +421,7 @@ describe('PointService', () => {
         expect(takerPoint.name).toEqual(`${PointAction.InteractiveSwap}:${event.transactionHash}:taker:${swap.taker}`);
         expect(takerPoint.network).toEqual('ethereum');
         expect(takerPoint.address).toEqual('0xTaker');
-        const cost = toBN(swap.amount)
+        const cost = toDec(swap.amount)
           .mul(swap.price)
           .div(pow10(market.quoteDecimals + market.baseDecimals))
           .toNumber();
@@ -463,7 +463,7 @@ describe('PointService', () => {
         expect(takerPoint.name).toEqual(`${PointAction.InteractiveSwap}:${event.transactionHash}:taker:${swap.taker}`);
         expect(takerPoint.network).toEqual('ethereum');
         expect(takerPoint.address).toEqual('0xTaker');
-        const cost = toBN(swap.amount)
+        const cost = toDec(swap.amount)
           .mul(swap.price)
           .div(pow10(market.quoteDecimals + market.baseDecimals))
           .toNumber();
@@ -550,7 +550,7 @@ describe('PointService', () => {
       });
 
       await expect(
-        service.grantOnLiquidityUpdate(market, liq, true, '0xProvider', toBN(powOf(10, 18))),
+        service.grantOnLiquidityUpdate(market, liq, true, '0xProvider', toBigInt(powOf(10, 18))),
       ).resolves.toBeFalsy();
     });
 
@@ -573,7 +573,7 @@ describe('PointService', () => {
       });
 
       await expect(
-        service.grantOnLiquidityUpdate(market, liq, true, '0xProvider', toBN(powOf(10, 18))),
+        service.grantOnLiquidityUpdate(market, liq, true, '0xProvider', toBigInt(powOf(10, 18))),
       ).resolves.toBeFalsy();
     });
 
@@ -596,7 +596,7 @@ describe('PointService', () => {
       });
 
       await expect(
-        service.grantOnLiquidityUpdate(market, liq, true, '0xProvider', toBN(powOf(10, 18))),
+        service.grantOnLiquidityUpdate(market, liq, true, '0xProvider', toBigInt(powOf(10, 18))),
       ).resolves.toBeFalsy();
     });
 
@@ -621,7 +621,7 @@ describe('PointService', () => {
 
         const liqAmt = 10;
         await expect(
-          service.grantOnLiquidityUpdate(market, liq, true, '0xProvider', toBN(powOf(liqAmt, 18))),
+          service.grantOnLiquidityUpdate(market, liq, true, '0xProvider', toBigInt(powOf(liqAmt, 18))),
         ).resolves.toBeTruthy();
 
         const providerPoint = await Point.getByAddress('0xProvider');
@@ -639,7 +639,7 @@ describe('PointService', () => {
 
         // Add liquidity again
         await expect(
-          service.grantOnLiquidityUpdate(market, liq, true, '0xProvider', toBN(powOf(liqAmt, 18))),
+          service.grantOnLiquidityUpdate(market, liq, true, '0xProvider', toBigInt(powOf(liqAmt, 18))),
         ).resolves.toBeTruthy();
 
         const providerPoint2 = await Point.getByAddress('0xProvider');
@@ -648,7 +648,7 @@ describe('PointService', () => {
 
         // Should deduct point of liquidity is removed
         await expect(
-          service.grantOnLiquidityUpdate(market, liq, false, '0xProvider', toBN(powOf(liqAmt, 18))),
+          service.grantOnLiquidityUpdate(market, liq, false, '0xProvider', toBigInt(powOf(liqAmt, 18))),
         ).resolves.toBeTruthy();
 
         const providerPoint3 = await Point.getByAddress('0xProvider');
@@ -676,7 +676,7 @@ describe('PointService', () => {
 
         const liqAmt = 10;
         await expect(
-          service.grantOnLiquidityUpdate(market, liq, true, '0xProvider', toBN(powOf(liqAmt, 18))),
+          service.grantOnLiquidityUpdate(market, liq, true, '0xProvider', toBigInt(powOf(liqAmt, 18))),
         ).resolves.toBeTruthy();
 
         const providerPoint = await Point.getByAddress('0xProvider');
@@ -694,7 +694,7 @@ describe('PointService', () => {
 
         // Remove liquidity again
         await expect(
-          service.grantOnLiquidityUpdate(market, liq, false, '0xProvider', toBN(powOf(liqAmt, 18))),
+          service.grantOnLiquidityUpdate(market, liq, false, '0xProvider', toBigInt(powOf(liqAmt, 18))),
         ).resolves.toBeTruthy();
 
         const providerPoint2 = await Point.getByAddress('0xProvider');
@@ -725,7 +725,7 @@ describe('PointService', () => {
 
         const liqAmt = 10;
         await expect(
-          service.grantOnLiquidityUpdate(market, liq, true, '0xProvider', toBN(powOf(liqAmt, 18))),
+          service.grantOnLiquidityUpdate(market, liq, true, '0xProvider', toBigInt(powOf(liqAmt, 18))),
         ).resolves.toBeTruthy();
 
         const providerPoint = await Point.getByAddress('0xProvider');
@@ -747,7 +747,7 @@ describe('PointService', () => {
 
         // Add liquidity again
         await expect(
-          service.grantOnLiquidityUpdate(market, liq, true, '0xProvider', toBN(powOf(liqAmt, 18))),
+          service.grantOnLiquidityUpdate(market, liq, true, '0xProvider', toBigInt(powOf(liqAmt, 18))),
         ).resolves.toBeTruthy();
 
         const providerPoint2 = await Point.getByAddress('0xProvider');
@@ -760,7 +760,7 @@ describe('PointService', () => {
 
         // Should deduct point of liquidity is removed
         await expect(
-          service.grantOnLiquidityUpdate(market, liq, false, '0xProvider', toBN(powOf(liqAmt, 18))),
+          service.grantOnLiquidityUpdate(market, liq, false, '0xProvider', toBigInt(powOf(liqAmt, 18))),
         ).resolves.toBeTruthy();
 
         const providerPoint3 = await Point.getByAddress('0xProvider');

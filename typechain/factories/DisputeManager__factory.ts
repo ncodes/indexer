@@ -2,8 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import { Contract, Signer, utils } from "ethers";
-import type { Provider } from "@ethersproject/providers";
+import { Contract, Interface, type ContractRunner } from "ethers";
 import type {
   DisputeManager,
   DisputeManagerInterface,
@@ -1085,12 +1084,12 @@ const _abi = [
 export class DisputeManager__factory {
   static readonly abi = _abi;
   static createInterface(): DisputeManagerInterface {
-    return new utils.Interface(_abi) as DisputeManagerInterface;
+    return new Interface(_abi) as DisputeManagerInterface;
   }
   static connect(
     address: string,
-    signerOrProvider: Signer | Provider
+    runner?: ContractRunner | null
   ): DisputeManager {
-    return new Contract(address, _abi, signerOrProvider) as DisputeManager;
+    return new Contract(address, _abi, runner) as unknown as DisputeManager;
   }
 }

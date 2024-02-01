@@ -8,7 +8,7 @@ import Market from '../../models/market';
 import Notification, { NotificationType } from '../../models/notification';
 import User from '../../models/user';
 import WebPushSubscription from '../../models/web_push_subscription';
-import { pow10D, toFixed } from '../../network/common';
+import { pow10, toFixed } from '../../network/common';
 import { MailerService } from '../../services/mailer/mailer.service';
 import { canSendNotification } from './common';
 
@@ -73,11 +73,11 @@ export class NotifierConsumer {
       template = `swap-instant/erc20-erc20`;
       const { baseDecimals, quoteDecimals } = market;
       const { amount, price } = swap;
-      locals.amount = toFixed(toDec(amount).div(pow10D(baseDecimals)), 8);
+      locals.amount = toFixed(toDec(amount).div(pow10(baseDecimals)), 8);
       locals.cost = toFixed(
         toDec(amount)
           .mul(price)
-          .div(pow10D(quoteDecimals * 2)),
+          .div(pow10(quoteDecimals * 2)),
         8,
       );
       subject = await this.mailer.render(`${template}.subject`, locals);
@@ -89,7 +89,7 @@ export class NotifierConsumer {
       template = `swap-instant/erc20-nft`;
       const { baseDecimals } = market;
       const { takerIds, amount } = swap;
-      locals.amount = toFixed(toDec(amount).div(pow10D(baseDecimals)), 8);
+      locals.amount = toFixed(toDec(amount).div(pow10(baseDecimals)), 8);
       locals.quoteSize = takerIds.length;
       locals.pluralStr = locals.quoteSize > 1 ? 's' : '';
       subject = await this.mailer.render(`${template}.subject`, locals);
@@ -101,7 +101,7 @@ export class NotifierConsumer {
       template = `swap-instant/nft-erc20`;
       const { quoteDecimals } = market;
       const { providerIds, price } = swap;
-      locals.price = toFixed(toDec(price).div(pow10D(quoteDecimals)), 8);
+      locals.price = toFixed(toDec(price).div(pow10(quoteDecimals)), 8);
       locals.baseSize = providerIds.length;
       locals.pluralStr = locals.baseSize > 1 ? 's' : '';
       locals.wasOrWereStr = locals.baseSize > 1 ? 'were' : 'was';
@@ -162,11 +162,11 @@ export class NotifierConsumer {
       template = `swap-interactive/erc20-synth_synth-erc20`;
       const { baseDecimals, quoteDecimals } = market;
       const { amount, price } = swap;
-      locals.amount = toFixed(toDec(amount).div(pow10D(baseDecimals)), 8);
+      locals.amount = toFixed(toDec(amount).div(pow10(baseDecimals)), 8);
       locals.cost = toFixed(
         toDec(amount)
           .mul(price)
-          .div(pow10D(quoteDecimals * 2)),
+          .div(pow10(quoteDecimals * 2)),
         8,
       );
       locals.payer = isEqualStr(swap.getPayer(), job.recipientAddr);
@@ -180,7 +180,7 @@ export class NotifierConsumer {
       template = `swap-interactive/synth-nft`;
       const { baseDecimals } = market;
       const { amount } = swap;
-      locals.amount = toFixed(toDec(amount).div(pow10D(baseDecimals)), 8);
+      locals.amount = toFixed(toDec(amount).div(pow10(baseDecimals)), 8);
       locals.quoteSize = swap.takerIds.length;
       locals.pluralStr = locals.quoteSize > 1 ? 's' : '';
       locals.wasOrWereStr = locals.quoteSize > 1 ? 'were' : 'was';
@@ -194,7 +194,7 @@ export class NotifierConsumer {
       template = `swap-interactive/nft-synth`;
       const { quoteDecimals } = market;
       const { price } = swap;
-      locals.price = toFixed(toDec(price).div(pow10D(quoteDecimals)), 8);
+      locals.price = toFixed(toDec(price).div(pow10(quoteDecimals)), 8);
       locals.baseSize = swap.providerIds.length;
       locals.pluralStr = locals.baseSize > 1 ? 's' : '';
       locals.wasOrWereStr = locals.baseSize > 1 ? 'were' : 'was';
@@ -208,11 +208,11 @@ export class NotifierConsumer {
       template = `swap-interactive/synth-synth`;
       const { baseDecimals, quoteDecimals } = market;
       const { amount, price } = swap;
-      locals.amount = toFixed(toDec(amount).div(pow10D(baseDecimals)), 8);
+      locals.amount = toFixed(toDec(amount).div(pow10(baseDecimals)), 8);
       locals.cost = toFixed(
         toDec(amount)
           .mul(price)
-          .div(pow10D(quoteDecimals * 2)),
+          .div(pow10(quoteDecimals * 2)),
         8,
       );
       locals.cancelAt = toTimezone(swap.cancelAt, user.timezone).fromNow(true);
@@ -891,8 +891,8 @@ export class NotifierConsumer {
       template = `offer/new-update/fungible`;
       const { baseDecimals, quoteDecimals } = market;
       const { amount, price } = offer;
-      locals.amount = toFixed(toDec(amount).div(pow10D(baseDecimals)), 8);
-      locals.price = toFixed(toDec(price).div(pow10D(quoteDecimals)), 8);
+      locals.amount = toFixed(toDec(amount).div(pow10(baseDecimals)), 8);
+      locals.price = toFixed(toDec(price).div(pow10(quoteDecimals)), 8);
       locals.deadline = toTimezone(offer.deadline, user.timezone).fromNow(true);
       subject = await this.mailer.render(`${template}.subject`, locals);
       note = await this.mailer.render(`${template}.note`, locals);
@@ -903,7 +903,7 @@ export class NotifierConsumer {
       template = `offer/new-update/erc20_synth-nft`;
       const { baseDecimals } = market;
       const { ids } = offer;
-      locals.amount = toFixed(toDec(liq.amount).div(pow10D(baseDecimals)), 8);
+      locals.amount = toFixed(toDec(liq.amount).div(pow10(baseDecimals)), 8);
       locals.deadline = toTimezone(offer.deadline, user.timezone).fromNow(true);
       locals.pluralStr = ids.length > 1 ? 's' : '';
       subject = await this.mailer.render(`${template}.subject`, locals);
@@ -914,7 +914,7 @@ export class NotifierConsumer {
     if (Market.isNFT(market.baseType) && Market.isFungible(market.quoteType)) {
       template = `offer/new-update/nft-erc20_synth`;
       const { quoteDecimals } = market;
-      locals.price = toFixed(toDec(offer.price).div(pow10D(quoteDecimals)), 8);
+      locals.price = toFixed(toDec(offer.price).div(pow10(quoteDecimals)), 8);
       locals.deadline = toTimezone(offer.deadline, user.timezone).fromNow(true);
       locals.pluralStr = liq.ids.length > 1 ? 's' : '';
       subject = await this.mailer.render(`${template}.subject`, locals);

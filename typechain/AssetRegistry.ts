@@ -3,27 +3,24 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BigNumber,
   BigNumberish,
   BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  Overrides,
-  PopulatedTransaction,
-  Signer,
-  utils,
-} from "ethers";
-import type {
   FunctionFragment,
   Result,
+  Interface,
   EventFragment,
-} from "@ethersproject/abi";
-import type { Listener, Provider } from "@ethersproject/providers";
+  AddressLike,
+  ContractRunner,
+  ContractMethod,
+  Listener,
+} from "ethers";
 import type {
-  TypedEventFilter,
-  TypedEvent,
+  TypedContractEvent,
+  TypedDeferredTopicFilter,
+  TypedEventLog,
+  TypedLogDescription,
   TypedListener,
-  OnEvent,
+  TypedContractMethod,
 } from "./common";
 
 export type InfoStruct = {
@@ -37,42 +34,26 @@ export type InfoStruct = {
 };
 
 export type InfoStructOutput = [
-  BigNumber,
-  BigNumber,
-  BigNumber,
-  BigNumber,
-  boolean,
-  boolean,
-  boolean
+  curRate: bigint,
+  feeBp: bigint,
+  feeFixed: bigint,
+  amountPerRewardPoint: bigint,
+  verified: boolean,
+  stable: boolean,
+  sharable: boolean
 ] & {
-  curRate: BigNumber;
-  feeBp: BigNumber;
-  feeFixed: BigNumber;
-  amountPerRewardPoint: BigNumber;
+  curRate: bigint;
+  feeBp: bigint;
+  feeFixed: bigint;
+  amountPerRewardPoint: bigint;
   verified: boolean;
   stable: boolean;
   sharable: boolean;
 };
 
-export interface AssetRegistryInterface extends utils.Interface {
-  functions: {
-    "assets(address)": FunctionFragment;
-    "get(address)": FunctionFragment;
-    "getRate(address)": FunctionFragment;
-    "owner()": FunctionFragment;
-    "renounceOwnership()": FunctionFragment;
-    "set(address,uint256,uint256,uint256,uint256,bool,bool,bool)": FunctionFragment;
-    "setFee(address,uint256,uint256)": FunctionFragment;
-    "setRate(address,uint256)": FunctionFragment;
-    "setSharable(address,bool)": FunctionFragment;
-    "setStable(address,bool)": FunctionFragment;
-    "setVerified(address,bool)": FunctionFragment;
-    "toCur(address,uint256)": FunctionFragment;
-    "transferOwnership(address)": FunctionFragment;
-  };
-
+export interface AssetRegistryInterface extends Interface {
   getFunction(
-    nameOrSignatureOrTopic:
+    nameOrSignature:
       | "assets"
       | "get"
       | "getRate"
@@ -88,9 +69,16 @@ export interface AssetRegistryInterface extends utils.Interface {
       | "transferOwnership"
   ): FunctionFragment;
 
-  encodeFunctionData(functionFragment: "assets", values: [string]): string;
-  encodeFunctionData(functionFragment: "get", values: [string]): string;
-  encodeFunctionData(functionFragment: "getRate", values: [string]): string;
+  getEvent(
+    nameOrSignatureOrTopic: "AssetRegistryUpdated" | "OwnershipTransferred"
+  ): EventFragment;
+
+  encodeFunctionData(functionFragment: "assets", values: [AddressLike]): string;
+  encodeFunctionData(functionFragment: "get", values: [AddressLike]): string;
+  encodeFunctionData(
+    functionFragment: "getRate",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -99,7 +87,7 @@ export interface AssetRegistryInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "set",
     values: [
-      string,
+      AddressLike,
       BigNumberish,
       BigNumberish,
       BigNumberish,
@@ -111,31 +99,31 @@ export interface AssetRegistryInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "setFee",
-    values: [string, BigNumberish, BigNumberish]
+    values: [AddressLike, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "setRate",
-    values: [string, BigNumberish]
+    values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "setSharable",
-    values: [string, boolean]
+    values: [AddressLike, boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "setStable",
-    values: [string, boolean]
+    values: [AddressLike, boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "setVerified",
-    values: [string, boolean]
+    values: [AddressLike, boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "toCur",
-    values: [string, BigNumberish]
+    values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
-    values: [string]
+    values: [AddressLike]
   ): string;
 
   decodeFunctionResult(functionFragment: "assets", data: BytesLike): Result;
@@ -163,507 +151,313 @@ export interface AssetRegistryInterface extends utils.Interface {
     functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
-
-  events: {
-    "AssetRegistryUpdated(address,uint256,uint256,uint256,uint256,bool,bool,bool)": EventFragment;
-    "OwnershipTransferred(address,address)": EventFragment;
-  };
-
-  getEvent(nameOrSignatureOrTopic: "AssetRegistryUpdated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
 }
 
-export interface AssetRegistryUpdatedEventObject {
-  addr: string;
-  curRate: BigNumber;
-  feeBp: BigNumber;
-  feeFixed: BigNumber;
-  amountPerRewardPoint: BigNumber;
-  verified: boolean;
-  stable: boolean;
-  sharable: boolean;
-}
-export type AssetRegistryUpdatedEvent = TypedEvent<
-  [
-    string,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    boolean,
-    boolean,
-    boolean
-  ],
-  AssetRegistryUpdatedEventObject
->;
-
-export type AssetRegistryUpdatedEventFilter =
-  TypedEventFilter<AssetRegistryUpdatedEvent>;
-
-export interface OwnershipTransferredEventObject {
-  previousOwner: string;
-  newOwner: string;
-}
-export type OwnershipTransferredEvent = TypedEvent<
-  [string, string],
-  OwnershipTransferredEventObject
->;
-
-export type OwnershipTransferredEventFilter =
-  TypedEventFilter<OwnershipTransferredEvent>;
-
-export interface AssetRegistry extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
-  deployed(): Promise<this>;
-
-  interface: AssetRegistryInterface;
-
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
-    fromBlockOrBlockhash?: string | number | undefined,
-    toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
-
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
-
-  functions: {
-    assets(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<
-      [
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        boolean,
-        boolean,
-        boolean
-      ] & {
-        curRate: BigNumber;
-        feeBp: BigNumber;
-        feeFixed: BigNumber;
-        amountPerRewardPoint: BigNumber;
-        verified: boolean;
-        stable: boolean;
-        sharable: boolean;
-      }
-    >;
-
-    get(addr: string, overrides?: CallOverrides): Promise<[InfoStructOutput]>;
-
-    getRate(addr: string, overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    owner(overrides?: CallOverrides): Promise<[string]>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    set(
-      addr: string,
-      curRate: BigNumberish,
-      feeBp: BigNumberish,
-      feeFixed: BigNumberish,
-      amountPerRewardPoint: BigNumberish,
-      verified: boolean,
-      stable: boolean,
-      sharable: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setFee(
-      addr: string,
-      feeBp: BigNumberish,
-      feeFixed: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setRate(
-      addr: string,
-      rate: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setSharable(
-      addr: string,
-      sharable: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setStable(
-      addr: string,
-      stable: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setVerified(
-      addr: string,
-      verified: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    toCur(
-      addr: string,
-      value: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-  };
-
-  assets(
-    arg0: string,
-    overrides?: CallOverrides
-  ): Promise<
-    [BigNumber, BigNumber, BigNumber, BigNumber, boolean, boolean, boolean] & {
-      curRate: BigNumber;
-      feeBp: BigNumber;
-      feeFixed: BigNumber;
-      amountPerRewardPoint: BigNumber;
-      verified: boolean;
-      stable: boolean;
-      sharable: boolean;
-    }
-  >;
-
-  get(addr: string, overrides?: CallOverrides): Promise<InfoStructOutput>;
-
-  getRate(addr: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-  owner(overrides?: CallOverrides): Promise<string>;
-
-  renounceOwnership(
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  set(
-    addr: string,
+export namespace AssetRegistryUpdatedEvent {
+  export type InputTuple = [
+    addr: AddressLike,
     curRate: BigNumberish,
     feeBp: BigNumberish,
     feeFixed: BigNumberish,
     amountPerRewardPoint: BigNumberish,
     verified: boolean,
     stable: boolean,
-    sharable: boolean,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setFee(
+    sharable: boolean
+  ];
+  export type OutputTuple = [
     addr: string,
-    feeBp: BigNumberish,
-    feeFixed: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setRate(
-    addr: string,
-    rate: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setSharable(
-    addr: string,
-    sharable: boolean,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setStable(
-    addr: string,
-    stable: boolean,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setVerified(
-    addr: string,
+    curRate: bigint,
+    feeBp: bigint,
+    feeFixed: bigint,
+    amountPerRewardPoint: bigint,
     verified: boolean,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+    stable: boolean,
+    sharable: boolean
+  ];
+  export interface OutputObject {
+    addr: string;
+    curRate: bigint;
+    feeBp: bigint;
+    feeFixed: bigint;
+    amountPerRewardPoint: bigint;
+    verified: boolean;
+    stable: boolean;
+    sharable: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
 
-  toCur(
-    addr: string,
-    value: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
+export namespace OwnershipTransferredEvent {
+  export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
+  export type OutputTuple = [previousOwner: string, newOwner: string];
+  export interface OutputObject {
+    previousOwner: string;
+    newOwner: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
 
-  transferOwnership(
-    newOwner: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+export interface AssetRegistry extends BaseContract {
+  connect(runner?: ContractRunner | null): AssetRegistry;
+  waitForDeployment(): Promise<this>;
 
-  callStatic: {
-    assets(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<
-      [
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        boolean,
-        boolean,
-        boolean
-      ] & {
-        curRate: BigNumber;
-        feeBp: BigNumber;
-        feeFixed: BigNumber;
-        amountPerRewardPoint: BigNumber;
+  interface: AssetRegistryInterface;
+
+  queryFilter<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    fromBlockOrBlockhash?: string | number | undefined,
+    toBlock?: string | number | undefined
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+  queryFilter<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    fromBlockOrBlockhash?: string | number | undefined,
+    toBlock?: string | number | undefined
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+
+  on<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  on<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+
+  once<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  once<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+
+  listeners<TCEvent extends TypedContractEvent>(
+    event: TCEvent
+  ): Promise<Array<TypedListener<TCEvent>>>;
+  listeners(eventName?: string): Promise<Array<Listener>>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(
+    event?: TCEvent
+  ): Promise<this>;
+
+  assets: TypedContractMethod<
+    [arg0: AddressLike],
+    [
+      [bigint, bigint, bigint, bigint, boolean, boolean, boolean] & {
+        curRate: bigint;
+        feeBp: bigint;
+        feeFixed: bigint;
+        amountPerRewardPoint: bigint;
         verified: boolean;
         stable: boolean;
         sharable: boolean;
       }
-    >;
+    ],
+    "view"
+  >;
 
-    get(addr: string, overrides?: CallOverrides): Promise<InfoStructOutput>;
+  get: TypedContractMethod<[addr: AddressLike], [InfoStructOutput], "view">;
 
-    getRate(addr: string, overrides?: CallOverrides): Promise<BigNumber>;
+  getRate: TypedContractMethod<[addr: AddressLike], [bigint], "view">;
 
-    owner(overrides?: CallOverrides): Promise<string>;
+  owner: TypedContractMethod<[], [string], "view">;
 
-    renounceOwnership(overrides?: CallOverrides): Promise<void>;
+  renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
-    set(
-      addr: string,
+  set: TypedContractMethod<
+    [
+      addr: AddressLike,
       curRate: BigNumberish,
       feeBp: BigNumberish,
       feeFixed: BigNumberish,
       amountPerRewardPoint: BigNumberish,
       verified: boolean,
       stable: boolean,
-      sharable: boolean,
-      overrides?: CallOverrides
-    ): Promise<void>;
+      sharable: boolean
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    setFee(
-      addr: string,
+  setFee: TypedContractMethod<
+    [addr: AddressLike, feeBp: BigNumberish, feeFixed: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  setRate: TypedContractMethod<
+    [addr: AddressLike, rate: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  setSharable: TypedContractMethod<
+    [addr: AddressLike, sharable: boolean],
+    [void],
+    "nonpayable"
+  >;
+
+  setStable: TypedContractMethod<
+    [addr: AddressLike, stable: boolean],
+    [void],
+    "nonpayable"
+  >;
+
+  setVerified: TypedContractMethod<
+    [addr: AddressLike, verified: boolean],
+    [void],
+    "nonpayable"
+  >;
+
+  toCur: TypedContractMethod<
+    [addr: AddressLike, value: BigNumberish],
+    [bigint],
+    "view"
+  >;
+
+  transferOwnership: TypedContractMethod<
+    [newOwner: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  getFunction<T extends ContractMethod = ContractMethod>(
+    key: string | FunctionFragment
+  ): T;
+
+  getFunction(
+    nameOrSignature: "assets"
+  ): TypedContractMethod<
+    [arg0: AddressLike],
+    [
+      [bigint, bigint, bigint, bigint, boolean, boolean, boolean] & {
+        curRate: bigint;
+        feeBp: bigint;
+        feeFixed: bigint;
+        amountPerRewardPoint: bigint;
+        verified: boolean;
+        stable: boolean;
+        sharable: boolean;
+      }
+    ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "get"
+  ): TypedContractMethod<[addr: AddressLike], [InfoStructOutput], "view">;
+  getFunction(
+    nameOrSignature: "getRate"
+  ): TypedContractMethod<[addr: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "owner"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "renounceOwnership"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "set"
+  ): TypedContractMethod<
+    [
+      addr: AddressLike,
+      curRate: BigNumberish,
       feeBp: BigNumberish,
       feeFixed: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setRate(
-      addr: string,
-      rate: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setSharable(
-      addr: string,
-      sharable: boolean,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setStable(
-      addr: string,
-      stable: boolean,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setVerified(
-      addr: string,
+      amountPerRewardPoint: BigNumberish,
       verified: boolean,
-      overrides?: CallOverrides
-    ): Promise<void>;
+      stable: boolean,
+      sharable: boolean
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setFee"
+  ): TypedContractMethod<
+    [addr: AddressLike, feeBp: BigNumberish, feeFixed: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setRate"
+  ): TypedContractMethod<
+    [addr: AddressLike, rate: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setSharable"
+  ): TypedContractMethod<
+    [addr: AddressLike, sharable: boolean],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setStable"
+  ): TypedContractMethod<
+    [addr: AddressLike, stable: boolean],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setVerified"
+  ): TypedContractMethod<
+    [addr: AddressLike, verified: boolean],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "toCur"
+  ): TypedContractMethod<
+    [addr: AddressLike, value: BigNumberish],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "transferOwnership"
+  ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
 
-    toCur(
-      addr: string,
-      value: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-  };
+  getEvent(
+    key: "AssetRegistryUpdated"
+  ): TypedContractEvent<
+    AssetRegistryUpdatedEvent.InputTuple,
+    AssetRegistryUpdatedEvent.OutputTuple,
+    AssetRegistryUpdatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "OwnershipTransferred"
+  ): TypedContractEvent<
+    OwnershipTransferredEvent.InputTuple,
+    OwnershipTransferredEvent.OutputTuple,
+    OwnershipTransferredEvent.OutputObject
+  >;
 
   filters: {
-    "AssetRegistryUpdated(address,uint256,uint256,uint256,uint256,bool,bool,bool)"(
-      addr?: null,
-      curRate?: null,
-      feeBp?: null,
-      feeFixed?: null,
-      amountPerRewardPoint?: null,
-      verified?: null,
-      stable?: null,
-      sharable?: null
-    ): AssetRegistryUpdatedEventFilter;
-    AssetRegistryUpdated(
-      addr?: null,
-      curRate?: null,
-      feeBp?: null,
-      feeFixed?: null,
-      amountPerRewardPoint?: null,
-      verified?: null,
-      stable?: null,
-      sharable?: null
-    ): AssetRegistryUpdatedEventFilter;
+    "AssetRegistryUpdated(address,uint256,uint256,uint256,uint256,bool,bool,bool)": TypedContractEvent<
+      AssetRegistryUpdatedEvent.InputTuple,
+      AssetRegistryUpdatedEvent.OutputTuple,
+      AssetRegistryUpdatedEvent.OutputObject
+    >;
+    AssetRegistryUpdated: TypedContractEvent<
+      AssetRegistryUpdatedEvent.InputTuple,
+      AssetRegistryUpdatedEvent.OutputTuple,
+      AssetRegistryUpdatedEvent.OutputObject
+    >;
 
-    "OwnershipTransferred(address,address)"(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
-    OwnershipTransferred(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
-  };
-
-  estimateGas: {
-    assets(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    get(addr: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    getRate(addr: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    owner(overrides?: CallOverrides): Promise<BigNumber>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    set(
-      addr: string,
-      curRate: BigNumberish,
-      feeBp: BigNumberish,
-      feeFixed: BigNumberish,
-      amountPerRewardPoint: BigNumberish,
-      verified: boolean,
-      stable: boolean,
-      sharable: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setFee(
-      addr: string,
-      feeBp: BigNumberish,
-      feeFixed: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setRate(
-      addr: string,
-      rate: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setSharable(
-      addr: string,
-      sharable: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setStable(
-      addr: string,
-      stable: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setVerified(
-      addr: string,
-      verified: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    toCur(
-      addr: string,
-      value: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-  };
-
-  populateTransaction: {
-    assets(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    get(addr: string, overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    getRate(
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    set(
-      addr: string,
-      curRate: BigNumberish,
-      feeBp: BigNumberish,
-      feeFixed: BigNumberish,
-      amountPerRewardPoint: BigNumberish,
-      verified: boolean,
-      stable: boolean,
-      sharable: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setFee(
-      addr: string,
-      feeBp: BigNumberish,
-      feeFixed: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setRate(
-      addr: string,
-      rate: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setSharable(
-      addr: string,
-      sharable: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setStable(
-      addr: string,
-      stable: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setVerified(
-      addr: string,
-      verified: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    toCur(
-      addr: string,
-      value: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
+    "OwnershipTransferred(address,address)": TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
+    OwnershipTransferred: TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
   };
 }

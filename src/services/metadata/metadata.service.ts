@@ -2,8 +2,9 @@ import { findTokenInLocalhost, findTokenInSynthetic, isValidChain } from '@joint
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+import { toNumber } from 'lodash';
 import { isDev, isProd, toDec } from '../../common/common';
-import { isZero, pow10D } from '../../network/common';
+import { isZero, pow10 } from '../../network/common';
 import NetworkService from '../../network/network.service';
 import { ExchangeRateService } from '../exchange_rate.service';
 import { RedisService } from '../redis/redis.service';
@@ -136,7 +137,7 @@ export class MetadataService {
 
     // If the token is a contract, try to get the decimals if not provided
     if (info.isContract && network && isProd() && !info.decimals)
-      info.decimals = await this.netSrv.getERC20Contract(contract).decimals();
+      info.decimals = toNumber(await this.netSrv.getERC20Contract(contract).decimals());
 
     // In dev mode, set decimals to 18 if not provided
     if (isDev() && !info.decimals) info.decimals = 18;
@@ -163,7 +164,7 @@ export class MetadataService {
     if (isZero(amount)) return 0;
     const isHD = tokenInfo?.isHD;
     if (!tokenInfo || tokenInfo.refetch) tokenInfo = await this.getTokenInfo(net, contract);
-    if (!isHD) return toDec(amount).div(pow10D(tokenInfo.decimals)).mul(tokenInfo.price).toNumber();
+    if (!isHD) return toDec(amount).div(pow10(tokenInfo.decimals)).mul(tokenInfo.price).toNumber();
     else return toDec(amount).mul(tokenInfo.price).toNumber();
   }
 

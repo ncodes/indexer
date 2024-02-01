@@ -3,32 +3,29 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BigNumber,
   BigNumberish,
   BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  Overrides,
-  PopulatedTransaction,
-  Signer,
-  utils,
-} from "ethers";
-import type {
   FunctionFragment,
   Result,
+  Interface,
   EventFragment,
-} from "@ethersproject/abi";
-import type { Listener, Provider } from "@ethersproject/providers";
+  AddressLike,
+  ContractRunner,
+  ContractMethod,
+  Listener,
+} from "ethers";
 import type {
-  TypedEventFilter,
-  TypedEvent,
+  TypedContractEvent,
+  TypedDeferredTopicFilter,
+  TypedEventLog,
+  TypedLogDescription,
   TypedListener,
-  OnEvent,
+  TypedContractMethod,
 } from "./common";
 
 export declare namespace Structs {
   export type TicketStruct = {
-    owner: string;
+    owner: AddressLike;
     idx: BigNumberish;
     poolId: BigNumberish;
     bond: BigNumberish;
@@ -41,25 +38,25 @@ export declare namespace Structs {
   };
 
   export type TicketStructOutput = [
-    string,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    boolean,
-    boolean
+    owner: string,
+    idx: bigint,
+    poolId: bigint,
+    bond: bigint,
+    matureAt: bigint,
+    poolIdx: bigint,
+    cancelAt: bigint,
+    joinBy: bigint,
+    drafted: boolean,
+    joined: boolean
   ] & {
     owner: string;
-    idx: BigNumber;
-    poolId: BigNumber;
-    bond: BigNumber;
-    matureAt: BigNumber;
-    poolIdx: BigNumber;
-    cancelAt: BigNumber;
-    joinBy: BigNumber;
+    idx: bigint;
+    poolId: bigint;
+    bond: bigint;
+    matureAt: bigint;
+    poolIdx: bigint;
+    cancelAt: bigint;
+    joinBy: bigint;
     drafted: boolean;
     joined: boolean;
   };
@@ -74,69 +71,25 @@ export declare namespace Structs {
   };
 
   export type TicketPoolStructOutput = [
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber
+    reqBond: bigint,
+    draftReward: bigint,
+    winReward: bigint,
+    noVoteSlashBP: bigint,
+    loseVoteSlashBP: bigint,
+    numDraftees: bigint
   ] & {
-    reqBond: BigNumber;
-    draftReward: BigNumber;
-    winReward: BigNumber;
-    noVoteSlashBP: BigNumber;
-    loseVoteSlashBP: BigNumber;
-    numDraftees: BigNumber;
+    reqBond: bigint;
+    draftReward: bigint;
+    winReward: bigint;
+    noVoteSlashBP: bigint;
+    loseVoteSlashBP: bigint;
+    numDraftees: bigint;
   };
 }
 
-export interface MediatorManagerInterface extends utils.Interface {
-  functions: {
-    "baseTicketPrice()": FunctionFragment;
-    "cancelTicket(uint256)": FunctionFragment;
-    "disputeManager()": FunctionFragment;
-    "draft(address,uint256,uint256)": FunctionFragment;
-    "drainTicket(uint256)": FunctionFragment;
-    "getTicket(address,uint256)": FunctionFragment;
-    "getTicketPool(uint256)": FunctionFragment;
-    "getTicketPrice()": FunctionFragment;
-    "join(uint256)": FunctionFragment;
-    "marketCore()": FunctionFragment;
-    "minInactiveWindowBeforeReset()": FunctionFragment;
-    "numWindows()": FunctionFragment;
-    "owner()": FunctionFragment;
-    "poolExists(uint256)": FunctionFragment;
-    "poolTickets(uint256,uint256)": FunctionFragment;
-    "pools(uint256)": FunctionFragment;
-    "priceSupplyDeltaBP()": FunctionFragment;
-    "purchaseTicket(uint256)": FunctionFragment;
-    "randomness()": FunctionFragment;
-    "renounceOwnership()": FunctionFragment;
-    "setDisputeManager(address)": FunctionFragment;
-    "setMarketCore(address)": FunctionFragment;
-    "setRandomnessProvider(address)": FunctionFragment;
-    "setTicketCancelDuration(uint256)": FunctionFragment;
-    "setTicketExpireDuration(uint256)": FunctionFragment;
-    "setTicketMarketParams(uint256,uint256,uint256,uint256,uint256,uint256,uint256)": FunctionFragment;
-    "setTicketMatureDuration(uint256)": FunctionFragment;
-    "soldOutBP()": FunctionFragment;
-    "ticketCancelDur()": FunctionFragment;
-    "ticketExpireDur()": FunctionFragment;
-    "ticketMatureDur()": FunctionFragment;
-    "ticketSold()": FunctionFragment;
-    "ticketSupply()": FunctionFragment;
-    "tickets(address,uint256)": FunctionFragment;
-    "ticketsPerWindow()": FunctionFragment;
-    "token()": FunctionFragment;
-    "transferOwnership(address)": FunctionFragment;
-    "undraft(address,uint256,bool,bool)": FunctionFragment;
-    "updateTicketPool(uint256,uint256,uint256,uint256,uint256,uint256,uint256)": FunctionFragment;
-    "windowDur()": FunctionFragment;
-    "windows(uint256)": FunctionFragment;
-  };
-
+export interface MediatorManagerInterface extends Interface {
   getFunction(
-    nameOrSignatureOrTopic:
+    nameOrSignature:
       | "baseTicketPrice"
       | "cancelTicket"
       | "disputeManager"
@@ -180,6 +133,26 @@ export interface MediatorManagerInterface extends utils.Interface {
       | "windows"
   ): FunctionFragment;
 
+  getEvent(
+    nameOrSignatureOrTopic:
+      | "Drafted"
+      | "JoinedPool"
+      | "OwnershipTransferred"
+      | "TicketCancelled"
+      | "TicketDrained"
+      | "TicketPurchased"
+      | "TicketSlashed"
+      | "Undrafted"
+      | "UpdatedDisputeManager"
+      | "UpdatedMarketCore"
+      | "UpdatedRandomnessProvider"
+      | "UpdatedTicketCancelDuration"
+      | "UpdatedTicketExpireDuration"
+      | "UpdatedTicketMatureDuration"
+      | "UpdatedTicketParams"
+      | "UpdatedTicketPool"
+  ): EventFragment;
+
   encodeFunctionData(
     functionFragment: "baseTicketPrice",
     values?: undefined
@@ -194,7 +167,7 @@ export interface MediatorManagerInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "draft",
-    values: [string, BigNumberish, BigNumberish]
+    values: [AddressLike, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "drainTicket",
@@ -202,7 +175,7 @@ export interface MediatorManagerInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getTicket",
-    values: [string, BigNumberish]
+    values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getTicketPool",
@@ -253,15 +226,15 @@ export interface MediatorManagerInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "setDisputeManager",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "setMarketCore",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "setRandomnessProvider",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "setTicketCancelDuration",
@@ -310,7 +283,7 @@ export interface MediatorManagerInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "tickets",
-    values: [string, BigNumberish]
+    values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "ticketsPerWindow",
@@ -319,11 +292,11 @@ export interface MediatorManagerInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "token", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "undraft",
-    values: [string, BigNumberish, boolean, boolean]
+    values: [AddressLike, BigNumberish, boolean, boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "updateTicketPool",
@@ -459,1414 +432,1100 @@ export interface MediatorManagerInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "windowDur", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "windows", data: BytesLike): Result;
-
-  events: {
-    "Drafted(address,address,uint256,uint256,uint256,address)": EventFragment;
-    "JoinedPool(address,uint256,uint256)": EventFragment;
-    "OwnershipTransferred(address,address)": EventFragment;
-    "TicketCancelled(address,uint256)": EventFragment;
-    "TicketDrained(address,uint256,uint256)": EventFragment;
-    "TicketPurchased(address,uint256,uint256,uint256,uint256,uint256)": EventFragment;
-    "TicketSlashed(address,uint256,uint256,bool,bool)": EventFragment;
-    "Undrafted(address,uint256,bool,address)": EventFragment;
-    "UpdatedDisputeManager(address)": EventFragment;
-    "UpdatedMarketCore(address)": EventFragment;
-    "UpdatedRandomnessProvider(address)": EventFragment;
-    "UpdatedTicketCancelDuration(uint256)": EventFragment;
-    "UpdatedTicketExpireDuration(uint256)": EventFragment;
-    "UpdatedTicketMatureDuration(uint256)": EventFragment;
-    "UpdatedTicketParams(uint256,uint256,uint256,uint256,uint256,uint256,uint256)": EventFragment;
-    "UpdatedTicketPool(uint256,uint256,uint256,uint256,uint256,uint256,uint256)": EventFragment;
-  };
-
-  getEvent(nameOrSignatureOrTopic: "Drafted"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "JoinedPool"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "TicketCancelled"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "TicketDrained"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "TicketPurchased"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "TicketSlashed"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Undrafted"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedDisputeManager"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedMarketCore"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedRandomnessProvider"): EventFragment;
-  getEvent(
-    nameOrSignatureOrTopic: "UpdatedTicketCancelDuration"
-  ): EventFragment;
-  getEvent(
-    nameOrSignatureOrTopic: "UpdatedTicketExpireDuration"
-  ): EventFragment;
-  getEvent(
-    nameOrSignatureOrTopic: "UpdatedTicketMatureDuration"
-  ): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedTicketParams"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedTicketPool"): EventFragment;
 }
 
-export interface DraftedEventObject {
-  marketId: string;
-  owner: string;
-  ticketId: BigNumber;
-  orderID: BigNumber;
-  disputeID: BigNumber;
-  drafter: string;
-}
-export type DraftedEvent = TypedEvent<
-  [string, string, BigNumber, BigNumber, BigNumber, string],
-  DraftedEventObject
->;
-
-export type DraftedEventFilter = TypedEventFilter<DraftedEvent>;
-
-export interface JoinedPoolEventObject {
-  owner: string;
-  poolId: BigNumber;
-  ticketId: BigNumber;
-}
-export type JoinedPoolEvent = TypedEvent<
-  [string, BigNumber, BigNumber],
-  JoinedPoolEventObject
->;
-
-export type JoinedPoolEventFilter = TypedEventFilter<JoinedPoolEvent>;
-
-export interface OwnershipTransferredEventObject {
-  previousOwner: string;
-  newOwner: string;
-}
-export type OwnershipTransferredEvent = TypedEvent<
-  [string, string],
-  OwnershipTransferredEventObject
->;
-
-export type OwnershipTransferredEventFilter =
-  TypedEventFilter<OwnershipTransferredEvent>;
-
-export interface TicketCancelledEventObject {
-  owner: string;
-  id: BigNumber;
-}
-export type TicketCancelledEvent = TypedEvent<
-  [string, BigNumber],
-  TicketCancelledEventObject
->;
-
-export type TicketCancelledEventFilter = TypedEventFilter<TicketCancelledEvent>;
-
-export interface TicketDrainedEventObject {
-  owner: string;
-  id: BigNumber;
-  amount: BigNumber;
-}
-export type TicketDrainedEvent = TypedEvent<
-  [string, BigNumber, BigNumber],
-  TicketDrainedEventObject
->;
-
-export type TicketDrainedEventFilter = TypedEventFilter<TicketDrainedEvent>;
-
-export interface TicketPurchasedEventObject {
-  owner: string;
-  id: BigNumber;
-  poolId: BigNumber;
-  amount: BigNumber;
-  matureAt: BigNumber;
-  joinBy: BigNumber;
-}
-export type TicketPurchasedEvent = TypedEvent<
-  [string, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber],
-  TicketPurchasedEventObject
->;
-
-export type TicketPurchasedEventFilter = TypedEventFilter<TicketPurchasedEvent>;
-
-export interface TicketSlashedEventObject {
-  owner: string;
-  ticketId: BigNumber;
-  amount: BigNumber;
-  voted: boolean;
-  winSide: boolean;
-}
-export type TicketSlashedEvent = TypedEvent<
-  [string, BigNumber, BigNumber, boolean, boolean],
-  TicketSlashedEventObject
->;
-
-export type TicketSlashedEventFilter = TypedEventFilter<TicketSlashedEvent>;
-
-export interface UndraftedEventObject {
-  owner: string;
-  ticketId: BigNumber;
-  slashed: boolean;
-  undrafter: string;
-}
-export type UndraftedEvent = TypedEvent<
-  [string, BigNumber, boolean, string],
-  UndraftedEventObject
->;
-
-export type UndraftedEventFilter = TypedEventFilter<UndraftedEvent>;
-
-export interface UpdatedDisputeManagerEventObject {
-  val: string;
-}
-export type UpdatedDisputeManagerEvent = TypedEvent<
-  [string],
-  UpdatedDisputeManagerEventObject
->;
-
-export type UpdatedDisputeManagerEventFilter =
-  TypedEventFilter<UpdatedDisputeManagerEvent>;
-
-export interface UpdatedMarketCoreEventObject {
-  val: string;
-}
-export type UpdatedMarketCoreEvent = TypedEvent<
-  [string],
-  UpdatedMarketCoreEventObject
->;
-
-export type UpdatedMarketCoreEventFilter =
-  TypedEventFilter<UpdatedMarketCoreEvent>;
-
-export interface UpdatedRandomnessProviderEventObject {
-  val: string;
-}
-export type UpdatedRandomnessProviderEvent = TypedEvent<
-  [string],
-  UpdatedRandomnessProviderEventObject
->;
-
-export type UpdatedRandomnessProviderEventFilter =
-  TypedEventFilter<UpdatedRandomnessProviderEvent>;
-
-export interface UpdatedTicketCancelDurationEventObject {
-  val: BigNumber;
-}
-export type UpdatedTicketCancelDurationEvent = TypedEvent<
-  [BigNumber],
-  UpdatedTicketCancelDurationEventObject
->;
-
-export type UpdatedTicketCancelDurationEventFilter =
-  TypedEventFilter<UpdatedTicketCancelDurationEvent>;
-
-export interface UpdatedTicketExpireDurationEventObject {
-  val: BigNumber;
-}
-export type UpdatedTicketExpireDurationEvent = TypedEvent<
-  [BigNumber],
-  UpdatedTicketExpireDurationEventObject
->;
-
-export type UpdatedTicketExpireDurationEventFilter =
-  TypedEventFilter<UpdatedTicketExpireDurationEvent>;
-
-export interface UpdatedTicketMatureDurationEventObject {
-  val: BigNumber;
-}
-export type UpdatedTicketMatureDurationEvent = TypedEvent<
-  [BigNumber],
-  UpdatedTicketMatureDurationEventObject
->;
-
-export type UpdatedTicketMatureDurationEventFilter =
-  TypedEventFilter<UpdatedTicketMatureDurationEvent>;
-
-export interface UpdatedTicketParamsEventObject {
-  baseTicketPrice: BigNumber;
-  windowDur: BigNumber;
-  ticketsPerWindow: BigNumber;
-  baseTicketSupply: BigNumber;
-  priceSupplyDeltaBP: BigNumber;
-  minInactiveWindowBeforeReset: BigNumber;
-  soldOutBP: BigNumber;
-}
-export type UpdatedTicketParamsEvent = TypedEvent<
-  [BigNumber, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber],
-  UpdatedTicketParamsEventObject
->;
-
-export type UpdatedTicketParamsEventFilter =
-  TypedEventFilter<UpdatedTicketParamsEvent>;
-
-export interface UpdatedTicketPoolEventObject {
-  poolId: BigNumber;
-  reqBond: BigNumber;
-  draftReward: BigNumber;
-  winReward: BigNumber;
-  noVoteSlashBP: BigNumber;
-  loseVoteSlashBP: BigNumber;
-  numDraftees: BigNumber;
-}
-export type UpdatedTicketPoolEvent = TypedEvent<
-  [BigNumber, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber],
-  UpdatedTicketPoolEventObject
->;
-
-export type UpdatedTicketPoolEventFilter =
-  TypedEventFilter<UpdatedTicketPoolEvent>;
-
-export interface MediatorManager extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
-  deployed(): Promise<this>;
-
-  interface: MediatorManagerInterface;
-
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
-    fromBlockOrBlockhash?: string | number | undefined,
-    toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
-
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
-
-  functions: {
-    baseTicketPrice(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    cancelTicket(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    disputeManager(overrides?: CallOverrides): Promise<[string]>;
-
-    draft(
-      marketId: string,
-      orderID: BigNumberish,
-      disputeID: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    drainTicket(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    getTicket(
-      owner: string,
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[Structs.TicketStructOutput]>;
-
-    getTicketPool(
-      poolId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[Structs.TicketPoolStructOutput]>;
-
-    getTicketPrice(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    join(
-      ticketId: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    marketCore(overrides?: CallOverrides): Promise<[string]>;
-
-    minInactiveWindowBeforeReset(
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    numWindows(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    owner(overrides?: CallOverrides): Promise<[string]>;
-
-    poolExists(
-      poolId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
-
-    poolTickets(
-      arg0: BigNumberish,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string, BigNumber] & { owner: string; idx: BigNumber }>;
-
-    pools(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber] & {
-        reqBond: BigNumber;
-        draftReward: BigNumber;
-        winReward: BigNumber;
-        noVoteSlashBP: BigNumber;
-        loseVoteSlashBP: BigNumber;
-        numDraftees: BigNumber;
-      }
-    >;
-
-    priceSupplyDeltaBP(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    purchaseTicket(
-      poolId: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    randomness(overrides?: CallOverrides): Promise<[string]>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setDisputeManager(
-      _disputeManager: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setMarketCore(
-      _marketCore: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setRandomnessProvider(
-      provider: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setTicketCancelDuration(
-      dur: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setTicketExpireDuration(
-      dur: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setTicketMarketParams(
-      _baseTicketPrice: BigNumberish,
-      _windowDur: BigNumberish,
-      _ticketsPerWindow: BigNumberish,
-      _baseTicketSupply: BigNumberish,
-      _priceSupplyDeltaBP: BigNumberish,
-      _minInactiveWindowBeforeReset: BigNumberish,
-      _soldOutBP: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setTicketMatureDuration(
-      dur: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    soldOutBP(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    ticketCancelDur(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    ticketExpireDur(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    ticketMatureDur(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    ticketSold(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    ticketSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    tickets(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<
-      [
-        string,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        boolean,
-        boolean
-      ] & {
-        owner: string;
-        idx: BigNumber;
-        poolId: BigNumber;
-        bond: BigNumber;
-        matureAt: BigNumber;
-        poolIdx: BigNumber;
-        cancelAt: BigNumber;
-        joinBy: BigNumber;
-        drafted: boolean;
-        joined: boolean;
-      }
-    >;
-
-    ticketsPerWindow(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    token(overrides?: CallOverrides): Promise<[string]>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    undraft(
-      ticketOwner: string,
-      ticketId: BigNumberish,
-      voted: boolean,
-      winSide: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    updateTicketPool(
-      poolId: BigNumberish,
-      reqBond: BigNumberish,
-      draftReward: BigNumberish,
-      winReward: BigNumberish,
-      noVoteSlashBP: BigNumberish,
-      loseVoteSlashBP: BigNumberish,
-      numDraftees: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    windowDur(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    windows(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, BigNumber, BigNumber, BigNumber] & {
-        endTime: BigNumber;
-        numPurchases: BigNumber;
-        supply: BigNumber;
-        price: BigNumber;
-      }
-    >;
-  };
-
-  baseTicketPrice(overrides?: CallOverrides): Promise<BigNumber>;
-
-  cancelTicket(
-    id: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  disputeManager(overrides?: CallOverrides): Promise<string>;
-
-  draft(
-    marketId: string,
+export namespace DraftedEvent {
+  export type InputTuple = [
+    marketId: AddressLike,
+    owner: AddressLike,
+    ticketId: BigNumberish,
     orderID: BigNumberish,
     disputeID: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  drainTicket(
-    id: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  getTicket(
+    drafter: AddressLike
+  ];
+  export type OutputTuple = [
+    marketId: string,
     owner: string,
+    ticketId: bigint,
+    orderID: bigint,
+    disputeID: bigint,
+    drafter: string
+  ];
+  export interface OutputObject {
+    marketId: string;
+    owner: string;
+    ticketId: bigint;
+    orderID: bigint;
+    disputeID: bigint;
+    drafter: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace JoinedPoolEvent {
+  export type InputTuple = [
+    owner: AddressLike,
+    poolId: BigNumberish,
+    ticketId: BigNumberish
+  ];
+  export type OutputTuple = [owner: string, poolId: bigint, ticketId: bigint];
+  export interface OutputObject {
+    owner: string;
+    poolId: bigint;
+    ticketId: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace OwnershipTransferredEvent {
+  export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
+  export type OutputTuple = [previousOwner: string, newOwner: string];
+  export interface OutputObject {
+    previousOwner: string;
+    newOwner: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace TicketCancelledEvent {
+  export type InputTuple = [owner: AddressLike, id: BigNumberish];
+  export type OutputTuple = [owner: string, id: bigint];
+  export interface OutputObject {
+    owner: string;
+    id: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace TicketDrainedEvent {
+  export type InputTuple = [
+    owner: AddressLike,
     id: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<Structs.TicketStructOutput>;
+    amount: BigNumberish
+  ];
+  export type OutputTuple = [owner: string, id: bigint, amount: bigint];
+  export interface OutputObject {
+    owner: string;
+    id: bigint;
+    amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
 
-  getTicketPool(
+export namespace TicketPurchasedEvent {
+  export type InputTuple = [
+    owner: AddressLike,
+    id: BigNumberish,
     poolId: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<Structs.TicketPoolStructOutput>;
+    amount: BigNumberish,
+    matureAt: BigNumberish,
+    joinBy: BigNumberish
+  ];
+  export type OutputTuple = [
+    owner: string,
+    id: bigint,
+    poolId: bigint,
+    amount: bigint,
+    matureAt: bigint,
+    joinBy: bigint
+  ];
+  export interface OutputObject {
+    owner: string;
+    id: bigint;
+    poolId: bigint;
+    amount: bigint;
+    matureAt: bigint;
+    joinBy: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
 
-  getTicketPrice(overrides?: CallOverrides): Promise<BigNumber>;
-
-  join(
+export namespace TicketSlashedEvent {
+  export type InputTuple = [
+    owner: AddressLike,
     ticketId: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  marketCore(overrides?: CallOverrides): Promise<string>;
-
-  minInactiveWindowBeforeReset(overrides?: CallOverrides): Promise<BigNumber>;
-
-  numWindows(overrides?: CallOverrides): Promise<BigNumber>;
-
-  owner(overrides?: CallOverrides): Promise<string>;
-
-  poolExists(poolId: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
-
-  poolTickets(
-    arg0: BigNumberish,
-    arg1: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<[string, BigNumber] & { owner: string; idx: BigNumber }>;
-
-  pools(
-    arg0: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<
-    [BigNumber, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber] & {
-      reqBond: BigNumber;
-      draftReward: BigNumber;
-      winReward: BigNumber;
-      noVoteSlashBP: BigNumber;
-      loseVoteSlashBP: BigNumber;
-      numDraftees: BigNumber;
-    }
-  >;
-
-  priceSupplyDeltaBP(overrides?: CallOverrides): Promise<BigNumber>;
-
-  purchaseTicket(
-    poolId: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  randomness(overrides?: CallOverrides): Promise<string>;
-
-  renounceOwnership(
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setDisputeManager(
-    _disputeManager: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setMarketCore(
-    _marketCore: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setRandomnessProvider(
-    provider: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setTicketCancelDuration(
-    dur: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setTicketExpireDuration(
-    dur: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setTicketMarketParams(
-    _baseTicketPrice: BigNumberish,
-    _windowDur: BigNumberish,
-    _ticketsPerWindow: BigNumberish,
-    _baseTicketSupply: BigNumberish,
-    _priceSupplyDeltaBP: BigNumberish,
-    _minInactiveWindowBeforeReset: BigNumberish,
-    _soldOutBP: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setTicketMatureDuration(
-    dur: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  soldOutBP(overrides?: CallOverrides): Promise<BigNumber>;
-
-  ticketCancelDur(overrides?: CallOverrides): Promise<BigNumber>;
-
-  ticketExpireDur(overrides?: CallOverrides): Promise<BigNumber>;
-
-  ticketMatureDur(overrides?: CallOverrides): Promise<BigNumber>;
-
-  ticketSold(overrides?: CallOverrides): Promise<BigNumber>;
-
-  ticketSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-  tickets(
-    arg0: string,
-    arg1: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<
-    [
-      string,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      boolean,
-      boolean
-    ] & {
-      owner: string;
-      idx: BigNumber;
-      poolId: BigNumber;
-      bond: BigNumber;
-      matureAt: BigNumber;
-      poolIdx: BigNumber;
-      cancelAt: BigNumber;
-      joinBy: BigNumber;
-      drafted: boolean;
-      joined: boolean;
-    }
-  >;
-
-  ticketsPerWindow(overrides?: CallOverrides): Promise<BigNumber>;
-
-  token(overrides?: CallOverrides): Promise<string>;
-
-  transferOwnership(
-    newOwner: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  undraft(
-    ticketOwner: string,
-    ticketId: BigNumberish,
+    amount: BigNumberish,
     voted: boolean,
-    winSide: boolean,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+    winSide: boolean
+  ];
+  export type OutputTuple = [
+    owner: string,
+    ticketId: bigint,
+    amount: bigint,
+    voted: boolean,
+    winSide: boolean
+  ];
+  export interface OutputObject {
+    owner: string;
+    ticketId: bigint;
+    amount: bigint;
+    voted: boolean;
+    winSide: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
 
-  updateTicketPool(
+export namespace UndraftedEvent {
+  export type InputTuple = [
+    owner: AddressLike,
+    ticketId: BigNumberish,
+    slashed: boolean,
+    undrafter: AddressLike
+  ];
+  export type OutputTuple = [
+    owner: string,
+    ticketId: bigint,
+    slashed: boolean,
+    undrafter: string
+  ];
+  export interface OutputObject {
+    owner: string;
+    ticketId: bigint;
+    slashed: boolean;
+    undrafter: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace UpdatedDisputeManagerEvent {
+  export type InputTuple = [val: AddressLike];
+  export type OutputTuple = [val: string];
+  export interface OutputObject {
+    val: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace UpdatedMarketCoreEvent {
+  export type InputTuple = [val: AddressLike];
+  export type OutputTuple = [val: string];
+  export interface OutputObject {
+    val: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace UpdatedRandomnessProviderEvent {
+  export type InputTuple = [val: AddressLike];
+  export type OutputTuple = [val: string];
+  export interface OutputObject {
+    val: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace UpdatedTicketCancelDurationEvent {
+  export type InputTuple = [val: BigNumberish];
+  export type OutputTuple = [val: bigint];
+  export interface OutputObject {
+    val: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace UpdatedTicketExpireDurationEvent {
+  export type InputTuple = [val: BigNumberish];
+  export type OutputTuple = [val: bigint];
+  export interface OutputObject {
+    val: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace UpdatedTicketMatureDurationEvent {
+  export type InputTuple = [val: BigNumberish];
+  export type OutputTuple = [val: bigint];
+  export interface OutputObject {
+    val: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace UpdatedTicketParamsEvent {
+  export type InputTuple = [
+    baseTicketPrice: BigNumberish,
+    windowDur: BigNumberish,
+    ticketsPerWindow: BigNumberish,
+    baseTicketSupply: BigNumberish,
+    priceSupplyDeltaBP: BigNumberish,
+    minInactiveWindowBeforeReset: BigNumberish,
+    soldOutBP: BigNumberish
+  ];
+  export type OutputTuple = [
+    baseTicketPrice: bigint,
+    windowDur: bigint,
+    ticketsPerWindow: bigint,
+    baseTicketSupply: bigint,
+    priceSupplyDeltaBP: bigint,
+    minInactiveWindowBeforeReset: bigint,
+    soldOutBP: bigint
+  ];
+  export interface OutputObject {
+    baseTicketPrice: bigint;
+    windowDur: bigint;
+    ticketsPerWindow: bigint;
+    baseTicketSupply: bigint;
+    priceSupplyDeltaBP: bigint;
+    minInactiveWindowBeforeReset: bigint;
+    soldOutBP: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace UpdatedTicketPoolEvent {
+  export type InputTuple = [
     poolId: BigNumberish,
     reqBond: BigNumberish,
     draftReward: BigNumberish,
     winReward: BigNumberish,
     noVoteSlashBP: BigNumberish,
     loseVoteSlashBP: BigNumberish,
-    numDraftees: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+    numDraftees: BigNumberish
+  ];
+  export type OutputTuple = [
+    poolId: bigint,
+    reqBond: bigint,
+    draftReward: bigint,
+    winReward: bigint,
+    noVoteSlashBP: bigint,
+    loseVoteSlashBP: bigint,
+    numDraftees: bigint
+  ];
+  export interface OutputObject {
+    poolId: bigint;
+    reqBond: bigint;
+    draftReward: bigint;
+    winReward: bigint;
+    noVoteSlashBP: bigint;
+    loseVoteSlashBP: bigint;
+    numDraftees: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
 
-  windowDur(overrides?: CallOverrides): Promise<BigNumber>;
+export interface MediatorManager extends BaseContract {
+  connect(runner?: ContractRunner | null): MediatorManager;
+  waitForDeployment(): Promise<this>;
 
-  windows(
-    arg0: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<
-    [BigNumber, BigNumber, BigNumber, BigNumber] & {
-      endTime: BigNumber;
-      numPurchases: BigNumber;
-      supply: BigNumber;
-      price: BigNumber;
-    }
+  interface: MediatorManagerInterface;
+
+  queryFilter<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    fromBlockOrBlockhash?: string | number | undefined,
+    toBlock?: string | number | undefined
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+  queryFilter<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    fromBlockOrBlockhash?: string | number | undefined,
+    toBlock?: string | number | undefined
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+
+  on<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  on<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+
+  once<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  once<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+
+  listeners<TCEvent extends TypedContractEvent>(
+    event: TCEvent
+  ): Promise<Array<TypedListener<TCEvent>>>;
+  listeners(eventName?: string): Promise<Array<Listener>>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(
+    event?: TCEvent
+  ): Promise<this>;
+
+  baseTicketPrice: TypedContractMethod<[], [bigint], "view">;
+
+  cancelTicket: TypedContractMethod<[id: BigNumberish], [void], "nonpayable">;
+
+  disputeManager: TypedContractMethod<[], [string], "view">;
+
+  draft: TypedContractMethod<
+    [marketId: AddressLike, orderID: BigNumberish, disputeID: BigNumberish],
+    [Structs.TicketStructOutput],
+    "nonpayable"
   >;
 
-  callStatic: {
-    baseTicketPrice(overrides?: CallOverrides): Promise<BigNumber>;
+  drainTicket: TypedContractMethod<[id: BigNumberish], [void], "nonpayable">;
 
-    cancelTicket(id: BigNumberish, overrides?: CallOverrides): Promise<void>;
+  getTicket: TypedContractMethod<
+    [owner: AddressLike, id: BigNumberish],
+    [Structs.TicketStructOutput],
+    "view"
+  >;
 
-    disputeManager(overrides?: CallOverrides): Promise<string>;
+  getTicketPool: TypedContractMethod<
+    [poolId: BigNumberish],
+    [Structs.TicketPoolStructOutput],
+    "view"
+  >;
 
-    draft(
-      marketId: string,
-      orderID: BigNumberish,
-      disputeID: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<Structs.TicketStructOutput>;
+  getTicketPrice: TypedContractMethod<[], [bigint], "view">;
 
-    drainTicket(id: BigNumberish, overrides?: CallOverrides): Promise<void>;
+  join: TypedContractMethod<[ticketId: BigNumberish], [void], "nonpayable">;
 
-    getTicket(
-      owner: string,
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<Structs.TicketStructOutput>;
+  marketCore: TypedContractMethod<[], [string], "view">;
 
-    getTicketPool(
-      poolId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<Structs.TicketPoolStructOutput>;
+  minInactiveWindowBeforeReset: TypedContractMethod<[], [bigint], "view">;
 
-    getTicketPrice(overrides?: CallOverrides): Promise<BigNumber>;
+  numWindows: TypedContractMethod<[], [bigint], "view">;
 
-    join(ticketId: BigNumberish, overrides?: CallOverrides): Promise<void>;
+  owner: TypedContractMethod<[], [string], "view">;
 
-    marketCore(overrides?: CallOverrides): Promise<string>;
+  poolExists: TypedContractMethod<[poolId: BigNumberish], [boolean], "view">;
 
-    minInactiveWindowBeforeReset(overrides?: CallOverrides): Promise<BigNumber>;
+  poolTickets: TypedContractMethod<
+    [arg0: BigNumberish, arg1: BigNumberish],
+    [[string, bigint] & { owner: string; idx: bigint }],
+    "view"
+  >;
 
-    numWindows(overrides?: CallOverrides): Promise<BigNumber>;
-
-    owner(overrides?: CallOverrides): Promise<string>;
-
-    poolExists(
-      poolId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    poolTickets(
-      arg0: BigNumberish,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string, BigNumber] & { owner: string; idx: BigNumber }>;
-
-    pools(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber] & {
-        reqBond: BigNumber;
-        draftReward: BigNumber;
-        winReward: BigNumber;
-        noVoteSlashBP: BigNumber;
-        loseVoteSlashBP: BigNumber;
-        numDraftees: BigNumber;
+  pools: TypedContractMethod<
+    [arg0: BigNumberish],
+    [
+      [bigint, bigint, bigint, bigint, bigint, bigint] & {
+        reqBond: bigint;
+        draftReward: bigint;
+        winReward: bigint;
+        noVoteSlashBP: bigint;
+        loseVoteSlashBP: bigint;
+        numDraftees: bigint;
       }
-    >;
+    ],
+    "view"
+  >;
 
-    priceSupplyDeltaBP(overrides?: CallOverrides): Promise<BigNumber>;
+  priceSupplyDeltaBP: TypedContractMethod<[], [bigint], "view">;
 
-    purchaseTicket(
-      poolId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  purchaseTicket: TypedContractMethod<
+    [poolId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    randomness(overrides?: CallOverrides): Promise<string>;
+  randomness: TypedContractMethod<[], [string], "view">;
 
-    renounceOwnership(overrides?: CallOverrides): Promise<void>;
+  renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
-    setDisputeManager(
-      _disputeManager: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  setDisputeManager: TypedContractMethod<
+    [_disputeManager: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    setMarketCore(
-      _marketCore: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  setMarketCore: TypedContractMethod<
+    [_marketCore: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    setRandomnessProvider(
-      provider: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  setRandomnessProvider: TypedContractMethod<
+    [provider: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    setTicketCancelDuration(
-      dur: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  setTicketCancelDuration: TypedContractMethod<
+    [dur: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    setTicketExpireDuration(
-      dur: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  setTicketExpireDuration: TypedContractMethod<
+    [dur: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    setTicketMarketParams(
+  setTicketMarketParams: TypedContractMethod<
+    [
       _baseTicketPrice: BigNumberish,
       _windowDur: BigNumberish,
       _ticketsPerWindow: BigNumberish,
       _baseTicketSupply: BigNumberish,
       _priceSupplyDeltaBP: BigNumberish,
       _minInactiveWindowBeforeReset: BigNumberish,
-      _soldOutBP: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+      _soldOutBP: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    setTicketMatureDuration(
-      dur: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  setTicketMatureDuration: TypedContractMethod<
+    [dur: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    soldOutBP(overrides?: CallOverrides): Promise<BigNumber>;
+  soldOutBP: TypedContractMethod<[], [bigint], "view">;
 
-    ticketCancelDur(overrides?: CallOverrides): Promise<BigNumber>;
+  ticketCancelDur: TypedContractMethod<[], [bigint], "view">;
 
-    ticketExpireDur(overrides?: CallOverrides): Promise<BigNumber>;
+  ticketExpireDur: TypedContractMethod<[], [bigint], "view">;
 
-    ticketMatureDur(overrides?: CallOverrides): Promise<BigNumber>;
+  ticketMatureDur: TypedContractMethod<[], [bigint], "view">;
 
-    ticketSold(overrides?: CallOverrides): Promise<BigNumber>;
+  ticketSold: TypedContractMethod<[], [bigint], "view">;
 
-    ticketSupply(overrides?: CallOverrides): Promise<BigNumber>;
+  ticketSupply: TypedContractMethod<[], [bigint], "view">;
 
-    tickets(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<
+  tickets: TypedContractMethod<
+    [arg0: AddressLike, arg1: BigNumberish],
+    [
       [
         string,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
         boolean,
         boolean
       ] & {
         owner: string;
-        idx: BigNumber;
-        poolId: BigNumber;
-        bond: BigNumber;
-        matureAt: BigNumber;
-        poolIdx: BigNumber;
-        cancelAt: BigNumber;
-        joinBy: BigNumber;
+        idx: bigint;
+        poolId: bigint;
+        bond: bigint;
+        matureAt: bigint;
+        poolIdx: bigint;
+        cancelAt: bigint;
+        joinBy: bigint;
         drafted: boolean;
         joined: boolean;
       }
-    >;
+    ],
+    "view"
+  >;
 
-    ticketsPerWindow(overrides?: CallOverrides): Promise<BigNumber>;
+  ticketsPerWindow: TypedContractMethod<[], [bigint], "view">;
 
-    token(overrides?: CallOverrides): Promise<string>;
+  token: TypedContractMethod<[], [string], "view">;
 
-    transferOwnership(
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  transferOwnership: TypedContractMethod<
+    [newOwner: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    undraft(
-      ticketOwner: string,
+  undraft: TypedContractMethod<
+    [
+      ticketOwner: AddressLike,
       ticketId: BigNumberish,
       voted: boolean,
-      winSide: boolean,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+      winSide: boolean
+    ],
+    [bigint],
+    "nonpayable"
+  >;
 
-    updateTicketPool(
+  updateTicketPool: TypedContractMethod<
+    [
       poolId: BigNumberish,
       reqBond: BigNumberish,
       draftReward: BigNumberish,
       winReward: BigNumberish,
       noVoteSlashBP: BigNumberish,
       loseVoteSlashBP: BigNumberish,
-      numDraftees: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+      numDraftees: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    windowDur(overrides?: CallOverrides): Promise<BigNumber>;
+  windowDur: TypedContractMethod<[], [bigint], "view">;
 
-    windows(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, BigNumber, BigNumber, BigNumber] & {
-        endTime: BigNumber;
-        numPurchases: BigNumber;
-        supply: BigNumber;
-        price: BigNumber;
+  windows: TypedContractMethod<
+    [arg0: BigNumberish],
+    [
+      [bigint, bigint, bigint, bigint] & {
+        endTime: bigint;
+        numPurchases: bigint;
+        supply: bigint;
+        price: bigint;
       }
-    >;
-  };
+    ],
+    "view"
+  >;
+
+  getFunction<T extends ContractMethod = ContractMethod>(
+    key: string | FunctionFragment
+  ): T;
+
+  getFunction(
+    nameOrSignature: "baseTicketPrice"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "cancelTicket"
+  ): TypedContractMethod<[id: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "disputeManager"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "draft"
+  ): TypedContractMethod<
+    [marketId: AddressLike, orderID: BigNumberish, disputeID: BigNumberish],
+    [Structs.TicketStructOutput],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "drainTicket"
+  ): TypedContractMethod<[id: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "getTicket"
+  ): TypedContractMethod<
+    [owner: AddressLike, id: BigNumberish],
+    [Structs.TicketStructOutput],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getTicketPool"
+  ): TypedContractMethod<
+    [poolId: BigNumberish],
+    [Structs.TicketPoolStructOutput],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getTicketPrice"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "join"
+  ): TypedContractMethod<[ticketId: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "marketCore"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "minInactiveWindowBeforeReset"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "numWindows"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "owner"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "poolExists"
+  ): TypedContractMethod<[poolId: BigNumberish], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "poolTickets"
+  ): TypedContractMethod<
+    [arg0: BigNumberish, arg1: BigNumberish],
+    [[string, bigint] & { owner: string; idx: bigint }],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "pools"
+  ): TypedContractMethod<
+    [arg0: BigNumberish],
+    [
+      [bigint, bigint, bigint, bigint, bigint, bigint] & {
+        reqBond: bigint;
+        draftReward: bigint;
+        winReward: bigint;
+        noVoteSlashBP: bigint;
+        loseVoteSlashBP: bigint;
+        numDraftees: bigint;
+      }
+    ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "priceSupplyDeltaBP"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "purchaseTicket"
+  ): TypedContractMethod<[poolId: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "randomness"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "renounceOwnership"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setDisputeManager"
+  ): TypedContractMethod<[_disputeManager: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setMarketCore"
+  ): TypedContractMethod<[_marketCore: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setRandomnessProvider"
+  ): TypedContractMethod<[provider: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setTicketCancelDuration"
+  ): TypedContractMethod<[dur: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setTicketExpireDuration"
+  ): TypedContractMethod<[dur: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setTicketMarketParams"
+  ): TypedContractMethod<
+    [
+      _baseTicketPrice: BigNumberish,
+      _windowDur: BigNumberish,
+      _ticketsPerWindow: BigNumberish,
+      _baseTicketSupply: BigNumberish,
+      _priceSupplyDeltaBP: BigNumberish,
+      _minInactiveWindowBeforeReset: BigNumberish,
+      _soldOutBP: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setTicketMatureDuration"
+  ): TypedContractMethod<[dur: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "soldOutBP"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "ticketCancelDur"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "ticketExpireDur"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "ticketMatureDur"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "ticketSold"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "ticketSupply"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "tickets"
+  ): TypedContractMethod<
+    [arg0: AddressLike, arg1: BigNumberish],
+    [
+      [
+        string,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        boolean,
+        boolean
+      ] & {
+        owner: string;
+        idx: bigint;
+        poolId: bigint;
+        bond: bigint;
+        matureAt: bigint;
+        poolIdx: bigint;
+        cancelAt: bigint;
+        joinBy: bigint;
+        drafted: boolean;
+        joined: boolean;
+      }
+    ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "ticketsPerWindow"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "token"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "transferOwnership"
+  ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "undraft"
+  ): TypedContractMethod<
+    [
+      ticketOwner: AddressLike,
+      ticketId: BigNumberish,
+      voted: boolean,
+      winSide: boolean
+    ],
+    [bigint],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "updateTicketPool"
+  ): TypedContractMethod<
+    [
+      poolId: BigNumberish,
+      reqBond: BigNumberish,
+      draftReward: BigNumberish,
+      winReward: BigNumberish,
+      noVoteSlashBP: BigNumberish,
+      loseVoteSlashBP: BigNumberish,
+      numDraftees: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "windowDur"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "windows"
+  ): TypedContractMethod<
+    [arg0: BigNumberish],
+    [
+      [bigint, bigint, bigint, bigint] & {
+        endTime: bigint;
+        numPurchases: bigint;
+        supply: bigint;
+        price: bigint;
+      }
+    ],
+    "view"
+  >;
+
+  getEvent(
+    key: "Drafted"
+  ): TypedContractEvent<
+    DraftedEvent.InputTuple,
+    DraftedEvent.OutputTuple,
+    DraftedEvent.OutputObject
+  >;
+  getEvent(
+    key: "JoinedPool"
+  ): TypedContractEvent<
+    JoinedPoolEvent.InputTuple,
+    JoinedPoolEvent.OutputTuple,
+    JoinedPoolEvent.OutputObject
+  >;
+  getEvent(
+    key: "OwnershipTransferred"
+  ): TypedContractEvent<
+    OwnershipTransferredEvent.InputTuple,
+    OwnershipTransferredEvent.OutputTuple,
+    OwnershipTransferredEvent.OutputObject
+  >;
+  getEvent(
+    key: "TicketCancelled"
+  ): TypedContractEvent<
+    TicketCancelledEvent.InputTuple,
+    TicketCancelledEvent.OutputTuple,
+    TicketCancelledEvent.OutputObject
+  >;
+  getEvent(
+    key: "TicketDrained"
+  ): TypedContractEvent<
+    TicketDrainedEvent.InputTuple,
+    TicketDrainedEvent.OutputTuple,
+    TicketDrainedEvent.OutputObject
+  >;
+  getEvent(
+    key: "TicketPurchased"
+  ): TypedContractEvent<
+    TicketPurchasedEvent.InputTuple,
+    TicketPurchasedEvent.OutputTuple,
+    TicketPurchasedEvent.OutputObject
+  >;
+  getEvent(
+    key: "TicketSlashed"
+  ): TypedContractEvent<
+    TicketSlashedEvent.InputTuple,
+    TicketSlashedEvent.OutputTuple,
+    TicketSlashedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Undrafted"
+  ): TypedContractEvent<
+    UndraftedEvent.InputTuple,
+    UndraftedEvent.OutputTuple,
+    UndraftedEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedDisputeManager"
+  ): TypedContractEvent<
+    UpdatedDisputeManagerEvent.InputTuple,
+    UpdatedDisputeManagerEvent.OutputTuple,
+    UpdatedDisputeManagerEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedMarketCore"
+  ): TypedContractEvent<
+    UpdatedMarketCoreEvent.InputTuple,
+    UpdatedMarketCoreEvent.OutputTuple,
+    UpdatedMarketCoreEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedRandomnessProvider"
+  ): TypedContractEvent<
+    UpdatedRandomnessProviderEvent.InputTuple,
+    UpdatedRandomnessProviderEvent.OutputTuple,
+    UpdatedRandomnessProviderEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedTicketCancelDuration"
+  ): TypedContractEvent<
+    UpdatedTicketCancelDurationEvent.InputTuple,
+    UpdatedTicketCancelDurationEvent.OutputTuple,
+    UpdatedTicketCancelDurationEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedTicketExpireDuration"
+  ): TypedContractEvent<
+    UpdatedTicketExpireDurationEvent.InputTuple,
+    UpdatedTicketExpireDurationEvent.OutputTuple,
+    UpdatedTicketExpireDurationEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedTicketMatureDuration"
+  ): TypedContractEvent<
+    UpdatedTicketMatureDurationEvent.InputTuple,
+    UpdatedTicketMatureDurationEvent.OutputTuple,
+    UpdatedTicketMatureDurationEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedTicketParams"
+  ): TypedContractEvent<
+    UpdatedTicketParamsEvent.InputTuple,
+    UpdatedTicketParamsEvent.OutputTuple,
+    UpdatedTicketParamsEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedTicketPool"
+  ): TypedContractEvent<
+    UpdatedTicketPoolEvent.InputTuple,
+    UpdatedTicketPoolEvent.OutputTuple,
+    UpdatedTicketPoolEvent.OutputObject
+  >;
 
   filters: {
-    "Drafted(address,address,uint256,uint256,uint256,address)"(
-      marketId?: null,
-      owner?: null,
-      ticketId?: null,
-      orderID?: null,
-      disputeID?: null,
-      drafter?: null
-    ): DraftedEventFilter;
-    Drafted(
-      marketId?: null,
-      owner?: null,
-      ticketId?: null,
-      orderID?: null,
-      disputeID?: null,
-      drafter?: null
-    ): DraftedEventFilter;
-
-    "JoinedPool(address,uint256,uint256)"(
-      owner?: null,
-      poolId?: null,
-      ticketId?: null
-    ): JoinedPoolEventFilter;
-    JoinedPool(
-      owner?: null,
-      poolId?: null,
-      ticketId?: null
-    ): JoinedPoolEventFilter;
-
-    "OwnershipTransferred(address,address)"(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
-    OwnershipTransferred(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
-
-    "TicketCancelled(address,uint256)"(
-      owner?: null,
-      id?: null
-    ): TicketCancelledEventFilter;
-    TicketCancelled(owner?: null, id?: null): TicketCancelledEventFilter;
-
-    "TicketDrained(address,uint256,uint256)"(
-      owner?: null,
-      id?: null,
-      amount?: null
-    ): TicketDrainedEventFilter;
-    TicketDrained(
-      owner?: null,
-      id?: null,
-      amount?: null
-    ): TicketDrainedEventFilter;
-
-    "TicketPurchased(address,uint256,uint256,uint256,uint256,uint256)"(
-      owner?: null,
-      id?: null,
-      poolId?: null,
-      amount?: null,
-      matureAt?: null,
-      joinBy?: null
-    ): TicketPurchasedEventFilter;
-    TicketPurchased(
-      owner?: null,
-      id?: null,
-      poolId?: null,
-      amount?: null,
-      matureAt?: null,
-      joinBy?: null
-    ): TicketPurchasedEventFilter;
-
-    "TicketSlashed(address,uint256,uint256,bool,bool)"(
-      owner?: null,
-      ticketId?: null,
-      amount?: null,
-      voted?: null,
-      winSide?: null
-    ): TicketSlashedEventFilter;
-    TicketSlashed(
-      owner?: null,
-      ticketId?: null,
-      amount?: null,
-      voted?: null,
-      winSide?: null
-    ): TicketSlashedEventFilter;
-
-    "Undrafted(address,uint256,bool,address)"(
-      owner?: null,
-      ticketId?: null,
-      slashed?: null,
-      undrafter?: null
-    ): UndraftedEventFilter;
-    Undrafted(
-      owner?: null,
-      ticketId?: null,
-      slashed?: null,
-      undrafter?: null
-    ): UndraftedEventFilter;
-
-    "UpdatedDisputeManager(address)"(
-      val?: null
-    ): UpdatedDisputeManagerEventFilter;
-    UpdatedDisputeManager(val?: null): UpdatedDisputeManagerEventFilter;
-
-    "UpdatedMarketCore(address)"(val?: null): UpdatedMarketCoreEventFilter;
-    UpdatedMarketCore(val?: null): UpdatedMarketCoreEventFilter;
-
-    "UpdatedRandomnessProvider(address)"(
-      val?: null
-    ): UpdatedRandomnessProviderEventFilter;
-    UpdatedRandomnessProvider(val?: null): UpdatedRandomnessProviderEventFilter;
-
-    "UpdatedTicketCancelDuration(uint256)"(
-      val?: null
-    ): UpdatedTicketCancelDurationEventFilter;
-    UpdatedTicketCancelDuration(
-      val?: null
-    ): UpdatedTicketCancelDurationEventFilter;
-
-    "UpdatedTicketExpireDuration(uint256)"(
-      val?: null
-    ): UpdatedTicketExpireDurationEventFilter;
-    UpdatedTicketExpireDuration(
-      val?: null
-    ): UpdatedTicketExpireDurationEventFilter;
-
-    "UpdatedTicketMatureDuration(uint256)"(
-      val?: null
-    ): UpdatedTicketMatureDurationEventFilter;
-    UpdatedTicketMatureDuration(
-      val?: null
-    ): UpdatedTicketMatureDurationEventFilter;
-
-    "UpdatedTicketParams(uint256,uint256,uint256,uint256,uint256,uint256,uint256)"(
-      baseTicketPrice?: null,
-      windowDur?: null,
-      ticketsPerWindow?: null,
-      baseTicketSupply?: null,
-      priceSupplyDeltaBP?: null,
-      minInactiveWindowBeforeReset?: null,
-      soldOutBP?: null
-    ): UpdatedTicketParamsEventFilter;
-    UpdatedTicketParams(
-      baseTicketPrice?: null,
-      windowDur?: null,
-      ticketsPerWindow?: null,
-      baseTicketSupply?: null,
-      priceSupplyDeltaBP?: null,
-      minInactiveWindowBeforeReset?: null,
-      soldOutBP?: null
-    ): UpdatedTicketParamsEventFilter;
-
-    "UpdatedTicketPool(uint256,uint256,uint256,uint256,uint256,uint256,uint256)"(
-      poolId?: null,
-      reqBond?: null,
-      draftReward?: null,
-      winReward?: null,
-      noVoteSlashBP?: null,
-      loseVoteSlashBP?: null,
-      numDraftees?: null
-    ): UpdatedTicketPoolEventFilter;
-    UpdatedTicketPool(
-      poolId?: null,
-      reqBond?: null,
-      draftReward?: null,
-      winReward?: null,
-      noVoteSlashBP?: null,
-      loseVoteSlashBP?: null,
-      numDraftees?: null
-    ): UpdatedTicketPoolEventFilter;
-  };
-
-  estimateGas: {
-    baseTicketPrice(overrides?: CallOverrides): Promise<BigNumber>;
-
-    cancelTicket(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    disputeManager(overrides?: CallOverrides): Promise<BigNumber>;
-
-    draft(
-      marketId: string,
-      orderID: BigNumberish,
-      disputeID: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    drainTicket(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    getTicket(
-      owner: string,
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getTicketPool(
-      poolId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getTicketPrice(overrides?: CallOverrides): Promise<BigNumber>;
-
-    join(
-      ticketId: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    marketCore(overrides?: CallOverrides): Promise<BigNumber>;
-
-    minInactiveWindowBeforeReset(overrides?: CallOverrides): Promise<BigNumber>;
-
-    numWindows(overrides?: CallOverrides): Promise<BigNumber>;
-
-    owner(overrides?: CallOverrides): Promise<BigNumber>;
-
-    poolExists(
-      poolId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    poolTickets(
-      arg0: BigNumberish,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    pools(arg0: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
-
-    priceSupplyDeltaBP(overrides?: CallOverrides): Promise<BigNumber>;
-
-    purchaseTicket(
-      poolId: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    randomness(overrides?: CallOverrides): Promise<BigNumber>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setDisputeManager(
-      _disputeManager: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setMarketCore(
-      _marketCore: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setRandomnessProvider(
-      provider: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setTicketCancelDuration(
-      dur: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setTicketExpireDuration(
-      dur: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setTicketMarketParams(
-      _baseTicketPrice: BigNumberish,
-      _windowDur: BigNumberish,
-      _ticketsPerWindow: BigNumberish,
-      _baseTicketSupply: BigNumberish,
-      _priceSupplyDeltaBP: BigNumberish,
-      _minInactiveWindowBeforeReset: BigNumberish,
-      _soldOutBP: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setTicketMatureDuration(
-      dur: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    soldOutBP(overrides?: CallOverrides): Promise<BigNumber>;
-
-    ticketCancelDur(overrides?: CallOverrides): Promise<BigNumber>;
-
-    ticketExpireDur(overrides?: CallOverrides): Promise<BigNumber>;
-
-    ticketMatureDur(overrides?: CallOverrides): Promise<BigNumber>;
-
-    ticketSold(overrides?: CallOverrides): Promise<BigNumber>;
-
-    ticketSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-    tickets(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    ticketsPerWindow(overrides?: CallOverrides): Promise<BigNumber>;
-
-    token(overrides?: CallOverrides): Promise<BigNumber>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    undraft(
-      ticketOwner: string,
-      ticketId: BigNumberish,
-      voted: boolean,
-      winSide: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    updateTicketPool(
-      poolId: BigNumberish,
-      reqBond: BigNumberish,
-      draftReward: BigNumberish,
-      winReward: BigNumberish,
-      noVoteSlashBP: BigNumberish,
-      loseVoteSlashBP: BigNumberish,
-      numDraftees: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    windowDur(overrides?: CallOverrides): Promise<BigNumber>;
-
-    windows(arg0: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
-  };
-
-  populateTransaction: {
-    baseTicketPrice(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    cancelTicket(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    disputeManager(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    draft(
-      marketId: string,
-      orderID: BigNumberish,
-      disputeID: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    drainTicket(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    getTicket(
-      owner: string,
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getTicketPool(
-      poolId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getTicketPrice(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    join(
-      ticketId: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    marketCore(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    minInactiveWindowBeforeReset(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    numWindows(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    poolExists(
-      poolId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    poolTickets(
-      arg0: BigNumberish,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    pools(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    priceSupplyDeltaBP(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    purchaseTicket(
-      poolId: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    randomness(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setDisputeManager(
-      _disputeManager: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setMarketCore(
-      _marketCore: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setRandomnessProvider(
-      provider: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setTicketCancelDuration(
-      dur: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setTicketExpireDuration(
-      dur: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setTicketMarketParams(
-      _baseTicketPrice: BigNumberish,
-      _windowDur: BigNumberish,
-      _ticketsPerWindow: BigNumberish,
-      _baseTicketSupply: BigNumberish,
-      _priceSupplyDeltaBP: BigNumberish,
-      _minInactiveWindowBeforeReset: BigNumberish,
-      _soldOutBP: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setTicketMatureDuration(
-      dur: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    soldOutBP(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    ticketCancelDur(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    ticketExpireDur(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    ticketMatureDur(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    ticketSold(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    ticketSupply(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    tickets(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    ticketsPerWindow(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    token(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    undraft(
-      ticketOwner: string,
-      ticketId: BigNumberish,
-      voted: boolean,
-      winSide: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    updateTicketPool(
-      poolId: BigNumberish,
-      reqBond: BigNumberish,
-      draftReward: BigNumberish,
-      winReward: BigNumberish,
-      noVoteSlashBP: BigNumberish,
-      loseVoteSlashBP: BigNumberish,
-      numDraftees: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    windowDur(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    windows(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+    "Drafted(address,address,uint256,uint256,uint256,address)": TypedContractEvent<
+      DraftedEvent.InputTuple,
+      DraftedEvent.OutputTuple,
+      DraftedEvent.OutputObject
+    >;
+    Drafted: TypedContractEvent<
+      DraftedEvent.InputTuple,
+      DraftedEvent.OutputTuple,
+      DraftedEvent.OutputObject
+    >;
+
+    "JoinedPool(address,uint256,uint256)": TypedContractEvent<
+      JoinedPoolEvent.InputTuple,
+      JoinedPoolEvent.OutputTuple,
+      JoinedPoolEvent.OutputObject
+    >;
+    JoinedPool: TypedContractEvent<
+      JoinedPoolEvent.InputTuple,
+      JoinedPoolEvent.OutputTuple,
+      JoinedPoolEvent.OutputObject
+    >;
+
+    "OwnershipTransferred(address,address)": TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
+    OwnershipTransferred: TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
+
+    "TicketCancelled(address,uint256)": TypedContractEvent<
+      TicketCancelledEvent.InputTuple,
+      TicketCancelledEvent.OutputTuple,
+      TicketCancelledEvent.OutputObject
+    >;
+    TicketCancelled: TypedContractEvent<
+      TicketCancelledEvent.InputTuple,
+      TicketCancelledEvent.OutputTuple,
+      TicketCancelledEvent.OutputObject
+    >;
+
+    "TicketDrained(address,uint256,uint256)": TypedContractEvent<
+      TicketDrainedEvent.InputTuple,
+      TicketDrainedEvent.OutputTuple,
+      TicketDrainedEvent.OutputObject
+    >;
+    TicketDrained: TypedContractEvent<
+      TicketDrainedEvent.InputTuple,
+      TicketDrainedEvent.OutputTuple,
+      TicketDrainedEvent.OutputObject
+    >;
+
+    "TicketPurchased(address,uint256,uint256,uint256,uint256,uint256)": TypedContractEvent<
+      TicketPurchasedEvent.InputTuple,
+      TicketPurchasedEvent.OutputTuple,
+      TicketPurchasedEvent.OutputObject
+    >;
+    TicketPurchased: TypedContractEvent<
+      TicketPurchasedEvent.InputTuple,
+      TicketPurchasedEvent.OutputTuple,
+      TicketPurchasedEvent.OutputObject
+    >;
+
+    "TicketSlashed(address,uint256,uint256,bool,bool)": TypedContractEvent<
+      TicketSlashedEvent.InputTuple,
+      TicketSlashedEvent.OutputTuple,
+      TicketSlashedEvent.OutputObject
+    >;
+    TicketSlashed: TypedContractEvent<
+      TicketSlashedEvent.InputTuple,
+      TicketSlashedEvent.OutputTuple,
+      TicketSlashedEvent.OutputObject
+    >;
+
+    "Undrafted(address,uint256,bool,address)": TypedContractEvent<
+      UndraftedEvent.InputTuple,
+      UndraftedEvent.OutputTuple,
+      UndraftedEvent.OutputObject
+    >;
+    Undrafted: TypedContractEvent<
+      UndraftedEvent.InputTuple,
+      UndraftedEvent.OutputTuple,
+      UndraftedEvent.OutputObject
+    >;
+
+    "UpdatedDisputeManager(address)": TypedContractEvent<
+      UpdatedDisputeManagerEvent.InputTuple,
+      UpdatedDisputeManagerEvent.OutputTuple,
+      UpdatedDisputeManagerEvent.OutputObject
+    >;
+    UpdatedDisputeManager: TypedContractEvent<
+      UpdatedDisputeManagerEvent.InputTuple,
+      UpdatedDisputeManagerEvent.OutputTuple,
+      UpdatedDisputeManagerEvent.OutputObject
+    >;
+
+    "UpdatedMarketCore(address)": TypedContractEvent<
+      UpdatedMarketCoreEvent.InputTuple,
+      UpdatedMarketCoreEvent.OutputTuple,
+      UpdatedMarketCoreEvent.OutputObject
+    >;
+    UpdatedMarketCore: TypedContractEvent<
+      UpdatedMarketCoreEvent.InputTuple,
+      UpdatedMarketCoreEvent.OutputTuple,
+      UpdatedMarketCoreEvent.OutputObject
+    >;
+
+    "UpdatedRandomnessProvider(address)": TypedContractEvent<
+      UpdatedRandomnessProviderEvent.InputTuple,
+      UpdatedRandomnessProviderEvent.OutputTuple,
+      UpdatedRandomnessProviderEvent.OutputObject
+    >;
+    UpdatedRandomnessProvider: TypedContractEvent<
+      UpdatedRandomnessProviderEvent.InputTuple,
+      UpdatedRandomnessProviderEvent.OutputTuple,
+      UpdatedRandomnessProviderEvent.OutputObject
+    >;
+
+    "UpdatedTicketCancelDuration(uint256)": TypedContractEvent<
+      UpdatedTicketCancelDurationEvent.InputTuple,
+      UpdatedTicketCancelDurationEvent.OutputTuple,
+      UpdatedTicketCancelDurationEvent.OutputObject
+    >;
+    UpdatedTicketCancelDuration: TypedContractEvent<
+      UpdatedTicketCancelDurationEvent.InputTuple,
+      UpdatedTicketCancelDurationEvent.OutputTuple,
+      UpdatedTicketCancelDurationEvent.OutputObject
+    >;
+
+    "UpdatedTicketExpireDuration(uint256)": TypedContractEvent<
+      UpdatedTicketExpireDurationEvent.InputTuple,
+      UpdatedTicketExpireDurationEvent.OutputTuple,
+      UpdatedTicketExpireDurationEvent.OutputObject
+    >;
+    UpdatedTicketExpireDuration: TypedContractEvent<
+      UpdatedTicketExpireDurationEvent.InputTuple,
+      UpdatedTicketExpireDurationEvent.OutputTuple,
+      UpdatedTicketExpireDurationEvent.OutputObject
+    >;
+
+    "UpdatedTicketMatureDuration(uint256)": TypedContractEvent<
+      UpdatedTicketMatureDurationEvent.InputTuple,
+      UpdatedTicketMatureDurationEvent.OutputTuple,
+      UpdatedTicketMatureDurationEvent.OutputObject
+    >;
+    UpdatedTicketMatureDuration: TypedContractEvent<
+      UpdatedTicketMatureDurationEvent.InputTuple,
+      UpdatedTicketMatureDurationEvent.OutputTuple,
+      UpdatedTicketMatureDurationEvent.OutputObject
+    >;
+
+    "UpdatedTicketParams(uint256,uint256,uint256,uint256,uint256,uint256,uint256)": TypedContractEvent<
+      UpdatedTicketParamsEvent.InputTuple,
+      UpdatedTicketParamsEvent.OutputTuple,
+      UpdatedTicketParamsEvent.OutputObject
+    >;
+    UpdatedTicketParams: TypedContractEvent<
+      UpdatedTicketParamsEvent.InputTuple,
+      UpdatedTicketParamsEvent.OutputTuple,
+      UpdatedTicketParamsEvent.OutputObject
+    >;
+
+    "UpdatedTicketPool(uint256,uint256,uint256,uint256,uint256,uint256,uint256)": TypedContractEvent<
+      UpdatedTicketPoolEvent.InputTuple,
+      UpdatedTicketPoolEvent.OutputTuple,
+      UpdatedTicketPoolEvent.OutputObject
+    >;
+    UpdatedTicketPool: TypedContractEvent<
+      UpdatedTicketPoolEvent.InputTuple,
+      UpdatedTicketPoolEvent.OutputTuple,
+      UpdatedTicketPoolEvent.OutputObject
+    >;
   };
 }

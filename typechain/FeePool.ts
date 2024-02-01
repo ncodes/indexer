@@ -3,75 +3,29 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BigNumber,
   BigNumberish,
   BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  Overrides,
-  PopulatedTransaction,
-  Signer,
-  utils,
-} from "ethers";
-import type {
   FunctionFragment,
   Result,
+  Interface,
   EventFragment,
-} from "@ethersproject/abi";
-import type { Listener, Provider } from "@ethersproject/providers";
+  AddressLike,
+  ContractRunner,
+  ContractMethod,
+  Listener,
+} from "ethers";
 import type {
-  TypedEventFilter,
-  TypedEvent,
+  TypedContractEvent,
+  TypedDeferredTopicFilter,
+  TypedEventLog,
+  TypedLogDescription,
   TypedListener,
-  OnEvent,
+  TypedContractMethod,
 } from "./common";
 
-export interface FeePoolInterface extends utils.Interface {
-  functions: {
-    "badge()": FunctionFragment;
-    "balanceOf(address)": FunctionFragment;
-    "canStake(address)": FunctionFragment;
-    "earned(address,address)": FunctionFragment;
-    "getAddressOfNFT(uint256)": FunctionFragment;
-    "getRewardForDuration(address)": FunctionFragment;
-    "lastTimeRewardApplicable(address)": FunctionFragment;
-    "lastUpdateTime(address)": FunctionFragment;
-    "nft()": FunctionFragment;
-    "nftBalanceOf(uint256)": FunctionFragment;
-    "nftEarned(uint256,address)": FunctionFragment;
-    "notifier()": FunctionFragment;
-    "notifyFeeDeposit(address,uint256)": FunctionFragment;
-    "notifyStake(address,uint256)": FunctionFragment;
-    "notifyWithdraw(address,uint256)": FunctionFragment;
-    "owner()": FunctionFragment;
-    "periodFinish(address)": FunctionFragment;
-    "recoverERC20(address,uint256)": FunctionFragment;
-    "renounceOwnership()": FunctionFragment;
-    "requiredBadges(uint256,uint256)": FunctionFragment;
-    "rewardPerToken(address)": FunctionFragment;
-    "rewardPerTokenStored(address)": FunctionFragment;
-    "rewardRates(address)": FunctionFragment;
-    "rewards(address,address)": FunctionFragment;
-    "rewardsDuration()": FunctionFragment;
-    "setBadgeManager(address)": FunctionFragment;
-    "setNFT(address)": FunctionFragment;
-    "setNotifier(address)": FunctionFragment;
-    "setRequiredBadges(string[2][])": FunctionFragment;
-    "setRewardDuration(uint256)": FunctionFragment;
-    "setTokenPool(address)": FunctionFragment;
-    "stakeNFT(uint256,uint256)": FunctionFragment;
-    "tokenBalanceOf(address)": FunctionFragment;
-    "tokenPool()": FunctionFragment;
-    "tokens(uint256)": FunctionFragment;
-    "totalSupply()": FunctionFragment;
-    "transferOwnership(address)": FunctionFragment;
-    "userRewardPerTokenPaid(address,address)": FunctionFragment;
-    "withdrawNFTReward(uint256,address,uint256)": FunctionFragment;
-    "withdrawReward(address,uint256)": FunctionFragment;
-  };
-
+export interface FeePoolInterface extends Interface {
   getFunction(
-    nameOrSignatureOrTopic:
+    nameOrSignature:
       | "badge"
       | "balanceOf"
       | "canStake"
@@ -114,12 +68,34 @@ export interface FeePoolInterface extends utils.Interface {
       | "withdrawReward"
   ): FunctionFragment;
 
+  getEvent(
+    nameOrSignatureOrTopic:
+      | "OwnershipTransferred"
+      | "Recovered"
+      | "RewardAdded"
+      | "RewardNFTWithdrawn"
+      | "RewardWithdrawn"
+      | "StakedNFT"
+      | "UpdatedBadgeManager"
+      | "UpdatedNFT"
+      | "UpdatedNotifier"
+      | "UpdatedReqBadges"
+      | "UpdatedRewardDuration"
+      | "UpdatedTokenPool"
+  ): EventFragment;
+
   encodeFunctionData(functionFragment: "badge", values?: undefined): string;
-  encodeFunctionData(functionFragment: "balanceOf", values: [string]): string;
-  encodeFunctionData(functionFragment: "canStake", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "balanceOf",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "canStake",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "earned",
-    values: [string, string]
+    values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getAddressOfNFT",
@@ -127,15 +103,15 @@ export interface FeePoolInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getRewardForDuration",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "lastTimeRewardApplicable",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "lastUpdateTime",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "nft", values?: undefined): string;
   encodeFunctionData(
@@ -144,29 +120,29 @@ export interface FeePoolInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "nftEarned",
-    values: [BigNumberish, string]
+    values: [BigNumberish, AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "notifier", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "notifyFeeDeposit",
-    values: [string, BigNumberish]
+    values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "notifyStake",
-    values: [string, BigNumberish]
+    values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "notifyWithdraw",
-    values: [string, BigNumberish]
+    values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "periodFinish",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "recoverERC20",
-    values: [string, BigNumberish]
+    values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -178,16 +154,19 @@ export interface FeePoolInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "rewardPerToken",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "rewardPerTokenStored",
-    values: [string]
+    values: [AddressLike]
   ): string;
-  encodeFunctionData(functionFragment: "rewardRates", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "rewardRates",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "rewards",
-    values: [string, string]
+    values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "rewardsDuration",
@@ -195,10 +174,13 @@ export interface FeePoolInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "setBadgeManager",
-    values: [string]
+    values: [AddressLike]
   ): string;
-  encodeFunctionData(functionFragment: "setNFT", values: [string]): string;
-  encodeFunctionData(functionFragment: "setNotifier", values: [string]): string;
+  encodeFunctionData(functionFragment: "setNFT", values: [AddressLike]): string;
+  encodeFunctionData(
+    functionFragment: "setNotifier",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "setRequiredBadges",
     values: [[string, string][]]
@@ -209,7 +191,7 @@ export interface FeePoolInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "setTokenPool",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "stakeNFT",
@@ -217,7 +199,7 @@ export interface FeePoolInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "tokenBalanceOf",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "tokenPool", values?: undefined): string;
   encodeFunctionData(
@@ -230,19 +212,19 @@ export interface FeePoolInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "userRewardPerTokenPaid",
-    values: [string, string]
+    values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "withdrawNFTReward",
-    values: [BigNumberish, string, BigNumberish]
+    values: [BigNumberish, AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "withdrawReward",
-    values: [string, BigNumberish]
+    values: [AddressLike, BigNumberish]
   ): string;
 
   decodeFunctionResult(functionFragment: "badge", data: BytesLike): Result;
@@ -366,1147 +348,780 @@ export interface FeePoolInterface extends utils.Interface {
     functionFragment: "withdrawReward",
     data: BytesLike
   ): Result;
-
-  events: {
-    "OwnershipTransferred(address,address)": EventFragment;
-    "Recovered(address,uint256)": EventFragment;
-    "RewardAdded(address,uint256)": EventFragment;
-    "RewardNFTWithdrawn(uint256,address,address,uint256)": EventFragment;
-    "RewardWithdrawn(address,address,uint256)": EventFragment;
-    "StakedNFT(uint256,address,uint256)": EventFragment;
-    "UpdatedBadgeManager(address)": EventFragment;
-    "UpdatedNFT(address)": EventFragment;
-    "UpdatedNotifier(address)": EventFragment;
-    "UpdatedReqBadges(string[2][])": EventFragment;
-    "UpdatedRewardDuration(uint256)": EventFragment;
-    "UpdatedTokenPool(address)": EventFragment;
-  };
-
-  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Recovered"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RewardAdded"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RewardNFTWithdrawn"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RewardWithdrawn"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "StakedNFT"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedBadgeManager"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedNFT"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedNotifier"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedReqBadges"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedRewardDuration"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedTokenPool"): EventFragment;
 }
 
-export interface OwnershipTransferredEventObject {
-  previousOwner: string;
-  newOwner: string;
+export namespace OwnershipTransferredEvent {
+  export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
+  export type OutputTuple = [previousOwner: string, newOwner: string];
+  export interface OutputObject {
+    previousOwner: string;
+    newOwner: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type OwnershipTransferredEvent = TypedEvent<
-  [string, string],
-  OwnershipTransferredEventObject
->;
 
-export type OwnershipTransferredEventFilter =
-  TypedEventFilter<OwnershipTransferredEvent>;
-
-export interface RecoveredEventObject {
-  token: string;
-  amount: BigNumber;
+export namespace RecoveredEvent {
+  export type InputTuple = [token: AddressLike, amount: BigNumberish];
+  export type OutputTuple = [token: string, amount: bigint];
+  export interface OutputObject {
+    token: string;
+    amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type RecoveredEvent = TypedEvent<
-  [string, BigNumber],
-  RecoveredEventObject
->;
 
-export type RecoveredEventFilter = TypedEventFilter<RecoveredEvent>;
-
-export interface RewardAddedEventObject {
-  token: string;
-  reward: BigNumber;
+export namespace RewardAddedEvent {
+  export type InputTuple = [token: AddressLike, reward: BigNumberish];
+  export type OutputTuple = [token: string, reward: bigint];
+  export interface OutputObject {
+    token: string;
+    reward: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type RewardAddedEvent = TypedEvent<
-  [string, BigNumber],
-  RewardAddedEventObject
->;
 
-export type RewardAddedEventFilter = TypedEventFilter<RewardAddedEvent>;
-
-export interface RewardNFTWithdrawnEventObject {
-  tokenId: BigNumber;
-  token: string;
-  user: string;
-  reward: BigNumber;
+export namespace RewardNFTWithdrawnEvent {
+  export type InputTuple = [
+    tokenId: BigNumberish,
+    token: AddressLike,
+    user: AddressLike,
+    reward: BigNumberish
+  ];
+  export type OutputTuple = [
+    tokenId: bigint,
+    token: string,
+    user: string,
+    reward: bigint
+  ];
+  export interface OutputObject {
+    tokenId: bigint;
+    token: string;
+    user: string;
+    reward: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type RewardNFTWithdrawnEvent = TypedEvent<
-  [BigNumber, string, string, BigNumber],
-  RewardNFTWithdrawnEventObject
->;
 
-export type RewardNFTWithdrawnEventFilter =
-  TypedEventFilter<RewardNFTWithdrawnEvent>;
-
-export interface RewardWithdrawnEventObject {
-  token: string;
-  user: string;
-  reward: BigNumber;
+export namespace RewardWithdrawnEvent {
+  export type InputTuple = [
+    token: AddressLike,
+    user: AddressLike,
+    reward: BigNumberish
+  ];
+  export type OutputTuple = [token: string, user: string, reward: bigint];
+  export interface OutputObject {
+    token: string;
+    user: string;
+    reward: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type RewardWithdrawnEvent = TypedEvent<
-  [string, string, BigNumber],
-  RewardWithdrawnEventObject
->;
 
-export type RewardWithdrawnEventFilter = TypedEventFilter<RewardWithdrawnEvent>;
-
-export interface StakedNFTEventObject {
-  tokenId: BigNumber;
-  nftAddress: string;
-  amount: BigNumber;
+export namespace StakedNFTEvent {
+  export type InputTuple = [
+    tokenId: BigNumberish,
+    nftAddress: AddressLike,
+    amount: BigNumberish
+  ];
+  export type OutputTuple = [
+    tokenId: bigint,
+    nftAddress: string,
+    amount: bigint
+  ];
+  export interface OutputObject {
+    tokenId: bigint;
+    nftAddress: string;
+    amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type StakedNFTEvent = TypedEvent<
-  [BigNumber, string, BigNumber],
-  StakedNFTEventObject
->;
 
-export type StakedNFTEventFilter = TypedEventFilter<StakedNFTEvent>;
-
-export interface UpdatedBadgeManagerEventObject {
-  addr: string;
+export namespace UpdatedBadgeManagerEvent {
+  export type InputTuple = [addr: AddressLike];
+  export type OutputTuple = [addr: string];
+  export interface OutputObject {
+    addr: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedBadgeManagerEvent = TypedEvent<
-  [string],
-  UpdatedBadgeManagerEventObject
->;
 
-export type UpdatedBadgeManagerEventFilter =
-  TypedEventFilter<UpdatedBadgeManagerEvent>;
-
-export interface UpdatedNFTEventObject {
-  addr: string;
+export namespace UpdatedNFTEvent {
+  export type InputTuple = [addr: AddressLike];
+  export type OutputTuple = [addr: string];
+  export interface OutputObject {
+    addr: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedNFTEvent = TypedEvent<[string], UpdatedNFTEventObject>;
 
-export type UpdatedNFTEventFilter = TypedEventFilter<UpdatedNFTEvent>;
-
-export interface UpdatedNotifierEventObject {
-  addr: string;
+export namespace UpdatedNotifierEvent {
+  export type InputTuple = [addr: AddressLike];
+  export type OutputTuple = [addr: string];
+  export interface OutputObject {
+    addr: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedNotifierEvent = TypedEvent<
-  [string],
-  UpdatedNotifierEventObject
->;
 
-export type UpdatedNotifierEventFilter = TypedEventFilter<UpdatedNotifierEvent>;
-
-export interface UpdatedReqBadgesEventObject {
-  badges: [string, string][];
+export namespace UpdatedReqBadgesEvent {
+  export type InputTuple = [badges: [string, string][]];
+  export type OutputTuple = [badges: [string, string][]];
+  export interface OutputObject {
+    badges: [string, string][];
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedReqBadgesEvent = TypedEvent<
-  [[string, string][]],
-  UpdatedReqBadgesEventObject
->;
 
-export type UpdatedReqBadgesEventFilter =
-  TypedEventFilter<UpdatedReqBadgesEvent>;
-
-export interface UpdatedRewardDurationEventObject {
-  dur: BigNumber;
+export namespace UpdatedRewardDurationEvent {
+  export type InputTuple = [dur: BigNumberish];
+  export type OutputTuple = [dur: bigint];
+  export interface OutputObject {
+    dur: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedRewardDurationEvent = TypedEvent<
-  [BigNumber],
-  UpdatedRewardDurationEventObject
->;
 
-export type UpdatedRewardDurationEventFilter =
-  TypedEventFilter<UpdatedRewardDurationEvent>;
-
-export interface UpdatedTokenPoolEventObject {
-  addr: string;
+export namespace UpdatedTokenPoolEvent {
+  export type InputTuple = [addr: AddressLike];
+  export type OutputTuple = [addr: string];
+  export interface OutputObject {
+    addr: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedTokenPoolEvent = TypedEvent<
-  [string],
-  UpdatedTokenPoolEventObject
->;
-
-export type UpdatedTokenPoolEventFilter =
-  TypedEventFilter<UpdatedTokenPoolEvent>;
 
 export interface FeePool extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
-  deployed(): Promise<this>;
+  connect(runner?: ContractRunner | null): FeePool;
+  waitForDeployment(): Promise<this>;
 
   interface: FeePoolInterface;
 
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
+  queryFilter<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
-
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
-
-  functions: {
-    badge(overrides?: CallOverrides): Promise<[string]>;
-
-    balanceOf(account: string, overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    canStake(addr: string, overrides?: CallOverrides): Promise<[boolean]>;
-
-    earned(
-      account: string,
-      feeToken: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    getAddressOfNFT(
-      tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    getRewardForDuration(
-      feeToken: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    lastTimeRewardApplicable(
-      feeToken: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    lastUpdateTime(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    nft(overrides?: CallOverrides): Promise<[string]>;
-
-    nftBalanceOf(
-      tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    nftEarned(
-      tokenId: BigNumberish,
-      feeToken: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    notifier(overrides?: CallOverrides): Promise<[string]>;
-
-    notifyFeeDeposit(
-      feeToken: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    notifyStake(
-      account: string,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    notifyWithdraw(
-      account: string,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    owner(overrides?: CallOverrides): Promise<[string]>;
-
-    periodFinish(arg0: string, overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    recoverERC20(
-      tokenAddress: string,
-      tokenAmount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    requiredBadges(
-      arg0: BigNumberish,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    rewardPerToken(
-      feeToken: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    rewardPerTokenStored(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    rewardRates(arg0: string, overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    rewards(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    rewardsDuration(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    setBadgeManager(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setNFT(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setNotifier(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setRequiredBadges(
-      badges: [string, string][],
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setRewardDuration(
-      dur: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setTokenPool(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    stakeNFT(
-      _tokenId: BigNumberish,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    tokenBalanceOf(
-      token: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    tokenPool(overrides?: CallOverrides): Promise<[string]>;
-
-    tokens(arg0: BigNumberish, overrides?: CallOverrides): Promise<[string]>;
-
-    totalSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    userRewardPerTokenPaid(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    withdrawNFTReward(
-      tokenId: BigNumberish,
-      feeToken: string,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    withdrawReward(
-      feeToken: string,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-  };
-
-  badge(overrides?: CallOverrides): Promise<string>;
-
-  balanceOf(account: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-  canStake(addr: string, overrides?: CallOverrides): Promise<boolean>;
-
-  earned(
-    account: string,
-    feeToken: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  getAddressOfNFT(
-    tokenId: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  getRewardForDuration(
-    feeToken: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  lastTimeRewardApplicable(
-    feeToken: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  lastUpdateTime(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-  nft(overrides?: CallOverrides): Promise<string>;
-
-  nftBalanceOf(
-    tokenId: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  nftEarned(
-    tokenId: BigNumberish,
-    feeToken: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  notifier(overrides?: CallOverrides): Promise<string>;
-
-  notifyFeeDeposit(
-    feeToken: string,
-    amount: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  notifyStake(
-    account: string,
-    _amount: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  notifyWithdraw(
-    account: string,
-    _amount: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  owner(overrides?: CallOverrides): Promise<string>;
-
-  periodFinish(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-  recoverERC20(
-    tokenAddress: string,
-    tokenAmount: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  renounceOwnership(
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  requiredBadges(
-    arg0: BigNumberish,
-    arg1: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  rewardPerToken(
-    feeToken: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  rewardPerTokenStored(
-    arg0: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  rewardRates(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-  rewards(
-    arg0: string,
-    arg1: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  rewardsDuration(overrides?: CallOverrides): Promise<BigNumber>;
-
-  setBadgeManager(
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setNFT(
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setNotifier(
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setRequiredBadges(
-    badges: [string, string][],
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setRewardDuration(
-    dur: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setTokenPool(
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  stakeNFT(
-    _tokenId: BigNumberish,
-    _amount: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  tokenBalanceOf(token: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-  tokenPool(overrides?: CallOverrides): Promise<string>;
-
-  tokens(arg0: BigNumberish, overrides?: CallOverrides): Promise<string>;
-
-  totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-  transferOwnership(
-    newOwner: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  userRewardPerTokenPaid(
-    arg0: string,
-    arg1: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  withdrawNFTReward(
-    tokenId: BigNumberish,
-    feeToken: string,
-    _amount: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  withdrawReward(
-    feeToken: string,
-    _amount: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  callStatic: {
-    badge(overrides?: CallOverrides): Promise<string>;
-
-    balanceOf(account: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    canStake(addr: string, overrides?: CallOverrides): Promise<boolean>;
-
-    earned(
-      account: string,
-      feeToken: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getAddressOfNFT(
-      tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    getRewardForDuration(
-      feeToken: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    lastTimeRewardApplicable(
-      feeToken: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    lastUpdateTime(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    nft(overrides?: CallOverrides): Promise<string>;
-
-    nftBalanceOf(
-      tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    nftEarned(
-      tokenId: BigNumberish,
-      feeToken: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    notifier(overrides?: CallOverrides): Promise<string>;
-
-    notifyFeeDeposit(
-      feeToken: string,
-      amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    notifyStake(
-      account: string,
-      _amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    notifyWithdraw(
-      account: string,
-      _amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    owner(overrides?: CallOverrides): Promise<string>;
-
-    periodFinish(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    recoverERC20(
-      tokenAddress: string,
-      tokenAmount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    renounceOwnership(overrides?: CallOverrides): Promise<void>;
-
-    requiredBadges(
-      arg0: BigNumberish,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    rewardPerToken(
-      feeToken: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    rewardPerTokenStored(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    rewardRates(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewards(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    rewardsDuration(overrides?: CallOverrides): Promise<BigNumber>;
-
-    setBadgeManager(addr: string, overrides?: CallOverrides): Promise<void>;
-
-    setNFT(addr: string, overrides?: CallOverrides): Promise<void>;
-
-    setNotifier(addr: string, overrides?: CallOverrides): Promise<void>;
-
-    setRequiredBadges(
-      badges: [string, string][],
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setRewardDuration(
-      dur: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setTokenPool(addr: string, overrides?: CallOverrides): Promise<void>;
-
-    stakeNFT(
-      _tokenId: BigNumberish,
-      _amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    tokenBalanceOf(
-      token: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    tokenPool(overrides?: CallOverrides): Promise<string>;
-
-    tokens(arg0: BigNumberish, overrides?: CallOverrides): Promise<string>;
-
-    totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    userRewardPerTokenPaid(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    withdrawNFTReward(
-      tokenId: BigNumberish,
-      feeToken: string,
-      _amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    withdrawReward(
-      feeToken: string,
-      _amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-  };
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+  queryFilter<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    fromBlockOrBlockhash?: string | number | undefined,
+    toBlock?: string | number | undefined
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+
+  on<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  on<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+
+  once<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  once<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+
+  listeners<TCEvent extends TypedContractEvent>(
+    event: TCEvent
+  ): Promise<Array<TypedListener<TCEvent>>>;
+  listeners(eventName?: string): Promise<Array<Listener>>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(
+    event?: TCEvent
+  ): Promise<this>;
+
+  badge: TypedContractMethod<[], [string], "view">;
+
+  balanceOf: TypedContractMethod<[account: AddressLike], [bigint], "view">;
+
+  canStake: TypedContractMethod<[addr: AddressLike], [boolean], "view">;
+
+  earned: TypedContractMethod<
+    [account: AddressLike, feeToken: AddressLike],
+    [bigint],
+    "view"
+  >;
+
+  getAddressOfNFT: TypedContractMethod<
+    [tokenId: BigNumberish],
+    [string],
+    "view"
+  >;
+
+  getRewardForDuration: TypedContractMethod<
+    [feeToken: AddressLike],
+    [bigint],
+    "view"
+  >;
+
+  lastTimeRewardApplicable: TypedContractMethod<
+    [feeToken: AddressLike],
+    [bigint],
+    "view"
+  >;
+
+  lastUpdateTime: TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+
+  nft: TypedContractMethod<[], [string], "view">;
+
+  nftBalanceOf: TypedContractMethod<[tokenId: BigNumberish], [bigint], "view">;
+
+  nftEarned: TypedContractMethod<
+    [tokenId: BigNumberish, feeToken: AddressLike],
+    [bigint],
+    "view"
+  >;
+
+  notifier: TypedContractMethod<[], [string], "view">;
+
+  notifyFeeDeposit: TypedContractMethod<
+    [feeToken: AddressLike, amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  notifyStake: TypedContractMethod<
+    [account: AddressLike, _amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  notifyWithdraw: TypedContractMethod<
+    [account: AddressLike, _amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  owner: TypedContractMethod<[], [string], "view">;
+
+  periodFinish: TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+
+  recoverERC20: TypedContractMethod<
+    [tokenAddress: AddressLike, tokenAmount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
+
+  requiredBadges: TypedContractMethod<
+    [arg0: BigNumberish, arg1: BigNumberish],
+    [string],
+    "view"
+  >;
+
+  rewardPerToken: TypedContractMethod<
+    [feeToken: AddressLike],
+    [bigint],
+    "view"
+  >;
+
+  rewardPerTokenStored: TypedContractMethod<
+    [arg0: AddressLike],
+    [bigint],
+    "view"
+  >;
+
+  rewardRates: TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+
+  rewards: TypedContractMethod<
+    [arg0: AddressLike, arg1: AddressLike],
+    [bigint],
+    "view"
+  >;
+
+  rewardsDuration: TypedContractMethod<[], [bigint], "view">;
+
+  setBadgeManager: TypedContractMethod<
+    [addr: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  setNFT: TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+
+  setNotifier: TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+
+  setRequiredBadges: TypedContractMethod<
+    [badges: [string, string][]],
+    [void],
+    "nonpayable"
+  >;
+
+  setRewardDuration: TypedContractMethod<
+    [dur: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  setTokenPool: TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+
+  stakeNFT: TypedContractMethod<
+    [_tokenId: BigNumberish, _amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  tokenBalanceOf: TypedContractMethod<[token: AddressLike], [bigint], "view">;
+
+  tokenPool: TypedContractMethod<[], [string], "view">;
+
+  tokens: TypedContractMethod<[arg0: BigNumberish], [string], "view">;
+
+  totalSupply: TypedContractMethod<[], [bigint], "view">;
+
+  transferOwnership: TypedContractMethod<
+    [newOwner: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  userRewardPerTokenPaid: TypedContractMethod<
+    [arg0: AddressLike, arg1: AddressLike],
+    [bigint],
+    "view"
+  >;
+
+  withdrawNFTReward: TypedContractMethod<
+    [tokenId: BigNumberish, feeToken: AddressLike, _amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  withdrawReward: TypedContractMethod<
+    [feeToken: AddressLike, _amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  getFunction<T extends ContractMethod = ContractMethod>(
+    key: string | FunctionFragment
+  ): T;
+
+  getFunction(
+    nameOrSignature: "badge"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "balanceOf"
+  ): TypedContractMethod<[account: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "canStake"
+  ): TypedContractMethod<[addr: AddressLike], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "earned"
+  ): TypedContractMethod<
+    [account: AddressLike, feeToken: AddressLike],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getAddressOfNFT"
+  ): TypedContractMethod<[tokenId: BigNumberish], [string], "view">;
+  getFunction(
+    nameOrSignature: "getRewardForDuration"
+  ): TypedContractMethod<[feeToken: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "lastTimeRewardApplicable"
+  ): TypedContractMethod<[feeToken: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "lastUpdateTime"
+  ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "nft"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "nftBalanceOf"
+  ): TypedContractMethod<[tokenId: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "nftEarned"
+  ): TypedContractMethod<
+    [tokenId: BigNumberish, feeToken: AddressLike],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "notifier"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "notifyFeeDeposit"
+  ): TypedContractMethod<
+    [feeToken: AddressLike, amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "notifyStake"
+  ): TypedContractMethod<
+    [account: AddressLike, _amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "notifyWithdraw"
+  ): TypedContractMethod<
+    [account: AddressLike, _amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "owner"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "periodFinish"
+  ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "recoverERC20"
+  ): TypedContractMethod<
+    [tokenAddress: AddressLike, tokenAmount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "renounceOwnership"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "requiredBadges"
+  ): TypedContractMethod<
+    [arg0: BigNumberish, arg1: BigNumberish],
+    [string],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "rewardPerToken"
+  ): TypedContractMethod<[feeToken: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "rewardPerTokenStored"
+  ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "rewardRates"
+  ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "rewards"
+  ): TypedContractMethod<
+    [arg0: AddressLike, arg1: AddressLike],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "rewardsDuration"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "setBadgeManager"
+  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setNFT"
+  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setNotifier"
+  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setRequiredBadges"
+  ): TypedContractMethod<[badges: [string, string][]], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setRewardDuration"
+  ): TypedContractMethod<[dur: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setTokenPool"
+  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "stakeNFT"
+  ): TypedContractMethod<
+    [_tokenId: BigNumberish, _amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "tokenBalanceOf"
+  ): TypedContractMethod<[token: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "tokenPool"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "tokens"
+  ): TypedContractMethod<[arg0: BigNumberish], [string], "view">;
+  getFunction(
+    nameOrSignature: "totalSupply"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "transferOwnership"
+  ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "userRewardPerTokenPaid"
+  ): TypedContractMethod<
+    [arg0: AddressLike, arg1: AddressLike],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "withdrawNFTReward"
+  ): TypedContractMethod<
+    [tokenId: BigNumberish, feeToken: AddressLike, _amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "withdrawReward"
+  ): TypedContractMethod<
+    [feeToken: AddressLike, _amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  getEvent(
+    key: "OwnershipTransferred"
+  ): TypedContractEvent<
+    OwnershipTransferredEvent.InputTuple,
+    OwnershipTransferredEvent.OutputTuple,
+    OwnershipTransferredEvent.OutputObject
+  >;
+  getEvent(
+    key: "Recovered"
+  ): TypedContractEvent<
+    RecoveredEvent.InputTuple,
+    RecoveredEvent.OutputTuple,
+    RecoveredEvent.OutputObject
+  >;
+  getEvent(
+    key: "RewardAdded"
+  ): TypedContractEvent<
+    RewardAddedEvent.InputTuple,
+    RewardAddedEvent.OutputTuple,
+    RewardAddedEvent.OutputObject
+  >;
+  getEvent(
+    key: "RewardNFTWithdrawn"
+  ): TypedContractEvent<
+    RewardNFTWithdrawnEvent.InputTuple,
+    RewardNFTWithdrawnEvent.OutputTuple,
+    RewardNFTWithdrawnEvent.OutputObject
+  >;
+  getEvent(
+    key: "RewardWithdrawn"
+  ): TypedContractEvent<
+    RewardWithdrawnEvent.InputTuple,
+    RewardWithdrawnEvent.OutputTuple,
+    RewardWithdrawnEvent.OutputObject
+  >;
+  getEvent(
+    key: "StakedNFT"
+  ): TypedContractEvent<
+    StakedNFTEvent.InputTuple,
+    StakedNFTEvent.OutputTuple,
+    StakedNFTEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedBadgeManager"
+  ): TypedContractEvent<
+    UpdatedBadgeManagerEvent.InputTuple,
+    UpdatedBadgeManagerEvent.OutputTuple,
+    UpdatedBadgeManagerEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedNFT"
+  ): TypedContractEvent<
+    UpdatedNFTEvent.InputTuple,
+    UpdatedNFTEvent.OutputTuple,
+    UpdatedNFTEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedNotifier"
+  ): TypedContractEvent<
+    UpdatedNotifierEvent.InputTuple,
+    UpdatedNotifierEvent.OutputTuple,
+    UpdatedNotifierEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedReqBadges"
+  ): TypedContractEvent<
+    UpdatedReqBadgesEvent.InputTuple,
+    UpdatedReqBadgesEvent.OutputTuple,
+    UpdatedReqBadgesEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedRewardDuration"
+  ): TypedContractEvent<
+    UpdatedRewardDurationEvent.InputTuple,
+    UpdatedRewardDurationEvent.OutputTuple,
+    UpdatedRewardDurationEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedTokenPool"
+  ): TypedContractEvent<
+    UpdatedTokenPoolEvent.InputTuple,
+    UpdatedTokenPoolEvent.OutputTuple,
+    UpdatedTokenPoolEvent.OutputObject
+  >;
 
   filters: {
-    "OwnershipTransferred(address,address)"(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
-    OwnershipTransferred(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
-
-    "Recovered(address,uint256)"(
-      token?: string | null,
-      amount?: null
-    ): RecoveredEventFilter;
-    Recovered(token?: string | null, amount?: null): RecoveredEventFilter;
-
-    "RewardAdded(address,uint256)"(
-      token?: string | null,
-      reward?: null
-    ): RewardAddedEventFilter;
-    RewardAdded(token?: string | null, reward?: null): RewardAddedEventFilter;
-
-    "RewardNFTWithdrawn(uint256,address,address,uint256)"(
-      tokenId?: null,
-      token?: string | null,
-      user?: string | null,
-      reward?: null
-    ): RewardNFTWithdrawnEventFilter;
-    RewardNFTWithdrawn(
-      tokenId?: null,
-      token?: string | null,
-      user?: string | null,
-      reward?: null
-    ): RewardNFTWithdrawnEventFilter;
-
-    "RewardWithdrawn(address,address,uint256)"(
-      token?: string | null,
-      user?: string | null,
-      reward?: null
-    ): RewardWithdrawnEventFilter;
-    RewardWithdrawn(
-      token?: string | null,
-      user?: string | null,
-      reward?: null
-    ): RewardWithdrawnEventFilter;
-
-    "StakedNFT(uint256,address,uint256)"(
-      tokenId?: null,
-      nftAddress?: null,
-      amount?: null
-    ): StakedNFTEventFilter;
-    StakedNFT(
-      tokenId?: null,
-      nftAddress?: null,
-      amount?: null
-    ): StakedNFTEventFilter;
-
-    "UpdatedBadgeManager(address)"(addr?: null): UpdatedBadgeManagerEventFilter;
-    UpdatedBadgeManager(addr?: null): UpdatedBadgeManagerEventFilter;
-
-    "UpdatedNFT(address)"(addr?: null): UpdatedNFTEventFilter;
-    UpdatedNFT(addr?: null): UpdatedNFTEventFilter;
-
-    "UpdatedNotifier(address)"(addr?: null): UpdatedNotifierEventFilter;
-    UpdatedNotifier(addr?: null): UpdatedNotifierEventFilter;
-
-    "UpdatedReqBadges(string[2][])"(badges?: null): UpdatedReqBadgesEventFilter;
-    UpdatedReqBadges(badges?: null): UpdatedReqBadgesEventFilter;
-
-    "UpdatedRewardDuration(uint256)"(
-      dur?: null
-    ): UpdatedRewardDurationEventFilter;
-    UpdatedRewardDuration(dur?: null): UpdatedRewardDurationEventFilter;
-
-    "UpdatedTokenPool(address)"(addr?: null): UpdatedTokenPoolEventFilter;
-    UpdatedTokenPool(addr?: null): UpdatedTokenPoolEventFilter;
-  };
-
-  estimateGas: {
-    badge(overrides?: CallOverrides): Promise<BigNumber>;
-
-    balanceOf(account: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    canStake(addr: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    earned(
-      account: string,
-      feeToken: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getAddressOfNFT(
-      tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getRewardForDuration(
-      feeToken: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    lastTimeRewardApplicable(
-      feeToken: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    lastUpdateTime(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    nft(overrides?: CallOverrides): Promise<BigNumber>;
-
-    nftBalanceOf(
-      tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    nftEarned(
-      tokenId: BigNumberish,
-      feeToken: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    notifier(overrides?: CallOverrides): Promise<BigNumber>;
-
-    notifyFeeDeposit(
-      feeToken: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    notifyStake(
-      account: string,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    notifyWithdraw(
-      account: string,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    owner(overrides?: CallOverrides): Promise<BigNumber>;
-
-    periodFinish(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    recoverERC20(
-      tokenAddress: string,
-      tokenAmount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    requiredBadges(
-      arg0: BigNumberish,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    rewardPerToken(
-      feeToken: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    rewardPerTokenStored(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    rewardRates(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    rewards(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    rewardsDuration(overrides?: CallOverrides): Promise<BigNumber>;
-
-    setBadgeManager(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setNFT(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setNotifier(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setRequiredBadges(
-      badges: [string, string][],
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setRewardDuration(
-      dur: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setTokenPool(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    stakeNFT(
-      _tokenId: BigNumberish,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    tokenBalanceOf(
-      token: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    tokenPool(overrides?: CallOverrides): Promise<BigNumber>;
-
-    tokens(arg0: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
-
-    totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    userRewardPerTokenPaid(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    withdrawNFTReward(
-      tokenId: BigNumberish,
-      feeToken: string,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    withdrawReward(
-      feeToken: string,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-  };
-
-  populateTransaction: {
-    badge(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    balanceOf(
-      account: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    canStake(
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    earned(
-      account: string,
-      feeToken: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getAddressOfNFT(
-      tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getRewardForDuration(
-      feeToken: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    lastTimeRewardApplicable(
-      feeToken: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    lastUpdateTime(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    nft(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    nftBalanceOf(
-      tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    nftEarned(
-      tokenId: BigNumberish,
-      feeToken: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    notifier(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    notifyFeeDeposit(
-      feeToken: string,
-      amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    notifyStake(
-      account: string,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    notifyWithdraw(
-      account: string,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    periodFinish(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    recoverERC20(
-      tokenAddress: string,
-      tokenAmount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    requiredBadges(
-      arg0: BigNumberish,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    rewardPerToken(
-      feeToken: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    rewardPerTokenStored(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    rewardRates(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    rewards(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    rewardsDuration(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    setBadgeManager(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setNFT(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setNotifier(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setRequiredBadges(
-      badges: [string, string][],
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setRewardDuration(
-      dur: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setTokenPool(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    stakeNFT(
-      _tokenId: BigNumberish,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    tokenBalanceOf(
-      token: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    tokenPool(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    tokens(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    totalSupply(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    userRewardPerTokenPaid(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    withdrawNFTReward(
-      tokenId: BigNumberish,
-      feeToken: string,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    withdrawReward(
-      feeToken: string,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
+    "OwnershipTransferred(address,address)": TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
+    OwnershipTransferred: TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
+
+    "Recovered(address,uint256)": TypedContractEvent<
+      RecoveredEvent.InputTuple,
+      RecoveredEvent.OutputTuple,
+      RecoveredEvent.OutputObject
+    >;
+    Recovered: TypedContractEvent<
+      RecoveredEvent.InputTuple,
+      RecoveredEvent.OutputTuple,
+      RecoveredEvent.OutputObject
+    >;
+
+    "RewardAdded(address,uint256)": TypedContractEvent<
+      RewardAddedEvent.InputTuple,
+      RewardAddedEvent.OutputTuple,
+      RewardAddedEvent.OutputObject
+    >;
+    RewardAdded: TypedContractEvent<
+      RewardAddedEvent.InputTuple,
+      RewardAddedEvent.OutputTuple,
+      RewardAddedEvent.OutputObject
+    >;
+
+    "RewardNFTWithdrawn(uint256,address,address,uint256)": TypedContractEvent<
+      RewardNFTWithdrawnEvent.InputTuple,
+      RewardNFTWithdrawnEvent.OutputTuple,
+      RewardNFTWithdrawnEvent.OutputObject
+    >;
+    RewardNFTWithdrawn: TypedContractEvent<
+      RewardNFTWithdrawnEvent.InputTuple,
+      RewardNFTWithdrawnEvent.OutputTuple,
+      RewardNFTWithdrawnEvent.OutputObject
+    >;
+
+    "RewardWithdrawn(address,address,uint256)": TypedContractEvent<
+      RewardWithdrawnEvent.InputTuple,
+      RewardWithdrawnEvent.OutputTuple,
+      RewardWithdrawnEvent.OutputObject
+    >;
+    RewardWithdrawn: TypedContractEvent<
+      RewardWithdrawnEvent.InputTuple,
+      RewardWithdrawnEvent.OutputTuple,
+      RewardWithdrawnEvent.OutputObject
+    >;
+
+    "StakedNFT(uint256,address,uint256)": TypedContractEvent<
+      StakedNFTEvent.InputTuple,
+      StakedNFTEvent.OutputTuple,
+      StakedNFTEvent.OutputObject
+    >;
+    StakedNFT: TypedContractEvent<
+      StakedNFTEvent.InputTuple,
+      StakedNFTEvent.OutputTuple,
+      StakedNFTEvent.OutputObject
+    >;
+
+    "UpdatedBadgeManager(address)": TypedContractEvent<
+      UpdatedBadgeManagerEvent.InputTuple,
+      UpdatedBadgeManagerEvent.OutputTuple,
+      UpdatedBadgeManagerEvent.OutputObject
+    >;
+    UpdatedBadgeManager: TypedContractEvent<
+      UpdatedBadgeManagerEvent.InputTuple,
+      UpdatedBadgeManagerEvent.OutputTuple,
+      UpdatedBadgeManagerEvent.OutputObject
+    >;
+
+    "UpdatedNFT(address)": TypedContractEvent<
+      UpdatedNFTEvent.InputTuple,
+      UpdatedNFTEvent.OutputTuple,
+      UpdatedNFTEvent.OutputObject
+    >;
+    UpdatedNFT: TypedContractEvent<
+      UpdatedNFTEvent.InputTuple,
+      UpdatedNFTEvent.OutputTuple,
+      UpdatedNFTEvent.OutputObject
+    >;
+
+    "UpdatedNotifier(address)": TypedContractEvent<
+      UpdatedNotifierEvent.InputTuple,
+      UpdatedNotifierEvent.OutputTuple,
+      UpdatedNotifierEvent.OutputObject
+    >;
+    UpdatedNotifier: TypedContractEvent<
+      UpdatedNotifierEvent.InputTuple,
+      UpdatedNotifierEvent.OutputTuple,
+      UpdatedNotifierEvent.OutputObject
+    >;
+
+    "UpdatedReqBadges(string[2][])": TypedContractEvent<
+      UpdatedReqBadgesEvent.InputTuple,
+      UpdatedReqBadgesEvent.OutputTuple,
+      UpdatedReqBadgesEvent.OutputObject
+    >;
+    UpdatedReqBadges: TypedContractEvent<
+      UpdatedReqBadgesEvent.InputTuple,
+      UpdatedReqBadgesEvent.OutputTuple,
+      UpdatedReqBadgesEvent.OutputObject
+    >;
+
+    "UpdatedRewardDuration(uint256)": TypedContractEvent<
+      UpdatedRewardDurationEvent.InputTuple,
+      UpdatedRewardDurationEvent.OutputTuple,
+      UpdatedRewardDurationEvent.OutputObject
+    >;
+    UpdatedRewardDuration: TypedContractEvent<
+      UpdatedRewardDurationEvent.InputTuple,
+      UpdatedRewardDurationEvent.OutputTuple,
+      UpdatedRewardDurationEvent.OutputObject
+    >;
+
+    "UpdatedTokenPool(address)": TypedContractEvent<
+      UpdatedTokenPoolEvent.InputTuple,
+      UpdatedTokenPoolEvent.OutputTuple,
+      UpdatedTokenPoolEvent.OutputObject
+    >;
+    UpdatedTokenPool: TypedContractEvent<
+      UpdatedTokenPoolEvent.InputTuple,
+      UpdatedTokenPoolEvent.OutputTuple,
+      UpdatedTokenPoolEvent.OutputObject
+    >;
   };
 }

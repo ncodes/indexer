@@ -1,5 +1,5 @@
 /* tslint:disable:no-string-literal */
-import { utils } from 'ethers';
+import { getBytes, hashMessage, recoverAddress } from 'ethers';
 import * as yaml from 'js-yaml';
 import * as jwt from 'jsonwebtoken';
 import * as moment from 'moment';
@@ -58,9 +58,9 @@ export async function makeSession(
  */
 export function parseWalletSignature(msg: string, sig: string, ignoreEmail = false): SignatureData {
   const rawMsg = Buffer.from(msg, 'hex');
-  const hashMsg = utils.hashMessage(rawMsg.toString('utf-8'));
-  const digest = utils.arrayify(hashMsg);
-  const recoveredAddress = utils.recoverAddress(digest, sig);
+  const hashMsg = hashMessage(rawMsg.toString('utf-8'));
+  const digest = getBytes(hashMsg);
+  const recoveredAddress = recoverAddress(digest, sig);
 
   const lines = rawMsg.toString('utf-8').split('--');
   if (lines.length < 2) throw new Error('malformed message');

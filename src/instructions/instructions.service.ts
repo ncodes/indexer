@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import PinataClient, { PinataPinListResponse } from '@pinata/sdk';
 import axios from 'axios';
-import { ethers, Wallet } from 'ethers';
+import { AbiCoder, keccak256, Wallet } from 'ethers';
 import * as moment from 'moment';
 import NetworkService from '../network/network.service';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -76,7 +76,7 @@ export class InstructionsService {
     if (!hasBadge) {
       types = ['string', 'string', 'address', 'uint256', 'string[]', 'string[]', 'uint256'];
       sigInfo.values = [instructionBadge, '', granteeAddr, 0, ['hash'], [instructionHash], sigExp.unix()];
-      const msgHash = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(types, sigInfo.values));
+      const msgHash = keccak256(AbiCoder.defaultAbiCoder().encode(types, sigInfo.values));
       const msgHashBytes = Buffer.from(msgHash.substring(2), 'hex');
       sigInfo.sig = await signer.signMessage(msgHashBytes);
       sigInfo.isNew = true;
@@ -86,7 +86,7 @@ export class InstructionsService {
     // Generate signature for upsertGranteeMetaBySig
     types = ['string', 'string', 'address', 'string', 'string', 'uint256'];
     sigInfo.values = [instructionBadge, '', granteeAddr, 'hash', instructionHash, sigExp.unix()];
-    const msgHash = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(types, sigInfo.values));
+    const msgHash = keccak256(AbiCoder.defaultAbiCoder().encode(types, sigInfo.values));
     const msgHashBytes = Buffer.from(msgHash.substring(2), 'hex');
     sigInfo.sig = await signer.signMessage(msgHashBytes);
     sigInfo.isNew = false;

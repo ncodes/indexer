@@ -3,27 +3,24 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BigNumber,
   BigNumberish,
   BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  Overrides,
-  PopulatedTransaction,
-  Signer,
-  utils,
-} from "ethers";
-import type {
   FunctionFragment,
   Result,
+  Interface,
   EventFragment,
-} from "@ethersproject/abi";
-import type { Listener, Provider } from "@ethersproject/providers";
+  AddressLike,
+  ContractRunner,
+  ContractMethod,
+  Listener,
+} from "ethers";
 import type {
-  TypedEventFilter,
-  TypedEvent,
+  TypedContractEvent,
+  TypedDeferredTopicFilter,
+  TypedEventLog,
+  TypedLogDescription,
   TypedListener,
-  OnEvent,
+  TypedContractMethod,
 } from "./common";
 
 export declare namespace Structs {
@@ -43,41 +40,41 @@ export declare namespace Structs {
     wantOrIds: BigNumberish[];
     wantAndIds: BigNumberish[];
     paused: boolean;
-    target: string;
+    target: AddressLike;
   };
 
   export type LiquidityStructOutput = [
-    BigNumber[],
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber[],
-    BigNumber[],
-    boolean,
-    string
+    ids: bigint[],
+    amount: bigint,
+    price: bigint,
+    minSwap: bigint,
+    maxSwap: bigint,
+    timeToPay: bigint,
+    openOrders: bigint,
+    openDisputes: bigint,
+    protoFeePurseId: bigint,
+    mktCreatorFeePurseId: bigint,
+    protoFeeRate: bigint,
+    mktCreatorFeeRate: bigint,
+    wantOrIds: bigint[],
+    wantAndIds: bigint[],
+    paused: boolean,
+    target: string
   ] & {
-    ids: BigNumber[];
-    amount: BigNumber;
-    price: BigNumber;
-    minSwap: BigNumber;
-    maxSwap: BigNumber;
-    timeToPay: BigNumber;
-    openOrders: BigNumber;
-    openDisputes: BigNumber;
-    protoFeePurseId: BigNumber;
-    mktCreatorFeePurseId: BigNumber;
-    protoFeeRate: BigNumber;
-    mktCreatorFeeRate: BigNumber;
-    wantOrIds: BigNumber[];
-    wantAndIds: BigNumber[];
+    ids: bigint[];
+    amount: bigint;
+    price: bigint;
+    minSwap: bigint;
+    maxSwap: bigint;
+    timeToPay: bigint;
+    openOrders: bigint;
+    openDisputes: bigint;
+    protoFeePurseId: bigint;
+    mktCreatorFeePurseId: bigint;
+    protoFeeRate: bigint;
+    mktCreatorFeeRate: bigint;
+    wantOrIds: bigint[];
+    wantAndIds: bigint[];
     paused: boolean;
     target: string;
   };
@@ -88,17 +85,17 @@ export declare namespace Structs {
     predictDur: BigNumberish;
   };
 
-  export type MarketDurStructOutput = [BigNumber, BigNumber, BigNumber] & {
-    disputeDelayDur: BigNumber;
-    evidenceDur: BigNumber;
-    predictDur: BigNumber;
-  };
+  export type MarketDurStructOutput = [
+    disputeDelayDur: bigint,
+    evidenceDur: bigint,
+    predictDur: bigint
+  ] & { disputeDelayDur: bigint; evidenceDur: bigint; predictDur: bigint };
 
-  export type AssetStruct = { addr: string; assetType: BigNumberish };
+  export type AssetStruct = { addr: AddressLike; assetType: BigNumberish };
 
-  export type AssetStructOutput = [string, number] & {
+  export type AssetStructOutput = [addr: string, assetType: bigint] & {
     addr: string;
-    assetType: number;
+    assetType: bigint;
   };
 
   export type MarketPermsStruct = {
@@ -108,7 +105,12 @@ export declare namespace Structs {
     allowZeroOfferPrice: boolean;
   };
 
-  export type MarketPermsStructOutput = [boolean, boolean, boolean, boolean] & {
+  export type MarketPermsStructOutput = [
+    put: boolean,
+    swap: boolean,
+    offerOnly: boolean,
+    allowZeroOfferPrice: boolean
+  ] & {
     put: boolean;
     swap: boolean;
     offerOnly: boolean;
@@ -123,33 +125,33 @@ export declare namespace Structs {
     commission: BigNumberish;
     poolId: BigNumberish;
     dur: Structs.MarketDurStruct;
-    creator: string;
-    manager: string;
+    creator: AddressLike;
+    manager: AddressLike;
     base: Structs.AssetStruct;
     quote: Structs.AssetStruct;
     perms: Structs.MarketPermsStruct;
   };
 
   export type MarketStructOutput = [
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    Structs.MarketDurStructOutput,
-    string,
-    string,
-    Structs.AssetStructOutput,
-    Structs.AssetStructOutput,
-    Structs.MarketPermsStructOutput
+    createdAt: bigint,
+    numOrders: bigint,
+    numDisputes: bigint,
+    numLiquidity: bigint,
+    commission: bigint,
+    poolId: bigint,
+    dur: Structs.MarketDurStructOutput,
+    creator: string,
+    manager: string,
+    base: Structs.AssetStructOutput,
+    quote: Structs.AssetStructOutput,
+    perms: Structs.MarketPermsStructOutput
   ] & {
-    createdAt: BigNumber;
-    numOrders: BigNumber;
-    numDisputes: BigNumber;
-    numLiquidity: BigNumber;
-    commission: BigNumber;
-    poolId: BigNumber;
+    createdAt: bigint;
+    numOrders: bigint;
+    numDisputes: bigint;
+    numLiquidity: bigint;
+    commission: bigint;
+    poolId: bigint;
     dur: Structs.MarketDurStructOutput;
     creator: string;
     manager: string;
@@ -159,10 +161,10 @@ export declare namespace Structs {
   };
 
   export type OfferStruct = {
-    creator: string;
-    marketId: string;
-    provider: string;
-    recipient: string;
+    creator: AddressLike;
+    marketId: AddressLike;
+    provider: AddressLike;
+    recipient: AddressLike;
     lid: BigNumberish;
     amount: BigNumberish;
     price: BigNumberish;
@@ -177,45 +179,45 @@ export declare namespace Structs {
   };
 
   export type OfferStructOutput = [
-    string,
-    string,
-    string,
-    string,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber[],
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    boolean,
-    boolean,
-    boolean
+    creator: string,
+    marketId: string,
+    provider: string,
+    recipient: string,
+    lid: bigint,
+    amount: bigint,
+    price: bigint,
+    ids: bigint[],
+    liq: bigint,
+    deadline: bigint,
+    execAt: bigint,
+    operator: bigint,
+    accepted: boolean,
+    cancelled: boolean,
+    executed: boolean
   ] & {
     creator: string;
     marketId: string;
     provider: string;
     recipient: string;
-    lid: BigNumber;
-    amount: BigNumber;
-    price: BigNumber;
-    ids: BigNumber[];
-    liq: BigNumber;
-    deadline: BigNumber;
-    execAt: BigNumber;
-    operator: BigNumber;
+    lid: bigint;
+    amount: bigint;
+    price: bigint;
+    ids: bigint[];
+    liq: bigint;
+    deadline: bigint;
+    execAt: bigint;
+    operator: bigint;
     accepted: boolean;
     cancelled: boolean;
     executed: boolean;
   };
 
   export type OrderStruct = {
-    marketId: string;
-    provider: string;
-    taker: string;
-    recipient: string;
-    finalizer: string;
+    marketId: AddressLike;
+    provider: AddressLike;
+    taker: AddressLike;
+    recipient: AddressLike;
+    finalizer: AddressLike;
     lid: BigNumberish;
     amount: BigNumberish;
     price: BigNumberish;
@@ -234,43 +236,43 @@ export declare namespace Structs {
   };
 
   export type OrderStructOutput = [
-    string,
-    string,
-    string,
-    string,
-    string,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber[],
-    BigNumber[],
-    boolean,
-    boolean,
-    boolean,
-    boolean
+    marketId: string,
+    provider: string,
+    taker: string,
+    recipient: string,
+    finalizer: string,
+    lid: bigint,
+    amount: bigint,
+    price: bigint,
+    createdAt: bigint,
+    payDeadline: bigint,
+    cancelAt: bigint,
+    disputeFrom: bigint,
+    offerId: bigint,
+    operator: bigint,
+    takerIds: bigint[],
+    providerIds: bigint[],
+    paid: boolean,
+    released: boolean,
+    disputed: boolean,
+    cancelled: boolean
   ] & {
     marketId: string;
     provider: string;
     taker: string;
     recipient: string;
     finalizer: string;
-    lid: BigNumber;
-    amount: BigNumber;
-    price: BigNumber;
-    createdAt: BigNumber;
-    payDeadline: BigNumber;
-    cancelAt: BigNumber;
-    disputeFrom: BigNumber;
-    offerId: BigNumber;
-    operator: BigNumber;
-    takerIds: BigNumber[];
-    providerIds: BigNumber[];
+    lid: bigint;
+    amount: bigint;
+    price: bigint;
+    createdAt: bigint;
+    payDeadline: bigint;
+    cancelAt: bigint;
+    disputeFrom: bigint;
+    offerId: bigint;
+    operator: bigint;
+    takerIds: bigint[];
+    providerIds: bigint[];
     paid: boolean;
     released: boolean;
     disputed: boolean;
@@ -291,23 +293,23 @@ export declare namespace StructsLib {
   };
 
   export type IntSlotStateStructOutput = [
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber
+    instantSwapFeeBp: bigint,
+    synthSwapFeeBp: bigint,
+    stableSwapFeeBp: bigint,
+    instantNFTSwapFeeBp: bigint,
+    fixedSynthSwapFee: bigint,
+    fixedNFTSwapFee: bigint,
+    maxOpenOrders: bigint,
+    maxOpenDisputes: bigint
   ] & {
-    instantSwapFeeBp: BigNumber;
-    synthSwapFeeBp: BigNumber;
-    stableSwapFeeBp: BigNumber;
-    instantNFTSwapFeeBp: BigNumber;
-    fixedSynthSwapFee: BigNumber;
-    fixedNFTSwapFee: BigNumber;
-    maxOpenOrders: BigNumber;
-    maxOpenDisputes: BigNumber;
+    instantSwapFeeBp: bigint;
+    synthSwapFeeBp: bigint;
+    stableSwapFeeBp: bigint;
+    instantNFTSwapFeeBp: bigint;
+    fixedSynthSwapFee: bigint;
+    fixedNFTSwapFee: bigint;
+    maxOpenOrders: bigint;
+    maxOpenDisputes: bigint;
   };
 
   export type UintSlotState2Struct = {
@@ -315,87 +317,15 @@ export declare namespace StructsLib {
     ammEthPoolFee: BigNumberish;
   };
 
-  export type UintSlotState2StructOutput = [BigNumber, BigNumber] & {
-    nftDiscountBp: BigNumber;
-    ammEthPoolFee: BigNumber;
-  };
+  export type UintSlotState2StructOutput = [
+    nftDiscountBp: bigint,
+    ammEthPoolFee: bigint
+  ] & { nftDiscountBp: bigint; ammEthPoolFee: bigint };
 }
 
-export interface CoreInterface extends utils.Interface {
-  functions: {
-    "acceptOffer(uint256,uint256)": FunctionFragment;
-    "canCreateDispute(uint256,address)": FunctionFragment;
-    "cancelOffer(uint256)": FunctionFragment;
-    "cancelOrder(uint256)": FunctionFragment;
-    "cancelOrderByDispute(uint256)": FunctionFragment;
-    "cancelOrderByManagerSig(uint256,uint256,bytes)": FunctionFragment;
-    "computeSwapFee(address,address,uint256,address,uint256,uint256)": FunctionFragment;
-    "configureFeePool(uint256)": FunctionFragment;
-    "createOffer(address,address,address,uint256,uint256,uint256,uint256[],uint256,uint256)": FunctionFragment;
-    "executeOffer(uint256,uint256)": FunctionFragment;
-    "feeBalanceOf(address,address)": FunctionFragment;
-    "getFeeBPs()": FunctionFragment;
-    "getLiquidity(address,address,uint256)": FunctionFragment;
-    "getLiquidityManager(address,address)": FunctionFragment;
-    "getMarket(address)": FunctionFragment;
-    "getOffer(uint256)": FunctionFragment;
-    "getOrder(uint256)": FunctionFragment;
-    "getReqSwapBadges(address,uint256,address)": FunctionFragment;
-    "hasLiquidity(address,address,uint256)": FunctionFragment;
-    "hasOrder(uint256)": FunctionFragment;
-    "inventorBalanceOf(address)": FunctionFragment;
-    "isVerified(address)": FunctionFragment;
-    "markAsDisputed(uint256)": FunctionFragment;
-    "markOrderAsPaid(uint256)": FunctionFragment;
-    "onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)": FunctionFragment;
-    "onERC1155Received(address,address,uint256,uint256,bytes)": FunctionFragment;
-    "operatorBalanceOf(address,address)": FunctionFragment;
-    "owner()": FunctionFragment;
-    "releaseOrder(uint256)": FunctionFragment;
-    "releaseOrderByDispute(uint256)": FunctionFragment;
-    "releaseOrderByManagerSig(uint256,uint256,bytes)": FunctionFragment;
-    "renounceOwnership()": FunctionFragment;
-    "setAmmInfo(address,address,uint256)": FunctionFragment;
-    "setAmmPoolInfo(address,address,uint256)": FunctionFragment;
-    "setAssetRegistry(address)": FunctionFragment;
-    "setBadgeMgr(address)": FunctionFragment;
-    "setDiscountForNFTHolder(uint256)": FunctionFragment;
-    "setDisputeManager(address)": FunctionFragment;
-    "setFeePool(address)": FunctionFragment;
-    "setFeePurse(address)": FunctionFragment;
-    "setInventor(address)": FunctionFragment;
-    "setLiquidityManager(address,address)": FunctionFragment;
-    "setMarketCore(address)": FunctionFragment;
-    "setMaxOpenDisputes(uint256)": FunctionFragment;
-    "setMaxOpenOrders(uint256)": FunctionFragment;
-    "setMinTimeToPay(uint256)": FunctionFragment;
-    "setNFT(address)": FunctionFragment;
-    "setOperator(address)": FunctionFragment;
-    "setOrderGraceDur(uint256)": FunctionFragment;
-    "setProtoFee(uint256,uint256,uint256,uint256,uint256,uint256)": FunctionFragment;
-    "setProtoFeeSplit(uint256,uint256,uint256)": FunctionFragment;
-    "setSwapBadgeForLiquidity(address,uint256,string[2][])": FunctionFragment;
-    "shareablesBalanceOf(address)": FunctionFragment;
-    "state()": FunctionFragment;
-    "state2()": FunctionFragment;
-    "supportsInterface(bytes4)": FunctionFragment;
-    "swapQuoteForBase(address,address,address,uint256,uint256,uint256,uint256[],uint256,uint256)": FunctionFragment;
-    "togglePause(address,uint256,uint256)": FunctionFragment;
-    "transferOwnership(address)": FunctionFragment;
-    "transferToFeePool(address)": FunctionFragment;
-    "unacceptOffer(uint256)": FunctionFragment;
-    "updateFungibleLiquidity(address,uint256,bool,address,uint256[2],uint256[],uint256[],uint256[5])": FunctionFragment;
-    "updateLiquidityPrice(address,address,uint256,uint256,uint256)": FunctionFragment;
-    "updateNonFungibleLiquidity(address,uint256,bool,address,uint256[],uint256,uint256[],uint256[],uint256[3])": FunctionFragment;
-    "updateOffer(uint256,uint256,uint256,uint256[],uint256)": FunctionFragment;
-    "updateOpenDisputesCount(address,address,uint256,bool)": FunctionFragment;
-    "withdrawFeeBalance(address)": FunctionFragment;
-    "withdrawInventorBalance(address)": FunctionFragment;
-    "withdrawOperatorBalance(address)": FunctionFragment;
-  };
-
+export interface CoreInterface extends Interface {
   getFunction(
-    nameOrSignatureOrTopic:
+    nameOrSignature:
       | "acceptOffer"
       | "canCreateDispute"
       | "cancelOffer"
@@ -467,13 +397,56 @@ export interface CoreInterface extends utils.Interface {
       | "withdrawOperatorBalance"
   ): FunctionFragment;
 
+  getEvent(
+    nameOrSignatureOrTopic:
+      | "FinalizedByManagerSig"
+      | "NFTDiscountUpdated"
+      | "NewOffer"
+      | "OfferAccepted"
+      | "OfferCancelled"
+      | "OfferExecuted"
+      | "OfferUnaccepted"
+      | "OfferUpdated"
+      | "OrderCancelled"
+      | "OwnershipTransferred"
+      | "ProtocolFeeSplitUpdated"
+      | "ProtocolFeeUpdated"
+      | "Swap"
+      | "SwapOrder"
+      | "SwapOrderPaid"
+      | "TogglePause"
+      | "TransferInventorBalance"
+      | "TransferredToFeePool"
+      | "UpdatedAMMInfo"
+      | "UpdatedAMMPoolInfo"
+      | "UpdatedAssetRegistry"
+      | "UpdatedBadge"
+      | "UpdatedDisputeManager"
+      | "UpdatedFeePool"
+      | "UpdatedFeePoolConfig"
+      | "UpdatedFeePurse"
+      | "UpdatedFungibleLiquidity"
+      | "UpdatedInventor"
+      | "UpdatedLiquidityManager"
+      | "UpdatedLiquiditySwapBadges"
+      | "UpdatedMarketCore"
+      | "UpdatedMaxOpenDisputes"
+      | "UpdatedMaxOpenOrders"
+      | "UpdatedMinTimeToPay"
+      | "UpdatedNFT"
+      | "UpdatedNonFungibleLiquidity"
+      | "UpdatedOperator"
+      | "UpdatedOrderGraceDur"
+      | "UpdatedPrice"
+  ): EventFragment;
+
   encodeFunctionData(
     functionFragment: "acceptOffer",
     values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "canCreateDispute",
-    values: [BigNumberish, string]
+    values: [BigNumberish, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "cancelOffer",
@@ -493,7 +466,14 @@ export interface CoreInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "computeSwapFee",
-    values: [string, string, BigNumberish, string, BigNumberish, BigNumberish]
+    values: [
+      AddressLike,
+      AddressLike,
+      BigNumberish,
+      AddressLike,
+      BigNumberish,
+      BigNumberish
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "configureFeePool",
@@ -502,9 +482,9 @@ export interface CoreInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "createOffer",
     values: [
-      string,
-      string,
-      string,
+      AddressLike,
+      AddressLike,
+      AddressLike,
       BigNumberish,
       BigNumberish,
       BigNumberish,
@@ -519,18 +499,21 @@ export interface CoreInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "feeBalanceOf",
-    values: [string, string]
+    values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "getFeeBPs", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "getLiquidity",
-    values: [string, string, BigNumberish]
+    values: [AddressLike, AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getLiquidityManager",
-    values: [string, string]
+    values: [AddressLike, AddressLike]
   ): string;
-  encodeFunctionData(functionFragment: "getMarket", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "getMarket",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "getOffer",
     values: [BigNumberish]
@@ -541,11 +524,11 @@ export interface CoreInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getReqSwapBadges",
-    values: [string, BigNumberish, string]
+    values: [AddressLike, BigNumberish, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "hasLiquidity",
-    values: [string, string, BigNumberish]
+    values: [AddressLike, AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "hasOrder",
@@ -553,9 +536,12 @@ export interface CoreInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "inventorBalanceOf",
-    values: [string]
+    values: [AddressLike]
   ): string;
-  encodeFunctionData(functionFragment: "isVerified", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "isVerified",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "markAsDisputed",
     values: [BigNumberish]
@@ -566,15 +552,21 @@ export interface CoreInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "onERC1155BatchReceived",
-    values: [string, string, BigNumberish[], BigNumberish[], BytesLike]
+    values: [
+      AddressLike,
+      AddressLike,
+      BigNumberish[],
+      BigNumberish[],
+      BytesLike
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "onERC1155Received",
-    values: [string, string, BigNumberish, BigNumberish, BytesLike]
+    values: [AddressLike, AddressLike, BigNumberish, BigNumberish, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "operatorBalanceOf",
-    values: [string, string]
+    values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
@@ -595,35 +587,47 @@ export interface CoreInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "setAmmInfo",
-    values: [string, string, BigNumberish]
+    values: [AddressLike, AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "setAmmPoolInfo",
-    values: [string, string, BigNumberish]
+    values: [AddressLike, AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "setAssetRegistry",
-    values: [string]
+    values: [AddressLike]
   ): string;
-  encodeFunctionData(functionFragment: "setBadgeMgr", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "setBadgeMgr",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "setDiscountForNFTHolder",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "setDisputeManager",
-    values: [string]
+    values: [AddressLike]
   ): string;
-  encodeFunctionData(functionFragment: "setFeePool", values: [string]): string;
-  encodeFunctionData(functionFragment: "setFeePurse", values: [string]): string;
-  encodeFunctionData(functionFragment: "setInventor", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "setFeePool",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setFeePurse",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setInventor",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "setLiquidityManager",
-    values: [string, string]
+    values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "setMarketCore",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "setMaxOpenDisputes",
@@ -637,8 +641,11 @@ export interface CoreInterface extends utils.Interface {
     functionFragment: "setMinTimeToPay",
     values: [BigNumberish]
   ): string;
-  encodeFunctionData(functionFragment: "setNFT", values: [string]): string;
-  encodeFunctionData(functionFragment: "setOperator", values: [string]): string;
+  encodeFunctionData(functionFragment: "setNFT", values: [AddressLike]): string;
+  encodeFunctionData(
+    functionFragment: "setOperator",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "setOrderGraceDur",
     values: [BigNumberish]
@@ -660,11 +667,11 @@ export interface CoreInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "setSwapBadgeForLiquidity",
-    values: [string, BigNumberish, [string, string][]]
+    values: [AddressLike, BigNumberish, [string, string][]]
   ): string;
   encodeFunctionData(
     functionFragment: "shareablesBalanceOf",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "state", values?: undefined): string;
   encodeFunctionData(functionFragment: "state2", values?: undefined): string;
@@ -675,9 +682,9 @@ export interface CoreInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "swapQuoteForBase",
     values: [
-      string,
-      string,
-      string,
+      AddressLike,
+      AddressLike,
+      AddressLike,
       BigNumberish,
       BigNumberish,
       BigNumberish,
@@ -688,15 +695,15 @@ export interface CoreInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "togglePause",
-    values: [string, BigNumberish, BigNumberish]
+    values: [AddressLike, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "transferToFeePool",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "unacceptOffer",
@@ -705,10 +712,10 @@ export interface CoreInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "updateFungibleLiquidity",
     values: [
-      string,
+      AddressLike,
       BigNumberish,
       boolean,
-      string,
+      AddressLike,
       [BigNumberish, BigNumberish],
       BigNumberish[],
       BigNumberish[],
@@ -717,15 +724,15 @@ export interface CoreInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "updateLiquidityPrice",
-    values: [string, string, BigNumberish, BigNumberish, BigNumberish]
+    values: [AddressLike, AddressLike, BigNumberish, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "updateNonFungibleLiquidity",
     values: [
-      string,
+      AddressLike,
       BigNumberish,
       boolean,
-      string,
+      AddressLike,
       BigNumberish[],
       BigNumberish,
       BigNumberish[],
@@ -745,19 +752,19 @@ export interface CoreInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "updateOpenDisputesCount",
-    values: [string, string, BigNumberish, boolean]
+    values: [AddressLike, AddressLike, BigNumberish, boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "withdrawFeeBalance",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "withdrawInventorBalance",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "withdrawOperatorBalance",
-    values: [string]
+    values: [AddressLike]
   ): string;
 
   decodeFunctionResult(
@@ -1000,1887 +1007,1170 @@ export interface CoreInterface extends utils.Interface {
     functionFragment: "withdrawOperatorBalance",
     data: BytesLike
   ): Result;
-
-  events: {
-    "FinalizedByManagerSig(address,address,uint256,bool)": EventFragment;
-    "NFTDiscountUpdated(uint256)": EventFragment;
-    "NewOffer(address,address,uint256,address,uint256,uint256,uint256,uint256[],uint256)": EventFragment;
-    "OfferAccepted(uint256,address,uint256)": EventFragment;
-    "OfferCancelled(uint256,address)": EventFragment;
-    "OfferExecuted(uint256,address)": EventFragment;
-    "OfferUnaccepted(uint256,address)": EventFragment;
-    "OfferUpdated(uint256,address,uint256,uint256,uint256[],uint256)": EventFragment;
-    "OrderCancelled(uint256,address,bool)": EventFragment;
-    "OwnershipTransferred(address,address)": EventFragment;
-    "ProtocolFeeSplitUpdated(uint256,uint256,uint256)": EventFragment;
-    "ProtocolFeeUpdated(uint256,uint256,uint256,uint256,uint256,uint256)": EventFragment;
-    "Swap(address,address,address,address,address,uint256[6],bool,uint256[],uint256[])": EventFragment;
-    "SwapOrder(address,address,address,address,uint256[7],uint256[],uint256[])": EventFragment;
-    "SwapOrderPaid(uint256,uint256)": EventFragment;
-    "TogglePause(address,address,uint256,bool)": EventFragment;
-    "TransferInventorBalance(address,uint256)": EventFragment;
-    "TransferredToFeePool(address,uint256,address,uint256)": EventFragment;
-    "UpdatedAMMInfo(address,address,uint256)": EventFragment;
-    "UpdatedAMMPoolInfo(address,address,uint256)": EventFragment;
-    "UpdatedAssetRegistry(address)": EventFragment;
-    "UpdatedBadge(address)": EventFragment;
-    "UpdatedDisputeManager(address)": EventFragment;
-    "UpdatedFeePool(address)": EventFragment;
-    "UpdatedFeePoolConfig(uint256)": EventFragment;
-    "UpdatedFeePurse(address)": EventFragment;
-    "UpdatedFungibleLiquidity(address,address,address,bool,bool,uint256,uint256,uint256,uint256[],uint256[],uint256,uint256,uint256)": EventFragment;
-    "UpdatedInventor(address)": EventFragment;
-    "UpdatedLiquidityManager(address,address,address,address)": EventFragment;
-    "UpdatedLiquiditySwapBadges(address,address,uint256,string[2][])": EventFragment;
-    "UpdatedMarketCore(address)": EventFragment;
-    "UpdatedMaxOpenDisputes(uint256)": EventFragment;
-    "UpdatedMaxOpenOrders(uint256)": EventFragment;
-    "UpdatedMinTimeToPay(uint256)": EventFragment;
-    "UpdatedNFT(address)": EventFragment;
-    "UpdatedNonFungibleLiquidity(address,address,address,bool,bool,uint256,uint256[],uint256,uint256[],uint256[],uint256)": EventFragment;
-    "UpdatedOperator(address)": EventFragment;
-    "UpdatedOrderGraceDur(uint256)": EventFragment;
-    "UpdatedPrice(address,address,address,uint256,uint256)": EventFragment;
-  };
-
-  getEvent(nameOrSignatureOrTopic: "FinalizedByManagerSig"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "NFTDiscountUpdated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "NewOffer"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OfferAccepted"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OfferCancelled"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OfferExecuted"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OfferUnaccepted"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OfferUpdated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OrderCancelled"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "ProtocolFeeSplitUpdated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "ProtocolFeeUpdated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Swap"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "SwapOrder"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "SwapOrderPaid"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "TogglePause"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "TransferInventorBalance"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "TransferredToFeePool"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedAMMInfo"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedAMMPoolInfo"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedAssetRegistry"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedBadge"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedDisputeManager"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedFeePool"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedFeePoolConfig"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedFeePurse"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedFungibleLiquidity"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedInventor"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedLiquidityManager"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedLiquiditySwapBadges"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedMarketCore"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedMaxOpenDisputes"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedMaxOpenOrders"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedMinTimeToPay"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedNFT"): EventFragment;
-  getEvent(
-    nameOrSignatureOrTopic: "UpdatedNonFungibleLiquidity"
-  ): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedOperator"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedOrderGraceDur"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedPrice"): EventFragment;
 }
 
-export interface FinalizedByManagerSigEventObject {
-  manager: string;
-  finalizer: string;
-  orderId: BigNumber;
-  released: boolean;
+export namespace FinalizedByManagerSigEvent {
+  export type InputTuple = [
+    manager: AddressLike,
+    finalizer: AddressLike,
+    orderId: BigNumberish,
+    released: boolean
+  ];
+  export type OutputTuple = [
+    manager: string,
+    finalizer: string,
+    orderId: bigint,
+    released: boolean
+  ];
+  export interface OutputObject {
+    manager: string;
+    finalizer: string;
+    orderId: bigint;
+    released: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type FinalizedByManagerSigEvent = TypedEvent<
-  [string, string, BigNumber, boolean],
-  FinalizedByManagerSigEventObject
->;
 
-export type FinalizedByManagerSigEventFilter =
-  TypedEventFilter<FinalizedByManagerSigEvent>;
-
-export interface NFTDiscountUpdatedEventObject {
-  bp: BigNumber;
+export namespace NFTDiscountUpdatedEvent {
+  export type InputTuple = [bp: BigNumberish];
+  export type OutputTuple = [bp: bigint];
+  export interface OutputObject {
+    bp: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type NFTDiscountUpdatedEvent = TypedEvent<
-  [BigNumber],
-  NFTDiscountUpdatedEventObject
->;
 
-export type NFTDiscountUpdatedEventFilter =
-  TypedEventFilter<NFTDiscountUpdatedEvent>;
-
-export interface NewOfferEventObject {
-  marketId: string;
-  provider: string;
-  lid: BigNumber;
-  offerer: string;
-  offerId: BigNumber;
-  amount: BigNumber;
-  price: BigNumber;
-  ids: BigNumber[];
-  expireDuration: BigNumber;
+export namespace NewOfferEvent {
+  export type InputTuple = [
+    marketId: AddressLike,
+    provider: AddressLike,
+    lid: BigNumberish,
+    offerer: AddressLike,
+    offerId: BigNumberish,
+    amount: BigNumberish,
+    price: BigNumberish,
+    ids: BigNumberish[],
+    expireDuration: BigNumberish
+  ];
+  export type OutputTuple = [
+    marketId: string,
+    provider: string,
+    lid: bigint,
+    offerer: string,
+    offerId: bigint,
+    amount: bigint,
+    price: bigint,
+    ids: bigint[],
+    expireDuration: bigint
+  ];
+  export interface OutputObject {
+    marketId: string;
+    provider: string;
+    lid: bigint;
+    offerer: string;
+    offerId: bigint;
+    amount: bigint;
+    price: bigint;
+    ids: bigint[];
+    expireDuration: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type NewOfferEvent = TypedEvent<
-  [
-    string,
-    string,
-    BigNumber,
-    string,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber[],
-    BigNumber
-  ],
-  NewOfferEventObject
->;
 
-export type NewOfferEventFilter = TypedEventFilter<NewOfferEvent>;
-
-export interface OfferAcceptedEventObject {
-  offerId: BigNumber;
-  acceptor: string;
-  executeAt: BigNumber;
+export namespace OfferAcceptedEvent {
+  export type InputTuple = [
+    offerId: BigNumberish,
+    acceptor: AddressLike,
+    executeAt: BigNumberish
+  ];
+  export type OutputTuple = [
+    offerId: bigint,
+    acceptor: string,
+    executeAt: bigint
+  ];
+  export interface OutputObject {
+    offerId: bigint;
+    acceptor: string;
+    executeAt: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type OfferAcceptedEvent = TypedEvent<
-  [BigNumber, string, BigNumber],
-  OfferAcceptedEventObject
->;
 
-export type OfferAcceptedEventFilter = TypedEventFilter<OfferAcceptedEvent>;
-
-export interface OfferCancelledEventObject {
-  offerId: BigNumber;
-  canceller: string;
+export namespace OfferCancelledEvent {
+  export type InputTuple = [offerId: BigNumberish, canceller: AddressLike];
+  export type OutputTuple = [offerId: bigint, canceller: string];
+  export interface OutputObject {
+    offerId: bigint;
+    canceller: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type OfferCancelledEvent = TypedEvent<
-  [BigNumber, string],
-  OfferCancelledEventObject
->;
 
-export type OfferCancelledEventFilter = TypedEventFilter<OfferCancelledEvent>;
-
-export interface OfferExecutedEventObject {
-  offerId: BigNumber;
-  executor: string;
+export namespace OfferExecutedEvent {
+  export type InputTuple = [offerId: BigNumberish, executor: AddressLike];
+  export type OutputTuple = [offerId: bigint, executor: string];
+  export interface OutputObject {
+    offerId: bigint;
+    executor: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type OfferExecutedEvent = TypedEvent<
-  [BigNumber, string],
-  OfferExecutedEventObject
->;
 
-export type OfferExecutedEventFilter = TypedEventFilter<OfferExecutedEvent>;
-
-export interface OfferUnacceptedEventObject {
-  offerId: BigNumber;
-  unacceptor: string;
+export namespace OfferUnacceptedEvent {
+  export type InputTuple = [offerId: BigNumberish, unacceptor: AddressLike];
+  export type OutputTuple = [offerId: bigint, unacceptor: string];
+  export interface OutputObject {
+    offerId: bigint;
+    unacceptor: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type OfferUnacceptedEvent = TypedEvent<
-  [BigNumber, string],
-  OfferUnacceptedEventObject
->;
 
-export type OfferUnacceptedEventFilter = TypedEventFilter<OfferUnacceptedEvent>;
-
-export interface OfferUpdatedEventObject {
-  offerId: BigNumber;
-  offerer: string;
-  amount: BigNumber;
-  price: BigNumber;
-  ids: BigNumber[];
-  execDelayDur: BigNumber;
+export namespace OfferUpdatedEvent {
+  export type InputTuple = [
+    offerId: BigNumberish,
+    offerer: AddressLike,
+    amount: BigNumberish,
+    price: BigNumberish,
+    ids: BigNumberish[],
+    execDelayDur: BigNumberish
+  ];
+  export type OutputTuple = [
+    offerId: bigint,
+    offerer: string,
+    amount: bigint,
+    price: bigint,
+    ids: bigint[],
+    execDelayDur: bigint
+  ];
+  export interface OutputObject {
+    offerId: bigint;
+    offerer: string;
+    amount: bigint;
+    price: bigint;
+    ids: bigint[];
+    execDelayDur: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type OfferUpdatedEvent = TypedEvent<
-  [BigNumber, string, BigNumber, BigNumber, BigNumber[], BigNumber],
-  OfferUpdatedEventObject
->;
 
-export type OfferUpdatedEventFilter = TypedEventFilter<OfferUpdatedEvent>;
-
-export interface OrderCancelledEventObject {
-  orderID: BigNumber;
-  canceller: string;
-  byDispute: boolean;
+export namespace OrderCancelledEvent {
+  export type InputTuple = [
+    orderID: BigNumberish,
+    canceller: AddressLike,
+    byDispute: boolean
+  ];
+  export type OutputTuple = [
+    orderID: bigint,
+    canceller: string,
+    byDispute: boolean
+  ];
+  export interface OutputObject {
+    orderID: bigint;
+    canceller: string;
+    byDispute: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type OrderCancelledEvent = TypedEvent<
-  [BigNumber, string, boolean],
-  OrderCancelledEventObject
->;
 
-export type OrderCancelledEventFilter = TypedEventFilter<OrderCancelledEvent>;
-
-export interface OwnershipTransferredEventObject {
-  previousOwner: string;
-  newOwner: string;
+export namespace OwnershipTransferredEvent {
+  export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
+  export type OutputTuple = [previousOwner: string, newOwner: string];
+  export interface OutputObject {
+    previousOwner: string;
+    newOwner: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type OwnershipTransferredEvent = TypedEvent<
-  [string, string],
-  OwnershipTransferredEventObject
->;
 
-export type OwnershipTransferredEventFilter =
-  TypedEventFilter<OwnershipTransferredEvent>;
-
-export interface ProtocolFeeSplitUpdatedEventObject {
-  inventor: BigNumber;
-  shared: BigNumber;
-  operator: BigNumber;
+export namespace ProtocolFeeSplitUpdatedEvent {
+  export type InputTuple = [
+    inventor: BigNumberish,
+    shared: BigNumberish,
+    operator: BigNumberish
+  ];
+  export type OutputTuple = [
+    inventor: bigint,
+    shared: bigint,
+    operator: bigint
+  ];
+  export interface OutputObject {
+    inventor: bigint;
+    shared: bigint;
+    operator: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type ProtocolFeeSplitUpdatedEvent = TypedEvent<
-  [BigNumber, BigNumber, BigNumber],
-  ProtocolFeeSplitUpdatedEventObject
->;
 
-export type ProtocolFeeSplitUpdatedEventFilter =
-  TypedEventFilter<ProtocolFeeSplitUpdatedEvent>;
-
-export interface ProtocolFeeUpdatedEventObject {
-  instantSwapFeeBp: BigNumber;
-  synthSwapFeeBp: BigNumber;
-  stableSwapFeeBp: BigNumber;
-  fixedSynthSwapFee: BigNumber;
-  fixedNFTSwapFee: BigNumber;
-  instantNFTSwapFeeBp: BigNumber;
+export namespace ProtocolFeeUpdatedEvent {
+  export type InputTuple = [
+    instantSwapFeeBp: BigNumberish,
+    synthSwapFeeBp: BigNumberish,
+    stableSwapFeeBp: BigNumberish,
+    fixedSynthSwapFee: BigNumberish,
+    fixedNFTSwapFee: BigNumberish,
+    instantNFTSwapFeeBp: BigNumberish
+  ];
+  export type OutputTuple = [
+    instantSwapFeeBp: bigint,
+    synthSwapFeeBp: bigint,
+    stableSwapFeeBp: bigint,
+    fixedSynthSwapFee: bigint,
+    fixedNFTSwapFee: bigint,
+    instantNFTSwapFeeBp: bigint
+  ];
+  export interface OutputObject {
+    instantSwapFeeBp: bigint;
+    synthSwapFeeBp: bigint;
+    stableSwapFeeBp: bigint;
+    fixedSynthSwapFee: bigint;
+    fixedNFTSwapFee: bigint;
+    instantNFTSwapFeeBp: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type ProtocolFeeUpdatedEvent = TypedEvent<
-  [BigNumber, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber],
-  ProtocolFeeUpdatedEventObject
->;
 
-export type ProtocolFeeUpdatedEventFilter =
-  TypedEventFilter<ProtocolFeeUpdatedEvent>;
-
-export interface SwapEventObject {
-  mid: string;
-  provider: string;
-  swapper: string;
-  recipient: string;
-  releaser: string;
-  numTypeInfo: BigNumber[];
-  byDispute: boolean;
-  idsFromProvider: BigNumber[];
-  idsFromTaker: BigNumber[];
+export namespace SwapEvent {
+  export type InputTuple = [
+    mid: AddressLike,
+    provider: AddressLike,
+    swapper: AddressLike,
+    recipient: AddressLike,
+    releaser: AddressLike,
+    numTypeInfo: BigNumberish[],
+    byDispute: boolean,
+    idsFromProvider: BigNumberish[],
+    idsFromTaker: BigNumberish[]
+  ];
+  export type OutputTuple = [
+    mid: string,
+    provider: string,
+    swapper: string,
+    recipient: string,
+    releaser: string,
+    numTypeInfo: bigint[],
+    byDispute: boolean,
+    idsFromProvider: bigint[],
+    idsFromTaker: bigint[]
+  ];
+  export interface OutputObject {
+    mid: string;
+    provider: string;
+    swapper: string;
+    recipient: string;
+    releaser: string;
+    numTypeInfo: bigint[];
+    byDispute: boolean;
+    idsFromProvider: bigint[];
+    idsFromTaker: bigint[];
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type SwapEvent = TypedEvent<
-  [
-    string,
-    string,
-    string,
-    string,
-    string,
-    BigNumber[],
-    boolean,
-    BigNumber[],
-    BigNumber[]
-  ],
-  SwapEventObject
->;
 
-export type SwapEventFilter = TypedEventFilter<SwapEvent>;
-
-export interface SwapOrderEventObject {
-  mid: string;
-  provider: string;
-  swapper: string;
-  recipient: string;
-  numTypeInfo: BigNumber[];
-  idsFromProvider: BigNumber[];
-  idsFromTaker: BigNumber[];
+export namespace SwapOrderEvent {
+  export type InputTuple = [
+    mid: AddressLike,
+    provider: AddressLike,
+    swapper: AddressLike,
+    recipient: AddressLike,
+    numTypeInfo: BigNumberish[],
+    idsFromProvider: BigNumberish[],
+    idsFromTaker: BigNumberish[]
+  ];
+  export type OutputTuple = [
+    mid: string,
+    provider: string,
+    swapper: string,
+    recipient: string,
+    numTypeInfo: bigint[],
+    idsFromProvider: bigint[],
+    idsFromTaker: bigint[]
+  ];
+  export interface OutputObject {
+    mid: string;
+    provider: string;
+    swapper: string;
+    recipient: string;
+    numTypeInfo: bigint[];
+    idsFromProvider: bigint[];
+    idsFromTaker: bigint[];
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type SwapOrderEvent = TypedEvent<
-  [string, string, string, string, BigNumber[], BigNumber[], BigNumber[]],
-  SwapOrderEventObject
->;
 
-export type SwapOrderEventFilter = TypedEventFilter<SwapOrderEvent>;
-
-export interface SwapOrderPaidEventObject {
-  orderID: BigNumber;
-  disputeDelayDur: BigNumber;
+export namespace SwapOrderPaidEvent {
+  export type InputTuple = [
+    orderID: BigNumberish,
+    disputeDelayDur: BigNumberish
+  ];
+  export type OutputTuple = [orderID: bigint, disputeDelayDur: bigint];
+  export interface OutputObject {
+    orderID: bigint;
+    disputeDelayDur: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type SwapOrderPaidEvent = TypedEvent<
-  [BigNumber, BigNumber],
-  SwapOrderPaidEventObject
->;
 
-export type SwapOrderPaidEventFilter = TypedEventFilter<SwapOrderPaidEvent>;
-
-export interface TogglePauseEventObject {
-  marketId: string;
-  provider: string;
-  lid: BigNumber;
-  paused: boolean;
+export namespace TogglePauseEvent {
+  export type InputTuple = [
+    marketId: AddressLike,
+    provider: AddressLike,
+    lid: BigNumberish,
+    paused: boolean
+  ];
+  export type OutputTuple = [
+    marketId: string,
+    provider: string,
+    lid: bigint,
+    paused: boolean
+  ];
+  export interface OutputObject {
+    marketId: string;
+    provider: string;
+    lid: bigint;
+    paused: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type TogglePauseEvent = TypedEvent<
-  [string, string, BigNumber, boolean],
-  TogglePauseEventObject
->;
 
-export type TogglePauseEventFilter = TypedEventFilter<TogglePauseEvent>;
-
-export interface TransferInventorBalanceEventObject {
-  asset: string;
-  amount: BigNumber;
+export namespace TransferInventorBalanceEvent {
+  export type InputTuple = [asset: AddressLike, amount: BigNumberish];
+  export type OutputTuple = [asset: string, amount: bigint];
+  export interface OutputObject {
+    asset: string;
+    amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type TransferInventorBalanceEvent = TypedEvent<
-  [string, BigNumber],
-  TransferInventorBalanceEventObject
->;
 
-export type TransferInventorBalanceEventFilter =
-  TypedEventFilter<TransferInventorBalanceEvent>;
-
-export interface TransferredToFeePoolEventObject {
-  token: string;
-  amount: BigNumber;
-  convAsset: string;
-  convAmount: BigNumber;
+export namespace TransferredToFeePoolEvent {
+  export type InputTuple = [
+    token: AddressLike,
+    amount: BigNumberish,
+    convAsset: AddressLike,
+    convAmount: BigNumberish
+  ];
+  export type OutputTuple = [
+    token: string,
+    amount: bigint,
+    convAsset: string,
+    convAmount: bigint
+  ];
+  export interface OutputObject {
+    token: string;
+    amount: bigint;
+    convAsset: string;
+    convAmount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type TransferredToFeePoolEvent = TypedEvent<
-  [string, BigNumber, string, BigNumber],
-  TransferredToFeePoolEventObject
->;
 
-export type TransferredToFeePoolEventFilter =
-  TypedEventFilter<TransferredToFeePoolEvent>;
-
-export interface UpdatedAMMInfoEventObject {
-  swapRouter: string;
-  ethErc20Addr: string;
-  poolFee: BigNumber;
+export namespace UpdatedAMMInfoEvent {
+  export type InputTuple = [
+    swapRouter: AddressLike,
+    ethErc20Addr: AddressLike,
+    poolFee: BigNumberish
+  ];
+  export type OutputTuple = [
+    swapRouter: string,
+    ethErc20Addr: string,
+    poolFee: bigint
+  ];
+  export interface OutputObject {
+    swapRouter: string;
+    ethErc20Addr: string;
+    poolFee: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedAMMInfoEvent = TypedEvent<
-  [string, string, BigNumber],
-  UpdatedAMMInfoEventObject
->;
 
-export type UpdatedAMMInfoEventFilter = TypedEventFilter<UpdatedAMMInfoEvent>;
-
-export interface UpdatedAMMPoolInfoEventObject {
-  input: string;
-  output: string;
-  poolFee: BigNumber;
+export namespace UpdatedAMMPoolInfoEvent {
+  export type InputTuple = [
+    input: AddressLike,
+    output: AddressLike,
+    poolFee: BigNumberish
+  ];
+  export type OutputTuple = [input: string, output: string, poolFee: bigint];
+  export interface OutputObject {
+    input: string;
+    output: string;
+    poolFee: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedAMMPoolInfoEvent = TypedEvent<
-  [string, string, BigNumber],
-  UpdatedAMMPoolInfoEventObject
->;
 
-export type UpdatedAMMPoolInfoEventFilter =
-  TypedEventFilter<UpdatedAMMPoolInfoEvent>;
-
-export interface UpdatedAssetRegistryEventObject {
-  addr: string;
+export namespace UpdatedAssetRegistryEvent {
+  export type InputTuple = [addr: AddressLike];
+  export type OutputTuple = [addr: string];
+  export interface OutputObject {
+    addr: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedAssetRegistryEvent = TypedEvent<
-  [string],
-  UpdatedAssetRegistryEventObject
->;
 
-export type UpdatedAssetRegistryEventFilter =
-  TypedEventFilter<UpdatedAssetRegistryEvent>;
-
-export interface UpdatedBadgeEventObject {
-  addr: string;
+export namespace UpdatedBadgeEvent {
+  export type InputTuple = [addr: AddressLike];
+  export type OutputTuple = [addr: string];
+  export interface OutputObject {
+    addr: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedBadgeEvent = TypedEvent<[string], UpdatedBadgeEventObject>;
 
-export type UpdatedBadgeEventFilter = TypedEventFilter<UpdatedBadgeEvent>;
-
-export interface UpdatedDisputeManagerEventObject {
-  addr: string;
+export namespace UpdatedDisputeManagerEvent {
+  export type InputTuple = [addr: AddressLike];
+  export type OutputTuple = [addr: string];
+  export interface OutputObject {
+    addr: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedDisputeManagerEvent = TypedEvent<
-  [string],
-  UpdatedDisputeManagerEventObject
->;
 
-export type UpdatedDisputeManagerEventFilter =
-  TypedEventFilter<UpdatedDisputeManagerEvent>;
-
-export interface UpdatedFeePoolEventObject {
-  addr: string;
+export namespace UpdatedFeePoolEvent {
+  export type InputTuple = [addr: AddressLike];
+  export type OutputTuple = [addr: string];
+  export interface OutputObject {
+    addr: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedFeePoolEvent = TypedEvent<
-  [string],
-  UpdatedFeePoolEventObject
->;
 
-export type UpdatedFeePoolEventFilter = TypedEventFilter<UpdatedFeePoolEvent>;
-
-export interface UpdatedFeePoolConfigEventObject {
-  interval: BigNumber;
+export namespace UpdatedFeePoolConfigEvent {
+  export type InputTuple = [interval: BigNumberish];
+  export type OutputTuple = [interval: bigint];
+  export interface OutputObject {
+    interval: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedFeePoolConfigEvent = TypedEvent<
-  [BigNumber],
-  UpdatedFeePoolConfigEventObject
->;
 
-export type UpdatedFeePoolConfigEventFilter =
-  TypedEventFilter<UpdatedFeePoolConfigEvent>;
-
-export interface UpdatedFeePurseEventObject {
-  addr: string;
+export namespace UpdatedFeePurseEvent {
+  export type InputTuple = [addr: AddressLike];
+  export type OutputTuple = [addr: string];
+  export interface OutputObject {
+    addr: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedFeePurseEvent = TypedEvent<
-  [string],
-  UpdatedFeePurseEventObject
->;
 
-export type UpdatedFeePurseEventFilter = TypedEventFilter<UpdatedFeePurseEvent>;
-
-export interface UpdatedFungibleLiquidityEventObject {
-  provider: string;
-  marketId: string;
-  target: string;
-  deduct: boolean;
-  paused: boolean;
-  liq: BigNumber;
-  amount: BigNumber;
-  price: BigNumber;
-  wantOrIds: BigNumber[];
-  wantAndIds: BigNumber[];
-  minSwap: BigNumber;
-  maxSwap: BigNumber;
-  timeToPay: BigNumber;
+export namespace UpdatedFungibleLiquidityEvent {
+  export type InputTuple = [
+    provider: AddressLike,
+    marketId: AddressLike,
+    target: AddressLike,
+    deduct: boolean,
+    paused: boolean,
+    liq: BigNumberish,
+    amount: BigNumberish,
+    price: BigNumberish,
+    wantOrIds: BigNumberish[],
+    wantAndIds: BigNumberish[],
+    minSwap: BigNumberish,
+    maxSwap: BigNumberish,
+    timeToPay: BigNumberish
+  ];
+  export type OutputTuple = [
+    provider: string,
+    marketId: string,
+    target: string,
+    deduct: boolean,
+    paused: boolean,
+    liq: bigint,
+    amount: bigint,
+    price: bigint,
+    wantOrIds: bigint[],
+    wantAndIds: bigint[],
+    minSwap: bigint,
+    maxSwap: bigint,
+    timeToPay: bigint
+  ];
+  export interface OutputObject {
+    provider: string;
+    marketId: string;
+    target: string;
+    deduct: boolean;
+    paused: boolean;
+    liq: bigint;
+    amount: bigint;
+    price: bigint;
+    wantOrIds: bigint[];
+    wantAndIds: bigint[];
+    minSwap: bigint;
+    maxSwap: bigint;
+    timeToPay: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedFungibleLiquidityEvent = TypedEvent<
-  [
-    string,
-    string,
-    string,
-    boolean,
-    boolean,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    BigNumber[],
-    BigNumber[],
-    BigNumber,
-    BigNumber,
-    BigNumber
-  ],
-  UpdatedFungibleLiquidityEventObject
->;
 
-export type UpdatedFungibleLiquidityEventFilter =
-  TypedEventFilter<UpdatedFungibleLiquidityEvent>;
-
-export interface UpdatedInventorEventObject {
-  addr: string;
+export namespace UpdatedInventorEvent {
+  export type InputTuple = [addr: AddressLike];
+  export type OutputTuple = [addr: string];
+  export interface OutputObject {
+    addr: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedInventorEvent = TypedEvent<
-  [string],
-  UpdatedInventorEventObject
->;
 
-export type UpdatedInventorEventFilter = TypedEventFilter<UpdatedInventorEvent>;
-
-export interface UpdatedLiquidityManagerEventObject {
-  marketId: string;
-  provider: string;
-  manager: string;
-  oldManager: string;
+export namespace UpdatedLiquidityManagerEvent {
+  export type InputTuple = [
+    marketId: AddressLike,
+    provider: AddressLike,
+    manager: AddressLike,
+    oldManager: AddressLike
+  ];
+  export type OutputTuple = [
+    marketId: string,
+    provider: string,
+    manager: string,
+    oldManager: string
+  ];
+  export interface OutputObject {
+    marketId: string;
+    provider: string;
+    manager: string;
+    oldManager: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedLiquidityManagerEvent = TypedEvent<
-  [string, string, string, string],
-  UpdatedLiquidityManagerEventObject
->;
 
-export type UpdatedLiquidityManagerEventFilter =
-  TypedEventFilter<UpdatedLiquidityManagerEvent>;
-
-export interface UpdatedLiquiditySwapBadgesEventObject {
-  market: string;
-  provider: string;
-  liq: BigNumber;
-  badges: [string, string][];
+export namespace UpdatedLiquiditySwapBadgesEvent {
+  export type InputTuple = [
+    market: AddressLike,
+    provider: AddressLike,
+    liq: BigNumberish,
+    badges: [string, string][]
+  ];
+  export type OutputTuple = [
+    market: string,
+    provider: string,
+    liq: bigint,
+    badges: [string, string][]
+  ];
+  export interface OutputObject {
+    market: string;
+    provider: string;
+    liq: bigint;
+    badges: [string, string][];
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedLiquiditySwapBadgesEvent = TypedEvent<
-  [string, string, BigNumber, [string, string][]],
-  UpdatedLiquiditySwapBadgesEventObject
->;
 
-export type UpdatedLiquiditySwapBadgesEventFilter =
-  TypedEventFilter<UpdatedLiquiditySwapBadgesEvent>;
-
-export interface UpdatedMarketCoreEventObject {
-  addr: string;
+export namespace UpdatedMarketCoreEvent {
+  export type InputTuple = [addr: AddressLike];
+  export type OutputTuple = [addr: string];
+  export interface OutputObject {
+    addr: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedMarketCoreEvent = TypedEvent<
-  [string],
-  UpdatedMarketCoreEventObject
->;
 
-export type UpdatedMarketCoreEventFilter =
-  TypedEventFilter<UpdatedMarketCoreEvent>;
-
-export interface UpdatedMaxOpenDisputesEventObject {
-  val: BigNumber;
+export namespace UpdatedMaxOpenDisputesEvent {
+  export type InputTuple = [val: BigNumberish];
+  export type OutputTuple = [val: bigint];
+  export interface OutputObject {
+    val: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedMaxOpenDisputesEvent = TypedEvent<
-  [BigNumber],
-  UpdatedMaxOpenDisputesEventObject
->;
 
-export type UpdatedMaxOpenDisputesEventFilter =
-  TypedEventFilter<UpdatedMaxOpenDisputesEvent>;
-
-export interface UpdatedMaxOpenOrdersEventObject {
-  val: BigNumber;
+export namespace UpdatedMaxOpenOrdersEvent {
+  export type InputTuple = [val: BigNumberish];
+  export type OutputTuple = [val: bigint];
+  export interface OutputObject {
+    val: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedMaxOpenOrdersEvent = TypedEvent<
-  [BigNumber],
-  UpdatedMaxOpenOrdersEventObject
->;
 
-export type UpdatedMaxOpenOrdersEventFilter =
-  TypedEventFilter<UpdatedMaxOpenOrdersEvent>;
-
-export interface UpdatedMinTimeToPayEventObject {
-  val: BigNumber;
+export namespace UpdatedMinTimeToPayEvent {
+  export type InputTuple = [val: BigNumberish];
+  export type OutputTuple = [val: bigint];
+  export interface OutputObject {
+    val: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedMinTimeToPayEvent = TypedEvent<
-  [BigNumber],
-  UpdatedMinTimeToPayEventObject
->;
 
-export type UpdatedMinTimeToPayEventFilter =
-  TypedEventFilter<UpdatedMinTimeToPayEvent>;
-
-export interface UpdatedNFTEventObject {
-  addr: string;
+export namespace UpdatedNFTEvent {
+  export type InputTuple = [addr: AddressLike];
+  export type OutputTuple = [addr: string];
+  export interface OutputObject {
+    addr: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedNFTEvent = TypedEvent<[string], UpdatedNFTEventObject>;
 
-export type UpdatedNFTEventFilter = TypedEventFilter<UpdatedNFTEvent>;
-
-export interface UpdatedNonFungibleLiquidityEventObject {
-  provider: string;
-  marketId: string;
-  target: string;
-  deduct: boolean;
-  paused: boolean;
-  lid: BigNumber;
-  ids: BigNumber[];
-  price: BigNumber;
-  wantOrIds: BigNumber[];
-  wantAndIds: BigNumber[];
-  timeToPay: BigNumber;
+export namespace UpdatedNonFungibleLiquidityEvent {
+  export type InputTuple = [
+    provider: AddressLike,
+    marketId: AddressLike,
+    target: AddressLike,
+    deduct: boolean,
+    paused: boolean,
+    lid: BigNumberish,
+    ids: BigNumberish[],
+    price: BigNumberish,
+    wantOrIds: BigNumberish[],
+    wantAndIds: BigNumberish[],
+    timeToPay: BigNumberish
+  ];
+  export type OutputTuple = [
+    provider: string,
+    marketId: string,
+    target: string,
+    deduct: boolean,
+    paused: boolean,
+    lid: bigint,
+    ids: bigint[],
+    price: bigint,
+    wantOrIds: bigint[],
+    wantAndIds: bigint[],
+    timeToPay: bigint
+  ];
+  export interface OutputObject {
+    provider: string;
+    marketId: string;
+    target: string;
+    deduct: boolean;
+    paused: boolean;
+    lid: bigint;
+    ids: bigint[];
+    price: bigint;
+    wantOrIds: bigint[];
+    wantAndIds: bigint[];
+    timeToPay: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedNonFungibleLiquidityEvent = TypedEvent<
-  [
-    string,
-    string,
-    string,
-    boolean,
-    boolean,
-    BigNumber,
-    BigNumber[],
-    BigNumber,
-    BigNumber[],
-    BigNumber[],
-    BigNumber
-  ],
-  UpdatedNonFungibleLiquidityEventObject
->;
 
-export type UpdatedNonFungibleLiquidityEventFilter =
-  TypedEventFilter<UpdatedNonFungibleLiquidityEvent>;
-
-export interface UpdatedOperatorEventObject {
-  addr: string;
+export namespace UpdatedOperatorEvent {
+  export type InputTuple = [addr: AddressLike];
+  export type OutputTuple = [addr: string];
+  export interface OutputObject {
+    addr: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedOperatorEvent = TypedEvent<
-  [string],
-  UpdatedOperatorEventObject
->;
 
-export type UpdatedOperatorEventFilter = TypedEventFilter<UpdatedOperatorEvent>;
-
-export interface UpdatedOrderGraceDurEventObject {
-  val: BigNumber;
+export namespace UpdatedOrderGraceDurEvent {
+  export type InputTuple = [val: BigNumberish];
+  export type OutputTuple = [val: bigint];
+  export interface OutputObject {
+    val: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedOrderGraceDurEvent = TypedEvent<
-  [BigNumber],
-  UpdatedOrderGraceDurEventObject
->;
 
-export type UpdatedOrderGraceDurEventFilter =
-  TypedEventFilter<UpdatedOrderGraceDurEvent>;
-
-export interface UpdatedPriceEventObject {
-  marketId: string;
-  provider: string;
-  manager: string;
-  lid: BigNumber;
-  price: BigNumber;
+export namespace UpdatedPriceEvent {
+  export type InputTuple = [
+    marketId: AddressLike,
+    provider: AddressLike,
+    manager: AddressLike,
+    lid: BigNumberish,
+    price: BigNumberish
+  ];
+  export type OutputTuple = [
+    marketId: string,
+    provider: string,
+    manager: string,
+    lid: bigint,
+    price: bigint
+  ];
+  export interface OutputObject {
+    marketId: string;
+    provider: string;
+    manager: string;
+    lid: bigint;
+    price: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedPriceEvent = TypedEvent<
-  [string, string, string, BigNumber, BigNumber],
-  UpdatedPriceEventObject
->;
-
-export type UpdatedPriceEventFilter = TypedEventFilter<UpdatedPriceEvent>;
 
 export interface Core extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
-  deployed(): Promise<this>;
+  connect(runner?: ContractRunner | null): Core;
+  waitForDeployment(): Promise<this>;
 
   interface: CoreInterface;
 
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
+  queryFilter<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+  queryFilter<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    fromBlockOrBlockhash?: string | number | undefined,
+    toBlock?: string | number | undefined
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
 
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
+  on<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  on<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-  functions: {
-    acceptOffer(
-      offerId: BigNumberish,
-      delay: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+  once<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  once<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-    canCreateDispute(
-      id: BigNumberish,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
+  listeners<TCEvent extends TypedContractEvent>(
+    event: TCEvent
+  ): Promise<Array<TypedListener<TCEvent>>>;
+  listeners(eventName?: string): Promise<Array<Listener>>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(
+    event?: TCEvent
+  ): Promise<this>;
 
-    cancelOffer(
-      offerId: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+  acceptOffer: TypedContractMethod<
+    [offerId: BigNumberish, delay: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    cancelOrder(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+  canCreateDispute: TypedContractMethod<
+    [id: BigNumberish, addr: AddressLike],
+    [boolean],
+    "view"
+  >;
 
-    cancelOrderByDispute(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+  cancelOffer: TypedContractMethod<
+    [offerId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    cancelOrderByManagerSig(
-      id: BigNumberish,
-      expireAt: BigNumberish,
-      signature: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+  cancelOrder: TypedContractMethod<[id: BigNumberish], [void], "nonpayable">;
 
-    computeSwapFee(
-      mid: string,
-      provider: string,
+  cancelOrderByDispute: TypedContractMethod<
+    [id: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  cancelOrderByManagerSig: TypedContractMethod<
+    [id: BigNumberish, expireAt: BigNumberish, signature: BytesLike],
+    [void],
+    "nonpayable"
+  >;
+
+  computeSwapFee: TypedContractMethod<
+    [
+      mid: AddressLike,
+      provider: AddressLike,
       lid: BigNumberish,
-      taker: string,
+      taker: AddressLike,
       orderAmt: BigNumberish,
-      orderPrice: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber, BigNumber, BigNumber, BigNumber]>;
-
-    configureFeePool(
-      interval: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    createOffer(
-      marketId: string,
-      provider: string,
-      recipient: string,
-      lid: BigNumberish,
-      amount: BigNumberish,
-      price: BigNumberish,
-      ids: BigNumberish[],
-      deadline: BigNumberish,
-      operator: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    executeOffer(
-      offerId: BigNumberish,
-      txDeadline: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    feeBalanceOf(
-      owner: string,
-      asset: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    getFeeBPs(
-      overrides?: CallOverrides
-    ): Promise<[[BigNumber, BigNumber, BigNumber]]>;
-
-    getLiquidity(
-      mid: string,
-      owner: string,
-      lid: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[Structs.LiquidityStructOutput]>;
-
-    getLiquidityManager(
-      marketId: string,
-      provider: string,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    getMarket(
-      id: string,
-      overrides?: CallOverrides
-    ): Promise<[Structs.MarketStructOutput]>;
-
-    getOffer(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[Structs.OfferStructOutput]>;
-
-    getOrder(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[Structs.OrderStructOutput]>;
-
-    getReqSwapBadges(
-      marketId: string,
-      lid: BigNumberish,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<[[string, string][]]>;
-
-    hasLiquidity(
-      mid: string,
-      owner: string,
-      lid: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
-
-    hasOrder(id: BigNumberish, overrides?: CallOverrides): Promise<[boolean]>;
-
-    inventorBalanceOf(
-      asset: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    isVerified(addr: string, overrides?: CallOverrides): Promise<[boolean]>;
-
-    markAsDisputed(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    markOrderAsPaid(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    onERC1155BatchReceived(
-      arg0: string,
-      arg1: string,
-      arg2: BigNumberish[],
-      arg3: BigNumberish[],
-      arg4: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    onERC1155Received(
-      arg0: string,
-      arg1: string,
-      arg2: BigNumberish,
-      arg3: BigNumberish,
-      arg4: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    operatorBalanceOf(
-      operator: string,
-      asset: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    owner(overrides?: CallOverrides): Promise<[string]>;
-
-    releaseOrder(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    releaseOrderByDispute(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    releaseOrderByManagerSig(
-      id: BigNumberish,
-      expireAt: BigNumberish,
-      signature: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setAmmInfo(
-      swapRouter: string,
-      ethErc20Addr: string,
-      poolFee: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setAmmPoolInfo(
-      input: string,
-      out: string,
-      poolFee: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setAssetRegistry(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setBadgeMgr(
-      val: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setDiscountForNFTHolder(
-      bp: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setDisputeManager(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setFeePool(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setFeePurse(
-      val: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setInventor(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setLiquidityManager(
-      marketId: string,
-      manager: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setMarketCore(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setMaxOpenDisputes(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setMaxOpenOrders(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setMinTimeToPay(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setNFT(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setOperator(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setOrderGraceDur(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setProtoFee(
-      _instantSwapFeeBp: BigNumberish,
-      _synthSwapFeeBp: BigNumberish,
-      _stableSwapFeeBp: BigNumberish,
-      _fixedSynthSwapFee: BigNumberish,
-      _fixedNFTSwapFee: BigNumberish,
-      _instantNFTSwapFeeBp: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setProtoFeeSplit(
-      inventorBP: BigNumberish,
-      sharedBP: BigNumberish,
-      operatorBP: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setSwapBadgeForLiquidity(
-      marketId: string,
-      lid: BigNumberish,
-      badgeIds: [string, string][],
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    shareablesBalanceOf(
-      asset: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    state(
-      overrides?: CallOverrides
-    ): Promise<
-      [
-        StructsLib.IntSlotStateStructOutput,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        string,
-        string
-      ] & {
-        ints: StructsLib.IntSlotStateStructOutput;
-        minTimeToPay: BigNumber;
-        orderGraceDur: BigNumber;
-        numOrders: BigNumber;
-        feePoolTxInterval: BigNumber;
-        inventor: string;
-        ammSwapRouter: string;
-      }
-    >;
-
-    state2(
-      overrides?: CallOverrides
-    ): Promise<
-      [
-        StructsLib.UintSlotState2StructOutput,
-        string,
-        string,
-        string,
-        string,
-        string,
-        string,
-        string,
-        string,
-        string,
-        string
-      ] & {
-        ints: StructsLib.UintSlotState2StructOutput;
-        disputeManager: string;
-        nft: string;
-        ammEth: string;
-        assetReg: string;
-        token: string;
-        marketCore: string;
-        feePool: string;
-        feePurse: string;
-        badge: string;
-        operatorMgr: string;
-      }
-    >;
-
-    supportsInterface(
-      interfaceId: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
-
-    swapQuoteForBase(
-      marketId: string,
-      provider: string,
-      recipient: string,
-      lid: BigNumberish,
-      amount: BigNumberish,
-      maxPrice: BigNumberish,
-      ids: BigNumberish[],
-      txDeadline: BigNumberish,
-      operator: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    togglePause(
-      marketId: string,
-      lid: BigNumberish,
-      expireAt: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    transferToFeePool(
-      _token: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    unacceptOffer(
-      offerId: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    updateFungibleLiquidity(
-      marketId: string,
-      lid: BigNumberish,
-      deduct: boolean,
-      target: string,
-      amountAndPrice: [BigNumberish, BigNumberish],
-      wantOrIds: BigNumberish[],
-      wantAndIds: BigNumberish[],
-      limits: [
-        BigNumberish,
-        BigNumberish,
-        BigNumberish,
-        BigNumberish,
-        BigNumberish
-      ],
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    updateLiquidityPrice(
-      marketId: string,
-      owner: string,
-      lid: BigNumberish,
-      price: BigNumberish,
-      expireAt: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    updateNonFungibleLiquidity(
-      marketId: string,
-      lid: BigNumberish,
-      deduct: boolean,
-      target: string,
-      ids: BigNumberish[],
-      price: BigNumberish,
-      wantOrIds: BigNumberish[],
-      wantAndIds: BigNumberish[],
-      limits: [BigNumberish, BigNumberish, BigNumberish],
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    updateOffer(
-      offerId: BigNumberish,
-      amount: BigNumberish,
-      price: BigNumberish,
-      ids: BigNumberish[],
-      deadline: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    updateOpenDisputesCount(
-      marketId: string,
-      provider: string,
-      lid: BigNumberish,
-      incr: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    withdrawFeeBalance(
-      asset: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    withdrawInventorBalance(
-      asset: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    withdrawOperatorBalance(
-      _token: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-  };
-
-  acceptOffer(
-    offerId: BigNumberish,
-    delay: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  canCreateDispute(
-    id: BigNumberish,
-    addr: string,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
-
-  cancelOffer(
-    offerId: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  cancelOrder(
-    id: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  cancelOrderByDispute(
-    id: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  cancelOrderByManagerSig(
-    id: BigNumberish,
-    expireAt: BigNumberish,
-    signature: BytesLike,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  computeSwapFee(
-    mid: string,
-    provider: string,
-    lid: BigNumberish,
-    taker: string,
-    orderAmt: BigNumberish,
-    orderPrice: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<[BigNumber, BigNumber, BigNumber, BigNumber]>;
-
-  configureFeePool(
-    interval: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  createOffer(
-    marketId: string,
-    provider: string,
-    recipient: string,
-    lid: BigNumberish,
-    amount: BigNumberish,
-    price: BigNumberish,
-    ids: BigNumberish[],
-    deadline: BigNumberish,
-    operator: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  executeOffer(
-    offerId: BigNumberish,
-    txDeadline: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  feeBalanceOf(
-    owner: string,
-    asset: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  getFeeBPs(
-    overrides?: CallOverrides
-  ): Promise<[BigNumber, BigNumber, BigNumber]>;
-
-  getLiquidity(
-    mid: string,
-    owner: string,
-    lid: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<Structs.LiquidityStructOutput>;
-
-  getLiquidityManager(
-    marketId: string,
-    provider: string,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  getMarket(
-    id: string,
-    overrides?: CallOverrides
-  ): Promise<Structs.MarketStructOutput>;
-
-  getOffer(
-    id: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<Structs.OfferStructOutput>;
-
-  getOrder(
-    id: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<Structs.OrderStructOutput>;
-
-  getReqSwapBadges(
-    marketId: string,
-    lid: BigNumberish,
-    addr: string,
-    overrides?: CallOverrides
-  ): Promise<[string, string][]>;
-
-  hasLiquidity(
-    mid: string,
-    owner: string,
-    lid: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
-
-  hasOrder(id: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
-
-  inventorBalanceOf(
-    asset: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  isVerified(addr: string, overrides?: CallOverrides): Promise<boolean>;
-
-  markAsDisputed(
-    id: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  markOrderAsPaid(
-    id: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  onERC1155BatchReceived(
-    arg0: string,
-    arg1: string,
-    arg2: BigNumberish[],
-    arg3: BigNumberish[],
-    arg4: BytesLike,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  onERC1155Received(
-    arg0: string,
-    arg1: string,
-    arg2: BigNumberish,
-    arg3: BigNumberish,
-    arg4: BytesLike,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  operatorBalanceOf(
-    operator: string,
-    asset: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  owner(overrides?: CallOverrides): Promise<string>;
-
-  releaseOrder(
-    id: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  releaseOrderByDispute(
-    id: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  releaseOrderByManagerSig(
-    id: BigNumberish,
-    expireAt: BigNumberish,
-    signature: BytesLike,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  renounceOwnership(
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setAmmInfo(
-    swapRouter: string,
-    ethErc20Addr: string,
-    poolFee: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setAmmPoolInfo(
-    input: string,
-    out: string,
-    poolFee: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setAssetRegistry(
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setBadgeMgr(
-    val: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setDiscountForNFTHolder(
-    bp: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setDisputeManager(
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setFeePool(
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setFeePurse(
-    val: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setInventor(
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setLiquidityManager(
-    marketId: string,
-    manager: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setMarketCore(
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setMaxOpenDisputes(
-    val: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setMaxOpenOrders(
-    val: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setMinTimeToPay(
-    val: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setNFT(
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setOperator(
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setOrderGraceDur(
-    val: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setProtoFee(
-    _instantSwapFeeBp: BigNumberish,
-    _synthSwapFeeBp: BigNumberish,
-    _stableSwapFeeBp: BigNumberish,
-    _fixedSynthSwapFee: BigNumberish,
-    _fixedNFTSwapFee: BigNumberish,
-    _instantNFTSwapFeeBp: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setProtoFeeSplit(
-    inventorBP: BigNumberish,
-    sharedBP: BigNumberish,
-    operatorBP: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setSwapBadgeForLiquidity(
-    marketId: string,
-    lid: BigNumberish,
-    badgeIds: [string, string][],
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  shareablesBalanceOf(
-    asset: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  state(
-    overrides?: CallOverrides
-  ): Promise<
-    [
-      StructsLib.IntSlotStateStructOutput,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      BigNumber,
-      string,
-      string
-    ] & {
-      ints: StructsLib.IntSlotStateStructOutput;
-      minTimeToPay: BigNumber;
-      orderGraceDur: BigNumber;
-      numOrders: BigNumber;
-      feePoolTxInterval: BigNumber;
-      inventor: string;
-      ammSwapRouter: string;
-    }
-  >;
-
-  state2(
-    overrides?: CallOverrides
-  ): Promise<
-    [
-      StructsLib.UintSlotState2StructOutput,
-      string,
-      string,
-      string,
-      string,
-      string,
-      string,
-      string,
-      string,
-      string,
-      string
-    ] & {
-      ints: StructsLib.UintSlotState2StructOutput;
-      disputeManager: string;
-      nft: string;
-      ammEth: string;
-      assetReg: string;
-      token: string;
-      marketCore: string;
-      feePool: string;
-      feePurse: string;
-      badge: string;
-      operatorMgr: string;
-    }
-  >;
-
-  supportsInterface(
-    interfaceId: BytesLike,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
-
-  swapQuoteForBase(
-    marketId: string,
-    provider: string,
-    recipient: string,
-    lid: BigNumberish,
-    amount: BigNumberish,
-    maxPrice: BigNumberish,
-    ids: BigNumberish[],
-    txDeadline: BigNumberish,
-    operator: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  togglePause(
-    marketId: string,
-    lid: BigNumberish,
-    expireAt: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  transferOwnership(
-    newOwner: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  transferToFeePool(
-    _token: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  unacceptOffer(
-    offerId: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  updateFungibleLiquidity(
-    marketId: string,
-    lid: BigNumberish,
-    deduct: boolean,
-    target: string,
-    amountAndPrice: [BigNumberish, BigNumberish],
-    wantOrIds: BigNumberish[],
-    wantAndIds: BigNumberish[],
-    limits: [
-      BigNumberish,
-      BigNumberish,
-      BigNumberish,
-      BigNumberish,
-      BigNumberish
+      orderPrice: BigNumberish
     ],
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+    [[bigint, bigint, bigint, bigint]],
+    "view"
+  >;
 
-  updateLiquidityPrice(
-    marketId: string,
-    owner: string,
-    lid: BigNumberish,
-    price: BigNumberish,
-    expireAt: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+  configureFeePool: TypedContractMethod<
+    [interval: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-  updateNonFungibleLiquidity(
-    marketId: string,
-    lid: BigNumberish,
-    deduct: boolean,
-    target: string,
-    ids: BigNumberish[],
-    price: BigNumberish,
-    wantOrIds: BigNumberish[],
-    wantAndIds: BigNumberish[],
-    limits: [BigNumberish, BigNumberish, BigNumberish],
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  updateOffer(
-    offerId: BigNumberish,
-    amount: BigNumberish,
-    price: BigNumberish,
-    ids: BigNumberish[],
-    deadline: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  updateOpenDisputesCount(
-    marketId: string,
-    provider: string,
-    lid: BigNumberish,
-    incr: boolean,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  withdrawFeeBalance(
-    asset: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  withdrawInventorBalance(
-    asset: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  withdrawOperatorBalance(
-    _token: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  callStatic: {
-    acceptOffer(
-      offerId: BigNumberish,
-      delay: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    canCreateDispute(
-      id: BigNumberish,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    cancelOffer(
-      offerId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    cancelOrder(id: BigNumberish, overrides?: CallOverrides): Promise<void>;
-
-    cancelOrderByDispute(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    cancelOrderByManagerSig(
-      id: BigNumberish,
-      expireAt: BigNumberish,
-      signature: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    computeSwapFee(
-      mid: string,
-      provider: string,
-      lid: BigNumberish,
-      taker: string,
-      orderAmt: BigNumberish,
-      orderPrice: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber, BigNumber, BigNumber, BigNumber]>;
-
-    configureFeePool(
-      interval: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    createOffer(
-      marketId: string,
-      provider: string,
-      recipient: string,
+  createOffer: TypedContractMethod<
+    [
+      marketId: AddressLike,
+      provider: AddressLike,
+      recipient: AddressLike,
       lid: BigNumberish,
       amount: BigNumberish,
       price: BigNumberish,
       ids: BigNumberish[],
       deadline: BigNumberish,
-      operator: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+      operator: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    executeOffer(
-      offerId: BigNumberish,
-      txDeadline: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  executeOffer: TypedContractMethod<
+    [offerId: BigNumberish, txDeadline: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    feeBalanceOf(
-      owner: string,
-      asset: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+  feeBalanceOf: TypedContractMethod<
+    [owner: AddressLike, asset: AddressLike],
+    [bigint],
+    "view"
+  >;
 
-    getFeeBPs(
-      overrides?: CallOverrides
-    ): Promise<[BigNumber, BigNumber, BigNumber]>;
+  getFeeBPs: TypedContractMethod<[], [[bigint, bigint, bigint]], "view">;
 
-    getLiquidity(
-      mid: string,
-      owner: string,
-      lid: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<Structs.LiquidityStructOutput>;
+  getLiquidity: TypedContractMethod<
+    [mid: AddressLike, owner: AddressLike, lid: BigNumberish],
+    [Structs.LiquidityStructOutput],
+    "view"
+  >;
 
-    getLiquidityManager(
-      marketId: string,
-      provider: string,
-      overrides?: CallOverrides
-    ): Promise<string>;
+  getLiquidityManager: TypedContractMethod<
+    [marketId: AddressLike, provider: AddressLike],
+    [string],
+    "view"
+  >;
 
-    getMarket(
-      id: string,
-      overrides?: CallOverrides
-    ): Promise<Structs.MarketStructOutput>;
+  getMarket: TypedContractMethod<
+    [id: AddressLike],
+    [Structs.MarketStructOutput],
+    "view"
+  >;
 
-    getOffer(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<Structs.OfferStructOutput>;
+  getOffer: TypedContractMethod<
+    [id: BigNumberish],
+    [Structs.OfferStructOutput],
+    "view"
+  >;
 
-    getOrder(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<Structs.OrderStructOutput>;
+  getOrder: TypedContractMethod<
+    [id: BigNumberish],
+    [Structs.OrderStructOutput],
+    "view"
+  >;
 
-    getReqSwapBadges(
-      marketId: string,
-      lid: BigNumberish,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<[string, string][]>;
+  getReqSwapBadges: TypedContractMethod<
+    [marketId: AddressLike, lid: BigNumberish, addr: AddressLike],
+    [[string, string][]],
+    "view"
+  >;
 
-    hasLiquidity(
-      mid: string,
-      owner: string,
-      lid: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
+  hasLiquidity: TypedContractMethod<
+    [mid: AddressLike, owner: AddressLike, lid: BigNumberish],
+    [boolean],
+    "view"
+  >;
 
-    hasOrder(id: BigNumberish, overrides?: CallOverrides): Promise<boolean>;
+  hasOrder: TypedContractMethod<[id: BigNumberish], [boolean], "view">;
 
-    inventorBalanceOf(
-      asset: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+  inventorBalanceOf: TypedContractMethod<
+    [asset: AddressLike],
+    [bigint],
+    "view"
+  >;
 
-    isVerified(addr: string, overrides?: CallOverrides): Promise<boolean>;
+  isVerified: TypedContractMethod<[addr: AddressLike], [boolean], "view">;
 
-    markAsDisputed(id: BigNumberish, overrides?: CallOverrides): Promise<void>;
+  markAsDisputed: TypedContractMethod<[id: BigNumberish], [void], "nonpayable">;
 
-    markOrderAsPaid(id: BigNumberish, overrides?: CallOverrides): Promise<void>;
+  markOrderAsPaid: TypedContractMethod<
+    [id: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    onERC1155BatchReceived(
-      arg0: string,
-      arg1: string,
+  onERC1155BatchReceived: TypedContractMethod<
+    [
+      arg0: AddressLike,
+      arg1: AddressLike,
       arg2: BigNumberish[],
       arg3: BigNumberish[],
-      arg4: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<string>;
+      arg4: BytesLike
+    ],
+    [string],
+    "nonpayable"
+  >;
 
-    onERC1155Received(
-      arg0: string,
-      arg1: string,
+  onERC1155Received: TypedContractMethod<
+    [
+      arg0: AddressLike,
+      arg1: AddressLike,
       arg2: BigNumberish,
       arg3: BigNumberish,
-      arg4: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<string>;
+      arg4: BytesLike
+    ],
+    [string],
+    "nonpayable"
+  >;
 
-    operatorBalanceOf(
-      operator: string,
-      asset: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+  operatorBalanceOf: TypedContractMethod<
+    [operator: AddressLike, asset: AddressLike],
+    [bigint],
+    "view"
+  >;
 
-    owner(overrides?: CallOverrides): Promise<string>;
+  owner: TypedContractMethod<[], [string], "view">;
 
-    releaseOrder(id: BigNumberish, overrides?: CallOverrides): Promise<void>;
+  releaseOrder: TypedContractMethod<[id: BigNumberish], [void], "nonpayable">;
 
-    releaseOrderByDispute(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  releaseOrderByDispute: TypedContractMethod<
+    [id: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    releaseOrderByManagerSig(
-      id: BigNumberish,
-      expireAt: BigNumberish,
-      signature: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  releaseOrderByManagerSig: TypedContractMethod<
+    [id: BigNumberish, expireAt: BigNumberish, signature: BytesLike],
+    [void],
+    "nonpayable"
+  >;
 
-    renounceOwnership(overrides?: CallOverrides): Promise<void>;
+  renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
-    setAmmInfo(
-      swapRouter: string,
-      ethErc20Addr: string,
-      poolFee: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  setAmmInfo: TypedContractMethod<
+    [swapRouter: AddressLike, ethErc20Addr: AddressLike, poolFee: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    setAmmPoolInfo(
-      input: string,
-      out: string,
-      poolFee: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  setAmmPoolInfo: TypedContractMethod<
+    [input: AddressLike, out: AddressLike, poolFee: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    setAssetRegistry(addr: string, overrides?: CallOverrides): Promise<void>;
+  setAssetRegistry: TypedContractMethod<
+    [addr: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    setBadgeMgr(val: string, overrides?: CallOverrides): Promise<void>;
+  setBadgeMgr: TypedContractMethod<[val: AddressLike], [void], "nonpayable">;
 
-    setDiscountForNFTHolder(
-      bp: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  setDiscountForNFTHolder: TypedContractMethod<
+    [bp: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    setDisputeManager(addr: string, overrides?: CallOverrides): Promise<void>;
+  setDisputeManager: TypedContractMethod<
+    [addr: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    setFeePool(addr: string, overrides?: CallOverrides): Promise<void>;
+  setFeePool: TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
 
-    setFeePurse(val: string, overrides?: CallOverrides): Promise<void>;
+  setFeePurse: TypedContractMethod<[val: AddressLike], [void], "nonpayable">;
 
-    setInventor(addr: string, overrides?: CallOverrides): Promise<void>;
+  setInventor: TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
 
-    setLiquidityManager(
-      marketId: string,
-      manager: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  setLiquidityManager: TypedContractMethod<
+    [marketId: AddressLike, manager: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    setMarketCore(addr: string, overrides?: CallOverrides): Promise<void>;
+  setMarketCore: TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
 
-    setMaxOpenDisputes(
-      val: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  setMaxOpenDisputes: TypedContractMethod<
+    [val: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    setMaxOpenOrders(
-      val: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  setMaxOpenOrders: TypedContractMethod<
+    [val: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    setMinTimeToPay(
-      val: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  setMinTimeToPay: TypedContractMethod<
+    [val: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    setNFT(addr: string, overrides?: CallOverrides): Promise<void>;
+  setNFT: TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
 
-    setOperator(addr: string, overrides?: CallOverrides): Promise<void>;
+  setOperator: TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
 
-    setOrderGraceDur(
-      val: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  setOrderGraceDur: TypedContractMethod<
+    [val: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    setProtoFee(
+  setProtoFee: TypedContractMethod<
+    [
       _instantSwapFeeBp: BigNumberish,
       _synthSwapFeeBp: BigNumberish,
       _stableSwapFeeBp: BigNumberish,
       _fixedSynthSwapFee: BigNumberish,
       _fixedNFTSwapFee: BigNumberish,
-      _instantNFTSwapFeeBp: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+      _instantNFTSwapFeeBp: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    setProtoFeeSplit(
+  setProtoFeeSplit: TypedContractMethod<
+    [
       inventorBP: BigNumberish,
       sharedBP: BigNumberish,
-      operatorBP: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+      operatorBP: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    setSwapBadgeForLiquidity(
-      marketId: string,
-      lid: BigNumberish,
-      badgeIds: [string, string][],
-      overrides?: CallOverrides
-    ): Promise<void>;
+  setSwapBadgeForLiquidity: TypedContractMethod<
+    [marketId: AddressLike, lid: BigNumberish, badgeIds: [string, string][]],
+    [void],
+    "nonpayable"
+  >;
 
-    shareablesBalanceOf(
-      asset: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+  shareablesBalanceOf: TypedContractMethod<
+    [asset: AddressLike],
+    [bigint],
+    "view"
+  >;
 
-    state(
-      overrides?: CallOverrides
-    ): Promise<
+  state: TypedContractMethod<
+    [],
+    [
       [
         StructsLib.IntSlotStateStructOutput,
-        BigNumber,
-        BigNumber,
-        BigNumber,
-        BigNumber,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
         string,
         string
       ] & {
         ints: StructsLib.IntSlotStateStructOutput;
-        minTimeToPay: BigNumber;
-        orderGraceDur: BigNumber;
-        numOrders: BigNumber;
-        feePoolTxInterval: BigNumber;
+        minTimeToPay: bigint;
+        orderGraceDur: bigint;
+        numOrders: bigint;
+        feePoolTxInterval: bigint;
         inventor: string;
         ammSwapRouter: string;
       }
-    >;
+    ],
+    "view"
+  >;
 
-    state2(
-      overrides?: CallOverrides
-    ): Promise<
+  state2: TypedContractMethod<
+    [],
+    [
       [
         StructsLib.UintSlotState2StructOutput,
         string,
@@ -2906,50 +2196,62 @@ export interface Core extends BaseContract {
         badge: string;
         operatorMgr: string;
       }
-    >;
+    ],
+    "view"
+  >;
 
-    supportsInterface(
-      interfaceId: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
+  supportsInterface: TypedContractMethod<
+    [interfaceId: BytesLike],
+    [boolean],
+    "view"
+  >;
 
-    swapQuoteForBase(
-      marketId: string,
-      provider: string,
-      recipient: string,
+  swapQuoteForBase: TypedContractMethod<
+    [
+      marketId: AddressLike,
+      provider: AddressLike,
+      recipient: AddressLike,
       lid: BigNumberish,
       amount: BigNumberish,
       maxPrice: BigNumberish,
       ids: BigNumberish[],
       txDeadline: BigNumberish,
-      operator: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+      operator: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    togglePause(
-      marketId: string,
-      lid: BigNumberish,
-      expireAt: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  togglePause: TypedContractMethod<
+    [marketId: AddressLike, lid: BigNumberish, expireAt: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    transferOwnership(
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  transferOwnership: TypedContractMethod<
+    [newOwner: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    transferToFeePool(_token: string, overrides?: CallOverrides): Promise<void>;
+  transferToFeePool: TypedContractMethod<
+    [_token: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    unacceptOffer(
-      offerId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  unacceptOffer: TypedContractMethod<
+    [offerId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    updateFungibleLiquidity(
-      marketId: string,
+  updateFungibleLiquidity: TypedContractMethod<
+    [
+      marketId: AddressLike,
       lid: BigNumberish,
       deduct: boolean,
-      target: string,
+      target: AddressLike,
       amountAndPrice: [BigNumberish, BigNumberish],
       wantOrIds: BigNumberish[],
       wantAndIds: BigNumberish[],
@@ -2959,1303 +2261,1263 @@ export interface Core extends BaseContract {
         BigNumberish,
         BigNumberish,
         BigNumberish
-      ],
-      overrides?: CallOverrides
-    ): Promise<void>;
+      ]
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    updateLiquidityPrice(
-      marketId: string,
-      owner: string,
+  updateLiquidityPrice: TypedContractMethod<
+    [
+      marketId: AddressLike,
+      owner: AddressLike,
       lid: BigNumberish,
       price: BigNumberish,
-      expireAt: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+      expireAt: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    updateNonFungibleLiquidity(
-      marketId: string,
+  updateNonFungibleLiquidity: TypedContractMethod<
+    [
+      marketId: AddressLike,
       lid: BigNumberish,
       deduct: boolean,
-      target: string,
+      target: AddressLike,
       ids: BigNumberish[],
       price: BigNumberish,
       wantOrIds: BigNumberish[],
       wantAndIds: BigNumberish[],
-      limits: [BigNumberish, BigNumberish, BigNumberish],
-      overrides?: CallOverrides
-    ): Promise<void>;
+      limits: [BigNumberish, BigNumberish, BigNumberish]
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    updateOffer(
+  updateOffer: TypedContractMethod<
+    [
       offerId: BigNumberish,
       amount: BigNumberish,
       price: BigNumberish,
       ids: BigNumberish[],
-      deadline: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+      deadline: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    updateOpenDisputesCount(
-      marketId: string,
-      provider: string,
+  updateOpenDisputesCount: TypedContractMethod<
+    [
+      marketId: AddressLike,
+      provider: AddressLike,
       lid: BigNumberish,
-      incr: boolean,
-      overrides?: CallOverrides
-    ): Promise<void>;
+      incr: boolean
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    withdrawFeeBalance(asset: string, overrides?: CallOverrides): Promise<void>;
+  withdrawFeeBalance: TypedContractMethod<
+    [asset: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    withdrawInventorBalance(
-      asset: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  withdrawInventorBalance: TypedContractMethod<
+    [asset: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    withdrawOperatorBalance(
-      _token: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-  };
+  withdrawOperatorBalance: TypedContractMethod<
+    [_token: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  getFunction<T extends ContractMethod = ContractMethod>(
+    key: string | FunctionFragment
+  ): T;
+
+  getFunction(
+    nameOrSignature: "acceptOffer"
+  ): TypedContractMethod<
+    [offerId: BigNumberish, delay: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "canCreateDispute"
+  ): TypedContractMethod<
+    [id: BigNumberish, addr: AddressLike],
+    [boolean],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "cancelOffer"
+  ): TypedContractMethod<[offerId: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "cancelOrder"
+  ): TypedContractMethod<[id: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "cancelOrderByDispute"
+  ): TypedContractMethod<[id: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "cancelOrderByManagerSig"
+  ): TypedContractMethod<
+    [id: BigNumberish, expireAt: BigNumberish, signature: BytesLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "computeSwapFee"
+  ): TypedContractMethod<
+    [
+      mid: AddressLike,
+      provider: AddressLike,
+      lid: BigNumberish,
+      taker: AddressLike,
+      orderAmt: BigNumberish,
+      orderPrice: BigNumberish
+    ],
+    [[bigint, bigint, bigint, bigint]],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "configureFeePool"
+  ): TypedContractMethod<[interval: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "createOffer"
+  ): TypedContractMethod<
+    [
+      marketId: AddressLike,
+      provider: AddressLike,
+      recipient: AddressLike,
+      lid: BigNumberish,
+      amount: BigNumberish,
+      price: BigNumberish,
+      ids: BigNumberish[],
+      deadline: BigNumberish,
+      operator: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "executeOffer"
+  ): TypedContractMethod<
+    [offerId: BigNumberish, txDeadline: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "feeBalanceOf"
+  ): TypedContractMethod<
+    [owner: AddressLike, asset: AddressLike],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getFeeBPs"
+  ): TypedContractMethod<[], [[bigint, bigint, bigint]], "view">;
+  getFunction(
+    nameOrSignature: "getLiquidity"
+  ): TypedContractMethod<
+    [mid: AddressLike, owner: AddressLike, lid: BigNumberish],
+    [Structs.LiquidityStructOutput],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getLiquidityManager"
+  ): TypedContractMethod<
+    [marketId: AddressLike, provider: AddressLike],
+    [string],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getMarket"
+  ): TypedContractMethod<
+    [id: AddressLike],
+    [Structs.MarketStructOutput],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getOffer"
+  ): TypedContractMethod<
+    [id: BigNumberish],
+    [Structs.OfferStructOutput],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getOrder"
+  ): TypedContractMethod<
+    [id: BigNumberish],
+    [Structs.OrderStructOutput],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getReqSwapBadges"
+  ): TypedContractMethod<
+    [marketId: AddressLike, lid: BigNumberish, addr: AddressLike],
+    [[string, string][]],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "hasLiquidity"
+  ): TypedContractMethod<
+    [mid: AddressLike, owner: AddressLike, lid: BigNumberish],
+    [boolean],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "hasOrder"
+  ): TypedContractMethod<[id: BigNumberish], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "inventorBalanceOf"
+  ): TypedContractMethod<[asset: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "isVerified"
+  ): TypedContractMethod<[addr: AddressLike], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "markAsDisputed"
+  ): TypedContractMethod<[id: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "markOrderAsPaid"
+  ): TypedContractMethod<[id: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "onERC1155BatchReceived"
+  ): TypedContractMethod<
+    [
+      arg0: AddressLike,
+      arg1: AddressLike,
+      arg2: BigNumberish[],
+      arg3: BigNumberish[],
+      arg4: BytesLike
+    ],
+    [string],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "onERC1155Received"
+  ): TypedContractMethod<
+    [
+      arg0: AddressLike,
+      arg1: AddressLike,
+      arg2: BigNumberish,
+      arg3: BigNumberish,
+      arg4: BytesLike
+    ],
+    [string],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "operatorBalanceOf"
+  ): TypedContractMethod<
+    [operator: AddressLike, asset: AddressLike],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "owner"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "releaseOrder"
+  ): TypedContractMethod<[id: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "releaseOrderByDispute"
+  ): TypedContractMethod<[id: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "releaseOrderByManagerSig"
+  ): TypedContractMethod<
+    [id: BigNumberish, expireAt: BigNumberish, signature: BytesLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "renounceOwnership"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setAmmInfo"
+  ): TypedContractMethod<
+    [swapRouter: AddressLike, ethErc20Addr: AddressLike, poolFee: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setAmmPoolInfo"
+  ): TypedContractMethod<
+    [input: AddressLike, out: AddressLike, poolFee: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setAssetRegistry"
+  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setBadgeMgr"
+  ): TypedContractMethod<[val: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setDiscountForNFTHolder"
+  ): TypedContractMethod<[bp: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setDisputeManager"
+  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setFeePool"
+  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setFeePurse"
+  ): TypedContractMethod<[val: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setInventor"
+  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setLiquidityManager"
+  ): TypedContractMethod<
+    [marketId: AddressLike, manager: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setMarketCore"
+  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setMaxOpenDisputes"
+  ): TypedContractMethod<[val: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setMaxOpenOrders"
+  ): TypedContractMethod<[val: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setMinTimeToPay"
+  ): TypedContractMethod<[val: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setNFT"
+  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setOperator"
+  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setOrderGraceDur"
+  ): TypedContractMethod<[val: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setProtoFee"
+  ): TypedContractMethod<
+    [
+      _instantSwapFeeBp: BigNumberish,
+      _synthSwapFeeBp: BigNumberish,
+      _stableSwapFeeBp: BigNumberish,
+      _fixedSynthSwapFee: BigNumberish,
+      _fixedNFTSwapFee: BigNumberish,
+      _instantNFTSwapFeeBp: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setProtoFeeSplit"
+  ): TypedContractMethod<
+    [
+      inventorBP: BigNumberish,
+      sharedBP: BigNumberish,
+      operatorBP: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setSwapBadgeForLiquidity"
+  ): TypedContractMethod<
+    [marketId: AddressLike, lid: BigNumberish, badgeIds: [string, string][]],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "shareablesBalanceOf"
+  ): TypedContractMethod<[asset: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "state"
+  ): TypedContractMethod<
+    [],
+    [
+      [
+        StructsLib.IntSlotStateStructOutput,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        string,
+        string
+      ] & {
+        ints: StructsLib.IntSlotStateStructOutput;
+        minTimeToPay: bigint;
+        orderGraceDur: bigint;
+        numOrders: bigint;
+        feePoolTxInterval: bigint;
+        inventor: string;
+        ammSwapRouter: string;
+      }
+    ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "state2"
+  ): TypedContractMethod<
+    [],
+    [
+      [
+        StructsLib.UintSlotState2StructOutput,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string,
+        string
+      ] & {
+        ints: StructsLib.UintSlotState2StructOutput;
+        disputeManager: string;
+        nft: string;
+        ammEth: string;
+        assetReg: string;
+        token: string;
+        marketCore: string;
+        feePool: string;
+        feePurse: string;
+        badge: string;
+        operatorMgr: string;
+      }
+    ],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "supportsInterface"
+  ): TypedContractMethod<[interfaceId: BytesLike], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "swapQuoteForBase"
+  ): TypedContractMethod<
+    [
+      marketId: AddressLike,
+      provider: AddressLike,
+      recipient: AddressLike,
+      lid: BigNumberish,
+      amount: BigNumberish,
+      maxPrice: BigNumberish,
+      ids: BigNumberish[],
+      txDeadline: BigNumberish,
+      operator: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "togglePause"
+  ): TypedContractMethod<
+    [marketId: AddressLike, lid: BigNumberish, expireAt: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "transferOwnership"
+  ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "transferToFeePool"
+  ): TypedContractMethod<[_token: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "unacceptOffer"
+  ): TypedContractMethod<[offerId: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "updateFungibleLiquidity"
+  ): TypedContractMethod<
+    [
+      marketId: AddressLike,
+      lid: BigNumberish,
+      deduct: boolean,
+      target: AddressLike,
+      amountAndPrice: [BigNumberish, BigNumberish],
+      wantOrIds: BigNumberish[],
+      wantAndIds: BigNumberish[],
+      limits: [
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish
+      ]
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "updateLiquidityPrice"
+  ): TypedContractMethod<
+    [
+      marketId: AddressLike,
+      owner: AddressLike,
+      lid: BigNumberish,
+      price: BigNumberish,
+      expireAt: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "updateNonFungibleLiquidity"
+  ): TypedContractMethod<
+    [
+      marketId: AddressLike,
+      lid: BigNumberish,
+      deduct: boolean,
+      target: AddressLike,
+      ids: BigNumberish[],
+      price: BigNumberish,
+      wantOrIds: BigNumberish[],
+      wantAndIds: BigNumberish[],
+      limits: [BigNumberish, BigNumberish, BigNumberish]
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "updateOffer"
+  ): TypedContractMethod<
+    [
+      offerId: BigNumberish,
+      amount: BigNumberish,
+      price: BigNumberish,
+      ids: BigNumberish[],
+      deadline: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "updateOpenDisputesCount"
+  ): TypedContractMethod<
+    [
+      marketId: AddressLike,
+      provider: AddressLike,
+      lid: BigNumberish,
+      incr: boolean
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "withdrawFeeBalance"
+  ): TypedContractMethod<[asset: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "withdrawInventorBalance"
+  ): TypedContractMethod<[asset: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "withdrawOperatorBalance"
+  ): TypedContractMethod<[_token: AddressLike], [void], "nonpayable">;
+
+  getEvent(
+    key: "FinalizedByManagerSig"
+  ): TypedContractEvent<
+    FinalizedByManagerSigEvent.InputTuple,
+    FinalizedByManagerSigEvent.OutputTuple,
+    FinalizedByManagerSigEvent.OutputObject
+  >;
+  getEvent(
+    key: "NFTDiscountUpdated"
+  ): TypedContractEvent<
+    NFTDiscountUpdatedEvent.InputTuple,
+    NFTDiscountUpdatedEvent.OutputTuple,
+    NFTDiscountUpdatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "NewOffer"
+  ): TypedContractEvent<
+    NewOfferEvent.InputTuple,
+    NewOfferEvent.OutputTuple,
+    NewOfferEvent.OutputObject
+  >;
+  getEvent(
+    key: "OfferAccepted"
+  ): TypedContractEvent<
+    OfferAcceptedEvent.InputTuple,
+    OfferAcceptedEvent.OutputTuple,
+    OfferAcceptedEvent.OutputObject
+  >;
+  getEvent(
+    key: "OfferCancelled"
+  ): TypedContractEvent<
+    OfferCancelledEvent.InputTuple,
+    OfferCancelledEvent.OutputTuple,
+    OfferCancelledEvent.OutputObject
+  >;
+  getEvent(
+    key: "OfferExecuted"
+  ): TypedContractEvent<
+    OfferExecutedEvent.InputTuple,
+    OfferExecutedEvent.OutputTuple,
+    OfferExecutedEvent.OutputObject
+  >;
+  getEvent(
+    key: "OfferUnaccepted"
+  ): TypedContractEvent<
+    OfferUnacceptedEvent.InputTuple,
+    OfferUnacceptedEvent.OutputTuple,
+    OfferUnacceptedEvent.OutputObject
+  >;
+  getEvent(
+    key: "OfferUpdated"
+  ): TypedContractEvent<
+    OfferUpdatedEvent.InputTuple,
+    OfferUpdatedEvent.OutputTuple,
+    OfferUpdatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "OrderCancelled"
+  ): TypedContractEvent<
+    OrderCancelledEvent.InputTuple,
+    OrderCancelledEvent.OutputTuple,
+    OrderCancelledEvent.OutputObject
+  >;
+  getEvent(
+    key: "OwnershipTransferred"
+  ): TypedContractEvent<
+    OwnershipTransferredEvent.InputTuple,
+    OwnershipTransferredEvent.OutputTuple,
+    OwnershipTransferredEvent.OutputObject
+  >;
+  getEvent(
+    key: "ProtocolFeeSplitUpdated"
+  ): TypedContractEvent<
+    ProtocolFeeSplitUpdatedEvent.InputTuple,
+    ProtocolFeeSplitUpdatedEvent.OutputTuple,
+    ProtocolFeeSplitUpdatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "ProtocolFeeUpdated"
+  ): TypedContractEvent<
+    ProtocolFeeUpdatedEvent.InputTuple,
+    ProtocolFeeUpdatedEvent.OutputTuple,
+    ProtocolFeeUpdatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Swap"
+  ): TypedContractEvent<
+    SwapEvent.InputTuple,
+    SwapEvent.OutputTuple,
+    SwapEvent.OutputObject
+  >;
+  getEvent(
+    key: "SwapOrder"
+  ): TypedContractEvent<
+    SwapOrderEvent.InputTuple,
+    SwapOrderEvent.OutputTuple,
+    SwapOrderEvent.OutputObject
+  >;
+  getEvent(
+    key: "SwapOrderPaid"
+  ): TypedContractEvent<
+    SwapOrderPaidEvent.InputTuple,
+    SwapOrderPaidEvent.OutputTuple,
+    SwapOrderPaidEvent.OutputObject
+  >;
+  getEvent(
+    key: "TogglePause"
+  ): TypedContractEvent<
+    TogglePauseEvent.InputTuple,
+    TogglePauseEvent.OutputTuple,
+    TogglePauseEvent.OutputObject
+  >;
+  getEvent(
+    key: "TransferInventorBalance"
+  ): TypedContractEvent<
+    TransferInventorBalanceEvent.InputTuple,
+    TransferInventorBalanceEvent.OutputTuple,
+    TransferInventorBalanceEvent.OutputObject
+  >;
+  getEvent(
+    key: "TransferredToFeePool"
+  ): TypedContractEvent<
+    TransferredToFeePoolEvent.InputTuple,
+    TransferredToFeePoolEvent.OutputTuple,
+    TransferredToFeePoolEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedAMMInfo"
+  ): TypedContractEvent<
+    UpdatedAMMInfoEvent.InputTuple,
+    UpdatedAMMInfoEvent.OutputTuple,
+    UpdatedAMMInfoEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedAMMPoolInfo"
+  ): TypedContractEvent<
+    UpdatedAMMPoolInfoEvent.InputTuple,
+    UpdatedAMMPoolInfoEvent.OutputTuple,
+    UpdatedAMMPoolInfoEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedAssetRegistry"
+  ): TypedContractEvent<
+    UpdatedAssetRegistryEvent.InputTuple,
+    UpdatedAssetRegistryEvent.OutputTuple,
+    UpdatedAssetRegistryEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedBadge"
+  ): TypedContractEvent<
+    UpdatedBadgeEvent.InputTuple,
+    UpdatedBadgeEvent.OutputTuple,
+    UpdatedBadgeEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedDisputeManager"
+  ): TypedContractEvent<
+    UpdatedDisputeManagerEvent.InputTuple,
+    UpdatedDisputeManagerEvent.OutputTuple,
+    UpdatedDisputeManagerEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedFeePool"
+  ): TypedContractEvent<
+    UpdatedFeePoolEvent.InputTuple,
+    UpdatedFeePoolEvent.OutputTuple,
+    UpdatedFeePoolEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedFeePoolConfig"
+  ): TypedContractEvent<
+    UpdatedFeePoolConfigEvent.InputTuple,
+    UpdatedFeePoolConfigEvent.OutputTuple,
+    UpdatedFeePoolConfigEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedFeePurse"
+  ): TypedContractEvent<
+    UpdatedFeePurseEvent.InputTuple,
+    UpdatedFeePurseEvent.OutputTuple,
+    UpdatedFeePurseEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedFungibleLiquidity"
+  ): TypedContractEvent<
+    UpdatedFungibleLiquidityEvent.InputTuple,
+    UpdatedFungibleLiquidityEvent.OutputTuple,
+    UpdatedFungibleLiquidityEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedInventor"
+  ): TypedContractEvent<
+    UpdatedInventorEvent.InputTuple,
+    UpdatedInventorEvent.OutputTuple,
+    UpdatedInventorEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedLiquidityManager"
+  ): TypedContractEvent<
+    UpdatedLiquidityManagerEvent.InputTuple,
+    UpdatedLiquidityManagerEvent.OutputTuple,
+    UpdatedLiquidityManagerEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedLiquiditySwapBadges"
+  ): TypedContractEvent<
+    UpdatedLiquiditySwapBadgesEvent.InputTuple,
+    UpdatedLiquiditySwapBadgesEvent.OutputTuple,
+    UpdatedLiquiditySwapBadgesEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedMarketCore"
+  ): TypedContractEvent<
+    UpdatedMarketCoreEvent.InputTuple,
+    UpdatedMarketCoreEvent.OutputTuple,
+    UpdatedMarketCoreEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedMaxOpenDisputes"
+  ): TypedContractEvent<
+    UpdatedMaxOpenDisputesEvent.InputTuple,
+    UpdatedMaxOpenDisputesEvent.OutputTuple,
+    UpdatedMaxOpenDisputesEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedMaxOpenOrders"
+  ): TypedContractEvent<
+    UpdatedMaxOpenOrdersEvent.InputTuple,
+    UpdatedMaxOpenOrdersEvent.OutputTuple,
+    UpdatedMaxOpenOrdersEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedMinTimeToPay"
+  ): TypedContractEvent<
+    UpdatedMinTimeToPayEvent.InputTuple,
+    UpdatedMinTimeToPayEvent.OutputTuple,
+    UpdatedMinTimeToPayEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedNFT"
+  ): TypedContractEvent<
+    UpdatedNFTEvent.InputTuple,
+    UpdatedNFTEvent.OutputTuple,
+    UpdatedNFTEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedNonFungibleLiquidity"
+  ): TypedContractEvent<
+    UpdatedNonFungibleLiquidityEvent.InputTuple,
+    UpdatedNonFungibleLiquidityEvent.OutputTuple,
+    UpdatedNonFungibleLiquidityEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedOperator"
+  ): TypedContractEvent<
+    UpdatedOperatorEvent.InputTuple,
+    UpdatedOperatorEvent.OutputTuple,
+    UpdatedOperatorEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedOrderGraceDur"
+  ): TypedContractEvent<
+    UpdatedOrderGraceDurEvent.InputTuple,
+    UpdatedOrderGraceDurEvent.OutputTuple,
+    UpdatedOrderGraceDurEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedPrice"
+  ): TypedContractEvent<
+    UpdatedPriceEvent.InputTuple,
+    UpdatedPriceEvent.OutputTuple,
+    UpdatedPriceEvent.OutputObject
+  >;
 
   filters: {
-    "FinalizedByManagerSig(address,address,uint256,bool)"(
-      manager?: null,
-      finalizer?: null,
-      orderId?: null,
-      released?: null
-    ): FinalizedByManagerSigEventFilter;
-    FinalizedByManagerSig(
-      manager?: null,
-      finalizer?: null,
-      orderId?: null,
-      released?: null
-    ): FinalizedByManagerSigEventFilter;
-
-    "NFTDiscountUpdated(uint256)"(bp?: null): NFTDiscountUpdatedEventFilter;
-    NFTDiscountUpdated(bp?: null): NFTDiscountUpdatedEventFilter;
-
-    "NewOffer(address,address,uint256,address,uint256,uint256,uint256,uint256[],uint256)"(
-      marketId?: null,
-      provider?: string | null,
-      lid?: null,
-      offerer?: string | null,
-      offerId?: null,
-      amount?: null,
-      price?: null,
-      ids?: null,
-      expireDuration?: null
-    ): NewOfferEventFilter;
-    NewOffer(
-      marketId?: null,
-      provider?: string | null,
-      lid?: null,
-      offerer?: string | null,
-      offerId?: null,
-      amount?: null,
-      price?: null,
-      ids?: null,
-      expireDuration?: null
-    ): NewOfferEventFilter;
-
-    "OfferAccepted(uint256,address,uint256)"(
-      offerId?: BigNumberish | null,
-      acceptor?: string | null,
-      executeAt?: null
-    ): OfferAcceptedEventFilter;
-    OfferAccepted(
-      offerId?: BigNumberish | null,
-      acceptor?: string | null,
-      executeAt?: null
-    ): OfferAcceptedEventFilter;
-
-    "OfferCancelled(uint256,address)"(
-      offerId?: BigNumberish | null,
-      canceller?: string | null
-    ): OfferCancelledEventFilter;
-    OfferCancelled(
-      offerId?: BigNumberish | null,
-      canceller?: string | null
-    ): OfferCancelledEventFilter;
-
-    "OfferExecuted(uint256,address)"(
-      offerId?: BigNumberish | null,
-      executor?: string | null
-    ): OfferExecutedEventFilter;
-    OfferExecuted(
-      offerId?: BigNumberish | null,
-      executor?: string | null
-    ): OfferExecutedEventFilter;
-
-    "OfferUnaccepted(uint256,address)"(
-      offerId?: BigNumberish | null,
-      unacceptor?: string | null
-    ): OfferUnacceptedEventFilter;
-    OfferUnaccepted(
-      offerId?: BigNumberish | null,
-      unacceptor?: string | null
-    ): OfferUnacceptedEventFilter;
-
-    "OfferUpdated(uint256,address,uint256,uint256,uint256[],uint256)"(
-      offerId?: BigNumberish | null,
-      offerer?: string | null,
-      amount?: null,
-      price?: null,
-      ids?: null,
-      execDelayDur?: null
-    ): OfferUpdatedEventFilter;
-    OfferUpdated(
-      offerId?: BigNumberish | null,
-      offerer?: string | null,
-      amount?: null,
-      price?: null,
-      ids?: null,
-      execDelayDur?: null
-    ): OfferUpdatedEventFilter;
-
-    "OrderCancelled(uint256,address,bool)"(
-      orderID?: BigNumberish | null,
-      canceller?: string | null,
-      byDispute?: boolean | null
-    ): OrderCancelledEventFilter;
-    OrderCancelled(
-      orderID?: BigNumberish | null,
-      canceller?: string | null,
-      byDispute?: boolean | null
-    ): OrderCancelledEventFilter;
-
-    "OwnershipTransferred(address,address)"(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
-    OwnershipTransferred(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
-
-    "ProtocolFeeSplitUpdated(uint256,uint256,uint256)"(
-      inventor?: null,
-      shared?: null,
-      operator?: null
-    ): ProtocolFeeSplitUpdatedEventFilter;
-    ProtocolFeeSplitUpdated(
-      inventor?: null,
-      shared?: null,
-      operator?: null
-    ): ProtocolFeeSplitUpdatedEventFilter;
-
-    "ProtocolFeeUpdated(uint256,uint256,uint256,uint256,uint256,uint256)"(
-      instantSwapFeeBp?: null,
-      synthSwapFeeBp?: null,
-      stableSwapFeeBp?: null,
-      fixedSynthSwapFee?: null,
-      fixedNFTSwapFee?: null,
-      instantNFTSwapFeeBp?: null
-    ): ProtocolFeeUpdatedEventFilter;
-    ProtocolFeeUpdated(
-      instantSwapFeeBp?: null,
-      synthSwapFeeBp?: null,
-      stableSwapFeeBp?: null,
-      fixedSynthSwapFee?: null,
-      fixedNFTSwapFee?: null,
-      instantNFTSwapFeeBp?: null
-    ): ProtocolFeeUpdatedEventFilter;
-
-    "Swap(address,address,address,address,address,uint256[6],bool,uint256[],uint256[])"(
-      mid?: string | null,
-      provider?: string | null,
-      swapper?: string | null,
-      recipient?: null,
-      releaser?: null,
-      numTypeInfo?: null,
-      byDispute?: null,
-      idsFromProvider?: null,
-      idsFromTaker?: null
-    ): SwapEventFilter;
-    Swap(
-      mid?: string | null,
-      provider?: string | null,
-      swapper?: string | null,
-      recipient?: null,
-      releaser?: null,
-      numTypeInfo?: null,
-      byDispute?: null,
-      idsFromProvider?: null,
-      idsFromTaker?: null
-    ): SwapEventFilter;
-
-    "SwapOrder(address,address,address,address,uint256[7],uint256[],uint256[])"(
-      mid?: string | null,
-      provider?: string | null,
-      swapper?: string | null,
-      recipient?: null,
-      numTypeInfo?: null,
-      idsFromProvider?: null,
-      idsFromTaker?: null
-    ): SwapOrderEventFilter;
-    SwapOrder(
-      mid?: string | null,
-      provider?: string | null,
-      swapper?: string | null,
-      recipient?: null,
-      numTypeInfo?: null,
-      idsFromProvider?: null,
-      idsFromTaker?: null
-    ): SwapOrderEventFilter;
-
-    "SwapOrderPaid(uint256,uint256)"(
-      orderID?: BigNumberish | null,
-      disputeDelayDur?: null
-    ): SwapOrderPaidEventFilter;
-    SwapOrderPaid(
-      orderID?: BigNumberish | null,
-      disputeDelayDur?: null
-    ): SwapOrderPaidEventFilter;
-
-    "TogglePause(address,address,uint256,bool)"(
-      marketId?: string | null,
-      provider?: string | null,
-      lid?: null,
-      paused?: null
-    ): TogglePauseEventFilter;
-    TogglePause(
-      marketId?: string | null,
-      provider?: string | null,
-      lid?: null,
-      paused?: null
-    ): TogglePauseEventFilter;
-
-    "TransferInventorBalance(address,uint256)"(
-      asset?: null,
-      amount?: null
-    ): TransferInventorBalanceEventFilter;
-    TransferInventorBalance(
-      asset?: null,
-      amount?: null
-    ): TransferInventorBalanceEventFilter;
-
-    "TransferredToFeePool(address,uint256,address,uint256)"(
-      token?: string | null,
-      amount?: null,
-      convAsset?: null,
-      convAmount?: null
-    ): TransferredToFeePoolEventFilter;
-    TransferredToFeePool(
-      token?: string | null,
-      amount?: null,
-      convAsset?: null,
-      convAmount?: null
-    ): TransferredToFeePoolEventFilter;
-
-    "UpdatedAMMInfo(address,address,uint256)"(
-      swapRouter?: null,
-      ethErc20Addr?: null,
-      poolFee?: null
-    ): UpdatedAMMInfoEventFilter;
-    UpdatedAMMInfo(
-      swapRouter?: null,
-      ethErc20Addr?: null,
-      poolFee?: null
-    ): UpdatedAMMInfoEventFilter;
-
-    "UpdatedAMMPoolInfo(address,address,uint256)"(
-      input?: null,
-      output?: null,
-      poolFee?: null
-    ): UpdatedAMMPoolInfoEventFilter;
-    UpdatedAMMPoolInfo(
-      input?: null,
-      output?: null,
-      poolFee?: null
-    ): UpdatedAMMPoolInfoEventFilter;
-
-    "UpdatedAssetRegistry(address)"(
-      addr?: null
-    ): UpdatedAssetRegistryEventFilter;
-    UpdatedAssetRegistry(addr?: null): UpdatedAssetRegistryEventFilter;
-
-    "UpdatedBadge(address)"(addr?: null): UpdatedBadgeEventFilter;
-    UpdatedBadge(addr?: null): UpdatedBadgeEventFilter;
-
-    "UpdatedDisputeManager(address)"(
-      addr?: null
-    ): UpdatedDisputeManagerEventFilter;
-    UpdatedDisputeManager(addr?: null): UpdatedDisputeManagerEventFilter;
-
-    "UpdatedFeePool(address)"(addr?: null): UpdatedFeePoolEventFilter;
-    UpdatedFeePool(addr?: null): UpdatedFeePoolEventFilter;
-
-    "UpdatedFeePoolConfig(uint256)"(
-      interval?: null
-    ): UpdatedFeePoolConfigEventFilter;
-    UpdatedFeePoolConfig(interval?: null): UpdatedFeePoolConfigEventFilter;
-
-    "UpdatedFeePurse(address)"(addr?: null): UpdatedFeePurseEventFilter;
-    UpdatedFeePurse(addr?: null): UpdatedFeePurseEventFilter;
-
-    "UpdatedFungibleLiquidity(address,address,address,bool,bool,uint256,uint256,uint256,uint256[],uint256[],uint256,uint256,uint256)"(
-      provider?: string | null,
-      marketId?: string | null,
-      target?: null,
-      deduct?: null,
-      paused?: null,
-      liq?: null,
-      amount?: null,
-      price?: null,
-      wantOrIds?: null,
-      wantAndIds?: null,
-      minSwap?: null,
-      maxSwap?: null,
-      timeToPay?: null
-    ): UpdatedFungibleLiquidityEventFilter;
-    UpdatedFungibleLiquidity(
-      provider?: string | null,
-      marketId?: string | null,
-      target?: null,
-      deduct?: null,
-      paused?: null,
-      liq?: null,
-      amount?: null,
-      price?: null,
-      wantOrIds?: null,
-      wantAndIds?: null,
-      minSwap?: null,
-      maxSwap?: null,
-      timeToPay?: null
-    ): UpdatedFungibleLiquidityEventFilter;
-
-    "UpdatedInventor(address)"(addr?: null): UpdatedInventorEventFilter;
-    UpdatedInventor(addr?: null): UpdatedInventorEventFilter;
-
-    "UpdatedLiquidityManager(address,address,address,address)"(
-      marketId?: string | null,
-      provider?: string | null,
-      manager?: string | null,
-      oldManager?: null
-    ): UpdatedLiquidityManagerEventFilter;
-    UpdatedLiquidityManager(
-      marketId?: string | null,
-      provider?: string | null,
-      manager?: string | null,
-      oldManager?: null
-    ): UpdatedLiquidityManagerEventFilter;
-
-    "UpdatedLiquiditySwapBadges(address,address,uint256,string[2][])"(
-      market?: null,
-      provider?: null,
-      liq?: null,
-      badges?: null
-    ): UpdatedLiquiditySwapBadgesEventFilter;
-    UpdatedLiquiditySwapBadges(
-      market?: null,
-      provider?: null,
-      liq?: null,
-      badges?: null
-    ): UpdatedLiquiditySwapBadgesEventFilter;
-
-    "UpdatedMarketCore(address)"(addr?: null): UpdatedMarketCoreEventFilter;
-    UpdatedMarketCore(addr?: null): UpdatedMarketCoreEventFilter;
-
-    "UpdatedMaxOpenDisputes(uint256)"(
-      val?: null
-    ): UpdatedMaxOpenDisputesEventFilter;
-    UpdatedMaxOpenDisputes(val?: null): UpdatedMaxOpenDisputesEventFilter;
-
-    "UpdatedMaxOpenOrders(uint256)"(
-      val?: null
-    ): UpdatedMaxOpenOrdersEventFilter;
-    UpdatedMaxOpenOrders(val?: null): UpdatedMaxOpenOrdersEventFilter;
-
-    "UpdatedMinTimeToPay(uint256)"(val?: null): UpdatedMinTimeToPayEventFilter;
-    UpdatedMinTimeToPay(val?: null): UpdatedMinTimeToPayEventFilter;
-
-    "UpdatedNFT(address)"(addr?: null): UpdatedNFTEventFilter;
-    UpdatedNFT(addr?: null): UpdatedNFTEventFilter;
-
-    "UpdatedNonFungibleLiquidity(address,address,address,bool,bool,uint256,uint256[],uint256,uint256[],uint256[],uint256)"(
-      provider?: string | null,
-      marketId?: string | null,
-      target?: null,
-      deduct?: null,
-      paused?: null,
-      lid?: null,
-      ids?: null,
-      price?: null,
-      wantOrIds?: null,
-      wantAndIds?: null,
-      timeToPay?: null
-    ): UpdatedNonFungibleLiquidityEventFilter;
-    UpdatedNonFungibleLiquidity(
-      provider?: string | null,
-      marketId?: string | null,
-      target?: null,
-      deduct?: null,
-      paused?: null,
-      lid?: null,
-      ids?: null,
-      price?: null,
-      wantOrIds?: null,
-      wantAndIds?: null,
-      timeToPay?: null
-    ): UpdatedNonFungibleLiquidityEventFilter;
-
-    "UpdatedOperator(address)"(addr?: null): UpdatedOperatorEventFilter;
-    UpdatedOperator(addr?: null): UpdatedOperatorEventFilter;
-
-    "UpdatedOrderGraceDur(uint256)"(
-      val?: null
-    ): UpdatedOrderGraceDurEventFilter;
-    UpdatedOrderGraceDur(val?: null): UpdatedOrderGraceDurEventFilter;
-
-    "UpdatedPrice(address,address,address,uint256,uint256)"(
-      marketId?: string | null,
-      provider?: string | null,
-      manager?: string | null,
-      lid?: null,
-      price?: null
-    ): UpdatedPriceEventFilter;
-    UpdatedPrice(
-      marketId?: string | null,
-      provider?: string | null,
-      manager?: string | null,
-      lid?: null,
-      price?: null
-    ): UpdatedPriceEventFilter;
-  };
-
-  estimateGas: {
-    acceptOffer(
-      offerId: BigNumberish,
-      delay: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    canCreateDispute(
-      id: BigNumberish,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    cancelOffer(
-      offerId: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    cancelOrder(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    cancelOrderByDispute(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    cancelOrderByManagerSig(
-      id: BigNumberish,
-      expireAt: BigNumberish,
-      signature: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    computeSwapFee(
-      mid: string,
-      provider: string,
-      lid: BigNumberish,
-      taker: string,
-      orderAmt: BigNumberish,
-      orderPrice: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    configureFeePool(
-      interval: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    createOffer(
-      marketId: string,
-      provider: string,
-      recipient: string,
-      lid: BigNumberish,
-      amount: BigNumberish,
-      price: BigNumberish,
-      ids: BigNumberish[],
-      deadline: BigNumberish,
-      operator: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    executeOffer(
-      offerId: BigNumberish,
-      txDeadline: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    feeBalanceOf(
-      owner: string,
-      asset: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getFeeBPs(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getLiquidity(
-      mid: string,
-      owner: string,
-      lid: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getLiquidityManager(
-      marketId: string,
-      provider: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getMarket(id: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    getOffer(id: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
-
-    getOrder(id: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
-
-    getReqSwapBadges(
-      marketId: string,
-      lid: BigNumberish,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    hasLiquidity(
-      mid: string,
-      owner: string,
-      lid: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    hasOrder(id: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
-
-    inventorBalanceOf(
-      asset: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    isVerified(addr: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    markAsDisputed(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    markOrderAsPaid(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    onERC1155BatchReceived(
-      arg0: string,
-      arg1: string,
-      arg2: BigNumberish[],
-      arg3: BigNumberish[],
-      arg4: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    onERC1155Received(
-      arg0: string,
-      arg1: string,
-      arg2: BigNumberish,
-      arg3: BigNumberish,
-      arg4: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    operatorBalanceOf(
-      operator: string,
-      asset: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    owner(overrides?: CallOverrides): Promise<BigNumber>;
-
-    releaseOrder(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    releaseOrderByDispute(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    releaseOrderByManagerSig(
-      id: BigNumberish,
-      expireAt: BigNumberish,
-      signature: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setAmmInfo(
-      swapRouter: string,
-      ethErc20Addr: string,
-      poolFee: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setAmmPoolInfo(
-      input: string,
-      out: string,
-      poolFee: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setAssetRegistry(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setBadgeMgr(
-      val: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setDiscountForNFTHolder(
-      bp: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setDisputeManager(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setFeePool(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setFeePurse(
-      val: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setInventor(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setLiquidityManager(
-      marketId: string,
-      manager: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setMarketCore(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setMaxOpenDisputes(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setMaxOpenOrders(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setMinTimeToPay(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setNFT(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setOperator(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setOrderGraceDur(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setProtoFee(
-      _instantSwapFeeBp: BigNumberish,
-      _synthSwapFeeBp: BigNumberish,
-      _stableSwapFeeBp: BigNumberish,
-      _fixedSynthSwapFee: BigNumberish,
-      _fixedNFTSwapFee: BigNumberish,
-      _instantNFTSwapFeeBp: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setProtoFeeSplit(
-      inventorBP: BigNumberish,
-      sharedBP: BigNumberish,
-      operatorBP: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setSwapBadgeForLiquidity(
-      marketId: string,
-      lid: BigNumberish,
-      badgeIds: [string, string][],
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    shareablesBalanceOf(
-      asset: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    state(overrides?: CallOverrides): Promise<BigNumber>;
-
-    state2(overrides?: CallOverrides): Promise<BigNumber>;
-
-    supportsInterface(
-      interfaceId: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    swapQuoteForBase(
-      marketId: string,
-      provider: string,
-      recipient: string,
-      lid: BigNumberish,
-      amount: BigNumberish,
-      maxPrice: BigNumberish,
-      ids: BigNumberish[],
-      txDeadline: BigNumberish,
-      operator: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    togglePause(
-      marketId: string,
-      lid: BigNumberish,
-      expireAt: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    transferToFeePool(
-      _token: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    unacceptOffer(
-      offerId: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    updateFungibleLiquidity(
-      marketId: string,
-      lid: BigNumberish,
-      deduct: boolean,
-      target: string,
-      amountAndPrice: [BigNumberish, BigNumberish],
-      wantOrIds: BigNumberish[],
-      wantAndIds: BigNumberish[],
-      limits: [
-        BigNumberish,
-        BigNumberish,
-        BigNumberish,
-        BigNumberish,
-        BigNumberish
-      ],
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    updateLiquidityPrice(
-      marketId: string,
-      owner: string,
-      lid: BigNumberish,
-      price: BigNumberish,
-      expireAt: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    updateNonFungibleLiquidity(
-      marketId: string,
-      lid: BigNumberish,
-      deduct: boolean,
-      target: string,
-      ids: BigNumberish[],
-      price: BigNumberish,
-      wantOrIds: BigNumberish[],
-      wantAndIds: BigNumberish[],
-      limits: [BigNumberish, BigNumberish, BigNumberish],
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    updateOffer(
-      offerId: BigNumberish,
-      amount: BigNumberish,
-      price: BigNumberish,
-      ids: BigNumberish[],
-      deadline: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    updateOpenDisputesCount(
-      marketId: string,
-      provider: string,
-      lid: BigNumberish,
-      incr: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    withdrawFeeBalance(
-      asset: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    withdrawInventorBalance(
-      asset: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    withdrawOperatorBalance(
-      _token: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-  };
-
-  populateTransaction: {
-    acceptOffer(
-      offerId: BigNumberish,
-      delay: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    canCreateDispute(
-      id: BigNumberish,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    cancelOffer(
-      offerId: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    cancelOrder(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    cancelOrderByDispute(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    cancelOrderByManagerSig(
-      id: BigNumberish,
-      expireAt: BigNumberish,
-      signature: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    computeSwapFee(
-      mid: string,
-      provider: string,
-      lid: BigNumberish,
-      taker: string,
-      orderAmt: BigNumberish,
-      orderPrice: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    configureFeePool(
-      interval: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    createOffer(
-      marketId: string,
-      provider: string,
-      recipient: string,
-      lid: BigNumberish,
-      amount: BigNumberish,
-      price: BigNumberish,
-      ids: BigNumberish[],
-      deadline: BigNumberish,
-      operator: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    executeOffer(
-      offerId: BigNumberish,
-      txDeadline: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    feeBalanceOf(
-      owner: string,
-      asset: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getFeeBPs(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    getLiquidity(
-      mid: string,
-      owner: string,
-      lid: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getLiquidityManager(
-      marketId: string,
-      provider: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getMarket(
-      id: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getOffer(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getOrder(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getReqSwapBadges(
-      marketId: string,
-      lid: BigNumberish,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    hasLiquidity(
-      mid: string,
-      owner: string,
-      lid: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    hasOrder(
-      id: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    inventorBalanceOf(
-      asset: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    isVerified(
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    markAsDisputed(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    markOrderAsPaid(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    onERC1155BatchReceived(
-      arg0: string,
-      arg1: string,
-      arg2: BigNumberish[],
-      arg3: BigNumberish[],
-      arg4: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    onERC1155Received(
-      arg0: string,
-      arg1: string,
-      arg2: BigNumberish,
-      arg3: BigNumberish,
-      arg4: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    operatorBalanceOf(
-      operator: string,
-      asset: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    releaseOrder(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    releaseOrderByDispute(
-      id: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    releaseOrderByManagerSig(
-      id: BigNumberish,
-      expireAt: BigNumberish,
-      signature: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setAmmInfo(
-      swapRouter: string,
-      ethErc20Addr: string,
-      poolFee: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setAmmPoolInfo(
-      input: string,
-      out: string,
-      poolFee: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setAssetRegistry(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setBadgeMgr(
-      val: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setDiscountForNFTHolder(
-      bp: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setDisputeManager(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setFeePool(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setFeePurse(
-      val: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setInventor(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setLiquidityManager(
-      marketId: string,
-      manager: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setMarketCore(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setMaxOpenDisputes(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setMaxOpenOrders(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setMinTimeToPay(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setNFT(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setOperator(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setOrderGraceDur(
-      val: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setProtoFee(
-      _instantSwapFeeBp: BigNumberish,
-      _synthSwapFeeBp: BigNumberish,
-      _stableSwapFeeBp: BigNumberish,
-      _fixedSynthSwapFee: BigNumberish,
-      _fixedNFTSwapFee: BigNumberish,
-      _instantNFTSwapFeeBp: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setProtoFeeSplit(
-      inventorBP: BigNumberish,
-      sharedBP: BigNumberish,
-      operatorBP: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setSwapBadgeForLiquidity(
-      marketId: string,
-      lid: BigNumberish,
-      badgeIds: [string, string][],
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    shareablesBalanceOf(
-      asset: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    state(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    state2(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    supportsInterface(
-      interfaceId: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    swapQuoteForBase(
-      marketId: string,
-      provider: string,
-      recipient: string,
-      lid: BigNumberish,
-      amount: BigNumberish,
-      maxPrice: BigNumberish,
-      ids: BigNumberish[],
-      txDeadline: BigNumberish,
-      operator: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    togglePause(
-      marketId: string,
-      lid: BigNumberish,
-      expireAt: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    transferToFeePool(
-      _token: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    unacceptOffer(
-      offerId: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    updateFungibleLiquidity(
-      marketId: string,
-      lid: BigNumberish,
-      deduct: boolean,
-      target: string,
-      amountAndPrice: [BigNumberish, BigNumberish],
-      wantOrIds: BigNumberish[],
-      wantAndIds: BigNumberish[],
-      limits: [
-        BigNumberish,
-        BigNumberish,
-        BigNumberish,
-        BigNumberish,
-        BigNumberish
-      ],
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    updateLiquidityPrice(
-      marketId: string,
-      owner: string,
-      lid: BigNumberish,
-      price: BigNumberish,
-      expireAt: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    updateNonFungibleLiquidity(
-      marketId: string,
-      lid: BigNumberish,
-      deduct: boolean,
-      target: string,
-      ids: BigNumberish[],
-      price: BigNumberish,
-      wantOrIds: BigNumberish[],
-      wantAndIds: BigNumberish[],
-      limits: [BigNumberish, BigNumberish, BigNumberish],
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    updateOffer(
-      offerId: BigNumberish,
-      amount: BigNumberish,
-      price: BigNumberish,
-      ids: BigNumberish[],
-      deadline: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    updateOpenDisputesCount(
-      marketId: string,
-      provider: string,
-      lid: BigNumberish,
-      incr: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    withdrawFeeBalance(
-      asset: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    withdrawInventorBalance(
-      asset: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    withdrawOperatorBalance(
-      _token: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
+    "FinalizedByManagerSig(address,address,uint256,bool)": TypedContractEvent<
+      FinalizedByManagerSigEvent.InputTuple,
+      FinalizedByManagerSigEvent.OutputTuple,
+      FinalizedByManagerSigEvent.OutputObject
+    >;
+    FinalizedByManagerSig: TypedContractEvent<
+      FinalizedByManagerSigEvent.InputTuple,
+      FinalizedByManagerSigEvent.OutputTuple,
+      FinalizedByManagerSigEvent.OutputObject
+    >;
+
+    "NFTDiscountUpdated(uint256)": TypedContractEvent<
+      NFTDiscountUpdatedEvent.InputTuple,
+      NFTDiscountUpdatedEvent.OutputTuple,
+      NFTDiscountUpdatedEvent.OutputObject
+    >;
+    NFTDiscountUpdated: TypedContractEvent<
+      NFTDiscountUpdatedEvent.InputTuple,
+      NFTDiscountUpdatedEvent.OutputTuple,
+      NFTDiscountUpdatedEvent.OutputObject
+    >;
+
+    "NewOffer(address,address,uint256,address,uint256,uint256,uint256,uint256[],uint256)": TypedContractEvent<
+      NewOfferEvent.InputTuple,
+      NewOfferEvent.OutputTuple,
+      NewOfferEvent.OutputObject
+    >;
+    NewOffer: TypedContractEvent<
+      NewOfferEvent.InputTuple,
+      NewOfferEvent.OutputTuple,
+      NewOfferEvent.OutputObject
+    >;
+
+    "OfferAccepted(uint256,address,uint256)": TypedContractEvent<
+      OfferAcceptedEvent.InputTuple,
+      OfferAcceptedEvent.OutputTuple,
+      OfferAcceptedEvent.OutputObject
+    >;
+    OfferAccepted: TypedContractEvent<
+      OfferAcceptedEvent.InputTuple,
+      OfferAcceptedEvent.OutputTuple,
+      OfferAcceptedEvent.OutputObject
+    >;
+
+    "OfferCancelled(uint256,address)": TypedContractEvent<
+      OfferCancelledEvent.InputTuple,
+      OfferCancelledEvent.OutputTuple,
+      OfferCancelledEvent.OutputObject
+    >;
+    OfferCancelled: TypedContractEvent<
+      OfferCancelledEvent.InputTuple,
+      OfferCancelledEvent.OutputTuple,
+      OfferCancelledEvent.OutputObject
+    >;
+
+    "OfferExecuted(uint256,address)": TypedContractEvent<
+      OfferExecutedEvent.InputTuple,
+      OfferExecutedEvent.OutputTuple,
+      OfferExecutedEvent.OutputObject
+    >;
+    OfferExecuted: TypedContractEvent<
+      OfferExecutedEvent.InputTuple,
+      OfferExecutedEvent.OutputTuple,
+      OfferExecutedEvent.OutputObject
+    >;
+
+    "OfferUnaccepted(uint256,address)": TypedContractEvent<
+      OfferUnacceptedEvent.InputTuple,
+      OfferUnacceptedEvent.OutputTuple,
+      OfferUnacceptedEvent.OutputObject
+    >;
+    OfferUnaccepted: TypedContractEvent<
+      OfferUnacceptedEvent.InputTuple,
+      OfferUnacceptedEvent.OutputTuple,
+      OfferUnacceptedEvent.OutputObject
+    >;
+
+    "OfferUpdated(uint256,address,uint256,uint256,uint256[],uint256)": TypedContractEvent<
+      OfferUpdatedEvent.InputTuple,
+      OfferUpdatedEvent.OutputTuple,
+      OfferUpdatedEvent.OutputObject
+    >;
+    OfferUpdated: TypedContractEvent<
+      OfferUpdatedEvent.InputTuple,
+      OfferUpdatedEvent.OutputTuple,
+      OfferUpdatedEvent.OutputObject
+    >;
+
+    "OrderCancelled(uint256,address,bool)": TypedContractEvent<
+      OrderCancelledEvent.InputTuple,
+      OrderCancelledEvent.OutputTuple,
+      OrderCancelledEvent.OutputObject
+    >;
+    OrderCancelled: TypedContractEvent<
+      OrderCancelledEvent.InputTuple,
+      OrderCancelledEvent.OutputTuple,
+      OrderCancelledEvent.OutputObject
+    >;
+
+    "OwnershipTransferred(address,address)": TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
+    OwnershipTransferred: TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
+
+    "ProtocolFeeSplitUpdated(uint256,uint256,uint256)": TypedContractEvent<
+      ProtocolFeeSplitUpdatedEvent.InputTuple,
+      ProtocolFeeSplitUpdatedEvent.OutputTuple,
+      ProtocolFeeSplitUpdatedEvent.OutputObject
+    >;
+    ProtocolFeeSplitUpdated: TypedContractEvent<
+      ProtocolFeeSplitUpdatedEvent.InputTuple,
+      ProtocolFeeSplitUpdatedEvent.OutputTuple,
+      ProtocolFeeSplitUpdatedEvent.OutputObject
+    >;
+
+    "ProtocolFeeUpdated(uint256,uint256,uint256,uint256,uint256,uint256)": TypedContractEvent<
+      ProtocolFeeUpdatedEvent.InputTuple,
+      ProtocolFeeUpdatedEvent.OutputTuple,
+      ProtocolFeeUpdatedEvent.OutputObject
+    >;
+    ProtocolFeeUpdated: TypedContractEvent<
+      ProtocolFeeUpdatedEvent.InputTuple,
+      ProtocolFeeUpdatedEvent.OutputTuple,
+      ProtocolFeeUpdatedEvent.OutputObject
+    >;
+
+    "Swap(address,address,address,address,address,uint256[6],bool,uint256[],uint256[])": TypedContractEvent<
+      SwapEvent.InputTuple,
+      SwapEvent.OutputTuple,
+      SwapEvent.OutputObject
+    >;
+    Swap: TypedContractEvent<
+      SwapEvent.InputTuple,
+      SwapEvent.OutputTuple,
+      SwapEvent.OutputObject
+    >;
+
+    "SwapOrder(address,address,address,address,uint256[7],uint256[],uint256[])": TypedContractEvent<
+      SwapOrderEvent.InputTuple,
+      SwapOrderEvent.OutputTuple,
+      SwapOrderEvent.OutputObject
+    >;
+    SwapOrder: TypedContractEvent<
+      SwapOrderEvent.InputTuple,
+      SwapOrderEvent.OutputTuple,
+      SwapOrderEvent.OutputObject
+    >;
+
+    "SwapOrderPaid(uint256,uint256)": TypedContractEvent<
+      SwapOrderPaidEvent.InputTuple,
+      SwapOrderPaidEvent.OutputTuple,
+      SwapOrderPaidEvent.OutputObject
+    >;
+    SwapOrderPaid: TypedContractEvent<
+      SwapOrderPaidEvent.InputTuple,
+      SwapOrderPaidEvent.OutputTuple,
+      SwapOrderPaidEvent.OutputObject
+    >;
+
+    "TogglePause(address,address,uint256,bool)": TypedContractEvent<
+      TogglePauseEvent.InputTuple,
+      TogglePauseEvent.OutputTuple,
+      TogglePauseEvent.OutputObject
+    >;
+    TogglePause: TypedContractEvent<
+      TogglePauseEvent.InputTuple,
+      TogglePauseEvent.OutputTuple,
+      TogglePauseEvent.OutputObject
+    >;
+
+    "TransferInventorBalance(address,uint256)": TypedContractEvent<
+      TransferInventorBalanceEvent.InputTuple,
+      TransferInventorBalanceEvent.OutputTuple,
+      TransferInventorBalanceEvent.OutputObject
+    >;
+    TransferInventorBalance: TypedContractEvent<
+      TransferInventorBalanceEvent.InputTuple,
+      TransferInventorBalanceEvent.OutputTuple,
+      TransferInventorBalanceEvent.OutputObject
+    >;
+
+    "TransferredToFeePool(address,uint256,address,uint256)": TypedContractEvent<
+      TransferredToFeePoolEvent.InputTuple,
+      TransferredToFeePoolEvent.OutputTuple,
+      TransferredToFeePoolEvent.OutputObject
+    >;
+    TransferredToFeePool: TypedContractEvent<
+      TransferredToFeePoolEvent.InputTuple,
+      TransferredToFeePoolEvent.OutputTuple,
+      TransferredToFeePoolEvent.OutputObject
+    >;
+
+    "UpdatedAMMInfo(address,address,uint256)": TypedContractEvent<
+      UpdatedAMMInfoEvent.InputTuple,
+      UpdatedAMMInfoEvent.OutputTuple,
+      UpdatedAMMInfoEvent.OutputObject
+    >;
+    UpdatedAMMInfo: TypedContractEvent<
+      UpdatedAMMInfoEvent.InputTuple,
+      UpdatedAMMInfoEvent.OutputTuple,
+      UpdatedAMMInfoEvent.OutputObject
+    >;
+
+    "UpdatedAMMPoolInfo(address,address,uint256)": TypedContractEvent<
+      UpdatedAMMPoolInfoEvent.InputTuple,
+      UpdatedAMMPoolInfoEvent.OutputTuple,
+      UpdatedAMMPoolInfoEvent.OutputObject
+    >;
+    UpdatedAMMPoolInfo: TypedContractEvent<
+      UpdatedAMMPoolInfoEvent.InputTuple,
+      UpdatedAMMPoolInfoEvent.OutputTuple,
+      UpdatedAMMPoolInfoEvent.OutputObject
+    >;
+
+    "UpdatedAssetRegistry(address)": TypedContractEvent<
+      UpdatedAssetRegistryEvent.InputTuple,
+      UpdatedAssetRegistryEvent.OutputTuple,
+      UpdatedAssetRegistryEvent.OutputObject
+    >;
+    UpdatedAssetRegistry: TypedContractEvent<
+      UpdatedAssetRegistryEvent.InputTuple,
+      UpdatedAssetRegistryEvent.OutputTuple,
+      UpdatedAssetRegistryEvent.OutputObject
+    >;
+
+    "UpdatedBadge(address)": TypedContractEvent<
+      UpdatedBadgeEvent.InputTuple,
+      UpdatedBadgeEvent.OutputTuple,
+      UpdatedBadgeEvent.OutputObject
+    >;
+    UpdatedBadge: TypedContractEvent<
+      UpdatedBadgeEvent.InputTuple,
+      UpdatedBadgeEvent.OutputTuple,
+      UpdatedBadgeEvent.OutputObject
+    >;
+
+    "UpdatedDisputeManager(address)": TypedContractEvent<
+      UpdatedDisputeManagerEvent.InputTuple,
+      UpdatedDisputeManagerEvent.OutputTuple,
+      UpdatedDisputeManagerEvent.OutputObject
+    >;
+    UpdatedDisputeManager: TypedContractEvent<
+      UpdatedDisputeManagerEvent.InputTuple,
+      UpdatedDisputeManagerEvent.OutputTuple,
+      UpdatedDisputeManagerEvent.OutputObject
+    >;
+
+    "UpdatedFeePool(address)": TypedContractEvent<
+      UpdatedFeePoolEvent.InputTuple,
+      UpdatedFeePoolEvent.OutputTuple,
+      UpdatedFeePoolEvent.OutputObject
+    >;
+    UpdatedFeePool: TypedContractEvent<
+      UpdatedFeePoolEvent.InputTuple,
+      UpdatedFeePoolEvent.OutputTuple,
+      UpdatedFeePoolEvent.OutputObject
+    >;
+
+    "UpdatedFeePoolConfig(uint256)": TypedContractEvent<
+      UpdatedFeePoolConfigEvent.InputTuple,
+      UpdatedFeePoolConfigEvent.OutputTuple,
+      UpdatedFeePoolConfigEvent.OutputObject
+    >;
+    UpdatedFeePoolConfig: TypedContractEvent<
+      UpdatedFeePoolConfigEvent.InputTuple,
+      UpdatedFeePoolConfigEvent.OutputTuple,
+      UpdatedFeePoolConfigEvent.OutputObject
+    >;
+
+    "UpdatedFeePurse(address)": TypedContractEvent<
+      UpdatedFeePurseEvent.InputTuple,
+      UpdatedFeePurseEvent.OutputTuple,
+      UpdatedFeePurseEvent.OutputObject
+    >;
+    UpdatedFeePurse: TypedContractEvent<
+      UpdatedFeePurseEvent.InputTuple,
+      UpdatedFeePurseEvent.OutputTuple,
+      UpdatedFeePurseEvent.OutputObject
+    >;
+
+    "UpdatedFungibleLiquidity(address,address,address,bool,bool,uint256,uint256,uint256,uint256[],uint256[],uint256,uint256,uint256)": TypedContractEvent<
+      UpdatedFungibleLiquidityEvent.InputTuple,
+      UpdatedFungibleLiquidityEvent.OutputTuple,
+      UpdatedFungibleLiquidityEvent.OutputObject
+    >;
+    UpdatedFungibleLiquidity: TypedContractEvent<
+      UpdatedFungibleLiquidityEvent.InputTuple,
+      UpdatedFungibleLiquidityEvent.OutputTuple,
+      UpdatedFungibleLiquidityEvent.OutputObject
+    >;
+
+    "UpdatedInventor(address)": TypedContractEvent<
+      UpdatedInventorEvent.InputTuple,
+      UpdatedInventorEvent.OutputTuple,
+      UpdatedInventorEvent.OutputObject
+    >;
+    UpdatedInventor: TypedContractEvent<
+      UpdatedInventorEvent.InputTuple,
+      UpdatedInventorEvent.OutputTuple,
+      UpdatedInventorEvent.OutputObject
+    >;
+
+    "UpdatedLiquidityManager(address,address,address,address)": TypedContractEvent<
+      UpdatedLiquidityManagerEvent.InputTuple,
+      UpdatedLiquidityManagerEvent.OutputTuple,
+      UpdatedLiquidityManagerEvent.OutputObject
+    >;
+    UpdatedLiquidityManager: TypedContractEvent<
+      UpdatedLiquidityManagerEvent.InputTuple,
+      UpdatedLiquidityManagerEvent.OutputTuple,
+      UpdatedLiquidityManagerEvent.OutputObject
+    >;
+
+    "UpdatedLiquiditySwapBadges(address,address,uint256,string[2][])": TypedContractEvent<
+      UpdatedLiquiditySwapBadgesEvent.InputTuple,
+      UpdatedLiquiditySwapBadgesEvent.OutputTuple,
+      UpdatedLiquiditySwapBadgesEvent.OutputObject
+    >;
+    UpdatedLiquiditySwapBadges: TypedContractEvent<
+      UpdatedLiquiditySwapBadgesEvent.InputTuple,
+      UpdatedLiquiditySwapBadgesEvent.OutputTuple,
+      UpdatedLiquiditySwapBadgesEvent.OutputObject
+    >;
+
+    "UpdatedMarketCore(address)": TypedContractEvent<
+      UpdatedMarketCoreEvent.InputTuple,
+      UpdatedMarketCoreEvent.OutputTuple,
+      UpdatedMarketCoreEvent.OutputObject
+    >;
+    UpdatedMarketCore: TypedContractEvent<
+      UpdatedMarketCoreEvent.InputTuple,
+      UpdatedMarketCoreEvent.OutputTuple,
+      UpdatedMarketCoreEvent.OutputObject
+    >;
+
+    "UpdatedMaxOpenDisputes(uint256)": TypedContractEvent<
+      UpdatedMaxOpenDisputesEvent.InputTuple,
+      UpdatedMaxOpenDisputesEvent.OutputTuple,
+      UpdatedMaxOpenDisputesEvent.OutputObject
+    >;
+    UpdatedMaxOpenDisputes: TypedContractEvent<
+      UpdatedMaxOpenDisputesEvent.InputTuple,
+      UpdatedMaxOpenDisputesEvent.OutputTuple,
+      UpdatedMaxOpenDisputesEvent.OutputObject
+    >;
+
+    "UpdatedMaxOpenOrders(uint256)": TypedContractEvent<
+      UpdatedMaxOpenOrdersEvent.InputTuple,
+      UpdatedMaxOpenOrdersEvent.OutputTuple,
+      UpdatedMaxOpenOrdersEvent.OutputObject
+    >;
+    UpdatedMaxOpenOrders: TypedContractEvent<
+      UpdatedMaxOpenOrdersEvent.InputTuple,
+      UpdatedMaxOpenOrdersEvent.OutputTuple,
+      UpdatedMaxOpenOrdersEvent.OutputObject
+    >;
+
+    "UpdatedMinTimeToPay(uint256)": TypedContractEvent<
+      UpdatedMinTimeToPayEvent.InputTuple,
+      UpdatedMinTimeToPayEvent.OutputTuple,
+      UpdatedMinTimeToPayEvent.OutputObject
+    >;
+    UpdatedMinTimeToPay: TypedContractEvent<
+      UpdatedMinTimeToPayEvent.InputTuple,
+      UpdatedMinTimeToPayEvent.OutputTuple,
+      UpdatedMinTimeToPayEvent.OutputObject
+    >;
+
+    "UpdatedNFT(address)": TypedContractEvent<
+      UpdatedNFTEvent.InputTuple,
+      UpdatedNFTEvent.OutputTuple,
+      UpdatedNFTEvent.OutputObject
+    >;
+    UpdatedNFT: TypedContractEvent<
+      UpdatedNFTEvent.InputTuple,
+      UpdatedNFTEvent.OutputTuple,
+      UpdatedNFTEvent.OutputObject
+    >;
+
+    "UpdatedNonFungibleLiquidity(address,address,address,bool,bool,uint256,uint256[],uint256,uint256[],uint256[],uint256)": TypedContractEvent<
+      UpdatedNonFungibleLiquidityEvent.InputTuple,
+      UpdatedNonFungibleLiquidityEvent.OutputTuple,
+      UpdatedNonFungibleLiquidityEvent.OutputObject
+    >;
+    UpdatedNonFungibleLiquidity: TypedContractEvent<
+      UpdatedNonFungibleLiquidityEvent.InputTuple,
+      UpdatedNonFungibleLiquidityEvent.OutputTuple,
+      UpdatedNonFungibleLiquidityEvent.OutputObject
+    >;
+
+    "UpdatedOperator(address)": TypedContractEvent<
+      UpdatedOperatorEvent.InputTuple,
+      UpdatedOperatorEvent.OutputTuple,
+      UpdatedOperatorEvent.OutputObject
+    >;
+    UpdatedOperator: TypedContractEvent<
+      UpdatedOperatorEvent.InputTuple,
+      UpdatedOperatorEvent.OutputTuple,
+      UpdatedOperatorEvent.OutputObject
+    >;
+
+    "UpdatedOrderGraceDur(uint256)": TypedContractEvent<
+      UpdatedOrderGraceDurEvent.InputTuple,
+      UpdatedOrderGraceDurEvent.OutputTuple,
+      UpdatedOrderGraceDurEvent.OutputObject
+    >;
+    UpdatedOrderGraceDur: TypedContractEvent<
+      UpdatedOrderGraceDurEvent.InputTuple,
+      UpdatedOrderGraceDurEvent.OutputTuple,
+      UpdatedOrderGraceDurEvent.OutputObject
+    >;
+
+    "UpdatedPrice(address,address,address,uint256,uint256)": TypedContractEvent<
+      UpdatedPriceEvent.InputTuple,
+      UpdatedPriceEvent.OutputTuple,
+      UpdatedPriceEvent.OutputObject
+    >;
+    UpdatedPrice: TypedContractEvent<
+      UpdatedPriceEvent.InputTuple,
+      UpdatedPriceEvent.OutputTuple,
+      UpdatedPriceEvent.OutputObject
+    >;
   };
 }

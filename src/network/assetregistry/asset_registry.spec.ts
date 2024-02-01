@@ -1,7 +1,7 @@
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { DBService } from '../../db/db.service';
 import AssetRegistry from '../../models/asset_registry';
-import { toBN } from '../common';
+import { toBigInt } from '../common';
 import { AssetRegistryHandler } from './asset_registry.handler';
 
 const BadgeManagerContract = jest.fn().mockImplementation(() => {
@@ -58,7 +58,17 @@ describe('AssetRegistryHandler', () => {
         verified: false,
       });
       await expect(
-        handler.onAssetRegistryUpdated(asset, toBN(300), toBN(150), toBN(200), toBN(2000), true, false, true, null),
+        handler.onAssetRegistryUpdated(
+          asset,
+          toBigInt(300),
+          toBigInt(150),
+          toBigInt(200),
+          toBigInt(2000),
+          true,
+          false,
+          true,
+          null,
+        ),
       ).resolves.toBeUndefined();
       const res = await AssetRegistry.find({ network: net, address: asset });
       expect(res.curRate).toEqual('300');

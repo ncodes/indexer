@@ -7,7 +7,7 @@ import Liquidity from '../../models/liquidity';
 import Market, { AssetType } from '../../models/market';
 import LiquidityProvider from '../../models/market_provider';
 import PermittedTrader from '../../models/permitted_trader';
-import { toBN } from '../common';
+import { toBigInt } from '../common';
 import { MarketCoreHandler } from './market_core.handler';
 
 // eslint-disable-next-line no-var
@@ -114,8 +114,8 @@ describe('MarketCoreHandler', () => {
             AssetType.ERC20,
             true,
             true,
-            toBN(1),
-            toBN(1),
+            toBigInt(1),
+            toBigInt(1),
             { transactionHash: txHash } as any,
           ),
         ).resolves.toBeUndefined();
@@ -161,8 +161,8 @@ describe('MarketCoreHandler', () => {
             AssetType.SYNTH,
             true,
             true,
-            toBN(1),
-            toBN(1),
+            toBigInt(1),
+            toBigInt(1),
             evt,
           ),
         ).resolves.toBeUndefined();
@@ -194,8 +194,8 @@ describe('MarketCoreHandler', () => {
               AssetType.SYNTH,
               true,
               true,
-              toBN(1),
-              toBN(1),
+              toBigInt(1),
+              toBigInt(1),
               { transactionHash: txHash } as any,
             ),
           ).resolves.toBeUndefined();
@@ -223,8 +223,8 @@ describe('MarketCoreHandler', () => {
             AssetType.ERC721,
             true,
             true,
-            toBN(1),
-            toBN(1),
+            toBigInt(1),
+            toBigInt(1),
             { transactionHash: txHash } as any,
           ),
         ).resolves.toBeUndefined();
@@ -249,8 +249,8 @@ describe('MarketCoreHandler', () => {
             AssetType.ERC1155,
             true,
             true,
-            toBN(1),
-            toBN(1),
+            toBigInt(1),
+            toBigInt(1),
             { transactionHash: txHash } as any,
           ),
         ).resolves.toBeUndefined();
@@ -484,7 +484,7 @@ describe('MarketCoreHandler', () => {
   describe('.onUpdatedCommission', function () {
     it('should update market correctly', async () => {
       const mkt = await Market.create({ network: net, address: marketAddress, commission: 1 });
-      await expect(handler.onUpdatedCommission(marketAddress, toBN(2), null)).resolves.toBeUndefined();
+      await expect(handler.onUpdatedCommission(marketAddress, toBigInt(2), null)).resolves.toBeUndefined();
       const updMkt = await Market.getById(mkt.id);
       expect(updMkt.commission).toEqual(2);
     });
@@ -494,7 +494,7 @@ describe('MarketCoreHandler', () => {
     it('should update market correctly', async () => {
       const mkt = await Market.create({ network: net, address: marketAddress });
       await expect(
-        handler.onUpdatedDisputeDurations(marketAddress, toBN(1), toBN(2), toBN(3), null),
+        handler.onUpdatedDisputeDurations(marketAddress, toBigInt(1), toBigInt(2), toBigInt(3), null),
       ).resolves.toBeUndefined();
       const updMkt = await Market.getById(mkt.id);
       expect(updMkt.disputeDelayDur).toEqual(1);

@@ -3,109 +3,29 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BigNumber,
   BigNumberish,
   BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  Overrides,
-  PayableOverrides,
-  PopulatedTransaction,
-  Signer,
-  utils,
-} from "ethers";
-import type {
   FunctionFragment,
   Result,
+  Interface,
   EventFragment,
-} from "@ethersproject/abi";
-import type { Listener, Provider } from "@ethersproject/providers";
+  AddressLike,
+  ContractRunner,
+  ContractMethod,
+  Listener,
+} from "ethers";
 import type {
-  TypedEventFilter,
-  TypedEvent,
+  TypedContractEvent,
+  TypedDeferredTopicFilter,
+  TypedEventLog,
+  TypedLogDescription,
   TypedListener,
-  OnEvent,
+  TypedContractMethod,
 } from "./common";
 
-export interface NFTInterface extends utils.Interface {
-  functions: {
-    "OPERATOR_FILTER_REGISTRY()": FunctionFragment;
-    "_contractURI()": FunctionFragment;
-    "allocate(uint256,uint256,bytes)": FunctionFragment;
-    "allocator()": FunctionFragment;
-    "allowAddr(address,uint256,bool)": FunctionFragment;
-    "allowAlloc()": FunctionFragment;
-    "allowEnergonOps()": FunctionFragment;
-    "allowMint()": FunctionFragment;
-    "allowlist(address)": FunctionFragment;
-    "approve(address,uint256)": FunctionFragment;
-    "balanceOf(address)": FunctionFragment;
-    "baseExtension()": FunctionFragment;
-    "baseURI()": FunctionFragment;
-    "burnAllowance(uint256,address)": FunctionFragment;
-    "burnAllowances(address,uint256)": FunctionFragment;
-    "burnApprove(uint256,address,uint256)": FunctionFragment;
-    "burnEnergon(uint256,uint256,bytes)": FunctionFragment;
-    "burnFrom(uint256,uint256)": FunctionFragment;
-    "contractURI()": FunctionFragment;
-    "cost()": FunctionFragment;
-    "depositEnergon(uint256,uint256)": FunctionFragment;
-    "energon()": FunctionFragment;
-    "engBalanceOf(uint256)": FunctionFragment;
-    "engBalances(uint256)": FunctionFragment;
-    "feePool()": FunctionFragment;
-    "getApproved(uint256)": FunctionFragment;
-    "isApprovedForAll(address,address)": FunctionFragment;
-    "maxSupply()": FunctionFragment;
-    "mint(uint256,bool,bytes,uint256)": FunctionFragment;
-    "mintCost()": FunctionFragment;
-    "mintTE(uint256,uint256)": FunctionFragment;
-    "mintedByAllowlist()": FunctionFragment;
-    "mintedByOwner()": FunctionFragment;
-    "mintedBySig()": FunctionFragment;
-    "mintedByTreasury()": FunctionFragment;
-    "name()": FunctionFragment;
-    "owner()": FunctionFragment;
-    "ownerOf(uint256)": FunctionFragment;
-    "p2pBalanceOf(uint256)": FunctionFragment;
-    "p2pBalances(uint256)": FunctionFragment;
-    "renounceOwnership()": FunctionFragment;
-    "royaltyInfo(uint256,uint256)": FunctionFragment;
-    "safeTransferFrom(address,address,uint256)": FunctionFragment;
-    "safeTransferFrom(address,address,uint256,bytes)": FunctionFragment;
-    "setAllocator(address)": FunctionFragment;
-    "setApprovalForAll(address,bool)": FunctionFragment;
-    "setBaseExtension(string)": FunctionFragment;
-    "setBaseURI(string)": FunctionFragment;
-    "setContractURI(string)": FunctionFragment;
-    "setCost(uint256)": FunctionFragment;
-    "setDefaultRoyalty(address,uint96)": FunctionFragment;
-    "setEnergon(address)": FunctionFragment;
-    "setFeePool(address)": FunctionFragment;
-    "setMintCost(uint256)": FunctionFragment;
-    "setToken(address)": FunctionFragment;
-    "supportsInterface(bytes4)": FunctionFragment;
-    "symbol()": FunctionFragment;
-    "toggleAllowAlloc()": FunctionFragment;
-    "toggleAllowEnergonOps()": FunctionFragment;
-    "toggleAllowMint()": FunctionFragment;
-    "token()": FunctionFragment;
-    "tokenByIndex(uint256)": FunctionFragment;
-    "tokenOfOwnerByIndex(address,uint256)": FunctionFragment;
-    "tokenURI(uint256)": FunctionFragment;
-    "tokensOfOwner(address)": FunctionFragment;
-    "totalAllocated()": FunctionFragment;
-    "totalSupply()": FunctionFragment;
-    "transferFrom(address,address,uint256)": FunctionFragment;
-    "transferOwnership(address)": FunctionFragment;
-    "treasuryEditionSupply()": FunctionFragment;
-    "usedNonce(address,uint256)": FunctionFragment;
-    "withdraw()": FunctionFragment;
-    "withdrawEnergon(uint256,uint256)": FunctionFragment;
-  };
-
+export interface NFTInterface extends Interface {
   getFunction(
-    nameOrSignatureOrTopic:
+    nameOrSignature:
       | "OPERATOR_FILTER_REGISTRY"
       | "_contractURI"
       | "allocate"
@@ -181,6 +101,33 @@ export interface NFTInterface extends utils.Interface {
       | "withdrawEnergon"
   ): FunctionFragment;
 
+  getEvent(
+    nameOrSignatureOrTopic:
+      | "Allocated"
+      | "AllocatorUpdated"
+      | "AllowAddr"
+      | "AllowAlloc"
+      | "AllowBurn"
+      | "AllowMint"
+      | "Approval"
+      | "ApprovalForAll"
+      | "BurnAllowance"
+      | "BurnedEnergon"
+      | "DepositedEnergon"
+      | "EnergonUpdated"
+      | "OwnershipTransferred"
+      | "TokenUpdated"
+      | "Transfer"
+      | "UpdatedBaseExtension"
+      | "UpdatedBaseURI"
+      | "UpdatedContractURI"
+      | "UpdatedCost"
+      | "UpdatedMaxMintAmount"
+      | "UpdatedMintCost"
+      | "Withdrawal"
+      | "WithdrawnEnergon"
+  ): EventFragment;
+
   encodeFunctionData(
     functionFragment: "OPERATOR_FILTER_REGISTRY",
     values?: undefined
@@ -196,7 +143,7 @@ export interface NFTInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "allocator", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "allowAddr",
-    values: [string, BigNumberish, boolean]
+    values: [AddressLike, BigNumberish, boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "allowAlloc",
@@ -207,12 +154,18 @@ export interface NFTInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "allowMint", values?: undefined): string;
-  encodeFunctionData(functionFragment: "allowlist", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "allowlist",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "approve",
-    values: [string, BigNumberish]
+    values: [AddressLike, BigNumberish]
   ): string;
-  encodeFunctionData(functionFragment: "balanceOf", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "balanceOf",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "baseExtension",
     values?: undefined
@@ -220,15 +173,15 @@ export interface NFTInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "baseURI", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "burnAllowance",
-    values: [BigNumberish, string]
+    values: [BigNumberish, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "burnAllowances",
-    values: [string, BigNumberish]
+    values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "burnApprove",
-    values: [BigNumberish, string, BigNumberish]
+    values: [BigNumberish, AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "burnEnergon",
@@ -263,7 +216,7 @@ export interface NFTInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "isApprovedForAll",
-    values: [string, string]
+    values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "maxSupply", values?: undefined): string;
   encodeFunctionData(
@@ -315,19 +268,19 @@ export interface NFTInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "safeTransferFrom(address,address,uint256)",
-    values: [string, string, BigNumberish]
+    values: [AddressLike, AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "safeTransferFrom(address,address,uint256,bytes)",
-    values: [string, string, BigNumberish, BytesLike]
+    values: [AddressLike, AddressLike, BigNumberish, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "setAllocator",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "setApprovalForAll",
-    values: [string, boolean]
+    values: [AddressLike, boolean]
   ): string;
   encodeFunctionData(
     functionFragment: "setBaseExtension",
@@ -344,15 +297,24 @@ export interface NFTInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "setDefaultRoyalty",
-    values: [string, BigNumberish]
+    values: [AddressLike, BigNumberish]
   ): string;
-  encodeFunctionData(functionFragment: "setEnergon", values: [string]): string;
-  encodeFunctionData(functionFragment: "setFeePool", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "setEnergon",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setFeePool",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "setMintCost",
     values: [BigNumberish]
   ): string;
-  encodeFunctionData(functionFragment: "setToken", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "setToken",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(
     functionFragment: "supportsInterface",
     values: [BytesLike]
@@ -377,7 +339,7 @@ export interface NFTInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "tokenOfOwnerByIndex",
-    values: [string, BigNumberish]
+    values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "tokenURI",
@@ -385,7 +347,7 @@ export interface NFTInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "tokensOfOwner",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "totalAllocated",
@@ -397,11 +359,11 @@ export interface NFTInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "transferFrom",
-    values: [string, string, BigNumberish]
+    values: [AddressLike, AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "treasuryEditionSupply",
@@ -409,7 +371,7 @@ export interface NFTInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "usedNonce",
-    values: [string, BigNumberish]
+    values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "withdraw", values?: undefined): string;
   encodeFunctionData(
@@ -619,2000 +581,1400 @@ export interface NFTInterface extends utils.Interface {
     functionFragment: "withdrawEnergon",
     data: BytesLike
   ): Result;
-
-  events: {
-    "Allocated(address,uint256,uint256)": EventFragment;
-    "AllocatorUpdated(address)": EventFragment;
-    "AllowAddr(address,uint256,bool)": EventFragment;
-    "AllowAlloc(bool)": EventFragment;
-    "AllowBurn(bool)": EventFragment;
-    "AllowMint(bool)": EventFragment;
-    "Approval(address,address,uint256)": EventFragment;
-    "ApprovalForAll(address,address,bool)": EventFragment;
-    "BurnAllowance(address,uint256,address,uint256)": EventFragment;
-    "BurnedEnergon(address,uint256,uint256,bytes)": EventFragment;
-    "DepositedEnergon(address,uint256,uint256)": EventFragment;
-    "EnergonUpdated(address)": EventFragment;
-    "OwnershipTransferred(address,address)": EventFragment;
-    "TokenUpdated(address)": EventFragment;
-    "Transfer(address,address,uint256)": EventFragment;
-    "UpdatedBaseExtension(string)": EventFragment;
-    "UpdatedBaseURI(string)": EventFragment;
-    "UpdatedContractURI(string)": EventFragment;
-    "UpdatedCost(uint256)": EventFragment;
-    "UpdatedMaxMintAmount(uint256)": EventFragment;
-    "UpdatedMintCost(uint256)": EventFragment;
-    "Withdrawal(uint256)": EventFragment;
-    "WithdrawnEnergon(address,uint256,uint256)": EventFragment;
-  };
-
-  getEvent(nameOrSignatureOrTopic: "Allocated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "AllocatorUpdated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "AllowAddr"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "AllowAlloc"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "AllowBurn"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "AllowMint"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Approval"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "ApprovalForAll"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "BurnAllowance"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "BurnedEnergon"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "DepositedEnergon"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "EnergonUpdated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "TokenUpdated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Transfer"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedBaseExtension"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedBaseURI"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedContractURI"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedCost"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedMaxMintAmount"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "UpdatedMintCost"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Withdrawal"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "WithdrawnEnergon"): EventFragment;
 }
 
-export interface AllocatedEventObject {
-  sender: string;
-  _tokenId: BigNumber;
-  amount: BigNumber;
+export namespace AllocatedEvent {
+  export type InputTuple = [
+    sender: AddressLike,
+    _tokenId: BigNumberish,
+    amount: BigNumberish
+  ];
+  export type OutputTuple = [sender: string, _tokenId: bigint, amount: bigint];
+  export interface OutputObject {
+    sender: string;
+    _tokenId: bigint;
+    amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type AllocatedEvent = TypedEvent<
-  [string, BigNumber, BigNumber],
-  AllocatedEventObject
->;
 
-export type AllocatedEventFilter = TypedEventFilter<AllocatedEvent>;
-
-export interface AllocatorUpdatedEventObject {
-  addr: string;
+export namespace AllocatorUpdatedEvent {
+  export type InputTuple = [addr: AddressLike];
+  export type OutputTuple = [addr: string];
+  export interface OutputObject {
+    addr: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type AllocatorUpdatedEvent = TypedEvent<
-  [string],
-  AllocatorUpdatedEventObject
->;
 
-export type AllocatorUpdatedEventFilter =
-  TypedEventFilter<AllocatorUpdatedEvent>;
-
-export interface AllowAddrEventObject {
-  addr: string;
-  slot: BigNumber;
-  add: boolean;
+export namespace AllowAddrEvent {
+  export type InputTuple = [
+    addr: AddressLike,
+    slot: BigNumberish,
+    add: boolean
+  ];
+  export type OutputTuple = [addr: string, slot: bigint, add: boolean];
+  export interface OutputObject {
+    addr: string;
+    slot: bigint;
+    add: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type AllowAddrEvent = TypedEvent<
-  [string, BigNumber, boolean],
-  AllowAddrEventObject
->;
 
-export type AllowAddrEventFilter = TypedEventFilter<AllowAddrEvent>;
-
-export interface AllowAllocEventObject {
-  allow: boolean;
+export namespace AllowAllocEvent {
+  export type InputTuple = [allow: boolean];
+  export type OutputTuple = [allow: boolean];
+  export interface OutputObject {
+    allow: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type AllowAllocEvent = TypedEvent<[boolean], AllowAllocEventObject>;
 
-export type AllowAllocEventFilter = TypedEventFilter<AllowAllocEvent>;
-
-export interface AllowBurnEventObject {
-  allow: boolean;
+export namespace AllowBurnEvent {
+  export type InputTuple = [allow: boolean];
+  export type OutputTuple = [allow: boolean];
+  export interface OutputObject {
+    allow: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type AllowBurnEvent = TypedEvent<[boolean], AllowBurnEventObject>;
 
-export type AllowBurnEventFilter = TypedEventFilter<AllowBurnEvent>;
-
-export interface AllowMintEventObject {
-  allow: boolean;
+export namespace AllowMintEvent {
+  export type InputTuple = [allow: boolean];
+  export type OutputTuple = [allow: boolean];
+  export interface OutputObject {
+    allow: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type AllowMintEvent = TypedEvent<[boolean], AllowMintEventObject>;
 
-export type AllowMintEventFilter = TypedEventFilter<AllowMintEvent>;
-
-export interface ApprovalEventObject {
-  owner: string;
-  approved: string;
-  tokenId: BigNumber;
+export namespace ApprovalEvent {
+  export type InputTuple = [
+    owner: AddressLike,
+    approved: AddressLike,
+    tokenId: BigNumberish
+  ];
+  export type OutputTuple = [owner: string, approved: string, tokenId: bigint];
+  export interface OutputObject {
+    owner: string;
+    approved: string;
+    tokenId: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type ApprovalEvent = TypedEvent<
-  [string, string, BigNumber],
-  ApprovalEventObject
->;
 
-export type ApprovalEventFilter = TypedEventFilter<ApprovalEvent>;
-
-export interface ApprovalForAllEventObject {
-  owner: string;
-  operator: string;
-  approved: boolean;
+export namespace ApprovalForAllEvent {
+  export type InputTuple = [
+    owner: AddressLike,
+    operator: AddressLike,
+    approved: boolean
+  ];
+  export type OutputTuple = [
+    owner: string,
+    operator: string,
+    approved: boolean
+  ];
+  export interface OutputObject {
+    owner: string;
+    operator: string;
+    approved: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type ApprovalForAllEvent = TypedEvent<
-  [string, string, boolean],
-  ApprovalForAllEventObject
->;
 
-export type ApprovalForAllEventFilter = TypedEventFilter<ApprovalForAllEvent>;
-
-export interface BurnAllowanceEventObject {
-  _owner: string;
-  _tokenId: BigNumber;
-  _burner: string;
-  _amount: BigNumber;
+export namespace BurnAllowanceEvent {
+  export type InputTuple = [
+    _owner: AddressLike,
+    _tokenId: BigNumberish,
+    _burner: AddressLike,
+    _amount: BigNumberish
+  ];
+  export type OutputTuple = [
+    _owner: string,
+    _tokenId: bigint,
+    _burner: string,
+    _amount: bigint
+  ];
+  export interface OutputObject {
+    _owner: string;
+    _tokenId: bigint;
+    _burner: string;
+    _amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type BurnAllowanceEvent = TypedEvent<
-  [string, BigNumber, string, BigNumber],
-  BurnAllowanceEventObject
->;
 
-export type BurnAllowanceEventFilter = TypedEventFilter<BurnAllowanceEvent>;
-
-export interface BurnedEnergonEventObject {
-  owner: string;
-  _tokenId: BigNumber;
-  _amount: BigNumber;
-  _purpose: string;
+export namespace BurnedEnergonEvent {
+  export type InputTuple = [
+    owner: AddressLike,
+    _tokenId: BigNumberish,
+    _amount: BigNumberish,
+    _purpose: BytesLike
+  ];
+  export type OutputTuple = [
+    owner: string,
+    _tokenId: bigint,
+    _amount: bigint,
+    _purpose: string
+  ];
+  export interface OutputObject {
+    owner: string;
+    _tokenId: bigint;
+    _amount: bigint;
+    _purpose: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type BurnedEnergonEvent = TypedEvent<
-  [string, BigNumber, BigNumber, string],
-  BurnedEnergonEventObject
->;
 
-export type BurnedEnergonEventFilter = TypedEventFilter<BurnedEnergonEvent>;
-
-export interface DepositedEnergonEventObject {
-  depositor: string;
-  _tokenId: BigNumber;
-  _amount: BigNumber;
+export namespace DepositedEnergonEvent {
+  export type InputTuple = [
+    depositor: AddressLike,
+    _tokenId: BigNumberish,
+    _amount: BigNumberish
+  ];
+  export type OutputTuple = [
+    depositor: string,
+    _tokenId: bigint,
+    _amount: bigint
+  ];
+  export interface OutputObject {
+    depositor: string;
+    _tokenId: bigint;
+    _amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type DepositedEnergonEvent = TypedEvent<
-  [string, BigNumber, BigNumber],
-  DepositedEnergonEventObject
->;
 
-export type DepositedEnergonEventFilter =
-  TypedEventFilter<DepositedEnergonEvent>;
-
-export interface EnergonUpdatedEventObject {
-  addr: string;
+export namespace EnergonUpdatedEvent {
+  export type InputTuple = [addr: AddressLike];
+  export type OutputTuple = [addr: string];
+  export interface OutputObject {
+    addr: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type EnergonUpdatedEvent = TypedEvent<
-  [string],
-  EnergonUpdatedEventObject
->;
 
-export type EnergonUpdatedEventFilter = TypedEventFilter<EnergonUpdatedEvent>;
-
-export interface OwnershipTransferredEventObject {
-  previousOwner: string;
-  newOwner: string;
+export namespace OwnershipTransferredEvent {
+  export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
+  export type OutputTuple = [previousOwner: string, newOwner: string];
+  export interface OutputObject {
+    previousOwner: string;
+    newOwner: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type OwnershipTransferredEvent = TypedEvent<
-  [string, string],
-  OwnershipTransferredEventObject
->;
 
-export type OwnershipTransferredEventFilter =
-  TypedEventFilter<OwnershipTransferredEvent>;
-
-export interface TokenUpdatedEventObject {
-  addr: string;
+export namespace TokenUpdatedEvent {
+  export type InputTuple = [addr: AddressLike];
+  export type OutputTuple = [addr: string];
+  export interface OutputObject {
+    addr: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type TokenUpdatedEvent = TypedEvent<[string], TokenUpdatedEventObject>;
 
-export type TokenUpdatedEventFilter = TypedEventFilter<TokenUpdatedEvent>;
-
-export interface TransferEventObject {
-  from: string;
-  to: string;
-  tokenId: BigNumber;
+export namespace TransferEvent {
+  export type InputTuple = [
+    from: AddressLike,
+    to: AddressLike,
+    tokenId: BigNumberish
+  ];
+  export type OutputTuple = [from: string, to: string, tokenId: bigint];
+  export interface OutputObject {
+    from: string;
+    to: string;
+    tokenId: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type TransferEvent = TypedEvent<
-  [string, string, BigNumber],
-  TransferEventObject
->;
 
-export type TransferEventFilter = TypedEventFilter<TransferEvent>;
-
-export interface UpdatedBaseExtensionEventObject {
-  _new: string;
+export namespace UpdatedBaseExtensionEvent {
+  export type InputTuple = [_new: string];
+  export type OutputTuple = [_new: string];
+  export interface OutputObject {
+    _new: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedBaseExtensionEvent = TypedEvent<
-  [string],
-  UpdatedBaseExtensionEventObject
->;
 
-export type UpdatedBaseExtensionEventFilter =
-  TypedEventFilter<UpdatedBaseExtensionEvent>;
-
-export interface UpdatedBaseURIEventObject {
-  _new: string;
+export namespace UpdatedBaseURIEvent {
+  export type InputTuple = [_new: string];
+  export type OutputTuple = [_new: string];
+  export interface OutputObject {
+    _new: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedBaseURIEvent = TypedEvent<
-  [string],
-  UpdatedBaseURIEventObject
->;
 
-export type UpdatedBaseURIEventFilter = TypedEventFilter<UpdatedBaseURIEvent>;
-
-export interface UpdatedContractURIEventObject {
-  _new: string;
+export namespace UpdatedContractURIEvent {
+  export type InputTuple = [_new: string];
+  export type OutputTuple = [_new: string];
+  export interface OutputObject {
+    _new: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedContractURIEvent = TypedEvent<
-  [string],
-  UpdatedContractURIEventObject
->;
 
-export type UpdatedContractURIEventFilter =
-  TypedEventFilter<UpdatedContractURIEvent>;
-
-export interface UpdatedCostEventObject {
-  _new: BigNumber;
+export namespace UpdatedCostEvent {
+  export type InputTuple = [_new: BigNumberish];
+  export type OutputTuple = [_new: bigint];
+  export interface OutputObject {
+    _new: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedCostEvent = TypedEvent<[BigNumber], UpdatedCostEventObject>;
 
-export type UpdatedCostEventFilter = TypedEventFilter<UpdatedCostEvent>;
-
-export interface UpdatedMaxMintAmountEventObject {
-  _new: BigNumber;
+export namespace UpdatedMaxMintAmountEvent {
+  export type InputTuple = [_new: BigNumberish];
+  export type OutputTuple = [_new: bigint];
+  export interface OutputObject {
+    _new: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedMaxMintAmountEvent = TypedEvent<
-  [BigNumber],
-  UpdatedMaxMintAmountEventObject
->;
 
-export type UpdatedMaxMintAmountEventFilter =
-  TypedEventFilter<UpdatedMaxMintAmountEvent>;
-
-export interface UpdatedMintCostEventObject {
-  _new: BigNumber;
+export namespace UpdatedMintCostEvent {
+  export type InputTuple = [_new: BigNumberish];
+  export type OutputTuple = [_new: bigint];
+  export interface OutputObject {
+    _new: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type UpdatedMintCostEvent = TypedEvent<
-  [BigNumber],
-  UpdatedMintCostEventObject
->;
 
-export type UpdatedMintCostEventFilter = TypedEventFilter<UpdatedMintCostEvent>;
-
-export interface WithdrawalEventObject {
-  amt: BigNumber;
+export namespace WithdrawalEvent {
+  export type InputTuple = [amt: BigNumberish];
+  export type OutputTuple = [amt: bigint];
+  export interface OutputObject {
+    amt: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type WithdrawalEvent = TypedEvent<[BigNumber], WithdrawalEventObject>;
 
-export type WithdrawalEventFilter = TypedEventFilter<WithdrawalEvent>;
-
-export interface WithdrawnEnergonEventObject {
-  withdrawer: string;
-  _tokenId: BigNumber;
-  _amount: BigNumber;
+export namespace WithdrawnEnergonEvent {
+  export type InputTuple = [
+    withdrawer: AddressLike,
+    _tokenId: BigNumberish,
+    _amount: BigNumberish
+  ];
+  export type OutputTuple = [
+    withdrawer: string,
+    _tokenId: bigint,
+    _amount: bigint
+  ];
+  export interface OutputObject {
+    withdrawer: string;
+    _tokenId: bigint;
+    _amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type WithdrawnEnergonEvent = TypedEvent<
-  [string, BigNumber, BigNumber],
-  WithdrawnEnergonEventObject
->;
-
-export type WithdrawnEnergonEventFilter =
-  TypedEventFilter<WithdrawnEnergonEvent>;
 
 export interface NFT extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
-  deployed(): Promise<this>;
+  connect(runner?: ContractRunner | null): NFT;
+  waitForDeployment(): Promise<this>;
 
   interface: NFTInterface;
 
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
+  queryFilter<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+  queryFilter<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    fromBlockOrBlockhash?: string | number | undefined,
+    toBlock?: string | number | undefined
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
 
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
+  on<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  on<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-  functions: {
-    OPERATOR_FILTER_REGISTRY(overrides?: CallOverrides): Promise<[string]>;
+  once<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  once<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-    _contractURI(overrides?: CallOverrides): Promise<[string]>;
+  listeners<TCEvent extends TypedContractEvent>(
+    event: TCEvent
+  ): Promise<Array<TypedListener<TCEvent>>>;
+  listeners(eventName?: string): Promise<Array<Listener>>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(
+    event?: TCEvent
+  ): Promise<this>;
 
-    allocate(
-      _tokenId: BigNumberish,
-      _alloc: BigNumberish,
-      _signature: BytesLike,
-      overrides?: PayableOverrides & { from?: string }
-    ): Promise<ContractTransaction>;
+  OPERATOR_FILTER_REGISTRY: TypedContractMethod<[], [string], "view">;
 
-    allocator(overrides?: CallOverrides): Promise<[string]>;
+  _contractURI: TypedContractMethod<[], [string], "view">;
 
-    allowAddr(
-      addr: string,
-      slot: BigNumberish,
-      add: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+  allocate: TypedContractMethod<
+    [_tokenId: BigNumberish, _alloc: BigNumberish, _signature: BytesLike],
+    [void],
+    "payable"
+  >;
 
-    allowAlloc(overrides?: CallOverrides): Promise<[boolean]>;
+  allocator: TypedContractMethod<[], [string], "view">;
 
-    allowEnergonOps(overrides?: CallOverrides): Promise<[boolean]>;
+  allowAddr: TypedContractMethod<
+    [addr: AddressLike, slot: BigNumberish, add: boolean],
+    [void],
+    "nonpayable"
+  >;
 
-    allowMint(overrides?: CallOverrides): Promise<[boolean]>;
+  allowAlloc: TypedContractMethod<[], [boolean], "view">;
 
-    allowlist(arg0: string, overrides?: CallOverrides): Promise<[BigNumber]>;
+  allowEnergonOps: TypedContractMethod<[], [boolean], "view">;
 
-    approve(
-      operator: string,
-      tokenId: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+  allowMint: TypedContractMethod<[], [boolean], "view">;
 
-    balanceOf(owner: string, overrides?: CallOverrides): Promise<[BigNumber]>;
+  allowlist: TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
 
-    baseExtension(overrides?: CallOverrides): Promise<[string]>;
+  approve: TypedContractMethod<
+    [operator: AddressLike, tokenId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    baseURI(overrides?: CallOverrides): Promise<[string]>;
+  balanceOf: TypedContractMethod<[owner: AddressLike], [bigint], "view">;
 
-    burnAllowance(
-      _tokenId: BigNumberish,
-      _burner: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
+  baseExtension: TypedContractMethod<[], [string], "view">;
 
-    burnAllowances(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
+  baseURI: TypedContractMethod<[], [string], "view">;
 
-    burnApprove(
-      _tokenId: BigNumberish,
-      _burner: string,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+  burnAllowance: TypedContractMethod<
+    [_tokenId: BigNumberish, _burner: AddressLike],
+    [bigint],
+    "view"
+  >;
 
-    burnEnergon(
-      _tokenId: BigNumberish,
-      _amount: BigNumberish,
-      _purpose: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+  burnAllowances: TypedContractMethod<
+    [arg0: AddressLike, arg1: BigNumberish],
+    [bigint],
+    "view"
+  >;
 
-    burnFrom(
-      _tokenId: BigNumberish,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+  burnApprove: TypedContractMethod<
+    [_tokenId: BigNumberish, _burner: AddressLike, _amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    contractURI(overrides?: CallOverrides): Promise<[string]>;
+  burnEnergon: TypedContractMethod<
+    [_tokenId: BigNumberish, _amount: BigNumberish, _purpose: BytesLike],
+    [void],
+    "nonpayable"
+  >;
 
-    cost(overrides?: CallOverrides): Promise<[BigNumber]>;
+  burnFrom: TypedContractMethod<
+    [_tokenId: BigNumberish, _amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    depositEnergon(
-      _tokenId: BigNumberish,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+  contractURI: TypedContractMethod<[], [string], "view">;
 
-    energon(overrides?: CallOverrides): Promise<[string]>;
+  cost: TypedContractMethod<[], [bigint], "view">;
 
-    engBalanceOf(
-      _tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
+  depositEnergon: TypedContractMethod<
+    [_tokenId: BigNumberish, _amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    engBalances(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
+  energon: TypedContractMethod<[], [string], "view">;
 
-    feePool(overrides?: CallOverrides): Promise<[string]>;
+  engBalanceOf: TypedContractMethod<[_tokenId: BigNumberish], [bigint], "view">;
 
-    getApproved(
-      tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
+  engBalances: TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;
 
-    isApprovedForAll(
-      owner: string,
-      operator: string,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
+  feePool: TypedContractMethod<[], [string], "view">;
 
-    maxSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
+  getApproved: TypedContractMethod<[tokenId: BigNumberish], [string], "view">;
 
-    mint(
+  isApprovedForAll: TypedContractMethod<
+    [owner: AddressLike, operator: AddressLike],
+    [boolean],
+    "view"
+  >;
+
+  maxSupply: TypedContractMethod<[], [bigint], "view">;
+
+  mint: TypedContractMethod<
+    [
       _mintAmount: BigNumberish,
       _noEnergon: boolean,
       _signature: BytesLike,
-      expireAt: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+      expireAt: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    mintCost(overrides?: CallOverrides): Promise<[BigNumber]>;
+  mintCost: TypedContractMethod<[], [bigint], "view">;
 
-    mintTE(
-      _fromId: BigNumberish,
-      _mintAmount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+  mintTE: TypedContractMethod<
+    [_fromId: BigNumberish, _mintAmount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    mintedByAllowlist(overrides?: CallOverrides): Promise<[BigNumber]>;
+  mintedByAllowlist: TypedContractMethod<[], [bigint], "view">;
 
-    mintedByOwner(overrides?: CallOverrides): Promise<[BigNumber]>;
+  mintedByOwner: TypedContractMethod<[], [bigint], "view">;
 
-    mintedBySig(overrides?: CallOverrides): Promise<[BigNumber]>;
+  mintedBySig: TypedContractMethod<[], [bigint], "view">;
 
-    mintedByTreasury(overrides?: CallOverrides): Promise<[BigNumber]>;
+  mintedByTreasury: TypedContractMethod<[], [bigint], "view">;
 
-    name(overrides?: CallOverrides): Promise<[string]>;
+  name: TypedContractMethod<[], [string], "view">;
 
-    owner(overrides?: CallOverrides): Promise<[string]>;
+  owner: TypedContractMethod<[], [string], "view">;
 
-    ownerOf(
+  ownerOf: TypedContractMethod<[tokenId: BigNumberish], [string], "view">;
+
+  p2pBalanceOf: TypedContractMethod<[_tokenId: BigNumberish], [bigint], "view">;
+
+  p2pBalances: TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;
+
+  renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
+
+  royaltyInfo: TypedContractMethod<
+    [_tokenId: BigNumberish, _salePrice: BigNumberish],
+    [[string, bigint]],
+    "view"
+  >;
+
+  "safeTransferFrom(address,address,uint256)": TypedContractMethod<
+    [from: AddressLike, to: AddressLike, tokenId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  "safeTransferFrom(address,address,uint256,bytes)": TypedContractMethod<
+    [
+      from: AddressLike,
+      to: AddressLike,
       tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
+      data: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    p2pBalanceOf(
-      _tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
+  setAllocator: TypedContractMethod<
+    [_allocator: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    p2pBalances(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
+  setApprovalForAll: TypedContractMethod<
+    [operator: AddressLike, approved: boolean],
+    [void],
+    "nonpayable"
+  >;
 
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
+  setBaseExtension: TypedContractMethod<
+    [_newBaseExtension: string],
+    [void],
+    "nonpayable"
+  >;
 
-    royaltyInfo(
-      _tokenId: BigNumberish,
-      _salePrice: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string, BigNumber]>;
-
-    "safeTransferFrom(address,address,uint256)"(
-      from: string,
-      to: string,
-      tokenId: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    "safeTransferFrom(address,address,uint256,bytes)"(
-      from: string,
-      to: string,
-      tokenId: BigNumberish,
-      data: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setAllocator(
-      _allocator: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setApprovalForAll(
-      operator: string,
-      approved: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setBaseExtension(
-      _newBaseExtension: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setBaseURI(
-      _newBaseURI: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setContractURI(
-      uri: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setCost(
-      value: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setDefaultRoyalty(
-      receiver: string,
-      feeNumerator: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setEnergon(
-      _energon: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setFeePool(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setMintCost(
-      value: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    setToken(
-      _token: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    supportsInterface(
-      interfaceId: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
-
-    symbol(overrides?: CallOverrides): Promise<[string]>;
-
-    toggleAllowAlloc(
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    toggleAllowEnergonOps(
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    toggleAllowMint(
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    token(overrides?: CallOverrides): Promise<[string]>;
-
-    tokenByIndex(
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    tokenOfOwnerByIndex(
-      owner: string,
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    tokenURI(
-      tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    tokensOfOwner(
-      _owner: string,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber[]]>;
-
-    totalAllocated(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    totalSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    transferFrom(
-      from: string,
-      to: string,
-      tokenId: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    treasuryEditionSupply(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    usedNonce(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[number]>;
-
-    withdraw(
-      overrides?: PayableOverrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    withdrawEnergon(
-      _tokenId: BigNumberish,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-  };
-
-  OPERATOR_FILTER_REGISTRY(overrides?: CallOverrides): Promise<string>;
-
-  _contractURI(overrides?: CallOverrides): Promise<string>;
-
-  allocate(
-    _tokenId: BigNumberish,
-    _alloc: BigNumberish,
-    _signature: BytesLike,
-    overrides?: PayableOverrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  allocator(overrides?: CallOverrides): Promise<string>;
-
-  allowAddr(
-    addr: string,
-    slot: BigNumberish,
-    add: boolean,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  allowAlloc(overrides?: CallOverrides): Promise<boolean>;
-
-  allowEnergonOps(overrides?: CallOverrides): Promise<boolean>;
-
-  allowMint(overrides?: CallOverrides): Promise<boolean>;
-
-  allowlist(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-  approve(
-    operator: string,
-    tokenId: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  balanceOf(owner: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-  baseExtension(overrides?: CallOverrides): Promise<string>;
-
-  baseURI(overrides?: CallOverrides): Promise<string>;
-
-  burnAllowance(
-    _tokenId: BigNumberish,
-    _burner: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  burnAllowances(
-    arg0: string,
-    arg1: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  burnApprove(
-    _tokenId: BigNumberish,
-    _burner: string,
-    _amount: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  burnEnergon(
-    _tokenId: BigNumberish,
-    _amount: BigNumberish,
-    _purpose: BytesLike,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  burnFrom(
-    _tokenId: BigNumberish,
-    _amount: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  contractURI(overrides?: CallOverrides): Promise<string>;
-
-  cost(overrides?: CallOverrides): Promise<BigNumber>;
-
-  depositEnergon(
-    _tokenId: BigNumberish,
-    _amount: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  energon(overrides?: CallOverrides): Promise<string>;
-
-  engBalanceOf(
-    _tokenId: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  engBalances(
-    arg0: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  feePool(overrides?: CallOverrides): Promise<string>;
-
-  getApproved(
-    tokenId: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  isApprovedForAll(
-    owner: string,
-    operator: string,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
-
-  maxSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-  mint(
-    _mintAmount: BigNumberish,
-    _noEnergon: boolean,
-    _signature: BytesLike,
-    expireAt: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  mintCost(overrides?: CallOverrides): Promise<BigNumber>;
-
-  mintTE(
-    _fromId: BigNumberish,
-    _mintAmount: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  mintedByAllowlist(overrides?: CallOverrides): Promise<BigNumber>;
-
-  mintedByOwner(overrides?: CallOverrides): Promise<BigNumber>;
-
-  mintedBySig(overrides?: CallOverrides): Promise<BigNumber>;
-
-  mintedByTreasury(overrides?: CallOverrides): Promise<BigNumber>;
-
-  name(overrides?: CallOverrides): Promise<string>;
-
-  owner(overrides?: CallOverrides): Promise<string>;
-
-  ownerOf(tokenId: BigNumberish, overrides?: CallOverrides): Promise<string>;
-
-  p2pBalanceOf(
-    _tokenId: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  p2pBalances(
-    arg0: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  renounceOwnership(
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  royaltyInfo(
-    _tokenId: BigNumberish,
-    _salePrice: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<[string, BigNumber]>;
-
-  "safeTransferFrom(address,address,uint256)"(
-    from: string,
-    to: string,
-    tokenId: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  "safeTransferFrom(address,address,uint256,bytes)"(
-    from: string,
-    to: string,
-    tokenId: BigNumberish,
-    data: BytesLike,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setAllocator(
-    _allocator: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setApprovalForAll(
-    operator: string,
-    approved: boolean,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setBaseExtension(
-    _newBaseExtension: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setBaseURI(
-    _newBaseURI: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setContractURI(
-    uri: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setCost(
-    value: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setDefaultRoyalty(
-    receiver: string,
-    feeNumerator: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setEnergon(
-    _energon: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setFeePool(
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setMintCost(
-    value: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  setToken(
-    _token: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  supportsInterface(
-    interfaceId: BytesLike,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
-
-  symbol(overrides?: CallOverrides): Promise<string>;
-
-  toggleAllowAlloc(
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  toggleAllowEnergonOps(
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  toggleAllowMint(
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  token(overrides?: CallOverrides): Promise<string>;
-
-  tokenByIndex(
-    index: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  tokenOfOwnerByIndex(
-    owner: string,
-    index: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  tokenURI(tokenId: BigNumberish, overrides?: CallOverrides): Promise<string>;
-
-  tokensOfOwner(
-    _owner: string,
-    overrides?: CallOverrides
-  ): Promise<BigNumber[]>;
-
-  totalAllocated(overrides?: CallOverrides): Promise<BigNumber>;
-
-  totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-  transferFrom(
-    from: string,
-    to: string,
-    tokenId: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  transferOwnership(
-    newOwner: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  treasuryEditionSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-  usedNonce(
-    arg0: string,
-    arg1: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<number>;
-
-  withdraw(
-    overrides?: PayableOverrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  withdrawEnergon(
-    _tokenId: BigNumberish,
-    _amount: BigNumberish,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  callStatic: {
-    OPERATOR_FILTER_REGISTRY(overrides?: CallOverrides): Promise<string>;
-
-    _contractURI(overrides?: CallOverrides): Promise<string>;
-
-    allocate(
-      _tokenId: BigNumberish,
-      _alloc: BigNumberish,
-      _signature: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    allocator(overrides?: CallOverrides): Promise<string>;
-
-    allowAddr(
-      addr: string,
-      slot: BigNumberish,
-      add: boolean,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    allowAlloc(overrides?: CallOverrides): Promise<boolean>;
-
-    allowEnergonOps(overrides?: CallOverrides): Promise<boolean>;
-
-    allowMint(overrides?: CallOverrides): Promise<boolean>;
-
-    allowlist(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    approve(
-      operator: string,
-      tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    balanceOf(owner: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    baseExtension(overrides?: CallOverrides): Promise<string>;
-
-    baseURI(overrides?: CallOverrides): Promise<string>;
-
-    burnAllowance(
-      _tokenId: BigNumberish,
-      _burner: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    burnAllowances(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    burnApprove(
-      _tokenId: BigNumberish,
-      _burner: string,
-      _amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    burnEnergon(
-      _tokenId: BigNumberish,
-      _amount: BigNumberish,
-      _purpose: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    burnFrom(
-      _tokenId: BigNumberish,
-      _amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    contractURI(overrides?: CallOverrides): Promise<string>;
-
-    cost(overrides?: CallOverrides): Promise<BigNumber>;
-
-    depositEnergon(
-      _tokenId: BigNumberish,
-      _amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    energon(overrides?: CallOverrides): Promise<string>;
-
-    engBalanceOf(
-      _tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    engBalances(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    feePool(overrides?: CallOverrides): Promise<string>;
-
-    getApproved(
-      tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    isApprovedForAll(
-      owner: string,
-      operator: string,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    maxSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-    mint(
+  setBaseURI: TypedContractMethod<[_newBaseURI: string], [void], "nonpayable">;
+
+  setContractURI: TypedContractMethod<[uri: string], [void], "nonpayable">;
+
+  setCost: TypedContractMethod<[value: BigNumberish], [void], "nonpayable">;
+
+  setDefaultRoyalty: TypedContractMethod<
+    [receiver: AddressLike, feeNumerator: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  setEnergon: TypedContractMethod<
+    [_energon: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  setFeePool: TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+
+  setMintCost: TypedContractMethod<[value: BigNumberish], [void], "nonpayable">;
+
+  setToken: TypedContractMethod<[_token: AddressLike], [void], "nonpayable">;
+
+  supportsInterface: TypedContractMethod<
+    [interfaceId: BytesLike],
+    [boolean],
+    "view"
+  >;
+
+  symbol: TypedContractMethod<[], [string], "view">;
+
+  toggleAllowAlloc: TypedContractMethod<[], [void], "nonpayable">;
+
+  toggleAllowEnergonOps: TypedContractMethod<[], [void], "nonpayable">;
+
+  toggleAllowMint: TypedContractMethod<[], [void], "nonpayable">;
+
+  token: TypedContractMethod<[], [string], "view">;
+
+  tokenByIndex: TypedContractMethod<[index: BigNumberish], [bigint], "view">;
+
+  tokenOfOwnerByIndex: TypedContractMethod<
+    [owner: AddressLike, index: BigNumberish],
+    [bigint],
+    "view"
+  >;
+
+  tokenURI: TypedContractMethod<[tokenId: BigNumberish], [string], "view">;
+
+  tokensOfOwner: TypedContractMethod<[_owner: AddressLike], [bigint[]], "view">;
+
+  totalAllocated: TypedContractMethod<[], [bigint], "view">;
+
+  totalSupply: TypedContractMethod<[], [bigint], "view">;
+
+  transferFrom: TypedContractMethod<
+    [from: AddressLike, to: AddressLike, tokenId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  transferOwnership: TypedContractMethod<
+    [newOwner: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  treasuryEditionSupply: TypedContractMethod<[], [bigint], "view">;
+
+  usedNonce: TypedContractMethod<
+    [arg0: AddressLike, arg1: BigNumberish],
+    [bigint],
+    "view"
+  >;
+
+  withdraw: TypedContractMethod<[], [void], "payable">;
+
+  withdrawEnergon: TypedContractMethod<
+    [_tokenId: BigNumberish, _amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  getFunction<T extends ContractMethod = ContractMethod>(
+    key: string | FunctionFragment
+  ): T;
+
+  getFunction(
+    nameOrSignature: "OPERATOR_FILTER_REGISTRY"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "_contractURI"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "allocate"
+  ): TypedContractMethod<
+    [_tokenId: BigNumberish, _alloc: BigNumberish, _signature: BytesLike],
+    [void],
+    "payable"
+  >;
+  getFunction(
+    nameOrSignature: "allocator"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "allowAddr"
+  ): TypedContractMethod<
+    [addr: AddressLike, slot: BigNumberish, add: boolean],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "allowAlloc"
+  ): TypedContractMethod<[], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "allowEnergonOps"
+  ): TypedContractMethod<[], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "allowMint"
+  ): TypedContractMethod<[], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "allowlist"
+  ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "approve"
+  ): TypedContractMethod<
+    [operator: AddressLike, tokenId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "balanceOf"
+  ): TypedContractMethod<[owner: AddressLike], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "baseExtension"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "baseURI"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "burnAllowance"
+  ): TypedContractMethod<
+    [_tokenId: BigNumberish, _burner: AddressLike],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "burnAllowances"
+  ): TypedContractMethod<
+    [arg0: AddressLike, arg1: BigNumberish],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "burnApprove"
+  ): TypedContractMethod<
+    [_tokenId: BigNumberish, _burner: AddressLike, _amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "burnEnergon"
+  ): TypedContractMethod<
+    [_tokenId: BigNumberish, _amount: BigNumberish, _purpose: BytesLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "burnFrom"
+  ): TypedContractMethod<
+    [_tokenId: BigNumberish, _amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "contractURI"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "cost"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "depositEnergon"
+  ): TypedContractMethod<
+    [_tokenId: BigNumberish, _amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "energon"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "engBalanceOf"
+  ): TypedContractMethod<[_tokenId: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "engBalances"
+  ): TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "feePool"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "getApproved"
+  ): TypedContractMethod<[tokenId: BigNumberish], [string], "view">;
+  getFunction(
+    nameOrSignature: "isApprovedForAll"
+  ): TypedContractMethod<
+    [owner: AddressLike, operator: AddressLike],
+    [boolean],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "maxSupply"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "mint"
+  ): TypedContractMethod<
+    [
       _mintAmount: BigNumberish,
       _noEnergon: boolean,
       _signature: BytesLike,
-      expireAt: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    mintCost(overrides?: CallOverrides): Promise<BigNumber>;
-
-    mintTE(
-      _fromId: BigNumberish,
-      _mintAmount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    mintedByAllowlist(overrides?: CallOverrides): Promise<BigNumber>;
-
-    mintedByOwner(overrides?: CallOverrides): Promise<BigNumber>;
-
-    mintedBySig(overrides?: CallOverrides): Promise<BigNumber>;
-
-    mintedByTreasury(overrides?: CallOverrides): Promise<BigNumber>;
-
-    name(overrides?: CallOverrides): Promise<string>;
-
-    owner(overrides?: CallOverrides): Promise<string>;
-
-    ownerOf(tokenId: BigNumberish, overrides?: CallOverrides): Promise<string>;
-
-    p2pBalanceOf(
-      _tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    p2pBalances(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    renounceOwnership(overrides?: CallOverrides): Promise<void>;
-
-    royaltyInfo(
-      _tokenId: BigNumberish,
-      _salePrice: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string, BigNumber]>;
-
-    "safeTransferFrom(address,address,uint256)"(
-      from: string,
-      to: string,
+      expireAt: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "mintCost"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "mintTE"
+  ): TypedContractMethod<
+    [_fromId: BigNumberish, _mintAmount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "mintedByAllowlist"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "mintedByOwner"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "mintedBySig"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "mintedByTreasury"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "name"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "owner"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "ownerOf"
+  ): TypedContractMethod<[tokenId: BigNumberish], [string], "view">;
+  getFunction(
+    nameOrSignature: "p2pBalanceOf"
+  ): TypedContractMethod<[_tokenId: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "p2pBalances"
+  ): TypedContractMethod<[arg0: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "renounceOwnership"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "royaltyInfo"
+  ): TypedContractMethod<
+    [_tokenId: BigNumberish, _salePrice: BigNumberish],
+    [[string, bigint]],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "safeTransferFrom(address,address,uint256)"
+  ): TypedContractMethod<
+    [from: AddressLike, to: AddressLike, tokenId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "safeTransferFrom(address,address,uint256,bytes)"
+  ): TypedContractMethod<
+    [
+      from: AddressLike,
+      to: AddressLike,
       tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
+      data: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setAllocator"
+  ): TypedContractMethod<[_allocator: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setApprovalForAll"
+  ): TypedContractMethod<
+    [operator: AddressLike, approved: boolean],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setBaseExtension"
+  ): TypedContractMethod<[_newBaseExtension: string], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setBaseURI"
+  ): TypedContractMethod<[_newBaseURI: string], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setContractURI"
+  ): TypedContractMethod<[uri: string], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setCost"
+  ): TypedContractMethod<[value: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setDefaultRoyalty"
+  ): TypedContractMethod<
+    [receiver: AddressLike, feeNumerator: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "setEnergon"
+  ): TypedContractMethod<[_energon: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setFeePool"
+  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setMintCost"
+  ): TypedContractMethod<[value: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setToken"
+  ): TypedContractMethod<[_token: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "supportsInterface"
+  ): TypedContractMethod<[interfaceId: BytesLike], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "symbol"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "toggleAllowAlloc"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "toggleAllowEnergonOps"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "toggleAllowMint"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "token"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "tokenByIndex"
+  ): TypedContractMethod<[index: BigNumberish], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "tokenOfOwnerByIndex"
+  ): TypedContractMethod<
+    [owner: AddressLike, index: BigNumberish],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "tokenURI"
+  ): TypedContractMethod<[tokenId: BigNumberish], [string], "view">;
+  getFunction(
+    nameOrSignature: "tokensOfOwner"
+  ): TypedContractMethod<[_owner: AddressLike], [bigint[]], "view">;
+  getFunction(
+    nameOrSignature: "totalAllocated"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "totalSupply"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "transferFrom"
+  ): TypedContractMethod<
+    [from: AddressLike, to: AddressLike, tokenId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "transferOwnership"
+  ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "treasuryEditionSupply"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "usedNonce"
+  ): TypedContractMethod<
+    [arg0: AddressLike, arg1: BigNumberish],
+    [bigint],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "withdraw"
+  ): TypedContractMethod<[], [void], "payable">;
+  getFunction(
+    nameOrSignature: "withdrawEnergon"
+  ): TypedContractMethod<
+    [_tokenId: BigNumberish, _amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    "safeTransferFrom(address,address,uint256,bytes)"(
-      from: string,
-      to: string,
-      tokenId: BigNumberish,
-      data: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setAllocator(_allocator: string, overrides?: CallOverrides): Promise<void>;
-
-    setApprovalForAll(
-      operator: string,
-      approved: boolean,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setBaseExtension(
-      _newBaseExtension: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setBaseURI(_newBaseURI: string, overrides?: CallOverrides): Promise<void>;
-
-    setContractURI(uri: string, overrides?: CallOverrides): Promise<void>;
-
-    setCost(value: BigNumberish, overrides?: CallOverrides): Promise<void>;
-
-    setDefaultRoyalty(
-      receiver: string,
-      feeNumerator: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    setEnergon(_energon: string, overrides?: CallOverrides): Promise<void>;
-
-    setFeePool(addr: string, overrides?: CallOverrides): Promise<void>;
-
-    setMintCost(value: BigNumberish, overrides?: CallOverrides): Promise<void>;
-
-    setToken(_token: string, overrides?: CallOverrides): Promise<void>;
-
-    supportsInterface(
-      interfaceId: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    symbol(overrides?: CallOverrides): Promise<string>;
-
-    toggleAllowAlloc(overrides?: CallOverrides): Promise<void>;
-
-    toggleAllowEnergonOps(overrides?: CallOverrides): Promise<void>;
-
-    toggleAllowMint(overrides?: CallOverrides): Promise<void>;
-
-    token(overrides?: CallOverrides): Promise<string>;
-
-    tokenByIndex(
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    tokenOfOwnerByIndex(
-      owner: string,
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    tokenURI(tokenId: BigNumberish, overrides?: CallOverrides): Promise<string>;
-
-    tokensOfOwner(
-      _owner: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber[]>;
-
-    totalAllocated(overrides?: CallOverrides): Promise<BigNumber>;
-
-    totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-    transferFrom(
-      from: string,
-      to: string,
-      tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    treasuryEditionSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-    usedNonce(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<number>;
-
-    withdraw(overrides?: CallOverrides): Promise<void>;
-
-    withdrawEnergon(
-      _tokenId: BigNumberish,
-      _amount: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<void>;
-  };
+  getEvent(
+    key: "Allocated"
+  ): TypedContractEvent<
+    AllocatedEvent.InputTuple,
+    AllocatedEvent.OutputTuple,
+    AllocatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "AllocatorUpdated"
+  ): TypedContractEvent<
+    AllocatorUpdatedEvent.InputTuple,
+    AllocatorUpdatedEvent.OutputTuple,
+    AllocatorUpdatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "AllowAddr"
+  ): TypedContractEvent<
+    AllowAddrEvent.InputTuple,
+    AllowAddrEvent.OutputTuple,
+    AllowAddrEvent.OutputObject
+  >;
+  getEvent(
+    key: "AllowAlloc"
+  ): TypedContractEvent<
+    AllowAllocEvent.InputTuple,
+    AllowAllocEvent.OutputTuple,
+    AllowAllocEvent.OutputObject
+  >;
+  getEvent(
+    key: "AllowBurn"
+  ): TypedContractEvent<
+    AllowBurnEvent.InputTuple,
+    AllowBurnEvent.OutputTuple,
+    AllowBurnEvent.OutputObject
+  >;
+  getEvent(
+    key: "AllowMint"
+  ): TypedContractEvent<
+    AllowMintEvent.InputTuple,
+    AllowMintEvent.OutputTuple,
+    AllowMintEvent.OutputObject
+  >;
+  getEvent(
+    key: "Approval"
+  ): TypedContractEvent<
+    ApprovalEvent.InputTuple,
+    ApprovalEvent.OutputTuple,
+    ApprovalEvent.OutputObject
+  >;
+  getEvent(
+    key: "ApprovalForAll"
+  ): TypedContractEvent<
+    ApprovalForAllEvent.InputTuple,
+    ApprovalForAllEvent.OutputTuple,
+    ApprovalForAllEvent.OutputObject
+  >;
+  getEvent(
+    key: "BurnAllowance"
+  ): TypedContractEvent<
+    BurnAllowanceEvent.InputTuple,
+    BurnAllowanceEvent.OutputTuple,
+    BurnAllowanceEvent.OutputObject
+  >;
+  getEvent(
+    key: "BurnedEnergon"
+  ): TypedContractEvent<
+    BurnedEnergonEvent.InputTuple,
+    BurnedEnergonEvent.OutputTuple,
+    BurnedEnergonEvent.OutputObject
+  >;
+  getEvent(
+    key: "DepositedEnergon"
+  ): TypedContractEvent<
+    DepositedEnergonEvent.InputTuple,
+    DepositedEnergonEvent.OutputTuple,
+    DepositedEnergonEvent.OutputObject
+  >;
+  getEvent(
+    key: "EnergonUpdated"
+  ): TypedContractEvent<
+    EnergonUpdatedEvent.InputTuple,
+    EnergonUpdatedEvent.OutputTuple,
+    EnergonUpdatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "OwnershipTransferred"
+  ): TypedContractEvent<
+    OwnershipTransferredEvent.InputTuple,
+    OwnershipTransferredEvent.OutputTuple,
+    OwnershipTransferredEvent.OutputObject
+  >;
+  getEvent(
+    key: "TokenUpdated"
+  ): TypedContractEvent<
+    TokenUpdatedEvent.InputTuple,
+    TokenUpdatedEvent.OutputTuple,
+    TokenUpdatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Transfer"
+  ): TypedContractEvent<
+    TransferEvent.InputTuple,
+    TransferEvent.OutputTuple,
+    TransferEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedBaseExtension"
+  ): TypedContractEvent<
+    UpdatedBaseExtensionEvent.InputTuple,
+    UpdatedBaseExtensionEvent.OutputTuple,
+    UpdatedBaseExtensionEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedBaseURI"
+  ): TypedContractEvent<
+    UpdatedBaseURIEvent.InputTuple,
+    UpdatedBaseURIEvent.OutputTuple,
+    UpdatedBaseURIEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedContractURI"
+  ): TypedContractEvent<
+    UpdatedContractURIEvent.InputTuple,
+    UpdatedContractURIEvent.OutputTuple,
+    UpdatedContractURIEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedCost"
+  ): TypedContractEvent<
+    UpdatedCostEvent.InputTuple,
+    UpdatedCostEvent.OutputTuple,
+    UpdatedCostEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedMaxMintAmount"
+  ): TypedContractEvent<
+    UpdatedMaxMintAmountEvent.InputTuple,
+    UpdatedMaxMintAmountEvent.OutputTuple,
+    UpdatedMaxMintAmountEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedMintCost"
+  ): TypedContractEvent<
+    UpdatedMintCostEvent.InputTuple,
+    UpdatedMintCostEvent.OutputTuple,
+    UpdatedMintCostEvent.OutputObject
+  >;
+  getEvent(
+    key: "Withdrawal"
+  ): TypedContractEvent<
+    WithdrawalEvent.InputTuple,
+    WithdrawalEvent.OutputTuple,
+    WithdrawalEvent.OutputObject
+  >;
+  getEvent(
+    key: "WithdrawnEnergon"
+  ): TypedContractEvent<
+    WithdrawnEnergonEvent.InputTuple,
+    WithdrawnEnergonEvent.OutputTuple,
+    WithdrawnEnergonEvent.OutputObject
+  >;
 
   filters: {
-    "Allocated(address,uint256,uint256)"(
-      sender?: string | null,
-      _tokenId?: BigNumberish | null,
-      amount?: null
-    ): AllocatedEventFilter;
-    Allocated(
-      sender?: string | null,
-      _tokenId?: BigNumberish | null,
-      amount?: null
-    ): AllocatedEventFilter;
-
-    "AllocatorUpdated(address)"(addr?: null): AllocatorUpdatedEventFilter;
-    AllocatorUpdated(addr?: null): AllocatorUpdatedEventFilter;
-
-    "AllowAddr(address,uint256,bool)"(
-      addr?: string | null,
-      slot?: null,
-      add?: null
-    ): AllowAddrEventFilter;
-    AllowAddr(
-      addr?: string | null,
-      slot?: null,
-      add?: null
-    ): AllowAddrEventFilter;
-
-    "AllowAlloc(bool)"(allow?: null): AllowAllocEventFilter;
-    AllowAlloc(allow?: null): AllowAllocEventFilter;
-
-    "AllowBurn(bool)"(allow?: null): AllowBurnEventFilter;
-    AllowBurn(allow?: null): AllowBurnEventFilter;
-
-    "AllowMint(bool)"(allow?: null): AllowMintEventFilter;
-    AllowMint(allow?: null): AllowMintEventFilter;
-
-    "Approval(address,address,uint256)"(
-      owner?: string | null,
-      approved?: string | null,
-      tokenId?: BigNumberish | null
-    ): ApprovalEventFilter;
-    Approval(
-      owner?: string | null,
-      approved?: string | null,
-      tokenId?: BigNumberish | null
-    ): ApprovalEventFilter;
-
-    "ApprovalForAll(address,address,bool)"(
-      owner?: string | null,
-      operator?: string | null,
-      approved?: null
-    ): ApprovalForAllEventFilter;
-    ApprovalForAll(
-      owner?: string | null,
-      operator?: string | null,
-      approved?: null
-    ): ApprovalForAllEventFilter;
-
-    "BurnAllowance(address,uint256,address,uint256)"(
-      _owner?: string | null,
-      _tokenId?: BigNumberish | null,
-      _burner?: string | null,
-      _amount?: null
-    ): BurnAllowanceEventFilter;
-    BurnAllowance(
-      _owner?: string | null,
-      _tokenId?: BigNumberish | null,
-      _burner?: string | null,
-      _amount?: null
-    ): BurnAllowanceEventFilter;
-
-    "BurnedEnergon(address,uint256,uint256,bytes)"(
-      owner?: string | null,
-      _tokenId?: BigNumberish | null,
-      _amount?: null,
-      _purpose?: null
-    ): BurnedEnergonEventFilter;
-    BurnedEnergon(
-      owner?: string | null,
-      _tokenId?: BigNumberish | null,
-      _amount?: null,
-      _purpose?: null
-    ): BurnedEnergonEventFilter;
-
-    "DepositedEnergon(address,uint256,uint256)"(
-      depositor?: string | null,
-      _tokenId?: BigNumberish | null,
-      _amount?: null
-    ): DepositedEnergonEventFilter;
-    DepositedEnergon(
-      depositor?: string | null,
-      _tokenId?: BigNumberish | null,
-      _amount?: null
-    ): DepositedEnergonEventFilter;
-
-    "EnergonUpdated(address)"(addr?: null): EnergonUpdatedEventFilter;
-    EnergonUpdated(addr?: null): EnergonUpdatedEventFilter;
-
-    "OwnershipTransferred(address,address)"(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
-    OwnershipTransferred(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
-
-    "TokenUpdated(address)"(addr?: null): TokenUpdatedEventFilter;
-    TokenUpdated(addr?: null): TokenUpdatedEventFilter;
-
-    "Transfer(address,address,uint256)"(
-      from?: string | null,
-      to?: string | null,
-      tokenId?: BigNumberish | null
-    ): TransferEventFilter;
-    Transfer(
-      from?: string | null,
-      to?: string | null,
-      tokenId?: BigNumberish | null
-    ): TransferEventFilter;
-
-    "UpdatedBaseExtension(string)"(
-      _new?: null
-    ): UpdatedBaseExtensionEventFilter;
-    UpdatedBaseExtension(_new?: null): UpdatedBaseExtensionEventFilter;
-
-    "UpdatedBaseURI(string)"(_new?: null): UpdatedBaseURIEventFilter;
-    UpdatedBaseURI(_new?: null): UpdatedBaseURIEventFilter;
-
-    "UpdatedContractURI(string)"(_new?: null): UpdatedContractURIEventFilter;
-    UpdatedContractURI(_new?: null): UpdatedContractURIEventFilter;
-
-    "UpdatedCost(uint256)"(_new?: null): UpdatedCostEventFilter;
-    UpdatedCost(_new?: null): UpdatedCostEventFilter;
-
-    "UpdatedMaxMintAmount(uint256)"(
-      _new?: null
-    ): UpdatedMaxMintAmountEventFilter;
-    UpdatedMaxMintAmount(_new?: null): UpdatedMaxMintAmountEventFilter;
-
-    "UpdatedMintCost(uint256)"(_new?: null): UpdatedMintCostEventFilter;
-    UpdatedMintCost(_new?: null): UpdatedMintCostEventFilter;
-
-    "Withdrawal(uint256)"(amt?: null): WithdrawalEventFilter;
-    Withdrawal(amt?: null): WithdrawalEventFilter;
-
-    "WithdrawnEnergon(address,uint256,uint256)"(
-      withdrawer?: string | null,
-      _tokenId?: BigNumberish | null,
-      _amount?: null
-    ): WithdrawnEnergonEventFilter;
-    WithdrawnEnergon(
-      withdrawer?: string | null,
-      _tokenId?: BigNumberish | null,
-      _amount?: null
-    ): WithdrawnEnergonEventFilter;
-  };
-
-  estimateGas: {
-    OPERATOR_FILTER_REGISTRY(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _contractURI(overrides?: CallOverrides): Promise<BigNumber>;
-
-    allocate(
-      _tokenId: BigNumberish,
-      _alloc: BigNumberish,
-      _signature: BytesLike,
-      overrides?: PayableOverrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    allocator(overrides?: CallOverrides): Promise<BigNumber>;
-
-    allowAddr(
-      addr: string,
-      slot: BigNumberish,
-      add: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    allowAlloc(overrides?: CallOverrides): Promise<BigNumber>;
-
-    allowEnergonOps(overrides?: CallOverrides): Promise<BigNumber>;
-
-    allowMint(overrides?: CallOverrides): Promise<BigNumber>;
-
-    allowlist(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    approve(
-      operator: string,
-      tokenId: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    balanceOf(owner: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    baseExtension(overrides?: CallOverrides): Promise<BigNumber>;
-
-    baseURI(overrides?: CallOverrides): Promise<BigNumber>;
-
-    burnAllowance(
-      _tokenId: BigNumberish,
-      _burner: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    burnAllowances(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    burnApprove(
-      _tokenId: BigNumberish,
-      _burner: string,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    burnEnergon(
-      _tokenId: BigNumberish,
-      _amount: BigNumberish,
-      _purpose: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    burnFrom(
-      _tokenId: BigNumberish,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    contractURI(overrides?: CallOverrides): Promise<BigNumber>;
-
-    cost(overrides?: CallOverrides): Promise<BigNumber>;
-
-    depositEnergon(
-      _tokenId: BigNumberish,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    energon(overrides?: CallOverrides): Promise<BigNumber>;
-
-    engBalanceOf(
-      _tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    engBalances(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    feePool(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getApproved(
-      tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    isApprovedForAll(
-      owner: string,
-      operator: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    maxSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-    mint(
-      _mintAmount: BigNumberish,
-      _noEnergon: boolean,
-      _signature: BytesLike,
-      expireAt: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    mintCost(overrides?: CallOverrides): Promise<BigNumber>;
-
-    mintTE(
-      _fromId: BigNumberish,
-      _mintAmount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    mintedByAllowlist(overrides?: CallOverrides): Promise<BigNumber>;
-
-    mintedByOwner(overrides?: CallOverrides): Promise<BigNumber>;
-
-    mintedBySig(overrides?: CallOverrides): Promise<BigNumber>;
-
-    mintedByTreasury(overrides?: CallOverrides): Promise<BigNumber>;
-
-    name(overrides?: CallOverrides): Promise<BigNumber>;
-
-    owner(overrides?: CallOverrides): Promise<BigNumber>;
-
-    ownerOf(
-      tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    p2pBalanceOf(
-      _tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    p2pBalances(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    royaltyInfo(
-      _tokenId: BigNumberish,
-      _salePrice: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    "safeTransferFrom(address,address,uint256)"(
-      from: string,
-      to: string,
-      tokenId: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    "safeTransferFrom(address,address,uint256,bytes)"(
-      from: string,
-      to: string,
-      tokenId: BigNumberish,
-      data: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setAllocator(
-      _allocator: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setApprovalForAll(
-      operator: string,
-      approved: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setBaseExtension(
-      _newBaseExtension: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setBaseURI(
-      _newBaseURI: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setContractURI(
-      uri: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setCost(
-      value: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setDefaultRoyalty(
-      receiver: string,
-      feeNumerator: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setEnergon(
-      _energon: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setFeePool(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setMintCost(
-      value: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    setToken(
-      _token: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    supportsInterface(
-      interfaceId: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    symbol(overrides?: CallOverrides): Promise<BigNumber>;
-
-    toggleAllowAlloc(
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    toggleAllowEnergonOps(
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    toggleAllowMint(
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    token(overrides?: CallOverrides): Promise<BigNumber>;
-
-    tokenByIndex(
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    tokenOfOwnerByIndex(
-      owner: string,
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    tokenURI(
-      tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    tokensOfOwner(
-      _owner: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    totalAllocated(overrides?: CallOverrides): Promise<BigNumber>;
-
-    totalSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-    transferFrom(
-      from: string,
-      to: string,
-      tokenId: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    treasuryEditionSupply(overrides?: CallOverrides): Promise<BigNumber>;
-
-    usedNonce(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    withdraw(
-      overrides?: PayableOverrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    withdrawEnergon(
-      _tokenId: BigNumberish,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-  };
-
-  populateTransaction: {
-    OPERATOR_FILTER_REGISTRY(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    _contractURI(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    allocate(
-      _tokenId: BigNumberish,
-      _alloc: BigNumberish,
-      _signature: BytesLike,
-      overrides?: PayableOverrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    allocator(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    allowAddr(
-      addr: string,
-      slot: BigNumberish,
-      add: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    allowAlloc(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    allowEnergonOps(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    allowMint(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    allowlist(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    approve(
-      operator: string,
-      tokenId: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    balanceOf(
-      owner: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    baseExtension(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    baseURI(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    burnAllowance(
-      _tokenId: BigNumberish,
-      _burner: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    burnAllowances(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    burnApprove(
-      _tokenId: BigNumberish,
-      _burner: string,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    burnEnergon(
-      _tokenId: BigNumberish,
-      _amount: BigNumberish,
-      _purpose: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    burnFrom(
-      _tokenId: BigNumberish,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    contractURI(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    cost(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    depositEnergon(
-      _tokenId: BigNumberish,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    energon(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    engBalanceOf(
-      _tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    engBalances(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    feePool(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    getApproved(
-      tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    isApprovedForAll(
-      owner: string,
-      operator: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    maxSupply(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    mint(
-      _mintAmount: BigNumberish,
-      _noEnergon: boolean,
-      _signature: BytesLike,
-      expireAt: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    mintCost(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    mintTE(
-      _fromId: BigNumberish,
-      _mintAmount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    mintedByAllowlist(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    mintedByOwner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    mintedBySig(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    mintedByTreasury(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    name(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    ownerOf(
-      tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    p2pBalanceOf(
-      _tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    p2pBalances(
-      arg0: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    royaltyInfo(
-      _tokenId: BigNumberish,
-      _salePrice: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    "safeTransferFrom(address,address,uint256)"(
-      from: string,
-      to: string,
-      tokenId: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    "safeTransferFrom(address,address,uint256,bytes)"(
-      from: string,
-      to: string,
-      tokenId: BigNumberish,
-      data: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setAllocator(
-      _allocator: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setApprovalForAll(
-      operator: string,
-      approved: boolean,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setBaseExtension(
-      _newBaseExtension: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setBaseURI(
-      _newBaseURI: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setContractURI(
-      uri: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setCost(
-      value: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setDefaultRoyalty(
-      receiver: string,
-      feeNumerator: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setEnergon(
-      _energon: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setFeePool(
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setMintCost(
-      value: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    setToken(
-      _token: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    supportsInterface(
-      interfaceId: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    symbol(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    toggleAllowAlloc(
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    toggleAllowEnergonOps(
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    toggleAllowMint(
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    token(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    tokenByIndex(
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    tokenOfOwnerByIndex(
-      owner: string,
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    tokenURI(
-      tokenId: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    tokensOfOwner(
-      _owner: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    totalAllocated(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    totalSupply(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    transferFrom(
-      from: string,
-      to: string,
-      tokenId: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    treasuryEditionSupply(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    usedNonce(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    withdraw(
-      overrides?: PayableOverrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    withdrawEnergon(
-      _tokenId: BigNumberish,
-      _amount: BigNumberish,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
+    "Allocated(address,uint256,uint256)": TypedContractEvent<
+      AllocatedEvent.InputTuple,
+      AllocatedEvent.OutputTuple,
+      AllocatedEvent.OutputObject
+    >;
+    Allocated: TypedContractEvent<
+      AllocatedEvent.InputTuple,
+      AllocatedEvent.OutputTuple,
+      AllocatedEvent.OutputObject
+    >;
+
+    "AllocatorUpdated(address)": TypedContractEvent<
+      AllocatorUpdatedEvent.InputTuple,
+      AllocatorUpdatedEvent.OutputTuple,
+      AllocatorUpdatedEvent.OutputObject
+    >;
+    AllocatorUpdated: TypedContractEvent<
+      AllocatorUpdatedEvent.InputTuple,
+      AllocatorUpdatedEvent.OutputTuple,
+      AllocatorUpdatedEvent.OutputObject
+    >;
+
+    "AllowAddr(address,uint256,bool)": TypedContractEvent<
+      AllowAddrEvent.InputTuple,
+      AllowAddrEvent.OutputTuple,
+      AllowAddrEvent.OutputObject
+    >;
+    AllowAddr: TypedContractEvent<
+      AllowAddrEvent.InputTuple,
+      AllowAddrEvent.OutputTuple,
+      AllowAddrEvent.OutputObject
+    >;
+
+    "AllowAlloc(bool)": TypedContractEvent<
+      AllowAllocEvent.InputTuple,
+      AllowAllocEvent.OutputTuple,
+      AllowAllocEvent.OutputObject
+    >;
+    AllowAlloc: TypedContractEvent<
+      AllowAllocEvent.InputTuple,
+      AllowAllocEvent.OutputTuple,
+      AllowAllocEvent.OutputObject
+    >;
+
+    "AllowBurn(bool)": TypedContractEvent<
+      AllowBurnEvent.InputTuple,
+      AllowBurnEvent.OutputTuple,
+      AllowBurnEvent.OutputObject
+    >;
+    AllowBurn: TypedContractEvent<
+      AllowBurnEvent.InputTuple,
+      AllowBurnEvent.OutputTuple,
+      AllowBurnEvent.OutputObject
+    >;
+
+    "AllowMint(bool)": TypedContractEvent<
+      AllowMintEvent.InputTuple,
+      AllowMintEvent.OutputTuple,
+      AllowMintEvent.OutputObject
+    >;
+    AllowMint: TypedContractEvent<
+      AllowMintEvent.InputTuple,
+      AllowMintEvent.OutputTuple,
+      AllowMintEvent.OutputObject
+    >;
+
+    "Approval(address,address,uint256)": TypedContractEvent<
+      ApprovalEvent.InputTuple,
+      ApprovalEvent.OutputTuple,
+      ApprovalEvent.OutputObject
+    >;
+    Approval: TypedContractEvent<
+      ApprovalEvent.InputTuple,
+      ApprovalEvent.OutputTuple,
+      ApprovalEvent.OutputObject
+    >;
+
+    "ApprovalForAll(address,address,bool)": TypedContractEvent<
+      ApprovalForAllEvent.InputTuple,
+      ApprovalForAllEvent.OutputTuple,
+      ApprovalForAllEvent.OutputObject
+    >;
+    ApprovalForAll: TypedContractEvent<
+      ApprovalForAllEvent.InputTuple,
+      ApprovalForAllEvent.OutputTuple,
+      ApprovalForAllEvent.OutputObject
+    >;
+
+    "BurnAllowance(address,uint256,address,uint256)": TypedContractEvent<
+      BurnAllowanceEvent.InputTuple,
+      BurnAllowanceEvent.OutputTuple,
+      BurnAllowanceEvent.OutputObject
+    >;
+    BurnAllowance: TypedContractEvent<
+      BurnAllowanceEvent.InputTuple,
+      BurnAllowanceEvent.OutputTuple,
+      BurnAllowanceEvent.OutputObject
+    >;
+
+    "BurnedEnergon(address,uint256,uint256,bytes)": TypedContractEvent<
+      BurnedEnergonEvent.InputTuple,
+      BurnedEnergonEvent.OutputTuple,
+      BurnedEnergonEvent.OutputObject
+    >;
+    BurnedEnergon: TypedContractEvent<
+      BurnedEnergonEvent.InputTuple,
+      BurnedEnergonEvent.OutputTuple,
+      BurnedEnergonEvent.OutputObject
+    >;
+
+    "DepositedEnergon(address,uint256,uint256)": TypedContractEvent<
+      DepositedEnergonEvent.InputTuple,
+      DepositedEnergonEvent.OutputTuple,
+      DepositedEnergonEvent.OutputObject
+    >;
+    DepositedEnergon: TypedContractEvent<
+      DepositedEnergonEvent.InputTuple,
+      DepositedEnergonEvent.OutputTuple,
+      DepositedEnergonEvent.OutputObject
+    >;
+
+    "EnergonUpdated(address)": TypedContractEvent<
+      EnergonUpdatedEvent.InputTuple,
+      EnergonUpdatedEvent.OutputTuple,
+      EnergonUpdatedEvent.OutputObject
+    >;
+    EnergonUpdated: TypedContractEvent<
+      EnergonUpdatedEvent.InputTuple,
+      EnergonUpdatedEvent.OutputTuple,
+      EnergonUpdatedEvent.OutputObject
+    >;
+
+    "OwnershipTransferred(address,address)": TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
+    OwnershipTransferred: TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
+
+    "TokenUpdated(address)": TypedContractEvent<
+      TokenUpdatedEvent.InputTuple,
+      TokenUpdatedEvent.OutputTuple,
+      TokenUpdatedEvent.OutputObject
+    >;
+    TokenUpdated: TypedContractEvent<
+      TokenUpdatedEvent.InputTuple,
+      TokenUpdatedEvent.OutputTuple,
+      TokenUpdatedEvent.OutputObject
+    >;
+
+    "Transfer(address,address,uint256)": TypedContractEvent<
+      TransferEvent.InputTuple,
+      TransferEvent.OutputTuple,
+      TransferEvent.OutputObject
+    >;
+    Transfer: TypedContractEvent<
+      TransferEvent.InputTuple,
+      TransferEvent.OutputTuple,
+      TransferEvent.OutputObject
+    >;
+
+    "UpdatedBaseExtension(string)": TypedContractEvent<
+      UpdatedBaseExtensionEvent.InputTuple,
+      UpdatedBaseExtensionEvent.OutputTuple,
+      UpdatedBaseExtensionEvent.OutputObject
+    >;
+    UpdatedBaseExtension: TypedContractEvent<
+      UpdatedBaseExtensionEvent.InputTuple,
+      UpdatedBaseExtensionEvent.OutputTuple,
+      UpdatedBaseExtensionEvent.OutputObject
+    >;
+
+    "UpdatedBaseURI(string)": TypedContractEvent<
+      UpdatedBaseURIEvent.InputTuple,
+      UpdatedBaseURIEvent.OutputTuple,
+      UpdatedBaseURIEvent.OutputObject
+    >;
+    UpdatedBaseURI: TypedContractEvent<
+      UpdatedBaseURIEvent.InputTuple,
+      UpdatedBaseURIEvent.OutputTuple,
+      UpdatedBaseURIEvent.OutputObject
+    >;
+
+    "UpdatedContractURI(string)": TypedContractEvent<
+      UpdatedContractURIEvent.InputTuple,
+      UpdatedContractURIEvent.OutputTuple,
+      UpdatedContractURIEvent.OutputObject
+    >;
+    UpdatedContractURI: TypedContractEvent<
+      UpdatedContractURIEvent.InputTuple,
+      UpdatedContractURIEvent.OutputTuple,
+      UpdatedContractURIEvent.OutputObject
+    >;
+
+    "UpdatedCost(uint256)": TypedContractEvent<
+      UpdatedCostEvent.InputTuple,
+      UpdatedCostEvent.OutputTuple,
+      UpdatedCostEvent.OutputObject
+    >;
+    UpdatedCost: TypedContractEvent<
+      UpdatedCostEvent.InputTuple,
+      UpdatedCostEvent.OutputTuple,
+      UpdatedCostEvent.OutputObject
+    >;
+
+    "UpdatedMaxMintAmount(uint256)": TypedContractEvent<
+      UpdatedMaxMintAmountEvent.InputTuple,
+      UpdatedMaxMintAmountEvent.OutputTuple,
+      UpdatedMaxMintAmountEvent.OutputObject
+    >;
+    UpdatedMaxMintAmount: TypedContractEvent<
+      UpdatedMaxMintAmountEvent.InputTuple,
+      UpdatedMaxMintAmountEvent.OutputTuple,
+      UpdatedMaxMintAmountEvent.OutputObject
+    >;
+
+    "UpdatedMintCost(uint256)": TypedContractEvent<
+      UpdatedMintCostEvent.InputTuple,
+      UpdatedMintCostEvent.OutputTuple,
+      UpdatedMintCostEvent.OutputObject
+    >;
+    UpdatedMintCost: TypedContractEvent<
+      UpdatedMintCostEvent.InputTuple,
+      UpdatedMintCostEvent.OutputTuple,
+      UpdatedMintCostEvent.OutputObject
+    >;
+
+    "Withdrawal(uint256)": TypedContractEvent<
+      WithdrawalEvent.InputTuple,
+      WithdrawalEvent.OutputTuple,
+      WithdrawalEvent.OutputObject
+    >;
+    Withdrawal: TypedContractEvent<
+      WithdrawalEvent.InputTuple,
+      WithdrawalEvent.OutputTuple,
+      WithdrawalEvent.OutputObject
+    >;
+
+    "WithdrawnEnergon(address,uint256,uint256)": TypedContractEvent<
+      WithdrawnEnergonEvent.InputTuple,
+      WithdrawnEnergonEvent.OutputTuple,
+      WithdrawnEnergonEvent.OutputObject
+    >;
+    WithdrawnEnergon: TypedContractEvent<
+      WithdrawnEnergonEvent.InputTuple,
+      WithdrawnEnergonEvent.OutputTuple,
+      WithdrawnEnergonEvent.OutputObject
+    >;
   };
 }

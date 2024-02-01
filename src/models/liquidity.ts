@@ -1,7 +1,7 @@
-import { ethers } from 'ethers';
+import { AbiCoder, getCreate2Address, keccak256, toUtf8Bytes } from 'ethers';
 import * as _ from 'lodash';
 import * as moment from 'moment';
-import Objection, { Model, raw, Transaction } from 'objection';
+import Objection, { Model, Transaction, raw } from 'objection';
 import { randStr } from '../common/common';
 import { BaseModel } from './base';
 import Market, { AssetType } from './market';
@@ -13,10 +13,10 @@ import Market, { AssetType } from './market';
  * @param lid - The liquidity ID
  */
 export function makeLiqAddress(marketAddress: string, provider: string, lid: number) {
-  return ethers.utils.getCreate2Address(
+  return getCreate2Address(
     marketAddress,
-    ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode(['address', 'uint256'], [provider, lid])),
-    ethers.utils.keccak256(ethers.utils.toUtf8Bytes('Liquidity(address provider, uint256 lid)')),
+    keccak256(AbiCoder.defaultAbiCoder().encode(['address', 'uint256'], [provider, lid])),
+    keccak256(toUtf8Bytes('Liquidity(address provider, uint256 lid)')),
   );
 }
 

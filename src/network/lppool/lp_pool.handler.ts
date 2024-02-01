@@ -1,8 +1,9 @@
-import { BigNumber, ethers, Event, providers } from 'ethers';
+import { JsonRpcProvider } from 'ethers';
+import { ContractCallEvent } from '../common';
 import { Handler } from '../handler';
 
 export class LPPoolHandler extends Handler {
-  constructor(private provider: providers.JsonRpcProvider, public network: string, private contracts: JointContracts) {
+  constructor(private provider: JsonRpcProvider, public network: string, private contracts: JointContracts) {
     super(LPPoolHandler.name, null, network, contracts.lpPool);
   }
 
@@ -10,23 +11,23 @@ export class LPPoolHandler extends Handler {
    * Listen for events
    */
   listen() {
-    this.on('RewardWithdrawn', async (account: string, amount: BigNumber, event: Event) => {
+    this.on('RewardWithdrawn', async (account: string, amount: bigint, event: ContractCallEvent) => {
       return this.onRewardWithdrawn(account, amount, event);
     });
 
-    this.on('RewardAdded', async (amount: BigNumber, event: Event) => {
+    this.on('RewardAdded', async (amount: bigint, event: ContractCallEvent) => {
       return this.onRewardAdded(amount, event);
     });
 
-    this.on('Locked', async (account: string, amount: BigNumber, event: Event) => {
+    this.on('Locked', async (account: string, amount: bigint, event: ContractCallEvent) => {
       return this.onLocked(account, amount, event);
     });
 
-    this.on('Unlocked', async (account: string, amount: BigNumber, event: Event) => {
+    this.on('Unlocked', async (account: string, amount: bigint, event: ContractCallEvent) => {
       return this.onUnlocked(account, amount, event);
     });
 
-    this.on('Recovered', async (token: string, amount: BigNumber, event: Event) => {
+    this.on('Recovered', async (token: string, amount: bigint, event: ContractCallEvent) => {
       return this.onRecovered(token, amount, event);
     });
   }
@@ -37,7 +38,7 @@ export class LPPoolHandler extends Handler {
    * @param _amount The amount that was withdrawn
    * @param _event The event object
    */
-  async onRewardWithdrawn(_account: string, _amount: BigNumber, _event: ethers.Event) {
+  async onRewardWithdrawn(_account: string, _amount: bigint, _event: ContractCallEvent) {
     // TODO: Implement
   }
 
@@ -46,7 +47,7 @@ export class LPPoolHandler extends Handler {
    * @param _amount The amount transferred
    * @param _event The event object
    */
-  async onRewardAdded(_amount: BigNumber, _event: ethers.Event) {
+  async onRewardAdded(_amount: bigint, _event: ContractCallEvent) {
     // TODO: Implement
   }
 
@@ -56,7 +57,7 @@ export class LPPoolHandler extends Handler {
    * @param _amount The amount of LP tokens
    * @param _event The event object
    */
-  async onLocked(_account: string, _amount: BigNumber, _event: ethers.Event) {
+  async onLocked(_account: string, _amount: bigint, _event: ContractCallEvent) {
     // TODO: Implement
   }
 
@@ -66,7 +67,7 @@ export class LPPoolHandler extends Handler {
    * @param _amount The amount of LP tokens unlocked
    * @param _event The event object
    */
-  async onUnlocked(_account: string, _amount: BigNumber, _event: ethers.Event) {
+  async onUnlocked(_account: string, _amount: bigint, _event: ContractCallEvent) {
     // TODO: Implement
   }
 
@@ -76,7 +77,7 @@ export class LPPoolHandler extends Handler {
    * @param _amount The amount recovered
    * @param _event The event object
    */
-  async onRecovered(_token: string, _amount: BigNumber, _event: ethers.Event) {
+  async onRecovered(_token: string, _amount: bigint, _event: ContractCallEvent) {
     // TODO: Implement
   }
 }

@@ -1,7 +1,7 @@
 import { ChainNames, getChainByName } from '@jointlabs/chains-info';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Contract, providers } from 'ethers';
+import { Contract, JsonRpcProvider, Provider, WebSocketProvider } from 'ethers';
 import * as assetRegABI from '../../abi/AssetRegistry.json';
 import * as badgeMgrABI from '../../abi/BadgeManager.json';
 import * as coreABI from '../../abi/Core.json';
@@ -45,7 +45,7 @@ import { Watcher } from './watcher';
 export default class NetworkService {
   private logger = new Logger(NetworkService.name);
   private contracts: JointContracts = {};
-  private provider: providers.JsonRpcProvider;
+  private provider: Provider;
   private watchers: Watcher[] = [];
   private net: ChainNames;
 
@@ -87,7 +87,7 @@ export default class NetworkService {
    * Get a network's provider
    * @returns
    */
-  getProvider(): providers.JsonRpcProvider {
+  getProvider(): Provider {
     return this.provider;
   }
 
@@ -96,7 +96,7 @@ export default class NetworkService {
    * @param address The contract address
    */
   getERC20Contract(address: string): ERC20 {
-    return new Contract(address, erc20TokenABI, this.provider) as ERC20;
+    return new Contract(address, erc20TokenABI, this.provider) as unknown as ERC20;
   }
 
   /**
@@ -140,38 +140,47 @@ export default class NetworkService {
     const rpcUrl = getChainByName(network).rpcUrl;
     if (!rpcUrl) throw new Error('startDefaultWatcher: rpcUrl is not defined');
 
-    this.provider = rpcUrl.startsWith('ws')
-      ? new providers.WebSocketProvider(rpcUrl)
-      : new providers.JsonRpcProvider(rpcUrl);
+    this.provider = rpcUrl.startsWith('ws') ? new WebSocketProvider(rpcUrl) : new JsonRpcProvider(rpcUrl);
 
     // Initialize contracts
     const p2pTokenAddr = getChainByName(network).contracts['token'].address;
-    if (p2pTokenAddr) this.contracts.p2pToken = new Contract(p2pTokenAddr, p2pTokenABI, this.provider) as Token;
+    if (p2pTokenAddr)
+      this.contracts.p2pToken = new Contract(p2pTokenAddr, p2pTokenABI, this.provider) as unknown as Token;
 
     const marketCoreAddr = getChainByName(network).contracts['marketCore'].address;
     if (marketCoreAddr)
-      this.contracts.marketCore = new Contract(marketCoreAddr, marketCoreABI, this.provider) as MarketCore;
+      this.contracts.marketCore = new Contract(marketCoreAddr, marketCoreABI, this.provider) as unknown as MarketCore;
 
     const coreAddr = getChainByName(network).contracts['core'].address;
-    if (coreAddr) this.contracts.core = new Contract(coreAddr, coreABI, this.provider) as Core;
+    if (coreAddr) this.contracts.core = new Contract(coreAddr, coreABI, this.provider) as unknown as Core;
 
     const mediatorMgr = getChainByName(network).contracts['mediatorManager'].address;
     if (mediatorMgr)
-      this.contracts.mediatorMgr = new Contract(mediatorMgr, mediatorManagerABI, this.provider) as MediatorManager;
+      this.contracts.mediatorMgr = new Contract(
+        mediatorMgr,
+        mediatorManagerABI,
+        this.provider,
+      ) as unknown as MediatorManager;
 
     const disputeMgrAddr = getChainByName(network).contracts['disputeManager'].address;
     if (disputeMgrAddr)
-      this.contracts.disputeMgr = new Contract(disputeMgrAddr, disputeManagerABI, this.provider) as DisputeManager;
+      this.contracts.disputeMgr = new Contract(
+        disputeMgrAddr,
+        disputeManagerABI,
+        this.provider,
+      ) as unknown as DisputeManager;
 
     const badgeMgrAddr = getChainByName(network).contracts['badgeManager'].address;
-    if (badgeMgrAddr) this.contracts.badgeMgr = new Contract(badgeMgrAddr, badgeMgrABI, this.provider) as BadgeManager;
+    if (badgeMgrAddr)
+      this.contracts.badgeMgr = new Contract(badgeMgrAddr, badgeMgrABI, this.provider) as unknown as BadgeManager;
 
     const assetRegAddr = getChainByName(network).contracts['assetRegistry'].address;
     if (assetRegAddr)
-      this.contracts.assetRegistry = new Contract(assetRegAddr, assetRegABI, this.provider) as AssetRegistry;
+      this.contracts.assetRegistry = new Contract(assetRegAddr, assetRegABI, this.provider) as unknown as AssetRegistry;
 
     const energonAddr = getChainByName(network).contracts['energon'].address;
-    if (energonAddr) this.contracts.energon = new Contract(energonAddr, erc20TokenABI, this.provider) as Energon;
+    if (energonAddr)
+      this.contracts.energon = new Contract(energonAddr, erc20TokenABI, this.provider) as unknown as Energon;
 
     // Load initial contract params
     await this.loadInitialContractParams();
@@ -211,12 +220,12 @@ export default class NetworkService {
     this.provider = this.provider
       ? this.provider
       : rpcUrl.startsWith('ws')
-      ? new providers.WebSocketProvider(rpcUrl)
-      : new providers.JsonRpcProvider(rpcUrl);
+      ? new WebSocketProvider(rpcUrl)
+      : new JsonRpcProvider(rpcUrl);
 
     // Initialize contracts
     const nftAddress = getChainByName(network).contracts['nft'].address;
-    if (nftAddress) this.contracts.nft = new Contract(nftAddress, nftABI, this.provider) as NFT;
+    if (nftAddress) this.contracts.nft = new Contract(nftAddress, nftABI, this.provider) as unknown as NFT;
 
     // Load initial contract params
     await this.loadInitialContractParams();

@@ -7,7 +7,7 @@ import Draft from '../../models/draft';
 import Market from '../../models/market';
 import Swap from '../../models/swap';
 import User from '../../models/user';
-import { isZero, toBN } from '../../network/common';
+import { isZero } from '../../network/common';
 import { MetadataService } from '../../services/metadata/metadata.service';
 
 @Injectable()
@@ -71,21 +71,21 @@ export default class SwapService {
       (Market.isERC20(baseType) && Market.isSynth(quoteType))
     ) {
       info.symbol = base;
-      info.fee = toBN(swap.marketCreatorFee).add(swap.protocolFee).toString();
+      info.fee = toDec(swap.marketCreatorFee).add(swap.protocolFee).toFixed();
       info.address = baseAddress;
     }
 
     // SYNTH/ERC20
     if (Market.isSynth(baseType) && Market.isERC20(quoteType)) {
       info.symbol = quote;
-      info.fee = toBN(swap.marketCreatorFee).add(swap.protocolFee).toString();
+      info.fee = toDec(swap.marketCreatorFee).add(swap.protocolFee).toFixed();
       info.address = quoteAddress;
     }
 
     // SYNTH/SYNTH
     if (Market.isSynth(baseType) && Market.isSynth(quoteType)) {
       info.symbol = 'P2P';
-      info.fee = toBN(swap.marketCreatorFee).add(swap.protocolFee).toString();
+      info.fee = toDec(swap.marketCreatorFee).add(swap.protocolFee).toFixed();
       info.address = getContractsAddress('token');
     }
 

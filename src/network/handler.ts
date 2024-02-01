@@ -1,9 +1,8 @@
 import { Logger } from '@nestjs/common';
-import { Contract, ContractInterface, providers, Signer } from 'ethers';
-import * as erc20ABI from '../../abi/ERC20.json';
-import { Provider } from '@ethersproject/abstract-provider';
-import { EventEmitter2 } from 'eventemitter2';
 import { ConfigService } from '@nestjs/config';
+import { BaseContract, Contract, InterfaceAbi, Provider, Signer } from 'ethers';
+import { EventEmitter2 } from 'eventemitter2';
+import * as erc20ABI from '../../abi/ERC20.json';
 import Meta from '../models/meta';
 
 /**
@@ -23,7 +22,7 @@ export abstract class Handler extends EventEmitter2 {
     public name: string,
     public cfg: ConfigService,
     public network: string,
-    private contract: Contract,
+    private contract: BaseContract,
   ) {
     super();
   }
@@ -54,7 +53,7 @@ export abstract class Handler extends EventEmitter2 {
    * @param contractInterface The contract ABI
    * @param signerOrProvider The provider or signer
    */
-  newContract(addressOrName: string, contractInterface: ContractInterface, signerOrProvider: Signer | Provider) {
+  newContract(addressOrName: string, contractInterface: InterfaceAbi, signerOrProvider: Signer | Provider) {
     return new Contract(addressOrName, contractInterface, signerOrProvider);
   }
 
@@ -63,7 +62,7 @@ export abstract class Handler extends EventEmitter2 {
    * @param provider The network provider
    * @param token The token address
    */
-  public async getTokenDecimals(provider: providers.JsonRpcProvider, token: string): Promise<number> {
+  public async getTokenDecimals(provider: Provider, token: string): Promise<number> {
     const base = this.newContract(token, erc20ABI, provider);
     return base.decimals();
   }

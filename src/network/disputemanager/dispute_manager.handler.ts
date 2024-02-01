@@ -1,4 +1,4 @@
-import { BigNumber, Event as ChainEvent, ethers, providers } from 'ethers';
+import { Provider } from 'ethers';
 import * as _ from 'lodash';
 import { Transaction } from 'objection';
 import { isEqualStr, toDec } from '../../common/common';
@@ -14,6 +14,7 @@ import Meta from '../../models/meta';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 import Reveal from '../../models/reveal';
 import Swap from '../../models/swap';
+import { ContractCallEvent, toNumber } from '../common';
 import { Handler } from '../handler';
 import NetworkService from '../network.service';
 
@@ -21,7 +22,7 @@ export class DisputeManagerHandler extends Handler {
   constructor(
     private netSrv: NetworkService,
     private notifSrv: NotifierService,
-    private provider: providers.JsonRpcProvider,
+    private provider: Provider,
     public network: string,
     private contracts: JointContracts,
   ) {
@@ -35,11 +36,11 @@ export class DisputeManagerHandler extends Handler {
     this.on(
       'DisputeCreated',
       async (
-        orderId: BigNumber,
+        orderId: bigint,
         creator: string,
-        disputeId: BigNumber,
+        disputeId: bigint,
         wantRelease: boolean,
-        event: ethers.Event,
+        event: ContractCallEvent,
         txn?: Transaction,
       ) => {
         return this.onDisputeCreated(orderId, creator, disputeId, wantRelease, event, txn);
@@ -50,12 +51,12 @@ export class DisputeManagerHandler extends Handler {
       'Committed',
       async (
         marketAddress: string,
-        orderId: BigNumber,
-        disputeId: BigNumber,
+        orderId: bigint,
+        disputeId: bigint,
         committer: string,
-        ticketIdx: BigNumber,
+        ticketIdx: bigint,
         hash: string,
-        event: ethers.Event,
+        event: ContractCallEvent,
         txn?: Transaction,
       ) => {
         return this.onCommitted(marketAddress, orderId, disputeId, committer, ticketIdx, hash, event, txn);
@@ -66,12 +67,12 @@ export class DisputeManagerHandler extends Handler {
       'Revealed',
       async (
         marketAddress: string,
-        orderId: BigNumber,
-        disputeId: BigNumber,
+        orderId: bigint,
+        disputeId: bigint,
         revealer: string,
-        ticketIdx: BigNumber,
+        ticketIdx: bigint,
         vote: string,
-        event: ethers.Event,
+        event: ContractCallEvent,
         txn?: Transaction,
       ) => {
         return this.onRevealed(marketAddress, orderId, disputeId, revealer, ticketIdx, vote, event, txn);
@@ -82,22 +83,22 @@ export class DisputeManagerHandler extends Handler {
       'DecisionExecuted',
       async (
         marketAddress: string,
-        orderId: BigNumber,
-        disputeId: BigNumber,
+        orderId: bigint,
+        disputeId: bigint,
         executor: string,
         abandoned: boolean,
         winningVote: string,
-        event: ethers.Event,
+        event: ContractCallEvent,
       ) => {
         return this.onDecisionExecuted(marketAddress, orderId, disputeId, executor, abandoned, winningVote, event);
       },
     );
 
-    this.on('UpdatedPredictDur', async (value: BigNumber, event: ChainEvent, txn?: Transaction) => {
+    this.on('UpdatedPredictDur', async (value: bigint, event: ContractCallEvent, txn?: Transaction) => {
       return this.onParameterUpdate('predictDur', value.toString(), event, txn);
     });
 
-    this.on('UpdatedEvidenceDur', async (value: BigNumber, event: ChainEvent, txn?: Transaction) => {
+    this.on('UpdatedEvidenceDur', async (value: bigint, event: ContractCallEvent, txn?: Transaction) => {
       return this.onParameterUpdate('evidenceDur', value.toString(), event, txn);
     });
   }
@@ -112,14 +113,14 @@ export class DisputeManagerHandler extends Handler {
    * @param txn The transaction object
    */
   async onDisputeCreated(
-    orderId: BigNumber,
+    orderId: bigint,
     creator: string,
-    disputeId: BigNumber,
+    disputeId: bigint,
     wantRelease: boolean,
-    event: ChainEvent,
+    event: ContractCallEvent,
     txn?: Transaction,
   ) {
-    const swap = await Swap.get(this.network, orderId.toNumber(), undefined, undefined, txn);
+    const swap = await Swap.get(this.network, toNumber(orderId), undefined, undefined, txn);
     const { provider, marketAddress, taker, network, lid } = swap;
 
     // Calculate number of mediators required
@@ -145,8 +146,8 @@ export class DisputeManagerHandler extends Handler {
         creator,
         defendant: provider === creator ? taker : provider,
         marketAddress: marketAddress,
-        orderId: orderId.toNumber(),
-        disputeId: disputeId.toNumber(),
+        orderId: toNumber(orderId),
+        disputeId: toNumber(disputeId),
         wantRelease,
         redispute,
         numMediators: poolInfo.numDraftees,
@@ -163,8 +164,8 @@ export class DisputeManagerHandler extends Handler {
             type: MineTaskType.Draft,
             network: network,
             marketAddress: marketAddress,
-            orderId: orderId.toNumber(),
-            disputeId: disputeId.toNumber(),
+            orderId: toNumber(orderId),
+            disputeId: toNumber(disputeId),
           },
           txn,
         );
@@ -202,9 +203,9 @@ export class DisputeManagerHandler extends Handler {
       {
         network: this.network,
         marketAddress,
-        orderId: orderId.toNumber(),
+        orderId: toNumber(orderId),
         creator: creator,
-        disputeId: disputeId.toNumber(),
+        disputeId: toNumber(disputeId),
         action: Events.SwapDisputed,
       },
       txn,
@@ -233,12 +234,12 @@ export class DisputeManagerHandler extends Handler {
    */
   async onCommitted(
     marketAddress: string,
-    orderId: BigNumber,
-    disputeId: BigNumber,
+    orderId: bigint,
+    disputeId: bigint,
     committer: string,
-    ticketIdx: BigNumber,
+    ticketIdx: bigint,
     hash: string,
-    event: ChainEvent,
+    event: ContractCallEvent,
     txn?: Transaction,
   ) {
     await Commit.create(
@@ -247,9 +248,9 @@ export class DisputeManagerHandler extends Handler {
         marketAddress,
         committer,
         hash,
-        ticketIndex: ticketIdx.toNumber(),
-        orderId: orderId.toNumber(),
-        disputeId: disputeId.toNumber(),
+        ticketIndex: toNumber(ticketIdx),
+        orderId: toNumber(orderId),
+        disputeId: toNumber(disputeId),
       },
       txn,
     );
@@ -259,9 +260,9 @@ export class DisputeManagerHandler extends Handler {
       {
         network: this.network,
         marketAddress,
-        orderId: orderId.toNumber(),
+        orderId: toNumber(orderId),
         creator: committer,
-        disputeId: disputeId.toNumber(),
+        disputeId: toNumber(disputeId),
         action: Events.SwapCommitted,
       },
       txn,
@@ -283,12 +284,12 @@ export class DisputeManagerHandler extends Handler {
    */
   async onRevealed(
     marketAddress: string,
-    orderId: BigNumber,
-    disputeId: BigNumber,
+    orderId: bigint,
+    disputeId: bigint,
     revealer: string,
-    ticketIdx: BigNumber,
+    ticketIdx: bigint,
     vote: string,
-    event: ChainEvent,
+    event: ContractCallEvent,
     txn?: Transaction,
   ) {
     await Reveal.create(
@@ -297,9 +298,9 @@ export class DisputeManagerHandler extends Handler {
         marketAddress,
         revealer,
         vote,
-        ticketIndex: ticketIdx.toNumber(),
-        orderId: orderId.toNumber(),
-        disputeId: disputeId.toNumber(),
+        ticketIndex: toNumber(ticketIdx),
+        orderId: toNumber(orderId),
+        disputeId: toNumber(disputeId),
       },
       txn,
     );
@@ -309,9 +310,9 @@ export class DisputeManagerHandler extends Handler {
       {
         network: this.network,
         marketAddress,
-        orderId: orderId.toNumber(),
+        orderId: toNumber(orderId),
         creator: revealer,
-        disputeId: disputeId.toNumber(),
+        disputeId: toNumber(disputeId),
         vote,
         action: Events.SwapRevealed,
       },
@@ -334,15 +335,15 @@ export class DisputeManagerHandler extends Handler {
    */
   async onDecisionExecuted(
     marketAddress: string,
-    orderId: BigNumber,
-    disputeId: BigNumber,
+    orderId: bigint,
+    disputeId: bigint,
     executor: string,
     abandoned: boolean,
     winningVote: string,
-    event: ChainEvent,
+    event: ContractCallEvent,
     txn?: Transaction,
   ) {
-    let dispute = await Dispute.get(this.network, marketAddress, orderId.toNumber(), disputeId.toNumber(), txn);
+    let dispute = await Dispute.get(this.network, marketAddress, toNumber(orderId), toNumber(disputeId), txn);
 
     // Update dispute
     const stalled = !['0x30', '0x31'].includes(winningVote);
@@ -405,9 +406,9 @@ export class DisputeManagerHandler extends Handler {
       {
         network: this.network,
         marketAddress,
-        orderId: orderId.toNumber(),
+        orderId: toNumber(orderId),
         creator: executor,
-        disputeId: disputeId.toNumber(),
+        disputeId: toNumber(disputeId),
         action: Events.SwapExecuted,
       },
       txn,
@@ -446,7 +447,7 @@ export class DisputeManagerHandler extends Handler {
    * @param _event The event object
    * @param txn The transaction object
    */
-  async onParameterUpdate(param: keyof ContractsParams, value: string, _event: ChainEvent, txn?: Transaction) {
+  async onParameterUpdate(param: keyof ContractsParams, value: string, _event: ContractCallEvent, txn?: Transaction) {
     await Meta.updateContractsParams(this.network, txn, (params) => (params[param] = value));
   }
 }

@@ -1,19 +1,11 @@
 import { Logger } from '@nestjs/common';
-import { BigNumber, constants, ethers, providers } from 'ethers';
+import { Interface, Log, Provider, ZeroAddress } from 'ethers';
 import { isEqualStr } from '../common/common';
 import Meta from '../models/meta';
 import { RedisService } from '../services/redis/redis.service';
+import { ContractCallEvent } from './common';
 import { Handler } from './handler';
 import Processor from './processor';
-
-export interface UnprocessedEvent {
-  event: ethers.Event;
-  block: number;
-  txIndex: number;
-  eventIndex: number;
-  contract: string;
-  promise?: any;
-}
 
 export class Watcher {
   logger = new Logger(Watcher.name);
@@ -32,7 +24,7 @@ export class Watcher {
   constructor(
     public name: string,
     public network: string,
-    private provider: providers.JsonRpcProvider,
+    private provider: Provider,
     private processor: Processor,
     private redisSrv: RedisService,
   ) {}
@@ -87,20 +79,24 @@ export class Watcher {
    * @param iface The contract interface
    * @returns
    */
-  getEventFromLog(log: ethers.providers.Log, iface: ethers.utils.Interface) {
-    const parsed = iface.parseLog(log);
+  getEventFromLog(log: Log, iface: Interface): ContractCallEvent {
+    const parsed = iface.parseLog({
+      data: log.data,
+      topics: log.topics as string[],
+    });
     return {
       event: parsed.name,
       args: parsed.args,
       blockNumber: log.blockNumber,
-      logIndex: log.logIndex,
+      logIndex: log.index,
       transactionIndex: log.transactionIndex,
       transactionHash: log.transactionHash,
       address: log.address,
       eventSignature: parsed.signature,
+      removed: log.removed,
       getBlock: () => this.provider.getBlock(log.blockNumber),
       getTransaction: () => this.provider.getTransaction(log.transactionHash),
-    } as ethers.Event;
+    };
   }
 
   /**
@@ -113,25 +109,23 @@ export class Watcher {
     this.logInfo(`Fetching events`, { curBlock });
 
     // Query latest logs for all contracts
-    const logs = await this.provider.send('eth_getLogs', [
-      {
-        fromBlock: prevBlock ? ethers.utils.hexValue(prevBlock) : ethers.utils.hexValue(curBlock),
-        toBlock: ethers.utils.hexValue(curBlock),
-        topics: [],
-        address: this.handlers
-          .map((h) => h.getContract().address)
-          .filter((addr) => {
-            return !isEqualStr(constants.AddressZero, addr);
-          }),
-      },
-    ]);
+    const logs = await this.provider.getLogs({
+      fromBlock: prevBlock ? prevBlock : curBlock,
+      toBlock: curBlock,
+      topics: [],
+      address: this.handlers
+        .map((h) => h.getContract().target)
+        .filter((addr) => {
+          return !isEqualStr(ZeroAddress, addr as string);
+        }),
+    });
 
     this.logInfo(`Found ${logs.length} logs`);
 
     // Extract the events from the logs
-    const events: ethers.Event[] = [
-      ...logs.map((log: ethers.providers.Log) => {
-        const handler = this.handlers.find((h) => isEqualStr(h.getContract().address, log.address));
+    const events: ContractCallEvent[] = [
+      ...logs.map((log: Log) => {
+        const handler = this.handlers.find((h) => isEqualStr(h.getContract().target as string, log.address));
         return this.getEventFromLog(log, handler.getContract().interface);
       }),
     ];
@@ -146,9 +140,9 @@ export class Watcher {
       events.map((e) => {
         return this.processor.addEvent({
           event: e,
-          block: BigNumber.from(e.blockNumber).toNumber(),
-          txIndex: BigNumber.from(e.transactionIndex).toNumber(),
-          eventIndex: BigNumber.from(e.logIndex).toNumber(),
+          block: e.blockNumber,
+          txIndex: e.transactionIndex,
+          eventIndex: e.logIndex,
           contract: e.address,
         });
       }),
@@ -187,7 +181,7 @@ export class Watcher {
     };
 
     // remove all listeners for 'block' event and add a new one
-    this.provider.removeAllListeners('block').on('block', listener);
+    this.provider.on('block', listener);
   }
 
   async sync() {

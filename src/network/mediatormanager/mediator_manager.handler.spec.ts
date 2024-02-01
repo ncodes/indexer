@@ -11,7 +11,7 @@ import MineTask, { MineTaskType } from '../../models/mine_task';
 import Swap from '../../models/swap';
 import Ticket from '../../models/ticket';
 import TicketSlash from '../../models/ticket_slash';
-import { toBN } from '../common';
+import { toBigInt, toNumber } from '../common';
 import { MediatorManagerHandler } from './mediator_manager.handler';
 
 const MarketCoreContract = jest.fn().mockImplementation(() => {
@@ -87,11 +87,19 @@ describe('MediatorManagerHandler', () => {
         transactionHash: '0xTxHash',
       } as any;
       await expect(
-        handler.onTicketPurchased(owner, toBN(1), toBN(0), toBN(10), toBN(now + 1), toBN(now + 1), evt),
+        handler.onTicketPurchased(
+          owner,
+          toBigInt(1),
+          toBigInt(0),
+          toBigInt(10),
+          toBigInt(now + 1),
+          toBigInt(now + 1),
+          evt,
+        ),
       ).resolves.toBeUndefined();
       const ticket = await Ticket.getByNetworkOwnerAndIndex(net, owner, 1);
       expect(ticket).toBeDefined();
-      expect(ticket.bond).toEqual(toBN(10).toString());
+      expect(ticket.bond).toEqual(toBigInt(10).toString());
       expect(ticket.matureAt).toBeDefined();
       expect(ticket.joinBy).toBeDefined();
       expect(ticket.joinBy).toBeDefined();
@@ -114,7 +122,7 @@ describe('MediatorManagerHandler', () => {
       const evt = {
         getBlock: jest.fn().mockResolvedValue({ timestamp: now }),
       } as any;
-      await expect(handler.onTicketCancelled(owner, toBN(1), evt)).resolves.toBeUndefined();
+      await expect(handler.onTicketCancelled(owner, toBigInt(1), evt)).resolves.toBeUndefined();
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.cancelAt).toBeDefined();
       expect(ticket.joined).toBeFalsy();
@@ -137,7 +145,7 @@ describe('MediatorManagerHandler', () => {
       const evt = {
         getBlock: jest.fn().mockResolvedValue({ timestamp: now }),
       } as any;
-      await expect(handler.onTicketDrained(owner, toBN(1), toBN(10), evt)).resolves.toBeUndefined();
+      await expect(handler.onTicketDrained(owner, toBigInt(1), toBigInt(10), evt)).resolves.toBeUndefined();
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.drained).toBeTruthy();
       expect(ticket.drainedAt).toBeDefined();
@@ -164,7 +172,7 @@ describe('MediatorManagerHandler', () => {
       const evt = {
         getBlock: jest.fn().mockResolvedValue({ timestamp: now }),
       } as any;
-      await expect(handler.onJoinedPool(owner, toBN(1), toBN(1), evt)).resolves.toBeUndefined();
+      await expect(handler.onJoinedPool(owner, toBigInt(1), toBigInt(1), evt)).resolves.toBeUndefined();
 
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.poolId).toEqual(1);
@@ -190,14 +198,14 @@ describe('MediatorManagerHandler', () => {
         owner: owner,
       });
 
-      const ticketId = toBN(1);
-      const orderId = toBN(23);
-      const disputeId = toBN(2);
+      const ticketId = toBigInt(1);
+      const orderId = toBigInt(23);
+      const disputeId = toBigInt(2);
 
       const swap = await Swap.create({
         network: net,
         marketAddress,
-        orderId: orderId.toNumber(),
+        orderId: toNumber(orderId),
         base: 'BASE',
         quote: 'QUOTE',
         provider: provider,
@@ -207,8 +215,8 @@ describe('MediatorManagerHandler', () => {
       let dispute = await Dispute.create({
         network: net,
         marketAddress,
-        orderId: orderId.toNumber(),
-        disputeId: disputeId.toNumber(),
+        orderId: toNumber(orderId),
+        disputeId: toNumber(disputeId),
         numMediators: 1,
         numMediatorsDrafted: 0,
       });
@@ -216,15 +224,15 @@ describe('MediatorManagerHandler', () => {
       await Draft.create({
         network: net,
         marketAddress,
-        disputeIndex: disputeId.toNumber(),
-        orderId: orderId.toNumber(),
+        disputeIndex: toNumber(disputeId),
+        orderId: toNumber(orderId),
         owner: '0xDraftOwner1',
       });
       await Draft.create({
         network: net,
         marketAddress,
-        disputeIndex: disputeId.toNumber(),
-        orderId: orderId.toNumber(),
+        disputeIndex: toNumber(disputeId),
+        orderId: toNumber(orderId),
         owner: '0xDraftOwner2',
       });
 
@@ -232,8 +240,8 @@ describe('MediatorManagerHandler', () => {
         type: MineTaskType.Draft,
         network: net,
         marketAddress,
-        orderId: orderId.toNumber(),
-        disputeId: disputeId.toNumber(),
+        orderId: toNumber(orderId),
+        disputeId: toNumber(disputeId),
       });
 
       const now = moment().unix();
@@ -274,7 +282,7 @@ describe('MediatorManagerHandler', () => {
       expect(event).toBeDefined();
       expect(event.network).toEqual(net);
       expect(event.marketAddress).toEqual(marketAddress);
-      expect(event.orderId).toEqual(orderId.toNumber());
+      expect(event.orderId).toEqual(toNumber(orderId));
       expect(event.draftee).toEqual(owner);
       expect(event.disputeId).toEqual(draft.disputeIndex);
       expect(event.creator).toEqual(drafter);
@@ -325,8 +333,8 @@ describe('MediatorManagerHandler', () => {
       // dispute is fully drafted (1 mediator)
       const execTask = await MineTask.find({
         marketAddress,
-        orderId: orderId.toNumber(),
-        disputeId: disputeId.toNumber(),
+        orderId: toNumber(orderId),
+        disputeId: toNumber(disputeId),
         type: MineTaskType.Execute,
       });
       expect(execTask).toBeDefined();
@@ -340,14 +348,14 @@ describe('MediatorManagerHandler', () => {
           owner: owner,
         });
 
-        const ticketId = toBN(1);
-        const orderId = toBN(23);
-        const disputeId = toBN(2);
+        const ticketId = toBigInt(1);
+        const orderId = toBigInt(23);
+        const disputeId = toBigInt(2);
 
         await Swap.create({
           network: net,
           marketAddress,
-          orderId: orderId.toNumber(),
+          orderId: toNumber(orderId),
           base: 'BASE',
           quote: 'QUOTE',
           provider: provider,
@@ -357,8 +365,8 @@ describe('MediatorManagerHandler', () => {
         let dispute = await Dispute.create({
           network: net,
           marketAddress,
-          orderId: orderId.toNumber(),
-          disputeId: disputeId.toNumber(),
+          orderId: toNumber(orderId),
+          disputeId: toNumber(disputeId),
           numMediators: 2,
           numMediatorsDrafted: 0,
         });
@@ -366,15 +374,15 @@ describe('MediatorManagerHandler', () => {
         await Draft.create({
           network: net,
           marketAddress,
-          disputeIndex: disputeId.toNumber(),
-          orderId: orderId.toNumber(),
+          disputeIndex: toNumber(disputeId),
+          orderId: toNumber(orderId),
           owner: '0xDraftOwner1',
         });
         await Draft.create({
           network: net,
           marketAddress,
-          disputeIndex: disputeId.toNumber(),
-          orderId: orderId.toNumber(),
+          disputeIndex: toNumber(disputeId),
+          orderId: toNumber(orderId),
           owner: '0xDraftOwner2',
         });
 
@@ -382,8 +390,8 @@ describe('MediatorManagerHandler', () => {
           type: MineTaskType.Draft,
           network: net,
           marketAddress,
-          orderId: orderId.toNumber(),
-          disputeId: disputeId.toNumber(),
+          orderId: toNumber(orderId),
+          disputeId: toNumber(disputeId),
         });
 
         const now = moment().unix();
@@ -473,7 +481,7 @@ describe('MediatorManagerHandler', () => {
         disputeId: ticket.disputeId,
       });
       const evt = {} as any;
-      await expect(handler.onUndrafted(owner, toBN(1), true, undrafter, evt)).resolves.toBeUndefined();
+      await expect(handler.onUndrafted(owner, toBigInt(1), true, undrafter, evt)).resolves.toBeUndefined();
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.drafted).toBeFalsy();
       expect(ticket.draftedAt).toBeNull();
@@ -488,7 +496,7 @@ describe('MediatorManagerHandler', () => {
       expect(numCompleted).toEqual(1);
 
       // not slashed
-      await expect(handler.onUndrafted(owner, toBN(1), false, undrafter, {} as any)).resolves.toBeUndefined();
+      await expect(handler.onUndrafted(owner, toBigInt(1), false, undrafter, {} as any)).resolves.toBeUndefined();
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.drafted).toBeFalsy();
       expect(ticket.draftedAt).toBeNull();
@@ -519,18 +527,20 @@ describe('MediatorManagerHandler', () => {
         index: 1,
         poolId: 1,
         owner: owner,
-        bond: toBN(20).toString(),
+        bond: toBigInt(20).toString(),
         orderId: 23,
         joined: true,
       });
 
       const voted = true;
       const evt = {} as any;
-      await expect(handler.onTicketSlashed(owner, toBN(1), toBN(10), voted, true, evt)).resolves.toBeUndefined();
+      await expect(
+        handler.onTicketSlashed(owner, toBigInt(1), toBigInt(10), voted, true, evt),
+      ).resolves.toBeUndefined();
 
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.slashed).toBeTruthy();
-      expect(ticket.bond).toEqual(toBN(10).toString());
+      expect(ticket.bond).toEqual(toBigInt(10).toString());
       expect(ticket.orderId).toBeNull();
       expect(ticket.joined).toBeFalsy();
       expect(ticket.poolId).toEqual(null);
@@ -541,7 +551,7 @@ describe('MediatorManagerHandler', () => {
         index: 1,
       });
       expect(slash).toBeDefined();
-      expect(slash.amount).toEqual(toBN(10).toString());
+      expect(slash.amount).toEqual(toBigInt(10).toString());
       expect(slash.voted).toBeTruthy();
       expect(slash.winSide).toBeTruthy();
       expect(slash.orderId).toBeNull();

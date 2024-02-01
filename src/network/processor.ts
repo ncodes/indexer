@@ -4,8 +4,17 @@ import * as LRUCache from 'lru-cache';
 import * as sortArray from 'sort-array';
 import { isDev, isEqualStr, isTest, shortenAddr } from '../common/common';
 import ChainEvent from '../models/chain_events';
+import { ContractCallEvent } from './common';
 import { Handler } from './handler';
-import { UnprocessedEvent } from './watcher';
+
+export interface UnprocessedEvent {
+  event: ContractCallEvent;
+  block: number;
+  txIndex: number;
+  eventIndex: number;
+  contract: string;
+  promise?: any;
+}
 
 /**
  * Processor processes events from the queue
@@ -44,7 +53,7 @@ export default class Processor {
    */
   getHandler(address: string) {
     for (const item of this.handlers) {
-      if (isEqualStr(item.getContract().address, address)) return item;
+      if (isEqualStr(item.getContract().target as string, address)) return item;
     }
   }
 

@@ -3,70 +3,29 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BigNumber,
   BigNumberish,
   BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  Overrides,
-  PopulatedTransaction,
-  Signer,
-  utils,
-} from "ethers";
-import type {
   FunctionFragment,
   Result,
+  Interface,
   EventFragment,
-} from "@ethersproject/abi";
-import type { Listener, Provider } from "@ethersproject/providers";
+  AddressLike,
+  ContractRunner,
+  ContractMethod,
+  Listener,
+} from "ethers";
 import type {
-  TypedEventFilter,
-  TypedEvent,
+  TypedContractEvent,
+  TypedDeferredTopicFilter,
+  TypedEventLog,
+  TypedLogDescription,
   TypedListener,
-  OnEvent,
+  TypedContractMethod,
 } from "./common";
 
-export interface BadgeManagerInterface extends utils.Interface {
-  functions: {
-    "badgeCoIssuers(string,address)": FunctionFragment;
-    "badgeIssuer(string)": FunctionFragment;
-    "badgeMetadata(string,string)": FunctionFragment;
-    "badgeMetadataKeys(string,uint256)": FunctionFragment;
-    "badgePaths(string,string)": FunctionFragment;
-    "getGrantId(string,string,address)": FunctionFragment;
-    "getGranteeMetaKeys(string,string,address)": FunctionFragment;
-    "getGranteeMetaValue(string,string,address,string)": FunctionFragment;
-    "getMetaKeys(string,string)": FunctionFragment;
-    "getMetaValue(string,string,string)": FunctionFragment;
-    "getPathId(string,string)": FunctionFragment;
-    "grantBadge(string,string,address,uint256,string[],string[])": FunctionFragment;
-    "grantBadgeBySig(string,string,address,uint256,string[],string[],uint256,bytes)": FunctionFragment;
-    "granted(bytes32)": FunctionFragment;
-    "granteeMetadata(bytes32,string)": FunctionFragment;
-    "granteeMetadataKeys(bytes32,uint256)": FunctionFragment;
-    "hasBadge(address,string,string)": FunctionFragment;
-    "issuerBadge(address)": FunctionFragment;
-    "owner()": FunctionFragment;
-    "pathMetadata(bytes32,string)": FunctionFragment;
-    "pathMetadataKeys(bytes32,uint256)": FunctionFragment;
-    "registerCoIssuer(string,address)": FunctionFragment;
-    "registerIssuer(address,string,string[],string[])": FunctionFragment;
-    "registerPath(string,string,string[],string[])": FunctionFragment;
-    "removeCoIssuer(string,address)": FunctionFragment;
-    "renounceOwnership()": FunctionFragment;
-    "replaceIssuer(string,address)": FunctionFragment;
-    "revokeBadge(string,string,address)": FunctionFragment;
-    "revokeBadgeBySig(string,string,address,uint256,bytes)": FunctionFragment;
-    "transferBadgeOwnership(string,string,address)": FunctionFragment;
-    "transferOwnership(address)": FunctionFragment;
-    "upsertGranteeMeta(string,string,address,string,string)": FunctionFragment;
-    "upsertGranteeMetaBySig(string,string,address,string,string,uint256,bytes)": FunctionFragment;
-    "upsertMeta(string,string,string,string)": FunctionFragment;
-    "usedSig(address)": FunctionFragment;
-  };
-
+export interface BadgeManagerInterface extends Interface {
   getFunction(
-    nameOrSignatureOrTopic:
+    nameOrSignature:
       | "badgeCoIssuers"
       | "badgeIssuer"
       | "badgeMetadata"
@@ -104,9 +63,24 @@ export interface BadgeManagerInterface extends utils.Interface {
       | "usedSig"
   ): FunctionFragment;
 
+  getEvent(
+    nameOrSignatureOrTopic:
+      | "AddedCoIssuer"
+      | "AddedIssuer"
+      | "BadgeMetaUpdated"
+      | "BadgeOwnershipTransferred"
+      | "GrantedBadge"
+      | "GranteeBadgeMetaUpdated"
+      | "OwnershipTransferred"
+      | "PathRegistered"
+      | "RemovedCoIssuer"
+      | "ReplacedIssuer"
+      | "RevokedBadge"
+  ): EventFragment;
+
   encodeFunctionData(
     functionFragment: "badgeCoIssuers",
-    values: [string, string]
+    values: [string, AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "badgeIssuer", values: [string]): string;
   encodeFunctionData(
@@ -123,15 +97,15 @@ export interface BadgeManagerInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getGrantId",
-    values: [string, string, string]
+    values: [string, string, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getGranteeMetaKeys",
-    values: [string, string, string]
+    values: [string, string, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getGranteeMetaValue",
-    values: [string, string, string, string]
+    values: [string, string, AddressLike, string]
   ): string;
   encodeFunctionData(
     functionFragment: "getMetaKeys",
@@ -147,14 +121,14 @@ export interface BadgeManagerInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "grantBadge",
-    values: [string, string, string, BigNumberish, string[], string[]]
+    values: [string, string, AddressLike, BigNumberish, string[], string[]]
   ): string;
   encodeFunctionData(
     functionFragment: "grantBadgeBySig",
     values: [
       string,
       string,
-      string,
+      AddressLike,
       BigNumberish,
       string[],
       string[],
@@ -173,9 +147,12 @@ export interface BadgeManagerInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "hasBadge",
-    values: [string, string, string]
+    values: [AddressLike, string, string]
   ): string;
-  encodeFunctionData(functionFragment: "issuerBadge", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "issuerBadge",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "pathMetadata",
@@ -187,11 +164,11 @@ export interface BadgeManagerInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "registerCoIssuer",
-    values: [string, string]
+    values: [string, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "registerIssuer",
-    values: [string, string, string[], string[]]
+    values: [AddressLike, string, string[], string[]]
   ): string;
   encodeFunctionData(
     functionFragment: "registerPath",
@@ -199,7 +176,7 @@ export interface BadgeManagerInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "removeCoIssuer",
-    values: [string, string]
+    values: [string, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -207,37 +184,48 @@ export interface BadgeManagerInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "replaceIssuer",
-    values: [string, string]
+    values: [string, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "revokeBadge",
-    values: [string, string, string]
+    values: [string, string, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "revokeBadgeBySig",
-    values: [string, string, string, BigNumberish, BytesLike]
+    values: [string, string, AddressLike, BigNumberish, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "transferBadgeOwnership",
-    values: [string, string, string]
+    values: [string, string, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
-    values: [string]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "upsertGranteeMeta",
-    values: [string, string, string, string, string]
+    values: [string, string, AddressLike, string, string]
   ): string;
   encodeFunctionData(
     functionFragment: "upsertGranteeMetaBySig",
-    values: [string, string, string, string, string, BigNumberish, BytesLike]
+    values: [
+      string,
+      string,
+      AddressLike,
+      string,
+      string,
+      BigNumberish,
+      BytesLike
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "upsertMeta",
     values: [string, string, string, string]
   ): string;
-  encodeFunctionData(functionFragment: "usedSig", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "usedSig",
+    values: [AddressLike]
+  ): string;
 
   decodeFunctionResult(
     functionFragment: "badgeCoIssuers",
@@ -352,1492 +340,978 @@ export interface BadgeManagerInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "upsertMeta", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "usedSig", data: BytesLike): Result;
-
-  events: {
-    "AddedCoIssuer(address,address,string)": EventFragment;
-    "AddedIssuer(address,string,string[],string[])": EventFragment;
-    "BadgeMetaUpdated(address,string,string,string,string)": EventFragment;
-    "BadgeOwnershipTransferred(string,string,address,address)": EventFragment;
-    "GrantedBadge(string,string,address,string[],string[],uint256)": EventFragment;
-    "GranteeBadgeMetaUpdated(address,address,string,string,string,string)": EventFragment;
-    "OwnershipTransferred(address,address)": EventFragment;
-    "PathRegistered(address,string,string,string[],string[])": EventFragment;
-    "RemovedCoIssuer(address,address,string)": EventFragment;
-    "ReplacedIssuer(address,address,string)": EventFragment;
-    "RevokedBadge(string,string,address)": EventFragment;
-  };
-
-  getEvent(nameOrSignatureOrTopic: "AddedCoIssuer"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "AddedIssuer"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "BadgeMetaUpdated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "BadgeOwnershipTransferred"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "GrantedBadge"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "GranteeBadgeMetaUpdated"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "PathRegistered"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RemovedCoIssuer"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "ReplacedIssuer"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RevokedBadge"): EventFragment;
 }
 
-export interface AddedCoIssuerEventObject {
-  issuer: string;
-  coIssuer: string;
-  badge: string;
+export namespace AddedCoIssuerEvent {
+  export type InputTuple = [
+    issuer: AddressLike,
+    coIssuer: AddressLike,
+    badge: string
+  ];
+  export type OutputTuple = [issuer: string, coIssuer: string, badge: string];
+  export interface OutputObject {
+    issuer: string;
+    coIssuer: string;
+    badge: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type AddedCoIssuerEvent = TypedEvent<
-  [string, string, string],
-  AddedCoIssuerEventObject
->;
 
-export type AddedCoIssuerEventFilter = TypedEventFilter<AddedCoIssuerEvent>;
-
-export interface AddedIssuerEventObject {
-  issuer: string;
-  badge: string;
-  metadataKeys: string[];
-  metadataValues: string[];
-}
-export type AddedIssuerEvent = TypedEvent<
-  [string, string, string[], string[]],
-  AddedIssuerEventObject
->;
-
-export type AddedIssuerEventFilter = TypedEventFilter<AddedIssuerEvent>;
-
-export interface BadgeMetaUpdatedEventObject {
-  issuer: string;
-  badge: string;
-  path: string;
-  key: string;
-  value: string;
-}
-export type BadgeMetaUpdatedEvent = TypedEvent<
-  [string, string, string, string, string],
-  BadgeMetaUpdatedEventObject
->;
-
-export type BadgeMetaUpdatedEventFilter =
-  TypedEventFilter<BadgeMetaUpdatedEvent>;
-
-export interface BadgeOwnershipTransferredEventObject {
-  badge: string;
-  path: string;
-  oldOwner: string;
-  newOwner: string;
-}
-export type BadgeOwnershipTransferredEvent = TypedEvent<
-  [string, string, string, string],
-  BadgeOwnershipTransferredEventObject
->;
-
-export type BadgeOwnershipTransferredEventFilter =
-  TypedEventFilter<BadgeOwnershipTransferredEvent>;
-
-export interface GrantedBadgeEventObject {
-  badge: string;
-  path: string;
-  grantee: string;
-  metadataKeys: string[];
-  metadataValues: string[];
-  expireAt: BigNumber;
-}
-export type GrantedBadgeEvent = TypedEvent<
-  [string, string, string, string[], string[], BigNumber],
-  GrantedBadgeEventObject
->;
-
-export type GrantedBadgeEventFilter = TypedEventFilter<GrantedBadgeEvent>;
-
-export interface GranteeBadgeMetaUpdatedEventObject {
-  issuer: string;
-  grantee: string;
-  badge: string;
-  path: string;
-  key: string;
-  value: string;
-}
-export type GranteeBadgeMetaUpdatedEvent = TypedEvent<
-  [string, string, string, string, string, string],
-  GranteeBadgeMetaUpdatedEventObject
->;
-
-export type GranteeBadgeMetaUpdatedEventFilter =
-  TypedEventFilter<GranteeBadgeMetaUpdatedEvent>;
-
-export interface OwnershipTransferredEventObject {
-  previousOwner: string;
-  newOwner: string;
-}
-export type OwnershipTransferredEvent = TypedEvent<
-  [string, string],
-  OwnershipTransferredEventObject
->;
-
-export type OwnershipTransferredEventFilter =
-  TypedEventFilter<OwnershipTransferredEvent>;
-
-export interface PathRegisteredEventObject {
-  issuer: string;
-  badge: string;
-  path: string;
-  metadataKeys: string[];
-  metadataValues: string[];
-}
-export type PathRegisteredEvent = TypedEvent<
-  [string, string, string, string[], string[]],
-  PathRegisteredEventObject
->;
-
-export type PathRegisteredEventFilter = TypedEventFilter<PathRegisteredEvent>;
-
-export interface RemovedCoIssuerEventObject {
-  issuer: string;
-  coIssuer: string;
-  badge: string;
-}
-export type RemovedCoIssuerEvent = TypedEvent<
-  [string, string, string],
-  RemovedCoIssuerEventObject
->;
-
-export type RemovedCoIssuerEventFilter = TypedEventFilter<RemovedCoIssuerEvent>;
-
-export interface ReplacedIssuerEventObject {
-  oldIssuer: string;
-  newIssuer: string;
-  badge: string;
-}
-export type ReplacedIssuerEvent = TypedEvent<
-  [string, string, string],
-  ReplacedIssuerEventObject
->;
-
-export type ReplacedIssuerEventFilter = TypedEventFilter<ReplacedIssuerEvent>;
-
-export interface RevokedBadgeEventObject {
-  badge: string;
-  path: string;
-  grantee: string;
-}
-export type RevokedBadgeEvent = TypedEvent<
-  [string, string, string],
-  RevokedBadgeEventObject
->;
-
-export type RevokedBadgeEventFilter = TypedEventFilter<RevokedBadgeEvent>;
-
-export interface BadgeManager extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
-  deployed(): Promise<this>;
-
-  interface: BadgeManagerInterface;
-
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
-    fromBlockOrBlockhash?: string | number | undefined,
-    toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
-
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
-
-  functions: {
-    badgeCoIssuers(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
-
-    badgeIssuer(arg0: string, overrides?: CallOverrides): Promise<[string]>;
-
-    badgeMetadata(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    badgeMetadataKeys(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    badgePaths(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    getGrantId(
-      badge: string,
-      path: string,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    getGranteeMetaKeys(
-      badge: string,
-      path: string,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<[string[]]>;
-
-    getGranteeMetaValue(
-      badge: string,
-      path: string,
-      addr: string,
-      key: string,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    getMetaKeys(
-      badge: string,
-      path: string,
-      overrides?: CallOverrides
-    ): Promise<[string[]]>;
-
-    getMetaValue(
-      badge: string,
-      path: string,
-      key: string,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    getPathId(
-      badge: string,
-      path: string,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    grantBadge(
-      badge: string,
-      path: string,
-      addr: string,
-      expireAt: BigNumberish,
-      metadataKeys: string[],
-      metadataValues: string[],
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    grantBadgeBySig(
-      badge: string,
-      path: string,
-      addr: string,
-      expireAt: BigNumberish,
-      metadataKeys: string[],
-      metadataValues: string[],
-      sigExpireAt: BigNumberish,
-      sig: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    granted(
-      arg0: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, BigNumber] & { grantedAt: BigNumber; expireAt: BigNumber }
-    >;
-
-    granteeMetadata(
-      arg0: BytesLike,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    granteeMetadataKeys(
-      arg0: BytesLike,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    hasBadge(
-      addr: string,
-      badge: string,
-      path: string,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
-
-    issuerBadge(arg0: string, overrides?: CallOverrides): Promise<[string]>;
-
-    owner(overrides?: CallOverrides): Promise<[string]>;
-
-    pathMetadata(
-      arg0: BytesLike,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    pathMetadataKeys(
-      arg0: BytesLike,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    registerCoIssuer(
-      badge: string,
-      coIssuer: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    registerIssuer(
-      issuer: string,
-      badge: string,
-      metadataKeys: string[],
-      metadataValues: string[],
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    registerPath(
-      badge: string,
-      path: string,
-      metadataKeys: string[],
-      metadataValues: string[],
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    removeCoIssuer(
-      badge: string,
-      coIssuer: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    replaceIssuer(
-      badge: string,
-      newIssuer: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    revokeBadge(
-      badge: string,
-      path: string,
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    revokeBadgeBySig(
-      badge: string,
-      path: string,
-      addr: string,
-      expireAt: BigNumberish,
-      sig: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    transferBadgeOwnership(
-      badge: string,
-      path: string,
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    upsertGranteeMeta(
-      badge: string,
-      path: string,
-      addr: string,
-      key: string,
-      value: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    upsertGranteeMetaBySig(
-      badge: string,
-      path: string,
-      addr: string,
-      key: string,
-      value: string,
-      expireAt: BigNumberish,
-      sig: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    upsertMeta(
-      badge: string,
-      path: string,
-      key: string,
-      value: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<ContractTransaction>;
-
-    usedSig(arg0: string, overrides?: CallOverrides): Promise<[boolean]>;
-  };
-
-  badgeCoIssuers(
-    arg0: string,
-    arg1: string,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
-
-  badgeIssuer(arg0: string, overrides?: CallOverrides): Promise<string>;
-
-  badgeMetadata(
-    arg0: string,
-    arg1: string,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  badgeMetadataKeys(
-    arg0: string,
-    arg1: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  badgePaths(
-    arg0: string,
-    arg1: string,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  getGrantId(
+export namespace AddedIssuerEvent {
+  export type InputTuple = [
+    issuer: AddressLike,
     badge: string,
-    path: string,
-    addr: string,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  getGranteeMetaKeys(
-    badge: string,
-    path: string,
-    addr: string,
-    overrides?: CallOverrides
-  ): Promise<string[]>;
-
-  getGranteeMetaValue(
-    badge: string,
-    path: string,
-    addr: string,
-    key: string,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  getMetaKeys(
-    badge: string,
-    path: string,
-    overrides?: CallOverrides
-  ): Promise<string[]>;
-
-  getMetaValue(
-    badge: string,
-    path: string,
-    key: string,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  getPathId(
-    badge: string,
-    path: string,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  grantBadge(
-    badge: string,
-    path: string,
-    addr: string,
-    expireAt: BigNumberish,
     metadataKeys: string[],
-    metadataValues: string[],
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  grantBadgeBySig(
-    badge: string,
-    path: string,
-    addr: string,
-    expireAt: BigNumberish,
-    metadataKeys: string[],
-    metadataValues: string[],
-    sigExpireAt: BigNumberish,
-    sig: BytesLike,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  granted(
-    arg0: BytesLike,
-    overrides?: CallOverrides
-  ): Promise<
-    [BigNumber, BigNumber] & { grantedAt: BigNumber; expireAt: BigNumber }
-  >;
-
-  granteeMetadata(
-    arg0: BytesLike,
-    arg1: string,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  granteeMetadataKeys(
-    arg0: BytesLike,
-    arg1: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  hasBadge(
-    addr: string,
-    badge: string,
-    path: string,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
-
-  issuerBadge(arg0: string, overrides?: CallOverrides): Promise<string>;
-
-  owner(overrides?: CallOverrides): Promise<string>;
-
-  pathMetadata(
-    arg0: BytesLike,
-    arg1: string,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  pathMetadataKeys(
-    arg0: BytesLike,
-    arg1: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  registerCoIssuer(
-    badge: string,
-    coIssuer: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  registerIssuer(
+    metadataValues: string[]
+  ];
+  export type OutputTuple = [
     issuer: string,
     badge: string,
     metadataKeys: string[],
-    metadataValues: string[],
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+    metadataValues: string[]
+  ];
+  export interface OutputObject {
+    issuer: string;
+    badge: string;
+    metadataKeys: string[];
+    metadataValues: string[];
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
 
-  registerPath(
+export namespace BadgeMetaUpdatedEvent {
+  export type InputTuple = [
+    issuer: AddressLike,
+    badge: string,
+    path: string,
+    key: string,
+    value: string
+  ];
+  export type OutputTuple = [
+    issuer: string,
+    badge: string,
+    path: string,
+    key: string,
+    value: string
+  ];
+  export interface OutputObject {
+    issuer: string;
+    badge: string;
+    path: string;
+    key: string;
+    value: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace BadgeOwnershipTransferredEvent {
+  export type InputTuple = [
+    badge: string,
+    path: string,
+    oldOwner: AddressLike,
+    newOwner: AddressLike
+  ];
+  export type OutputTuple = [
+    badge: string,
+    path: string,
+    oldOwner: string,
+    newOwner: string
+  ];
+  export interface OutputObject {
+    badge: string;
+    path: string;
+    oldOwner: string;
+    newOwner: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace GrantedBadgeEvent {
+  export type InputTuple = [
+    badge: string,
+    path: string,
+    grantee: AddressLike,
+    metadataKeys: string[],
+    metadataValues: string[],
+    expireAt: BigNumberish
+  ];
+  export type OutputTuple = [
+    badge: string,
+    path: string,
+    grantee: string,
+    metadataKeys: string[],
+    metadataValues: string[],
+    expireAt: bigint
+  ];
+  export interface OutputObject {
+    badge: string;
+    path: string;
+    grantee: string;
+    metadataKeys: string[];
+    metadataValues: string[];
+    expireAt: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace GranteeBadgeMetaUpdatedEvent {
+  export type InputTuple = [
+    issuer: AddressLike,
+    grantee: AddressLike,
+    badge: string,
+    path: string,
+    key: string,
+    value: string
+  ];
+  export type OutputTuple = [
+    issuer: string,
+    grantee: string,
+    badge: string,
+    path: string,
+    key: string,
+    value: string
+  ];
+  export interface OutputObject {
+    issuer: string;
+    grantee: string;
+    badge: string;
+    path: string;
+    key: string;
+    value: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace OwnershipTransferredEvent {
+  export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
+  export type OutputTuple = [previousOwner: string, newOwner: string];
+  export interface OutputObject {
+    previousOwner: string;
+    newOwner: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace PathRegisteredEvent {
+  export type InputTuple = [
+    issuer: AddressLike,
     badge: string,
     path: string,
     metadataKeys: string[],
-    metadataValues: string[],
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
-
-  removeCoIssuer(
+    metadataValues: string[]
+  ];
+  export type OutputTuple = [
+    issuer: string,
     badge: string,
-    coIssuer: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+    path: string,
+    metadataKeys: string[],
+    metadataValues: string[]
+  ];
+  export interface OutputObject {
+    issuer: string;
+    badge: string;
+    path: string;
+    metadataKeys: string[];
+    metadataValues: string[];
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
 
-  renounceOwnership(
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+export namespace RemovedCoIssuerEvent {
+  export type InputTuple = [
+    issuer: AddressLike,
+    coIssuer: AddressLike,
+    badge: string
+  ];
+  export type OutputTuple = [issuer: string, coIssuer: string, badge: string];
+  export interface OutputObject {
+    issuer: string;
+    coIssuer: string;
+    badge: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
 
-  replaceIssuer(
-    badge: string,
+export namespace ReplacedIssuerEvent {
+  export type InputTuple = [
+    oldIssuer: AddressLike,
+    newIssuer: AddressLike,
+    badge: string
+  ];
+  export type OutputTuple = [
+    oldIssuer: string,
     newIssuer: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+    badge: string
+  ];
+  export interface OutputObject {
+    oldIssuer: string;
+    newIssuer: string;
+    badge: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
 
-  revokeBadge(
-    badge: string,
-    path: string,
-    addr: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+export namespace RevokedBadgeEvent {
+  export type InputTuple = [badge: string, path: string, grantee: AddressLike];
+  export type OutputTuple = [badge: string, path: string, grantee: string];
+  export interface OutputObject {
+    badge: string;
+    path: string;
+    grantee: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
 
-  revokeBadgeBySig(
-    badge: string,
-    path: string,
-    addr: string,
-    expireAt: BigNumberish,
-    sig: BytesLike,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+export interface BadgeManager extends BaseContract {
+  connect(runner?: ContractRunner | null): BadgeManager;
+  waitForDeployment(): Promise<this>;
 
-  transferBadgeOwnership(
-    badge: string,
-    path: string,
-    newOwner: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+  interface: BadgeManagerInterface;
 
-  transferOwnership(
-    newOwner: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+  queryFilter<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    fromBlockOrBlockhash?: string | number | undefined,
+    toBlock?: string | number | undefined
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+  queryFilter<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    fromBlockOrBlockhash?: string | number | undefined,
+    toBlock?: string | number | undefined
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
 
-  upsertGranteeMeta(
-    badge: string,
-    path: string,
-    addr: string,
-    key: string,
-    value: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+  on<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  on<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-  upsertGranteeMetaBySig(
-    badge: string,
-    path: string,
-    addr: string,
-    key: string,
-    value: string,
-    expireAt: BigNumberish,
-    sig: BytesLike,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+  once<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  once<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-  upsertMeta(
-    badge: string,
-    path: string,
-    key: string,
-    value: string,
-    overrides?: Overrides & { from?: string }
-  ): Promise<ContractTransaction>;
+  listeners<TCEvent extends TypedContractEvent>(
+    event: TCEvent
+  ): Promise<Array<TypedListener<TCEvent>>>;
+  listeners(eventName?: string): Promise<Array<Listener>>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(
+    event?: TCEvent
+  ): Promise<this>;
 
-  usedSig(arg0: string, overrides?: CallOverrides): Promise<boolean>;
+  badgeCoIssuers: TypedContractMethod<
+    [arg0: string, arg1: AddressLike],
+    [boolean],
+    "view"
+  >;
 
-  callStatic: {
-    badgeCoIssuers(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
+  badgeIssuer: TypedContractMethod<[arg0: string], [string], "view">;
 
-    badgeIssuer(arg0: string, overrides?: CallOverrides): Promise<string>;
+  badgeMetadata: TypedContractMethod<
+    [arg0: string, arg1: string],
+    [string],
+    "view"
+  >;
 
-    badgeMetadata(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<string>;
+  badgeMetadataKeys: TypedContractMethod<
+    [arg0: string, arg1: BigNumberish],
+    [string],
+    "view"
+  >;
 
-    badgeMetadataKeys(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<string>;
+  badgePaths: TypedContractMethod<
+    [arg0: string, arg1: string],
+    [string],
+    "view"
+  >;
 
-    badgePaths(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<string>;
+  getGrantId: TypedContractMethod<
+    [badge: string, path: string, addr: AddressLike],
+    [string],
+    "view"
+  >;
 
-    getGrantId(
+  getGranteeMetaKeys: TypedContractMethod<
+    [badge: string, path: string, addr: AddressLike],
+    [string[]],
+    "view"
+  >;
+
+  getGranteeMetaValue: TypedContractMethod<
+    [badge: string, path: string, addr: AddressLike, key: string],
+    [string],
+    "view"
+  >;
+
+  getMetaKeys: TypedContractMethod<
+    [badge: string, path: string],
+    [string[]],
+    "view"
+  >;
+
+  getMetaValue: TypedContractMethod<
+    [badge: string, path: string, key: string],
+    [string],
+    "view"
+  >;
+
+  getPathId: TypedContractMethod<
+    [badge: string, path: string],
+    [string],
+    "view"
+  >;
+
+  grantBadge: TypedContractMethod<
+    [
       badge: string,
       path: string,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    getGranteeMetaKeys(
-      badge: string,
-      path: string,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<string[]>;
-
-    getGranteeMetaValue(
-      badge: string,
-      path: string,
-      addr: string,
-      key: string,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    getMetaKeys(
-      badge: string,
-      path: string,
-      overrides?: CallOverrides
-    ): Promise<string[]>;
-
-    getMetaValue(
-      badge: string,
-      path: string,
-      key: string,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    getPathId(
-      badge: string,
-      path: string,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    grantBadge(
-      badge: string,
-      path: string,
-      addr: string,
+      addr: AddressLike,
       expireAt: BigNumberish,
       metadataKeys: string[],
-      metadataValues: string[],
-      overrides?: CallOverrides
-    ): Promise<void>;
+      metadataValues: string[]
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    grantBadgeBySig(
+  grantBadgeBySig: TypedContractMethod<
+    [
       badge: string,
       path: string,
-      addr: string,
+      addr: AddressLike,
       expireAt: BigNumberish,
       metadataKeys: string[],
       metadataValues: string[],
       sigExpireAt: BigNumberish,
-      sig: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<void>;
+      sig: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    granted(
-      arg0: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<
-      [BigNumber, BigNumber] & { grantedAt: BigNumber; expireAt: BigNumber }
-    >;
+  granted: TypedContractMethod<
+    [arg0: BytesLike],
+    [[bigint, bigint] & { grantedAt: bigint; expireAt: bigint }],
+    "view"
+  >;
 
-    granteeMetadata(
-      arg0: BytesLike,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<string>;
+  granteeMetadata: TypedContractMethod<
+    [arg0: BytesLike, arg1: string],
+    [string],
+    "view"
+  >;
 
-    granteeMetadataKeys(
-      arg0: BytesLike,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<string>;
+  granteeMetadataKeys: TypedContractMethod<
+    [arg0: BytesLike, arg1: BigNumberish],
+    [string],
+    "view"
+  >;
 
-    hasBadge(
-      addr: string,
-      badge: string,
-      path: string,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
+  hasBadge: TypedContractMethod<
+    [addr: AddressLike, badge: string, path: string],
+    [boolean],
+    "view"
+  >;
 
-    issuerBadge(arg0: string, overrides?: CallOverrides): Promise<string>;
+  issuerBadge: TypedContractMethod<[arg0: AddressLike], [string], "view">;
 
-    owner(overrides?: CallOverrides): Promise<string>;
+  owner: TypedContractMethod<[], [string], "view">;
 
-    pathMetadata(
-      arg0: BytesLike,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<string>;
+  pathMetadata: TypedContractMethod<
+    [arg0: BytesLike, arg1: string],
+    [string],
+    "view"
+  >;
 
-    pathMetadataKeys(
-      arg0: BytesLike,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<string>;
+  pathMetadataKeys: TypedContractMethod<
+    [arg0: BytesLike, arg1: BigNumberish],
+    [string],
+    "view"
+  >;
 
-    registerCoIssuer(
-      badge: string,
-      coIssuer: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+  registerCoIssuer: TypedContractMethod<
+    [badge: string, coIssuer: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
-    registerIssuer(
-      issuer: string,
+  registerIssuer: TypedContractMethod<
+    [
+      issuer: AddressLike,
       badge: string,
       metadataKeys: string[],
-      metadataValues: string[],
-      overrides?: CallOverrides
-    ): Promise<void>;
+      metadataValues: string[]
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    registerPath(
+  registerPath: TypedContractMethod<
+    [
       badge: string,
       path: string,
       metadataKeys: string[],
+      metadataValues: string[]
+    ],
+    [void],
+    "nonpayable"
+  >;
+
+  removeCoIssuer: TypedContractMethod<
+    [badge: string, coIssuer: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
+
+  replaceIssuer: TypedContractMethod<
+    [badge: string, newIssuer: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  revokeBadge: TypedContractMethod<
+    [badge: string, path: string, addr: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  revokeBadgeBySig: TypedContractMethod<
+    [
+      badge: string,
+      path: string,
+      addr: AddressLike,
+      expireAt: BigNumberish,
+      sig: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+
+  transferBadgeOwnership: TypedContractMethod<
+    [badge: string, path: string, newOwner: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  transferOwnership: TypedContractMethod<
+    [newOwner: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  upsertGranteeMeta: TypedContractMethod<
+    [
+      badge: string,
+      path: string,
+      addr: AddressLike,
+      key: string,
+      value: string
+    ],
+    [void],
+    "nonpayable"
+  >;
+
+  upsertGranteeMetaBySig: TypedContractMethod<
+    [
+      badge: string,
+      path: string,
+      addr: AddressLike,
+      key: string,
+      value: string,
+      expireAt: BigNumberish,
+      sig: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+
+  upsertMeta: TypedContractMethod<
+    [badge: string, path: string, key: string, value: string],
+    [void],
+    "nonpayable"
+  >;
+
+  usedSig: TypedContractMethod<[arg0: AddressLike], [boolean], "view">;
+
+  getFunction<T extends ContractMethod = ContractMethod>(
+    key: string | FunctionFragment
+  ): T;
+
+  getFunction(
+    nameOrSignature: "badgeCoIssuers"
+  ): TypedContractMethod<[arg0: string, arg1: AddressLike], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "badgeIssuer"
+  ): TypedContractMethod<[arg0: string], [string], "view">;
+  getFunction(
+    nameOrSignature: "badgeMetadata"
+  ): TypedContractMethod<[arg0: string, arg1: string], [string], "view">;
+  getFunction(
+    nameOrSignature: "badgeMetadataKeys"
+  ): TypedContractMethod<[arg0: string, arg1: BigNumberish], [string], "view">;
+  getFunction(
+    nameOrSignature: "badgePaths"
+  ): TypedContractMethod<[arg0: string, arg1: string], [string], "view">;
+  getFunction(
+    nameOrSignature: "getGrantId"
+  ): TypedContractMethod<
+    [badge: string, path: string, addr: AddressLike],
+    [string],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getGranteeMetaKeys"
+  ): TypedContractMethod<
+    [badge: string, path: string, addr: AddressLike],
+    [string[]],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getGranteeMetaValue"
+  ): TypedContractMethod<
+    [badge: string, path: string, addr: AddressLike, key: string],
+    [string],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getMetaKeys"
+  ): TypedContractMethod<[badge: string, path: string], [string[]], "view">;
+  getFunction(
+    nameOrSignature: "getMetaValue"
+  ): TypedContractMethod<
+    [badge: string, path: string, key: string],
+    [string],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getPathId"
+  ): TypedContractMethod<[badge: string, path: string], [string], "view">;
+  getFunction(
+    nameOrSignature: "grantBadge"
+  ): TypedContractMethod<
+    [
+      badge: string,
+      path: string,
+      addr: AddressLike,
+      expireAt: BigNumberish,
+      metadataKeys: string[],
+      metadataValues: string[]
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "grantBadgeBySig"
+  ): TypedContractMethod<
+    [
+      badge: string,
+      path: string,
+      addr: AddressLike,
+      expireAt: BigNumberish,
+      metadataKeys: string[],
       metadataValues: string[],
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    removeCoIssuer(
+      sigExpireAt: BigNumberish,
+      sig: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "granted"
+  ): TypedContractMethod<
+    [arg0: BytesLike],
+    [[bigint, bigint] & { grantedAt: bigint; expireAt: bigint }],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "granteeMetadata"
+  ): TypedContractMethod<[arg0: BytesLike, arg1: string], [string], "view">;
+  getFunction(
+    nameOrSignature: "granteeMetadataKeys"
+  ): TypedContractMethod<
+    [arg0: BytesLike, arg1: BigNumberish],
+    [string],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "hasBadge"
+  ): TypedContractMethod<
+    [addr: AddressLike, badge: string, path: string],
+    [boolean],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "issuerBadge"
+  ): TypedContractMethod<[arg0: AddressLike], [string], "view">;
+  getFunction(
+    nameOrSignature: "owner"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "pathMetadata"
+  ): TypedContractMethod<[arg0: BytesLike, arg1: string], [string], "view">;
+  getFunction(
+    nameOrSignature: "pathMetadataKeys"
+  ): TypedContractMethod<
+    [arg0: BytesLike, arg1: BigNumberish],
+    [string],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "registerCoIssuer"
+  ): TypedContractMethod<
+    [badge: string, coIssuer: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "registerIssuer"
+  ): TypedContractMethod<
+    [
+      issuer: AddressLike,
       badge: string,
-      coIssuer: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    renounceOwnership(overrides?: CallOverrides): Promise<void>;
-
-    replaceIssuer(
-      badge: string,
-      newIssuer: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    revokeBadge(
+      metadataKeys: string[],
+      metadataValues: string[]
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "registerPath"
+  ): TypedContractMethod<
+    [
       badge: string,
       path: string,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    revokeBadgeBySig(
+      metadataKeys: string[],
+      metadataValues: string[]
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "removeCoIssuer"
+  ): TypedContractMethod<
+    [badge: string, coIssuer: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "renounceOwnership"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "replaceIssuer"
+  ): TypedContractMethod<
+    [badge: string, newIssuer: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "revokeBadge"
+  ): TypedContractMethod<
+    [badge: string, path: string, addr: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "revokeBadgeBySig"
+  ): TypedContractMethod<
+    [
       badge: string,
       path: string,
-      addr: string,
+      addr: AddressLike,
       expireAt: BigNumberish,
-      sig: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    transferBadgeOwnership(
+      sig: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "transferBadgeOwnership"
+  ): TypedContractMethod<
+    [badge: string, path: string, newOwner: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "transferOwnership"
+  ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "upsertGranteeMeta"
+  ): TypedContractMethod<
+    [
       badge: string,
       path: string,
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    upsertGranteeMeta(
-      badge: string,
-      path: string,
-      addr: string,
+      addr: AddressLike,
       key: string,
-      value: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    upsertGranteeMetaBySig(
+      value: string
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "upsertGranteeMetaBySig"
+  ): TypedContractMethod<
+    [
       badge: string,
       path: string,
-      addr: string,
+      addr: AddressLike,
       key: string,
       value: string,
       expireAt: BigNumberish,
-      sig: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<void>;
+      sig: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "upsertMeta"
+  ): TypedContractMethod<
+    [badge: string, path: string, key: string, value: string],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "usedSig"
+  ): TypedContractMethod<[arg0: AddressLike], [boolean], "view">;
 
-    upsertMeta(
-      badge: string,
-      path: string,
-      key: string,
-      value: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    usedSig(arg0: string, overrides?: CallOverrides): Promise<boolean>;
-  };
+  getEvent(
+    key: "AddedCoIssuer"
+  ): TypedContractEvent<
+    AddedCoIssuerEvent.InputTuple,
+    AddedCoIssuerEvent.OutputTuple,
+    AddedCoIssuerEvent.OutputObject
+  >;
+  getEvent(
+    key: "AddedIssuer"
+  ): TypedContractEvent<
+    AddedIssuerEvent.InputTuple,
+    AddedIssuerEvent.OutputTuple,
+    AddedIssuerEvent.OutputObject
+  >;
+  getEvent(
+    key: "BadgeMetaUpdated"
+  ): TypedContractEvent<
+    BadgeMetaUpdatedEvent.InputTuple,
+    BadgeMetaUpdatedEvent.OutputTuple,
+    BadgeMetaUpdatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "BadgeOwnershipTransferred"
+  ): TypedContractEvent<
+    BadgeOwnershipTransferredEvent.InputTuple,
+    BadgeOwnershipTransferredEvent.OutputTuple,
+    BadgeOwnershipTransferredEvent.OutputObject
+  >;
+  getEvent(
+    key: "GrantedBadge"
+  ): TypedContractEvent<
+    GrantedBadgeEvent.InputTuple,
+    GrantedBadgeEvent.OutputTuple,
+    GrantedBadgeEvent.OutputObject
+  >;
+  getEvent(
+    key: "GranteeBadgeMetaUpdated"
+  ): TypedContractEvent<
+    GranteeBadgeMetaUpdatedEvent.InputTuple,
+    GranteeBadgeMetaUpdatedEvent.OutputTuple,
+    GranteeBadgeMetaUpdatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "OwnershipTransferred"
+  ): TypedContractEvent<
+    OwnershipTransferredEvent.InputTuple,
+    OwnershipTransferredEvent.OutputTuple,
+    OwnershipTransferredEvent.OutputObject
+  >;
+  getEvent(
+    key: "PathRegistered"
+  ): TypedContractEvent<
+    PathRegisteredEvent.InputTuple,
+    PathRegisteredEvent.OutputTuple,
+    PathRegisteredEvent.OutputObject
+  >;
+  getEvent(
+    key: "RemovedCoIssuer"
+  ): TypedContractEvent<
+    RemovedCoIssuerEvent.InputTuple,
+    RemovedCoIssuerEvent.OutputTuple,
+    RemovedCoIssuerEvent.OutputObject
+  >;
+  getEvent(
+    key: "ReplacedIssuer"
+  ): TypedContractEvent<
+    ReplacedIssuerEvent.InputTuple,
+    ReplacedIssuerEvent.OutputTuple,
+    ReplacedIssuerEvent.OutputObject
+  >;
+  getEvent(
+    key: "RevokedBadge"
+  ): TypedContractEvent<
+    RevokedBadgeEvent.InputTuple,
+    RevokedBadgeEvent.OutputTuple,
+    RevokedBadgeEvent.OutputObject
+  >;
 
   filters: {
-    "AddedCoIssuer(address,address,string)"(
-      issuer?: string | null,
-      coIssuer?: string | null,
-      badge?: null
-    ): AddedCoIssuerEventFilter;
-    AddedCoIssuer(
-      issuer?: string | null,
-      coIssuer?: string | null,
-      badge?: null
-    ): AddedCoIssuerEventFilter;
-
-    "AddedIssuer(address,string,string[],string[])"(
-      issuer?: string | null,
-      badge?: null,
-      metadataKeys?: null,
-      metadataValues?: null
-    ): AddedIssuerEventFilter;
-    AddedIssuer(
-      issuer?: string | null,
-      badge?: null,
-      metadataKeys?: null,
-      metadataValues?: null
-    ): AddedIssuerEventFilter;
-
-    "BadgeMetaUpdated(address,string,string,string,string)"(
-      issuer?: string | null,
-      badge?: null,
-      path?: null,
-      key?: null,
-      value?: null
-    ): BadgeMetaUpdatedEventFilter;
-    BadgeMetaUpdated(
-      issuer?: string | null,
-      badge?: null,
-      path?: null,
-      key?: null,
-      value?: null
-    ): BadgeMetaUpdatedEventFilter;
-
-    "BadgeOwnershipTransferred(string,string,address,address)"(
-      badge?: null,
-      path?: null,
-      oldOwner?: string | null,
-      newOwner?: string | null
-    ): BadgeOwnershipTransferredEventFilter;
-    BadgeOwnershipTransferred(
-      badge?: null,
-      path?: null,
-      oldOwner?: string | null,
-      newOwner?: string | null
-    ): BadgeOwnershipTransferredEventFilter;
-
-    "GrantedBadge(string,string,address,string[],string[],uint256)"(
-      badge?: null,
-      path?: null,
-      grantee?: null,
-      metadataKeys?: null,
-      metadataValues?: null,
-      expireAt?: null
-    ): GrantedBadgeEventFilter;
-    GrantedBadge(
-      badge?: null,
-      path?: null,
-      grantee?: null,
-      metadataKeys?: null,
-      metadataValues?: null,
-      expireAt?: null
-    ): GrantedBadgeEventFilter;
-
-    "GranteeBadgeMetaUpdated(address,address,string,string,string,string)"(
-      issuer?: string | null,
-      grantee?: string | null,
-      badge?: null,
-      path?: null,
-      key?: null,
-      value?: null
-    ): GranteeBadgeMetaUpdatedEventFilter;
-    GranteeBadgeMetaUpdated(
-      issuer?: string | null,
-      grantee?: string | null,
-      badge?: null,
-      path?: null,
-      key?: null,
-      value?: null
-    ): GranteeBadgeMetaUpdatedEventFilter;
-
-    "OwnershipTransferred(address,address)"(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
-    OwnershipTransferred(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): OwnershipTransferredEventFilter;
-
-    "PathRegistered(address,string,string,string[],string[])"(
-      issuer?: string | null,
-      badge?: null,
-      path?: null,
-      metadataKeys?: null,
-      metadataValues?: null
-    ): PathRegisteredEventFilter;
-    PathRegistered(
-      issuer?: string | null,
-      badge?: null,
-      path?: null,
-      metadataKeys?: null,
-      metadataValues?: null
-    ): PathRegisteredEventFilter;
-
-    "RemovedCoIssuer(address,address,string)"(
-      issuer?: string | null,
-      coIssuer?: string | null,
-      badge?: null
-    ): RemovedCoIssuerEventFilter;
-    RemovedCoIssuer(
-      issuer?: string | null,
-      coIssuer?: string | null,
-      badge?: null
-    ): RemovedCoIssuerEventFilter;
-
-    "ReplacedIssuer(address,address,string)"(
-      oldIssuer?: string | null,
-      newIssuer?: string | null,
-      badge?: null
-    ): ReplacedIssuerEventFilter;
-    ReplacedIssuer(
-      oldIssuer?: string | null,
-      newIssuer?: string | null,
-      badge?: null
-    ): ReplacedIssuerEventFilter;
-
-    "RevokedBadge(string,string,address)"(
-      badge?: null,
-      path?: null,
-      grantee?: null
-    ): RevokedBadgeEventFilter;
-    RevokedBadge(
-      badge?: null,
-      path?: null,
-      grantee?: null
-    ): RevokedBadgeEventFilter;
-  };
-
-  estimateGas: {
-    badgeCoIssuers(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    badgeIssuer(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    badgeMetadata(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    badgeMetadataKeys(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    badgePaths(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getGrantId(
-      badge: string,
-      path: string,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getGranteeMetaKeys(
-      badge: string,
-      path: string,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getGranteeMetaValue(
-      badge: string,
-      path: string,
-      addr: string,
-      key: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getMetaKeys(
-      badge: string,
-      path: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getMetaValue(
-      badge: string,
-      path: string,
-      key: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getPathId(
-      badge: string,
-      path: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    grantBadge(
-      badge: string,
-      path: string,
-      addr: string,
-      expireAt: BigNumberish,
-      metadataKeys: string[],
-      metadataValues: string[],
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    grantBadgeBySig(
-      badge: string,
-      path: string,
-      addr: string,
-      expireAt: BigNumberish,
-      metadataKeys: string[],
-      metadataValues: string[],
-      sigExpireAt: BigNumberish,
-      sig: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    granted(arg0: BytesLike, overrides?: CallOverrides): Promise<BigNumber>;
-
-    granteeMetadata(
-      arg0: BytesLike,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    granteeMetadataKeys(
-      arg0: BytesLike,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    hasBadge(
-      addr: string,
-      badge: string,
-      path: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    issuerBadge(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    owner(overrides?: CallOverrides): Promise<BigNumber>;
-
-    pathMetadata(
-      arg0: BytesLike,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    pathMetadataKeys(
-      arg0: BytesLike,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    registerCoIssuer(
-      badge: string,
-      coIssuer: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    registerIssuer(
-      issuer: string,
-      badge: string,
-      metadataKeys: string[],
-      metadataValues: string[],
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    registerPath(
-      badge: string,
-      path: string,
-      metadataKeys: string[],
-      metadataValues: string[],
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    removeCoIssuer(
-      badge: string,
-      coIssuer: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    replaceIssuer(
-      badge: string,
-      newIssuer: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    revokeBadge(
-      badge: string,
-      path: string,
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    revokeBadgeBySig(
-      badge: string,
-      path: string,
-      addr: string,
-      expireAt: BigNumberish,
-      sig: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    transferBadgeOwnership(
-      badge: string,
-      path: string,
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    upsertGranteeMeta(
-      badge: string,
-      path: string,
-      addr: string,
-      key: string,
-      value: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    upsertGranteeMetaBySig(
-      badge: string,
-      path: string,
-      addr: string,
-      key: string,
-      value: string,
-      expireAt: BigNumberish,
-      sig: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    upsertMeta(
-      badge: string,
-      path: string,
-      key: string,
-      value: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<BigNumber>;
-
-    usedSig(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
-  };
-
-  populateTransaction: {
-    badgeCoIssuers(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    badgeIssuer(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    badgeMetadata(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    badgeMetadataKeys(
-      arg0: string,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    badgePaths(
-      arg0: string,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getGrantId(
-      badge: string,
-      path: string,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getGranteeMetaKeys(
-      badge: string,
-      path: string,
-      addr: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getGranteeMetaValue(
-      badge: string,
-      path: string,
-      addr: string,
-      key: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getMetaKeys(
-      badge: string,
-      path: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getMetaValue(
-      badge: string,
-      path: string,
-      key: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getPathId(
-      badge: string,
-      path: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    grantBadge(
-      badge: string,
-      path: string,
-      addr: string,
-      expireAt: BigNumberish,
-      metadataKeys: string[],
-      metadataValues: string[],
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    grantBadgeBySig(
-      badge: string,
-      path: string,
-      addr: string,
-      expireAt: BigNumberish,
-      metadataKeys: string[],
-      metadataValues: string[],
-      sigExpireAt: BigNumberish,
-      sig: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    granted(
-      arg0: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    granteeMetadata(
-      arg0: BytesLike,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    granteeMetadataKeys(
-      arg0: BytesLike,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    hasBadge(
-      addr: string,
-      badge: string,
-      path: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    issuerBadge(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    pathMetadata(
-      arg0: BytesLike,
-      arg1: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    pathMetadataKeys(
-      arg0: BytesLike,
-      arg1: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    registerCoIssuer(
-      badge: string,
-      coIssuer: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    registerIssuer(
-      issuer: string,
-      badge: string,
-      metadataKeys: string[],
-      metadataValues: string[],
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    registerPath(
-      badge: string,
-      path: string,
-      metadataKeys: string[],
-      metadataValues: string[],
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    removeCoIssuer(
-      badge: string,
-      coIssuer: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    replaceIssuer(
-      badge: string,
-      newIssuer: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    revokeBadge(
-      badge: string,
-      path: string,
-      addr: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    revokeBadgeBySig(
-      badge: string,
-      path: string,
-      addr: string,
-      expireAt: BigNumberish,
-      sig: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    transferBadgeOwnership(
-      badge: string,
-      path: string,
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    upsertGranteeMeta(
-      badge: string,
-      path: string,
-      addr: string,
-      key: string,
-      value: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    upsertGranteeMetaBySig(
-      badge: string,
-      path: string,
-      addr: string,
-      key: string,
-      value: string,
-      expireAt: BigNumberish,
-      sig: BytesLike,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    upsertMeta(
-      badge: string,
-      path: string,
-      key: string,
-      value: string,
-      overrides?: Overrides & { from?: string }
-    ): Promise<PopulatedTransaction>;
-
-    usedSig(
-      arg0: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+    "AddedCoIssuer(address,address,string)": TypedContractEvent<
+      AddedCoIssuerEvent.InputTuple,
+      AddedCoIssuerEvent.OutputTuple,
+      AddedCoIssuerEvent.OutputObject
+    >;
+    AddedCoIssuer: TypedContractEvent<
+      AddedCoIssuerEvent.InputTuple,
+      AddedCoIssuerEvent.OutputTuple,
+      AddedCoIssuerEvent.OutputObject
+    >;
+
+    "AddedIssuer(address,string,string[],string[])": TypedContractEvent<
+      AddedIssuerEvent.InputTuple,
+      AddedIssuerEvent.OutputTuple,
+      AddedIssuerEvent.OutputObject
+    >;
+    AddedIssuer: TypedContractEvent<
+      AddedIssuerEvent.InputTuple,
+      AddedIssuerEvent.OutputTuple,
+      AddedIssuerEvent.OutputObject
+    >;
+
+    "BadgeMetaUpdated(address,string,string,string,string)": TypedContractEvent<
+      BadgeMetaUpdatedEvent.InputTuple,
+      BadgeMetaUpdatedEvent.OutputTuple,
+      BadgeMetaUpdatedEvent.OutputObject
+    >;
+    BadgeMetaUpdated: TypedContractEvent<
+      BadgeMetaUpdatedEvent.InputTuple,
+      BadgeMetaUpdatedEvent.OutputTuple,
+      BadgeMetaUpdatedEvent.OutputObject
+    >;
+
+    "BadgeOwnershipTransferred(string,string,address,address)": TypedContractEvent<
+      BadgeOwnershipTransferredEvent.InputTuple,
+      BadgeOwnershipTransferredEvent.OutputTuple,
+      BadgeOwnershipTransferredEvent.OutputObject
+    >;
+    BadgeOwnershipTransferred: TypedContractEvent<
+      BadgeOwnershipTransferredEvent.InputTuple,
+      BadgeOwnershipTransferredEvent.OutputTuple,
+      BadgeOwnershipTransferredEvent.OutputObject
+    >;
+
+    "GrantedBadge(string,string,address,string[],string[],uint256)": TypedContractEvent<
+      GrantedBadgeEvent.InputTuple,
+      GrantedBadgeEvent.OutputTuple,
+      GrantedBadgeEvent.OutputObject
+    >;
+    GrantedBadge: TypedContractEvent<
+      GrantedBadgeEvent.InputTuple,
+      GrantedBadgeEvent.OutputTuple,
+      GrantedBadgeEvent.OutputObject
+    >;
+
+    "GranteeBadgeMetaUpdated(address,address,string,string,string,string)": TypedContractEvent<
+      GranteeBadgeMetaUpdatedEvent.InputTuple,
+      GranteeBadgeMetaUpdatedEvent.OutputTuple,
+      GranteeBadgeMetaUpdatedEvent.OutputObject
+    >;
+    GranteeBadgeMetaUpdated: TypedContractEvent<
+      GranteeBadgeMetaUpdatedEvent.InputTuple,
+      GranteeBadgeMetaUpdatedEvent.OutputTuple,
+      GranteeBadgeMetaUpdatedEvent.OutputObject
+    >;
+
+    "OwnershipTransferred(address,address)": TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
+    OwnershipTransferred: TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
+
+    "PathRegistered(address,string,string,string[],string[])": TypedContractEvent<
+      PathRegisteredEvent.InputTuple,
+      PathRegisteredEvent.OutputTuple,
+      PathRegisteredEvent.OutputObject
+    >;
+    PathRegistered: TypedContractEvent<
+      PathRegisteredEvent.InputTuple,
+      PathRegisteredEvent.OutputTuple,
+      PathRegisteredEvent.OutputObject
+    >;
+
+    "RemovedCoIssuer(address,address,string)": TypedContractEvent<
+      RemovedCoIssuerEvent.InputTuple,
+      RemovedCoIssuerEvent.OutputTuple,
+      RemovedCoIssuerEvent.OutputObject
+    >;
+    RemovedCoIssuer: TypedContractEvent<
+      RemovedCoIssuerEvent.InputTuple,
+      RemovedCoIssuerEvent.OutputTuple,
+      RemovedCoIssuerEvent.OutputObject
+    >;
+
+    "ReplacedIssuer(address,address,string)": TypedContractEvent<
+      ReplacedIssuerEvent.InputTuple,
+      ReplacedIssuerEvent.OutputTuple,
+      ReplacedIssuerEvent.OutputObject
+    >;
+    ReplacedIssuer: TypedContractEvent<
+      ReplacedIssuerEvent.InputTuple,
+      ReplacedIssuerEvent.OutputTuple,
+      ReplacedIssuerEvent.OutputObject
+    >;
+
+    "RevokedBadge(string,string,address)": TypedContractEvent<
+      RevokedBadgeEvent.InputTuple,
+      RevokedBadgeEvent.OutputTuple,
+      RevokedBadgeEvent.OutputObject
+    >;
+    RevokedBadge: TypedContractEvent<
+      RevokedBadgeEvent.InputTuple,
+      RevokedBadgeEvent.OutputTuple,
+      RevokedBadgeEvent.OutputObject
+    >;
   };
 }

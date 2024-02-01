@@ -5,7 +5,7 @@ import Badge from '../../models/badge';
 import BadgeGrant from '../../models/badge_grant';
 import Liquidity from '../../models/liquidity';
 import Market from '../../models/market';
-import { toBN } from '../common';
+import { toBigInt } from '../common';
 import { BadgeManagerHandler } from './badge_manager.handler';
 
 const BadgeManagerContract = jest.fn().mockImplementation(() => {
@@ -60,7 +60,7 @@ describe('BadgeManagerHandler', () => {
   describe('.onGrantedBadge', () => {
     it('should correctly create grant badge', async () => {
       const expireAt = moment().add(10, 's');
-      await handler.onGrantedBadge('badge', 'path', grantee, keys, values, toBN(expireAt.unix()), null);
+      await handler.onGrantedBadge('badge', 'path', grantee, keys, values, toBigInt(expireAt.unix()), null);
       const rec = await BadgeGrant.find({ badge, path });
       expect(rec).toBeDefined();
       expect(rec.grantee).toEqual(grantee);
@@ -69,7 +69,7 @@ describe('BadgeManagerHandler', () => {
     });
 
     it('should correctly create grant badge when expireAt is zero', async () => {
-      await handler.onGrantedBadge('badge', 'path', grantee, keys, values, toBN(0), null);
+      await handler.onGrantedBadge('badge', 'path', grantee, keys, values, toBigInt(0), null);
       const rec = await BadgeGrant.find({ badge, path });
       expect(rec).toBeDefined();
       expect(rec.grantee).toEqual(grantee);
@@ -79,22 +79,22 @@ describe('BadgeManagerHandler', () => {
 
     describe('when badge=pm and path is set', () => {
       it("should create badge grant record even when liquidity doesn't exist", async () => {
-        await handler.onGrantedBadge('pm', 'bank_transfer', grantee, ['0xLiqAddress'], ['1'], toBN(0), null);
+        await handler.onGrantedBadge('pm', 'bank_transfer', grantee, ['0xLiqAddress'], ['1'], toBigInt(0), null);
         const rec = await BadgeGrant.find({ badge: 'pm', path: 'bank_transfer' });
         expect(rec).toBeDefined();
       });
 
       it('should update payment method on liquidity matching the specified liquidity address in meta key array', async () => {
         let liq = await Liquidity.create({ network: net, address: '0xLiqAddress' });
-        await handler.onGrantedBadge('pm', 'bank_transfer', grantee, ['0xLiqAddress'], ['1'], toBN(0), null);
+        await handler.onGrantedBadge('pm', 'bank_transfer', grantee, ['0xLiqAddress'], ['1'], toBigInt(0), null);
         liq = await Liquidity.getById(liq.id);
         expect(liq.paymentMethods).toEqual(['pm/bank_transfer']);
 
-        await handler.onGrantedBadge('pm', 'union_bank', grantee, ['0xLiqAddress'], ['1'], toBN(0), null);
+        await handler.onGrantedBadge('pm', 'union_bank', grantee, ['0xLiqAddress'], ['1'], toBigInt(0), null);
         liq = await Liquidity.getById(liq.id);
         expect(liq.paymentMethods).toEqual(['pm/bank_transfer', 'pm/union_bank']);
 
-        await handler.onGrantedBadge('pm', 'bank_transfer', grantee, ['0xLiqAddress'], ['0'], toBN(0), null);
+        await handler.onGrantedBadge('pm', 'bank_transfer', grantee, ['0xLiqAddress'], ['0'], toBigInt(0), null);
         liq = await Liquidity.getById(liq.id);
         expect(liq.paymentMethods).toEqual(['pm/union_bank']);
       });
@@ -102,7 +102,7 @@ describe('BadgeManagerHandler', () => {
 
     describe('when badge=region and path is set', () => {
       it("should create badge grant record even when market doesn't exist", async () => {
-        await handler.onGrantedBadge('region', 'asia', '0xMarketAddress', [], [], toBN(0), null);
+        await handler.onGrantedBadge('region', 'asia', '0xMarketAddress', [], [], toBigInt(0), null);
         const rec = await BadgeGrant.find({ badge: 'region', path: 'asia' });
         expect(rec).toBeDefined();
       });
@@ -110,17 +110,17 @@ describe('BadgeManagerHandler', () => {
       it('should update region on market matching the specified grantee address', async () => {
         let market = await Market.create({ network: net, address: '0xMarketAddress' });
 
-        await handler.onGrantedBadge('region', 'asia', market.address, [], [], toBN(0), null);
+        await handler.onGrantedBadge('region', 'asia', market.address, [], [], toBigInt(0), null);
         market = await Market.getById(market.id);
         expect(market.regions).toEqual(['region/asia']);
 
         // handle duplicate
-        await handler.onGrantedBadge('region', 'asia', market.address, [], [], toBN(0), null);
+        await handler.onGrantedBadge('region', 'asia', market.address, [], [], toBigInt(0), null);
         market = await Market.getById(market.id);
         expect(market.regions).toEqual(['region/asia']);
 
         // handle a new region
-        await handler.onGrantedBadge('region', 'europe', market.address, [], [], toBN(0), null);
+        await handler.onGrantedBadge('region', 'europe', market.address, [], [], toBigInt(0), null);
         market = await Market.getById(market.id);
         expect(market.regions).toEqual(['region/asia', 'region/europe']);
       });
@@ -129,7 +129,7 @@ describe('BadgeManagerHandler', () => {
 
   describe('.onRevokedBadge', () => {
     it('should revoke granted badge when path is unset', async () => {
-      await handler.onGrantedBadge('badge', '', grantee, keys, values, toBN(0), null);
+      await handler.onGrantedBadge('badge', '', grantee, keys, values, toBigInt(0), null);
       let grant = await BadgeGrant.find({ badge, grantee });
       expect(grant).toBeDefined();
 
@@ -139,8 +139,8 @@ describe('BadgeManagerHandler', () => {
     });
 
     it('should revoke granted badge when path is set', async () => {
-      await handler.onGrantedBadge('badge', '', grantee, keys, values, toBN(0), null);
-      await handler.onGrantedBadge('badge', path, grantee, keys, values, toBN(0), null);
+      await handler.onGrantedBadge('badge', '', grantee, keys, values, toBigInt(0), null);
+      await handler.onGrantedBadge('badge', path, grantee, keys, values, toBigInt(0), null);
       let grant = await BadgeGrant.find({ badge, grantee, path });
       expect(grant).toBeDefined();
 
@@ -235,7 +235,7 @@ describe('BadgeManagerHandler', () => {
 
   describe('.onGranteeBadgeMetaUpdated', function () {
     it('should update metadata correctly when path is unset', async () => {
-      await handler.onGrantedBadge('badge', '', grantee, keys, values, toBN(0), null);
+      await handler.onGrantedBadge('badge', '', grantee, keys, values, toBigInt(0), null);
       let grant = await BadgeGrant.find({ badge, grantee });
       expect(grant).toBeDefined();
       expect(grant.metadata).toEqual({ key1: 'val1', key2: 'val2' });
@@ -246,7 +246,7 @@ describe('BadgeManagerHandler', () => {
     });
 
     it('should update metadata correctly when path is set', async () => {
-      await handler.onGrantedBadge('badge', path, grantee, keys, values, toBN(0), null);
+      await handler.onGrantedBadge('badge', path, grantee, keys, values, toBigInt(0), null);
       let grant = await BadgeGrant.find({ badge, grantee });
       expect(grant).toBeDefined();
       expect(grant.metadata).toEqual({ key1: 'val1', key2: 'val2' });
@@ -259,7 +259,7 @@ describe('BadgeManagerHandler', () => {
     describe('when badge=pm and path is set', () => {
       it('should update payment method on liquidity matching the specified liquidity address in meta key array', async () => {
         let liq = await Liquidity.create({ network: net, address: '0xLiqAddress' });
-        await handler.onGrantedBadge('pm', 'bank_transfer', grantee, ['0xLiqAddress'], ['1'], toBN(0), null);
+        await handler.onGrantedBadge('pm', 'bank_transfer', grantee, ['0xLiqAddress'], ['1'], toBigInt(0), null);
         liq = await Liquidity.getById(liq.id);
         expect(liq.paymentMethods).toEqual(['pm/bank_transfer']);
 

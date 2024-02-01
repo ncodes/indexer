@@ -11,7 +11,7 @@ import { DBService } from '../../db/db.service';
 import Market from '../../models/market';
 import Ticket from '../../models/ticket';
 import User from '../../models/user';
-import { toBN } from '../../network/common';
+import { toBigInt } from '../../network/common';
 import NetworkService from '../../network/network.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { RedisService } from '../../services/redis/redis.service';
@@ -586,9 +586,9 @@ describe('TicketsController', () => {
       await Ticket.create({ network: net, bond: '10', owner: '0xOwner' });
       await Ticket.create({ network: net, bond: '15', owner: '0xOwner2' });
 
-      mockGetTicketPrice.mockResolvedValue(toBN(100));
-      mockTicketSupply.mockResolvedValue(toBN(1000));
-      mockTicketSold.mockResolvedValue(toBN(25));
+      mockGetTicketPrice.mockResolvedValue(toBigInt(100));
+      mockTicketSupply.mockResolvedValue(toBigInt(1000));
+      mockTicketSold.mockResolvedValue(toBigInt(25));
       mockTryToUsd.mockResolvedValue(123);
 
       await request(app.getHttpServer())
@@ -612,9 +612,9 @@ describe('TicketsController', () => {
       await Ticket.create({ network: net, bond: '10', owner: '0xOwner', drained: true });
       await Ticket.create({ network: net, bond: '15', owner: '0xOwner2' });
 
-      mockGetTicketPrice.mockResolvedValue(toBN(100));
-      mockTicketSupply.mockResolvedValue(toBN(1000));
-      mockTicketSold.mockResolvedValue(toBN(25));
+      mockGetTicketPrice.mockResolvedValue(toBigInt(100));
+      mockTicketSupply.mockResolvedValue(toBigInt(1000));
+      mockTicketSold.mockResolvedValue(toBigInt(25));
       mockTryToUsd.mockResolvedValue(123);
 
       await request(app.getHttpServer())

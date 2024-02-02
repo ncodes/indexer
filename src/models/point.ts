@@ -1,3 +1,4 @@
+import * as moment from 'moment';
 import Objection, { Model, Transaction, raw } from 'objection';
 import { isEqualStr, randStr } from '../common/common';
 import { BaseModel } from './base';
@@ -173,16 +174,17 @@ export default class Point extends BaseModel {
 
   /**
    * Get the top addresses
-   * @param limit The limit of the leaderboard
+   * @param secondsAgo The seconds ago to start from
    * @param address The address (optional)
    * @param txn Optional transaction object
    * @returns
    */
-  static getTopAddresses(limit: number, address?: string, txn?: Transaction) {
+  static getTopAddresses(secondsAgo: number, address?: string, txn?: Transaction) {
     return this.query(txn)
       .select('address')
       .sum('point as totalPoints')
       .whereNotDeleted()
+      .where('createdAt', '>', moment().subtract(secondsAgo, 'seconds').toISOString())
       .where((q) => {
         if (address) {
           q.where('address', 'ilike', address);
@@ -190,7 +192,6 @@ export default class Point extends BaseModel {
       })
       .groupBy('address')
       .orderBy('totalPoints', 'desc')
-      .limit(limit)
       .withGraphFetched('owner');
   }
 

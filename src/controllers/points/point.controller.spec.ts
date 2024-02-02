@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
+import * as moment from 'moment';
 import * as request from 'supertest';
 import { createWalletClient, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
@@ -189,7 +190,7 @@ describe('PointController', () => {
         });
     });
 
-    it('should return correct results when limit query is provided', async () => {
+    it('should return correct results within the default 30 mins ago window', async () => {
       const p1 = await Point.create({
         network: 'ethereum',
         name: 'point_1',
@@ -204,6 +205,7 @@ describe('PointController', () => {
         address: '0xAddress2',
         point: '100',
         action: PointAction.Generic,
+        createdAt: moment().subtract(31, 'minutes').toISOString(),
       });
 
       await request(app.getHttpServer())

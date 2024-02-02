@@ -112,7 +112,7 @@ export class AuthController {
     });
 
     // If email is verified, generate session token,
-    // otherwise send an OTP to the unverified email
+    // otherwise send an OTP to the unverified email.
     if (!user.emailUnverified) {
       token = await makeSession(user, body.sig, this.cfgSrv.get('auth.jwtExpMin'), this.cfgSrv.get('auth.jwtSecret'));
     } else {
@@ -123,7 +123,7 @@ export class AuthController {
       });
     }
 
-    // Register device for notifications
+    // Register device for notifications.
     await this.userSrv.registerDevice(user);
 
     // Enable referrer state for the user

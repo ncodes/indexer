@@ -295,6 +295,7 @@ export default class Liquidity extends BaseModel {
    * @param provider Filter by provider address (optional)
    * @param paused Filter by paused status (optional)
    * @param maxOpenDisputes Allow only records with lower open disputes
+   * @param maxOpenOrders Allow only records with lower open orders
    * @param amount Filter by swap amount
    * @param price Filter by price
    * @param amountUsd Filter by swap amount in USD (if it starts with '>', it means equal or greater than or if it starts with '<', it means equal or less than)
@@ -310,29 +311,53 @@ export default class Liquidity extends BaseModel {
    * @param select Select specific fields (optional)
    * @param txn Optional transaction object
    */
-  static search(
-    network: string,
-    marketAddress: string,
-    base: string,
-    quote: string,
-    provider: string,
-    paused: boolean,
-    maxOpenDisputes: number,
-    amount: string,
-    price: string,
-    amountUsd: string,
-    priceUsd: string,
+  static search({
+    network,
+    marketAddress,
+    base,
+    quote,
+    provider,
+    paused,
+    maxOpenDisputes,
+    maxOpenOrders,
+    amount,
+    price,
+    amountUsd,
+    priceUsd,
     quoteUsdRate = 0,
     baseUsdRate = 0,
-    reqLpBadges?: string[],
-    reqSwapBadges?: string[],
-    paymentMethods?: string[],
-    liquidities?: { marketAddress: string; provider: string; lid: number }[],
-    limit?: number,
-    offset?: number,
+    reqLpBadges,
+    reqSwapBadges,
+    paymentMethods,
+    liquidities,
+    limit,
+    offset,
     select = [],
-    txn?: Objection.Transaction,
-  ) {
+    txn,
+  }: {
+    network?: string;
+    marketAddress?: string;
+    base?: string;
+    quote?: string;
+    provider?: string;
+    paused?: boolean;
+    maxOpenDisputes?: number;
+    maxOpenOrders?: number;
+    amount?: string;
+    price?: string;
+    amountUsd?: string;
+    priceUsd?: string;
+    quoteUsdRate?: number;
+    baseUsdRate?: number;
+    reqLpBadges?: string[];
+    reqSwapBadges?: string[];
+    paymentMethods?: string[];
+    liquidities?: { marketAddress: string; provider: string; lid: number }[];
+    limit?: number;
+    offset?: number;
+    select?: any[];
+    txn?: Objection.Transaction;
+  }) {
     select = this.makeSelectList(select);
     let q = this.query(txn).withGraphFetched('market');
 
@@ -409,6 +434,10 @@ export default class Liquidity extends BaseModel {
 
     if (maxOpenDisputes) {
       q = q.where('s.openDisputes', '<', maxOpenDisputes);
+    }
+
+    if (maxOpenOrders) {
+      q = q.where('s.openOrders', '<', maxOpenOrders);
     }
 
     if (amount) {

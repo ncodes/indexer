@@ -108,6 +108,7 @@ export class LiquidityController {
   @Get()
   async list(@Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
     const maxOpenDisputes = (await this.cfgSrv.getContractParam(q.net, 'maxOpenDisputes')) as number;
+    const maxOpenOrders = (await this.cfgSrv.getContractParam(q.net, 'maxOpenOrders')) as number;
 
     const reqLpBadges = [];
     if (q.kycLp) {
@@ -143,29 +144,29 @@ export class LiquidityController {
     }
 
     if (!q.count) {
-      const liquidities = await Liquidity.search(
-        q.net,
-        q.market,
-        q.base,
-        q.quote,
-        q.provider,
-        q.paused,
+      const liquidities = await Liquidity.search({
+        network: q.net,
+        marketAddress: q.market,
+        base: q.base,
+        quote: q.quote,
+        provider: q.provider,
+        paused: q.paused,
         maxOpenDisputes,
-        q.amount,
-        q.price,
-        q.amountUsd,
-        q.priceUsd,
-        quoteUsdRate,
-        baseUsdRate,
-        reqLpBadges,
-        reqSwapBadges,
-        q.paymentMethods,
-        q.liquidities,
-        q.limit || 25,
-        q.offset,
-        q.select,
-        undefined,
-      );
+        maxOpenOrders,
+        amount: q.amount,
+        price: q.price,
+        amountUsd: q.amountUsd,
+        priceUsd: q.priceUsd,
+        quoteUsdRate: quoteUsdRate,
+        baseUsdRate: baseUsdRate,
+        reqLpBadges: reqLpBadges,
+        reqSwapBadges: reqSwapBadges,
+        paymentMethods: q.paymentMethods,
+        liquidities: q.liquidities,
+        limit: Math.min(q.limit || 25, 50),
+        offset: q.offset,
+        select: q.select,
+      });
 
       for (const liquidity of liquidities) {
         await this.liqSrv.extendLiquidity(liquidity, q.select);

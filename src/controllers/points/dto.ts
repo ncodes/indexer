@@ -1,4 +1,4 @@
-import { IsISO8601, IsNotEmpty, IsNumberString, IsOptional } from 'class-validator';
+import { IsEnum, IsISO8601, IsNotEmpty, IsNumberString, IsOptional } from 'class-validator';
 import { makeValidatorMsg } from '../../common/validations/validation';
 
 export class GetLeaderboardDTO {
@@ -23,6 +23,9 @@ export class GetRecentPoints {
   @IsISO8601({ strict: true }, { message: makeValidatorMsg('must be a valid ISO8601 date', 'from') })
   @IsOptional()
   from: string;
+
+  @IsEnum(['asc', 'desc'], { message: makeValidatorMsg('must be either asc or desc', 'order') })
+  order = 'asc';
 }
 
 export class CreatePointFromEnergonBalance {

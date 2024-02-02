@@ -142,11 +142,12 @@ export class PointController {
    * @param query The query object
    * @param [query.from] The date to get points from
    * @param [query.limit] The limit of points to get
+   * @param [query.order] The order of the points
    * @returns
    */
   @Get('/latest')
   async getLatestPoints(@Query(new ValidationPipe(CommonValidationPipeOpt)) query: GetRecentPoints) {
-    const points = await Point.getPointsAfterDate(query.from, parseInt(query.limit) || 100);
-    return ok().data(points.reverse()).build();
+    const points = await Point.getPointsAfterDate(query.from, parseInt(query.limit) || 100, query.order);
+    return ok().data(points).build();
   }
 }

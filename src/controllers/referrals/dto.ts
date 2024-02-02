@@ -1,4 +1,4 @@
-import { IsISO8601, IsNotEmpty, IsNumberString, IsOptional } from 'class-validator';
+import { IsEnum, IsISO8601, IsNotEmpty, IsNumberString, IsOptional } from 'class-validator';
 import { makeValidatorMsg } from '../../common/validations/validation';
 
 export class GetLeaderboardDTO {
@@ -24,4 +24,7 @@ export class GetRecentPoints {
 
   @IsNotEmpty({ message: makeValidatorMsg('referrer address is required', 'referrer') })
   referrer: string;
+
+  @IsEnum(['asc', 'desc'], { message: makeValidatorMsg('must be either asc or desc', 'order') })
+  order = 'asc';
 }

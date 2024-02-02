@@ -1,7 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import * as moment from 'moment';
 import * as request from 'supertest';
 import { createWalletClient, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
@@ -190,7 +189,7 @@ describe('PointController', () => {
         });
     });
 
-    it('should return correct results within the default 30 mins ago window', async () => {
+    it('should return correct results when limit query is provided', async () => {
       const p1 = await Point.create({
         network: 'ethereum',
         name: 'point_1',
@@ -205,7 +204,6 @@ describe('PointController', () => {
         address: '0xAddress2',
         point: '100',
         action: PointAction.Generic,
-        createdAt: moment().subtract(31, 'minutes').toISOString(),
       });
 
       await request(app.getHttpServer())
@@ -473,6 +471,46 @@ describe('PointController', () => {
       await request(app.getHttpServer())
         .get(`/v1/points/latest`)
         .query({})
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data.length).toBe(2);
+          expect(p1.address).toBe(res.body.data[0].address);
+          expect(p2.address).toBe(res.body.data[1].address);
+        });
+    });
+
+    it("should return correct results when 'order' is provided", async () => {
+      const p1 = await Point.create({
+        network: 'ethereum',
+        name: 'point_1',
+        address: '0xAddress',
+        point: '200',
+        action: PointAction.Generic,
+        createdAt: '2021-01-01T00:00:00Z',
+      });
+
+      const p2 = await Point.create({
+        network: 'ethereum',
+        name: 'point_2',
+        address: '0xAddress2',
+        point: '100',
+        action: PointAction.Generic,
+        createdAt: '2021-01-02T00:00:00Z',
+      });
+
+      await request(app.getHttpServer())
+        .get(`/v1/points/latest`)
+        .query({ order: 'asc' })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data.length).toBe(2);
+          expect(p1.address).toBe(res.body.data[0].address);
+          expect(p2.address).toBe(res.body.data[1].address);
+        });
+
+      await request(app.getHttpServer())
+        .get(`/v1/points/latest`)
+        .query({ order: 'desc' })
         .expect(200)
         .expect((res) => {
           expect(res.body.data.length).toBe(2);

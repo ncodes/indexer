@@ -1,4 +1,4 @@
-import Objection, { Model, Transaction, raw } from 'objection';
+import Objection, { Model, OrderByDirection, Transaction, raw } from 'objection';
 import { isEqualStr, randStr } from '../common/common';
 import { BaseModel } from './base';
 import User from './user';
@@ -303,27 +303,29 @@ export default class Point extends BaseModel {
    * Get points created after a specific date and allow limit
    * @param date The date to start from
    * @param limit The maximum number of results to return
+   * @param order The order of the results
    * @param txn Optional transaction object
    * @returns
    */
-  static getPointsAfterDate(date: string, limit: number, txn?: Transaction) {
+  static getPointsAfterDate(date: string, limit: number, order = 'asc', txn?: Transaction) {
     return this.query(txn)
       .where((q) => {
         if (date) q.where('createdAt', '>', date);
       })
       .whereNotDeleted()
       .limit(limit)
-      .orderBy('createdAt', 'asc');
+      .orderBy('createdAt', order as OrderByDirection);
   }
 
   /**
    * Get points created after a specific date and allow limit
    * @param date The date to start from
    * @param limit The maximum number of results to return
+   * @param order The order of the results
    * @param txn Optional transaction object
    * @returns
    */
-  static getReferrerPointsAfterDate(referrer: string, date: string, limit: number, txn?: Transaction) {
+  static getReferrerPointsAfterDate(referrer: string, date: string, limit: number, order = 'asc', txn?: Transaction) {
     return this.query(txn)
       .where('referrer', 'ilike', referrer)
       .where('address', 'ilike', referrer)
@@ -332,7 +334,7 @@ export default class Point extends BaseModel {
       })
       .whereNotDeleted()
       .limit(limit)
-      .orderBy('createdAt', 'asc');
+      .orderBy('createdAt', order as OrderByDirection);
   }
 
   /**

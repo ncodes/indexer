@@ -28,7 +28,7 @@ export class PointController {
    */
   @Get('/leaderboard')
   async getLeaderboard(@Query(new ValidationPipe(CommonValidationPipeOpt)) query: GetLeaderboardDTO) {
-    const result = await Point.getTopAddresses(1800, query.address);
+    const result = await Point.getTopAddresses(parseInt(query.limit) || 100, query.address);
     const countAddresses = await Point.countDistinctAddresses(query.address);
 
     result.forEach((r) => {

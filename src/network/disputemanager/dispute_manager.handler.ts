@@ -382,21 +382,19 @@ export class DisputeManagerHandler extends Handler {
       txn,
     );
 
-    // Create mediator undraft task(s)
-    Array(dispute.numMediators)
-      .fill(0)
-      .map(async () => {
-        await MineTask.create(
-          {
-            type: MineTaskType.Undraft,
-            network: dispute.network,
-            marketAddress: dispute.marketAddress,
-            orderId: dispute.orderId,
-            disputeId: dispute.disputeId,
-          },
-          txn,
-        );
-      });
+    // Create undraft task(s) for drafted mediators
+    for (let i = 0; i < dispute.numMediatorsDrafted; i++) {
+      await MineTask.create(
+        {
+          type: MineTaskType.Undraft,
+          network: dispute.network,
+          marketAddress: dispute.marketAddress,
+          orderId: dispute.orderId,
+          disputeId: dispute.disputeId,
+        },
+        txn,
+      );
+    }
 
     // Complete a dispute execution mining task
     await MineTask.completeOneExecutionTask(this.network, marketAddress, dispute.orderId, dispute.disputeId, txn);

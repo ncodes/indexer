@@ -329,6 +329,7 @@ describe('DisputeManagerHandler', () => {
         orderId: toNumber(orderId),
         disputeId: toNumber(disputeId),
         numMediators,
+        numMediatorsDrafted: 2,
       });
 
       swap = await Swap.create({
@@ -394,7 +395,7 @@ describe('DisputeManagerHandler', () => {
         liquidity = await Liquidity.getById(liquidity.id);
         expect(liquidity.openDisputes).toEqual(0);
 
-        // expect undraft mining task
+        // expect undraft mining task equal to the number of drafted mediators
         const q = {
           type: MineTaskType.Undraft,
           network: net,
@@ -402,7 +403,7 @@ describe('DisputeManagerHandler', () => {
           orderId: toNumber(orderId),
           disputeId: toNumber(disputeId),
         };
-        expect(await MineTask.count(q)).toEqual(numMediators);
+        expect(await MineTask.count(q)).toEqual(dispute.numMediatorsDrafted);
 
         // expect execute task to be marked complete
         const task = await MineTask.getById(executeTask.id);

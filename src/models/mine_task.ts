@@ -87,12 +87,16 @@ export default class MineTask extends BaseModel {
    * @param txn Optional transaction object
    */
   static fetchMineable(network: string, type?: MineTaskType, limit?: number, offset?: number, txn?: Transaction) {
+    // Get uncompleted tasks that is ready to be mined now
     let q = this.query(txn).select('*').whereNotDeleted().where({ completed: false });
     if (network) q = q.where({ network });
     if (type) q = q.where({ type });
     if (offset != undefined) q = q.offset(offset);
     if (limit) q = q.limit(limit);
-    return q.where('mineAt', '<=', 'now()').orderBy('mineAt', 'ASC');
+    const q1 = q.where('mineAt', '<=', 'now()').as('q1');
+
+    // Randomize the order of the tasks
+    return this.query(txn).select('*').from(q1).orderByRaw('random()');
   }
 
   /**

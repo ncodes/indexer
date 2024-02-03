@@ -175,6 +175,7 @@ describe('TaskGateway', () => {
 
   describe('.produceTasks', () => {
     let task: MineTask;
+    let task2: MineTask;
 
     beforeEach(async () => {
       task = await MineTask.create({
@@ -186,13 +187,21 @@ describe('TaskGateway', () => {
     });
 
     it('should fetch uncompleted tasks from database into the queue', async () => {
+      task2 = await MineTask.create({
+        type: MineTaskType.Draft,
+        orderId: 0,
+        network: net,
+        marketAddress: '0xMarket',
+      });
+
       await gateway.produceTasks();
       const queuedTask = gateway.queuedTasks[task.id];
       expect(queuedTask).toBeDefined();
       expect(queuedTask.task.id).toEqual(task.id);
       expect(queuedTask.assignedAt).toEqual(0);
-      expect(gateway.queue).toHaveLength(1);
-      expect(gateway.queue[0].id).toEqual(task.id);
+      expect(gateway.queue).toHaveLength(2);
+      expect([gateway.queue[0].id, gateway.queue[1].id]).toContainEqual(task.id);
+      expect([gateway.queue[0].id, gateway.queue[1].id]).toContainEqual(task2.id);
     });
 
     it('should check the status of task that was already added into the queue', async () => {

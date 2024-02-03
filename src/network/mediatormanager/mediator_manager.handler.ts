@@ -321,17 +321,19 @@ export class MediatorManagerHandler extends Handler {
 
     // Create execution task when fully drafted
     if (fullyDrafted) {
-      await MineTask.create(
-        {
-          type: MineTaskType.Execute,
-          network: dispute.network,
-          marketAddress,
-          orderId: toNumber(orderId),
-          disputeId: toNumber(disputeId),
-          mineAt: dispute.revealEndAt,
-        },
-        txn,
-      );
+      if (!(await MineTask.taskExist(MineTaskType.Execute, this.network, dispute.orderId, dispute.disputeId, txn))) {
+        await MineTask.create(
+          {
+            type: MineTaskType.Execute,
+            network: dispute.network,
+            marketAddress,
+            orderId: toNumber(orderId),
+            disputeId: toNumber(disputeId),
+            mineAt: dispute.revealEndAt,
+          },
+          txn,
+        );
+      }
     }
 
     // Create swap event

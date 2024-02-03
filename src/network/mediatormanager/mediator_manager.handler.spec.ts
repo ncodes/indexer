@@ -338,6 +338,15 @@ describe('MediatorManagerHandler', () => {
         type: MineTaskType.Execute,
       });
       expect(execTask).toBeDefined();
+
+      // Call handler again to ensure new execute task is not created
+      await expect(
+        handler.onDrafted(marketAddress, owner, ticketId, orderId, disputeId, drafter, evt),
+      ).resolves.toBeUndefined();
+
+      // expect no new execute task to be created
+      const count = await MineTask.count({ type: MineTaskType.Execute });
+      expect(count).toEqual(1);
     });
 
     describe('when not fully drafted', () => {

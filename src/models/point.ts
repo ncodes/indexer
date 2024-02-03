@@ -309,6 +309,7 @@ export default class Point extends BaseModel {
    */
   static getPointsAfterDate(date: string, limit: number, order = 'asc', txn?: Transaction) {
     return this.query(txn)
+      .where(raw('point::numeric > 0'))
       .where((q) => {
         if (date) q.where('createdAt', '>', date);
       })
@@ -329,6 +330,7 @@ export default class Point extends BaseModel {
     return this.query(txn)
       .where('referrer', 'ilike', referrer)
       .where('address', 'ilike', referrer)
+      .where(raw('point::numeric > 0'))
       .where((q) => {
         if (date) q.where('createdAt', '>', date);
       })

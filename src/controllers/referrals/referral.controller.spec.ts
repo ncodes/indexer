@@ -406,5 +406,38 @@ describe('ReferralController', () => {
           expect(p1.address).toBe(res.body.data[1].address);
         });
     });
+
+    it('should not return zero point', async () => {
+      await Point.create({
+        network: 'ethereum',
+        name: 'point_1',
+        referrer: '0xReferrer',
+        address: '0xReferrer',
+        referee: '0xReferee',
+        point: '0',
+        action: PointAction.Generic,
+        createdAt: '2021-01-01T00:00:00Z',
+      });
+
+      const p2 = await Point.create({
+        network: 'ethereum',
+        name: 'point_2',
+        referrer: '0xReferrer',
+        address: '0xReferrer',
+        referee: '0xReferee2',
+        point: '100',
+        action: PointAction.Generic,
+        createdAt: '2021-01-02T00:00:00Z',
+      });
+
+      await request(app.getHttpServer())
+        .get(`/v1/referrals/latest`)
+        .query({ referrer: '0xReferrer' })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data.length).toBe(1);
+          expect(p2.address).toBe(res.body.data[0].address);
+        });
+    });
   });
 });

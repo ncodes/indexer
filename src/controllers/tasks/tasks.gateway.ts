@@ -113,6 +113,7 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     }
 
     const minerId = makeMinerId(network, address);
+
     if (this.knownMiners[minerId] === undefined) {
       const miner = new Miner({
         network,
@@ -122,6 +123,7 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
       });
       this.minersQueue[network] = [...(this.minersQueue[network] || []), miner];
       this.knownMiners[miner.id] = miner;
+
       this.logger.debug(
         `handleRegisterMiner: Miner registered`,
         JSON.stringify({ minerId: miner.id, clientId: client.id }),
@@ -131,12 +133,14 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         `handleRegisterMiner: Miner already registered`,
         JSON.stringify({ minerId: minerId, clientId: client.id }),
       );
+
       const curTask = this.minerTask[minerId];
       if (curTask) {
         this.logger.debug(
           'handleRegisterMiner: Checking miner existing task',
           JSON.stringify({ minerId: minerId, clientId: client.id }),
         );
+
         this.checkTaskStatus(curTask);
       }
     }
@@ -149,14 +153,18 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
    * If task is already in the queue, check its status.
    */
   async produceTasks() {
-    const tasks = await MineTask.fetchMineable(undefined, undefined, 100, 0);
+    const preferredMineTaskType = this.cfgSrv.get('app.preferredMineTaskType');
+    const tasks = await MineTask.fetchMineable(undefined, preferredMineTaskType, 100, 0);
+
     this.logger.debug(`produceTasks: Fetched new tasks (Count: ${tasks.length})`);
+
     for (const t of tasks) {
       if (this.queuedTasks[t.id]) {
         this.logger.debug('produceTasks: Checking existing task', JSON.stringify({ task: t.id }));
         this.checkTaskStatus(this.queuedTasks[t.id]);
         continue;
       }
+
       this.queuedTasks[t.id] = { task: t, assignedAt: 0 };
       this.pushToQueue(t);
       this.logger.debug('produceTasks: New task added to queue', JSON.stringify({ task: t.id }));

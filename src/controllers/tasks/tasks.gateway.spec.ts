@@ -1,5 +1,5 @@
 import { HttpException, INestApplication } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import { NoopLogger } from '../../common/loggers/noop_logger';
@@ -23,11 +23,17 @@ jest.mock('../../network/common', () => {
   };
 });
 
+const mockCfgGet = jest.fn();
+const ConfigServiceMock = jest.fn().mockImplementation(() => {
+  return { get: mockCfgGet };
+});
+
 describe('TaskGateway', () => {
   let app: INestApplication;
   const db = DBService.getForTest();
   let gateway: TasksGateway;
   const net: ChainNames = 'ethereum';
+  const cfgObj = {};
 
   afterEach(async () => {
     await db.truncateTables();
@@ -44,10 +50,17 @@ describe('TaskGateway', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
 
+    mockCfgGet.mockReset().mockImplementation((args) => {
+      return cfgObj[args];
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       providers: [TasksGateway],
-    }).compile();
+    })
+      .overrideProvider(ConfigService)
+      .useValue(new ConfigServiceMock())
+      .compile();
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());
     app.useGlobalFilters(new AllExceptionsFilter());
@@ -188,7 +201,7 @@ describe('TaskGateway', () => {
 
     it('should fetch uncompleted tasks from database into the queue', async () => {
       task2 = await MineTask.create({
-        type: MineTaskType.Draft,
+        type: MineTaskType.Undraft,
         orderId: 0,
         network: net,
         marketAddress: '0xMarket',
@@ -215,6 +228,41 @@ describe('TaskGateway', () => {
       await gateway.produceTasks();
       expect(mockCheckTaskStatus).toHaveBeenCalledTimes(1);
       expect(mockCheckTaskStatus).toHaveBeenCalledWith(gateway.queuedTasks[task.id]);
+    });
+
+    describe('when preferred mine task is set', () => {
+      beforeEach(async () => {
+        task2 = await MineTask.create({
+          type: MineTaskType.Undraft,
+          orderId: 0,
+          network: net,
+          marketAddress: '0xMarket',
+        });
+      });
+
+      it('should fetch uncompleted tasks matching the specified type=undraft', async () => {
+        cfgObj['app.preferredMineTaskType'] = 'undraft';
+
+        await gateway.produceTasks();
+        const queuedTask = gateway.queuedTasks[task2.id];
+        expect(queuedTask).toBeDefined();
+        expect(queuedTask.task.id).toEqual(task2.id);
+        expect(queuedTask.assignedAt).toEqual(0);
+        expect(gateway.queue).toHaveLength(1);
+        expect(gateway.queue[0].id).toEqual(task2.id);
+      });
+
+      it('should fetch uncompleted tasks matching the specified type=undraft', async () => {
+        cfgObj['app.preferredMineTaskType'] = 'draft';
+
+        await gateway.produceTasks();
+        const queuedTask = gateway.queuedTasks[task.id];
+        expect(queuedTask).toBeDefined();
+        expect(queuedTask.task.id).toEqual(task.id);
+        expect(queuedTask.assignedAt).toEqual(0);
+        expect(gateway.queue).toHaveLength(1);
+        expect(gateway.queue[0].id).toEqual(task.id);
+      });
     });
   });
 

@@ -5,6 +5,7 @@ export type QueuedTask = {
   task: MineTask;
   assignedAt: number;
   minerId?: string;
+  firstSeenAt?: number;
 };
 
 export function makeMinerId(network: string, address: string) {

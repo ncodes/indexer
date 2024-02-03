@@ -12,6 +12,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { isEthereumAddress } from 'class-validator';
+import * as moment from 'moment';
 import { Server, Socket } from 'socket.io';
 import { isTest } from '../../common/common';
 import { build400, build500, ok } from '../../common/responses/responses';
@@ -79,6 +80,15 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
   handleDisconnect(client: Socket) {
     this.logger.log('Websocket disconnected', client.id);
     this.cleanUpMiner(client.id);
+  }
+
+  /**
+   * Returned queued tasks
+   * @returns
+   */
+  @SubscribeMessage('queued')
+  async handleFetchQueueTasks() {
+    return ok().data({ queued: this.queuedTasks }).build();
   }
 
   /**
@@ -165,7 +175,7 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         continue;
       }
 
-      this.queuedTasks[t.id] = { task: t, assignedAt: 0 };
+      this.queuedTasks[t.id] = { task: t, assignedAt: 0, firstSeenAt: moment().unix() };
       this.pushToQueue(t);
       this.logger.debug('produceTasks: New task added to queue', JSON.stringify({ task: t.id }));
     }
@@ -204,7 +214,7 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     try {
       miner.socket.emit('task', task, () => {
         this.queuedTasks[task.id].minerId = miner.id;
-        this.queuedTasks[task.id].assignedAt = Date.now() / 1000;
+        this.queuedTasks[task.id].assignedAt = moment().unix();
         this.minerTask[miner.id] = this.queuedTasks[task.id];
         this.logger.debug(`assignTask: Assigned task ${task.id} to ${miner.address}`);
       });
@@ -226,12 +236,10 @@ export class TasksGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
   async checkTaskStatus(task: QueuedTask) {
     // Wait for a period of time before checking task status
     const minerTaskDur = MinerTaskDurations[task.task.network] || 60;
-    if (Date.now() / 1000 - task.assignedAt <= minerTaskDur) {
-      const timeLeft = (minerTaskDur - (Date.now() / 1000 - task.assignedAt)).toFixed(1);
-      this.logger.debug(
-        `checkTaskStatus: Waiting for miner to complete task`,
-        JSON.stringify({ task: task.task.id, timeLeft: `${timeLeft}s` }),
-      );
+    if (moment().diff(moment.unix(task.assignedAt), 's') <= minerTaskDur) {
+      const timeLeft = minerTaskDur - moment().diff(moment.unix(task.assignedAt), 's');
+      const logInfo = JSON.stringify({ task: task.task.id, timeLeft: `${timeLeft}s` });
+      this.logger.debug(`checkTaskStatus: Waiting for miner to complete task`, logInfo);
       return CheckStatusFuncResult.WAITING_FOR_MINER;
     }
 

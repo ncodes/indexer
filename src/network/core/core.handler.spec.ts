@@ -10,10 +10,11 @@ import Liquidity from '../../models/liquidity';
 import Market, { AssetType } from '../../models/market';
 import MarketPrice from '../../models/market_price';
 import Meta, { FeeName, MetaKeys, ProtocolFeeBeneficiary } from '../../models/meta';
-import MineTask, { MineTaskType } from '../../models/mine_task';
+import MineTask from '../../models/mine_task';
 import Offer from '../../models/offer';
 import Swap from '../../models/swap';
 import { pow10, powOf, toBigInt, toNumber } from '../common';
+import { MineTaskType } from './../../models/mine_task';
 import { CoreHandler } from './core.handler';
 
 const mockGetOrder = jest.fn();
@@ -1453,6 +1454,117 @@ describe('CoreHandler', () => {
           market,
           liq,
           swap,
+        });
+      });
+
+      describe('when order is released but a dispute had been created', () => {
+        it('should set the dispute release status to true; set complete status of all draft task to true; create execute task if dispute was not fully drafted', async () => {
+          await Market.updateById(market.id, { baseType: AssetType.ERC20, quoteType: AssetType.SYNTH });
+          await Liquidity.updateById(liq.id, { amount: powOf(1000, 18).toString(), totalSwaps: 1, openOrders: 2 });
+          let task = await MineTask.create({
+            type: MineTaskType.Draft,
+            network: net,
+            marketAddress: market.address,
+            orderId: toNumber(orderId) - 1,
+            disputeId: dispute.disputeId,
+            completed: false,
+          });
+
+          let task2 = await MineTask.create({
+            type: MineTaskType.Draft,
+            network: net,
+            marketAddress: market.address,
+            orderId: toNumber(orderId) - 1,
+            disputeId: dispute.disputeId,
+            completed: true,
+          });
+
+          const numTypeInfo = [
+            orderId,
+            toBigInt(liq.lid),
+            toBigInt(swap.amount),
+            toBigInt(liq.price),
+            toBigInt(1),
+            toBigInt(1),
+          ];
+          const [, , , , ,] = numTypeInfo;
+          const evt = { transactionHash: txHash } as any;
+
+          await handler.onSwap(
+            marketAddress,
+            provider,
+            taker,
+            ZeroAddress,
+            provider,
+            numTypeInfo,
+            true,
+            [toBigInt(1), toBigInt(2)],
+            [toBigInt(3), toBigInt(4)],
+            evt,
+          );
+
+          swap = await Swap.find({ marketAddress: market.address });
+          expect(swap).toBeDefined();
+
+          // mark recent dispute as released
+          dispute = await Dispute.getById(dispute.id);
+          expect(dispute.orderReleased).toBeTruthy();
+
+          // mark all draft tasks as completed
+          task = await MineTask.getById(task.id);
+          expect(task.completed).toBeTruthy();
+          task2 = await MineTask.getById(task2.id);
+          expect(task2.completed).toBeTruthy();
+
+          // Update dispute to make it not fully drafted or marked as released
+          dispute = await Dispute.updateById(dispute.id, {
+            numMediators: 3,
+            numMediatorsDrafted: 2,
+            orderReleased: false,
+          });
+
+          // Re-run the handler
+          await handler.onSwap(
+            marketAddress,
+            provider,
+            taker,
+            ZeroAddress,
+            provider,
+            numTypeInfo,
+            true,
+            [toBigInt(1), toBigInt(2)],
+            [toBigInt(3), toBigInt(4)],
+            evt,
+          );
+
+          // Should create "execute" task
+          const executeTask = await MineTask.find({
+            type: MineTaskType.Execute,
+            orderId: dispute.orderId,
+            disputeId: dispute.disputeId,
+          });
+          expect(executeTask).toBeDefined();
+
+          // Should not create another execute task
+          await handler.onSwap(
+            marketAddress,
+            provider,
+            taker,
+            ZeroAddress,
+            provider,
+            numTypeInfo,
+            true,
+            [toBigInt(1), toBigInt(2)],
+            [toBigInt(3), toBigInt(4)],
+            evt,
+          );
+
+          const count = await MineTask.count({
+            type: MineTaskType.Execute,
+            orderId: dispute.orderId,
+            disputeId: dispute.disputeId,
+          });
+          expect(count).toEqual(1);
         });
       });
 

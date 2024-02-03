@@ -711,10 +711,26 @@ export class CoreHandler extends Handler {
         txn,
       );
 
-      // Mark the last dispute as `orderReleased` if there is any
+      // Mark the last dispute as `orderReleased` if there is any.
+      // Complete all draft tasks of the dispute.
+      // Create an execution task for the dispute if the dispute was not fully drafted
       const dispute = await Dispute.getRecentOfOrder(this.network, marketAddress, toNumber(orderId), txn);
       if (dispute && !dispute.orderReleased) {
         await Dispute.updateById(dispute.id, { orderReleased: true }, txn);
+        await MineTask.completeAllUncompletedDraftTask(this.network, dispute.orderId, dispute.disputeId, txn);
+        if (dispute.numMediatorsDrafted < dispute.numMediators) {
+          await MineTask.create(
+            {
+              type: MineTaskType.Execute,
+              network: dispute.network,
+              marketAddress,
+              orderId: dispute.orderId,
+              disputeId: dispute.disputeId,
+              mineAt: moment().toISOString(),
+            },
+            txn,
+          );
+        }
       }
 
       // Update liquidity

@@ -174,7 +174,7 @@ export class Watcher {
       }
     };
 
-    // remove all listeners for 'block' event and add a new one
+    // register 'block' event listener
     this.provider.on('block', listener);
   }
 

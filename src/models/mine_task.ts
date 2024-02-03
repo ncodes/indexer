@@ -142,6 +142,7 @@ export default class MineTask extends BaseModel {
    */
   static count(q: Partial<MineTask>, txn?: Transaction): Promise<number> {
     return this.query(txn)
+      .whereNotDeleted()
       .where(q)
       .count('id')
       .first()
@@ -176,6 +177,7 @@ export default class MineTask extends BaseModel {
     txn?: Transaction,
   ) {
     return this.query(txn)
+      .whereNotDeleted()
       .where(
         'id',
         'in',
@@ -205,6 +207,7 @@ export default class MineTask extends BaseModel {
    */
   static completeOneUndraftTask(network: string, orderId: number, disputeId: number, txn?: Transaction) {
     return this.query(txn)
+      .whereNotDeleted()
       .where(
         'id',
         'in',
@@ -240,6 +243,7 @@ export default class MineTask extends BaseModel {
     txn?: Transaction,
   ) {
     return this.query(txn)
+      .whereNotDeleted()
       .where(
         'id',
         'in',
@@ -258,5 +262,52 @@ export default class MineTask extends BaseModel {
       .patch({
         completed: true,
       });
+  }
+
+  /**
+   * Mark all uncompleted draft tasks as completed
+   * @param network The network name
+   * @param orderId The order index
+   * @param disputeId The dispute index
+   * @param txn Optional transaction object
+   * @returns
+   */
+  static completeAllUncompletedDraftTask(network: string, orderId: number, disputeId: number, txn?: Transaction) {
+    return this.query(txn)
+      .whereNotDeleted()
+      .where({
+        type: MineTaskType.Draft,
+        network,
+        orderId,
+        disputeId,
+        completed: false,
+      })
+      .patch({
+        completed: true,
+      });
+  }
+
+  /**
+   * Check if a task exists
+   * @param type The task type
+   * @param network The network name
+   * @param orderId The order index
+   * @param disputeId The dispute index
+   * @param txn
+   * @returns
+   */
+  static async taskExist(type: MineTaskType, network: string, orderId: number, disputeId: number, txn?: Transaction) {
+    const res = await this.query(txn)
+      .select('id')
+      .whereNotDeleted()
+      .where({
+        type,
+        network,
+        orderId,
+        disputeId,
+        completed: false,
+      })
+      .first();
+    return !!res;
   }
 }

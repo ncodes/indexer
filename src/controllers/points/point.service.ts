@@ -116,6 +116,8 @@ export class PointService {
     if (market.instant && market.involvesERC20()) {
       const amountHD = toDec(swap.amount).div(pow10(market.baseDecimals));
       const point = amountHD.mul(pointPerUnit);
+      if (point.lte(0)) return false;
+
       const unitPerLevel = toDec(MarketPoints[`swap:level:${market.address}`] || point);
       const level = Math.max(1, point.div(unitPerLevel).toNumber());
 
@@ -193,6 +195,8 @@ export class PointService {
       }
 
       const point = amount.mul(pointPerUnit);
+      if (point.lte(0)) return false;
+
       const unitPerLevel = toDec(MarketPoints[`swap:level:${market.address}`] || point);
       const level = Math.max(1, point.div(unitPerLevel).toNumber());
 
@@ -287,6 +291,7 @@ export class PointService {
 
     const amountHD = toDec(amount).div(pow10(market.baseDecimals));
     const point = amountHD.mul(pointPerUnit);
+    if (point.lte(0)) return false;
 
     const unitPerLevel = toDec(MarketPoints[`liq:level:${market.address}`] || point);
     const level = Math.max(1, point.div(unitPerLevel).toNumber()) || 1;

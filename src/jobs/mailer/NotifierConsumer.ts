@@ -874,7 +874,7 @@ export class NotifierConsumer {
     let template,
       subject,
       note = '';
-    const offersLink = `${job.appUrl}/market/${market.address}/liquidity/${liq.provider}/${liq.lid}/#offers`;
+    const offersLink = `${job.appUrl}/offer/${offer.offerId}`;
     const locals: any = {
       ...job,
       ...job.data,
@@ -969,7 +969,7 @@ export class NotifierConsumer {
   async notifyOfferAccepted(job: NotifyJob<BaseOfferNotification>, skipEmail: boolean) {
     const { user } = job;
     const { offer, market, liq } = job.data;
-    const offersLink = `${job.appUrl}/market/${market.address}/liquidity/${liq.provider}/${liq.lid}/#offers`;
+    const offersLink = `${job.appUrl}/offer/${offer.offerId}`;
     const locals: any = {
       ...job,
       ...job.data,
@@ -1007,7 +1007,7 @@ export class NotifierConsumer {
   async notifyOfferUnaccepted(job: NotifyJob<BaseOfferNotification>, skipEmail: boolean) {
     const { user } = job;
     const { market, liq } = job.data;
-    const offersLink = `${job.appUrl}/market/${market.address}/liquidity/${liq.provider}/${liq.lid}/#offers`;
+    const offersLink = `${job.appUrl}/offer/${offer.offerId}`;
     const locals: any = {
       ...job,
       ...job.data,
@@ -1043,7 +1043,7 @@ export class NotifierConsumer {
   async notifyOfferCancelled(job: NotifyJob<BaseOfferNotification>, skipEmail: boolean) {
     const { user } = job;
     const { market, liq } = job.data;
-    const offersLink = `${job.appUrl}/market/${market.address}/liquidity/${liq.provider}/${liq.lid}/#offers`;
+    const offersLink = `${job.appUrl}/offer/${offer.offerId}`;
     const locals: any = {
       ...job,
       ...job.data,
@@ -1079,7 +1079,7 @@ export class NotifierConsumer {
   async notifyOfferExecuted(job: NotifyJob<BaseOfferNotification>, skipEmail: boolean) {
     const { user } = job;
     const { market, liq } = job.data;
-    const offersLink = `${job.appUrl}/market/${market.address}/liquidity/${liq.provider}/${liq.lid}/#offers`;
+    const offersLink = `${job.appUrl}/offer/${offer.offerId}`;
     const locals: any = {
       ...job,
       ...job.data,

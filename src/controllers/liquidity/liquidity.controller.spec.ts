@@ -497,6 +497,134 @@ describe('LiquidityController', () => {
       });
     });
 
+    describe('liquidy is reached max open order', () => {
+      it('should return 200 and not include the liquidity', async () => {
+        await Liquidity.create({
+          network: net,
+          provider: '0xProvider',
+          amount: '10',
+          marketAddress,
+          openOrders: 3,
+        });
+        await Liquidity.create({
+          network: net,
+          provider: '0xProvider2',
+          amount: '10',
+          marketAddress: '0xMarket2',
+        });
+
+        mockGetContractParam.mockResolvedValue(3);
+
+        jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(undefined);
+
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
+
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities`)
+          .query({ net, market: marketAddress })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(0);
+          });
+      });
+
+      it('should return 200 and all liquidity if isProvider query param = true along with provider address', async () => {
+        await Liquidity.create({
+          network: net,
+          provider: '0xProvider',
+          amount: '10',
+          marketAddress,
+          openOrders: 3,
+        });
+        await Liquidity.create({
+          network: net,
+          provider: '0xProvider',
+          amount: '10',
+          marketAddress,
+        });
+
+        mockGetContractParam.mockResolvedValue(3);
+
+        jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(undefined);
+
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
+
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities`)
+          .query({ net, market: marketAddress, provider: '0xProvider', isProvider: true })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(2);
+          });
+      });
+    });
+
+    describe('liquidy is reached max open dispute', () => {
+      it('should return 200 and not include the liquidity', async () => {
+        await Liquidity.create({
+          network: net,
+          provider: '0xProvider',
+          amount: '10',
+          marketAddress,
+          openDisputes: 3,
+        });
+        await Liquidity.create({
+          network: net,
+          provider: '0xProvider2',
+          amount: '10',
+          marketAddress: '0xMarket2',
+        });
+
+        mockGetContractParam.mockResolvedValue(3);
+
+        jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(undefined);
+
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
+
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities`)
+          .query({ net, market: marketAddress })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(0);
+          });
+      });
+
+      it('should return 200 and all liquidity if isProvider query param = true along with provider address', async () => {
+        await Liquidity.create({
+          network: net,
+          provider: '0xProvider',
+          amount: '10',
+          marketAddress,
+          openDisputes: 3,
+        });
+        await Liquidity.create({
+          network: net,
+          provider: '0xProvider',
+          amount: '10',
+          marketAddress,
+        });
+
+        mockGetContractParam.mockResolvedValue(3);
+
+        jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(undefined);
+
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
+
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities`)
+          .query({ net, market: marketAddress, provider: '0xProvider', isProvider: true })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(2);
+          });
+      });
+    });
+
     describe('base or quote is set', () => {
       it('should return 200 and the correct liquidity records', async () => {
         const liq = await Liquidity.create({

@@ -100,6 +100,8 @@ export class LiquidityController {
    * @param [q.kycTaker] Indicate to only return liquidity where taker has KYC badge
    * @param [q.swapBadges] Indicate to only return liquidity where taker has the specified badge(s)
    * @param [q.count] Returns the count of matching result
+   * @param [q.isProvider] If set, the provider is the caller (disables maxOpenDisputes and maxOpenOrders filters)
+   * @param [q.paused] If set, only paused liquidities are returned
    * @param [q.limit] The number of result to return
    * @param [q.offset] The query offset
    * @param [q.select] Select extend fields to return
@@ -107,8 +109,12 @@ export class LiquidityController {
    */
   @Get()
   async list(@Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
-    const maxOpenDisputes = (await this.cfgSrv.getContractParam(q.net, 'maxOpenDisputes')) as number;
-    const maxOpenOrders = (await this.cfgSrv.getContractParam(q.net, 'maxOpenOrders')) as number;
+    let maxOpenDisputes = (await this.cfgSrv.getContractParam(q.net, 'maxOpenDisputes')) as number;
+    let maxOpenOrders = (await this.cfgSrv.getContractParam(q.net, 'maxOpenOrders')) as number;
+    if (q.isProvider && q.provider) {
+      maxOpenDisputes = 0;
+      maxOpenOrders = 0;
+    }
 
     const reqLpBadges = [];
     if (q.kycLp) {

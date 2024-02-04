@@ -1006,7 +1006,7 @@ export class NotifierConsumer {
    */
   async notifyOfferUnaccepted(job: NotifyJob<BaseOfferNotification>, skipEmail: boolean) {
     const { user } = job;
-    const { market, liq } = job.data;
+    const { market, liq, offer } = job.data;
     const offersLink = `${job.appUrl}/offer/${offer.offerId}`;
     const locals: any = {
       ...job,
@@ -1042,7 +1042,7 @@ export class NotifierConsumer {
    */
   async notifyOfferCancelled(job: NotifyJob<BaseOfferNotification>, skipEmail: boolean) {
     const { user } = job;
-    const { market, liq } = job.data;
+    const { market, liq, offer } = job.data;
     const offersLink = `${job.appUrl}/offer/${offer.offerId}`;
     const locals: any = {
       ...job,
@@ -1078,7 +1078,7 @@ export class NotifierConsumer {
    */
   async notifyOfferExecuted(job: NotifyJob<BaseOfferNotification>, skipEmail: boolean) {
     const { user } = job;
-    const { market, liq } = job.data;
+    const { market, liq, offer } = job.data;
     const offersLink = `${job.appUrl}/offer/${offer.offerId}`;
     const locals: any = {
       ...job,

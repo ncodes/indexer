@@ -1,17 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Put,
-  Query,
-  Req,
-  Res,
-  UseGuards,
-  ValidationPipe,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Put, Query, Req, Res, UseGuards, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { isAxiosError } from 'axios';
 import { isEmail } from 'class-validator';
@@ -201,23 +188,6 @@ export class AuthController {
     if (!user) throw404(ErrorMessages.UserNotFound);
 
     return ok().data(user).build<User>();
-  }
-
-  /**
-   * Check if an address is allowed to use the app
-   * @param address The address to check
-   */
-  @Get('/:address/allowed')
-  async isAllowed(@Param('address') address: string) {
-    const allowed = this.authSrv.isInPrivateAllowlist(address);
-    let code = allowed ? 1 : -1;
-
-    if (allowed) {
-      const user = await User.getByAddress(address);
-      if (!user || !user.discordId) code = -2;
-    }
-
-    return ok().data({ code }).build();
   }
 
   /**

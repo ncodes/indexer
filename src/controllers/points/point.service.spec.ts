@@ -41,9 +41,8 @@ jest.mock('./data/points.ts', () => {
 });
 
 // mock AuthService
-const mockIsInPrivateAllowlist = jest.fn().mockReturnValue(true);
 const AuthServiceMock = jest.fn().mockImplementation(() => {
-  return { isInPrivateAllowlist: mockIsInPrivateAllowlist };
+  return {};
 });
 
 describe('PointService', () => {
@@ -68,7 +67,6 @@ describe('PointService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    mockIsInPrivateAllowlist.mockClear().mockReturnValue(true);
     mockCfgGet.mockReset();
 
     cfgObj = {};
@@ -134,26 +132,6 @@ describe('PointService', () => {
   });
 
   describe('.grantSwap', () => {
-    it('should return false if recipient is not allowed', async () => {
-      const market = await Market.create({
-        network: 'ethereum',
-        instant: true,
-        address: marketAddr,
-        baseDecimals: 18,
-        baseType: AssetType.ERC20,
-        quoteType: AssetType.ERC20,
-      });
-      const swap = await Swap.create({
-        amount: powOf(2000, 18).toString(),
-        provider: '0xProvider',
-        taker: '0xTaker',
-      });
-      const event = { transactionHash: '0xHash' };
-
-      mockIsInPrivateAllowlist.mockReturnValue(false);
-      expect(service.grantOnSwap(market, swap, undefined, event as any)).resolves.toBeFalsy();
-    });
-
     describe('market is instant and counterparts have no referrer', () => {
       it('should grant correct point when market has a specific point per unit', async () => {
         const market = await Market.create({
@@ -530,30 +508,6 @@ describe('PointService', () => {
   });
 
   describe('.grantOnLiquidityUpdate', () => {
-    it('should return false if recipient is not allowed', async () => {
-      mockIsInPrivateAllowlist.mockReturnValue(false);
-      const market = await Market.create({
-        network: 'ethereum',
-        instant: true,
-        address: marketAddr,
-        baseDecimals: 18,
-        baseType: AssetType.SYNTH,
-        quoteType: AssetType.SYNTH,
-        quoteDecimals: 18,
-      });
-
-      const liq = await Liquidity.create({
-        amount: powOf(0, 18).toString(),
-        provider: '0xProvider',
-        marketAddress: market.address,
-        lid: 1,
-      });
-
-      await expect(
-        service.grantOnLiquidityUpdate(market, liq, true, '0xProvider', toBigInt(powOf(10, 18))),
-      ).resolves.toBeFalsy();
-    });
-
     it('should return false when market neither base or quote assets are ERC20', async () => {
       const market = await Market.create({
         network: 'ethereum',

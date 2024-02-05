@@ -703,52 +703,6 @@ describe('AuthController', () => {
     });
   });
 
-  describe('.isAllowed', () => {
-    it('should return false when address is not in the allowlist', async () => {
-      await request(app.getHttpServer())
-        .get(`/v1/auth/0xAddress/allowed`)
-        .query({})
-        .expect(200)
-        .expect({
-          data: { code: -1 },
-        });
-    });
-
-    it('should return false when address is not in the allowlist', async () => {
-      jest.spyOn(app.get(AuthService), 'isInPrivateAllowlist').mockReturnValue(false);
-      await request(app.getHttpServer())
-        .get(`/v1/auth/0xAddress/allowed`)
-        .query({})
-        .expect(200)
-        .expect({
-          data: { code: -1 },
-        });
-    });
-
-    it('should return false when address is in the allowlist but has no discord id', async () => {
-      jest.spyOn(app.get(AuthService), 'isInPrivateAllowlist').mockReturnValue(true);
-      await request(app.getHttpServer())
-        .get(`/v1/auth/${u.address}/allowed`)
-        .query({})
-        .expect(200)
-        .expect({
-          data: { code: -2 },
-        });
-    });
-
-    it('should return true when address is in the allowlist and has discord id', async () => {
-      jest.spyOn(app.get(AuthService), 'isInPrivateAllowlist').mockReturnValue(true);
-      await User.updateById(u.id, { discordId: 'user' });
-      await request(app.getHttpServer())
-        .get(`/v1/auth/${u.address}/allowed`)
-        .query({})
-        .expect(200)
-        .expect({
-          data: { code: 1 },
-        });
-    });
-  });
-
   describe('.verifyDiscord', () => {
     it('should return error and auth code was not provided', async () => {
       await request(app.getHttpServer())

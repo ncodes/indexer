@@ -160,7 +160,7 @@ export class Watcher {
         this.logInfo(`New block: ${curBlock}`, { isSyncing: this.isSyncing });
 
         // Process events
-        await this.fetchAndProcessEvents(0, curBlock);
+        await this.fetchAndProcessEvents(curBlock - 1, curBlock);
 
         this.logInfo(`Finished processing block: ${curBlock}`);
 

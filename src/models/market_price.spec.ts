@@ -107,5 +107,28 @@ describe('MarketPrice', () => {
         expect(await MarketPrice.priceChange('net1', '0x123', '0xProvider', 1, 24)).toEqual(100);
       });
     });
+
+    describe('when there no price record 24 hours ago', () => {
+      it('should not included price record beyond 24 hrs', async () => {
+        await MarketPrice.create({
+          network: 'net1',
+          marketAddress: '0x123',
+          provider: '0xProvider',
+          lid: 1,
+          price: '100',
+          createdAt: moment()
+            .subtract(86400 * 2, 's')
+            .toISOString(),
+        });
+        await MarketPrice.create({
+          network: 'net1',
+          marketAddress: '0x123',
+          provider: '0xProvider',
+          lid: 1,
+          price: '200',
+        });
+        expect(await MarketPrice.priceChange('net1', '0x123', '0xProvider', 1, 24)).toEqual(0);
+      });
+    });
   });
 });

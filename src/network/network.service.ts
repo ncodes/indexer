@@ -1,7 +1,7 @@
 import { ChainNames, getChainByName } from '@jointlabs/chains-info';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Contract, JsonRpcProvider, Provider, WebSocketProvider } from 'ethers';
+import { Contract, FetchRequest, JsonRpcProvider, Provider } from 'ethers';
 import * as assetRegABI from '../../abi/AssetRegistry.json';
 import * as badgeMgrABI from '../../abi/BadgeManager.json';
 import * as coreABI from '../../abi/Core.json';
@@ -140,7 +140,9 @@ export default class NetworkService {
     const rpcUrl = getChainByName(network).rpcUrl;
     if (!rpcUrl) throw new Error('startDefaultWatcher: rpcUrl is not defined');
 
-    this.provider = rpcUrl.startsWith('ws') ? new WebSocketProvider(rpcUrl) : new JsonRpcProvider(rpcUrl);
+    const fetchRequest = new FetchRequest(rpcUrl);
+    fetchRequest.setHeader('User-Agent', this.cfgSrv.get('app.infuraUASecret'));
+    this.provider = new JsonRpcProvider(fetchRequest);
 
     // Initialize contracts
     const p2pTokenAddr = getChainByName(network).contracts['token'].address;
@@ -217,21 +219,19 @@ export default class NetworkService {
     const rpcUrl = getChainByName(network).rpcUrl;
     if (!rpcUrl) throw new Error('startNFTWatcher: rpcUrl is not defined');
 
-    this.provider = this.provider
-      ? this.provider
-      : rpcUrl.startsWith('ws')
-      ? new WebSocketProvider(rpcUrl)
-      : new JsonRpcProvider(rpcUrl);
+    const fetchRequest = new FetchRequest(rpcUrl);
+    fetchRequest.setHeader('User-Agent', this.cfgSrv.get('app.infuraUASecret'));
+    const provider = new JsonRpcProvider(fetchRequest);
 
     // Initialize contracts
     const nftAddress = getChainByName(network).contracts['nft'].address;
-    if (nftAddress) this.contracts.nft = new Contract(nftAddress, nftABI, this.provider) as unknown as NFT;
+    if (nftAddress) this.contracts.nft = new Contract(nftAddress, nftABI, provider) as unknown as NFT;
 
     // Load initial contract params
     await this.loadInitialContractParams();
 
     // Initialize handlers
-    const handlers = [new NFTHandler(this, this.provider, network, this.contracts)];
+    const handlers = [new NFTHandler(this, provider, network, this.contracts)];
 
     // Create event processor
     const processor = new Processor(network);
@@ -239,7 +239,7 @@ export default class NetworkService {
 
     // Create event watcher
     if (!this.isWatcherDisabled('NFT_WATCHER')) {
-      const watcher = new Watcher('NFT_WATCHER', network, this.provider, processor, this.redisSrv);
+      const watcher = new Watcher('NFT_WATCHER', network, provider, processor, this.redisSrv);
       await watcher.add(...handlers);
       this.watchers.push(watcher);
     } else {

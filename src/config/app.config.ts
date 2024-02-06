@@ -22,6 +22,7 @@ export default () => ({
     maxSwapImageSize: process.env.MAX_SWAP_IMAGE_SIZE,
     maxSwapVideoSize: process.env.MAX_SWAP_VIDEO_SIZE,
     maxSwapDocSize: process.env.MAX_SWAP_DOC_SIZE,
+    infuraUASecret: process.env.INFURA_UA_SECRET,
     fileUpload: {
       maxImageSize: process.env.FILE_UPLOAD_MAX_IMAGE_SIZE,
       maxVideoSize: process.env.FILE_UPLOAD_MAX_VIDEO_SIZE,

@@ -57,12 +57,16 @@ export default class Processor {
     }
   }
 
+  makeEventId(event: UnprocessedEvent) {
+    return `${event.block}-${event.txIndex}-${event.eventIndex}`;
+  }
+
   /**
    * Add an event to the unprocessed queue
    * @param event The target event
    */
   addEvent(event: UnprocessedEvent): Promise<any> {
-    const eventId = `${event.block}-${event.txIndex}-${event.eventIndex}`;
+    const eventId = this.makeEventId(event);
     if (this.seen.has(eventId)) return;
     this.seen.set(eventId, true);
 
@@ -98,6 +102,7 @@ export default class Processor {
         txIndex: e.txIndex,
         logIndex: e.eventIndex,
         removed: !!removed,
+        txHash: e.event.transactionHash,
       });
 
       if (removed) {
@@ -114,10 +119,17 @@ export default class Processor {
 
       if (error.message.indexOf('duplicate key') !== -1 && error.message.indexOf(ChainEvent.tableName) !== -1) {
         this.logger.debug(`(Event: ${e.event.event}, Contract: ${shortenAddr(e.contract)}): Previously seen event`);
-        return Promise.resolve();
+        return;
       }
 
-      this.logger.error(`Error (Event: ${e.event.event}, Contract: ${shortenAddr(e.contract)}): ${error.message}`);
+      // Remove the event from the seen cache because it will be retried by the syncer
+      this.seen.del(this.makeEventId(e));
+
+      this.logger.error(
+        `Error (Event: ${e.event.event}, Contract: ${shortenAddr(e.contract)}): ${error.message}`,
+        error,
+      );
+
       return Promise.reject(error);
     }
   }

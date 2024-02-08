@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { Interface, Log, Provider, ZeroAddress } from 'ethers';
-import { isEqualStr } from '../common/common';
+import { delay, isEqualStr } from '../common/common';
 import Meta from '../models/meta';
 import { RedisService } from '../services/redis/redis.service';
 import { ContractCallEvent } from './common';
@@ -175,14 +175,13 @@ export class Watcher {
     };
 
     // register 'block' event listener
-    this.provider.on('block', listener);
+    this.provider.removeAllListeners('block').then(() => {
+      this.provider.on('block', listener);
+    });
   }
 
   async sync() {
-    if (this.isSyncing) {
-      this.logInfo('Watcher is already synchronizing');
-      return;
-    }
+    if (this.isSyncing) return;
     this.isSyncing = true;
 
     try {
@@ -223,6 +222,7 @@ export class Watcher {
       this.logError(`Error:sync(): ` + e.message, e.stack);
       this.logInfo('Attempt to restarting sync() after sync error');
       this.isSyncing = false;
+      await delay(5000);
       this.sync();
     }
   }

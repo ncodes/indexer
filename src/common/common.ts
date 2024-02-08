@@ -139,3 +139,7 @@ export function getContractsAddress(name: ContractNames) {
   if (!net) throw new Error('NETWORK is not set');
   return getChainByName(net).contracts[name].address;
 }
+
+export function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}

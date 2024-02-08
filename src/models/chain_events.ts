@@ -12,6 +12,7 @@ export default class ChainEvent extends BaseModel {
   txIndex: number;
   logIndex: number;
   removed: boolean;
+  txHash: string;
 
   constructor(init?: Partial<ChainEvent>) {
     super();

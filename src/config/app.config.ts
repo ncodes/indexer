@@ -2,6 +2,7 @@ export default () => ({
   app: {
     network: process.env.NETWORK,
     nodeEnv: process.env.NODE_ENV,
+    xmtpEnv: process.env.XMTP_ENV,
     url: process.env.URL,
     appUrl: process.env.APP_URL,
     throttle_ttl: process.env.THROTTLE_TTL,

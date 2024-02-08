@@ -7,6 +7,8 @@ import {
   isValidChain,
 } from '@jointlabs/chains-info';
 import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Client } from '@xmtp/xmtp-js';
+import { Wallet } from 'ethers';
 import { ok, throw400, throw404 } from '../../common/responses/responses';
 import { ConfigService } from '../../config/config.service';
 import AssetRegistry from '../../models/asset_registry';
@@ -163,6 +165,20 @@ export class MiscController {
       .data({
         value: parseFloat(this.cfgSrv.get('app.pointsPerEnergon')),
       })
+      .build();
+  }
+
+  /**
+   * Determines if a given address has enabled xmtp chat
+   * @param address The address to check
+   * @returns
+   */
+  @Get('chat-enabled/:address')
+  async enabledForChat(@Param('address') address: string) {
+    const wallet = Wallet.createRandom();
+    const xmtp = await Client.create(wallet, { env: this.cfgSrv.get('app.xmtpEnv') });
+    return ok()
+      .data({ enabled: await xmtp.canMessage(address) })
       .build();
   }
 }

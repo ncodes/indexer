@@ -573,16 +573,27 @@ export default class Swap extends BaseModel {
    * @param disputed Indicate to return count for disputed swaps
    * @param txn
    */
-  static countByStatus(
-    network?: string,
-    marketAddress?: string,
-    provider?: string,
-    providerOrTaker?: string,
-    released?: boolean,
-    cancelled?: boolean,
-    disputed?: boolean,
-    txn?: Objection.Transaction,
-  ) {
+  static countByStatus({
+    network,
+    marketAddress,
+    provider,
+    providerOrTaker,
+    instant,
+    released,
+    cancelled,
+    disputed,
+    txn,
+  }: {
+    network?: string;
+    marketAddress?: string;
+    provider?: string;
+    providerOrTaker?: string;
+    released?: boolean;
+    cancelled?: boolean;
+    disputed?: boolean;
+    instant?: boolean;
+    txn?: Objection.Transaction;
+  } = {}) {
     return new Promise<string>((resolve, reject) => {
       let q = this.query(txn);
       if (network) q = q.where('network', network);
@@ -596,6 +607,7 @@ export default class Swap extends BaseModel {
       if (released !== undefined) q = q.where({ released });
       if (cancelled !== undefined) q = q.where({ cancelled });
       if (disputed !== undefined) q = q.where({ byDispute: disputed });
+      if (instant !== undefined) q = q.where({ instant });
       q.count('id')
         .whereNotDeleted()
         .first()
@@ -621,26 +633,26 @@ export default class Swap extends BaseModel {
     providerOrTaker?: string,
     txn?: Objection.Transaction,
   ) {
-    const nReleased = await Swap.countByStatus(
+    const nReleased = await Swap.countByStatus({
       network,
       marketAddress,
       provider,
       providerOrTaker,
-      true,
-      undefined,
-      false,
+      released: true,
+      cancelled: undefined,
+      disputed: false,
       txn,
-    );
-    const nSwaps = await Swap.countByStatus(
+    });
+    const nSwaps = await Swap.countByStatus({
       network,
       marketAddress,
       provider,
       providerOrTaker,
-      undefined,
-      undefined,
-      undefined,
+      released: undefined,
+      cancelled: undefined,
+      disputed: undefined,
       txn,
-    );
+    });
     return Promise.resolve(toDec(nReleased).div(nSwaps).mul(100).toDP(2).toNumber() || 0);
   }
 

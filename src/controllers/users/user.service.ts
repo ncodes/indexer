@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { transaction } from 'objection';
-import { isEqualStr, randStr } from '../../common/common';
+import { isEqualStr, randStr, toDec } from '../../common/common';
 import BadgeGrant from '../../models/badge_grant';
 import { defaultNotificationSettings } from '../../models/notification_setting';
 import Swap from '../../models/swap';
@@ -23,15 +23,16 @@ export class UserService {
    */
   async extendUser(user: User, network?: string) {
     try {
-      const totalSwaps = await Swap.countByStatus(
+      const totalSwaps = await Swap.countByStatus({
         network,
-        undefined,
-        undefined,
-        user.address,
-        undefined,
-        false,
-        undefined,
-      );
+        marketAddress: undefined,
+        provider: undefined,
+        providerOrTaker: user.address,
+        released: undefined,
+        cancelled: false,
+        instant: false,
+        disputed: undefined,
+      });
       user.totalSwaps = parseInt(totalSwaps);
       user.completionRate = await Swap.getCompletionRate(network, undefined, undefined, user.address);
 
@@ -43,7 +44,7 @@ export class UserService {
       });
 
       user.volume = await Swap.getVolume(network, undefined, undefined, undefined, user.address);
-      user.volumeUsd = parseFloat(
+      user.volumeUsd = toDec(
         await Swap.getVolume(
           network,
           undefined,
@@ -55,7 +56,9 @@ export class UserService {
           undefined,
           true,
         ),
-      );
+      )
+        .toDP(8)
+        .toNumber();
 
       const lastSwap = await Swap.getRecentSwap(network, user.address, undefined);
       user.lastActiveAt = undefined;

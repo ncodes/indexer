@@ -1,4 +1,4 @@
-import { ZeroAddress, ethers } from 'ethers';
+import { Wallet, ZeroAddress } from 'ethers';
 import * as moment from 'moment';
 import { randStr, toDec } from '../../common/common';
 import { NoopLogger } from '../../common/loggers/noop_logger';
@@ -13,6 +13,7 @@ import Meta, { FeeName, MetaKeys, ProtocolFeeBeneficiary } from '../../models/me
 import MineTask from '../../models/mine_task';
 import Offer from '../../models/offer';
 import Swap from '../../models/swap';
+import User from '../../models/user';
 import { pow10, powOf, toBigInt, toNumber } from '../common';
 import { MineTaskType } from './../../models/mine_task';
 import { CoreHandler } from './core.handler';
@@ -66,8 +67,8 @@ const MockNetworkService = jest.fn().mockImplementation(() => {
 
 describe('CoreHandler', () => {
   const taker = '0xTaker';
-  const provider = ethers.Wallet.createRandom().address;
-  const marketAddress = ethers.Wallet.createRandom().address;
+  const provider = Wallet.createRandom().address;
+  const marketAddress = Wallet.createRandom().address;
   const manager = '0xManager';
   const BASE = 'BASE';
   const QUOTE = 'QUOTE';
@@ -415,6 +416,84 @@ describe('CoreHandler', () => {
       market = await Market.getById(market.id);
       expect(market.totalLiquidity).toEqual('90');
       expect(market.lowestPrice).toEqual('430');
+    });
+
+    it('when user has enabled messaging and the liquidity`s messaging status has not been updated, set it', async () => {
+      await User.create({
+        address: provider,
+        messagingEnabled: true,
+      });
+
+      const market = await Market.create({
+        network: net,
+        address: marketAddress,
+        base: BASE,
+        baseAddress: baseAddress,
+        quote: QUOTE,
+        quoteAddress: quoteAddress,
+        totalLiquidity: '100',
+      });
+
+      const lid = 1;
+      await Liquidity.create({
+        network: net,
+        marketAddress: market.address,
+        provider: provider,
+        amount: '100',
+        price: '400',
+        wantOrIds: [1],
+        wantAndIds: [2],
+        lid: lid,
+      });
+
+      await expect(
+        handler.onUpdatedFungibleLiquidity(
+          provider,
+          marketAddress,
+          ZeroAddress,
+          true,
+          false,
+          toBigInt(lid),
+          toBigInt(10),
+          toBigInt(430),
+          [toBigInt(3)],
+          [toBigInt(4)],
+          toBigInt(2),
+          toBigInt(20),
+          toBigInt(10),
+          undefined,
+        ),
+      ).resolves.toBeUndefined();
+      let liq = await Liquidity.getLiquidity(handler.network, marketAddress, provider, 1);
+      expect(liq).toBeDefined();
+      expect(liq.messagingEnabled).toEqual(true);
+
+      // Should not update messaging status if it has been updated previously
+      await Liquidity.updateById(liq.id, {
+        messagingEnabled: false,
+        messagingEnabledUpdatedAt: moment().toISOString(),
+      });
+      await expect(
+        handler.onUpdatedFungibleLiquidity(
+          provider,
+          marketAddress,
+          ZeroAddress,
+          true,
+          false,
+          toBigInt(lid),
+          toBigInt(10),
+          toBigInt(430),
+          [toBigInt(3)],
+          [toBigInt(4)],
+          toBigInt(2),
+          toBigInt(20),
+          toBigInt(10),
+          undefined,
+        ),
+      ).resolves.toBeUndefined();
+      liq = await Liquidity.getLiquidity(handler.network, marketAddress, provider, 1);
+      expect(liq).toBeDefined();
+      expect(liq.messagingEnabled).toEqual(false);
     });
 
     it('should remove liquidity amount from market total liquidity if paused=true and the reverse if paused=false', async () => {

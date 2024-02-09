@@ -100,6 +100,9 @@ export default class Liquidity extends BaseModel {
   avgReleaseDur: number;
   // The list of payment methods badges associated
   paymentMethods: string[];
+  // Indicate if messaging is enabled
+  messagingEnabled: boolean;
+  messagingEnabledUpdatedAt: string;
 
   /** Not Persisted */
   totalSwaps24h: string;
@@ -194,6 +197,26 @@ export default class Liquidity extends BaseModel {
     if (marketAddress) q = q.where('marketAddress', 'ILIKE', marketAddress);
     if (provider) q = q.where('provider', 'ILIKE', provider);
     return q.orderBy('createdAt', 'DESC');
+  }
+
+  /**
+   * Get providers that have not enabled messaging
+   * @param within Ignore records updated within the last n seconds
+   * @param txn Optional transaction object
+   * @returns
+   */
+  static async getProvidersWithDisabledMessaging(within: number, txn?: Transaction) {
+    return (
+      await this.query(txn)
+        .select('provider')
+        .where({ messagingEnabled: false })
+        .where((q) => {
+          return q
+            .orWhereNull('messagingEnabledUpdatedAt')
+            .orWhere('messagingEnabledUpdatedAt', '<', moment().subtract(within, 's').toISOString());
+        })
+        .distinct('provider')
+    ).map((x) => x.provider);
   }
 
   /**
@@ -574,10 +597,19 @@ export default class Liquidity extends BaseModel {
    * @param udp the fields to be updated
    * @param txn Optional transaction object
    */
-  static updateById(id: string, udp: Partial<Liquidity>, txn?: Transaction): Promise<Liquidity> {
-    return new Promise((resolve, reject) => {
-      this.query(txn).whereNotDeleted().patchAndFetchById(id, udp).then(resolve).catch(reject);
-    });
+  static updateById(id: string, udp: Partial<Liquidity>, txn?: Transaction) {
+    return this.query(txn).whereNotDeleted().patchAndFetchById(id, udp);
+  }
+
+  /**
+   * Update a record by provider address
+   * @param provider The provider address
+   * @param upd The fields to be updated
+   * @param txn Optional transaction object
+   * @returns
+   */
+  static updateByProviderAddress(provider: string, upd: Partial<Liquidity>, txn?: Transaction) {
+    return this.query(txn).whereNotDeleted().where('provider', 'ILIKE', provider).patch(upd);
   }
 
   /**

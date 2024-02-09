@@ -69,7 +69,9 @@ export default class NetworkService {
    */
   private async watch() {
     this.net = this.cfgSrv.get('app.network');
+    console.log('NET', this.net);
     if (!this.net) throw new Error('Network is not defined');
+    console.log('INIT', this.net);
     await this.startGeneralWatcher(this.net);
     await this.startNFTWatcher(this.net);
     await this.restartWatcherSync();
@@ -137,8 +139,10 @@ export default class NetworkService {
    * @param network The name of the network
    */
   private async startGeneralWatcher(network: ChainNames) {
+    console.log('A');
     const rpcUrl = getChainByName(network).rpcUrl;
     if (!rpcUrl) throw new Error('startDefaultWatcher: rpcUrl is not defined');
+    console.log('B');
 
     const fetchRequest = new FetchRequest(rpcUrl);
     fetchRequest.setHeader('User-Agent', this.cfgSrv.get('app.infuraUASecret'));
@@ -148,21 +152,26 @@ export default class NetworkService {
     const p2pTokenAddr = getChainByName(network).contracts['token'].address;
     if (p2pTokenAddr)
       this.contracts.p2pToken = new Contract(p2pTokenAddr, p2pTokenABI, this.provider) as unknown as Token;
+    console.log('C');
 
     const marketCoreAddr = getChainByName(network).contracts['marketCore'].address;
     if (marketCoreAddr)
       this.contracts.marketCore = new Contract(marketCoreAddr, marketCoreABI, this.provider) as unknown as MarketCore;
 
+    console.log('D');
     const coreAddr = getChainByName(network).contracts['core'].address;
     if (coreAddr) this.contracts.core = new Contract(coreAddr, coreABI, this.provider) as unknown as Core;
+    console.log('E');
 
     const mediatorMgr = getChainByName(network).contracts['mediatorManager'].address;
+    console.log('F', mediatorMgr);
     if (mediatorMgr)
       this.contracts.mediatorMgr = new Contract(
         mediatorMgr,
         mediatorManagerABI,
         this.provider,
       ) as unknown as MediatorManager;
+    console.log('G', this.contracts.mediatorMgr);
 
     const disputeMgrAddr = getChainByName(network).contracts['disputeManager'].address;
     if (disputeMgrAddr)

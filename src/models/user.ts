@@ -18,6 +18,7 @@ export default class User extends BaseModel {
   referrer: string;
   refCode: string;
   discordId: string;
+  messagingEnabled: boolean;
 
   // Not persisted
   totalSwaps: number;
@@ -189,6 +190,15 @@ export default class User extends BaseModel {
    */
   static updateById(id: string, udp: Partial<User>) {
     return this.query().whereNotDeleted().patchAndFetchById(id, udp);
+  }
+
+  /**
+   * updateByAddress updates a user by address
+   * @param address the user address
+   * @param udp the fields to be updated
+   */
+  static updateByAddress(address: string, udp: Partial<User>) {
+    return this.query().where('address', 'ILIKE', address).whereNotDeleted().patch(udp);
   }
 
   /**

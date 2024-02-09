@@ -9,8 +9,9 @@ import OnEvidencePeriodEnd from './dispute_notifications/on_evidence_period_end/
 import OnRevealPeriodEnd from './dispute_notifications/on_reveal_period_end/onRevealPeriodEnd';
 import ExchangeRateFetcher from './exchange_rate_cacher/ExchangeRateFetcher';
 import { NotificationModule } from './notifications/NotificationModule';
+import ProviderMessagingStatusUpdate from './provider_messaging_status_update/ProviderMessagingStatusUpdate';
 
-const providers = [];
+const providers: any[] = [ProviderMessagingStatusUpdate];
 
 if (!['1', 'true'].includes(process.env.DISABLE_DISPUTE_NOTIFIERS)) {
   providers.push(...[OnCommitPeriodEnd, OnEvidencePeriodEnd, OnRevealPeriodEnd]);

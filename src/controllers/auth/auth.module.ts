@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { NotifierModule } from '../../jobs/mailer/NotifierModule';
+import { NotificationModule } from '../../jobs/notifications/NotificationModule';
 import { JointLinkService } from '../../services/joint_link.service';
 import ConvosService from '../convos/convos.service';
 import { UserService } from '../users/user.service';
@@ -8,7 +8,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 
 @Module({
-  imports: [NotifierModule],
+  imports: [NotificationModule],
   controllers: [AuthController],
   providers: [ConfigService, UserService, ConvosService, JointLinkService, AuthService],
 })

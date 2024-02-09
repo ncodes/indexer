@@ -2,8 +2,8 @@ import { Provider, formatEther } from 'ethers';
 import * as moment from 'moment';
 import { Transaction } from 'objection';
 import { toDec } from '../../common/common';
-import { NotifierService } from '../../jobs/mailer/NotifierService';
-import { NotificationID } from '../../jobs/mailer/common';
+import { NotificationService } from '../../jobs/notifications/NotificationService';
+import { NotificationID } from '../../jobs/notifications/common';
 import Dispute from '../../models/dispute';
 import Draft from '../../models/draft';
 import Event, { Events } from '../../models/event';
@@ -20,7 +20,7 @@ import NetworkService from '../network.service';
 export class MediatorManagerHandler extends Handler {
   constructor(
     private netSrv: NetworkService,
-    private notifSrv: NotifierService,
+    private notifSrv: NotificationService,
     private provider: Provider,
     public network: string,
     private contracts: JointContracts,

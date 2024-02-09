@@ -3,17 +3,17 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Queue } from 'bull';
 import { isDev } from '../../common/common';
-import { NotifierConsumer } from './NotifierConsumer';
+import { NoticationConsumer } from './NotificationConsumer';
 import { NotificationID } from './common';
 
 @Injectable()
-export class NotifierService {
+export class NotificationService {
   disable = false;
 
   constructor(
     @InjectQueue('notifier') private queue: Queue,
     private cfgSrv: ConfigService,
-    private notifier: NotifierConsumer,
+    private notifier: NoticationConsumer,
   ) {
     this.disable = this.cfgSrv.get('app.disableNotifications') == 'true';
   }

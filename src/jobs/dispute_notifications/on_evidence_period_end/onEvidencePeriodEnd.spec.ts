@@ -8,19 +8,19 @@ import Dispute from '../../../models/dispute';
 import Draft from '../../../models/draft';
 import Market from '../../../models/market';
 import Swap from '../../../models/swap';
-import { NotifierService } from '../../mailer/NotifierService';
-import { NotificationID } from '../../mailer/common';
-import OnCommitPeriodEnd from './on_commit_period_end';
+import { NotificationService } from '../../notifications/NotificationService';
+import { NotificationID } from '../../notifications/common';
+import OnEvidencePeriodEnd from './onEvidencePeriodEnd';
 
 const mockNotify = jest.fn();
 const MockNotifierService = jest.fn().mockImplementation(() => {
   return { notify: mockNotify };
 });
 
-describe('OnCommitPeriodEnd', () => {
+describe('OnEvidencePeriodEnd', () => {
   let app: INestApplication;
   const db = DBService.getForTest();
-  let srv: OnCommitPeriodEnd;
+  let srv: OnEvidencePeriodEnd;
   const net = 'ethereum';
   const provider = '0xProvider';
   const taker = '0xTaker';
@@ -41,15 +41,15 @@ describe('OnCommitPeriodEnd', () => {
     await db.truncateTables();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ConfigService, OnCommitPeriodEnd, NotifierService],
+      providers: [ConfigService, OnEvidencePeriodEnd, NotificationService],
     })
-      .overrideProvider(NotifierService)
+      .overrideProvider(NotificationService)
       .useValue(new MockNotifierService())
       .compile();
 
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());
-    srv = app.get<OnCommitPeriodEnd>(OnCommitPeriodEnd);
+    srv = app.get<OnEvidencePeriodEnd>(OnEvidencePeriodEnd);
     await app.init();
   });
 
@@ -68,11 +68,11 @@ describe('OnCommitPeriodEnd', () => {
       const orderId = 1;
 
       beforeEach(async () => {
-        const now = moment();
         market = await Market.create({
           network: net,
           address: marketAddress,
         });
+        const now = moment();
         swap = await Swap.create({
           network: net,
           marketAddress,
@@ -88,7 +88,7 @@ describe('OnCommitPeriodEnd', () => {
           disputeId,
           orderId,
           numMediators: 3,
-          commitEndAt: now.add(1, 'h').toISOString(),
+          evidenceEndAt: now.add(1, 'h').toISOString(),
         });
         dispute = await Dispute.create({
           network: net,
@@ -96,8 +96,8 @@ describe('OnCommitPeriodEnd', () => {
           disputeId,
           orderId,
           numMediators: 3,
-          commitEndAt: now.subtract(1, 'h').toISOString(),
-          revealEndAt: now.add(1, 'h').toISOString(),
+          evidenceEndAt: now.subtract(1, 'h').toISOString(),
+          commitEndAt: now.add(1, 'h').toISOString(),
         });
         await Draft.create({
           network: net,
@@ -108,10 +108,10 @@ describe('OnCommitPeriodEnd', () => {
         });
       });
 
-      it('should set dispute.notifiedOnCommitEndAt = true', async () => {
+      it('should set dispute.notifiedOnEvidenceEndAt = true', async () => {
         await expect(srv.process()).resolves.toBeUndefined();
         dispute = await Dispute.getById(dispute.id);
-        expect(dispute.notifiedOnCommitEndAt).toBeTruthy();
+        expect(dispute.notifiedOnEvidenceEndAt).toBeTruthy();
       });
 
       it('should send notification to taker, provider and draftees', async () => {
@@ -121,12 +121,12 @@ describe('OnCommitPeriodEnd', () => {
           swap,
           disputeId,
           drafted: undefined,
-          revealPhaseHoursLeft: moment(dispute.revealEndAt).fromNow(true),
+          commitPhaseHoursLeft: moment(dispute.commitEndAt).fromNow(true),
         };
-        expect(mockNotify).toHaveBeenNthCalledWith(1, NotificationID.CommitPhaseEnded, net, provider, payload);
-        expect(mockNotify).toHaveBeenNthCalledWith(2, NotificationID.CommitPhaseEnded, net, taker, payload);
+        expect(mockNotify).toHaveBeenNthCalledWith(1, NotificationID.EvidencePhaseEnded, net, provider, payload);
+        expect(mockNotify).toHaveBeenNthCalledWith(2, NotificationID.EvidencePhaseEnded, net, taker, payload);
         payload.drafted = true;
-        expect(mockNotify).toHaveBeenNthCalledWith(3, NotificationID.CommitPhaseEnded, net, draftee, payload);
+        expect(mockNotify).toHaveBeenNthCalledWith(3, NotificationID.EvidencePhaseEnded, net, draftee, payload);
       });
     });
   });

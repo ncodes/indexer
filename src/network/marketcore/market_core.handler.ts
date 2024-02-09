@@ -5,8 +5,8 @@ import { Transaction } from 'objection';
 import * as erc20ABI from '../../../abi/ERC20.json';
 import * as erc721ABI from '../../../abi/ERC721.json';
 import { isDev } from '../../common/common';
-import { NotifierService } from '../../jobs/mailer/NotifierService';
-import { NotificationID } from '../../jobs/mailer/common';
+import { NotificationService } from '../../jobs/notifications/NotificationService';
+import { NotificationID } from '../../jobs/notifications/common';
 import Liquidity from '../../models/liquidity';
 import Market from '../../models/market';
 import LiquidityProvider from '../../models/market_provider';
@@ -20,7 +20,7 @@ export class MarketCoreHandler extends Handler {
 
   constructor(
     private netSrv: NetworkService,
-    private notifSrv: NotifierService,
+    private notifSrv: NotificationService,
     private provider: Provider,
     public network: ChainNames,
     private contracts: JointContracts,

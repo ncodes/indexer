@@ -12,9 +12,12 @@ import { pow10, toFixed } from '../../network/common';
 import { MailerService } from '../../services/mailer/mailer.service';
 import { canSendNotification } from './common';
 
+/**
+ * NotificationConsumer execute notification jobs.
+ */
 @Processor('notifier')
-export class NotifierConsumer {
-  logger = new Logger(NotifierConsumer.name);
+export class NoticationConsumer {
+  logger = new Logger(NoticationConsumer.name);
 
   constructor(private mailer: MailerService) {}
 

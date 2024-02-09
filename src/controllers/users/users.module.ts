@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { NotifierModule } from '../../jobs/mailer/NotifierModule';
+import { NotificationModule } from '../../jobs/notifications/NotificationModule';
 import { NetworkModule } from '../../network/network.module';
 import { JointLinkService } from '../../services/joint_link.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
@@ -9,7 +9,7 @@ import { UserService } from './user.service';
 import { UsersController } from './users.controller';
 
 @Module({
-  imports: [NetworkModule, NotifierModule, RedisModule],
+  imports: [NetworkModule, NotificationModule, RedisModule],
   controllers: [UsersController],
   providers: [UserService, MetadataService, ConvosService, JointLinkService],
 })

@@ -4,7 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { DBService } from '../../db/db.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
-import ExchangeRateFetcher from './exchange_rate_fetcher';
+import ExchangeRateFetcher from './ExchangeRateFetcher';
 
 const mockUpdateCache = jest.fn();
 const ExchangeRateServiceMock = jest.fn().mockImplementation(() => {

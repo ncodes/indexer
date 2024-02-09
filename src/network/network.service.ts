@@ -25,7 +25,7 @@ import {
 } from '../../typechain';
 import { isTest } from '../common/common';
 import { PointService } from '../controllers/points/point.service';
-import { NotifierService } from '../jobs/mailer/NotifierService';
+import { NotificationService } from '../jobs/notifications/NotificationService';
 import Meta, { MetaKeys } from '../models/meta';
 import { ExchangeRateService } from '../services/exchange_rate.service';
 import { MetadataService } from '../services/metadata/metadata.service';
@@ -52,7 +52,7 @@ export default class NetworkService {
   constructor(
     public cfgSrv: ConfigService,
     public redisSrv: RedisService,
-    private notifSrv: NotifierService,
+    private notifSrv: NotificationService,
     @Inject(forwardRef(() => MetadataService))
     private metadataSrv: MetadataService,
     private exrSrv: ExchangeRateService,

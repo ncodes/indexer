@@ -4,7 +4,7 @@ import { isLocal, toDec } from '../../common/common';
 import { AuthService } from '../../controllers/auth/auth.service';
 import { PointService } from '../../controllers/points/point.service';
 import { DBService } from '../../db/db.service';
-import { NotifierService } from '../../jobs/mailer/NotifierService';
+import { NotificationService } from '../../jobs/notifications/NotificationService';
 import NetworkService from '../../network/network.service';
 import { ExchangeRateService } from '../exchange_rate.service';
 import { RedisService } from '../redis/redis.service';
@@ -82,14 +82,14 @@ if (process.env.TEST_EXTERNAL_API == 'true' || isLocal()) {
           MetadataService,
           ExchangeRateService,
           RedisService,
-          NotifierService,
+          NotificationService,
           PointService,
           AuthService,
         ],
       })
         .overrideProvider(RedisService)
         .useValue(new mockRedisService())
-        .overrideProvider(NotifierService)
+        .overrideProvider(NotificationService)
         .useValue(new MockNotifierService())
         .overrideProvider(ConfigService)
         .useValue(new MockConfigService())

@@ -7,8 +7,8 @@ import Draft from '../../../models/draft';
 import Reveal from '../../../models/reveal';
 import Swap from '../../../models/swap';
 import { Base } from '../../base';
-import { NotifierService } from '../../mailer/NotifierService';
-import { NotificationID } from '../../mailer/common';
+import { NotificationService } from '../../notifications/NotificationService';
+import { NotificationID } from '../../notifications/common';
 
 /**
  * OnRevealPeriodEnd finds disputes whose reveal period has ended
@@ -17,7 +17,7 @@ import { NotificationID } from '../../mailer/common';
 export default class OnRevealPeriodEnd extends Base {
   private logger = new Logger(OnRevealPeriodEnd.name);
 
-  constructor(private cfgSrv: ConfigService, private notifier: NotifierService) {
+  constructor(private cfgSrv: ConfigService, private notifier: NotificationService) {
     super();
     this.schedule();
   }

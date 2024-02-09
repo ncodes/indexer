@@ -7,7 +7,7 @@ import { setFeaturedAssets } from '../../common/featured_assets';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { DBService } from '../../db/db.service';
-import { NotifierService } from '../../jobs/mailer/NotifierService';
+import { NotificationService } from '../../jobs/notifications/NotificationService';
 import AssetRegistry from '../../models/asset_registry';
 import Liquidity from '../../models/liquidity';
 import MarketPrice from '../../models/market_price';
@@ -17,9 +17,9 @@ import NetworkService from '../../network/network.service';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { RedisService } from '../../services/redis/redis.service';
+import { AuthService } from '../auth/auth.service';
 import { PointService } from '../points/point.service';
 import { AssetsController } from './assets.controller';
-import { AuthService } from '../auth/auth.service';
 
 // Note: We use var because const will not jest hoist correctly.
 // eslint-disable-next-line no-var
@@ -69,14 +69,14 @@ describe('AssetsController', () => {
         ConfigService,
         MetadataService,
         NetworkService,
-        NotifierService,
+        NotificationService,
         ExchangeRateService,
         AuthService,
         RedisService,
         PointService,
       ],
     })
-      .overrideProvider(NotifierService)
+      .overrideProvider(NotificationService)
       .useValue(new NotifierServiceMock())
       .overrideProvider(RedisService)
       .useValue(new (jest.fn())())

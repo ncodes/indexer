@@ -2,8 +2,8 @@ import { Provider } from 'ethers';
 import * as _ from 'lodash';
 import { Transaction } from 'objection';
 import { isEqualStr, toDec } from '../../common/common';
-import { NotifierService } from '../../jobs/mailer/NotifierService';
-import { NotificationID } from '../../jobs/mailer/common';
+import { NotificationService } from '../../jobs/notifications/NotificationService';
+import { NotificationID } from '../../jobs/notifications/common';
 import Commit from '../../models/commit';
 import Dispute from '../../models/dispute';
 import Draft from '../../models/draft';
@@ -21,7 +21,7 @@ import NetworkService from '../network.service';
 export class DisputeManagerHandler extends Handler {
   constructor(
     private netSrv: NetworkService,
-    private notifSrv: NotifierService,
+    private notifSrv: NotificationService,
     private provider: Provider,
     public network: string,
     private contracts: JointContracts,

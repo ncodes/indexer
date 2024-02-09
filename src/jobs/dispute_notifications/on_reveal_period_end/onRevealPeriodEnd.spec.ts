@@ -10,9 +10,9 @@ import Market from '../../../models/market';
 import Meta, { MetaKeys } from '../../../models/meta';
 import Reveal from '../../../models/reveal';
 import Swap from '../../../models/swap';
-import { NotifierService } from '../../mailer/NotifierService';
-import { NotificationID } from '../../mailer/common';
-import OnRevealPeriodEnd from './on_reveal_period_end';
+import { NotificationService } from '../../notifications/NotificationService';
+import { NotificationID } from '../../notifications/common';
+import OnRevealPeriodEnd from './onRevealPeriodEnd';
 
 const mockNotify = jest.fn();
 const MockNotifierService = jest.fn().mockImplementation(() => {
@@ -53,9 +53,9 @@ describe('OnRevealPeriodEnd', () => {
     );
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ConfigService, OnRevealPeriodEnd, NotifierService],
+      providers: [ConfigService, OnRevealPeriodEnd, NotificationService],
     })
-      .overrideProvider(NotifierService)
+      .overrideProvider(NotificationService)
       .useValue(new MockNotifierService())
       .compile();
 

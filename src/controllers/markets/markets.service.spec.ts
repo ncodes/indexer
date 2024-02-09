@@ -2,7 +2,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as moment from 'moment';
 import { DBService } from '../../db/db.service';
-import { NotifierService } from '../../jobs/mailer/NotifierService';
+import { NotificationService } from '../../jobs/notifications/NotificationService';
 import Liquidity from '../../models/liquidity';
 import Market from '../../models/market';
 import MarketPrice from '../../models/market_price';
@@ -71,7 +71,7 @@ describe('MarketsService', () => {
         MarketService,
         NetworkService,
         MetadataService,
-        NotifierService,
+        NotificationService,
         ConfigService,
         ExchangeRateService,
         RedisService,
@@ -83,7 +83,7 @@ describe('MarketsService', () => {
       .useValue(new ConfigServiceMock())
       .overrideProvider(NetworkServiceMock)
       .useValue(new NetworkServiceMock())
-      .overrideProvider(NotifierService)
+      .overrideProvider(NotificationService)
       .useValue(new (jest.fn())())
       .overrideProvider(RedisService)
       .useValue(new (jest.fn())())

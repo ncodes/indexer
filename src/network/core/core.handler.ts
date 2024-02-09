@@ -4,8 +4,8 @@ import * as _ from 'lodash';
 import * as moment from 'moment';
 import { Transaction } from 'objection';
 import { includesStr, isEqualStr, toDec } from '../../common/common';
-import { NotifierService } from '../../jobs/mailer/NotifierService';
-import { NotificationID } from '../../jobs/mailer/common';
+import { NotificationService } from '../../jobs/notifications/NotificationService';
+import { NotificationID } from '../../jobs/notifications/common';
 import Dispute from '../../models/dispute';
 import Event, { Events } from '../../models/event';
 import Liquidity, { makeLiqAddress } from '../../models/liquidity';
@@ -26,7 +26,7 @@ export class CoreHandler extends Handler {
 
   constructor(
     private netSrv: NetworkService,
-    private notifSrv: NotifierService,
+    private notifSrv: NotificationService,
     private metadataSrv: MetadataService,
     private exrSrv: ExchangeRateService,
     private provider: Provider,

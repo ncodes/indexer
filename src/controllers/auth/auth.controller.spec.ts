@@ -11,8 +11,8 @@ import { NoopLogger } from '../../common/loggers/noop_logger';
 import { ErrorMessages } from '../../common/responses/responses';
 import { Roles } from '../../common/roles';
 import { DBService } from '../../db/db.service';
-import { NotifierService } from '../../jobs/mailer/NotifierService';
-import { NotificationID } from '../../jobs/mailer/common';
+import { NotificationService } from '../../jobs/notifications/NotificationService';
+import { NotificationID } from '../../jobs/notifications/common';
 import Session from '../../models/session';
 import User from '../../models/user';
 import { JointLinkService } from '../../services/joint_link.service';
@@ -94,7 +94,7 @@ describe('AuthController', () => {
         RedisService,
         UserService,
         ConvosService,
-        NotifierService,
+        NotificationService,
         JointLinkService,
         AuthService,
       ],
@@ -103,7 +103,7 @@ describe('AuthController', () => {
       .useValue(new ConfigServiceMock())
       .overrideProvider(RedisService)
       .useValue(new RedisServiceMock())
-      .overrideProvider(NotifierService)
+      .overrideProvider(NotificationService)
       .useValue(new NotifierServiceMock())
       .overrideProvider(JointLinkService)
       .useValue(new MockJointLinkService())

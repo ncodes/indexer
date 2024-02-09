@@ -7,17 +7,17 @@ import Dispute from '../../../models/dispute';
 import Draft from '../../../models/draft';
 import Swap from '../../../models/swap';
 import { Base } from '../../base';
-import { NotifierService } from '../../mailer/NotifierService';
-import { NotificationID } from '../../mailer/common';
+import { NotificationService } from '../../notifications/NotificationService';
+import { NotificationID } from '../../notifications/common';
 
 /**
- * OnCommitPeriodEnd finds disputes whose commit period has ended
+ * OnEvidencePeriodEnd finds disputes whose evidence period has ended
  */
 @Injectable()
-export default class OnCommitPeriodEnd extends Base {
-  private logger = new Logger(OnCommitPeriodEnd.name);
+export default class OnEvidencePeriodEnd extends Base {
+  private logger = new Logger(OnEvidencePeriodEnd.name);
 
-  constructor(private notifier: NotifierService, private cfgSrv: ConfigService) {
+  constructor(private notifier: NotificationService, private cfgSrv: ConfigService) {
     super();
     this.schedule();
   }
@@ -33,12 +33,12 @@ export default class OnCommitPeriodEnd extends Base {
     return new Promise<void>(async (res, rej) => {
       this.setProcessing(true);
       try {
-        const disputes = await Dispute.getByAfterCommitEndAt();
+        const disputes = await Dispute.getByAfterEvidenceEndAt();
         this.logger.debug(`Notifying participants of ${disputes.length} dispute(s)`);
         for (const dispute of disputes) await this.notify(dispute);
         return res();
       } catch (e) {
-        this.logger.error(e.message || 'failed to records');
+        this.logger.error(e.message || 'failed to get records');
         return rej(e);
       } finally {
         this.setProcessing(false);
@@ -53,29 +53,25 @@ export default class OnCommitPeriodEnd extends Base {
   async notify(dispute: Dispute) {
     const recipients: { address: string; drafted?: boolean }[] = [];
 
-    // Get the swap order
+    // Get the swap order and add participants as recipients
     const swap = await Swap.get(dispute.network, dispute.orderId);
     recipients.push({ address: swap.provider }, { address: swap.taker });
 
     // Get the drafted tickets
     const drafted = await Draft.getAll(swap.network, swap.marketAddress, swap.orderId, dispute.disputeId);
-    recipients.push(
-      ..._.map(drafted, (v) => {
-        return { address: v.owner, drafted: true };
-      }),
-    );
+    recipients.push(..._.map(drafted, (v) => ({ address: v.owner, drafted: true })));
 
     // Send notification
     for (const recipient of recipients) {
-      await this.notifier.notify(NotificationID.CommitPhaseEnded, swap.network, recipient.address, {
+      await this.notifier.notify(NotificationID.EvidencePhaseEnded, swap.network, recipient.address, {
         swap,
         disputeId: dispute.disputeId,
+        commitPhaseHoursLeft: moment(dispute.commitEndAt).fromNow(true),
         drafted: recipient.drafted,
-        revealPhaseHoursLeft: moment(dispute.revealEndAt).fromNow(true),
       });
     }
 
     // Mark dispute row as notified
-    await Dispute.updateById(dispute.id, { notifiedOnCommitEndAt: true });
+    await Dispute.updateById(dispute.id, { notifiedOnEvidenceEndAt: true });
   }
 }

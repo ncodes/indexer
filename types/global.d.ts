@@ -1,5 +1,5 @@
 import { BigNumber } from 'ethers';
-import { NotificationID } from '../src/jobs/mailer/common';
+import { NotificationID } from '../src/jobs/notifications/common';
 import Convo from '../src/models/convo';
 import Dispute from '../src/models/dispute';
 import Liquidity from '../src/models/liquidity';

@@ -7,7 +7,8 @@ import { AllExceptionsFilter } from '../../common/interceptors/exception_filter'
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { Roles } from '../../common/roles';
 import { DBService } from '../../db/db.service';
-import { NotificationID } from '../../jobs/mailer/common';
+import { NotificationService } from '../../jobs/notifications/NotificationService';
+import { NotificationID } from '../../jobs/notifications/common';
 import Convo from '../../models/convo';
 import Notification, { NotificationType } from '../../models/notification';
 import NotificationSetting from '../../models/notification_setting';
@@ -17,7 +18,6 @@ import Swap from '../../models/swap';
 import User from '../../models/user';
 import { RedisService } from '../../services/redis/redis.service';
 import { makeSession } from '../auth/utils';
-import { NotifierService } from './../../jobs/mailer/NotifierService';
 import { NotificationsController } from './notifications.controller';
 
 const mockCfgGet = jest.fn();
@@ -77,11 +77,11 @@ describe('NotificationsController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [NotificationsController],
-      providers: [ConfigService, NotifierService, RedisService],
+      providers: [ConfigService, NotificationService, RedisService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
-      .overrideProvider(NotifierService)
+      .overrideProvider(NotificationService)
       .useValue(new NotifierServiceMock())
       .overrideProvider(RedisService)
       .useValue(new RedisServiceMock())

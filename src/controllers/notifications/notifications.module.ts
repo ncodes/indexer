@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { NotifierModule } from '../../jobs/mailer/NotifierModule';
+import { NotificationModule } from '../../jobs/notifications/NotificationModule';
 import { RedisModule } from '../../services/redis/redis.module';
 import { NotificationsController } from './notifications.controller';
 
 @Module({
-  imports: [NotifierModule, RedisModule],
+  imports: [NotificationModule, RedisModule],
   controllers: [NotificationsController],
   providers: [],
 })

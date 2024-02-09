@@ -1,7 +1,7 @@
 import * as moment from 'moment';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { DBService } from '../../db/db.service';
-import { NotificationID } from '../../jobs/mailer/common';
+import { NotificationID } from '../../jobs/notifications/common';
 import Dispute from '../../models/dispute';
 import Draft from '../../models/draft';
 import Event, { Events } from '../../models/event';

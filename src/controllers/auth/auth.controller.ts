@@ -20,8 +20,8 @@ import {
 import { Roles } from '../../common/roles';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
-import { NotifierService } from '../../jobs/mailer/NotifierService';
-import { NotificationID } from '../../jobs/mailer/common';
+import { NotificationService } from '../../jobs/notifications/NotificationService';
+import { NotificationID } from '../../jobs/notifications/common';
 import NotificationSetting, { defaultNotificationSettings } from '../../models/notification_setting';
 import Session from '../../models/session';
 import User from '../../models/user';
@@ -39,7 +39,7 @@ export class AuthController {
     private cfgSrv: ConfigService,
     private authSrv: AuthService,
     private userSrv: UserService,
-    private notifSrv: NotifierService,
+    private notifSrv: NotificationService,
   ) {}
 
   /**

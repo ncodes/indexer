@@ -8,8 +8,8 @@ import { ok, throw404 } from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import { IsRootAdmin } from '../../guards/is_basic_admin';
-import { NotifierService } from '../../jobs/mailer/NotifierService';
-import { NotificationID } from '../../jobs/mailer/common';
+import { NotificationService } from '../../jobs/notifications/NotificationService';
+import { NotificationID } from '../../jobs/notifications/common';
 import Convo from '../../models/convo';
 import Notification from '../../models/notification';
 import NotificationSetting from '../../models/notification_setting';
@@ -27,7 +27,7 @@ import {
 
 @Controller('v1/notifications')
 export class NotificationsController {
-  constructor(private notifySrv: NotifierService, private redisSrv: RedisService) {}
+  constructor(private notifySrv: NotificationService, private redisSrv: RedisService) {}
 
   /**
    * @param req The request object

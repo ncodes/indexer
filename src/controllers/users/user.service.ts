@@ -57,7 +57,7 @@ export class UserService {
           true,
         ),
       )
-        .toDP(8)
+        .toDP(0)
         .toNumber();
 
       const lastSwap = await Swap.getRecentSwap(network, user.address, undefined);

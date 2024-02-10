@@ -1,4 +1,4 @@
-import { getChainNames } from '@jointlabs/chains-info';
+import { ChainNames, getChainNames } from '@jointlabs/chains-info';
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsEnum, IsIn, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { toNumber } from 'lodash';
@@ -108,7 +108,7 @@ export class ListQueryDTO {
 export class StatsQueryDTO {
   @IsIn(getChainNames(), { message: makeValidatorMsg('network is unknown', 'net') })
   @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
-  public net?: string;
+  public net?: ChainNames;
 
   @IsOptional()
   public owner?: string;

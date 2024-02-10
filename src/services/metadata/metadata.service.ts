@@ -1,4 +1,4 @@
-import { findTokenInLocalhost, findTokenInSynthetic, isValidChain } from '@jointlabs/chains-info';
+import { ChainNames, findTokenInLocalhost, findTokenInSynthetic, isValidChain } from '@jointlabs/chains-info';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
@@ -137,7 +137,7 @@ export class MetadataService {
 
     // If the token is a contract, try to get the decimals if not provided
     if (info.isContract && network && isProd() && !info.decimals)
-      info.decimals = toNumber(await this.netSrv.getERC20Contract(contract).decimals());
+      info.decimals = toNumber(await this.netSrv.getERC20Contract(network as ChainNames, contract).decimals());
 
     // In dev mode, set decimals to 18 if not provided
     if (isDev() && !info.decimals) info.decimals = 18;

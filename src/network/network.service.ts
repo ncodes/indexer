@@ -1,28 +1,9 @@
-import { ChainNames, getChainByName } from '@jointlabs/chains-info';
+import { ChainNames } from '@jointlabs/chains-info';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Contract, FetchRequest, JsonRpcProvider, Provider } from 'ethers';
-import * as assetRegABI from '../../abi/AssetRegistry.json';
-import * as badgeMgrABI from '../../abi/BadgeManager.json';
-import * as coreABI from '../../abi/Core.json';
-import * as disputeManagerABI from '../../abi/DisputeManager.json';
+import { Contract, Provider } from 'ethers';
 import * as erc20TokenABI from '../../abi/ERC20.json';
-import * as marketCoreABI from '../../abi/MarketCore.json';
-import * as mediatorManagerABI from '../../abi/MediatorManager.json';
-import * as nftABI from '../../abi/NFT.json';
-import * as p2pTokenABI from '../../abi/Token.json';
-import {
-  AssetRegistry,
-  BadgeManager,
-  Core,
-  DisputeManager,
-  ERC20,
-  Energon,
-  MarketCore,
-  MediatorManager,
-  NFT,
-  Token,
-} from '../../typechain';
+import { ERC20 } from '../../typechain';
 import { isTest } from '../common/common';
 import { PointService } from '../controllers/points/point.service';
 import { NotificationService } from '../jobs/notifications/NotificationService';
@@ -32,6 +13,7 @@ import { MetadataService } from '../services/metadata/metadata.service';
 import { RedisService } from '../services/redis/redis.service';
 import { AssetRegistryHandler } from './assetregistry/asset_registry.handler';
 import { BadgeManagerHandler } from './badge/badge_manager.handler';
+import { ContractManager } from './contract_manager';
 import { CoreHandler } from './core/core.handler';
 import { DisputeManagerHandler } from './disputemanager/dispute_manager.handler';
 import { MarketCoreHandler } from './marketcore/market_core.handler';
@@ -44,10 +26,9 @@ import { Watcher } from './watcher';
 @Injectable()
 export default class NetworkService {
   private logger = new Logger(NetworkService.name);
-  private contracts: JointContracts = {};
-  private provider: Provider;
   private watchers: Watcher[] = [];
   private net: ChainNames;
+  private contractMgr = new ContractManager();
 
   constructor(
     public cfgSrv: ConfigService,
@@ -59,6 +40,9 @@ export default class NetworkService {
     public pointSrv: PointService,
   ) {
     if (isTest()) return;
+
+    this.contractMgr.initialize(this.cfgSrv.get('app.infuraUASecret'));
+
     this.watch().catch((e) => {
       this.logger.error(e);
     });
@@ -69,36 +53,36 @@ export default class NetworkService {
    */
   private async watch() {
     this.net = this.cfgSrv.get('app.network');
-    console.log('NET', this.net);
     if (!this.net) throw new Error('Network is not defined');
-    console.log('INIT', this.net);
     await this.startGeneralWatcher(this.net);
     await this.startNFTWatcher(this.net);
-    await this.restartWatcherSync();
+    this.restartWatcherSync();
   }
 
   /**
    * Get contracts linked to a given network
+   * @param chain The name of the chain
    * @returns
    */
-  getContracts() {
-    return this.contracts;
+  getContracts(chain: ChainNames) {
+    return this.contractMgr.contracts[chain];
   }
 
   /**
    * Get a network's provider
    * @returns
    */
-  getProvider(): Provider {
-    return this.provider;
+  getProvider(chain: ChainNames): Provider {
+    return this.contractMgr.providers[chain];
   }
 
   /**
    * Get an  ERC20 contract
+   * @para chain The chain name
    * @param address The contract address
    */
-  getERC20Contract(address: string): ERC20 {
-    return new Contract(address, erc20TokenABI, this.provider) as unknown as ERC20;
+  getERC20Contract(chain: ChainNames, address: string): ERC20 {
+    return new Contract(address, erc20TokenABI, this.contractMgr.providers[chain]) as unknown as ERC20;
   }
 
   /**
@@ -139,71 +123,26 @@ export default class NetworkService {
    * @param network The name of the network
    */
   private async startGeneralWatcher(network: ChainNames) {
-    console.log('A');
-    const rpcUrl = getChainByName(network).rpcUrl;
-    if (!rpcUrl) throw new Error('startDefaultWatcher: rpcUrl is not defined');
-    console.log('B');
-
-    const fetchRequest = new FetchRequest(rpcUrl);
-    fetchRequest.setHeader('User-Agent', this.cfgSrv.get('app.infuraUASecret'));
-    this.provider = new JsonRpcProvider(fetchRequest);
-
-    // Initialize contracts
-    const p2pTokenAddr = getChainByName(network).contracts['token'].address;
-    if (p2pTokenAddr)
-      this.contracts.p2pToken = new Contract(p2pTokenAddr, p2pTokenABI, this.provider) as unknown as Token;
-    console.log('C');
-
-    const marketCoreAddr = getChainByName(network).contracts['marketCore'].address;
-    if (marketCoreAddr)
-      this.contracts.marketCore = new Contract(marketCoreAddr, marketCoreABI, this.provider) as unknown as MarketCore;
-
-    console.log('D');
-    const coreAddr = getChainByName(network).contracts['core'].address;
-    if (coreAddr) this.contracts.core = new Contract(coreAddr, coreABI, this.provider) as unknown as Core;
-    console.log('E');
-
-    const mediatorMgr = getChainByName(network).contracts['mediatorManager'].address;
-    console.log('F', mediatorMgr);
-    if (mediatorMgr)
-      this.contracts.mediatorMgr = new Contract(
-        mediatorMgr,
-        mediatorManagerABI,
-        this.provider,
-      ) as unknown as MediatorManager;
-    console.log('G', this.contracts.mediatorMgr);
-
-    const disputeMgrAddr = getChainByName(network).contracts['disputeManager'].address;
-    if (disputeMgrAddr)
-      this.contracts.disputeMgr = new Contract(
-        disputeMgrAddr,
-        disputeManagerABI,
-        this.provider,
-      ) as unknown as DisputeManager;
-
-    const badgeMgrAddr = getChainByName(network).contracts['badgeManager'].address;
-    if (badgeMgrAddr)
-      this.contracts.badgeMgr = new Contract(badgeMgrAddr, badgeMgrABI, this.provider) as unknown as BadgeManager;
-
-    const assetRegAddr = getChainByName(network).contracts['assetRegistry'].address;
-    if (assetRegAddr)
-      this.contracts.assetRegistry = new Contract(assetRegAddr, assetRegABI, this.provider) as unknown as AssetRegistry;
-
-    const energonAddr = getChainByName(network).contracts['energon'].address;
-    if (energonAddr)
-      this.contracts.energon = new Contract(energonAddr, erc20TokenABI, this.provider) as unknown as Energon;
-
     // Load initial contract params
     await this.loadInitialContractParams();
 
     // Initialize handlers
+    const provider = this.contractMgr.providers[network];
     const handlers = [
-      new MarketCoreHandler(this, this.notifSrv, this.provider, network, this.contracts),
-      new MediatorManagerHandler(this, this.notifSrv, this.provider, network, this.contracts),
-      new DisputeManagerHandler(this, this.notifSrv, this.provider, network, this.contracts),
-      new CoreHandler(this, this.notifSrv, this.metadataSrv, this.exrSrv, this.provider, network, this.contracts),
-      new BadgeManagerHandler(this, this.provider, network, this.contracts),
-      new AssetRegistryHandler(this.provider, network, this.contracts),
+      new MarketCoreHandler(this, this.notifSrv, provider, network, this.contractMgr.contracts[network]),
+      new MediatorManagerHandler(this, this.notifSrv, provider, network, this.contractMgr.contracts[network]),
+      new DisputeManagerHandler(this, this.notifSrv, provider, network, this.contractMgr.contracts[network]),
+      new CoreHandler(
+        this,
+        this.notifSrv,
+        this.metadataSrv,
+        this.exrSrv,
+        provider,
+        network,
+        this.contractMgr.contracts[network],
+      ),
+      new BadgeManagerHandler(this, provider, network, this.contractMgr.contracts[network]),
+      new AssetRegistryHandler(provider, network, this.contractMgr.contracts[network]),
     ];
 
     // Create event processor
@@ -212,7 +151,7 @@ export default class NetworkService {
 
     // Create event watcher
     if (!this.isWatcherDisabled()) {
-      const watcher = new Watcher('', network, this.provider, processor, this.redisSrv);
+      const watcher = new Watcher('', network, provider, processor, this.redisSrv);
       await watcher.add(...handlers);
       this.watchers.push(watcher);
     } else {
@@ -225,22 +164,12 @@ export default class NetworkService {
    * @param network The name of the network
    */
   private async startNFTWatcher(network: ChainNames) {
-    const rpcUrl = getChainByName(network).rpcUrl;
-    if (!rpcUrl) throw new Error('startNFTWatcher: rpcUrl is not defined');
-
-    const fetchRequest = new FetchRequest(rpcUrl);
-    fetchRequest.setHeader('User-Agent', this.cfgSrv.get('app.infuraUASecret'));
-    const provider = new JsonRpcProvider(fetchRequest);
-
-    // Initialize contracts
-    const nftAddress = getChainByName(network).contracts['nft'].address;
-    if (nftAddress) this.contracts.nft = new Contract(nftAddress, nftABI, provider) as unknown as NFT;
-
     // Load initial contract params
     await this.loadInitialContractParams();
 
     // Initialize handlers
-    const handlers = [new NFTHandler(this, provider, network, this.contracts)];
+    const provider = this.contractMgr.providers[network];
+    const handlers = [new NFTHandler(this, provider, network, this.contractMgr.contracts[network])];
 
     // Create event processor
     const processor = new Processor(network);

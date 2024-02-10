@@ -1,3 +1,4 @@
+import { ChainNames } from '@jointlabs/chains-info';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AbiCoder, Wallet, keccak256 } from 'ethers';
@@ -24,7 +25,7 @@ export class PaymentsService {
     metaValue: string,
   ) {
     const sigInfo: GrantSigInfo = { network };
-    const badgeMgr = this.netSrv.getContracts().badgeMgr;
+    const badgeMgr = this.netSrv.getContracts(network as ChainNames).badgeMgr;
     const badgePath = badge.split('/');
     if (badgePath.length !== 2) throw new Error('invalid payment method badge path');
 

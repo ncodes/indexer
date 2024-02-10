@@ -1,3 +1,4 @@
+import { ChainNames } from '@jointlabs/chains-info';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import PinataClient, { PinataPinListResponse } from '@pinata/sdk';
@@ -66,7 +67,7 @@ export class InstructionsService {
    */
   async getGrantSignature(network: string, granteeAddr: string, instructionHash: string) {
     const sigInfo: GrantSigInfo = { network };
-    const badgeMgr = this.netSrv.getContracts().badgeMgr;
+    const badgeMgr = this.netSrv.getContracts(network as ChainNames).badgeMgr;
     const instructionBadge = this.cfgSrv.get('app.badges.instruction');
     const hasBadge = await badgeMgr.hasBadge(granteeAddr, instructionBadge, '');
     const signer = new Wallet(this.cfgSrv.get('app.badges.instructionIssuerPk'));

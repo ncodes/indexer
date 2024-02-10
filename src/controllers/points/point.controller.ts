@@ -99,7 +99,7 @@ export class PointController {
     }
 
     // Get the ENG balance of the signer
-    const engBal = await this.netSrv.getContracts().energon?.balanceOf(body.signer);
+    const engBal = await this.netSrv.getContracts('ethereum').energon?.balanceOf(body.signer);
 
     // Make sure the signer has a non-zero ENG balance
     if (isZero(engBal)) {

@@ -44,8 +44,9 @@ export enum NotificationID {
  * @returns
  */
 export function canSendNotification(user: Partial<User>, notifId: NotificationID) {
+  const alwaysEnabledNotifIds = [NotificationID.VerifyNewEmail];
   const notifSettings = user.notificationSettings || new NotificationSetting();
-  if (notifSettings.disabled) return false;
+  if (notifSettings.disabled && !alwaysEnabledNotifIds.includes(notifId)) return false;
 
   const offerNotifIds = [
     NotificationID.NewOffer,

@@ -1,6 +1,6 @@
 import { Provider } from 'ethers';
-import { toNumber } from 'lodash';
 import { Transaction } from 'objection';
+import NFTOwner from '../../models/nft_owner';
 import { ContractCallEvent } from '../common';
 import { Handler } from '../handler';
 import NetworkService from '../network.service';
@@ -36,6 +36,7 @@ export class NFTHandler extends Handler {
    * @param txn The transaction object
    */
   async onTransfer(from: string, to: string, tokenId: bigint, _event: ContractCallEvent, txn?: Transaction) {
-    await this.netSrv.pointSrv.grantOnNFTOwnership(this.network, to, toNumber(tokenId.toString()), txn);
+    await NFTOwner.deleteByAddressAndTokenId(from, Number(tokenId), txn);
+    await NFTOwner.create({ address: to, tokenId: Number(tokenId) }, txn);
   }
 }

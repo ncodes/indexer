@@ -18,10 +18,6 @@ export enum PointAction {
   Energon = 'energon',
 }
 
-export enum PointValue {
-  PointPerENG = 1,
-}
-
 /**
  * Point represents a point
  */
@@ -42,7 +38,7 @@ export default class Point extends BaseModel {
   // The action that caused the point
   action: PointAction;
   // Whether the point is approved
-  approved: boolean;
+  approved: boolean; // TODO: used, so remove
 
   // Not persisted
   owner: User;

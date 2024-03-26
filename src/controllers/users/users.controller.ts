@@ -1,23 +1,28 @@
 import { Body, Controller, Delete, Get, Param, Post, Query, Req, Res, UseGuards, ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { isAddress } from 'ethers';
 import express from 'express';
 import { transaction } from 'objection';
-import { isEqualStr } from '../../common/common';
+import { isEqualStr, toDec } from '../../common/common';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ErrorMessages, ok, throw401, throw404 } from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import { MayHaveKeyGuard } from '../../guards/may_have_token.guard';
 import { MayBeAuthenticatedGuard } from '../../guards/maybe_authenticated.guard';
+import NFTOwner from '../../models/nft_owner';
 import Offer from '../../models/offer';
 import OnlineStatus from '../../models/online_status';
 import Swap from '../../models/swap';
 import User from '../../models/user';
+import NetworkService from '../../network/network.service';
+import { getTokenEnergonAlloc } from '../points/point.service';
 import { GetQueryDTO, LogOnlineStatusDTO, RegisterDeviceDTO } from './dto';
 import { UserService } from './user.service';
 
 @Controller('v1/users')
 export class UsersController {
-  constructor(private userSrv: UserService) {}
+  constructor(private userSrv: UserService, private netSrv: NetworkService, private cfgSrv: ConfigService) {}
 
   /**
    * Get a user by address. Sensitive user fields are removed
@@ -136,5 +141,48 @@ export class UsersController {
     });
 
     return ok(res).status(201).data({ ok: true }).build();
+  }
+
+  /**
+   * Get the energon balance of an address
+   * @param address The address to check
+   * @returns
+   * TODO: delete after testnet
+   */
+  @Get('/energon-balance/:address')
+  async getEnergonBalance(@Param('address') address: string) {
+    if (isAddress(address) === false) {
+      return ok().data({ balance: '0' }).build();
+    }
+
+    const balance = await this.netSrv.getContracts('ethereum').energon?.balanceOf(address);
+    return ok()
+      .data({ balance: toDec(balance).toFixed() })
+      .build();
+  }
+
+  /**
+   * Get information about the NFTs owned by an address
+   * @param address The address to check
+   * @returns
+   * TODO: delete after testnet
+   */
+  @Get('/nft-info/:address')
+  async getNFTOwned(@Param('address') address: string) {
+    const nfts = await NFTOwner.findByAddress(address);
+
+    let totalPoints = '0';
+    for (const nft of nfts) {
+      const pointPerEng = parseFloat(this.cfgSrv.get('app.pointsPerEnergon'));
+      const point = toDec(pointPerEng).mul(getTokenEnergonAlloc(nft.tokenId));
+      totalPoints = toDec(totalPoints).add(point).toFixed();
+    }
+
+    return ok()
+      .data({
+        count: nfts.length,
+        totalPoints,
+      })
+      .build();
   }
 }

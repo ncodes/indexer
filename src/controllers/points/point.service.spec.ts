@@ -4,19 +4,12 @@ import { toDec } from '../../common/common';
 import { DBService } from '../../db/db.service';
 import Liquidity from '../../models/liquidity';
 import Market, { AssetType } from '../../models/market';
-import Point, { PointAction, PointValue } from '../../models/point';
+import Point, { PointAction } from '../../models/point';
 import Swap from '../../models/swap';
 import User from '../../models/user';
 import { pow10, powOf, toBigInt } from '../../network/common';
 import { AuthService } from '../auth/auth.service';
-import { NFTAllocations } from './data/nft_allocation';
-import {
-  MultiplierActivationTokenId,
-  PointService,
-  ReferrerPointSharePct,
-  makeNFTOwnershipPointName,
-  makeNFTOwnershipRefPointName,
-} from './point.service';
+import { PointService, ReferrerPointSharePct } from './point.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -86,49 +79,6 @@ describe('PointService', () => {
       .compile();
 
     service = module.get<PointService>(PointService);
-  });
-
-  describe('.grantNFTOwnership', () => {
-    it('should grant correct point when user has no referrer', async () => {
-      await service.grantOnNFTOwnership('ethereum', '0x123', 1405);
-      const expectedPoints = NFTAllocations[1405] * PointValue.PointPerENG;
-      const point = await Point.getByName(makeNFTOwnershipPointName(1405));
-      expect(point.network).toEqual('ethereum');
-      expect(point.address).toEqual('0x123');
-      expect(parseFloat(point.point)).toEqual(expectedPoints);
-
-      const pointRef = await Point.getByName(makeNFTOwnershipRefPointName(1405));
-      expect(pointRef).toBeUndefined();
-    });
-
-    it('should grant correct point to user and referrer when user has a referrer', async () => {
-      await User.create({ address: '0x123', referrer: '0x456' });
-
-      await service.grantOnNFTOwnership('ethereum', '0x123', 1405);
-      const expectedPoints = NFTAllocations[1405] * PointValue.PointPerENG;
-      const expectedReferrerPoints = expectedPoints * ReferrerPointSharePct;
-      const point = await Point.getByName('nft_ownership:1405');
-      expect(point.network).toEqual('ethereum');
-      expect(point.address).toEqual('0x123');
-      expect(parseFloat(point.point)).toEqual(expectedPoints);
-
-      const pointRef = await Point.getByName(makeNFTOwnershipRefPointName(1405));
-      expect(pointRef).not.toBeUndefined();
-      expect(pointRef.address).toEqual('0x456');
-      expect(pointRef.point).toEqual(expectedReferrerPoints.toFixed());
-    });
-
-    it('should apply multiplier to expected points if token Id > than multiplier activation ID', async () => {
-      await service.grantOnNFTOwnership('ethereum', '0x123', MultiplierActivationTokenId + 1);
-      const expectedPoints = NFTAllocations[1405] * PointValue.PointPerENG;
-      const point = await Point.getByName(PointAction.NFTOwnership + ':' + (MultiplierActivationTokenId + 1));
-      expect(point.network).toEqual('ethereum');
-      expect(point.address).toEqual('0x123');
-      expect(parseFloat(point.point)).toBeGreaterThan(expectedPoints);
-
-      const pointRef = await Point.getByName(makeNFTOwnershipRefPointName(1405));
-      expect(pointRef).toBeUndefined();
-    });
   });
 
   describe('.grantSwap', () => {

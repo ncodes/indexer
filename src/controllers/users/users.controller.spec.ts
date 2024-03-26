@@ -12,6 +12,7 @@ import Draft from '../../models/draft';
 import Offer from '../../models/offer';
 import Swap from '../../models/swap';
 import User from '../../models/user';
+import NetworkService from '../../network/network.service';
 import { JointLinkService } from '../../services/joint_link.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { makeSession } from '../auth/utils';
@@ -27,6 +28,14 @@ const ConfigServiceMock = jest.fn().mockImplementation(() => {
 const mockMetadataTryToUsd = jest.fn();
 const MetadataServiceMock = jest.fn().mockImplementation(() => {
   return { tryToUsd: mockMetadataTryToUsd };
+});
+
+const NetworkServiceMock = jest.fn().mockImplementation(() => {
+  return {
+    getContracts: jest.fn().mockImplementation(() => {
+      return {};
+    }),
+  };
 });
 
 describe('UsersController', () => {
@@ -60,12 +69,14 @@ describe('UsersController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [UsersController],
-      providers: [ConfigService, UserService, MetadataService, ConvosService, JointLinkService],
+      providers: [ConfigService, NetworkService, UserService, MetadataService, ConvosService, JointLinkService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
       .overrideProvider(MetadataService)
       .useValue(new MetadataServiceMock())
+      .overrideProvider(NetworkService)
+      .useValue(new NetworkServiceMock())
       .compile();
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());

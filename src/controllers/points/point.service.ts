@@ -1,13 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as csv from 'csv-parser';
-import { random } from 'lodash';
 import { Transaction, transaction } from 'objection';
 import { Readable } from 'stream';
 import { sha1, toDec } from '../../common/common';
 import Liquidity from '../../models/liquidity';
 import Market from '../../models/market';
-import Point, { PointAction, PointValue } from '../../models/point';
+import Point, { PointAction } from '../../models/point';
 import Swap from '../../models/swap';
 import User from '../../models/user';
 import { ContractCallEvent, pow10 } from '../../network/common';
@@ -37,62 +36,6 @@ export function makeCSVPointName(csvHash: string, recipient: string) {
 @Injectable()
 export class PointService {
   constructor(private cfg: ConfigService, private authSrv: AuthService) {}
-
-  /**
-   * Grant point for NFT ownership
-   * @param receiver The receiver address
-   * @param tokenId The token ID
-   * @param txn Optional transaction object
-   */
-  async grantOnNFTOwnership(net: string, receiver: string, tokenId: number, txn?: Transaction) {
-    // Get user. If not existing, use an in-memory user object
-    let target = await User.getByAddress(receiver);
-    if (!target) target = new User({ address: receiver });
-
-    // The unique name for this point
-    const name = makeNFTOwnershipPointName(tokenId);
-    const refName = makeNFTOwnershipRefPointName(tokenId);
-
-    // Delete existing point
-    await Point.deleteByName(name, txn);
-    await Point.deleteByName(refName, txn);
-
-    // Calculate multiplier.
-    // If the token ID is greater than 3252, the multiplier is randomly chosen
-    let multiplier = 1;
-    if (tokenId > MultiplierActivationTokenId) {
-      multiplier = [2, 2.5, 3, 3.5, 4, 4.5, 5][random(0, 6)];
-    }
-
-    // Create new point for receiver.
-    const point = PointValue.PointPerENG * getTokenEnergonAlloc(tokenId) * multiplier;
-    await Point.create(
-      {
-        network: net,
-        name,
-        address: receiver,
-        point: point.toFixed(),
-        action: PointAction.NFTOwnership,
-      },
-      txn,
-    );
-
-    // If the user has a referrer, create a point for the referrer
-    if (target.referrer) {
-      await Point.create(
-        {
-          network: net,
-          name: refName,
-          address: target.referrer,
-          referrer: target.referrer,
-          referee: receiver,
-          point: (target.referrer ? point * ReferrerPointSharePct : 0).toFixed(),
-          action: PointAction.NFTOwnershipRef,
-        },
-        txn,
-      );
-    }
-  }
 
   /**
    * Grant point for a swap

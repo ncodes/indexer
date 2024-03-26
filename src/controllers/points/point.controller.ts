@@ -6,11 +6,12 @@ import { isEqualStr, toDec } from '../../common/common';
 import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
 import { ErrorTypes, ok, throw400 } from '../../common/responses/responses';
 import { IsRootAdmin } from '../../guards/is_basic_admin';
+import NFTOwner from '../../models/nft_owner';
 import Point, { PointAction } from '../../models/point';
 import { isZero, pow10 } from '../../network/common';
 import NetworkService from '../../network/network.service';
 import { CreatePointFromEnergonBalance, CreatePointsFromCSV, GetLeaderboardDTO, GetRecentPoints } from './dto';
-import { PointService } from './point.service';
+import { PointService, getTokenEnergonAlloc } from './point.service';
 
 /**
  * PointController handles all point functionalities.
@@ -120,6 +121,59 @@ export class PointController {
       address: body.beneficiary,
       point: pointsToGrant.toFixed(),
       action: PointAction.Energon,
+    });
+
+    return ok().data({ ok: true }).build();
+  }
+
+  /**
+   * Converts NFT ownership to points.
+   * @param body The request body
+   * @param body.signer The signer address
+   * @param body.beneficiary The beneficiary address
+   * @param body.sig The signature
+   * @returns
+   */
+  @Post('/from-nft-owned')
+  async createPointFromNFTOwned(
+    @Body(new ValidationPipe(CommonValidationPipeOpt)) body: CreatePointFromEnergonBalance,
+  ) {
+    try {
+      const address = await recoverMessageAddress({
+        message: `beneficiary: ${body.beneficiary}`,
+        signature: body.sig as `0x${string}`,
+      });
+
+      if (!isEqualStr(address, body.signer)) {
+        throw400('invalid signature', ErrorTypes.InvalidRequest);
+      }
+    } catch (error) {
+      throw400('invalid signature', ErrorTypes.InvalidRequest);
+    }
+
+    // Check if the point has already been granted
+    const pointName = `nft_owned:${body.signer}`;
+    const existingPoint = await Point.getByName(pointName);
+    if (existingPoint) {
+      throw400('points already granted', ErrorTypes.InvalidRequest);
+    }
+
+    // Calculate total points based on NFT owned by signer
+    const nfts = await NFTOwner.findByAddress(body.signer);
+    let totalPoints = '0';
+    for (const nft of nfts) {
+      const pointPerEng = parseFloat(this.cfgSrv.get('app.pointsPerEnergon'));
+      const point = toDec(pointPerEng).mul(getTokenEnergonAlloc(nft.tokenId));
+      totalPoints = toDec(totalPoints).add(point).toFixed();
+    }
+
+    // Grant the points
+    await Point.create({
+      network: 'ethereum',
+      name: pointName,
+      address: body.beneficiary,
+      point: totalPoints,
+      action: PointAction.NFTOwnership,
     });
 
     return ok().data({ ok: true }).build();

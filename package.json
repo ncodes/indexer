@@ -45,7 +45,7 @@
     "@connectrpc/connect-node": "^1.1.2",
     "@connectrpc/connect-web": "^1.1.2",
     "@discordjs/core": "^0.6.0",
-    "@jointlabs/chains-info": "^0.0.30",
+    "@jointlabs/chains-info": "^0.0.36",
     "@ladjs/consolidate": "^1.0.1",
     "@nestjs/bull": "^10.0.1",
     "@nestjs/common": "^10.2.8",

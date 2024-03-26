@@ -721,39 +721,4 @@ describe('PointService', () => {
       });
     });
   });
-
-  describe('.grantPointsFromCSV', () => {
-    it('should create point from csv data', async () => {
-      const data = `Wallet Address,Address Type,Point,Ranking
-0x80c4ae58e8c425b54c31e958a3edc32776f09de9,EVM,5,1
-0x80c4ae58e8c425b54c31e958a3edc32776f09de8,EVM,50,1
-`;
-      await expect(service.grantPointsFromCSV(data)).resolves.toBeUndefined();
-      let point = await Point.getByAddress('0x80c4ae58e8c425b54c31e958a3edc32776f09de9');
-      expect(point).not.toBeUndefined();
-      expect(point.network).toEqual('ethereum');
-      expect(point.address).toEqual('0x80c4ae58e8c425b54c31e958a3edc32776f09de9');
-      expect(point.point).toEqual('5');
-
-      let point2 = await Point.getByAddress('0x80c4ae58e8c425b54c31e958a3edc32776f09de8');
-      expect(point2).not.toBeUndefined();
-      expect(point2.network).toEqual('ethereum');
-      expect(point2.address).toEqual('0x80c4ae58e8c425b54c31e958a3edc32776f09de8');
-      expect(point2.point).toEqual('50');
-
-      // Should delete existing points if same CSV is uploaded again
-      await expect(service.grantPointsFromCSV(data)).resolves.toBeUndefined();
-      point = await Point.getByAddress('0x80c4ae58e8c425b54c31e958a3edc32776f09de9');
-      expect(point).not.toBeUndefined();
-      expect(point.point).toEqual('5');
-      const pCount = await Point.countByAddress('0x80c4ae58e8c425b54c31e958a3edc32776f09de9');
-      expect(pCount).toEqual('1');
-
-      point2 = await Point.getByAddress('0x80c4ae58e8c425b54c31e958a3edc32776f09de8');
-      expect(point2).not.toBeUndefined();
-      expect(point2.point).toEqual('50');
-      const p2Count = await Point.countByAddress('0x80c4ae58e8c425b54c31e958a3edc32776f09de8');
-      expect(p2Count).toEqual('1');
-    });
-  });
 });

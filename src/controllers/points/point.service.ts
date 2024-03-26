@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as csv from 'csv-parser';
-import { Transaction, transaction } from 'objection';
-import { Readable } from 'stream';
-import { sha1, toDec } from '../../common/common';
+import { Transaction } from 'objection';
+import { toDec } from '../../common/common';
 import Liquidity from '../../models/liquidity';
 import Market from '../../models/market';
 import Point, { PointAction } from '../../models/point';
@@ -349,53 +347,5 @@ export class PointService {
     }
 
     return true;
-  }
-
-  /**
-   * Grant points from CSV record
-   * @param csvBody The CSV body
-   */
-  async grantPointsFromCSV(csvBody: string) {
-    return new Promise((resolve, reject) => {
-      const hash = sha1(csvBody);
-
-      // Read CSV
-      const results: { 'Wallet Address': string; 'Address Type': string; Point: string }[] = [];
-      const stream = new Readable();
-      stream.push(csvBody);
-      stream.push(null);
-      stream
-        .pipe(csv({ skipLines: 1, headers: ['Wallet Address', 'Address Type', 'Point', 'Ranking'] }))
-        .on('data', async (row) => {
-          results.push(row);
-        })
-        .on('end', () => {
-          handleResult().then(resolve).catch(reject);
-        });
-
-      const handleResult = async () => {
-        await transaction(User, Point, async (User, Point) => {
-          for (const r of results) {
-            // Get user. If not existing, use an in-memory user object
-            let target = await User.getByAddress(r['Wallet Address']);
-            if (!target) target = new User({ address: r['Wallet Address'] });
-
-            // The unique name for this point
-            const name = makeCSVPointName(hash, target.address);
-
-            // Delete existing point
-            await Point.deleteByName(name);
-
-            await Point.create({
-              network: 'ethereum',
-              name,
-              address: target.address,
-              point: r.Point,
-              action: PointAction.CSV,
-            });
-          }
-        });
-      };
-    });
   }
 }

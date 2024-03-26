@@ -1,0 +1,14 @@
+[
+  {
+    "Wallet Address": "0x80c4ae58e8c425b54c31e958a3edc32776f09de9",
+    "Address Type": "EVM",
+    "Point": 5,
+    "Ranking": 1
+  },
+  {
+    "Wallet Address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "Address Type": "EVM",
+    "Point": 10000,
+    "Ranking": 1
+  }
+]

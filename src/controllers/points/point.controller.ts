@@ -1,16 +1,15 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
 import { recoverMessageAddress } from 'viem';
 import { isEqualStr, toDec } from '../../common/common';
 import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
 import { ErrorTypes, ok, throw400 } from '../../common/responses/responses';
-import { IsRootAdmin } from '../../guards/is_basic_admin';
 import NFTOwner from '../../models/nft_owner';
 import Point, { PointAction } from '../../models/point';
 import { isZero, pow10 } from '../../network/common';
 import NetworkService from '../../network/network.service';
-import { CreatePointFromEnergonBalance, CreatePointsFromCSV, GetLeaderboardDTO, GetRecentPoints } from './dto';
+import * as galxePoints from '../users/data/glaxe.json';
+import { CreatePointFromEnergonBalance, GetLeaderboardDTO, GetRecentPoints } from './dto';
 import { PointService, getTokenEnergonAlloc } from './point.service';
 
 /**
@@ -51,20 +50,6 @@ export class PointController {
         points: result,
       })
       .build();
-  }
-
-  /**
-   * Converts CSV entries to points.
-   * @param body The request body
-   * @param body.csvUrl The CSV URL
-   * @returns
-   */
-  @UseGuards(IsRootAdmin)
-  @Post('/from-csv')
-  async createPointsFromCSV(@Body(new ValidationPipe(CommonValidationPipeOpt)) body: CreatePointsFromCSV) {
-    const csvBody = await axios(body.csvUrl).then((res) => res.data);
-    await this.pointSrv.grantPointsFromCSV(csvBody);
-    return ok().data({ ok: true }).build();
   }
 
   /**
@@ -174,6 +159,62 @@ export class PointController {
       address: body.beneficiary,
       point: totalPoints,
       action: PointAction.NFTOwnership,
+    });
+
+    return ok().data({ ok: true }).build();
+  }
+
+  /**
+   * Converts NFT ownership to points.
+   * @param body The request body
+   * @param body.signer The signer address
+   * @param body.beneficiary The beneficiary address
+   * @param body.sig The signature
+   * @returns
+   */
+  @Post('/from-galxe')
+  async createPointFromGalxe(@Body(new ValidationPipe(CommonValidationPipeOpt)) body: CreatePointFromEnergonBalance) {
+    try {
+      const address = await recoverMessageAddress({
+        message: `beneficiary: ${body.beneficiary}`,
+        signature: body.sig as `0x${string}`,
+      });
+
+      if (!isEqualStr(address, body.signer)) {
+        throw400('invalid signature', ErrorTypes.InvalidRequest);
+      }
+    } catch (error) {
+      throw400('invalid signature', ErrorTypes.InvalidRequest);
+    }
+
+    // Check if the point has already been granted
+    const pointName = `galxe:${body.signer}`;
+    const existingPoint = await Point.getByName(pointName);
+    if (existingPoint) {
+      throw400('points already granted', ErrorTypes.InvalidRequest);
+    }
+
+    const points = galxePoints as unknown as {
+      ['Wallet Address']: string;
+      ['Address Type']: string;
+      Point: number;
+      Ranking: 1;
+    }[];
+
+    // Find by address
+    const point = points.find((p) => p['Wallet Address'].toLowerCase() === body.signer.toLocaleLowerCase());
+    if (!point) {
+      return ok().data({ ok: false }).build();
+    }
+
+    point.Point = point.Point * 5;
+
+    await Point.create({
+      network: 'galxe',
+      name: pointName,
+      address: body.beneficiary,
+      point: point?.Point.toString() || '0',
+      action: PointAction.CSV,
     });
 
     return ok().data({ ok: true }).build();

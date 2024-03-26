@@ -17,6 +17,7 @@ import Swap from '../../models/swap';
 import User from '../../models/user';
 import NetworkService from '../../network/network.service';
 import { getTokenEnergonAlloc } from '../points/point.service';
+import * as galxePoints from './data/glaxe.json';
 import { GetQueryDTO, LogOnlineStatusDTO, RegisterDeviceDTO } from './dto';
 import { UserService } from './user.service';
 
@@ -183,6 +184,27 @@ export class UsersController {
         count: nfts.length,
         totalPoints,
       })
+      .build();
+  }
+
+  /**
+   * Get the galxe points of an address
+   * @param address The address to check
+   */
+  @Get('/galxe-points/:address')
+  async getGalxePoints(@Param('address') address: string) {
+    const points = galxePoints as unknown as {
+      ['Wallet Address']: string;
+      ['Address Type']: string;
+      Point: number;
+      Ranking: 1;
+    }[];
+
+    // Find by address
+    const point = points.find((p) => p['Wallet Address'].toLowerCase() === address.toLowerCase());
+
+    return ok()
+      .data({ points: point?.Point ?? 0 })
       .build();
   }
 }

@@ -2,7 +2,6 @@ import { Logger } from '@nestjs/common';
 import { Interface, Log, Provider, ZeroAddress } from 'ethers';
 import { delay, isEqualStr } from '../common/common';
 import Meta from '../models/meta';
-import { RedisService } from '../services/redis/redis.service';
 import { ContractCallEvent } from './common';
 import { Handler } from './handler';
 import Processor from './processor';
@@ -19,15 +18,8 @@ export class Watcher {
    * @param network The network name
    * @param provider The network provider
    * @param processor The processor object
-   * @param notifierService The notification service
    */
-  constructor(
-    public name: string,
-    public network: string,
-    private provider: Provider,
-    private processor: Processor,
-    private redisSrv: RedisService,
-  ) {}
+  constructor(public name: string, public network: string, private provider: Provider, private processor: Processor) {}
 
   /**
    * Add handlers and start synchronizing them

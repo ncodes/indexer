@@ -151,7 +151,7 @@ export default class NetworkService {
 
     // Create event watcher
     if (!this.isWatcherDisabled()) {
-      const watcher = new Watcher('', network, provider, processor, this.redisSrv);
+      const watcher = new Watcher('', network, provider, processor);
       await watcher.add(...handlers);
       this.watchers.push(watcher);
     } else {
@@ -177,7 +177,7 @@ export default class NetworkService {
 
     // Create event watcher
     if (!this.isWatcherDisabled('NFT_WATCHER')) {
-      const watcher = new Watcher('NFT_WATCHER', network, provider, processor, this.redisSrv);
+      const watcher = new Watcher('NFT_WATCHER', network, provider, processor);
       await watcher.add(...handlers);
       this.watchers.push(watcher);
     } else {

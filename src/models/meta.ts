@@ -90,7 +90,7 @@ export default class Meta extends BaseModel {
    * @param network The name of the network
    * @param keyName The name of the key name
    */
-  static makeNetKey(network: string, keyName) {
+  static makeNetKey(network: string, keyName: string) {
     return `${network}:${keyName}`;
   }
 

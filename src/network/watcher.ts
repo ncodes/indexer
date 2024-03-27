@@ -194,8 +194,9 @@ export class Watcher {
       }
 
       // Determine the start and end block height
-      let endBlock = process.env.WATCH_RANGE
-        ? parseInt(process.env.WATCH_RANGE) + parseInt(meta.value)
+      const watchRange = this.name ? `WATCH_RANGE_${this.name}` : 'WATCH_RANGE';
+      let endBlock = process.env[watchRange]
+        ? parseInt(process.env[watchRange]) + parseInt(meta.value)
         : parseInt(meta.value) + 1;
       endBlock = endBlock > curBlock ? curBlock : endBlock;
       const startBlock = parseInt(meta.value) + 1;

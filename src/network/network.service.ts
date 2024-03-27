@@ -55,7 +55,7 @@ export default class NetworkService {
     this.net = this.cfgSrv.get('app.network');
     if (!this.net) throw new Error('Network is not defined');
     await this.startGeneralWatcher(this.net);
-    await this.startNFTWatcher(this.net);
+    await this.startNFTWatcher(this.cfgSrv.get('app.nftWatcherNetwork'));
     this.restartWatcherSync();
   }
 
@@ -109,12 +109,12 @@ export default class NetworkService {
    * Load initial contracts params for a given network
    * @param network The network name
    */
-  private async loadInitialContractParams() {
-    const key = Meta.makeNetKey(this.net, MetaKeys.ContractsParams);
+  private async loadInitialContractParams(chain: ChainNames) {
+    const key = Meta.makeNetKey(chain, MetaKeys.ContractsParams);
     const params = await Meta.get(key);
     if (params && params.value) return;
 
-    await Meta.create(key, JSON.stringify(getNetworkParams(this.net)));
+    await Meta.create(key, JSON.stringify(getNetworkParams(chain)));
     this.logger.log('Loaded initial contracts parameters');
   }
 
@@ -124,7 +124,7 @@ export default class NetworkService {
    */
   private async startGeneralWatcher(network: ChainNames) {
     // Load initial contract params
-    await this.loadInitialContractParams();
+    await this.loadInitialContractParams(network);
 
     // Initialize handlers
     const provider = this.contractMgr.providers[network];
@@ -165,7 +165,7 @@ export default class NetworkService {
    */
   private async startNFTWatcher(network: ChainNames) {
     // Load initial contract params
-    await this.loadInitialContractParams();
+    await this.loadInitialContractParams(network);
 
     // Initialize handlers
     const provider = this.contractMgr.providers[network];

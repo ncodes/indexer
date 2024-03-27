@@ -14,6 +14,7 @@ export default () => ({
     disableWatcher: process.env.DISABLE_WATCHER,
     disabledWatchers: process.env.DISABLED_WATCHERS,
     disableMineTaskProcessing: process.env.DISABLE_MINE_TASK_PROCESSING,
+    nftWatcherNetwork: process.env.NFT_WATCHER_NETWORK,
     preferredMineTaskType: process.env.PREFERRED_MINE_TASK_TYPE,
     tokenMetadataSource: process.env.TOKEN_METADATA_SOURCE,
     jntLinkApiUrl: process.env.JNT_LINK_API_URL,

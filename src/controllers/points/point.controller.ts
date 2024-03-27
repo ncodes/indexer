@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, Query, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as _ from 'lodash';
 import { recoverMessageAddress } from 'viem';
 import { isEqualStr, toDec } from '../../common/common';
 import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
@@ -202,10 +203,12 @@ export class PointController {
     }[];
 
     // Find by address
-    const point = points.find((p) => p['Wallet Address'].toLowerCase() === body.signer.toLocaleLowerCase());
+    let point = points.find((p) => p['Wallet Address'].toLowerCase() === body.signer.toLocaleLowerCase());
     if (!point) {
       return ok().data({ ok: false }).build();
     }
+
+    point = _.clone(point);
 
     const pointPerGalxe = parseFloat(this.cfgSrv.get('app.pointsPerGalxe'));
     point.Point = point.Point * pointPerGalxe;

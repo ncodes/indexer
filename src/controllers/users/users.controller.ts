@@ -203,8 +203,14 @@ export class UsersController {
     // Find by address
     const point = points.find((p) => p['Wallet Address'].toLowerCase() === address.toLowerCase());
 
+    let earned = 0;
+    if (point) {
+      const pointPerGalxe = parseFloat(this.cfgSrv.get('app.pointsPerGalxe'));
+      earned = toDec(point.Point).mul(pointPerGalxe).toNumber();
+    }
+
     return ok()
-      .data({ points: point?.Point ?? 0 })
+      .data({ points: point?.Point ?? 0, actualPoints: earned })
       .build();
   }
 }

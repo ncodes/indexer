@@ -207,7 +207,8 @@ export class PointController {
       return ok().data({ ok: false }).build();
     }
 
-    point.Point = point.Point * 5;
+    const pointPerGalxe = parseFloat(this.cfgSrv.get('app.pointsPerGalxe'));
+    point.Point = point.Point * pointPerGalxe;
 
     await Point.create({
       network: 'galxe',

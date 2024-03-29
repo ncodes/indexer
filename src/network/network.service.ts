@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { Contract, Provider } from 'ethers';
 import * as erc20TokenABI from '../../abi/ERC20.json';
 import { ERC20 } from '../../typechain';
-import { isTest } from '../common/common';
+import { isProd, isTest } from '../common/common';
 import { PointService } from '../controllers/points/point.service';
 import { NotificationService } from '../jobs/notifications/NotificationService';
 import Meta, { MetaKeys } from '../models/meta';
@@ -27,7 +27,6 @@ import { Watcher } from './watcher';
 export default class NetworkService {
   private logger = new Logger(NetworkService.name);
   private watchers: Watcher[] = [];
-  private net: ChainNames;
   private contractMgr = new ContractManager();
 
   constructor(
@@ -52,10 +51,14 @@ export default class NetworkService {
    * Watch event
    */
   private async watch() {
-    this.net = this.cfgSrv.get('app.network');
-    if (!this.net) throw new Error('Network is not defined');
-    await this.startGeneralWatcher(this.net);
-    await this.startNFTWatcher(this.cfgSrv.get('app.nftWatcherNetwork'));
+    if (isProd()) {
+      await this.startWatcher('sepolia', 'sepolia');
+      await this.startWatcher('arbitrum', 'arbitrum');
+      await this.startNFTWatcher('NFT_WATCHER', 'ethereum');
+    } else {
+      await this.startWatcher('localhost', 'localhost');
+      await this.startNFTWatcher('NFT_WATCHER', 'localhost');
+    }
     this.restartWatcherSync();
   }
 
@@ -120,9 +123,10 @@ export default class NetworkService {
 
   /**
    * Connect and watch contracts.
+   * @param name The name of the watcher
    * @param network The name of the network
    */
-  private async startGeneralWatcher(network: ChainNames) {
+  private async startWatcher(name: string, network: ChainNames) {
     // Load initial contract params
     await this.loadInitialContractParams(network);
 
@@ -150,8 +154,8 @@ export default class NetworkService {
     await processor.add(...handlers);
 
     // Create event watcher
-    if (!this.isWatcherDisabled()) {
-      const watcher = new Watcher('', network, provider, processor);
+    if (!this.isWatcherDisabled(name)) {
+      const watcher = new Watcher(name, network, provider, processor);
       await watcher.add(...handlers);
       this.watchers.push(watcher);
     } else {
@@ -161,9 +165,10 @@ export default class NetworkService {
 
   /**
    * Connect and watch NFT contracts.
+   * @param name The name of the watcher
    * @param network The name of the network
    */
-  private async startNFTWatcher(network: ChainNames) {
+  private async startNFTWatcher(name: string, network: ChainNames) {
     // Load initial contract params
     await this.loadInitialContractParams(network);
 
@@ -176,8 +181,8 @@ export default class NetworkService {
     await processor.add(...handlers);
 
     // Create event watcher
-    if (!this.isWatcherDisabled('NFT_WATCHER')) {
-      const watcher = new Watcher('NFT_WATCHER', network, provider, processor);
+    if (!this.isWatcherDisabled(name)) {
+      const watcher = new Watcher(name, network, provider, processor);
       await watcher.add(...handlers);
       this.watchers.push(watcher);
     } else {
@@ -194,7 +199,12 @@ export default class NetworkService {
     let disabled = ['true', '1'].includes(this.cfgSrv.get('app.disableWatcher'));
     if (!disabled && name) {
       const disabledWatchers = this.cfgSrv.get('app.disabledWatchers');
-      disabled = disabledWatchers && disabledWatchers.split(',').includes(name);
+      disabled =
+        disabledWatchers &&
+        disabledWatchers
+          .split(',')
+          .map((v: string) => v.toLowerCase())
+          .includes(name.toLowerCase());
     }
 
     return disabled;

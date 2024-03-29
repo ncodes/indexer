@@ -35,7 +35,7 @@ export class Watcher {
    * @private
    */
   private makeSyncKey() {
-    return !this.name ? `sync_height:${this.network}` : `sync_height:${this.name}:${this.network}`;
+    return `sync_height:${this.name}:${this.network}`;
   }
 
   /**
@@ -51,18 +51,15 @@ export class Watcher {
    * @private
    */
   private getLaunchHeight() {
-    const key = !this.name ? 'LAUNCH_HEIGHT' : `LAUNCH_HEIGHT_${this.name}`;
-    return process.env[key] || '1';
+    return process.env[`LAUNCH_HEIGHT_${this.name.toUpperCase()}`] || '1';
   }
 
   private logInfo(message: any, context?: any) {
-    const watcherId = this.name ? `:${this.name}` : '';
-    this.logger.log(`Watcher${watcherId}: ${message}`, JSON.stringify(context));
+    this.logger.log(`Watcher:${this.name}: ${message}`, JSON.stringify(context));
   }
 
   private logError(message: any, context?: string) {
-    const watcherId = this.name ? `:${this.name}` : '';
-    this.logger.error(`Watcher${watcherId}: ${message}`, context);
+    this.logger.error(`Watcher:${this.name}: ${message}`, context);
   }
 
   /**
@@ -194,7 +191,7 @@ export class Watcher {
       }
 
       // Determine the start and end block height
-      const watchRange = this.name ? `WATCH_RANGE_${this.name}` : 'WATCH_RANGE';
+      const watchRange = `WATCH_RANGE_${this.name.toUpperCase()}`;
       let endBlock = process.env[watchRange]
         ? parseInt(process.env[watchRange]) + parseInt(meta.value)
         : parseInt(meta.value) + 1;

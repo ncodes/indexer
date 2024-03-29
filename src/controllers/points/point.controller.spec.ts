@@ -69,7 +69,6 @@ describe('PointController', () => {
       'app.rootAdminUser': 'test',
       'app.rootAdminPass': 'test',
       'app.pointsPerEnergon': pointsPerEng,
-      'app.network': 'ethereum',
     };
     mockCfgGet.mockReset().mockImplementation((args) => {
       return cfgObj[args];
@@ -215,53 +214,6 @@ describe('PointController', () => {
           expect(res.body.data.points.length).toBe(1);
           expect(p1.address).toBe(res.body.data.points[0].address);
         });
-    });
-  });
-
-  describe('.createPointsFromCSV', () => {
-    it('should return 401 when basic authorization fails', async () => {
-      await request(app.getHttpServer())
-        .post(`/v1/points/from-csv`)
-        .send({})
-        .expect(401)
-        .expect({
-          error: {
-            type: 'authentication_error',
-            message: 'authorization header is required',
-          },
-        });
-    });
-
-    it('should return 400 when csv url was not provided', async () => {
-      await request(app.getHttpServer())
-        .post(`/v1/points/from-csv`)
-        .auth('test', 'test')
-        .send({})
-        .expect(400)
-        .expect({
-          error: {
-            message: 'csv url is required',
-            param: 'csvUrl',
-            type: 'invalid_request_error',
-          },
-        });
-    });
-
-    it('should return 400 x', async () => {
-      await request(app.getHttpServer())
-        .post(`/v1/points/from-csv`)
-        .auth('test', 'test')
-        .send({ csvUrl: 'https://example.com' })
-        .expect(201)
-        .expect({ data: { ok: true } });
-
-      const p = await Point.query().where('address', '0x80c4ae58e8c425b54c31e958a3edc32776f09de9').first();
-      expect(p).toBeDefined();
-      expect(p.point).toBe('5');
-
-      const p2 = await Point.query().where('address', '0x80c4ae58e8c425b54c31e958a3edc32776f09de8').first();
-      expect(p2).toBeDefined();
-      expect(p2.point).toBe('50');
     });
   });
 

@@ -102,7 +102,7 @@ export class PointController {
 
     // Grant the points
     await Point.create({
-      network: this.cfgSrv.get('app.network'),
+      network: 'ethereum',
       name: pointName,
       address: body.beneficiary,
       point: pointsToGrant.toFixed(),

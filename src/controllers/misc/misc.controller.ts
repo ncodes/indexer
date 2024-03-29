@@ -6,9 +6,10 @@ import {
   getTokenInfo,
   isValidChain,
 } from '@jointlabs/chains-info';
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, Req } from '@nestjs/common';
 import { Client } from '@xmtp/xmtp-js';
 import { Wallet } from 'ethers';
+import { Request } from 'express';
 import { ok, throw400, throw404 } from '../../common/responses/responses';
 import { ConfigService } from '../../config/config.service';
 import AssetRegistry from '../../models/asset_registry';
@@ -180,5 +181,10 @@ export class MiscController {
     return ok()
       .data({ enabled: await xmtp.canMessage(address) })
       .build();
+  }
+
+  @Get('req-country-code')
+  async getRequestCountryCode(@Req() req: Request) {
+    return ok().data(req.headers).build();
   }
 }

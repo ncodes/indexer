@@ -35,6 +35,11 @@ export function makeCSVPointName(csvHash: string, recipient: string) {
 export class PointService {
   constructor(private cfg: ConfigService, private authSrv: AuthService) {}
 
+  canIgnorePoint(net: string): boolean {
+    const nets = (this.cfg.get('app.ignoreNetworkPoint') || '').split(',');
+    return nets.includes(net);
+  }
+
   /**
    * Grant point for a swap
    * @param market The market object
@@ -43,6 +48,8 @@ export class PointService {
    * @param txn Optional transaction object
    */
   async grantOnSwap(market: Market, swap: Swap, txn?: Transaction, event?: ContractCallEvent) {
+    if (this.canIgnorePoint(market.network)) return false;
+
     const pointPerUnit =
       MarketPoints['swap:' + market.address] ?? MarketPoints[market.instant ? 'swap:instant' : 'swap:interactive'];
 
@@ -216,6 +223,8 @@ export class PointService {
     amount: bigint,
     txn?: Transaction,
   ) {
+    if (this.canIgnorePoint(market.network)) return false;
+
     // Only grant points to market that involves ERC20 and whose base token is not a synthetic token
     if (!market.involvesERC20() || Market.isSynth(market.baseType)) return false;
 
@@ -315,6 +324,8 @@ export class PointService {
    * @param txn Optional transaction object
    */
   async grantPoint(id: string, net: string, recipient: string, event: ContractCallEvent, txn?: Transaction) {
+    if (this.canIgnorePoint(net)) return false;
+
     const point = MarketPoints[id];
     if (!point || point == 0) return false;
 

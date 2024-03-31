@@ -20,6 +20,7 @@ export default () => ({
     jntLinkApiKey: process.env.JNT_LINK_API_KEY,
     pointsPerEnergon: process.env.POINTS_PER_ENERGON,
     pointsPerGalxe: process.env.POINTS_PER_GALXE,
+    ignoreNetworkPoint: process.env.IGNORE_NETWORK_POINT,
     exchangeRateSource: process.env.EXCHANGE_RATE_SOURCE,
     maxSwapImageSize: process.env.MAX_SWAP_IMAGE_SIZE,
     maxSwapVideoSize: process.env.MAX_SWAP_VIDEO_SIZE,

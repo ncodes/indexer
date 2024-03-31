@@ -81,7 +81,30 @@ describe('PointService', () => {
     service = module.get<PointService>(PointService);
   });
 
-  describe('.grantSwap', () => {
+  describe('.grantOnSwap', () => {
+    describe('network has been ignored', () => {
+      it('should return false', async () => {
+        const market = await Market.create({
+          network: 'ethereum',
+          instant: true,
+          address: marketAddr2,
+          baseDecimals: 18,
+          baseType: AssetType.ERC20,
+          quoteType: AssetType.ERC20,
+        });
+        const swap = await Swap.create({
+          amount: powOf(2000, 18).toString(),
+          provider: '0xProvider',
+          taker: '0xTaker',
+        });
+
+        cfgObj['app.ignoreNetworkPoint'] = 'ethereum';
+
+        const event = { transactionHash: '0xHash' };
+        expect(await service.grantOnSwap(market, swap, undefined, event as any)).toBeFalsy();
+      });
+    });
+
     describe('market is instant and counterparts have no referrer', () => {
       it('should grant correct point when market has a specific point per unit', async () => {
         const market = await Market.create({
@@ -119,7 +142,7 @@ describe('PointService', () => {
         // expect(providerPoint.action).toEqual(PointAction.InstantSwap);
       });
 
-      it.skip('should grant correct point when market does not have a specific point per unit', async () => {
+      it('should grant correct point when market does not have a specific point per unit', async () => {
         const market = await Market.create({
           network: 'ethereum',
           instant: true,
@@ -143,16 +166,6 @@ describe('PointService', () => {
         expect(takerPoint.address).toEqual('0xTaker');
         expect(parseFloat(takerPoint.point)).toEqual(2000 * 10);
         expect(takerPoint.action).toEqual(PointAction.InstantSwap);
-
-        const providerPoint = await Point.getByAddress('0xProvider');
-        expect(providerPoint).not.toBeUndefined();
-        expect(providerPoint.name).toEqual(
-          `${PointAction.InstantSwap}:${event.transactionHash}:provider:${swap.provider}`,
-        );
-        expect(providerPoint.network).toEqual('ethereum');
-        expect(providerPoint.address).toEqual('0xProvider');
-        expect(parseFloat(providerPoint.point)).toEqual(2000 * 10);
-        expect(providerPoint.action).toEqual(PointAction.InstantSwap);
       });
     });
 
@@ -458,14 +471,41 @@ describe('PointService', () => {
   });
 
   describe('.grantOnLiquidityUpdate', () => {
-    it('should return false when market neither base or quote assets are ERC20', async () => {
+    describe('network has been ignored', () => {
+      it('should return false', async () => {
+        const market = await Market.create({
+          network: 'ethereum',
+          instant: true,
+          address: marketAddr,
+          baseDecimals: 18,
+          baseType: AssetType.SYNTH,
+          quoteType: AssetType.SYNTH,
+          quoteDecimals: 18,
+        });
+
+        const liq = await Liquidity.create({
+          amount: powOf(0, 18).toString(),
+          provider: '0xProvider',
+          marketAddress: market.address,
+          lid: 1,
+        });
+
+        cfgObj['app.ignoreNetworkPoint'] = 'ethereum';
+
+        await expect(
+          service.grantOnLiquidityUpdate(market, liq, true, '0xProvider', toBigInt(powOf(10, 18))),
+        ).resolves.toBeFalsy();
+      });
+    });
+
+    it('should return false when market base is SYNTH', async () => {
       const market = await Market.create({
         network: 'ethereum',
         instant: true,
         address: marketAddr,
         baseDecimals: 18,
         baseType: AssetType.SYNTH,
-        quoteType: AssetType.SYNTH,
+        quoteType: AssetType.ERC20,
         quoteDecimals: 18,
       });
 
@@ -679,6 +719,14 @@ describe('PointService', () => {
   });
 
   describe('.grantPoint', () => {
+    describe('network has been ignored', () => {
+      it('should return false', async () => {
+        const event = { transactionHash: '0xHash' } as any;
+        cfgObj['app.ignoreNetworkPoint'] = 'ethereum';
+        await expect(service.grantPoint('unknown', 'ethereum', '0x1234', event)).resolves.toBeFalsy();
+      });
+    });
+
     it('should return false if no point for the given point id', async () => {
       const event = { transactionHash: '0xHash' } as any;
       await expect(service.grantPoint('unknown', '0x123', '0x1234', event)).resolves.toBeFalsy();

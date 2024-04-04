@@ -108,8 +108,8 @@ export class CoreHandler extends Handler {
 
     this.on(
       'SwapOrderPaid',
-      async (orderId: bigint, disputeFrom: bigint, event: ContractCallEvent, txn?: Transaction) => {
-        return this.onSwapOrderPaid(orderId, disputeFrom, event, txn);
+      async (orderId: bigint, payer: string, disputeDelayDur: bigint, event: ContractCallEvent, txn?: Transaction) => {
+        return this.onSwapOrderPaid(orderId, payer, disputeDelayDur, event, txn);
       },
     );
 
@@ -886,11 +886,18 @@ export class CoreHandler extends Handler {
   /**
    * An order was marked as `paid`
    * @param orderId The order ID
-   * @param disputeFrom The duration after which the order can be disputed
+   * @param payer The order payer's address
+   * @param disputeDelayDur The duration after which the order can be disputed
    * @param event The event object
    * @param txn The transaction object
    */
-  async onSwapOrderPaid(orderId: bigint, disputeFrom: bigint, event: ContractCallEvent, txn?: Transaction) {
+  async onSwapOrderPaid(
+    orderId: bigint,
+    payer: string,
+    disputeDelayDur: bigint,
+    event: ContractCallEvent,
+    txn?: Transaction,
+  ) {
     let swap = await Swap.get(this.network, toNumber(orderId), undefined, undefined, txn);
 
     // Update the order
@@ -898,11 +905,11 @@ export class CoreHandler extends Handler {
       swap.id,
       {
         paid: true,
-        payer: swap.getPayer(),
+        payer: payer,
         paidAt: moment().toISOString(),
         disputeFrom: moment
           .unix(await getBlockTime(event))
-          .add(toNumber(disputeFrom), 'seconds')
+          .add(toNumber(disputeDelayDur), 'seconds')
           .toISOString(),
       },
       txn,

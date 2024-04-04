@@ -18,6 +18,7 @@ export function getNetworkParams(network: ChainNames): ContractsParams {
     soldOutBP: getContractsParams(network).mediatorManager.soldOutBP,
     ticketMatureDur: getContractsParams(network).mediatorManager.ticketMatureDur,
     ticketCancelDur: getContractsParams(network).mediatorManager.ticketCancelDur,
+    ticketPauseDur: getContractsParams(network).mediatorManager.ticketPauseDur,
     ticketExpireDur: getContractsParams(network).mediatorManager.ticketExpireDur,
     reqPoolBond: getContractsParams(network).mediatorManager.reqPoolBond,
     poolDraftReward: getContractsParams(network).mediatorManager.poolDraftReward,

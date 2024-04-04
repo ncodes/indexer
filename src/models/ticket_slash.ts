@@ -1,5 +1,5 @@
-import { randStr } from '../common/common';
 import Objection, { Transaction } from 'objection';
+import { randStr } from '../common/common';
 import { BaseModel } from './base';
 
 /**
@@ -26,6 +26,8 @@ export default class TicketSlash extends BaseModel {
   voted: boolean;
   // Indicate whether the ticket was on the winning side
   winSide: boolean;
+  // Indicate whether the ticket was slashed by governance
+  byGov: boolean;
 
   constructor(init?: Partial<TicketSlash>) {
     super();

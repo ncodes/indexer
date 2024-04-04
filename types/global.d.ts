@@ -180,6 +180,7 @@ declare global {
     ticketMatureDur: number;
     ticketCancelDur: number;
     ticketExpireDur: number;
+    ticketPauseDur: number;
     reqPoolBond: string;
     poolDraftReward: string;
     poolWinReward: string;
@@ -345,6 +346,10 @@ declare global {
     noVoteSlashBP: string;
     loseVoteSlashBP: string;
     numDraftees: number;
+    evidenceDur: number;
+    predictDur: number;
+    approvedMediatorOnly: boolean;
+    approvedMarketOnly: boolean;
   }
 
   type Instructions = {

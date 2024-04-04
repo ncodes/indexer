@@ -578,6 +578,54 @@ describe('MediatorManagerHandler', () => {
     });
   });
 
+  describe('.onTicketSlashedByOwner', () => {
+    it("should mark ticket as slashed, update bond and add a slash record with 'byGov' set to true", async () => {
+      let ticket = await Ticket.create({
+        network: net,
+        index: 1,
+        poolId: 1,
+        owner: owner,
+        bond: toBigInt(20).toString(),
+        orderId: 23,
+        joined: true,
+      });
+
+      const evt = {} as any;
+      await expect(handler.onTicketSlashedByOwner(owner, toBigInt(1), toBigInt(10), evt)).resolves.toBeUndefined();
+
+      ticket = await Ticket.getById(ticket.id);
+      expect(ticket.slashed).toBeTruthy();
+      expect(ticket.bond).toEqual(toBigInt(10).toString());
+      expect(ticket.orderId).toBeNull();
+      expect(ticket.joined).toBeFalsy();
+      expect(ticket.poolId).toEqual(null);
+      expect(ticket.blocked).toBeFalsy();
+
+      const slash = await TicketSlash.find({
+        network: net,
+        owner,
+        index: 1,
+      });
+      expect(slash).toBeDefined();
+      expect(slash.amount).toEqual(toBigInt(10).toString());
+      expect(slash.voted).toBeFalsy();
+      expect(slash.winSide).toBeFalsy();
+      expect(slash.orderId).toBeNull();
+      expect(slash.byGov).toBeTruthy();
+
+      expect(mockGrantPoint).toHaveBeenCalledWith('ticket:slashed', net, owner, evt, undefined);
+
+      // expect notification to have been sent
+      expect(mockNotify).toHaveBeenCalledWith(NotificationID.TicketSlashed, net, owner, {
+        ticket,
+        owner,
+        amount: '0.00000000000000001',
+        asset: 'P2P',
+        byGov: true,
+      });
+    });
+  });
+
   describe('.onParameterUpdate', function () {
     it('should throw error if contract params metadata has not been initialized', async () => {
       const key = Meta.makeNetKey(net, MetaKeys.ContractsParams);

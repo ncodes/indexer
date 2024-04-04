@@ -1,5 +1,5 @@
-import { BaseModel } from './base';
 import { Transaction } from 'objection';
+import { BaseModel } from './base';
 
 export enum FeeName {
   InstantSwapFeeBp = 'instantSwapFeeBp',
@@ -142,6 +142,7 @@ export default class Meta extends BaseModel {
     if (!existing || !existing.value) throw new Error('Contracts params not initialized');
     const obj = JSON.parse(existing.value);
     if (updFn) updFn(obj);
+
     await Meta.update(key, JSON.stringify(obj), txn);
   }
 

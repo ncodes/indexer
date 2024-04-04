@@ -112,6 +112,13 @@ export class MediatorManagerHandler extends Handler {
     );
 
     this.on(
+      'TicketSlashedByOwner',
+      async (owner: string, ticketId: bigint, amount: bigint, event: ContractCallEvent, txn?: Transaction) => {
+        return this.onTicketSlashedByOwner(owner, ticketId, amount, event, txn);
+      },
+    );
+
+    this.on(
       'UpdatedTicketPool',
       async (
         poolId: bigint,
@@ -121,6 +128,10 @@ export class MediatorManagerHandler extends Handler {
         noVoteSlashBP: bigint,
         loseVoteSlashBP: bigint,
         numDraftees: bigint,
+        evidenceDur: bigint,
+        predictDur: bigint,
+        approvedMediatorOnly: boolean,
+        approvedMarketOnly: boolean,
         event: ContractCallEvent,
         txn?: Transaction,
       ) => {
@@ -132,23 +143,32 @@ export class MediatorManagerHandler extends Handler {
           noVoteSlashBP,
           loseVoteSlashBP,
           numDraftees,
+          evidenceDur,
+          predictDur,
+          approvedMediatorOnly,
+          approvedMarketOnly,
           event,
           txn,
         );
       },
     );
 
-    this.on('UpdatedTicketCancelDuration', async (duration: bigint, event: ContractCallEvent, txn?: Transaction) => {
-      return this.onParameterUpdate('ticketCancelDur', duration.toString(), event, txn);
-    });
-
-    this.on('UpdatedTicketMatureDuration', async (duration: bigint, event: ContractCallEvent, txn?: Transaction) => {
-      return this.onParameterUpdate('ticketMatureDur', duration.toString(), event, txn);
-    });
-
-    this.on('UpdatedTicketExpireDuration', async (duration: bigint, event: ContractCallEvent, txn?: Transaction) => {
-      return this.onParameterUpdate('ticketExpireDur', duration.toString(), event, txn);
-    });
+    this.on(
+      'UpdatedTicketDurations',
+      async (
+        ticketCancelDur: bigint,
+        ticketMatureDur: bigint,
+        ticketExpireDur: bigint,
+        ticketPauseDur: bigint,
+        event: ContractCallEvent,
+        txn?: Transaction,
+      ) => {
+        await this.onParameterUpdate('ticketCancelDur', ticketCancelDur.toString(), event, txn);
+        await this.onParameterUpdate('ticketMatureDur', ticketMatureDur.toString(), event, txn);
+        await this.onParameterUpdate('ticketExpireDur', ticketExpireDur.toString(), event, txn);
+        await this.onParameterUpdate('ticketPauseDur', ticketPauseDur.toString(), event, txn);
+      },
+    );
   }
 
   /**
@@ -493,6 +513,63 @@ export class MediatorManagerHandler extends Handler {
   }
 
   /**
+   * A ticket was slashed by the contract owner or governance
+   * @param owner The ticket owner
+   * @param ticketId The unique id of the ticket
+   * @param amount The amount that was slashed
+   * @param event The event object
+   * @param txn The database transaction handle
+   */
+  async onTicketSlashedByOwner(
+    owner: string,
+    ticketId: bigint,
+    amount: bigint,
+    event: ContractCallEvent,
+    txn?: Transaction,
+  ) {
+    let ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, toNumber(ticketId), undefined, txn);
+    ticket = await Ticket.updateById(
+      ticket.id,
+      {
+        orderId: null,
+        disputeId: null,
+        slashed: true,
+        joined: false,
+        blocked: false,
+        poolId: null,
+        bond: toDec(ticket.bond).sub(amount.toString()).toString(),
+      },
+      txn,
+    );
+
+    await TicketSlash.create(
+      {
+        network: ticket.network,
+        owner: ticket.owner,
+        index: ticket.index,
+        poolId: ticket.poolId,
+        ticketId: ticket.id,
+        orderId: ticket.orderId,
+        disputeId: ticket.disputeId,
+        amount: amount.toString(),
+        byGov: true,
+      },
+      txn,
+    );
+
+    await this.netSrv.pointSrv.grantPoint('ticket:slashed', this.network, owner, event, txn);
+
+    // Send notification
+    this.notifSrv.notify(NotificationID.TicketSlashed, this.network, owner, {
+      ticket,
+      owner,
+      amount: commify(formatEther(amount)),
+      byGov: true,
+      asset: 'P2P',
+    });
+  }
+
+  /**
    * Ticket pool was updated
    * @param poolId The ID of the pool
    * @param reqBond The pool's required bond
@@ -501,6 +578,10 @@ export class MediatorManagerHandler extends Handler {
    * @param noVoteSlashBP The slash BP for tickets that did not vote
    * @param loseVoteSlashBP The slash BP for tickets that voted for the losing side
    * @param numDraftees The number of draftees
+   * @param evidenceDur The duration of the evidence phase
+   * @param predictDur The duration of the prediction phase
+   * @param approvedMediatorOnly Indicates whether only approved mediators can draft
+   * @param approvedMarketOnly Indicates whether only approved markets can draft
    * @param _event The event object
    * @param txn The database transaction handle
    */
@@ -512,6 +593,10 @@ export class MediatorManagerHandler extends Handler {
     noVoteSlashBP: bigint,
     loseVoteSlashBP: bigint,
     numDraftees: bigint,
+    evidenceDur: bigint,
+    predictDur: bigint,
+    approvedMediatorOnly: boolean,
+    approvedMarketOnly: boolean,
     _event: ContractCallEvent,
     txn?: Transaction,
   ) {
@@ -525,6 +610,10 @@ export class MediatorManagerHandler extends Handler {
         noVoteSlashBP: noVoteSlashBP.toString(),
         loseVoteSlashBP: loseVoteSlashBP.toString(),
         numDraftees: toNumber(numDraftees),
+        evidenceDur: toNumber(evidenceDur),
+        predictDur: toNumber(predictDur),
+        approvedMediatorOnly: approvedMediatorOnly,
+        approvedMarketOnly: approvedMarketOnly,
       }),
       txn,
     );

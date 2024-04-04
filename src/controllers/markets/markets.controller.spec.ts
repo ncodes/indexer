@@ -8,6 +8,7 @@ import { AllExceptionsFilter } from '../../common/interceptors/exception_filter'
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { Roles } from '../../common/roles';
 import { DBService } from '../../db/db.service';
+import Liquidity from '../../models/liquidity';
 import Market, { AssetType } from '../../models/market';
 import LiquidityProvider from '../../models/market_provider';
 import PermittedTrader from '../../models/permitted_trader';
@@ -912,15 +913,16 @@ describe('MarketsController', () => {
         const market = await Market.create({
           network: net,
           address: randStr(),
-          totalLiquidity: '10',
           amountSwapped: '2',
         });
+        await Liquidity.create({ network: net, marketAddress: market.address, amount: '10' });
+
         const market2 = await Market.create({
           network: net,
           address: randStr(),
-          totalLiquidity: '11',
           amountSwapped: '1',
         });
+        await Liquidity.create({ network: net, marketAddress: market2.address, amount: '11' });
 
         jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
 
@@ -1019,9 +1021,10 @@ describe('MarketsController', () => {
           quoteAddress: '0xQuote',
           baseDecimals: 18,
           quoteDecimals: 18,
-          totalLiquidity: powOf(100, 18).toString(),
           amountSwapped: '2',
         });
+        await Liquidity.create({ network: net, marketAddress: market.address, amount: powOf(100, 18).toString() });
+
         market2 = await Market.create({
           network: net,
           address: randStr(),
@@ -1029,9 +1032,9 @@ describe('MarketsController', () => {
           quoteAddress: '0xQuote',
           baseDecimals: 18,
           quoteDecimals: 18,
-          totalLiquidity: powOf(200, 18).toString(),
           amountSwapped: '1',
         });
+        await Liquidity.create({ network: net, marketAddress: market2.address, amount: powOf(200, 18).toString() });
       });
 
       it('should return 400 when base was not provided', async () => {

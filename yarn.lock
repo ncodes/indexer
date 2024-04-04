@@ -3972,6 +3972,11 @@ commander@4.1.1:
   resolved "https://registry.npmjs.org/commander/-/commander-4.1.1.tgz"
   integrity sha512-NOKm8xhkzAjzFx8B2v5OAHT+u5pRQc2UCa2Vq9jYL/31o2wi9mxBA7LIFs3sV5VSC49z6pEhfbMULvShKj26WA==
 
+commander@^10.0.0:
+  version "10.0.1"
+  resolved "https://registry.yarnpkg.com/commander/-/commander-10.0.1.tgz#881ee46b4f77d1c1dccc5823433aa39b022cbe06"
+  integrity sha512-y4Mg2tXshplEbSGzx7amzPwKKOCGuoSRP/CjEdwwk0FOGlUbq6lKuoyDZTNZkmxHdJtp54hdfY/JUrdL7Xfdug==
+
 commander@^2.20.0:
   version "2.20.3"
   resolved "https://registry.npmjs.org/commander/-/commander-2.20.3.tgz"
@@ -7485,13 +7490,13 @@ knex@2.1.0:
     tarn "^3.0.2"
     tildify "2.0.0"
 
-knex@2.4.2:
-  version "2.4.2"
-  resolved "https://registry.npmjs.org/knex/-/knex-2.4.2.tgz"
-  integrity sha512-tMI1M7a+xwHhPxjbl/H9K1kHX+VncEYcvCx5K00M16bWvpYPKAZd6QrCu68PtHAdIZNQPWZn0GVhqVBEthGWCg==
+knex@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/knex/-/knex-3.1.0.tgz#b6ddd5b5ad26a6315234a5b09ec38dc4a370bd8c"
+  integrity sha512-GLoII6hR0c4ti243gMs5/1Rb3B+AjwMOfjYm97pu0FOQa7JH56hgBxYf5WK2525ceSbBY1cjeZ9yk99GPMB6Kw==
   dependencies:
     colorette "2.0.19"
-    commander "^9.1.0"
+    commander "^10.0.0"
     debug "4.3.4"
     escalade "^3.1.1"
     esm "^3.2.25"
@@ -7499,7 +7504,7 @@ knex@2.4.2:
     getopts "2.3.0"
     interpret "^2.2.0"
     lodash "^4.17.21"
-    pg-connection-string "2.5.0"
+    pg-connection-string "2.6.2"
     rechoir "^0.8.0"
     resolve-from "^5.0.0"
     tarn "^3.0.2"
@@ -8570,10 +8575,10 @@ objection-js-soft-delete@^3.0.5:
   resolved "https://registry.npmjs.org/objection-js-soft-delete/-/objection-js-soft-delete-3.0.5.tgz"
   integrity sha512-8idKS3V7EcVKIrwAIT36PqR6A9E4fgRnB/4rUrYqpX1AlC8w6vY2VLpLXomHWIziYPxbM4sKc/7Uk0qfITJtPg==
 
-objection@^3.1.3:
-  version "3.1.3"
-  resolved "https://registry.npmjs.org/objection/-/objection-3.1.3.tgz"
-  integrity sha512-X4DH8/xKBS34bwWOSLAPyceg0JgLhLiUuz+cEEyDA8iDFoT1UM9UbtwBpwHV11hYskAKxOgVlNHeveFQiOPDXA==
+objection@^3.1.4:
+  version "3.1.4"
+  resolved "https://registry.yarnpkg.com/objection/-/objection-3.1.4.tgz#0dfe58c42e9c09f5d092d0e69677cf806fd8fd31"
+  integrity sha512-BI1YQ18JicfoODgCdKxmw4W8f24/e9hCEQpOTux0xmyd8hOidOzDd1WopOMxqxo7FA+Jfw8XTfZIUaqDnS7r0g==
   dependencies:
     ajv "^8.12.0"
     ajv-formats "^2.1.1"
@@ -8878,6 +8883,11 @@ pg-connection-string@2.5.0, pg-connection-string@^2.5.0:
   version "2.5.0"
   resolved "https://registry.npmjs.org/pg-connection-string/-/pg-connection-string-2.5.0.tgz"
   integrity sha512-r5o/V/ORTA6TmUnyWZR9nCj1klXCO2CEKNRlVuJptZe85QuhFayC7WeMic7ndayT5IRIR0S0xFxFi2ousartlQ==
+
+pg-connection-string@2.6.2:
+  version "2.6.2"
+  resolved "https://registry.yarnpkg.com/pg-connection-string/-/pg-connection-string-2.6.2.tgz#713d82053de4e2bd166fab70cd4f26ad36aab475"
+  integrity sha512-ch6OwaeaPYcova4kKZ15sbJ2hKb/VP48ZD2gE7i1J+L4MspCtBMAx8nMgz7bksc7IojCIIWuEhHibSMFH8m8oA==
 
 pg-escape@^0.2.0:
   version "0.2.0"

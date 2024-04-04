@@ -28,7 +28,7 @@ const MetadataServiceMock = jest.fn().mockImplementation(() => {
 describe('TicketsService', () => {
   let module: TestingModule;
   let service: TicketsService;
-  const net = 'net';
+  const net = 'localhost';
   const db = DBService.getForTest();
   let cfgObj = {};
 

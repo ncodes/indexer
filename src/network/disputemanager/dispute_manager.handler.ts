@@ -124,7 +124,7 @@ export class DisputeManagerHandler extends Handler {
     const { provider, marketAddress, taker, network, lid } = swap;
 
     // Calculate number of mediators required
-    const market = await Market.getMarket(this.network, swap.marketAddress, undefined, undefined, txn);
+    const market = await Market.getMarket(this.network, swap.marketAddress, undefined, undefined, true, txn);
 
     // Get pool info
     const poolParamKey = Meta.makeMediatorPoolKey(this.network, market.mediatorPoolId);
@@ -354,7 +354,7 @@ export class DisputeManagerHandler extends Handler {
     );
 
     // Update market
-    const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, txn);
+    const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, true, txn);
     await Market.updateById(
       market.id,
       {

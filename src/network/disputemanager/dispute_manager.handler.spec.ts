@@ -124,7 +124,7 @@ describe('DisputeManagerHandler', () => {
         });
 
         // expect market to be updated correctly
-        market = await Market.getById(market.id);
+        market = await Market.getById(market.id, true);
         expect(market.openDisputes).toEqual(1);
         expect(market.totalDisputes).toEqual(1);
         expect(market.disputeRate).toEqual(50);
@@ -219,7 +219,7 @@ describe('DisputeManagerHandler', () => {
         });
 
         // expect market to be updated correctly
-        market = await Market.getById(market.id);
+        market = await Market.getById(market.id, true);
         expect(market.openDisputes).toEqual(1);
         expect(market.totalDisputes).toEqual(1);
 
@@ -371,7 +371,7 @@ describe('DisputeManagerHandler', () => {
         expect(dispute.released).toBeTruthy();
 
         // expect market to be updated correctly
-        market = await Market.getById(market.id);
+        market = await Market.getById(market.id, true);
         expect(market.openDisputes).toEqual(0);
         expect(market.totalDisputes).toEqual(1);
 
@@ -424,7 +424,7 @@ describe('DisputeManagerHandler', () => {
         expect(dispute.released).toBeFalsy();
 
         // expect market to be updated correctly
-        market = await Market.getById(market.id);
+        market = await Market.getById(market.id, true);
         expect(market.openDisputes).toEqual(0);
         expect(market.totalDisputes).toEqual(1);
 
@@ -450,7 +450,7 @@ describe('DisputeManagerHandler', () => {
         expect(dispute.released).toBeNull();
 
         // expect market to be updated correctly
-        market = await Market.getById(market.id);
+        market = await Market.getById(market.id, true);
         expect(market.openDisputes).toEqual(1);
         expect(market.totalDisputes).toEqual(1);
 

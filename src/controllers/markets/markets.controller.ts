@@ -118,32 +118,32 @@ export class MarketsController {
       ? await this.metadataSrv.tryToUsd(q.net, '1', q.quote, { refetch: true, isHD: true })
       : undefined;
 
-    const result = await Market.search(
-      q.net,
-      q.creator,
-      q.address,
-      q.base,
-      q.quote,
-      q.query,
-      q.price,
-      q.liquidity,
+    const result = await Market.search({
+      network: q.net,
+      creator: q.creator,
+      address: q.address,
+      base: q.base,
+      quote: q.quote,
+      queryStr: q.query,
+      price: q.price,
+      liquidity: q.liquidity,
       baseUsdRate,
       quoteUsdRate,
-      q.priceUsd,
-      q.liquidityUsd,
-      q.regions,
+      priceUsd: q.priceUsd,
+      liquidityUsd: q.liquidityUsd,
+      regions: q.regions,
       reqPutBadges,
       reqSwapBadges,
-      q.offer,
-      q.permSwap,
-      q.permPut,
-      q.instant,
-      q.count,
-      q.limit || 25,
-      q.offset,
-      q.select,
-      undefined,
-    );
+      offer: q.offer,
+      permSwap: q.permSwap,
+      permPut: q.permPut,
+      instant: q.instant,
+      countOnly: q.count,
+      limit: q.limit || 25,
+      offset: q.offset,
+      select: q.select,
+      relations: undefined,
+    });
 
     if (q.count) {
       return ok().data({ count: result }).build();

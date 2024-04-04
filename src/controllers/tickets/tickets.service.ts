@@ -44,12 +44,12 @@ export class TicketsService {
       }
 
       if ((select.includes(`slashedAmtUsd`) && !isZero(ticket.slashedAmt)) || !select.length) {
-        const p2pTokenAddr = getContractsAddress('token');
+        const p2pTokenAddr = getContractsAddress(ticket.network, 'token');
         ticket.slashedAmtUsd = await this.metadataSrv.tryToUsd(ticket.network, ticket.slashedAmt, p2pTokenAddr);
       }
 
       if ((select.includes(`bondUsd`) && !isZero(ticket.bond)) || !select.length) {
-        const p2pTokenAddr = getContractsAddress('token');
+        const p2pTokenAddr = getContractsAddress(ticket.network, 'token');
         ticket.bondUsd = await this.metadataSrv.tryToUsd(ticket.network, ticket.bond, p2pTokenAddr);
       }
 

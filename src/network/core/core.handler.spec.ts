@@ -190,9 +190,8 @@ describe('CoreHandler', () => {
       expect(liq.maxSwap).toEqual('20');
       expect(liq.timeToPay).toEqual(10);
 
-      market = await Market.getById(market.id);
+      market = await Market.getById(market.id, true);
       expect(market.lowestPrice).toEqual('300');
-      expect(market.totalLiquidity).toEqual('100');
 
       const marketPrice = await MarketPrice.find({ network: net, marketAddress });
       expect(marketPrice).toBeDefined();
@@ -219,7 +218,7 @@ describe('CoreHandler', () => {
     });
 
     it('should not update market total liquidity when liquidity has paused=true', async () => {
-      let market = await Market.create({
+      await Market.create({
         network: net,
         address: marketAddress,
         base: BASE,
@@ -254,9 +253,6 @@ describe('CoreHandler', () => {
       const liq = await Liquidity.getLiquidity(handler.network, marketAddress, provider, 1);
       expect(liq).toBeDefined();
       expect(liq.lid).toEqual(1);
-
-      market = await Market.getById(market.id);
-      expect(market.totalLiquidity).toEqual('0');
     });
 
     it('should update the liquidity if it already exist and deduction=false', async () => {
@@ -267,7 +263,6 @@ describe('CoreHandler', () => {
         baseAddress: baseAddress,
         quote: QUOTE,
         quoteAddress: quoteAddress,
-        totalLiquidity: '100',
       });
       const lid = 1;
       await Liquidity.create({
@@ -317,8 +312,7 @@ describe('CoreHandler', () => {
       expect(liq.timeToPay).toEqual(10);
       expect(liq.target).toEqual('0xNewTarget');
 
-      market = await Market.getById(market.id);
-      expect(market.totalLiquidity).toEqual('110');
+      market = await Market.getById(market.id, true);
       expect(market.lowestPrice).toEqual('430');
 
       const eventAdd = await Event.find({ network: net, action: Events.LiquidityAdd });
@@ -376,7 +370,6 @@ describe('CoreHandler', () => {
         baseAddress: baseAddress,
         quote: QUOTE,
         quoteAddress: quoteAddress,
-        totalLiquidity: '100',
       });
       const lid = 1;
       await Liquidity.create({
@@ -413,8 +406,7 @@ describe('CoreHandler', () => {
       expect(liq.provider).toEqual(provider);
       expect(liq.amount).toEqual('90');
 
-      market = await Market.getById(market.id);
-      expect(market.totalLiquidity).toEqual('90');
+      market = await Market.getById(market.id, true);
       expect(market.lowestPrice).toEqual('430');
     });
 
@@ -431,7 +423,6 @@ describe('CoreHandler', () => {
         baseAddress: baseAddress,
         quote: QUOTE,
         quoteAddress: quoteAddress,
-        totalLiquidity: '100',
       });
 
       const lid = 1;
@@ -504,7 +495,6 @@ describe('CoreHandler', () => {
         baseAddress: baseAddress,
         quote: QUOTE,
         quoteAddress: quoteAddress,
-        totalLiquidity: '220',
       });
       const lid = 1;
       await Liquidity.create({
@@ -542,8 +532,7 @@ describe('CoreHandler', () => {
       expect(liq.amount).toEqual('100');
       expect(liq.paused).toEqual(true);
 
-      market = await Market.getById(market.id);
-      expect(market.totalLiquidity).toEqual('120');
+      market = await Market.getById(market.id, true);
 
       // unpause the liquidity
       await expect(
@@ -569,9 +558,6 @@ describe('CoreHandler', () => {
       expect(liq).toBeDefined();
       expect(liq.provider).toEqual(provider);
       expect(liq.paused).toEqual(false);
-
-      market = await Market.getById(market.id);
-      expect(market.totalLiquidity).toEqual('220');
     });
 
     describe('quote asset type is NFT', () => {
@@ -667,7 +653,7 @@ describe('CoreHandler', () => {
       expect(liq.maxSwap).toEqual(null);
       expect(liq.timeToPay).toEqual(1);
 
-      market = await Market.getById(market.id);
+      market = await Market.getById(market.id, true);
       expect(market.lowestPrice).toEqual('300');
 
       const marketPrice = await MarketPrice.find({ network: net, marketAddress });
@@ -729,7 +715,7 @@ describe('CoreHandler', () => {
       expect(liq.maxSwap).toEqual(null);
       expect(liq.timeToPay).toEqual(2);
 
-      market = await Market.getById(market.id);
+      market = await Market.getById(market.id, true);
       expect(market.lowestPrice).toEqual('10');
     });
 
@@ -775,7 +761,7 @@ describe('CoreHandler', () => {
       expect(liq.ids).toEqual([1]);
       expect(liq.amount).toEqual(liq.ids.length.toString());
 
-      market = await Market.getById(market.id);
+      market = await Market.getById(market.id, true);
       expect(market.lowestPrice).toEqual('10');
     });
 
@@ -840,7 +826,7 @@ describe('CoreHandler', () => {
       liq = await Liquidity.find({ id: liq.id });
       expect(liq.price).toEqual('100');
 
-      market = await Market.getById(market.id);
+      market = await Market.getById(market.id, true);
       expect(market.lowestPrice).toEqual('100');
 
       const marketPrice = await MarketPrice.find({ marketAddress: liq.marketAddress });
@@ -1076,7 +1062,6 @@ describe('CoreHandler', () => {
         baseAddress: baseAddress,
         quote: QUOTE,
         quoteAddress: quoteAddress,
-        totalLiquidity: liqAmt.toString(),
       });
 
       liq = await Liquidity.create({
@@ -1153,9 +1138,8 @@ describe('CoreHandler', () => {
       expect(event.orderId).toEqual(swap.orderId);
       expect(event.swapId).toEqual(swap.id);
 
-      market = await Market.getById(market.id);
+      market = await Market.getById(market.id, true);
       expect(market.totalSwaps).toEqual(1);
-      expect(market.totalLiquidity).toEqual(toDec(liqAmt).sub(amount.toString()).toString());
       swap.market = market;
 
       expect(mockNotify).toHaveBeenCalledWith(NotificationID.NewInteractiveSwap, net, provider, {
@@ -1252,7 +1236,6 @@ describe('CoreHandler', () => {
         quote: QUOTE,
         amountSwapped: powOf(1, 18).toString(),
         totalSwaps: 1,
-        totalLiquidity: liqAmt.toString(),
       });
 
       liq = await Liquidity.create({
@@ -1326,11 +1309,10 @@ describe('CoreHandler', () => {
         expect(liq.amountSwapped).toEqual('11000000000000000000');
         expect(liq.totalSwaps).toEqual(1);
 
-        market = await Market.getById(market.id);
+        market = await Market.getById(market.id, true);
         expect(market.lastSwapAt).toBeDefined();
         expect(market.amountSwapped).toEqual('2000000000000000000');
         expect(market.totalSwaps).toEqual(2);
-        expect(market.totalLiquidity).toEqual(toDec(liqAmt).sub(amount.toString()).toString());
 
         const event = await Event.find({ network: net, action: Events.LiquiditySwap });
         expect(event).toBeDefined();
@@ -1500,7 +1482,7 @@ describe('CoreHandler', () => {
         // should not update completion rate since swap was disputed
         expect(liq.completionRate).toEqual(0);
 
-        const marketUpd = await Market.getById(market.id);
+        const marketUpd = await Market.getById(market.id, true);
         expect(marketUpd.lastSwapAt).toBeDefined();
         expect(marketUpd.amountSwapped).toEqual(toDec(market.amountSwapped).add(amount.toString()).toString());
         expect(marketUpd.totalSwaps).toEqual(market.totalSwaps);
@@ -1522,7 +1504,7 @@ describe('CoreHandler', () => {
         expect(dispute.orderReleased).toBeTruthy();
 
         liq = await Liquidity.getById(liq.id);
-        market = await Market.getById(market.id);
+        market = await Market.getById(market.id, true);
         swap = await Swap.find({ marketAddress: market.address });
         swap.market = market;
 
@@ -1665,7 +1647,7 @@ describe('CoreHandler', () => {
           );
 
           liq = await Liquidity.getById(liq.id);
-          market = await Market.getById(market.id);
+          market = await Market.getById(market.id, true);
           swap = await Swap.find({ marketAddress: market.address });
           swap = await Swap.find({ marketAddress: market.address });
           swap.market = market;
@@ -1699,7 +1681,6 @@ describe('CoreHandler', () => {
         quote: QUOTE,
         baseAddress,
         quoteAddress,
-        totalLiquidity: liqAmt.toString(),
       });
 
       liq = await Liquidity.create({
@@ -1745,9 +1726,8 @@ describe('CoreHandler', () => {
       expect(liq.amount).toEqual(toDec(liqAmt).add(amount.toString()).toFixed());
       expect(liq.avgFinalizeDur).toBeGreaterThan(0);
 
-      market = await Market.getById(market.id);
+      market = await Market.getById(market.id, true);
       expect(market.avgFinalizeDur).toBeGreaterThan(0);
-      expect(market.totalLiquidity).toEqual(toDec(liqAmt).add(amount.toString()).toFixed());
 
       const event = await Event.find({ action: Events.SwapCancelled });
       expect(event).toBeDefined();
@@ -1763,7 +1743,7 @@ describe('CoreHandler', () => {
 
       // When provider is the canceller
       await handler.onOrderCancelled(orderId, provider, byDispute, {} as any);
-      market = await Market.getById(market.id);
+      market = await Market.getById(market.id, true);
       swap = await Swap.getById(swap.id);
       liq = await Liquidity.getById(liq.id);
 
@@ -1777,7 +1757,7 @@ describe('CoreHandler', () => {
         await handler.onOrderCancelled(orderId, canceller, false, {} as any);
 
         // Swap should be marked as cancelled
-        market = await Market.getById(market.id);
+        market = await Market.getById(market.id, true);
         swap = await Swap.getById(swap.id);
         swap.market = market;
         liq = await Liquidity.getById(liq.id);
@@ -1845,7 +1825,7 @@ describe('CoreHandler', () => {
       liq = await Liquidity.getById(liq.id);
       expect(liq.avgPaymentDur).toBeGreaterThan(0);
 
-      market = await Market.getById(market.id);
+      market = await Market.getById(market.id, true);
       expect(market.avgPaymentDur).toBeGreaterThan(0);
 
       swap.market = market;
@@ -1860,7 +1840,7 @@ describe('CoreHandler', () => {
         getBlock: jest.fn().mockResolvedValue({ timestamp: now.unix() }),
       } as any);
       swap = await Swap.find({ marketAddress: market.address });
-      market = await Market.getById(market.id);
+      market = await Market.getById(market.id, true);
       swap.market = market;
       expect(mockNotify).toHaveBeenCalledWith(NotificationID.SwapOrderPaid, net, taker, {
         swap,

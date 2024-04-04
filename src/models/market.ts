@@ -16,6 +16,33 @@ export interface Asset {
   type: AssetType;
 }
 
+interface MarketSearchParams {
+  network?: string;
+  creator?: string;
+  address?: string[];
+  base?: string;
+  quote?: string;
+  queryStr?: string;
+  price?: string;
+  liquidity?: string;
+  baseUsdRate?: number;
+  quoteUsdRate?: number;
+  priceUsd?: string;
+  liquidityUsd?: string;
+  regions?: string[];
+  reqPutBadges?: string[];
+  reqSwapBadges?: string[];
+  offer?: boolean;
+  permSwap?: boolean;
+  permPut?: boolean;
+  instant?: boolean;
+  countOnly?: boolean;
+  limit?: number;
+  offset?: number;
+  select?: any[];
+  relations?: string;
+}
+
 /**
  * Market represents a market model
  */
@@ -86,8 +113,6 @@ export default class Market extends BaseModel {
   manager: string = undefined;
   // The region badge attached to this market
   regions: string[] = undefined;
-  // Total liquidity in this market
-  totalLiquidity: string = undefined;
   // The list of required badges to put liquidity
   requiredPutBadges: string[] = undefined;
   // The list of required badges to swap
@@ -102,6 +127,7 @@ export default class Market extends BaseModel {
   lowestPrice: string = undefined;
 
   // *** Non-persisted fields **//
+  totalLiquidity: string = undefined;
   lowestPriceUsd: number;
   totalLiquidityUsd: number = undefined;
   numDisputes: number;
@@ -146,6 +172,7 @@ export default class Market extends BaseModel {
   $formatJson(json: Objection.Pojo): Objection.Pojo {
     const object = json as Market;
     object.object = 'market';
+    delete (object as any).total_liquidity;
     return object;
   }
 
@@ -226,10 +253,11 @@ export default class Market extends BaseModel {
   /**
    * getById finds a record by ID
    * @param id The record id
+   * @param noJoins If set, it will not join the related tables or create derived fields
    * @param txn Optional transaction object
    */
-  static getById(id: string, txn?: Transaction) {
-    return this.query(txn).whereNotDeleted().findById(id);
+  static getById(id: string, noJoins?: boolean, txn?: Transaction) {
+    return this.buildMarketsQuery({ noJoins }, txn).whereNotDeleted().findById(id);
   }
 
   /**
@@ -238,14 +266,38 @@ export default class Market extends BaseModel {
    * @param txn Optional transaction object
    */
   static getByAddress(address: string, txn?: Transaction) {
-    return this.query(txn).whereNotDeleted().where('address', address).first();
+    return this.buildMarketsQuery({}, txn).whereNotDeleted().where('address', address).first();
   }
 
-  static makeSelectList(select = []) {
+  /**
+   * Make a select list
+   * @param select The fields to select
+   * @param prefix The prefix to add to the fields
+   * @returns
+   */
+  static makeSelectList(select = [], prefix = '') {
     select = select.filter((x) => Object.keys(new Market()).includes(x));
     select = select.length
-      ? _.uniq(select.concat(['id', 'address', 'network', 'base', 'baseAddress', 'quote', 'quoteAddress']))
+      ? _.uniq(
+          select.concat([
+            'id',
+            'address',
+            'network',
+            'base',
+            'baseAddress',
+            'quote',
+            'quoteAddress',
+            'createdAt',
+            'updatedAt',
+            'deletedAt',
+          ]),
+        )
       : ['*'];
+
+    select = select.map((s) => {
+      return prefix ? `${prefix}.${s}` : s;
+    });
+
     return select;
   }
 
@@ -262,11 +314,11 @@ export default class Market extends BaseModel {
     marketAddress: string,
     select = [],
     relations: string = undefined,
+    noJoins = false,
     txn?: Objection.Transaction,
   ) {
     select = this.makeSelectList(select);
-    return this.query(txn)
-      .select(...select)
+    return this.buildMarketsQuery({ select, noJoins }, txn)
       .where('network', 'ilike', network)
       .where('address', 'ilike', marketAddress)
       .whereNotDeleted()
@@ -281,7 +333,7 @@ export default class Market extends BaseModel {
    */
   static find(q: Partial<Market>, txn?: Transaction): Promise<Market> {
     return new Promise((resolve, reject) => {
-      this.query(txn).where(q).whereNotDeleted().first().then(resolve).catch(reject);
+      this.buildMarketsQuery({}, txn).where(q).whereNotDeleted().first().then(resolve).catch(reject);
     });
   }
 
@@ -304,6 +356,52 @@ export default class Market extends BaseModel {
       .orWhere('quote', 'ILIKE', `%${qs}%`)
       .orWhere('quoteAddress', 'ILIKE', `%${qs}%`)
       .orWhere('pair', 'ILIKE', `%${qs.replaceAll(/\s|\/|-/gi, '')}%`);
+  }
+
+  /**
+   * Create markets query builder. The base for all markets query.
+   * @param select The fields to select
+   * @param txn Optional transaction object
+   * @returns
+   */
+  static buildMarketsQuery(
+    {
+      select,
+      baseUsdRate,
+      quoteUsdRate,
+      noJoins,
+    }: { select?: string[]; baseUsdRate?: number; quoteUsdRate?: number; noJoins?: boolean },
+    txn?: Objection.Transaction,
+  ) {
+    let sub = this.query(txn);
+    select = select ?? [];
+
+    // Get markets and any derived fields
+    if (!noJoins) {
+      sub = sub
+        .select('markets.*', raw('COALESCE(SUM(liquidities.amount), 0) AS "totalLiquidity"'))
+        .groupBy('markets.sn', 'markets.id')
+        .leftJoin('liquidities', (join) => {
+          join.on('markets.address', 'liquidities.marketAddress');
+          join.andOn('markets.network', 'liquidities.network');
+        });
+    }
+
+    // Subclass the markets query to perform further queries on it
+    let sub2 = this.query()
+      .select(...select)
+      .from(sub.as('sub'));
+
+    if (!noJoins) {
+      if (baseUsdRate)
+        sub2 = sub2.select(
+          raw('"totalLiquidity" * ?? / POW(10, "baseDecimals") as "totalLiquidityUsd"', [baseUsdRate]),
+        );
+      if (quoteUsdRate)
+        sub2 = sub2.select(raw('"lowestPrice" * ?? / POW(10,"quoteDecimals") as "lowestPriceUsd"', [quoteUsdRate]));
+    }
+
+    return this.query().from(sub2.as('markets'));
   }
 
   /**
@@ -335,73 +433,70 @@ export default class Market extends BaseModel {
    * @param txn Optional transaction object
    */
   static async search(
-    network: string,
-    creator: string,
-    address: string[],
-    base: string,
-    quote: string,
-    queryStr: string,
-    price: string,
-    liquidity: string,
-    baseUsdRate = 0,
-    quoteUsdRate = 0,
-    priceUsd: string,
-    liquidityUsd: string,
-    regions: string[],
-    reqPutBadges: string[],
-    reqSwapBadges: string[],
-    offer: boolean,
-    permSwap: boolean,
-    permPut: boolean,
-    instant: boolean,
-    countOnly: boolean,
-    limit: number,
-    offset: number,
-    select = [],
-    relations: string = undefined,
+    {
+      network,
+      creator,
+      address,
+      base,
+      quote,
+      queryStr,
+      price,
+      liquidity,
+      baseUsdRate = 0,
+      quoteUsdRate = 0,
+      priceUsd,
+      liquidityUsd,
+      regions,
+      reqPutBadges,
+      reqSwapBadges,
+      offer,
+      permSwap,
+      permPut,
+      instant,
+      countOnly,
+      limit,
+      offset,
+      select = [],
+      relations = undefined,
+    }: MarketSearchParams,
     txn?: Objection.Transaction,
   ) {
-    select = this.makeSelectList(select);
-    let q = this.query(txn);
+    select = this.makeSelectList(select, '');
 
-    q = q.from((sub) => {
-      sub = sub.from('markets').select(...select);
-      sub = sub.select(raw('"totalLiquidity" * ?? / 10^"baseDecimals" as "totalLiquidityUsd"', [baseUsdRate]));
-      sub = sub.select(raw('"lowestPrice" * ?? / 10^"quoteDecimals" as "lowestPriceUsd"', [quoteUsdRate]));
+    // Final subclass: derived calculations are ready
+    let q2 = this.buildMarketsQuery({ select, baseUsdRate, quoteUsdRate }, txn);
 
-      if (base) {
-        sub = sub.where((sub) => {
-          return sub.where('baseAddress', 'ILIKE', base).orWhere('base', 'ILIKE', base);
-        });
-      }
+    if (base) {
+      q2 = q2.where((q) => {
+        return q.where('baseAddress', 'ILIKE', base).orWhere('base', 'ILIKE', base);
+      });
+    }
 
-      if (quote) {
-        sub = sub.where((sub) => {
-          return sub.where('quoteAddress', 'ILIKE', quote).orWhere('quote', 'ILIKE', quote);
-        });
-      }
+    if (quote) {
+      q2 = q2.where((q) => {
+        return q.where('quoteAddress', 'ILIKE', quote).orWhere('quote', 'ILIKE', quote);
+      });
+    }
 
-      return sub.as('s');
-    });
+    // Calculate the total liquidity with a subquery on liquidity table
+    q2 = q2.whereNotDeleted();
 
-    q = q.alias('s').whereNotDeleted();
+    // q2 = !countOnly ? q2.select(...select, raw('count(*) over() as' + ' "$queryCount"')) : q;
 
-    q = !countOnly ? q.select(...select, raw('count(*) over() as' + ' "$queryCount"')) : q;
+    if (network) q2 = q2.where('network', 'ilike', network);
 
-    if (network) q = q.where('network', 'ilike', network);
+    if (creator) q2 = q2.where('creator', 'ilike', creator);
 
-    if (creator) q = q.where('creator', 'ilike', creator);
+    if (address) q2 = q2.where('address', 'in', address);
 
-    if (address) q = q.where('address', 'in', address);
+    if (permSwap !== undefined) q2 = q2.where('permSwap', permSwap);
 
-    if (permSwap !== undefined) q = q.where('permSwap', permSwap);
+    if (permPut !== undefined) q2 = q2.where('permPut', permPut);
 
-    if (permPut !== undefined) q = q.where('permPut', permPut);
-
-    if (instant !== undefined) q = q.where('instant', instant);
+    if (instant !== undefined) q2 = q2.where('instant', instant);
 
     if (queryStr) {
-      q = q.where((q) => {
+      q2 = q2.where((q) => {
         return this.makeSearchQuery(q, queryStr);
       });
     }
@@ -409,74 +504,73 @@ export default class Market extends BaseModel {
     if (price) {
       const operator = price.startsWith('>') ? '>=' : '<=';
       const priceValue = price.replace('>', '').replace('<', '');
-      q = q.where(raw('"lowestPrice"'), operator, priceValue);
+      q2 = q2.where(raw('"lowestPrice"'), operator, priceValue);
     }
 
     if (priceUsd) {
       const operator = priceUsd.startsWith('>') ? '>=' : '<=';
       const priceValue = priceUsd.replace('>', '').replace('<', '');
-      q = q.where(raw('"lowestPriceUsd"'), operator, priceValue);
+      q2 = q2.where(raw('"lowestPriceUsd"'), operator, priceValue);
     }
 
     if (liquidity) {
       const operator = liquidity.startsWith('>') ? '>=' : '<=';
       const availableLiquidityValue = liquidity.replace('>', '').replace('<', '');
-      q = q.where(raw('"totalLiquidity"'), operator, availableLiquidityValue);
+      q2 = q2.where(raw('"totalLiquidity"'), operator, availableLiquidityValue);
     }
 
     if (liquidityUsd) {
       const operator = liquidityUsd.startsWith('>') ? '>=' : '<=';
       const availableLiquidityValue = liquidityUsd.replace('>', '').replace('<', '');
-      q = q.where(raw('"totalLiquidityUsd"'), operator, availableLiquidityValue);
+      q2 = q2.where(raw('"totalLiquidityUsd"'), operator, availableLiquidityValue);
     }
 
     if (regions && regions.length) {
-      q = q.whereRaw(
+      q2 = q2.whereRaw(
         `EXISTS (
-      SELECT 1
-      FROM jsonb_array_elements_text("regions") region
-      WHERE region ILIKE ANY (?::text[])
-      )`,
+          SELECT 1
+          FROM jsonb_array_elements_text("regions") region
+          WHERE region ILIKE ANY (?::text[])
+        )`,
         [regions],
       );
     }
 
     if (!_.isEmpty(reqPutBadges)) {
-      q = q.whereRaw(
+      q2 = q2.whereRaw(
         `EXISTS (
-      SELECT 1
-      FROM jsonb_array_elements_text("requiredPutBadges") badge
-      WHERE badge ILIKE ANY (?::text[])
-      )`,
+          SELECT 1
+          FROM jsonb_array_elements_text("requiredPutBadges") badge
+          WHERE badge ILIKE ANY (?::text[])
+        )`,
         [reqPutBadges],
       );
     }
 
     if (!_.isEmpty(reqSwapBadges)) {
-      q = q.whereRaw(
+      q2 = q2.whereRaw(
         `EXISTS (
-      SELECT 1
-      FROM jsonb_array_elements_text("requiredSwapBadges") badge
-      WHERE badge ILIKE ANY (?::text[])
-      )`,
+          SELECT 1
+          FROM jsonb_array_elements_text("requiredSwapBadges") badge
+          WHERE badge ILIKE ANY (?::text[])
+        )`,
         [reqSwapBadges],
       );
     }
 
     if (offer !== undefined) {
-      q = q.where('offerOnly', offer);
+      q2 = q2.where('offerOnly', offer);
     }
 
     if (countOnly) {
-      const res = await q.count('id').first();
-      return res.count;
+      return (await q2.count('id').first()).count;
     }
 
-    if (offset != undefined) q = q.offset(offset);
+    if (offset != undefined) q2 = q2.offset(offset);
 
-    if (limit) q = q.limit(limit);
+    if (limit) q2 = q2.limit(limit);
 
-    return q
+    q2 = q2
       .orderBy('avgFinalizeDur', 'ASC') // prefer low finalize duration
       .orderBy('avgPaymentDur', 'ASC') // prefer low payment duration
       .orderBy('avgReleaseDur', 'ASC') // prefer low release duration
@@ -486,6 +580,8 @@ export default class Market extends BaseModel {
       .orderBy('updatedAt', 'DESC')
       .orderBy('sn', 'DESC')
       .withGraphFetched(relations);
+
+    return q2;
   }
 
   /**

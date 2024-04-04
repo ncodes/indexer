@@ -177,7 +177,7 @@ export class BadgeManagerHandler extends Handler {
 
     // Handle region badge grant to market
     if (badge == this.cfg.get('app.badges.region') && path != '') {
-      const market = await Market.getMarket(this.network, grantee, ['id', 'regions'], undefined, txn);
+      const market = await Market.getMarket(this.network, grantee, ['id', 'regions'], undefined, true, txn);
       if (market) {
         const regions = _.uniq([...(market.regions || []), `${badge}/${path}`]);
         await Market.updateById(market.id, { regions }, txn);

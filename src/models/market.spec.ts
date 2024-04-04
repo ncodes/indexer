@@ -1,5 +1,7 @@
 import { ChainNames } from '@jointlabs/chains-info';
 import { DBService } from '../db/db.service';
+import { powOf } from '../network/common';
+import Liquidity from './liquidity';
 import Market from './market';
 
 describe('Market', () => {
@@ -18,34 +20,39 @@ describe('Market', () => {
     await db.truncateTables();
   });
 
+  describe('.getById', () => {
+    it('should successfully get market by ID', async () => {
+      await Liquidity.create({ network: 'ethereum', marketAddress: '0xMarket', amount: powOf(4, 18).toString() });
+      await Liquidity.create({ network: 'ethereum', marketAddress: '0xMarket', amount: powOf(5, 18).toString() });
+      const mkt = await Market.create({
+        network: 'ethereum',
+        address: '0xMarket',
+        baseDecimals: 18,
+      });
+      const mkt2 = await Market.create({ network: 'ethereum', address: '0xMarket2', baseDecimals: 18 });
+
+      let res = await Market.getById(mkt.id);
+      expect(res).toBeDefined();
+      expect(res?.id).toEqual(mkt.id);
+      expect(res.totalLiquidity).toEqual(powOf(9, 18).toString());
+
+      res = await Market.getById(mkt2.id);
+      expect(res).toBeDefined();
+      expect(res?.id).toEqual(mkt2.id);
+      expect(res.totalLiquidity).toEqual('0');
+
+      res = await Market.getById('invalid');
+      expect(res).toBeUndefined();
+    });
+  });
+
   describe('.search', function () {
     it('should return correct result when `network` is set', async () => {
-      const mkt = await Market.create({ address: '0xMarket', network: net, totalLiquidity: '1' });
+      const mkt = await Market.create({ address: '0xMarket', network: net });
       await Market.create({ address: '0xMarket', network: 'localhost' });
-      const res = (await Market.search(
-        net,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      const res = (await Market.search({
+        network: net,
+      })) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt.id);
     });
@@ -54,34 +61,13 @@ describe('Market', () => {
       const mkt = await Market.create({
         network: 'ethereum',
         address: '0xMarket',
-        totalLiquidity: '1',
+
         creator: '0xCreator',
       });
-      await Market.create({ network: 'ethereum', address: '0xMarket2', totalLiquidity: '1', creator: '0xCreator2' });
-      const res = (await Market.search(
-        undefined,
-        '0xCreator',
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      await Market.create({ network: 'ethereum', address: '0xMarket2', creator: '0xCreator2' });
+      const res = (await Market.search({
+        creator: '0xCreator',
+      })) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt.id);
     });
@@ -89,34 +75,12 @@ describe('Market', () => {
     it('should return correct result when `address` is set', async () => {
       const mkt = await Market.create({
         network: 'ethereum',
-        totalLiquidity: '1',
         address: '0xAddress',
       });
-      await Market.create({ network: 'ethereum', totalLiquidity: '1', address: '0xAddress2' });
-      const res = (await Market.search(
-        undefined,
-        undefined,
-        ['0xAddress'],
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      await Market.create({ network: 'ethereum', address: '0xAddress2' });
+      const res = (await Market.search({
+        address: ['0xAddress'],
+      })) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt.id);
     });
@@ -125,67 +89,23 @@ describe('Market', () => {
       await Market.create({
         network: 'ethereum',
         address: '0xMarket',
-        totalLiquidity: '1',
         baseAddress: '0xBase',
         base: 'BASE',
       });
       await Market.create({
         network: 'ethereum',
         address: '0xMarket2',
-        totalLiquidity: '1',
         baseAddress: '0xBase',
         base: 'BAZE',
       });
-      let res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        '0xBase',
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      let res = (await Market.search({
+        base: '0xBase',
+      })) as Market[];
       expect(res).toHaveLength(2);
 
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        'BAZE',
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      res = (await Market.search({
+        base: 'BAZE',
+      })) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].base).toEqual('BAZE');
     });
@@ -194,68 +114,24 @@ describe('Market', () => {
       const mkt = await Market.create({
         network: 'ethereum',
         address: '0xMarket',
-        totalLiquidity: '1',
         quoteAddress: '0xQuote',
         quote: 'QUOTE',
       });
       const mkt2 = await Market.create({
         network: 'ethereum',
         address: '0xMarket2',
-        totalLiquidity: '1',
         quoteAddress: '0xQuote2',
         quote: 'QUOTE2',
       });
-      let res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        '0xQuote',
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      let res = (await Market.search({
+        quote: '0xQuote',
+      })) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt.id);
 
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        'QUOTE2',
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      res = (await Market.search({
+        quote: 'QUOTE2',
+      })) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt2.id);
     });
@@ -264,35 +140,13 @@ describe('Market', () => {
       const mkt = await Market.create({
         network: 'ethereum',
         address: '0xMarket',
-        totalLiquidity: '1',
         base: 'BTC',
         quoteAddress: '0xQuote',
       });
-      await Market.create({ network: 'ethereum', address: '0xMarket2', totalLiquidity: '1', quoteAddress: '0xQuote2' });
-      const res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        'BTC',
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      await Market.create({ network: 'ethereum', address: '0xMarket2', quoteAddress: '0xQuote2' });
+      const res = (await Market.search({
+        queryStr: 'BTC',
+      })) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt.id);
     });
@@ -301,86 +155,23 @@ describe('Market', () => {
       const mkt = await Market.create({ network: 'ethereum', address: '0xMarket', lowestPrice: '9' });
       const mkt2 = await Market.create({ network: 'ethereum', address: '0xMarket2', lowestPrice: '10' });
       const mkt3 = await Market.create({ network: 'ethereum', address: '0xMarket3', lowestPrice: '11' });
-      let res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        '10',
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      let res = (await Market.search({
+        price: '10',
+      })) as Market[];
       expect(res).toHaveLength(2);
       expect(res[0].id).toEqual(mkt2.id);
       expect(res[1].id).toEqual(mkt.id);
 
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        '<10',
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      res = (await Market.search({
+        price: '<10',
+      })) as Market[];
       expect(res).toHaveLength(2);
       expect(res[0].id).toEqual(mkt2.id);
       expect(res[1].id).toEqual(mkt.id);
 
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        '>10',
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      res = (await Market.search({
+        price: '>10',
+      })) as Market[];
       expect(res).toHaveLength(2);
       expect(res[0].id).toEqual(mkt3.id);
       expect(res[1].id).toEqual(mkt2.id);
@@ -400,373 +191,136 @@ describe('Market', () => {
         quoteDecimals: 0,
         lowestPrice: '11',
       }); // 5.5
-      let res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        0.5,
-        '4.5',
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      let res = (await Market.search({
+        quoteUsdRate: 0.5,
+        priceUsd: '4.5',
+      })) as Market[];
+
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt.id);
 
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        0.5,
-        '<5.0',
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      res = (await Market.search({
+        quoteUsdRate: 0.5,
+        priceUsd: '<5.0',
+      })) as Market[];
       expect(res).toHaveLength(2);
       expect(res[0].id).toEqual(mkt2.id);
       expect(res[1].id).toEqual(mkt.id);
 
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        0.5,
-        '>5.0',
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      res = (await Market.search({
+        quoteUsdRate: 0.5,
+        priceUsd: '>5.0',
+      })) as Market[];
       expect(res).toHaveLength(2);
       expect(res[0].id).toEqual(mkt3.id);
       expect(res[1].id).toEqual(mkt2.id);
     });
 
     it('should return correct result when `liquidity` is set', async () => {
-      const mkt = await Market.create({ network: 'ethereum', address: '0xMarket', totalLiquidity: '9' });
-      const mkt2 = await Market.create({ network: 'ethereum', address: '0xMarket2', totalLiquidity: '10' });
-      const mkt3 = await Market.create({ network: 'ethereum', address: '0xMarket3', totalLiquidity: '11' });
-      let res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        '10',
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
-      expect(res).toHaveLength(2);
-      expect(res[0].id).toEqual(mkt2.id);
-      expect(res[1].id).toEqual(mkt.id);
-
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        '<10',
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
-      expect(res).toHaveLength(2);
-      expect(res[0].id).toEqual(mkt2.id);
-      expect(res[1].id).toEqual(mkt.id);
-
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        '>10',
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
-      expect(res).toHaveLength(2);
-      expect(res[0].id).toEqual(mkt3.id);
-      expect(res[1].id).toEqual(mkt2.id);
-    });
-
-    it('should return correct result when `liquidityUsd` is set', async () => {
+      await Liquidity.create({ network: 'ethereum', marketAddress: '0xMarket', amount: powOf(4, 18).toString() });
+      await Liquidity.create({ network: 'ethereum', marketAddress: '0xMarket', amount: powOf(5, 18).toString() });
       const mkt = await Market.create({
         network: 'ethereum',
         address: '0xMarket',
-        quoteDecimals: 0,
-        totalLiquidity: '9',
-      }); // 4.5
-      const mkt2 = await Market.create({
-        network: 'ethereum',
-        address: '0xMarket2',
-        quoteDecimals: 0,
-        totalLiquidity: '10',
-      }); // 5.0
-      const mkt3 = await Market.create({
-        network: 'ethereum',
-        address: '0xMarket3',
-        quoteDecimals: 0,
-        totalLiquidity: '11',
-      }); // 5.5
-      let res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        0.5,
-        undefined,
-        undefined,
-        '4.5',
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
-      expect(res).toHaveLength(1);
-      expect(res[0].id).toEqual(mkt.id);
+        baseDecimals: 18,
+      });
 
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        0.5,
-        undefined,
-        undefined,
-        '<5.0',
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      await Liquidity.create({ network: 'sepolia', marketAddress: '0xMarket2', amount: powOf(4, 18).toString() });
+      await Liquidity.create({ network: 'ethereum', marketAddress: '0xMarket2', amount: powOf(5, 18).toString() });
+      await Liquidity.create({ network: 'ethereum', marketAddress: '0xMarket2', amount: powOf(1, 18).toString() });
+      const mkt2 = await Market.create({ network: 'ethereum', address: '0xMarket2', baseDecimals: 18 });
+
+      await Liquidity.create({ network: 'ethereum', marketAddress: '0xMarket3', amount: powOf(5, 18).toString() });
+      await Liquidity.create({ network: 'ethereum', marketAddress: '0xMarket3', amount: powOf(6, 18).toString() });
+      const mkt3 = await Market.create({ network: 'ethereum', address: '0xMarket3', baseDecimals: 18 });
+
+      let res = (await Market.search({
+        liquidity: powOf(10, 18).toString(),
+        baseUsdRate: 2.5,
+      })) as Market[];
+
       expect(res).toHaveLength(2);
       expect(res[0].id).toEqual(mkt2.id);
       expect(res[1].id).toEqual(mkt.id);
 
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        0.5,
-        undefined,
-        undefined,
-        '>5.0',
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      res = (await Market.search({
+        liquidity: `<${powOf(10, 18).toString()}`,
+      })) as Market[];
       expect(res).toHaveLength(2);
+      expect(res[0].id).toEqual(mkt2.id);
+      expect(res[1].id).toEqual(mkt.id);
+
+      res = (await Market.search({
+        liquidity: `>${powOf(10, 18).toString()}`,
+      })) as Market[];
+      expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt3.id);
-      expect(res[1].id).toEqual(mkt2.id);
+    });
+
+    it('should return correct result when `liquidityUsd` is set', async () => {
+      await Liquidity.create({ network: 'ethereum', marketAddress: '0xMarket', amount: powOf(4, 18).toString() });
+      await Liquidity.create({ network: 'ethereum', marketAddress: '0xMarket', amount: powOf(5, 18).toString() });
+      const mkt = await Market.create({ network: 'ethereum', address: '0xMarket', baseDecimals: 18 });
+
+      await Liquidity.create({ network: 'sepolia', marketAddress: '0xMarket2', amount: powOf(4, 18).toString() });
+      await Liquidity.create({ network: 'ethereum', marketAddress: '0xMarket2', amount: powOf(5, 18).toString() });
+      await Liquidity.create({ network: 'ethereum', marketAddress: '0xMarket2', amount: powOf(1, 18).toString() });
+      const mkt2 = await Market.create({ network: 'ethereum', address: '0xMarket2', baseDecimals: 18 });
+
+      await Liquidity.create({ network: 'ethereum', marketAddress: '0xMarket3', amount: powOf(5, 18).toString() });
+      await Liquidity.create({ network: 'ethereum', marketAddress: '0xMarket3', amount: powOf(6, 18).toString() });
+      const mkt3 = await Market.create({ network: 'ethereum', address: '0xMarket3', baseDecimals: 18 });
+
+      let res = (await Market.search({
+        baseUsdRate: 0.5,
+        liquidityUsd: '4.5',
+      })) as Market[];
+      expect(res).toHaveLength(2);
+      expect(res[0].id).toEqual(mkt2.id);
+      expect(res[1].id).toEqual(mkt.id);
+
+      res = (await Market.search({
+        baseUsdRate: 0.5,
+        liquidityUsd: '<5.0',
+      })) as Market[];
+      expect(res).toHaveLength(2);
+      expect(res[0].id).toEqual(mkt2.id);
+      expect(res[1].id).toEqual(mkt.id);
+
+      res = (await Market.search({
+        baseUsdRate: 0.5,
+        liquidityUsd: '>5.0',
+      })) as Market[];
+      expect(res).toHaveLength(1);
+      expect(res[0].id).toEqual(mkt3.id);
     });
 
     it('should return correct result when `permSwap` is set', async () => {
       const mkt = await Market.create({
         network: 'ethereum',
         address: '0xMarket',
-        totalLiquidity: '1',
+
         permSwap: false,
       });
       const mkt2 = await Market.create({
         network: 'ethereum',
         address: '0xMarket2',
-        totalLiquidity: '1',
+
         permSwap: true,
       });
-      let res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        false,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      let res = (await Market.search({
+        permSwap: false,
+      })) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt.id);
 
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        true,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      res = (await Market.search({
+        permSwap: true,
+      })) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt2.id);
 
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      res = (await Market.search({})) as Market[];
       expect(res).toHaveLength(2);
     });
 
@@ -774,186 +328,58 @@ describe('Market', () => {
       const mkt = await Market.create({
         network: 'ethereum',
         address: '0xMarket',
-        totalLiquidity: '1',
+
         permPut: false,
       });
       const mkt2 = await Market.create({
         network: 'ethereum',
         address: '0xMarket2',
-        totalLiquidity: '1',
+
         permPut: true,
       });
-      let res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        false,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      let res = (await Market.search({
+        permPut: false,
+      })) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt.id);
 
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        true,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      res = (await Market.search({
+        permPut: true,
+      })) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt2.id);
 
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      res = (await Market.search({})) as Market[];
       expect(res).toHaveLength(2);
     });
 
     it('should return correct result when `instant` is set', async () => {
-      const mkt = await Market.create({ network: 'ethereum', address: '0xMarket', totalLiquidity: '1', instant: true });
+      const mkt = await Market.create({ network: 'ethereum', address: '0xMarket', instant: true });
       const mkt2 = await Market.create({
         network: 'ethereum',
         address: '0xMarket2',
-        totalLiquidity: '1',
+
         instant: false,
       });
-      let res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        true,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      let res = (await Market.search({
+        instant: true,
+      })) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt.id);
 
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        false,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      res = (await Market.search({
+        instant: false,
+      })) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt2.id);
     });
 
     it('should return correct result when `countOnly` is set', async () => {
-      await Market.create({ network: 'ethereum', address: '0xMarket', totalLiquidity: '1', amountSwapped: '2' });
-      await Market.create({ network: 'ethereum', address: '0xMarket2', totalLiquidity: '1', amountSwapped: '1' });
-      const res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        true,
-        undefined,
-        undefined,
-      )) as Market[];
+      await Market.create({ network: 'ethereum', address: '0xMarket', amountSwapped: '2' });
+      await Market.create({ network: 'ethereum', address: '0xMarket2', amountSwapped: '1' });
+      const res = (await Market.search({
+        countOnly: true,
+      })) as Market[];
       expect(res).toEqual('2');
     });
 
@@ -961,61 +387,19 @@ describe('Market', () => {
       const mkt = await Market.create({
         network: 'ethereum',
         address: '0xMarket',
-        totalLiquidity: '1',
+
         amountSwapped: '2',
       });
-      await Market.create({ network: 'ethereum', address: '0xMarket2', totalLiquidity: '1', amountSwapped: '1' });
-      let res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        1,
-        undefined,
-      )) as Market[];
+      await Market.create({ network: 'ethereum', address: '0xMarket2', amountSwapped: '1' });
+      let res = (await Market.search({
+        limit: 1,
+      })) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt.id);
 
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        2,
-        undefined,
-      )) as Market[];
+      res = (await Market.search({
+        limit: 2,
+      })) as Market[];
       expect(res).toHaveLength(2);
     });
 
@@ -1023,66 +407,26 @@ describe('Market', () => {
       const mkt = await Market.create({
         network: 'ethereum',
         address: '0xMarket',
-        totalLiquidity: '1',
+
         amountSwapped: '2',
       });
       const mkt2 = await Market.create({
         network: 'ethereum',
         address: '0xMarket2',
-        totalLiquidity: '1',
+
         amountSwapped: '1',
       });
-      let res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        1,
-        0,
-      )) as Market[];
+      let res = (await Market.search({
+        limit: 1,
+        offset: 0,
+      })) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt.id);
 
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        1,
-        1,
-      )) as Market[];
+      res = (await Market.search({
+        limit: 1,
+        offset: 1,
+      })) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt2.id);
     });
@@ -1091,148 +435,41 @@ describe('Market', () => {
       const mkt = await Market.create({
         network: 'ethereum',
         address: '0xMarket',
-        totalLiquidity: '1',
+
         regions: ['region/nga', 'region/europe'],
       });
       const mkt2 = await Market.create({
         network: 'ethereum',
         address: '0xMarket2',
-        totalLiquidity: '1',
+
         regions: ['region/asia'],
       });
-      let res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        ['region/nga'],
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      let res = (await Market.search({
+        regions: ['region/nga'],
+      })) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt.id);
 
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        ['region/europe'],
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      res = (await Market.search({
+        regions: ['region/europe'],
+      })) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt.id);
 
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        ['region/asia'],
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      res = (await Market.search({
+        regions: ['region/asia'],
+      })) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt2.id);
 
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        ['region/nga', 'region/asia'],
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      res = (await Market.search({
+        regions: ['region/nga', 'region/asia'],
+      })) as Market[];
       expect(res).toHaveLength(2);
 
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        ['region%'],
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      res = (await Market.search({
+        regions: ['region%'],
+      })) as Market[];
       expect(res).toHaveLength(2);
     });
 
@@ -1240,93 +477,30 @@ describe('Market', () => {
       const mkt = await Market.create({
         network: 'ethereum',
         address: '0xMarket',
-        totalLiquidity: '1',
+
         requiredSwapBadges: ['merchant'],
       });
       const mkt2 = await Market.create({
         network: 'ethereum',
         address: '0xMarket2',
-        totalLiquidity: '1',
+
         requiredSwapBadges: ['bitcoiner'],
       });
-      let res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        ['merchant'],
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      let res = (await Market.search({
+        reqSwapBadges: ['merchant'],
+      })) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt.id);
 
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        ['bitcoiner'],
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      res = (await Market.search({
+        reqSwapBadges: ['bitcoiner'],
+      })) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt2.id);
 
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        ['bitcoiner', 'merchant'],
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      res = (await Market.search({
+        reqSwapBadges: ['bitcoiner', 'merchant'],
+      })) as Market[];
       expect(res).toHaveLength(2);
     });
 
@@ -1334,93 +508,30 @@ describe('Market', () => {
       const mkt = await Market.create({
         network: 'ethereum',
         address: '0xMarket',
-        totalLiquidity: '1',
+
         requiredPutBadges: ['merchant'],
       });
       const mkt2 = await Market.create({
         network: 'ethereum',
         address: '0xMarket2',
-        totalLiquidity: '1',
+
         requiredPutBadges: ['bitcoiner'],
       });
-      let res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        ['merchant'],
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      let res = (await Market.search({
+        reqPutBadges: ['merchant'],
+      })) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt.id);
 
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        ['bitcoiner'],
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      res = (await Market.search({
+        reqPutBadges: ['bitcoiner'],
+      })) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt2.id);
 
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        ['bitcoiner', 'merchant'],
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      res = (await Market.search({
+        reqPutBadges: ['bitcoiner', 'merchant'],
+      })) as Market[];
       expect(res).toHaveLength(2);
     });
 
@@ -1428,93 +539,27 @@ describe('Market', () => {
       const mkt = await Market.create({
         network: 'ethereum',
         address: '0xMarket',
-        totalLiquidity: '1',
+
         offerOnly: true,
       });
       const mkt2 = await Market.create({
-        totalLiquidity: '1',
         network: 'ethereum',
         address: '0xMarket2',
         offerOnly: false,
       });
-      let res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        true,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      let res = (await Market.search({
+        offer: true,
+      })) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt.id);
 
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        false,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      res = (await Market.search({
+        offer: false,
+      })) as Market[];
       expect(res).toHaveLength(1);
       expect(res[0].id).toEqual(mkt2.id);
 
-      res = (await Market.search(
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-      )) as Market[];
+      res = (await Market.search({})) as Market[];
       expect(res).toHaveLength(2);
     });
   });

@@ -129,15 +129,13 @@ export function randomEthAddr() {
 }
 
 /**
- * Get a contract address by name for the current network.
- * Expects NETWORK env var to be set.
+ * Get a contract address
+ * @param network The network name
  * @param name The contract name
  * @returns
  */
-export function getContractsAddress(name: ContractNames) {
-  const net = process.env.NETWORK;
-  if (!net) throw new Error('NETWORK is not set');
-  return getChainByName(net).contracts[name].address;
+export function getContractsAddress(network: string, name: ContractNames) {
+  return getChainByName(network).contracts[name].address;
 }
 
 export function delay(ms: number) {

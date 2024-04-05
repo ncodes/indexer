@@ -233,6 +233,10 @@ export class MediatorManagerHandler extends Handler {
         );
       },
     );
+
+    this.on('UpdatedMaxPause', async (maxPause: bigint, event: ContractCallEvent, txn?: Transaction) => {
+      await this.onParameterUpdate('ticketMaxPause', maxPause.toString(), event, txn);
+    });
   }
 
   /**

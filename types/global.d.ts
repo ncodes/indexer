@@ -169,7 +169,7 @@ declare global {
     // Market core params
     defaultDisputeDelayDur: number;
 
-    // Market manager params
+    // Mediator manager params
     baseTicketPrice: string;
     ticketWindowDur: number;
     ticketsPerWindow: number;
@@ -187,6 +187,7 @@ declare global {
     poolNumDraftee: number;
     poolNoVoteSlashBP: number;
     poolLoseVoteSlashBP: number;
+    ticketMaxPause: number;
 
     // Dispute manager params
     predictDur: number;

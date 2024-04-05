@@ -124,6 +124,8 @@ export default class Market extends BaseModel {
 
   // *** Non-persisted fields **//
   totalLiquidity: string = undefined;
+  evidenceDur: number = undefined;
+  predictDur: number = undefined;
   lowestPriceUsd: number;
   totalLiquidityUsd: number = undefined;
   numDisputes: number;

@@ -42,6 +42,7 @@ describe('MarketsService', () => {
   const quote = '0xQuote';
   const marketAddress = '0xMarket';
   const creator = '0xCreator';
+  const mediatorPoolId = 0;
   let cfgObj = {};
 
   afterEach(async () => {
@@ -91,8 +92,11 @@ describe('MarketsService', () => {
 
     service = module.get<MarketService>(MarketService);
 
-    const key = Meta.makeNetKey(net, MetaKeys.ContractsParams);
-    await Meta.update(key, JSON.stringify({}));
+    const contractParamsKey = Meta.makeNetKey(net, MetaKeys.ContractsParams);
+    await Meta.update(contractParamsKey, JSON.stringify({}));
+
+    const mediatorPoolKey = Meta.makeMediatorPoolKey(net, mediatorPoolId);
+    await Meta.update(mediatorPoolKey, JSON.stringify({}));
   });
 
   describe('.extendMarket', () => {
@@ -104,6 +108,7 @@ describe('MarketsService', () => {
         network: net,
         baseAddress: base,
         quoteAddress: quote,
+        mediatorPoolId,
       });
     });
 

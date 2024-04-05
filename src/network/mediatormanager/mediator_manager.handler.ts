@@ -119,6 +119,27 @@ export class MediatorManagerHandler extends Handler {
     );
 
     this.on(
+      'TicketBlocked',
+      async (owner: string, ticketId: bigint, blocked: boolean, event: ContractCallEvent, txn?: Transaction) => {
+        return this.onTicketBlocked(owner, ticketId, blocked, event, txn);
+      },
+    );
+
+    this.on(
+      'TicketPaused',
+      async (
+        owner: string,
+        ticketId: bigint,
+        paused: boolean,
+        pauseDur: bigint,
+        event: ContractCallEvent,
+        txn?: Transaction,
+      ) => {
+        return this.onTicketPaused(owner, ticketId, paused, pauseDur, event, txn);
+      },
+    );
+
+    this.on(
       'UpdatedTicketPool',
       async (
         poolId: bigint,
@@ -167,6 +188,34 @@ export class MediatorManagerHandler extends Handler {
         await this.onParameterUpdate('ticketMatureDur', ticketMatureDur.toString(), event, txn);
         await this.onParameterUpdate('ticketExpireDur', ticketExpireDur.toString(), event, txn);
         await this.onParameterUpdate('ticketPauseDur', ticketPauseDur.toString(), event, txn);
+      },
+    );
+
+    this.on(
+      'UpdatedTicketParams',
+      async (
+        baseTicketPrice: bigint,
+        ticketWindowDur: bigint,
+        ticketsPerWindow: bigint,
+        baseTicketSupply: bigint,
+        priceSupplyDeltaBP: bigint,
+        minInactiveWindowBeforeReset: bigint,
+        soldOutBP: bigint,
+        event: ContractCallEvent,
+        txn?: Transaction,
+      ) => {
+        await this.onParameterUpdate('baseTicketPrice', baseTicketPrice.toString(), event, txn);
+        await this.onParameterUpdate('ticketWindowDur', ticketWindowDur.toString(), event, txn);
+        await this.onParameterUpdate('ticketsPerWindow', ticketsPerWindow.toString(), event, txn);
+        await this.onParameterUpdate('ticketSupply', baseTicketSupply.toString(), event, txn);
+        await this.onParameterUpdate('priceSupplyDeltaBP', priceSupplyDeltaBP.toString(), event, txn);
+        await this.onParameterUpdate('soldOutBP', soldOutBP.toString(), event, txn);
+        await this.onParameterUpdate(
+          'minInactiveWindowBeforeReset',
+          minInactiveWindowBeforeReset.toString(),
+          event,
+          txn,
+        );
       },
     );
   }
@@ -567,6 +616,55 @@ export class MediatorManagerHandler extends Handler {
       byGov: true,
       asset: 'P2P',
     });
+  }
+
+  /**
+   * A ticket was blocked or unblocked
+   * @param owner The ticket owner
+   * @param ticketId The unique id of the ticket
+   * @param blocked Indicates whether the ticket was blocked
+   * @param _event The event object
+   * @param txn The database transaction handle
+   */
+  async onTicketBlocked(
+    owner: string,
+    ticketId: bigint,
+    blocked: boolean,
+    _event: ContractCallEvent,
+    txn?: Transaction,
+  ) {
+    const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, toNumber(ticketId), undefined, txn);
+    await Ticket.updateById(ticket.id, { blocked }, txn);
+  }
+
+  /**
+   * A ticket was paused or ununpaused
+   * @param owner The ticket owner
+   * @param ticketId The unique id of the ticket
+   * @param unpaused Indicates whether the ticket was unpaused
+   * @param pauseDur The amount of duration the ticket can remain paused before it expires
+   * @param _event The event object
+   * @param txn The database transaction handle
+   */
+  async onTicketPaused(
+    owner: string,
+    ticketId: bigint,
+    paused: boolean,
+    pauseDur: bigint,
+    event: ContractCallEvent,
+    txn?: Transaction,
+  ) {
+    const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, toNumber(ticketId), undefined, txn);
+    const blockTime = await getBlockTime(event);
+    const pauseExpireAt = blockTime + toNumber(pauseDur);
+    await Ticket.updateById(
+      ticket.id,
+      {
+        paused,
+        pauseExpireAt: moment.unix(pauseExpireAt).toISOString(),
+      },
+      txn,
+    );
   }
 
   /**

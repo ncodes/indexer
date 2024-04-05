@@ -65,6 +65,8 @@ export default class Ticket extends BaseModel {
   drainedAt: string = undefined;
   // The time the ticket was drafted
   draftedAt: string = undefined;
+  // The time the ticket pause state is expired
+  pauseExpireAt: string = undefined;
 
   /** Not Persisted */
   market: Market;

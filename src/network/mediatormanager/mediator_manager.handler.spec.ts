@@ -529,6 +529,54 @@ describe('MediatorManagerHandler', () => {
     });
   });
 
+  describe('.onTicketBlocked', () => {
+    it('should mark or unmark ticket as blocked', async () => {
+      let ticket = await Ticket.create({
+        network: net,
+        index: 1,
+        poolId: 1,
+        owner: owner,
+      });
+
+      await expect(handler.onTicketBlocked(owner, toBigInt(1), true, undefined)).resolves.toBeUndefined();
+      ticket = await Ticket.getById(ticket.id);
+      expect(ticket.blocked).toBeTruthy();
+
+      await expect(handler.onTicketBlocked(owner, toBigInt(1), false, undefined)).resolves.toBeUndefined();
+      ticket = await Ticket.getById(ticket.id);
+      expect(ticket.blocked).toBeFalsy();
+    });
+  });
+
+  describe('.onTicketPaused', () => {
+    it('should mark or unmark ticket as paused', async () => {
+      let ticket = await Ticket.create({
+        network: net,
+        index: 1,
+        poolId: 1,
+        owner: owner,
+      });
+
+      const pauseDur = BigInt(86400);
+      const now = moment().unix();
+      const evt = {
+        getBlock: jest.fn().mockResolvedValue({ timestamp: now }),
+      } as any;
+
+      await expect(handler.onTicketPaused(owner, toBigInt(1), true, pauseDur, evt)).resolves.toBeUndefined();
+      ticket = await Ticket.getById(ticket.id);
+      expect(ticket.paused).toBeTruthy();
+      expect(ticket.pauseExpireAt).toBeDefined();
+      expect(moment(ticket.pauseExpireAt).unix()).toEqual(moment.unix(now + Number(pauseDur)).unix());
+
+      await expect(handler.onTicketPaused(owner, toBigInt(1), false, pauseDur, evt)).resolves.toBeUndefined();
+      ticket = await Ticket.getById(ticket.id);
+      expect(ticket.paused).toBeFalsy();
+      expect(ticket.pauseExpireAt).toBeDefined();
+      expect(moment(ticket.pauseExpireAt).unix()).toEqual(moment.unix(now + Number(pauseDur)).unix());
+    });
+  });
+
   describe('.onTicketSlashed', () => {
     it('should mark ticket as slashed, update bond and add a slash record', async () => {
       let ticket = await Ticket.create({

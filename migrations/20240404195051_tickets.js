@@ -7,6 +7,7 @@ exports.up = function (knex) {
     knex.schema.table('tickets', (table) => {
       table.boolean('blocked').defaultTo(false);
       table.boolean('paused').defaultTo(false);
+      table.timestamp('pauseExpireAt');
     }),
   ]);
 };
@@ -20,6 +21,7 @@ exports.down = function (knex) {
     knex.schema.table('tickets', (table) => {
       table.dropColumn('blocked');
       table.dropColumn('paused');
+      table.dropColumn('pauseExpireAt');
     }),
   ]);
 };

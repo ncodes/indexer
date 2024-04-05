@@ -1,6 +1,8 @@
 import { Transaction } from 'objection';
 import { BaseModel } from './base';
 
+type K = keyof ContractsParams;
+
 export enum FeeName {
   InstantSwapFeeBp = 'instantSwapFeeBp',
   SynthSwapFeeBp = 'syntheticSwapFeeBp',
@@ -135,7 +137,7 @@ export default class Meta extends BaseModel {
   static async updateContractsParams(
     network: string,
     txn: Transaction,
-    updFn: (params: { [key: string]: string }) => void,
+    updFn: (params: { ContractParamKey: string }) => void,
   ) {
     const key = Meta.makeNetKey(network, MetaKeys.ContractsParams);
     const existing = await Meta.get(key, txn);

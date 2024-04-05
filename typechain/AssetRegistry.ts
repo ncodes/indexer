@@ -27,7 +27,6 @@ export type InfoStruct = {
   curRate: BigNumberish;
   feeBp: BigNumberish;
   feeFixed: BigNumberish;
-  amountPerRewardPoint: BigNumberish;
   verified: boolean;
   stable: boolean;
   sharable: boolean;
@@ -37,7 +36,6 @@ export type InfoStructOutput = [
   curRate: bigint,
   feeBp: bigint,
   feeFixed: bigint,
-  amountPerRewardPoint: bigint,
   verified: boolean,
   stable: boolean,
   sharable: boolean
@@ -45,7 +43,6 @@ export type InfoStructOutput = [
   curRate: bigint;
   feeBp: bigint;
   feeFixed: bigint;
-  amountPerRewardPoint: bigint;
   verified: boolean;
   stable: boolean;
   sharable: boolean;
@@ -88,7 +85,6 @@ export interface AssetRegistryInterface extends Interface {
     functionFragment: "set",
     values: [
       AddressLike,
-      BigNumberish,
       BigNumberish,
       BigNumberish,
       BigNumberish,
@@ -159,7 +155,6 @@ export namespace AssetRegistryUpdatedEvent {
     curRate: BigNumberish,
     feeBp: BigNumberish,
     feeFixed: BigNumberish,
-    amountPerRewardPoint: BigNumberish,
     verified: boolean,
     stable: boolean,
     sharable: boolean
@@ -169,7 +164,6 @@ export namespace AssetRegistryUpdatedEvent {
     curRate: bigint,
     feeBp: bigint,
     feeFixed: bigint,
-    amountPerRewardPoint: bigint,
     verified: boolean,
     stable: boolean,
     sharable: boolean
@@ -179,7 +173,6 @@ export namespace AssetRegistryUpdatedEvent {
     curRate: bigint;
     feeBp: bigint;
     feeFixed: bigint;
-    amountPerRewardPoint: bigint;
     verified: boolean;
     stable: boolean;
     sharable: boolean;
@@ -249,11 +242,10 @@ export interface AssetRegistry extends BaseContract {
   assets: TypedContractMethod<
     [arg0: AddressLike],
     [
-      [bigint, bigint, bigint, bigint, boolean, boolean, boolean] & {
+      [bigint, bigint, bigint, boolean, boolean, boolean] & {
         curRate: bigint;
         feeBp: bigint;
         feeFixed: bigint;
-        amountPerRewardPoint: bigint;
         verified: boolean;
         stable: boolean;
         sharable: boolean;
@@ -276,7 +268,6 @@ export interface AssetRegistry extends BaseContract {
       curRate: BigNumberish,
       feeBp: BigNumberish,
       feeFixed: BigNumberish,
-      amountPerRewardPoint: BigNumberish,
       verified: boolean,
       stable: boolean,
       sharable: boolean
@@ -336,11 +327,10 @@ export interface AssetRegistry extends BaseContract {
   ): TypedContractMethod<
     [arg0: AddressLike],
     [
-      [bigint, bigint, bigint, bigint, boolean, boolean, boolean] & {
+      [bigint, bigint, bigint, boolean, boolean, boolean] & {
         curRate: bigint;
         feeBp: bigint;
         feeFixed: bigint;
-        amountPerRewardPoint: bigint;
         verified: boolean;
         stable: boolean;
         sharable: boolean;
@@ -368,7 +358,6 @@ export interface AssetRegistry extends BaseContract {
       curRate: BigNumberish,
       feeBp: BigNumberish,
       feeFixed: BigNumberish,
-      amountPerRewardPoint: BigNumberish,
       verified: boolean,
       stable: boolean,
       sharable: boolean
@@ -438,7 +427,7 @@ export interface AssetRegistry extends BaseContract {
   >;
 
   filters: {
-    "AssetRegistryUpdated(address,uint256,uint256,uint256,uint256,bool,bool,bool)": TypedContractEvent<
+    "AssetRegistryUpdated(address,uint256,uint256,uint256,bool,bool,bool)": TypedContractEvent<
       AssetRegistryUpdatedEvent.InputTuple,
       AssetRegistryUpdatedEvent.OutputTuple,
       AssetRegistryUpdatedEvent.OutputObject

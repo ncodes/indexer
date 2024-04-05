@@ -91,22 +91,6 @@ export default class PoolApproval extends BaseModel {
   }
 
   /**
-   * Get by dispute ID
-   * @param network The network name
-   * @param marketAddress The market ID
-   * @param orderId The order ID
-   * @param disputeIndex The dispute ID
-   * @param txn Optional transaction object
-   */
-  static getAll(network: string, marketAddress: string, orderId: number, disputeIndex: number, txn?: Transaction) {
-    return this.query(txn)
-      .whereNotDeleted()
-      .where({ network })
-      .where('marketAddress', 'ilike', marketAddress)
-      .where({ disputeIndex, orderId });
-  }
-
-  /**
    * Delete a record by ID
    * @param id The record ID
    * @param txn Optional transaction object

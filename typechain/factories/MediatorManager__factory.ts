@@ -41,6 +41,11 @@ const _abi = [
         name: "_ticketExpireDur",
         type: "uint256",
       },
+      {
+        internalType: "uint256",
+        name: "_ticketPauseDur",
+        type: "uint256",
+      },
     ],
     stateMutability: "nonpayable",
     type: "constructor",
@@ -137,6 +142,81 @@ const _abi = [
     inputs: [
       {
         indexed: false,
+        internalType: "uint256",
+        name: "poolId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "addr",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "bool",
+        name: "approved",
+        type: "bool",
+      },
+    ],
+    name: "PoolMarketApproval",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "poolId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "addr",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "bool",
+        name: "approved",
+        type: "bool",
+      },
+    ],
+    name: "PoolMediatorApproval",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "address",
+        name: "owner",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "id",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "bool",
+        name: "blocked",
+        type: "bool",
+      },
+    ],
+    name: "TicketBlocked",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
         internalType: "address",
         name: "owner",
         type: "address",
@@ -174,6 +254,37 @@ const _abi = [
       },
     ],
     name: "TicketDrained",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "address",
+        name: "ticketOwner",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "ticketId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "bool",
+        name: "paused",
+        type: "bool",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "pauseDur",
+        type: "uint256",
+      },
+    ],
+    name: "TicketPaused",
     type: "event",
   },
   {
@@ -273,6 +384,31 @@ const _abi = [
       },
       {
         indexed: false,
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+    ],
+    name: "TicketSlashedByOwner",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "address",
+        name: "owner",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "ticketId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
         internalType: "bool",
         name: "slashed",
         type: "bool",
@@ -318,6 +454,19 @@ const _abi = [
     inputs: [
       {
         indexed: false,
+        internalType: "uint256",
+        name: "maxPause",
+        type: "uint256",
+      },
+    ],
+    name: "UpdatedMaxPause",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
         internalType: "address",
         name: "val",
         type: "address",
@@ -332,37 +481,29 @@ const _abi = [
       {
         indexed: false,
         internalType: "uint256",
-        name: "val",
+        name: "ticketCancelDur",
         type: "uint256",
       },
-    ],
-    name: "UpdatedTicketCancelDuration",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
       {
         indexed: false,
         internalType: "uint256",
-        name: "val",
+        name: "ticketMatureDur",
         type: "uint256",
       },
-    ],
-    name: "UpdatedTicketExpireDuration",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
       {
         indexed: false,
         internalType: "uint256",
-        name: "val",
+        name: "ticketExpireDur",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "ticketPauseDur",
         type: "uint256",
       },
     ],
-    name: "UpdatedTicketMatureDuration",
+    name: "UpdatedTicketDurations",
     type: "event",
   },
   {
@@ -459,6 +600,30 @@ const _abi = [
         name: "numDraftees",
         type: "uint256",
       },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "evidenceDur",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "predictDur",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "bool",
+        name: "approvedMediatorOnly",
+        type: "bool",
+      },
+      {
+        indexed: false,
+        internalType: "bool",
+        name: "approvedMarketOnly",
+        type: "bool",
+      },
     ],
     name: "UpdatedTicketPool",
     type: "event",
@@ -525,11 +690,6 @@ const _abi = [
       {
         components: [
           {
-            internalType: "address",
-            name: "owner",
-            type: "address",
-          },
-          {
             internalType: "uint256",
             name: "idx",
             type: "uint256",
@@ -550,9 +710,9 @@ const _abi = [
             type: "uint256",
           },
           {
-            internalType: "uint256",
+            internalType: "int256",
             name: "poolIdx",
-            type: "uint256",
+            type: "int256",
           },
           {
             internalType: "uint256",
@@ -565,6 +725,16 @@ const _abi = [
             type: "uint256",
           },
           {
+            internalType: "uint256",
+            name: "numPaused",
+            type: "uint256",
+          },
+          {
+            internalType: "address",
+            name: "owner",
+            type: "address",
+          },
+          {
             internalType: "bool",
             name: "drafted",
             type: "bool",
@@ -572,6 +742,21 @@ const _abi = [
           {
             internalType: "bool",
             name: "joined",
+            type: "bool",
+          },
+          {
+            internalType: "bool",
+            name: "blocked",
+            type: "bool",
+          },
+          {
+            internalType: "bool",
+            name: "slashed",
+            type: "bool",
+          },
+          {
+            internalType: "bool",
+            name: "paused",
             type: "bool",
           },
         ],
@@ -600,7 +785,7 @@ const _abi = [
     inputs: [
       {
         internalType: "address",
-        name: "owner",
+        name: "ticketOwner",
         type: "address",
       },
       {
@@ -613,11 +798,6 @@ const _abi = [
     outputs: [
       {
         components: [
-          {
-            internalType: "address",
-            name: "owner",
-            type: "address",
-          },
           {
             internalType: "uint256",
             name: "idx",
@@ -639,9 +819,9 @@ const _abi = [
             type: "uint256",
           },
           {
-            internalType: "uint256",
+            internalType: "int256",
             name: "poolIdx",
-            type: "uint256",
+            type: "int256",
           },
           {
             internalType: "uint256",
@@ -654,6 +834,16 @@ const _abi = [
             type: "uint256",
           },
           {
+            internalType: "uint256",
+            name: "numPaused",
+            type: "uint256",
+          },
+          {
+            internalType: "address",
+            name: "owner",
+            type: "address",
+          },
+          {
             internalType: "bool",
             name: "drafted",
             type: "bool",
@@ -661,6 +851,21 @@ const _abi = [
           {
             internalType: "bool",
             name: "joined",
+            type: "bool",
+          },
+          {
+            internalType: "bool",
+            name: "blocked",
+            type: "bool",
+          },
+          {
+            internalType: "bool",
+            name: "slashed",
+            type: "bool",
+          },
+          {
+            internalType: "bool",
+            name: "paused",
             type: "bool",
           },
         ],
@@ -684,6 +889,21 @@ const _abi = [
     outputs: [
       {
         components: [
+          {
+            internalType: "bool",
+            name: "exists",
+            type: "bool",
+          },
+          {
+            internalType: "bool",
+            name: "approvedMediatorOnly",
+            type: "bool",
+          },
+          {
+            internalType: "bool",
+            name: "approvedMarketOnly",
+            type: "bool",
+          },
           {
             internalType: "uint256",
             name: "reqBond",
@@ -714,6 +934,16 @@ const _abi = [
             name: "numDraftees",
             type: "uint256",
           },
+          {
+            internalType: "uint256",
+            name: "evidenceDur",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "predictDur",
+            type: "uint256",
+          },
         ],
         internalType: "struct Structs.TicketPool",
         name: "",
@@ -740,6 +970,54 @@ const _abi = [
     inputs: [
       {
         internalType: "uint256",
+        name: "poolId",
+        type: "uint256",
+      },
+      {
+        internalType: "address",
+        name: "marketAddr",
+        type: "address",
+      },
+    ],
+    name: "isApprovedMarket",
+    outputs: [
+      {
+        internalType: "bool",
+        name: "",
+        type: "bool",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "poolId",
+        type: "uint256",
+      },
+      {
+        internalType: "address",
+        name: "addr",
+        type: "address",
+      },
+    ],
+    name: "isApprovedMediator",
+    outputs: [
+      {
+        internalType: "bool",
+        name: "",
+        type: "bool",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
         name: "ticketId",
         type: "uint256",
       },
@@ -757,6 +1035,19 @@ const _abi = [
         internalType: "contract IMarketCore",
         name: "",
         type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "maxPause",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
       },
     ],
     stateMutability: "view",
@@ -805,6 +1096,30 @@ const _abi = [
     inputs: [
       {
         internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    name: "poolApprovals",
+    outputs: [
+      {
+        internalType: "bool",
+        name: "",
+        type: "bool",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
         name: "poolId",
         type: "uint256",
       },
@@ -815,6 +1130,49 @@ const _abi = [
         internalType: "bool",
         name: "",
         type: "bool",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    name: "poolMarketApprovals",
+    outputs: [
+      {
+        internalType: "bool",
+        name: "",
+        type: "bool",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    name: "poolOwners",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
       },
     ],
     stateMutability: "view",
@@ -860,6 +1218,21 @@ const _abi = [
     name: "pools",
     outputs: [
       {
+        internalType: "bool",
+        name: "exists",
+        type: "bool",
+      },
+      {
+        internalType: "bool",
+        name: "approvedMediatorOnly",
+        type: "bool",
+      },
+      {
+        internalType: "bool",
+        name: "approvedMarketOnly",
+        type: "bool",
+      },
+      {
         internalType: "uint256",
         name: "reqBond",
         type: "uint256",
@@ -887,6 +1260,16 @@ const _abi = [
       {
         internalType: "uint256",
         name: "numDraftees",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "evidenceDur",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "predictDur",
         type: "uint256",
       },
     ],
@@ -968,6 +1351,19 @@ const _abi = [
   {
     inputs: [
       {
+        internalType: "uint256",
+        name: "_maxPause",
+        type: "uint256",
+      },
+    ],
+    name: "setMaxPause",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
         internalType: "address",
         name: "provider",
         type: "address",
@@ -982,24 +1378,26 @@ const _abi = [
     inputs: [
       {
         internalType: "uint256",
-        name: "dur",
+        name: "_ticketCancelDur",
         type: "uint256",
       },
-    ],
-    name: "setTicketCancelDuration",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
       {
         internalType: "uint256",
-        name: "dur",
+        name: "_ticketMatureDur",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "_ticketExpireDur",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "_ticketPauseDur",
         type: "uint256",
       },
     ],
-    name: "setTicketExpireDuration",
+    name: "setTicketDurations",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -1050,12 +1448,22 @@ const _abi = [
   {
     inputs: [
       {
+        internalType: "address",
+        name: "ticketOwner",
+        type: "address",
+      },
+      {
         internalType: "uint256",
-        name: "dur",
+        name: "ticketId",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "amount",
         type: "uint256",
       },
     ],
-    name: "setTicketMatureDuration",
+    name: "slash",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -1114,6 +1522,19 @@ const _abi = [
   },
   {
     inputs: [],
+    name: "ticketPauseDur",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "ticketSold",
     outputs: [
       {
@@ -1154,11 +1575,6 @@ const _abi = [
     name: "tickets",
     outputs: [
       {
-        internalType: "address",
-        name: "owner",
-        type: "address",
-      },
-      {
         internalType: "uint256",
         name: "idx",
         type: "uint256",
@@ -1179,9 +1595,9 @@ const _abi = [
         type: "uint256",
       },
       {
-        internalType: "uint256",
+        internalType: "int256",
         name: "poolIdx",
-        type: "uint256",
+        type: "int256",
       },
       {
         internalType: "uint256",
@@ -1194,6 +1610,16 @@ const _abi = [
         type: "uint256",
       },
       {
+        internalType: "uint256",
+        name: "numPaused",
+        type: "uint256",
+      },
+      {
+        internalType: "address",
+        name: "owner",
+        type: "address",
+      },
+      {
         internalType: "bool",
         name: "drafted",
         type: "bool",
@@ -1201,6 +1627,21 @@ const _abi = [
       {
         internalType: "bool",
         name: "joined",
+        type: "bool",
+      },
+      {
+        internalType: "bool",
+        name: "blocked",
+        type: "bool",
+      },
+      {
+        internalType: "bool",
+        name: "slashed",
+        type: "bool",
+      },
+      {
+        internalType: "bool",
+        name: "paused",
         type: "bool",
       },
     ],
@@ -1218,6 +1659,73 @@ const _abi = [
       },
     ],
     stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "poolId",
+        type: "uint256",
+      },
+      {
+        internalType: "address",
+        name: "marketAddr",
+        type: "address",
+      },
+    ],
+    name: "toggleApproveMarket",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "poolId",
+        type: "uint256",
+      },
+      {
+        internalType: "address",
+        name: "addr",
+        type: "address",
+      },
+    ],
+    name: "toggleApproveMediator",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "ticketOwner",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "ticketId",
+        type: "uint256",
+      },
+    ],
+    name: "toggleBlock",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "ticketId",
+        type: "uint256",
+      },
+    ],
+    name: "togglePause",
+    outputs: [],
+    stateMutability: "nonpayable",
     type: "function",
   },
   {
@@ -1316,6 +1824,26 @@ const _abi = [
         internalType: "uint256",
         name: "numDraftees",
         type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "evidenceDur",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "predictDur",
+        type: "uint256",
+      },
+      {
+        internalType: "bool",
+        name: "approvedMediatorOnly",
+        type: "bool",
+      },
+      {
+        internalType: "bool",
+        name: "approvedMarketOnly",
+        type: "bool",
       },
     ],
     name: "updateTicketPool",

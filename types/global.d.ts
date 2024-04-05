@@ -1,3 +1,12 @@
+import {
+  ChainLinkParams,
+  CoreParams,
+  DisputeManagerParams,
+  MarketCoreParams,
+  MediatorManagerParams,
+  MinerRegistryParams,
+  OthersParams,
+} from '@jointlabs/chains-info/src/types';
 import { BigNumber } from 'ethers';
 import { NotificationID } from '../src/jobs/notifications/common';
 import Convo from '../src/models/convo';
@@ -19,6 +28,7 @@ import {
   LPPool,
   MarketCore,
   MediatorManager,
+  MinerRegistry,
   NFT,
   Token,
   TokenPool,
@@ -56,6 +66,7 @@ declare global {
     lpPool?: LPPool;
     feePool?: FeePool;
     assetRegistry?: AssetRegistry;
+    minerRegistry?: MinerRegistry;
     energon?: Energon;
     nft?: NFT;
   }
@@ -157,54 +168,13 @@ declare global {
     }
   }
 
-  interface ContractsParams {
-    // Core params
-    minTimeToPay: number;
-    orderGraceDur: number;
-    maxOpenOrders: number;
-    maxOpenDisputes: number;
-    transferToFeePoolInterval: number;
-    nftDiscountBP: number;
-
-    // Market core params
-    defaultDisputeDelayDur: number;
-
-    // Mediator manager params
-    baseTicketPrice: string;
-    ticketWindowDur: number;
-    ticketsPerWindow: number;
-    ticketSupply: number;
-    priceSupplyDeltaBP: number;
-    minInactiveWindowBeforeReset: number;
-    soldOutBP: number;
-    ticketMatureDur: number;
-    ticketCancelDur: number;
-    ticketExpireDur: number;
-    ticketPauseDur: number;
-    reqPoolBond: string;
-    poolDraftReward: string;
-    poolWinReward: string;
-    poolNumDraftee: number;
-    poolNoVoteSlashBP: number;
-    poolLoseVoteSlashBP: number;
-    ticketMaxPause: number;
-
-    // Dispute manager params
-    predictDur: number;
-    evidenceDur: number;
-
-    // Chainlink params
-    chainlinkKeyHash?: string;
-    chainlinkCoordinator?: string;
-    chainlinkSubId?: number;
-
-    // Operator params
-    operatorBond: string;
-
-    // Others
-    safe?: string;
-    allocatorAddr?: string;
-  }
+  type ContractsParams = CoreParams &
+    MarketCoreParams &
+    MediatorManagerParams &
+    DisputeManagerParams &
+    MinerRegistryParams &
+    ChainLinkParams &
+    OthersParams;
 
   export interface InstantSwapNotificationData {
     market: Market;

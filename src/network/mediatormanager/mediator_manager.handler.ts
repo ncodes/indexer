@@ -10,6 +10,7 @@ import Event, { Events } from '../../models/event';
 import Market from '../../models/market';
 import Meta from '../../models/meta';
 import MineTask, { MineTaskType } from '../../models/mine_task';
+import PoolApproval from '../../models/pool_approval';
 import Swap from '../../models/swap';
 import Ticket from '../../models/ticket';
 import TicketSlash from '../../models/ticket_slash';
@@ -136,6 +137,20 @@ export class MediatorManagerHandler extends Handler {
         txn?: Transaction,
       ) => {
         return this.onTicketPaused(owner, ticketId, paused, pauseDur, event, txn);
+      },
+    );
+
+    this.on(
+      'PoolMediatorApproval',
+      async (poolId: bigint, address: string, approved: boolean, event: ContractCallEvent, txn?: Transaction) => {
+        return this.onPoolApprovalUpdate(true, poolId, address, approved, event, txn);
+      },
+    );
+
+    this.on(
+      'PoolMarketApproval',
+      async (poolId: bigint, address: string, approved: boolean, event: ContractCallEvent, txn?: Transaction) => {
+        return this.onPoolApprovalUpdate(false, poolId, address, approved, event, txn);
       },
     );
 
@@ -665,6 +680,43 @@ export class MediatorManagerHandler extends Handler {
       },
       txn,
     );
+  }
+
+  /**
+   * Update pool approval status for a mediator or market
+   * @param isMediator Indicates whether the address is for a mediator or market
+   * @param poolId The ID of the pool
+   * @param address The address of the mediator or market
+   * @param approved Indicates whether the address is approved or no longer approved
+   * @param event The event object
+   * @param txn The database transaction handle
+   */
+  async onPoolApprovalUpdate(
+    isMediator: boolean,
+    poolId: bigint,
+    address: string,
+    approved: boolean,
+    _event: ContractCallEvent,
+    txn?: Transaction,
+  ) {
+    const existing = !approved
+      ? await PoolApproval.getByNetworkPoolIdAddress(this.network, toNumber(poolId), address, txn)
+      : null;
+
+    if (existing) {
+      await PoolApproval.deleteById(existing.id, txn);
+    } else {
+      await PoolApproval.create(
+        {
+          network: this.network,
+          poolId: toNumber(poolId),
+          address,
+          isMarket: !isMediator,
+          approved,
+        },
+        txn,
+      );
+    }
   }
 
   /**

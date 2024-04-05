@@ -73,6 +73,11 @@ export default class PoolApproval extends BaseModel {
     return this.query(txn).whereNotDeleted().findById(id);
   }
 
+  // Get by network, poolId and address. Use ilike for address
+  static getByNetworkPoolIdAddress(network: string, poolId: number, address: string, txn?: Transaction) {
+    return this.query(txn).whereNotDeleted().where({ network, poolId }).where('address', 'ilike', address).first();
+  }
+
   /**
    * updateById updates a record by ID
    * @param id the notification id
@@ -99,5 +104,15 @@ export default class PoolApproval extends BaseModel {
       .where({ network })
       .where('marketAddress', 'ilike', marketAddress)
       .where({ disputeIndex, orderId });
+  }
+
+  /**
+   * Delete a record by ID
+   * @param id The record ID
+   * @param txn Optional transaction object
+   * @returns
+   */
+  static deleteById(id: string, txn?: Transaction) {
+    return this.query(txn).where({ id }).delete();
   }
 }

@@ -8,6 +8,7 @@ import Event, { Events } from '../../models/event';
 import Market from '../../models/market';
 import Meta, { MetaKeys } from '../../models/meta';
 import MineTask, { MineTaskType } from '../../models/mine_task';
+import PoolApproval from '../../models/pool_approval';
 import Swap from '../../models/swap';
 import Ticket from '../../models/ticket';
 import TicketSlash from '../../models/ticket_slash';
@@ -574,6 +575,38 @@ describe('MediatorManagerHandler', () => {
       expect(ticket.paused).toBeFalsy();
       expect(ticket.pauseExpireAt).toBeDefined();
       expect(moment(ticket.pauseExpireAt).unix()).toEqual(moment.unix(now + Number(pauseDur)).unix());
+    });
+  });
+
+  describe('.onPoolApprovalUpdate', () => {
+    it('should correctly handle pool approval', async () => {
+      await expect(
+        handler.onPoolApprovalUpdate(true, toBigInt(1), '0xAddress', true, {} as any),
+      ).resolves.toBeUndefined();
+      let approval = await PoolApproval.getByNetworkPoolIdAddress(net, 1, '0xAddress');
+      expect(approval).toBeDefined();
+      expect(approval.network).toEqual(net);
+      expect(approval.approved).toBeTruthy();
+      expect(approval.poolId).toEqual(1);
+      expect(approval.address).toEqual('0xAddress');
+      expect(approval.isMarket).toBeFalsy();
+
+      await expect(
+        handler.onPoolApprovalUpdate(true, toBigInt(1), '0xAddress', false, {} as any),
+      ).resolves.toBeUndefined();
+      approval = await PoolApproval.getByNetworkPoolIdAddress(net, 1, '0xAddress');
+      expect(approval).toBeUndefined();
+
+      await expect(
+        handler.onPoolApprovalUpdate(false, toBigInt(1), '0xAddress', true, {} as any),
+      ).resolves.toBeUndefined();
+      approval = await PoolApproval.getByNetworkPoolIdAddress(net, 1, '0xAddress');
+      expect(approval).toBeDefined();
+      expect(approval.network).toEqual(net);
+      expect(approval.approved).toBeTruthy();
+      expect(approval.poolId).toEqual(1);
+      expect(approval.address).toEqual('0xAddress');
+      expect(approval.isMarket).toBeTruthy();
     });
   });
 

@@ -384,8 +384,10 @@ export class MediatorManagerHandler extends Handler {
     const market = await Market.getMarket(this.network, marketAddress);
 
     // Compute dispute phases times when dispute is fully drafted
-    const evidenceDur = market.evidenceDur || parseInt(await this.getParam('evidenceDur'));
-    const predictDur = market.predictDur || parseInt(await this.getParam('predictDur'));
+    const poolParamKey = Meta.makeMediatorPoolKey(this.network, market.mediatorPoolId);
+    const poolInfo = await Meta.getJSON<PoolParams>(poolParamKey, txn);
+    const evidenceDur = poolInfo.evidenceDur || parseInt(await this.getParam('evidenceDur'));
+    const predictDur = poolInfo.predictDur || parseInt(await this.getParam('predictDur'));
     const numDrafted = dispute.numMediatorsDrafted + 1;
     const fullyDrafted = numDrafted >= dispute.numMediators;
     const blockTime = await getBlockTime(event);

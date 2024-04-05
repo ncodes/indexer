@@ -73,6 +73,14 @@ describe('MediatorManagerHandler', () => {
     await Meta.create(
       Meta.makeNetKey(net, MetaKeys.ContractsParams),
       JSON.stringify({
+        predictDur: 2,
+        evidenceDur: 2,
+      } as PoolParams),
+    );
+
+    await Meta.create(
+      Meta.makeMediatorPoolKey(net, 0),
+      JSON.stringify({
         ticketCancelDur: 604800,
         ticketExpireDur: 172800,
         predictDur: 2,
@@ -189,6 +197,7 @@ describe('MediatorManagerHandler', () => {
         network: net,
         creator: creator,
         address: marketAddress,
+        mediatorPoolId: 0,
       });
     });
 

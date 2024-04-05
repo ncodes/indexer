@@ -310,17 +310,17 @@ declare global {
   }
 
   interface PoolParams {
-    poolId: number;
-    reqBond: string;
-    draftReward: string;
-    winReward: string;
-    noVoteSlashBP: string;
-    loseVoteSlashBP: string;
-    numDraftees: number;
-    evidenceDur: number;
-    predictDur: number;
-    approvedMediatorOnly: boolean;
-    approvedMarketOnly: boolean;
+    poolId?: number;
+    reqBond?: string;
+    draftReward?: string;
+    winReward?: string;
+    noVoteSlashBP?: string;
+    loseVoteSlashBP?: string;
+    numDraftees?: number;
+    evidenceDur?: number;
+    predictDur?: number;
+    approvedMediatorOnly?: boolean;
+    approvedMarketOnly?: boolean;
   }
 
   type Instructions = {

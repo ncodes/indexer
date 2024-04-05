@@ -493,13 +493,9 @@ describe('MarketCoreHandler', () => {
   describe('.onUpdatedDisputeDurations', function () {
     it('should update market correctly', async () => {
       const mkt = await Market.create({ network: net, address: marketAddress });
-      await expect(
-        handler.onUpdatedDisputeDurations(marketAddress, toBigInt(1), toBigInt(2), toBigInt(3), null),
-      ).resolves.toBeUndefined();
+      await expect(handler.onUpdatedDisputeDelayDuration(marketAddress, toBigInt(1), null)).resolves.toBeUndefined();
       const updMkt = await Market.getById(mkt.id);
       expect(updMkt.disputeDelayDur).toEqual(1);
-      expect(updMkt.evidenceDur).toEqual(2);
-      expect(updMkt.predictDur).toEqual(3);
     });
   });
 

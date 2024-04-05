@@ -105,10 +105,6 @@ export default class Market extends BaseModel {
   renounced: boolean;
   // Number of seconds before dispute can be started
   disputeDelayDur: number = undefined;
-  // Number of seconds within which evidence must be shared
-  evidenceDur: number = undefined;
-  // Number of seconds for votes to be committed and revealed
-  predictDur: number = undefined;
   // The market manager
   manager: string = undefined;
   // The region badge attached to this market

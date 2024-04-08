@@ -102,6 +102,9 @@ describe('PointService', () => {
 
         const event = { transactionHash: '0xHash' };
         expect(await service.grantOnSwap(market, swap, undefined, event as any)).toBeFalsy();
+
+        const point = await Point.find({});
+        expect(point).toBeUndefined();
       });
     });
 

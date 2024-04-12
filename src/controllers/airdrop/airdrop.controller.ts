@@ -65,6 +65,7 @@ export class AirdropController {
 
     await transaction(User, Point, async (User, Point) => {
       const user = await User.updateById(req.user.id, {
+        twitterUserId: userInfo.data.id,
         twitterUsername: userInfo.data.username,
         twitterToken: accessToken,
         twitterLinkedAt: moment().toISOString(),

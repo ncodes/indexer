@@ -7,6 +7,7 @@ exports.up = function (knex) {
     knex.schema.table('users', (table) => {
       table.string('discordToken');
       table.timestamp('discordLinkedAt');
+      table.string('twitterUserId');
       table.string('twitterUsername');
       table.string('twitterToken');
       table.boolean('isEarlyDiscordMember').defaultTo(false);
@@ -22,12 +23,13 @@ exports.up = function (knex) {
 exports.down = function (knex) {
   return Promise.all([
     knex.schema.table('users', (table) => {
+      table.dropColumn('discordToken');
+      table.dropColumn('discordLinkedAt');
+      table.dropColumn('twitterUserId');
       table.dropColumn('twitterUsername');
       table.dropColumn('twitterToken');
-      table.dropColumn('discordToken');
-      table.dropColumn('twitterLinkedAt');
-      table.dropColumn('discordLinkedAt');
       table.dropColumn('isEarlyDiscordMember');
+      table.dropColumn('twitterLinkedAt');
     }),
   ]);
 };

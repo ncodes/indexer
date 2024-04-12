@@ -18,6 +18,7 @@ export default class User extends BaseModel {
   referrer: string;
   refCode: string;
   messagingEnabled: boolean;
+  twitterUserId: string;
   twitterUsername: string;
   twitterToken: string;
   twitterLinkedAt: string;

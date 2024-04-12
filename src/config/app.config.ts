@@ -34,6 +34,13 @@ export default () => ({
       allowedVideoTypes: process.env.FILE_UPLOAD_ALLOWED_VIDEO_TYPES,
       allowedDocTypes: process.env.FILE_UPLOAD_ALLOWED_DOC_TYPES,
     },
+    twitter: {
+      oauthClientId: process.env.TWITTER_OAUTH_CLIENT_ID,
+      oauthClientSecret: process.env.TWITTER_OAUTH_CLIENT_SECRET,
+      apiKey: process.env.TWITTER_API_KEY,
+      apiSecret: process.env.TWITTER_API_SECRET,
+      callbackUrl: process.env.TWITTER_CALLBACK_URL,
+    },
     redis: {
       url: process.env.REDIS_URL,
     },
@@ -61,6 +68,7 @@ export default () => ({
       clientSecret: process.env.DISCORD_CLIENT_SECRET,
       redirectUri: process.env.DISCORD_REDIRECT_URI,
       jointGuildId: process.env.DISCORD_JOINT_GUILD_ID,
+      earlyMemberAlloc: process.env.DISCORD_EARLY_MEMBER_ALLOC,
     },
     badges: {
       merchant: process.env.MERCHANT_BADGE,

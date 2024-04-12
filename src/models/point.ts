@@ -16,6 +16,8 @@ export enum PointAction {
   GenericRef = 'generic_ref',
   CSV = 'csv',
   Energon = 'energon',
+  TwitterConnect = 'twitter_connect',
+  DiscordConnect = 'discord_connect',
 }
 
 /**
@@ -270,6 +272,18 @@ export default class Point extends BaseModel {
       .then((res: any) => {
         const rank = res.findIndex((r) => isEqualStr(r.address, address));
         return rank + 1;
+      });
+  }
+
+  // Get total points of address
+  static async getTotalPointsByAddress(address: string, txn?: Transaction) {
+    return this.query(txn)
+      .where('address', 'ilike', address)
+      .whereNotDeleted()
+      .sum('point as totalPoints')
+      .first()
+      .then((res: any) => {
+        return res.totalPoints || '0';
       });
   }
 

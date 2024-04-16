@@ -20,25 +20,13 @@ export class AssetRegistryHandler extends Handler {
         curRate: bigint,
         feeBp: bigint,
         feeFixed: bigint,
-        amountPerRewardPoint: bigint,
         verified: boolean,
         stable: boolean,
         shareable: boolean,
         event: Event,
         txn?: Transaction,
       ) => {
-        return this.onAssetRegistryUpdated(
-          address,
-          curRate,
-          feeBp,
-          feeFixed,
-          amountPerRewardPoint,
-          verified,
-          stable,
-          shareable,
-          event,
-          txn,
-        );
+        return this.onAssetRegistryUpdated(address, curRate, feeBp, feeFixed, verified, stable, shareable, event, txn);
       },
     );
   }
@@ -49,7 +37,6 @@ export class AssetRegistryHandler extends Handler {
    * @param curRate The asset exchange rate to P2P (e.g 1 ASSET -> P2P)
    * @param feeBp The basis point fee to charged by protocol on the asset
    * @param feeFixed The fixed fee rate charged by the protocol (denominated in P2P)
-   * @param amountPerRewardPoint How much unit equates to 1 reward point (denominated in the asset)
    * @param verified Indicates whether the asset is verified
    * @param stable Indicates whether the asset is a stablecoin
    * @param shareable Indicates whether fee earned on the asset are shareable
@@ -61,7 +48,6 @@ export class AssetRegistryHandler extends Handler {
     curRate: bigint,
     feeBp: bigint,
     feeFixed: bigint,
-    amountPerRewardPoint: bigint,
     verified: boolean,
     stable: boolean,
     sharable: boolean,
@@ -76,7 +62,6 @@ export class AssetRegistryHandler extends Handler {
         curRate: curRate.toString(),
         feeBp: toNumber(feeBp.toString()),
         feeFixed: feeFixed.toString(),
-        amountPerRewardPoint: amountPerRewardPoint.toString(),
         verified,
         stable,
         sharable,

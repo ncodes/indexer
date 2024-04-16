@@ -28,12 +28,6 @@
       },
       {
         "indexed": false,
-        "internalType": "uint256",
-        "name": "amountPerRewardPoint",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
         "internalType": "bool",
         "name": "verified",
         "type": "bool"
@@ -99,11 +93,6 @@
         "type": "uint256"
       },
       {
-        "internalType": "uint256",
-        "name": "amountPerRewardPoint",
-        "type": "uint256"
-      },
-      {
         "internalType": "bool",
         "name": "verified",
         "type": "bool"
@@ -147,11 +136,6 @@
           {
             "internalType": "uint256",
             "name": "feeFixed",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "amountPerRewardPoint",
             "type": "uint256"
           },
           {
@@ -237,11 +221,6 @@
       {
         "internalType": "uint256",
         "name": "feeFixed",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amountPerRewardPoint",
         "type": "uint256"
       },
       {

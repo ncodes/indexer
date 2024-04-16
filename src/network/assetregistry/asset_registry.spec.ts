@@ -52,29 +52,17 @@ describe('AssetRegistryHandler', () => {
         curRate: '200',
         feeBp: 100,
         feeFixed: '100',
-        amountPerRewardPoint: '1000',
         sharable: false,
         stable: true,
         verified: false,
       });
       await expect(
-        handler.onAssetRegistryUpdated(
-          asset,
-          toBigInt(300),
-          toBigInt(150),
-          toBigInt(200),
-          toBigInt(2000),
-          true,
-          false,
-          true,
-          null,
-        ),
+        handler.onAssetRegistryUpdated(asset, toBigInt(300), toBigInt(150), toBigInt(200), true, false, true, null),
       ).resolves.toBeUndefined();
       const res = await AssetRegistry.find({ network: net, address: asset });
       expect(res.curRate).toEqual('300');
       expect(res.feeBp).toEqual(150);
       expect(res.feeFixed).toEqual('200');
-      expect(res.amountPerRewardPoint).toEqual('2000');
       expect(res.verified).toEqual(true);
       expect(res.stable).toEqual(false);
       expect(res.sharable).toEqual(true);

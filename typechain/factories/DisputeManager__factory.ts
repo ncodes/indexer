@@ -398,6 +398,44 @@ const _abi = [
     inputs: [
       {
         indexed: false,
+        internalType: "address",
+        name: "addr",
+        type: "address",
+      },
+    ],
+    name: "UpdatedMinerRegistry",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "draft",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "undraft",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "execute",
+        type: "uint256",
+      },
+    ],
+    name: "UpdatedMinerRewards",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
         internalType: "uint256",
         name: "val",
         type: "uint256",
@@ -417,6 +455,25 @@ const _abi = [
       },
     ],
     name: "UpdatedSharedSlashPortion",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "address",
+        name: "dest",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "amt",
+        type: "uint256",
+      },
+    ],
+    name: "WithdrawnBalance",
     type: "event",
   },
   {
@@ -461,12 +518,12 @@ const _abi = [
     inputs: [
       {
         internalType: "uint256",
-        name: "orderId",
+        name: "_orderId",
         type: "uint256",
       },
       {
         internalType: "uint256",
-        name: "ticketIdx",
+        name: "_ticketIdx",
         type: "uint256",
       },
       {
@@ -777,6 +834,19 @@ const _abi = [
   },
   {
     inputs: [],
+    name: "minerReg",
+    outputs: [
+      {
+        internalType: "contract IMinerRegistry",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "owner",
     outputs: [
       {
@@ -856,17 +926,17 @@ const _abi = [
     inputs: [
       {
         internalType: "uint256",
-        name: "orderId",
+        name: "_orderId",
         type: "uint256",
       },
       {
         internalType: "uint256",
-        name: "ticketIdx",
+        name: "_ticketIdx",
         type: "uint256",
       },
       {
         internalType: "string",
-        name: "vote",
+        name: "_vote",
         type: "string",
       },
       {
@@ -992,12 +1062,12 @@ const _abi = [
   {
     inputs: [
       {
-        internalType: "uint256",
-        name: "val",
-        type: "uint256",
+        internalType: "address",
+        name: "addr",
+        type: "address",
       },
     ],
-    name: "setPredictDur",
+    name: "setMinerRegistry",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -1010,22 +1080,9 @@ const _abi = [
         type: "uint256",
       },
     ],
-    name: "setSharedSlashPortion",
+    name: "setPredictDur",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "sharedSlashPortionBP",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
     type: "function",
   },
   {
@@ -1068,6 +1125,19 @@ const _abi = [
       },
     ],
     name: "undraftMediator",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "dest",
+        type: "address",
+      },
+    ],
+    name: "withdrawBalance",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",

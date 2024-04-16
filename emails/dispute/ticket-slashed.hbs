@@ -3,11 +3,17 @@
     <td style="padding: 10px 30px; font-size: 20px; line-height: 30px;">
       Hello {{userAddrShort}},
       <br><br>
-      Your ticket, #{{ticket.index}}, was slashed for <b>{{reason}}</b> - {{explain}}.
+      
+      Your ticket, #{{ticket.index}}, was slashed 
+        {{#unless byGov}}for <b>{{reason}}</b> - {{explain}}
+        {{else}}by governace{{/unless}}.
+        
       <br><br>
-      Consequently, a portion of your ticket's stake was burned and redistributed to the prevailing side,
-      and the ticket was removed from the market.
+      
+      Consequently, a portion of your ticket's security bond was burned. The ticket was also removed from the pool and will not be considered for drafting.
+      
       <br /><br />
+      
       <div class="alert" {{> alertStyle }}>
         <div style="padding: 5px 10px; ">{{> badgeInfo label='INFO' }} <b>Slashed Amount</b>: {{amount}} {{asset}}</div>
       </div>

@@ -4,10 +4,12 @@ import { ConfigModule, ConfigService as NestConfigService } from '@nestjs/config
 import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigService } from '../config/config.service';
 import { ExchangeRateServiceModule } from '../services/exchange_rate.service';
+import { TwitterService } from '../services/twitter.service';
 import OnCommitPeriodEnd from './dispute_notifications/on_commit_period_end/onCommitPeriodEnd';
 import OnEvidencePeriodEnd from './dispute_notifications/on_evidence_period_end/onEvidencePeriodEnd';
 import OnRevealPeriodEnd from './dispute_notifications/on_reveal_period_end/onRevealPeriodEnd';
 import ExchangeRateFetcher from './exchange_rate_cacher/ExchangeRateFetcher';
+import MentionedTweetFinder from './mentioned_tweet_finder/MentionedTweetFinder';
 import { NotificationModule } from './notifications/NotificationModule';
 import ProviderMessagingStatusUpdate from './provider_messaging_status_update/ProviderMessagingStatusUpdate';
 
@@ -19,6 +21,10 @@ if (!['1', 'true'].includes(process.env.DISABLE_DISPUTE_NOTIFIERS)) {
 
 if (!['1', 'true'].includes(process.env.DISABLE_CURRENCY_RATE_FETCHER)) {
   providers.push(ExchangeRateFetcher);
+}
+
+if (['1', 'true'].includes(process.env.ENABLE_MENTIONED_TWEET_FINDER)) {
+  providers.push(MentionedTweetFinder);
 }
 
 @Module({
@@ -34,6 +40,6 @@ if (!['1', 'true'].includes(process.env.DISABLE_CURRENCY_RATE_FETCHER)) {
     NotificationModule,
     ExchangeRateServiceModule,
   ],
-  providers: [ConfigService, ...providers],
+  providers: [ConfigService, TwitterService, ...providers],
 })
 export class JobsModule {}

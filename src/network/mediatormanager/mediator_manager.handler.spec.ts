@@ -8,6 +8,7 @@ import Event, { Events } from '../../models/event';
 import Market from '../../models/market';
 import Meta, { MetaKeys } from '../../models/meta';
 import MineTask, { MineTaskType } from '../../models/mine_task';
+import PoolApproval from '../../models/pool_approval';
 import Swap from '../../models/swap';
 import Ticket from '../../models/ticket';
 import TicketSlash from '../../models/ticket_slash';
@@ -71,6 +72,14 @@ describe('MediatorManagerHandler', () => {
 
     await Meta.create(
       Meta.makeNetKey(net, MetaKeys.ContractsParams),
+      JSON.stringify({
+        predictDur: 2,
+        evidenceDur: 2,
+      } as PoolParams),
+    );
+
+    await Meta.create(
+      Meta.makeMediatorPoolKey(net, 0),
       JSON.stringify({
         ticketCancelDur: 604800,
         ticketExpireDur: 172800,
@@ -188,6 +197,7 @@ describe('MediatorManagerHandler', () => {
         network: net,
         creator: creator,
         address: marketAddress,
+        mediatorPoolId: 0,
       });
     });
 
@@ -529,6 +539,86 @@ describe('MediatorManagerHandler', () => {
     });
   });
 
+  describe('.onTicketBlocked', () => {
+    it('should mark or unmark ticket as blocked', async () => {
+      let ticket = await Ticket.create({
+        network: net,
+        index: 1,
+        poolId: 1,
+        owner: owner,
+      });
+
+      await expect(handler.onTicketBlocked(owner, toBigInt(1), true, undefined)).resolves.toBeUndefined();
+      ticket = await Ticket.getById(ticket.id);
+      expect(ticket.blocked).toBeTruthy();
+
+      await expect(handler.onTicketBlocked(owner, toBigInt(1), false, undefined)).resolves.toBeUndefined();
+      ticket = await Ticket.getById(ticket.id);
+      expect(ticket.blocked).toBeFalsy();
+    });
+  });
+
+  describe('.onTicketPaused', () => {
+    it('should mark or unmark ticket as paused', async () => {
+      let ticket = await Ticket.create({
+        network: net,
+        index: 1,
+        poolId: 1,
+        owner: owner,
+      });
+
+      const pauseDur = BigInt(86400);
+      const now = moment().unix();
+      const evt = {
+        getBlock: jest.fn().mockResolvedValue({ timestamp: now }),
+      } as any;
+
+      await expect(handler.onTicketPaused(owner, toBigInt(1), true, pauseDur, evt)).resolves.toBeUndefined();
+      ticket = await Ticket.getById(ticket.id);
+      expect(ticket.paused).toBeTruthy();
+      expect(ticket.pauseExpireAt).toBeDefined();
+      expect(moment(ticket.pauseExpireAt).unix()).toEqual(moment.unix(now + Number(pauseDur)).unix());
+
+      await expect(handler.onTicketPaused(owner, toBigInt(1), false, pauseDur, evt)).resolves.toBeUndefined();
+      ticket = await Ticket.getById(ticket.id);
+      expect(ticket.paused).toBeFalsy();
+      expect(ticket.pauseExpireAt).toBeDefined();
+      expect(moment(ticket.pauseExpireAt).unix()).toEqual(moment.unix(now + Number(pauseDur)).unix());
+    });
+  });
+
+  describe('.onPoolApprovalUpdate', () => {
+    it('should correctly handle pool approval', async () => {
+      await expect(
+        handler.onPoolApprovalUpdate(true, toBigInt(1), '0xAddress', true, {} as any),
+      ).resolves.toBeUndefined();
+      let approval = await PoolApproval.getByNetworkPoolIdAddress(net, 1, '0xAddress');
+      expect(approval).toBeDefined();
+      expect(approval.network).toEqual(net);
+      expect(approval.approved).toBeTruthy();
+      expect(approval.poolId).toEqual(1);
+      expect(approval.address).toEqual('0xAddress');
+      expect(approval.isMarket).toBeFalsy();
+
+      await expect(
+        handler.onPoolApprovalUpdate(true, toBigInt(1), '0xAddress', false, {} as any),
+      ).resolves.toBeUndefined();
+      approval = await PoolApproval.getByNetworkPoolIdAddress(net, 1, '0xAddress');
+      expect(approval).toBeUndefined();
+
+      await expect(
+        handler.onPoolApprovalUpdate(false, toBigInt(1), '0xAddress', true, {} as any),
+      ).resolves.toBeUndefined();
+      approval = await PoolApproval.getByNetworkPoolIdAddress(net, 1, '0xAddress');
+      expect(approval).toBeDefined();
+      expect(approval.network).toEqual(net);
+      expect(approval.approved).toBeTruthy();
+      expect(approval.poolId).toEqual(1);
+      expect(approval.address).toEqual('0xAddress');
+      expect(approval.isMarket).toBeTruthy();
+    });
+  });
+
   describe('.onTicketSlashed', () => {
     it('should mark ticket as slashed, update bond and add a slash record', async () => {
       let ticket = await Ticket.create({
@@ -574,6 +664,54 @@ describe('MediatorManagerHandler', () => {
         voted,
         amount: '0.00000000000000001',
         asset: 'P2P',
+      });
+    });
+  });
+
+  describe('.onTicketSlashedByOwner', () => {
+    it("should mark ticket as slashed, update bond and add a slash record with 'byGov' set to true", async () => {
+      let ticket = await Ticket.create({
+        network: net,
+        index: 1,
+        poolId: 1,
+        owner: owner,
+        bond: toBigInt(20).toString(),
+        orderId: 23,
+        joined: true,
+      });
+
+      const evt = {} as any;
+      await expect(handler.onTicketSlashedByOwner(owner, toBigInt(1), toBigInt(10), evt)).resolves.toBeUndefined();
+
+      ticket = await Ticket.getById(ticket.id);
+      expect(ticket.slashed).toBeTruthy();
+      expect(ticket.bond).toEqual(toBigInt(10).toString());
+      expect(ticket.orderId).toBeNull();
+      expect(ticket.joined).toBeFalsy();
+      expect(ticket.poolId).toEqual(null);
+      expect(ticket.blocked).toBeFalsy();
+
+      const slash = await TicketSlash.find({
+        network: net,
+        owner,
+        index: 1,
+      });
+      expect(slash).toBeDefined();
+      expect(slash.amount).toEqual(toBigInt(10).toString());
+      expect(slash.voted).toBeFalsy();
+      expect(slash.winSide).toBeFalsy();
+      expect(slash.orderId).toBeNull();
+      expect(slash.byGov).toBeTruthy();
+
+      expect(mockGrantPoint).toHaveBeenCalledWith('ticket:slashed', net, owner, evt, undefined);
+
+      // expect notification to have been sent
+      expect(mockNotify).toHaveBeenCalledWith(NotificationID.TicketSlashed, net, owner, {
+        ticket,
+        owner,
+        amount: '0.00000000000000001',
+        asset: 'P2P',
+        byGov: true,
       });
     });
   });

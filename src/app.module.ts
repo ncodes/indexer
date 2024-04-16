@@ -8,6 +8,7 @@ import { JsonBodyMiddleware } from './common/middlewares/body.middleware';
 import AppConfig from './config/app.config';
 import AuthConfig from './config/auth.config';
 import KnexConfig from './config/knex.config';
+import { AirdropModule } from './controllers/airdrop/airdrop.module';
 import { AssetsModule } from './controllers/assets/assets.module';
 import { AuthModule } from './controllers/auth/auth.module';
 import { BadgesModule } from './controllers/badges/badges.module';
@@ -63,6 +64,7 @@ function getModules() {
     FilesModule,
     PointModule,
     ReferralModule,
+    AirdropModule,
   ];
 
   return process.env.OFF != 'true' ? modules : [];

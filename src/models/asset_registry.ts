@@ -1,6 +1,6 @@
-import { BaseModel } from './base';
 import Objection, { Transaction } from 'objection';
 import { randStr } from '../common/common';
+import { BaseModel } from './base';
 
 /**
  * AssetRegistry contains information about an asset
@@ -16,8 +16,6 @@ export default class AssetRegistry extends BaseModel {
   feeBp: number = undefined;
   // The fixed fee rate charged by the protocol (denominated in P2P)
   feeFixed: string = undefined;
-  // How much unit equates to 1 reward point (denominated in the asset)
-  amountPerRewardPoint: string = undefined;
   // Indicates whether the asset is verified
   verified: boolean = undefined;
   // Indicates whether the asset is a stablecoin

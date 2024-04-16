@@ -8,6 +8,7 @@ import * as disputeManagerABI from '../../abi/DisputeManager.json';
 import * as erc20TokenABI from '../../abi/ERC20.json';
 import * as marketCoreABI from '../../abi/MarketCore.json';
 import * as mediatorManagerABI from '../../abi/MediatorManager.json';
+import * as minerRegABI from '../../abi/MinerRegistry.json';
 import * as nftABI from '../../abi/NFT.json';
 import * as p2pTokenABI from '../../abi/Token.json';
 import {
@@ -18,6 +19,7 @@ import {
   Energon,
   MarketCore,
   MediatorManager,
+  MinerRegistry,
   NFT,
   Token,
 } from '../../typechain';
@@ -98,6 +100,14 @@ export class ContractManager {
         assetRegABI,
         provider,
       ) as unknown as AssetRegistry;
+
+    const minerRegAddr = getChainByName(chain).contracts['minerRegistry'].address;
+    if (minerRegAddr)
+      this.contracts[chain].minerRegistry = new Contract(
+        minerRegAddr,
+        minerRegABI,
+        provider,
+      ) as unknown as MinerRegistry;
 
     const energonAddr = getChainByName(chain).contracts['energon'].address;
     if (energonAddr)

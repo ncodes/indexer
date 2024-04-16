@@ -55,12 +55,18 @@ export default class Ticket extends BaseModel {
   drafted: boolean = undefined;
   // Indicate whether the ticket has been slashed
   slashed: boolean = undefined;
+  // Indicate whether the ticket is blocked
+  blocked: boolean = undefined;
+  // Indicate whether the ticket is paused
+  paused: boolean = undefined;
   // The time when the ticket is considered cancelled
   cancelAt: string = undefined;
   // The time the ticket was drained
   drainedAt: string = undefined;
   // The time the ticket was drafted
   draftedAt: string = undefined;
+  // The time the ticket pause state is expired
+  pauseExpireAt: string = undefined;
 
   /** Not Persisted */
   market: Market;

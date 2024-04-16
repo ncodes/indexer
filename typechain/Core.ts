@@ -79,17 +79,11 @@ export declare namespace Structs {
     target: string;
   };
 
-  export type MarketDurStruct = {
-    disputeDelayDur: BigNumberish;
-    evidenceDur: BigNumberish;
-    predictDur: BigNumberish;
-  };
+  export type MarketDurStruct = { disputeDelayDur: BigNumberish };
 
-  export type MarketDurStructOutput = [
-    disputeDelayDur: bigint,
-    evidenceDur: bigint,
-    predictDur: bigint
-  ] & { disputeDelayDur: bigint; evidenceDur: bigint; predictDur: bigint };
+  export type MarketDurStructOutput = [disputeDelayDur: bigint] & {
+    disputeDelayDur: bigint;
+  };
 
   export type AssetStruct = { addr: AddressLike; assetType: BigNumberish };
 
@@ -350,6 +344,7 @@ export interface CoreInterface extends Interface {
       | "isVerified"
       | "markAsDisputed"
       | "markOrderAsPaid"
+      | "markOrderAsPaidByManagerSig"
       | "onERC1155BatchReceived"
       | "onERC1155Received"
       | "operatorBalanceOf"
@@ -372,6 +367,7 @@ export interface CoreInterface extends Interface {
       | "setMaxOpenDisputes"
       | "setMaxOpenOrders"
       | "setMinTimeToPay"
+      | "setMinerRegistry"
       | "setNFT"
       | "setOperator"
       | "setOrderGraceDur"
@@ -416,6 +412,7 @@ export interface CoreInterface extends Interface {
       | "SwapOrderPaid"
       | "TogglePause"
       | "TransferInventorBalance"
+      | "TransferOperatorBalance"
       | "TransferredToFeePool"
       | "UpdatedAMMInfo"
       | "UpdatedAMMPoolInfo"
@@ -433,6 +430,7 @@ export interface CoreInterface extends Interface {
       | "UpdatedMaxOpenDisputes"
       | "UpdatedMaxOpenOrders"
       | "UpdatedMinTimeToPay"
+      | "UpdatedMinerRegistry"
       | "UpdatedNFT"
       | "UpdatedNonFungibleLiquidity"
       | "UpdatedOperator"
@@ -551,6 +549,10 @@ export interface CoreInterface extends Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "markOrderAsPaidByManagerSig",
+    values: [BigNumberish, BigNumberish, BytesLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "onERC1155BatchReceived",
     values: [
       AddressLike,
@@ -640,6 +642,10 @@ export interface CoreInterface extends Interface {
   encodeFunctionData(
     functionFragment: "setMinTimeToPay",
     values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setMinerRegistry",
+    values: [AddressLike]
   ): string;
   encodeFunctionData(functionFragment: "setNFT", values: [AddressLike]): string;
   encodeFunctionData(
@@ -846,6 +852,10 @@ export interface CoreInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "markOrderAsPaidByManagerSig",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "onERC1155BatchReceived",
     data: BytesLike
   ): Result;
@@ -922,6 +932,10 @@ export interface CoreInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "setMinTimeToPay",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setMinerRegistry",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "setNFT", data: BytesLike): Result;
@@ -1014,19 +1028,19 @@ export namespace FinalizedByManagerSigEvent {
     manager: AddressLike,
     finalizer: AddressLike,
     orderId: BigNumberish,
-    released: boolean
+    action: BigNumberish
   ];
   export type OutputTuple = [
     manager: string,
     finalizer: string,
     orderId: bigint,
-    released: boolean
+    action: bigint
   ];
   export interface OutputObject {
     manager: string;
     finalizer: string;
     orderId: bigint;
-    released: boolean;
+    action: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -1343,11 +1357,17 @@ export namespace SwapOrderEvent {
 export namespace SwapOrderPaidEvent {
   export type InputTuple = [
     orderID: BigNumberish,
+    payer: AddressLike,
     disputeDelayDur: BigNumberish
   ];
-  export type OutputTuple = [orderID: bigint, disputeDelayDur: bigint];
+  export type OutputTuple = [
+    orderID: bigint,
+    payer: string,
+    disputeDelayDur: bigint
+  ];
   export interface OutputObject {
     orderID: bigint;
+    payer: string;
     disputeDelayDur: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
@@ -1382,10 +1402,33 @@ export namespace TogglePauseEvent {
 }
 
 export namespace TransferInventorBalanceEvent {
-  export type InputTuple = [asset: AddressLike, amount: BigNumberish];
-  export type OutputTuple = [asset: string, amount: bigint];
+  export type InputTuple = [
+    owner: AddressLike,
+    token: AddressLike,
+    amount: BigNumberish
+  ];
+  export type OutputTuple = [owner: string, token: string, amount: bigint];
   export interface OutputObject {
-    asset: string;
+    owner: string;
+    token: string;
+    amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace TransferOperatorBalanceEvent {
+  export type InputTuple = [
+    owner: AddressLike,
+    token: AddressLike,
+    amount: BigNumberish
+  ];
+  export type OutputTuple = [owner: string, token: string, amount: bigint];
+  export interface OutputObject {
+    owner: string;
+    token: string;
     amount: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
@@ -1693,6 +1736,18 @@ export namespace UpdatedMinTimeToPayEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace UpdatedMinerRegistryEvent {
+  export type InputTuple = [addr: AddressLike];
+  export type OutputTuple = [addr: string];
+  export interface OutputObject {
+    addr: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace UpdatedNFTEvent {
   export type InputTuple = [addr: AddressLike];
   export type OutputTuple = [addr: string];
@@ -1920,7 +1975,7 @@ export interface Core extends BaseContract {
   >;
 
   feeBalanceOf: TypedContractMethod<
-    [owner: AddressLike, asset: AddressLike],
+    [_owner: AddressLike, _asset: AddressLike],
     [bigint],
     "view"
   >;
@@ -1928,7 +1983,7 @@ export interface Core extends BaseContract {
   getFeeBPs: TypedContractMethod<[], [[bigint, bigint, bigint]], "view">;
 
   getLiquidity: TypedContractMethod<
-    [mid: AddressLike, owner: AddressLike, lid: BigNumberish],
+    [_mid: AddressLike, _owner: AddressLike, _lid: BigNumberish],
     [Structs.LiquidityStructOutput],
     "view"
   >;
@@ -1964,7 +2019,7 @@ export interface Core extends BaseContract {
   >;
 
   hasLiquidity: TypedContractMethod<
-    [mid: AddressLike, owner: AddressLike, lid: BigNumberish],
+    [_mid: AddressLike, _owner: AddressLike, _lid: BigNumberish],
     [boolean],
     "view"
   >;
@@ -1983,6 +2038,12 @@ export interface Core extends BaseContract {
 
   markOrderAsPaid: TypedContractMethod<
     [id: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  markOrderAsPaidByManagerSig: TypedContractMethod<
+    [id: BigNumberish, expireAt: BigNumberish, signature: BytesLike],
     [void],
     "nonpayable"
   >;
@@ -2099,6 +2160,12 @@ export interface Core extends BaseContract {
     "nonpayable"
   >;
 
+  setMinerRegistry: TypedContractMethod<
+    [addr: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
   setNFT: TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
 
   setOperator: TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
@@ -2182,6 +2249,7 @@ export interface Core extends BaseContract {
         string,
         string,
         string,
+        string,
         string
       ] & {
         ints: StructsLib.UintSlotState2StructOutput;
@@ -2195,6 +2263,7 @@ export interface Core extends BaseContract {
         feePurse: string;
         badge: string;
         operatorMgr: string;
+        minerReg: string;
       }
     ],
     "view"
@@ -2219,7 +2288,7 @@ export interface Core extends BaseContract {
       operator: BigNumberish
     ],
     [void],
-    "nonpayable"
+    "payable"
   >;
 
   togglePause: TypedContractMethod<
@@ -2264,16 +2333,16 @@ export interface Core extends BaseContract {
       ]
     ],
     [void],
-    "nonpayable"
+    "payable"
   >;
 
   updateLiquidityPrice: TypedContractMethod<
     [
-      marketId: AddressLike,
-      owner: AddressLike,
-      lid: BigNumberish,
-      price: BigNumberish,
-      expireAt: BigNumberish
+      _marketId: AddressLike,
+      _owner: AddressLike,
+      _lid: BigNumberish,
+      _price: BigNumberish,
+      _expireAt: BigNumberish
     ],
     [void],
     "nonpayable"
@@ -2414,7 +2483,7 @@ export interface Core extends BaseContract {
   getFunction(
     nameOrSignature: "feeBalanceOf"
   ): TypedContractMethod<
-    [owner: AddressLike, asset: AddressLike],
+    [_owner: AddressLike, _asset: AddressLike],
     [bigint],
     "view"
   >;
@@ -2424,7 +2493,7 @@ export interface Core extends BaseContract {
   getFunction(
     nameOrSignature: "getLiquidity"
   ): TypedContractMethod<
-    [mid: AddressLike, owner: AddressLike, lid: BigNumberish],
+    [_mid: AddressLike, _owner: AddressLike, _lid: BigNumberish],
     [Structs.LiquidityStructOutput],
     "view"
   >;
@@ -2466,7 +2535,7 @@ export interface Core extends BaseContract {
   getFunction(
     nameOrSignature: "hasLiquidity"
   ): TypedContractMethod<
-    [mid: AddressLike, owner: AddressLike, lid: BigNumberish],
+    [_mid: AddressLike, _owner: AddressLike, _lid: BigNumberish],
     [boolean],
     "view"
   >;
@@ -2485,6 +2554,13 @@ export interface Core extends BaseContract {
   getFunction(
     nameOrSignature: "markOrderAsPaid"
   ): TypedContractMethod<[id: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "markOrderAsPaidByManagerSig"
+  ): TypedContractMethod<
+    [id: BigNumberish, expireAt: BigNumberish, signature: BytesLike],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "onERC1155BatchReceived"
   ): TypedContractMethod<
@@ -2592,6 +2668,9 @@ export interface Core extends BaseContract {
     nameOrSignature: "setMinTimeToPay"
   ): TypedContractMethod<[val: BigNumberish], [void], "nonpayable">;
   getFunction(
+    nameOrSignature: "setMinerRegistry"
+  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "setNFT"
   ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
   getFunction(
@@ -2676,6 +2755,7 @@ export interface Core extends BaseContract {
         string,
         string,
         string,
+        string,
         string
       ] & {
         ints: StructsLib.UintSlotState2StructOutput;
@@ -2689,6 +2769,7 @@ export interface Core extends BaseContract {
         feePurse: string;
         badge: string;
         operatorMgr: string;
+        minerReg: string;
       }
     ],
     "view"
@@ -2711,7 +2792,7 @@ export interface Core extends BaseContract {
       operator: BigNumberish
     ],
     [void],
-    "nonpayable"
+    "payable"
   >;
   getFunction(
     nameOrSignature: "togglePause"
@@ -2749,17 +2830,17 @@ export interface Core extends BaseContract {
       ]
     ],
     [void],
-    "nonpayable"
+    "payable"
   >;
   getFunction(
     nameOrSignature: "updateLiquidityPrice"
   ): TypedContractMethod<
     [
-      marketId: AddressLike,
-      owner: AddressLike,
-      lid: BigNumberish,
-      price: BigNumberish,
-      expireAt: BigNumberish
+      _marketId: AddressLike,
+      _owner: AddressLike,
+      _lid: BigNumberish,
+      _price: BigNumberish,
+      _expireAt: BigNumberish
     ],
     [void],
     "nonpayable"
@@ -2936,6 +3017,13 @@ export interface Core extends BaseContract {
     TransferInventorBalanceEvent.OutputObject
   >;
   getEvent(
+    key: "TransferOperatorBalance"
+  ): TypedContractEvent<
+    TransferOperatorBalanceEvent.InputTuple,
+    TransferOperatorBalanceEvent.OutputTuple,
+    TransferOperatorBalanceEvent.OutputObject
+  >;
+  getEvent(
     key: "TransferredToFeePool"
   ): TypedContractEvent<
     TransferredToFeePoolEvent.InputTuple,
@@ -3055,6 +3143,13 @@ export interface Core extends BaseContract {
     UpdatedMinTimeToPayEvent.OutputObject
   >;
   getEvent(
+    key: "UpdatedMinerRegistry"
+  ): TypedContractEvent<
+    UpdatedMinerRegistryEvent.InputTuple,
+    UpdatedMinerRegistryEvent.OutputTuple,
+    UpdatedMinerRegistryEvent.OutputObject
+  >;
+  getEvent(
     key: "UpdatedNFT"
   ): TypedContractEvent<
     UpdatedNFTEvent.InputTuple,
@@ -3091,7 +3186,7 @@ export interface Core extends BaseContract {
   >;
 
   filters: {
-    "FinalizedByManagerSig(address,address,uint256,bool)": TypedContractEvent<
+    "FinalizedByManagerSig(address,address,uint256,uint256)": TypedContractEvent<
       FinalizedByManagerSigEvent.InputTuple,
       FinalizedByManagerSigEvent.OutputTuple,
       FinalizedByManagerSigEvent.OutputObject
@@ -3245,7 +3340,7 @@ export interface Core extends BaseContract {
       SwapOrderEvent.OutputObject
     >;
 
-    "SwapOrderPaid(uint256,uint256)": TypedContractEvent<
+    "SwapOrderPaid(uint256,address,uint256)": TypedContractEvent<
       SwapOrderPaidEvent.InputTuple,
       SwapOrderPaidEvent.OutputTuple,
       SwapOrderPaidEvent.OutputObject
@@ -3267,7 +3362,7 @@ export interface Core extends BaseContract {
       TogglePauseEvent.OutputObject
     >;
 
-    "TransferInventorBalance(address,uint256)": TypedContractEvent<
+    "TransferInventorBalance(address,address,uint256)": TypedContractEvent<
       TransferInventorBalanceEvent.InputTuple,
       TransferInventorBalanceEvent.OutputTuple,
       TransferInventorBalanceEvent.OutputObject
@@ -3276,6 +3371,17 @@ export interface Core extends BaseContract {
       TransferInventorBalanceEvent.InputTuple,
       TransferInventorBalanceEvent.OutputTuple,
       TransferInventorBalanceEvent.OutputObject
+    >;
+
+    "TransferOperatorBalance(address,address,uint256)": TypedContractEvent<
+      TransferOperatorBalanceEvent.InputTuple,
+      TransferOperatorBalanceEvent.OutputTuple,
+      TransferOperatorBalanceEvent.OutputObject
+    >;
+    TransferOperatorBalance: TypedContractEvent<
+      TransferOperatorBalanceEvent.InputTuple,
+      TransferOperatorBalanceEvent.OutputTuple,
+      TransferOperatorBalanceEvent.OutputObject
     >;
 
     "TransferredToFeePool(address,uint256,address,uint256)": TypedContractEvent<
@@ -3463,6 +3569,17 @@ export interface Core extends BaseContract {
       UpdatedMinTimeToPayEvent.InputTuple,
       UpdatedMinTimeToPayEvent.OutputTuple,
       UpdatedMinTimeToPayEvent.OutputObject
+    >;
+
+    "UpdatedMinerRegistry(address)": TypedContractEvent<
+      UpdatedMinerRegistryEvent.InputTuple,
+      UpdatedMinerRegistryEvent.OutputTuple,
+      UpdatedMinerRegistryEvent.OutputObject
+    >;
+    UpdatedMinerRegistry: TypedContractEvent<
+      UpdatedMinerRegistryEvent.InputTuple,
+      UpdatedMinerRegistryEvent.OutputTuple,
+      UpdatedMinerRegistryEvent.OutputObject
     >;
 
     "UpdatedNFT(address)": TypedContractEvent<

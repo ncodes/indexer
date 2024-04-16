@@ -17,10 +17,25 @@ export default class User extends BaseModel {
   otpSecret: string;
   referrer: string;
   refCode: string;
-  discordId: string;
   messagingEnabled: boolean;
+  twitterUserId: string;
+  twitterUsername: string;
+  twitterToken: string;
+  twitterLinkedAt: string;
+  discordId: string;
+  discordToken: string;
+  discordLinkedAt: string;
+  isEarlyDiscordMember: boolean;
+  presale: boolean;
+  presaleCountry: string;
+  ipCountry: string;
+  presaleApproved: boolean;
 
   // Not persisted
+  totalUnclaimedAlloc: string;
+  points: number;
+  pointsAllocs: number;
+  pointsAllocsClaimed: boolean;
   totalSwaps: number;
   completionRate: number;
   badges: string[];
@@ -28,6 +43,9 @@ export default class User extends BaseModel {
   volumeUsd: number;
   lastActiveAt: string;
   notificationSettings: Partial<NotificationSetting>;
+  nft: { count?: number; totalAlloc?: number; claimed?: boolean };
+  earlyDiscordMemberAlloc: string;
+  earlyDiscordMemberClaimed: boolean;
 
   constructor(init?: Partial<User>) {
     super();
@@ -44,6 +62,9 @@ export default class User extends BaseModel {
     user.object = 'user';
     delete user.otpSecret;
     delete user.deviceTokenEmail;
+    delete user.twitterToken;
+    delete user.ipCountry;
+    delete user.presaleCountry;
     return user;
   }
 
@@ -155,6 +176,22 @@ export default class User extends BaseModel {
       .whereNotDeleted()
       .withGraphFetched('notificationSettings')
       .first();
+  }
+
+  /**
+   * Get a user by twitter username
+   * @param username The twitter username
+   */
+  static getByTwitterUsername(username: string) {
+    return this.query().where('twitterUsername', 'ILIKE', username).whereNotDeleted().first();
+  }
+
+  /**
+   * Get a user by twitter user ID
+   * @param userId The twitter user ID
+   */
+  static getByTwitterUserId(userId: string) {
+    return this.query().where('twitterUserId', 'ILIKE', userId).whereNotDeleted().first();
   }
 
   /**

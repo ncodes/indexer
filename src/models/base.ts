@@ -1,5 +1,5 @@
-import Objection, { Model } from 'objection';
 import * as moment from 'moment';
+import Objection, { Model } from 'objection';
 import objectionSoftDelete from 'objection-js-soft-delete';
 
 const softDelete = objectionSoftDelete({

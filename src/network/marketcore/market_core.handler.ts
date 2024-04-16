@@ -118,16 +118,9 @@ export class MarketCoreHandler extends Handler {
     );
 
     this.on(
-      'UpdatedDisputeDurations',
-      async (
-        id: string,
-        disputeDelayDur: bigint,
-        evidenceDur: bigint,
-        predictDur: bigint,
-        event: ContractCallEvent,
-        txn: Transaction,
-      ) => {
-        return this.onUpdatedDisputeDurations(id, disputeDelayDur, evidenceDur, predictDur, event, txn);
+      'UpdatedDisputeDelayDuration',
+      async (id: string, disputeDelayDur: bigint, event: ContractCallEvent, txn: Transaction) => {
+        return this.onUpdatedDisputeDelayDuration(id, disputeDelayDur, event, txn);
       },
     );
 
@@ -435,29 +428,16 @@ export class MarketCoreHandler extends Handler {
    * Updated dispute durations
    * @param id The market ID
    * @param disputeDelayDur Number of seconds before dispute can be started
-   * @param evidenceDur Number of seconds within which evidence must be shared
-   * @param predictDur Number of seconds for votes to be committed and revealed
    * @param event The event object
    * @param txn The db transaction object
    */
-  async onUpdatedDisputeDurations(
+  async onUpdatedDisputeDelayDuration(
     id: string,
     disputeDelayDur: bigint,
-    evidenceDur: bigint,
-    predictDur: bigint,
-    event: ContractCallEvent,
+    _event: ContractCallEvent,
     txn?: Transaction,
   ) {
-    await Market.updateByNetworkAddress(
-      this.network,
-      id,
-      {
-        disputeDelayDur: toNumber(disputeDelayDur),
-        evidenceDur: toNumber(evidenceDur),
-        predictDur: toNumber(predictDur),
-      },
-      txn,
-    );
+    await Market.updateByNetworkAddress(this.network, id, { disputeDelayDur: toNumber(disputeDelayDur) }, txn);
   }
 
   /**

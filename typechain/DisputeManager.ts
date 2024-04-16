@@ -86,6 +86,7 @@ export interface DisputeManagerInterface extends Interface {
       | "getDispute"
       | "marketCore"
       | "mediatorMgr"
+      | "minerReg"
       | "owner"
       | "predictDur"
       | "predictions"
@@ -98,12 +99,12 @@ export interface DisputeManagerInterface extends Interface {
       | "setEvidenceDur"
       | "setMarketCore"
       | "setMediatorManager"
+      | "setMinerRegistry"
       | "setPredictDur"
-      | "setSharedSlashPortion"
-      | "sharedSlashPortionBP"
       | "token"
       | "transferOwnership"
       | "undraftMediator"
+      | "withdrawBalance"
       | "withdrawReward"
   ): FunctionFragment;
 
@@ -121,8 +122,11 @@ export interface DisputeManagerInterface extends Interface {
       | "UpdatedEvidenceDur"
       | "UpdatedMarketCore"
       | "UpdatedMediatorManager"
+      | "UpdatedMinerRegistry"
+      | "UpdatedMinerRewards"
       | "UpdatedPredictDur"
       | "UpdatedSharedSlashPortion"
+      | "WithdrawnBalance"
       | "WithdrawnMediatorReward"
       | "WithdrawnReward"
   ): EventFragment;
@@ -168,6 +172,7 @@ export interface DisputeManagerInterface extends Interface {
     functionFragment: "mediatorMgr",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "minerReg", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "predictDur",
@@ -214,16 +219,12 @@ export interface DisputeManagerInterface extends Interface {
     values: [AddressLike]
   ): string;
   encodeFunctionData(
+    functionFragment: "setMinerRegistry",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "setPredictDur",
     values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setSharedSlashPortion",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "sharedSlashPortionBP",
-    values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "token", values?: undefined): string;
   encodeFunctionData(
@@ -233,6 +234,10 @@ export interface DisputeManagerInterface extends Interface {
   encodeFunctionData(
     functionFragment: "undraftMediator",
     values: [BigNumberish, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "withdrawBalance",
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "withdrawReward",
@@ -268,6 +273,7 @@ export interface DisputeManagerInterface extends Interface {
     functionFragment: "mediatorMgr",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "minerReg", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "predictDur", data: BytesLike): Result;
   decodeFunctionResult(
@@ -302,15 +308,11 @@ export interface DisputeManagerInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "setMinerRegistry",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "setPredictDur",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setSharedSlashPortion",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "sharedSlashPortionBP",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "token", data: BytesLike): Result;
@@ -320,6 +322,10 @@ export interface DisputeManagerInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "undraftMediator",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "withdrawBalance",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -594,6 +600,36 @@ export namespace UpdatedMediatorManagerEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace UpdatedMinerRegistryEvent {
+  export type InputTuple = [addr: AddressLike];
+  export type OutputTuple = [addr: string];
+  export interface OutputObject {
+    addr: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace UpdatedMinerRewardsEvent {
+  export type InputTuple = [
+    draft: BigNumberish,
+    undraft: BigNumberish,
+    execute: BigNumberish
+  ];
+  export type OutputTuple = [draft: bigint, undraft: bigint, execute: bigint];
+  export interface OutputObject {
+    draft: bigint;
+    undraft: bigint;
+    execute: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace UpdatedPredictDurEvent {
   export type InputTuple = [val: BigNumberish];
   export type OutputTuple = [val: bigint];
@@ -611,6 +647,19 @@ export namespace UpdatedSharedSlashPortionEvent {
   export type OutputTuple = [val: bigint];
   export interface OutputObject {
     val: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace WithdrawnBalanceEvent {
+  export type InputTuple = [dest: AddressLike, amt: BigNumberish];
+  export type OutputTuple = [dest: string, amt: bigint];
+  export interface OutputObject {
+    dest: string;
+    amt: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -688,7 +737,7 @@ export interface DisputeManager extends BaseContract {
   ): Promise<this>;
 
   commitVote: TypedContractMethod<
-    [orderId: BigNumberish, ticketIdx: BigNumberish, _hash: BytesLike],
+    [_orderId: BigNumberish, _ticketIdx: BigNumberish, _hash: BytesLike],
     [void],
     "nonpayable"
   >;
@@ -761,6 +810,8 @@ export interface DisputeManager extends BaseContract {
 
   mediatorMgr: TypedContractMethod<[], [string], "view">;
 
+  minerReg: TypedContractMethod<[], [string], "view">;
+
   owner: TypedContractMethod<[], [string], "view">;
 
   predictDur: TypedContractMethod<[], [bigint], "view">;
@@ -786,9 +837,9 @@ export interface DisputeManager extends BaseContract {
 
   revealVote: TypedContractMethod<
     [
-      orderId: BigNumberish,
-      ticketIdx: BigNumberish,
-      vote: string,
+      _orderId: BigNumberish,
+      _ticketIdx: BigNumberish,
+      _vote: string,
       _hash: BytesLike
     ],
     [void],
@@ -817,15 +868,13 @@ export interface DisputeManager extends BaseContract {
     "nonpayable"
   >;
 
-  setPredictDur: TypedContractMethod<[val: BigNumberish], [void], "nonpayable">;
-
-  setSharedSlashPortion: TypedContractMethod<
-    [val: BigNumberish],
+  setMinerRegistry: TypedContractMethod<
+    [addr: AddressLike],
     [void],
     "nonpayable"
   >;
 
-  sharedSlashPortionBP: TypedContractMethod<[], [bigint], "view">;
+  setPredictDur: TypedContractMethod<[val: BigNumberish], [void], "nonpayable">;
 
   token: TypedContractMethod<[], [string], "view">;
 
@@ -841,6 +890,12 @@ export interface DisputeManager extends BaseContract {
     "nonpayable"
   >;
 
+  withdrawBalance: TypedContractMethod<
+    [dest: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
   withdrawReward: TypedContractMethod<[], [void], "nonpayable">;
 
   getFunction<T extends ContractMethod = ContractMethod>(
@@ -850,7 +905,7 @@ export interface DisputeManager extends BaseContract {
   getFunction(
     nameOrSignature: "commitVote"
   ): TypedContractMethod<
-    [orderId: BigNumberish, ticketIdx: BigNumberish, _hash: BytesLike],
+    [_orderId: BigNumberish, _ticketIdx: BigNumberish, _hash: BytesLike],
     [void],
     "nonpayable"
   >;
@@ -929,6 +984,9 @@ export interface DisputeManager extends BaseContract {
     nameOrSignature: "mediatorMgr"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "minerReg"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
@@ -959,9 +1017,9 @@ export interface DisputeManager extends BaseContract {
     nameOrSignature: "revealVote"
   ): TypedContractMethod<
     [
-      orderId: BigNumberish,
-      ticketIdx: BigNumberish,
-      vote: string,
+      _orderId: BigNumberish,
+      _ticketIdx: BigNumberish,
+      _vote: string,
       _hash: BytesLike
     ],
     [void],
@@ -989,14 +1047,11 @@ export interface DisputeManager extends BaseContract {
     nameOrSignature: "setMediatorManager"
   ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
   getFunction(
+    nameOrSignature: "setMinerRegistry"
+  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "setPredictDur"
   ): TypedContractMethod<[val: BigNumberish], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "setSharedSlashPortion"
-  ): TypedContractMethod<[val: BigNumberish], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "sharedSlashPortionBP"
-  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "token"
   ): TypedContractMethod<[], [string], "view">;
@@ -1010,6 +1065,9 @@ export interface DisputeManager extends BaseContract {
     [void],
     "nonpayable"
   >;
+  getFunction(
+    nameOrSignature: "withdrawBalance"
+  ): TypedContractMethod<[dest: AddressLike], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "withdrawReward"
   ): TypedContractMethod<[], [void], "nonpayable">;
@@ -1099,6 +1157,20 @@ export interface DisputeManager extends BaseContract {
     UpdatedMediatorManagerEvent.OutputObject
   >;
   getEvent(
+    key: "UpdatedMinerRegistry"
+  ): TypedContractEvent<
+    UpdatedMinerRegistryEvent.InputTuple,
+    UpdatedMinerRegistryEvent.OutputTuple,
+    UpdatedMinerRegistryEvent.OutputObject
+  >;
+  getEvent(
+    key: "UpdatedMinerRewards"
+  ): TypedContractEvent<
+    UpdatedMinerRewardsEvent.InputTuple,
+    UpdatedMinerRewardsEvent.OutputTuple,
+    UpdatedMinerRewardsEvent.OutputObject
+  >;
+  getEvent(
     key: "UpdatedPredictDur"
   ): TypedContractEvent<
     UpdatedPredictDurEvent.InputTuple,
@@ -1111,6 +1183,13 @@ export interface DisputeManager extends BaseContract {
     UpdatedSharedSlashPortionEvent.InputTuple,
     UpdatedSharedSlashPortionEvent.OutputTuple,
     UpdatedSharedSlashPortionEvent.OutputObject
+  >;
+  getEvent(
+    key: "WithdrawnBalance"
+  ): TypedContractEvent<
+    WithdrawnBalanceEvent.InputTuple,
+    WithdrawnBalanceEvent.OutputTuple,
+    WithdrawnBalanceEvent.OutputObject
   >;
   getEvent(
     key: "WithdrawnMediatorReward"
@@ -1260,6 +1339,28 @@ export interface DisputeManager extends BaseContract {
       UpdatedMediatorManagerEvent.OutputObject
     >;
 
+    "UpdatedMinerRegistry(address)": TypedContractEvent<
+      UpdatedMinerRegistryEvent.InputTuple,
+      UpdatedMinerRegistryEvent.OutputTuple,
+      UpdatedMinerRegistryEvent.OutputObject
+    >;
+    UpdatedMinerRegistry: TypedContractEvent<
+      UpdatedMinerRegistryEvent.InputTuple,
+      UpdatedMinerRegistryEvent.OutputTuple,
+      UpdatedMinerRegistryEvent.OutputObject
+    >;
+
+    "UpdatedMinerRewards(uint256,uint256,uint256)": TypedContractEvent<
+      UpdatedMinerRewardsEvent.InputTuple,
+      UpdatedMinerRewardsEvent.OutputTuple,
+      UpdatedMinerRewardsEvent.OutputObject
+    >;
+    UpdatedMinerRewards: TypedContractEvent<
+      UpdatedMinerRewardsEvent.InputTuple,
+      UpdatedMinerRewardsEvent.OutputTuple,
+      UpdatedMinerRewardsEvent.OutputObject
+    >;
+
     "UpdatedPredictDur(uint256)": TypedContractEvent<
       UpdatedPredictDurEvent.InputTuple,
       UpdatedPredictDurEvent.OutputTuple,
@@ -1280,6 +1381,17 @@ export interface DisputeManager extends BaseContract {
       UpdatedSharedSlashPortionEvent.InputTuple,
       UpdatedSharedSlashPortionEvent.OutputTuple,
       UpdatedSharedSlashPortionEvent.OutputObject
+    >;
+
+    "WithdrawnBalance(address,uint256)": TypedContractEvent<
+      WithdrawnBalanceEvent.InputTuple,
+      WithdrawnBalanceEvent.OutputTuple,
+      WithdrawnBalanceEvent.OutputObject
+    >;
+    WithdrawnBalance: TypedContractEvent<
+      WithdrawnBalanceEvent.InputTuple,
+      WithdrawnBalanceEvent.OutputTuple,
+      WithdrawnBalanceEvent.OutputObject
     >;
 
     "WithdrawnMediatorReward(address,uint256)": TypedContractEvent<

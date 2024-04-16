@@ -35,12 +35,6 @@ const _abi = [
       },
       {
         indexed: false,
-        internalType: "uint256",
-        name: "amountPerRewardPoint",
-        type: "uint256",
-      },
-      {
-        indexed: false,
         internalType: "bool",
         name: "verified",
         type: "bool",
@@ -106,11 +100,6 @@ const _abi = [
         type: "uint256",
       },
       {
-        internalType: "uint256",
-        name: "amountPerRewardPoint",
-        type: "uint256",
-      },
-      {
         internalType: "bool",
         name: "verified",
         type: "bool",
@@ -154,11 +143,6 @@ const _abi = [
           {
             internalType: "uint256",
             name: "feeFixed",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "amountPerRewardPoint",
             type: "uint256",
           },
           {
@@ -244,11 +228,6 @@ const _abi = [
       {
         internalType: "uint256",
         name: "feeFixed",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "amountPerRewardPoint",
         type: "uint256",
       },
       {

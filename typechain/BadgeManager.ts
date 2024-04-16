@@ -719,8 +719,8 @@ export interface BadgeManager extends BaseContract {
       path: string,
       addr: AddressLike,
       expireAt: BigNumberish,
-      metadataKeys: string[],
-      metadataValues: string[],
+      metaKeys: string[],
+      metaValues: string[],
       sigExpireAt: BigNumberish,
       sig: BytesLike
     ],
@@ -949,8 +949,8 @@ export interface BadgeManager extends BaseContract {
       path: string,
       addr: AddressLike,
       expireAt: BigNumberish,
-      metadataKeys: string[],
-      metadataValues: string[],
+      metaKeys: string[],
+      metaValues: string[],
       sigExpireAt: BigNumberish,
       sig: BytesLike
     ],

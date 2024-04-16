@@ -1,6 +1,5 @@
 export default () => ({
   app: {
-    network: process.env.NETWORK,
     nodeEnv: process.env.NODE_ENV,
     xmtpEnv: process.env.XMTP_ENV,
     url: process.env.URL,

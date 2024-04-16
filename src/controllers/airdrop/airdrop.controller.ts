@@ -18,6 +18,7 @@ import { Request } from 'express';
 import * as moment from 'moment';
 import { transaction } from 'objection';
 import { Client } from 'twitter-api-sdk';
+import { isLocal } from '../../common/common';
 import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
 import { ok, throw400, throw401 } from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
@@ -244,6 +245,8 @@ export class AirdropController {
   @UseGuards(HasKeyGuard)
   @Post('/claim-alloc/nft')
   async claimNFTAllocation(@Req() req: Request) {
+    if (!isLocal()) throw400('Not available');
+
     const existingAllocation = await Allocation.getByName(`droidpd:${req.user.address}`);
     if (existingAllocation) throw400('Already claimed');
 
@@ -275,6 +278,8 @@ export class AirdropController {
   @UseGuards(HasKeyGuard)
   @Post('/claim-alloc/early-member')
   async claimEarlyMemberAllocation(@Req() req: Request) {
+    if (!isLocal()) throw400('Not available');
+
     const existingAllocation = await Allocation.getByName(`early_member:${req.user.address}`);
     if (existingAllocation) throw400('Already claimed');
 
@@ -302,12 +307,14 @@ export class AirdropController {
   @UseGuards(HasKeyGuard)
   @Post('/claim-alloc/points')
   async claimPointsAllocation(@Req() req: Request) {
+    if (!isLocal()) throw400('Not available');
+
     const existingAllocation = await Allocation.getByName(`points:${req.user.address}`);
     if (existingAllocation) throw400('Already claimed');
 
     // Calculate total allocation
     // TODO: use proper calculation
-    const totalAlloc = 1250;
+    const totalAlloc = 0;
 
     // if (totalAlloc == 0) throw400('No point allocation');
 

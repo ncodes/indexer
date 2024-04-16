@@ -11,6 +11,7 @@ import OnRevealPeriodEnd from './dispute_notifications/on_reveal_period_end/onRe
 import ExchangeRateFetcher from './exchange_rate_cacher/ExchangeRateFetcher';
 import MentionedTweetFinder from './mentioned_tweet_finder/MentionedTweetFinder';
 import { NotificationModule } from './notifications/NotificationModule';
+import PointRedenominator from './point_redominator/PointRedenominator';
 import ProviderMessagingStatusUpdate from './provider_messaging_status_update/ProviderMessagingStatusUpdate';
 
 const providers: any[] = [ProviderMessagingStatusUpdate];
@@ -25,6 +26,10 @@ if (!['1', 'true'].includes(process.env.DISABLE_CURRENCY_RATE_FETCHER)) {
 
 if (['1', 'true'].includes(process.env.ENABLE_MENTIONED_TWEET_FINDER)) {
   providers.push(MentionedTweetFinder);
+}
+
+if (['1', 'true'].includes(process.env.ENABLE_POINT_REDENOMINATOR)) {
+  providers.push(PointRedenominator);
 }
 
 @Module({

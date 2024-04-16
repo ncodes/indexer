@@ -25,6 +25,8 @@ export default () => ({
     pointPerReply: process.env.POINT_PER_REPLY,
     pointsPerRetweet: process.env.POINT_PER_RETWEET,
     ignoreNetworkPoint: process.env.IGNORE_NETWORK_POINT,
+    redenominationRate: process.env.REDENOMINATION_RATE,
+    redenominationLimit: process.env.REDENOMINATION_LIMIT,
     exchangeRateSource: process.env.EXCHANGE_RATE_SOURCE,
     maxSwapImageSize: process.env.MAX_SWAP_IMAGE_SIZE,
     maxSwapVideoSize: process.env.MAX_SWAP_VIDEO_SIZE,

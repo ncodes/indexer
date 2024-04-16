@@ -44,7 +44,9 @@ export default class Point extends BaseModel {
   // The action that caused the point
   action: PointAction;
   // Whether the point is approved
-  approved: boolean; // TODO: used, so remove
+  approved: boolean; // TODO: unsed, so remove
+  // Whether the point is re-denominated
+  redenominated: boolean;
 
   // Not persisted
   owner: User;
@@ -369,5 +371,15 @@ export default class Point extends BaseModel {
       .then((res: any) => {
         return res.totalPoints || '0';
       });
+  }
+
+  /**
+   * Get non-redenominated points
+   * @param limit The limit of the results
+   * @param txn Optional transaction object
+   * @returns
+   */
+  static getNonRedominatedPoints(limit = 100, txn?: Transaction) {
+    return this.query(txn).where('redenominated', false).whereNotDeleted().limit(limit);
   }
 }

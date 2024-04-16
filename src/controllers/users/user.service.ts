@@ -94,7 +94,7 @@ export class UserService {
 
       // Points allocation information
       user.points = parseInt(await Point.getTotalPointsByAddress(user.address));
-      user.pointsAllocs = 1250; // TODO: use proper calculation
+      user.pointsAllocs = 0; // TODO: use proper calculation
       user.pointsAllocsClaimed = !!(await Allocation.getByName(`points:${user.address}`));
 
       // NFT allocation information

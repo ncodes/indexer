@@ -37,6 +37,7 @@ export default class PointRedenominator extends Base {
           await Point.updateById(point.id, {
             point: newPoint.toString(),
             redenominated: true,
+            oldPoint: point.point,
           });
         }
       });

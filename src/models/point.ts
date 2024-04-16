@@ -47,6 +47,8 @@ export default class Point extends BaseModel {
   approved: boolean; // TODO: unsed, so remove
   // Whether the point is re-denominated
   redenominated: boolean;
+  // Pre-redomination point
+  oldPoint: string;
 
   // Not persisted
   owner: User;

@@ -55,15 +55,18 @@ describe('PointRedenominator', () => {
       p1 = await Point.getById(p1.id);
       expect(p1.redenominated).toBe(true);
       expect(p1.point).toBe('100000000');
+      expect(p1.oldPoint).toBe('1000000000000');
 
       await expect(job.process()).resolves.toBeUndefined();
       p2 = await Point.getById(p2.id);
       expect(p2.redenominated).toBe(true);
       expect(p2.point).toBe('200000000');
+      expect(p2.oldPoint).toBe('2000000000000');
 
       await expect(job.process()).resolves.toBeUndefined();
       p1 = await Point.getById(p1.id);
       expect(p1.point).toBe('100000000');
+      expect(p1.oldPoint).toBe('1000000000000');
     });
   });
 });

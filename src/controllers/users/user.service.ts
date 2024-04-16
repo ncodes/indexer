@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { transaction } from 'objection';
-import { isEqualStr, randStr, toDec } from '../../common/common';
+import { isEqualStr, isLocal, randStr, toDec } from '../../common/common';
 import Allocation from '../../models/allocations';
 import BadgeGrant from '../../models/badge_grant';
 import NFTOwner from '../../models/nft_owner';
@@ -100,8 +100,10 @@ export class UserService {
       // NFT allocation information
       const nftsOwned = await NFTOwner.findByAddress(user.address);
       user.nft = { count: nftsOwned.length, totalAlloc: 0, claimed: false };
-      for (const n of nftsOwned) {
-        user.nft.totalAlloc = (user.nft.totalAlloc ?? 0) + NFTAllocations[n.tokenId.toString()];
+      if (isLocal()) {
+        for (const n of nftsOwned) {
+          user.nft.totalAlloc = (user.nft.totalAlloc ?? 0) + NFTAllocations[n.tokenId.toString()];
+        }
       }
       user.nft.claimed = !!(await Allocation.getByName(`droidpd:${user.address}`));
 

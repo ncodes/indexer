@@ -26,6 +26,10 @@ export default class User extends BaseModel {
   discordToken: string;
   discordLinkedAt: string;
   isEarlyDiscordMember: boolean;
+  presale: boolean;
+  presaleCountry: string;
+  ipCountry: string;
+  presaleApproved: boolean;
 
   // Not persisted
   totalUnclaimedAlloc: string;
@@ -59,6 +63,8 @@ export default class User extends BaseModel {
     delete user.otpSecret;
     delete user.deviceTokenEmail;
     delete user.twitterToken;
+    delete user.ipCountry;
+    delete user.presaleCountry;
     return user;
   }
 
@@ -178,6 +184,14 @@ export default class User extends BaseModel {
    */
   static getByTwitterUsername(username: string) {
     return this.query().where('twitterUsername', 'ILIKE', username).whereNotDeleted().first();
+  }
+
+  /**
+   * Get a user by twitter user ID
+   * @param userId The twitter user ID
+   */
+  static getByTwitterUserId(userId: string) {
+    return this.query().where('twitterUserId', 'ILIKE', userId).whereNotDeleted().first();
   }
 
   /**

@@ -109,6 +109,7 @@
     "nodemailer": "^6.9.1",
     "nodemailer-html-to-text": "^3.2.0",
     "nomics": "^0.5.7",
+    "normalize-url": "^8.0.1",
     "numeral": "^2.0.6",
     "objection": "^3.1.4",
     "objection-js-soft-delete": "^3.0.5",

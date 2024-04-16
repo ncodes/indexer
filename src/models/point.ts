@@ -18,6 +18,10 @@ export enum PointAction {
   Energon = 'energon',
   TwitterConnect = 'twitter_connect',
   DiscordConnect = 'discord_connect',
+  QuestBond = 'quest_bond',
+  Quest = 'quest',
+  QuestVote = 'quest_vote',
+  TweetSearch = 'tweet_search_point',
 }
 
 /**

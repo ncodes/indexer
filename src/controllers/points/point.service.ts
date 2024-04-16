@@ -10,7 +10,7 @@ import User from '../../models/user';
 import { ContractCallEvent, pow10 } from '../../network/common';
 import { AuthService } from './../auth/auth.service';
 import { NFTAllocations } from './data/nft_allocation';
-import { MarketPoints } from './data/points';
+import { PointMap } from './data/points';
 
 export const ReferrerPointSharePct = 0.1;
 export const MultiplierActivationTokenId = 3252;
@@ -51,7 +51,7 @@ export class PointService {
     if (this.canIgnorePoint(market.network)) return false;
 
     const pointPerUnit =
-      MarketPoints['swap:' + market.address] ?? MarketPoints[market.instant ? 'swap:instant' : 'swap:interactive'];
+      PointMap['swap:' + market.address] ?? PointMap[market.instant ? 'swap:instant' : 'swap:interactive'];
 
     // Handle ERC20/ERC20.
     // Award points to both taker and provider
@@ -60,7 +60,7 @@ export class PointService {
       const point = amountHD.mul(pointPerUnit);
       if (point.lte(0)) return false;
 
-      const unitPerLevel = toDec(MarketPoints[`swap:level:${market.address}`] || point);
+      const unitPerLevel = toDec(PointMap[`swap:level:${market.address}`] || point);
       const level = Math.max(1, point.div(unitPerLevel).toNumber());
 
       const takerPoint = await Point.create(
@@ -139,7 +139,7 @@ export class PointService {
       const point = amount.mul(pointPerUnit);
       if (point.lte(0)) return false;
 
-      const unitPerLevel = toDec(MarketPoints[`swap:level:${market.address}`] || point);
+      const unitPerLevel = toDec(PointMap[`swap:level:${market.address}`] || point);
       const level = Math.max(1, point.div(unitPerLevel).toNumber());
 
       const takerPoint = await Point.create(
@@ -229,13 +229,13 @@ export class PointService {
     if (!market.involvesERC20() || Market.isSynth(market.baseType)) return false;
 
     const pointPerUnit =
-      MarketPoints['liq:' + market.address] ?? MarketPoints[market.instant ? 'liq:instant' : 'liq:interactive'];
+      PointMap['liq:' + market.address] ?? PointMap[market.instant ? 'liq:instant' : 'liq:interactive'];
 
     const amountHD = toDec(amount).div(pow10(market.baseDecimals));
     const point = amountHD.mul(pointPerUnit);
     if (point.lte(0)) return false;
 
-    const unitPerLevel = toDec(MarketPoints[`liq:level:${market.address}`] || point);
+    const unitPerLevel = toDec(PointMap[`liq:level:${market.address}`] || point);
     const level = Math.max(1, point.div(unitPerLevel).toNumber()) || 1;
     const name = `${PointAction.LiquidityAdd}:${market.address}:${provider}:${liq.lid}`;
     const existingPoint = await Point.getByName(name);
@@ -326,7 +326,7 @@ export class PointService {
   async grantPoint(id: string, net: string, recipient: string, event: ContractCallEvent, txn?: Transaction) {
     if (this.canIgnorePoint(net)) return false;
 
-    const point = MarketPoints[id];
+    const point = PointMap[id];
     if (!point || point == 0) return false;
 
     await Point.create(

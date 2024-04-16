@@ -25,7 +25,6 @@ import type {
 
 export declare namespace Structs {
   export type TicketStruct = {
-    owner: AddressLike;
     idx: BigNumberish;
     poolId: BigNumberish;
     bond: BigNumberish;
@@ -33,12 +32,16 @@ export declare namespace Structs {
     poolIdx: BigNumberish;
     cancelAt: BigNumberish;
     joinBy: BigNumberish;
+    numPaused: BigNumberish;
+    owner: AddressLike;
     drafted: boolean;
     joined: boolean;
+    blocked: boolean;
+    slashed: boolean;
+    paused: boolean;
   };
 
   export type TicketStructOutput = [
-    owner: string,
     idx: bigint,
     poolId: bigint,
     bond: bigint,
@@ -46,10 +49,14 @@ export declare namespace Structs {
     poolIdx: bigint,
     cancelAt: bigint,
     joinBy: bigint,
+    numPaused: bigint,
+    owner: string,
     drafted: boolean,
-    joined: boolean
+    joined: boolean,
+    blocked: boolean,
+    slashed: boolean,
+    paused: boolean
   ] & {
-    owner: string;
     idx: bigint;
     poolId: bigint;
     bond: bigint;
@@ -57,33 +64,53 @@ export declare namespace Structs {
     poolIdx: bigint;
     cancelAt: bigint;
     joinBy: bigint;
+    numPaused: bigint;
+    owner: string;
     drafted: boolean;
     joined: boolean;
+    blocked: boolean;
+    slashed: boolean;
+    paused: boolean;
   };
 
   export type TicketPoolStruct = {
+    exists: boolean;
+    approvedMediatorOnly: boolean;
+    approvedMarketOnly: boolean;
     reqBond: BigNumberish;
     draftReward: BigNumberish;
     winReward: BigNumberish;
     noVoteSlashBP: BigNumberish;
     loseVoteSlashBP: BigNumberish;
     numDraftees: BigNumberish;
+    evidenceDur: BigNumberish;
+    predictDur: BigNumberish;
   };
 
   export type TicketPoolStructOutput = [
+    exists: boolean,
+    approvedMediatorOnly: boolean,
+    approvedMarketOnly: boolean,
     reqBond: bigint,
     draftReward: bigint,
     winReward: bigint,
     noVoteSlashBP: bigint,
     loseVoteSlashBP: bigint,
-    numDraftees: bigint
+    numDraftees: bigint,
+    evidenceDur: bigint,
+    predictDur: bigint
   ] & {
+    exists: boolean;
+    approvedMediatorOnly: boolean;
+    approvedMarketOnly: boolean;
     reqBond: bigint;
     draftReward: bigint;
     winReward: bigint;
     noVoteSlashBP: bigint;
     loseVoteSlashBP: bigint;
     numDraftees: bigint;
+    evidenceDur: bigint;
+    predictDur: bigint;
   };
 }
 
@@ -98,12 +125,18 @@ export interface MediatorManagerInterface extends Interface {
       | "getTicket"
       | "getTicketPool"
       | "getTicketPrice"
+      | "isApprovedMarket"
+      | "isApprovedMediator"
       | "join"
       | "marketCore"
+      | "maxPause"
       | "minInactiveWindowBeforeReset"
       | "numWindows"
       | "owner"
+      | "poolApprovals"
       | "poolExists"
+      | "poolMarketApprovals"
+      | "poolOwners"
       | "poolTickets"
       | "pools"
       | "priceSupplyDeltaBP"
@@ -112,19 +145,24 @@ export interface MediatorManagerInterface extends Interface {
       | "renounceOwnership"
       | "setDisputeManager"
       | "setMarketCore"
+      | "setMaxPause"
       | "setRandomnessProvider"
-      | "setTicketCancelDuration"
-      | "setTicketExpireDuration"
+      | "setTicketDurations"
       | "setTicketMarketParams"
-      | "setTicketMatureDuration"
+      | "slash"
       | "soldOutBP"
       | "ticketCancelDur"
       | "ticketExpireDur"
       | "ticketMatureDur"
+      | "ticketPauseDur"
       | "ticketSold"
       | "ticketSupply"
       | "tickets"
       | "ticketsPerWindow"
+      | "toggleApproveMarket"
+      | "toggleApproveMediator"
+      | "toggleBlock"
+      | "togglePause"
       | "token"
       | "transferOwnership"
       | "undraft"
@@ -138,17 +176,21 @@ export interface MediatorManagerInterface extends Interface {
       | "Drafted"
       | "JoinedPool"
       | "OwnershipTransferred"
+      | "PoolMarketApproval"
+      | "PoolMediatorApproval"
+      | "TicketBlocked"
       | "TicketCancelled"
       | "TicketDrained"
+      | "TicketPaused"
       | "TicketPurchased"
       | "TicketSlashed"
+      | "TicketSlashedByOwner"
       | "Undrafted"
       | "UpdatedDisputeManager"
       | "UpdatedMarketCore"
+      | "UpdatedMaxPause"
       | "UpdatedRandomnessProvider"
-      | "UpdatedTicketCancelDuration"
-      | "UpdatedTicketExpireDuration"
-      | "UpdatedTicketMatureDuration"
+      | "UpdatedTicketDurations"
       | "UpdatedTicketParams"
       | "UpdatedTicketPool"
   ): EventFragment;
@@ -185,11 +227,20 @@ export interface MediatorManagerInterface extends Interface {
     functionFragment: "getTicketPrice",
     values?: undefined
   ): string;
+  encodeFunctionData(
+    functionFragment: "isApprovedMarket",
+    values: [BigNumberish, AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "isApprovedMediator",
+    values: [BigNumberish, AddressLike]
+  ): string;
   encodeFunctionData(functionFragment: "join", values: [BigNumberish]): string;
   encodeFunctionData(
     functionFragment: "marketCore",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "maxPause", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "minInactiveWindowBeforeReset",
     values?: undefined
@@ -200,7 +251,19 @@ export interface MediatorManagerInterface extends Interface {
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
+    functionFragment: "poolApprovals",
+    values: [BigNumberish, AddressLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "poolExists",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "poolMarketApprovals",
+    values: [BigNumberish, AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "poolOwners",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
@@ -233,16 +296,16 @@ export interface MediatorManagerInterface extends Interface {
     values: [AddressLike]
   ): string;
   encodeFunctionData(
+    functionFragment: "setMaxPause",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "setRandomnessProvider",
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "setTicketCancelDuration",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setTicketExpireDuration",
-    values: [BigNumberish]
+    functionFragment: "setTicketDurations",
+    values: [BigNumberish, BigNumberish, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "setTicketMarketParams",
@@ -257,8 +320,8 @@ export interface MediatorManagerInterface extends Interface {
     ]
   ): string;
   encodeFunctionData(
-    functionFragment: "setTicketMatureDuration",
-    values: [BigNumberish]
+    functionFragment: "slash",
+    values: [AddressLike, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "soldOutBP", values?: undefined): string;
   encodeFunctionData(
@@ -271,6 +334,10 @@ export interface MediatorManagerInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "ticketMatureDur",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "ticketPauseDur",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -288,6 +355,22 @@ export interface MediatorManagerInterface extends Interface {
   encodeFunctionData(
     functionFragment: "ticketsPerWindow",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "toggleApproveMarket",
+    values: [BigNumberish, AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "toggleApproveMediator",
+    values: [BigNumberish, AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "toggleBlock",
+    values: [AddressLike, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "togglePause",
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "token", values?: undefined): string;
   encodeFunctionData(
@@ -307,7 +390,11 @@ export interface MediatorManagerInterface extends Interface {
       BigNumberish,
       BigNumberish,
       BigNumberish,
-      BigNumberish
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      boolean,
+      boolean
     ]
   ): string;
   encodeFunctionData(functionFragment: "windowDur", values?: undefined): string;
@@ -342,15 +429,33 @@ export interface MediatorManagerInterface extends Interface {
     functionFragment: "getTicketPrice",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "isApprovedMarket",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "isApprovedMediator",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "join", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "marketCore", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "maxPause", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "minInactiveWindowBeforeReset",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "numWindows", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "poolApprovals",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "poolExists", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "poolMarketApprovals",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "poolOwners", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "poolTickets",
     data: BytesLike
@@ -378,25 +483,22 @@ export interface MediatorManagerInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "setMaxPause",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "setRandomnessProvider",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "setTicketCancelDuration",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setTicketExpireDuration",
+    functionFragment: "setTicketDurations",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "setTicketMarketParams",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "setTicketMatureDuration",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "slash", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "soldOutBP", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "ticketCancelDur",
@@ -410,6 +512,10 @@ export interface MediatorManagerInterface extends Interface {
     functionFragment: "ticketMatureDur",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "ticketPauseDur",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "ticketSold", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "ticketSupply",
@@ -418,6 +524,22 @@ export interface MediatorManagerInterface extends Interface {
   decodeFunctionResult(functionFragment: "tickets", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "ticketsPerWindow",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "toggleApproveMarket",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "toggleApproveMediator",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "toggleBlock",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "togglePause",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "token", data: BytesLike): Result;
@@ -496,6 +618,60 @@ export namespace OwnershipTransferredEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace PoolMarketApprovalEvent {
+  export type InputTuple = [
+    poolId: BigNumberish,
+    addr: AddressLike,
+    approved: boolean
+  ];
+  export type OutputTuple = [poolId: bigint, addr: string, approved: boolean];
+  export interface OutputObject {
+    poolId: bigint;
+    addr: string;
+    approved: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace PoolMediatorApprovalEvent {
+  export type InputTuple = [
+    poolId: BigNumberish,
+    addr: AddressLike,
+    approved: boolean
+  ];
+  export type OutputTuple = [poolId: bigint, addr: string, approved: boolean];
+  export interface OutputObject {
+    poolId: bigint;
+    addr: string;
+    approved: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace TicketBlockedEvent {
+  export type InputTuple = [
+    owner: AddressLike,
+    id: BigNumberish,
+    blocked: boolean
+  ];
+  export type OutputTuple = [owner: string, id: bigint, blocked: boolean];
+  export interface OutputObject {
+    owner: string;
+    id: bigint;
+    blocked: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace TicketCancelledEvent {
   export type InputTuple = [owner: AddressLike, id: BigNumberish];
   export type OutputTuple = [owner: string, id: bigint];
@@ -520,6 +696,31 @@ export namespace TicketDrainedEvent {
     owner: string;
     id: bigint;
     amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace TicketPausedEvent {
+  export type InputTuple = [
+    ticketOwner: AddressLike,
+    ticketId: BigNumberish,
+    paused: boolean,
+    pauseDur: BigNumberish
+  ];
+  export type OutputTuple = [
+    ticketOwner: string,
+    ticketId: bigint,
+    paused: boolean,
+    pauseDur: bigint
+  ];
+  export interface OutputObject {
+    ticketOwner: string;
+    ticketId: bigint;
+    paused: boolean;
+    pauseDur: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -586,6 +787,24 @@ export namespace TicketSlashedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace TicketSlashedByOwnerEvent {
+  export type InputTuple = [
+    owner: AddressLike,
+    ticketId: BigNumberish,
+    amount: BigNumberish
+  ];
+  export type OutputTuple = [owner: string, ticketId: bigint, amount: bigint];
+  export interface OutputObject {
+    owner: string;
+    ticketId: bigint;
+    amount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace UndraftedEvent {
   export type InputTuple = [
     owner: AddressLike,
@@ -635,6 +854,18 @@ export namespace UpdatedMarketCoreEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace UpdatedMaxPauseEvent {
+  export type InputTuple = [maxPause: BigNumberish];
+  export type OutputTuple = [maxPause: bigint];
+  export interface OutputObject {
+    maxPause: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace UpdatedRandomnessProviderEvent {
   export type InputTuple = [val: AddressLike];
   export type OutputTuple = [val: string];
@@ -647,35 +878,24 @@ export namespace UpdatedRandomnessProviderEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export namespace UpdatedTicketCancelDurationEvent {
-  export type InputTuple = [val: BigNumberish];
-  export type OutputTuple = [val: bigint];
+export namespace UpdatedTicketDurationsEvent {
+  export type InputTuple = [
+    ticketCancelDur: BigNumberish,
+    ticketMatureDur: BigNumberish,
+    ticketExpireDur: BigNumberish,
+    ticketPauseDur: BigNumberish
+  ];
+  export type OutputTuple = [
+    ticketCancelDur: bigint,
+    ticketMatureDur: bigint,
+    ticketExpireDur: bigint,
+    ticketPauseDur: bigint
+  ];
   export interface OutputObject {
-    val: bigint;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace UpdatedTicketExpireDurationEvent {
-  export type InputTuple = [val: BigNumberish];
-  export type OutputTuple = [val: bigint];
-  export interface OutputObject {
-    val: bigint;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace UpdatedTicketMatureDurationEvent {
-  export type InputTuple = [val: BigNumberish];
-  export type OutputTuple = [val: bigint];
-  export interface OutputObject {
-    val: bigint;
+    ticketCancelDur: bigint;
+    ticketMatureDur: bigint;
+    ticketExpireDur: bigint;
+    ticketPauseDur: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -725,7 +945,11 @@ export namespace UpdatedTicketPoolEvent {
     winReward: BigNumberish,
     noVoteSlashBP: BigNumberish,
     loseVoteSlashBP: BigNumberish,
-    numDraftees: BigNumberish
+    numDraftees: BigNumberish,
+    evidenceDur: BigNumberish,
+    predictDur: BigNumberish,
+    approvedMediatorOnly: boolean,
+    approvedMarketOnly: boolean
   ];
   export type OutputTuple = [
     poolId: bigint,
@@ -734,7 +958,11 @@ export namespace UpdatedTicketPoolEvent {
     winReward: bigint,
     noVoteSlashBP: bigint,
     loseVoteSlashBP: bigint,
-    numDraftees: bigint
+    numDraftees: bigint,
+    evidenceDur: bigint,
+    predictDur: bigint,
+    approvedMediatorOnly: boolean,
+    approvedMarketOnly: boolean
   ];
   export interface OutputObject {
     poolId: bigint;
@@ -744,6 +972,10 @@ export namespace UpdatedTicketPoolEvent {
     noVoteSlashBP: bigint;
     loseVoteSlashBP: bigint;
     numDraftees: bigint;
+    evidenceDur: bigint;
+    predictDur: bigint;
+    approvedMediatorOnly: boolean;
+    approvedMarketOnly: boolean;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -809,7 +1041,7 @@ export interface MediatorManager extends BaseContract {
   drainTicket: TypedContractMethod<[id: BigNumberish], [void], "nonpayable">;
 
   getTicket: TypedContractMethod<
-    [owner: AddressLike, id: BigNumberish],
+    [ticketOwner: AddressLike, id: BigNumberish],
     [Structs.TicketStructOutput],
     "view"
   >;
@@ -822,9 +1054,23 @@ export interface MediatorManager extends BaseContract {
 
   getTicketPrice: TypedContractMethod<[], [bigint], "view">;
 
+  isApprovedMarket: TypedContractMethod<
+    [poolId: BigNumberish, marketAddr: AddressLike],
+    [boolean],
+    "view"
+  >;
+
+  isApprovedMediator: TypedContractMethod<
+    [poolId: BigNumberish, addr: AddressLike],
+    [boolean],
+    "view"
+  >;
+
   join: TypedContractMethod<[ticketId: BigNumberish], [void], "nonpayable">;
 
   marketCore: TypedContractMethod<[], [string], "view">;
+
+  maxPause: TypedContractMethod<[], [bigint], "view">;
 
   minInactiveWindowBeforeReset: TypedContractMethod<[], [bigint], "view">;
 
@@ -832,7 +1078,21 @@ export interface MediatorManager extends BaseContract {
 
   owner: TypedContractMethod<[], [string], "view">;
 
+  poolApprovals: TypedContractMethod<
+    [arg0: BigNumberish, arg1: AddressLike],
+    [boolean],
+    "view"
+  >;
+
   poolExists: TypedContractMethod<[poolId: BigNumberish], [boolean], "view">;
+
+  poolMarketApprovals: TypedContractMethod<
+    [arg0: BigNumberish, arg1: AddressLike],
+    [boolean],
+    "view"
+  >;
+
+  poolOwners: TypedContractMethod<[arg0: BigNumberish], [string], "view">;
 
   poolTickets: TypedContractMethod<
     [arg0: BigNumberish, arg1: BigNumberish],
@@ -843,13 +1103,30 @@ export interface MediatorManager extends BaseContract {
   pools: TypedContractMethod<
     [arg0: BigNumberish],
     [
-      [bigint, bigint, bigint, bigint, bigint, bigint] & {
+      [
+        boolean,
+        boolean,
+        boolean,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint
+      ] & {
+        exists: boolean;
+        approvedMediatorOnly: boolean;
+        approvedMarketOnly: boolean;
         reqBond: bigint;
         draftReward: bigint;
         winReward: bigint;
         noVoteSlashBP: bigint;
         loseVoteSlashBP: bigint;
         numDraftees: bigint;
+        evidenceDur: bigint;
+        predictDur: bigint;
       }
     ],
     "view"
@@ -879,20 +1156,25 @@ export interface MediatorManager extends BaseContract {
     "nonpayable"
   >;
 
+  setMaxPause: TypedContractMethod<
+    [_maxPause: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
   setRandomnessProvider: TypedContractMethod<
     [provider: AddressLike],
     [void],
     "nonpayable"
   >;
 
-  setTicketCancelDuration: TypedContractMethod<
-    [dur: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
-
-  setTicketExpireDuration: TypedContractMethod<
-    [dur: BigNumberish],
+  setTicketDurations: TypedContractMethod<
+    [
+      _ticketCancelDur: BigNumberish,
+      _ticketMatureDur: BigNumberish,
+      _ticketExpireDur: BigNumberish,
+      _ticketPauseDur: BigNumberish
+    ],
     [void],
     "nonpayable"
   >;
@@ -911,8 +1193,8 @@ export interface MediatorManager extends BaseContract {
     "nonpayable"
   >;
 
-  setTicketMatureDuration: TypedContractMethod<
-    [dur: BigNumberish],
+  slash: TypedContractMethod<
+    [ticketOwner: AddressLike, ticketId: BigNumberish, amount: BigNumberish],
     [void],
     "nonpayable"
   >;
@@ -925,6 +1207,8 @@ export interface MediatorManager extends BaseContract {
 
   ticketMatureDur: TypedContractMethod<[], [bigint], "view">;
 
+  ticketPauseDur: TypedContractMethod<[], [bigint], "view">;
+
   ticketSold: TypedContractMethod<[], [bigint], "view">;
 
   ticketSupply: TypedContractMethod<[], [bigint], "view">;
@@ -933,18 +1217,21 @@ export interface MediatorManager extends BaseContract {
     [arg0: AddressLike, arg1: BigNumberish],
     [
       [
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
         string,
-        bigint,
-        bigint,
-        bigint,
-        bigint,
-        bigint,
-        bigint,
-        bigint,
+        boolean,
+        boolean,
+        boolean,
         boolean,
         boolean
       ] & {
-        owner: string;
         idx: bigint;
         poolId: bigint;
         bond: bigint;
@@ -952,14 +1239,43 @@ export interface MediatorManager extends BaseContract {
         poolIdx: bigint;
         cancelAt: bigint;
         joinBy: bigint;
+        numPaused: bigint;
+        owner: string;
         drafted: boolean;
         joined: boolean;
+        blocked: boolean;
+        slashed: boolean;
+        paused: boolean;
       }
     ],
     "view"
   >;
 
   ticketsPerWindow: TypedContractMethod<[], [bigint], "view">;
+
+  toggleApproveMarket: TypedContractMethod<
+    [poolId: BigNumberish, marketAddr: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  toggleApproveMediator: TypedContractMethod<
+    [poolId: BigNumberish, addr: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  toggleBlock: TypedContractMethod<
+    [ticketOwner: AddressLike, ticketId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  togglePause: TypedContractMethod<
+    [ticketId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
   token: TypedContractMethod<[], [string], "view">;
 
@@ -988,7 +1304,11 @@ export interface MediatorManager extends BaseContract {
       winReward: BigNumberish,
       noVoteSlashBP: BigNumberish,
       loseVoteSlashBP: BigNumberish,
-      numDraftees: BigNumberish
+      numDraftees: BigNumberish,
+      evidenceDur: BigNumberish,
+      predictDur: BigNumberish,
+      approvedMediatorOnly: boolean,
+      approvedMarketOnly: boolean
     ],
     [void],
     "nonpayable"
@@ -1035,7 +1355,7 @@ export interface MediatorManager extends BaseContract {
   getFunction(
     nameOrSignature: "getTicket"
   ): TypedContractMethod<
-    [owner: AddressLike, id: BigNumberish],
+    [ticketOwner: AddressLike, id: BigNumberish],
     [Structs.TicketStructOutput],
     "view"
   >;
@@ -1050,11 +1370,28 @@ export interface MediatorManager extends BaseContract {
     nameOrSignature: "getTicketPrice"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
+    nameOrSignature: "isApprovedMarket"
+  ): TypedContractMethod<
+    [poolId: BigNumberish, marketAddr: AddressLike],
+    [boolean],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "isApprovedMediator"
+  ): TypedContractMethod<
+    [poolId: BigNumberish, addr: AddressLike],
+    [boolean],
+    "view"
+  >;
+  getFunction(
     nameOrSignature: "join"
   ): TypedContractMethod<[ticketId: BigNumberish], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "marketCore"
   ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "maxPause"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "minInactiveWindowBeforeReset"
   ): TypedContractMethod<[], [bigint], "view">;
@@ -1065,8 +1402,25 @@ export interface MediatorManager extends BaseContract {
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "poolApprovals"
+  ): TypedContractMethod<
+    [arg0: BigNumberish, arg1: AddressLike],
+    [boolean],
+    "view"
+  >;
+  getFunction(
     nameOrSignature: "poolExists"
   ): TypedContractMethod<[poolId: BigNumberish], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "poolMarketApprovals"
+  ): TypedContractMethod<
+    [arg0: BigNumberish, arg1: AddressLike],
+    [boolean],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "poolOwners"
+  ): TypedContractMethod<[arg0: BigNumberish], [string], "view">;
   getFunction(
     nameOrSignature: "poolTickets"
   ): TypedContractMethod<
@@ -1079,13 +1433,30 @@ export interface MediatorManager extends BaseContract {
   ): TypedContractMethod<
     [arg0: BigNumberish],
     [
-      [bigint, bigint, bigint, bigint, bigint, bigint] & {
+      [
+        boolean,
+        boolean,
+        boolean,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint
+      ] & {
+        exists: boolean;
+        approvedMediatorOnly: boolean;
+        approvedMarketOnly: boolean;
         reqBond: bigint;
         draftReward: bigint;
         winReward: bigint;
         noVoteSlashBP: bigint;
         loseVoteSlashBP: bigint;
         numDraftees: bigint;
+        evidenceDur: bigint;
+        predictDur: bigint;
       }
     ],
     "view"
@@ -1109,14 +1480,23 @@ export interface MediatorManager extends BaseContract {
     nameOrSignature: "setMarketCore"
   ): TypedContractMethod<[_marketCore: AddressLike], [void], "nonpayable">;
   getFunction(
+    nameOrSignature: "setMaxPause"
+  ): TypedContractMethod<[_maxPause: BigNumberish], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "setRandomnessProvider"
   ): TypedContractMethod<[provider: AddressLike], [void], "nonpayable">;
   getFunction(
-    nameOrSignature: "setTicketCancelDuration"
-  ): TypedContractMethod<[dur: BigNumberish], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "setTicketExpireDuration"
-  ): TypedContractMethod<[dur: BigNumberish], [void], "nonpayable">;
+    nameOrSignature: "setTicketDurations"
+  ): TypedContractMethod<
+    [
+      _ticketCancelDur: BigNumberish,
+      _ticketMatureDur: BigNumberish,
+      _ticketExpireDur: BigNumberish,
+      _ticketPauseDur: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "setTicketMarketParams"
   ): TypedContractMethod<
@@ -1133,8 +1513,12 @@ export interface MediatorManager extends BaseContract {
     "nonpayable"
   >;
   getFunction(
-    nameOrSignature: "setTicketMatureDuration"
-  ): TypedContractMethod<[dur: BigNumberish], [void], "nonpayable">;
+    nameOrSignature: "slash"
+  ): TypedContractMethod<
+    [ticketOwner: AddressLike, ticketId: BigNumberish, amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "soldOutBP"
   ): TypedContractMethod<[], [bigint], "view">;
@@ -1148,6 +1532,9 @@ export interface MediatorManager extends BaseContract {
     nameOrSignature: "ticketMatureDur"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
+    nameOrSignature: "ticketPauseDur"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
     nameOrSignature: "ticketSold"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
@@ -1159,18 +1546,21 @@ export interface MediatorManager extends BaseContract {
     [arg0: AddressLike, arg1: BigNumberish],
     [
       [
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
+        bigint,
         string,
-        bigint,
-        bigint,
-        bigint,
-        bigint,
-        bigint,
-        bigint,
-        bigint,
+        boolean,
+        boolean,
+        boolean,
         boolean,
         boolean
       ] & {
-        owner: string;
         idx: bigint;
         poolId: bigint;
         bond: bigint;
@@ -1178,8 +1568,13 @@ export interface MediatorManager extends BaseContract {
         poolIdx: bigint;
         cancelAt: bigint;
         joinBy: bigint;
+        numPaused: bigint;
+        owner: string;
         drafted: boolean;
         joined: boolean;
+        blocked: boolean;
+        slashed: boolean;
+        paused: boolean;
       }
     ],
     "view"
@@ -1187,6 +1582,30 @@ export interface MediatorManager extends BaseContract {
   getFunction(
     nameOrSignature: "ticketsPerWindow"
   ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "toggleApproveMarket"
+  ): TypedContractMethod<
+    [poolId: BigNumberish, marketAddr: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "toggleApproveMediator"
+  ): TypedContractMethod<
+    [poolId: BigNumberish, addr: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "toggleBlock"
+  ): TypedContractMethod<
+    [ticketOwner: AddressLike, ticketId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "togglePause"
+  ): TypedContractMethod<[ticketId: BigNumberish], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "token"
   ): TypedContractMethod<[], [string], "view">;
@@ -1215,7 +1634,11 @@ export interface MediatorManager extends BaseContract {
       winReward: BigNumberish,
       noVoteSlashBP: BigNumberish,
       loseVoteSlashBP: BigNumberish,
-      numDraftees: BigNumberish
+      numDraftees: BigNumberish,
+      evidenceDur: BigNumberish,
+      predictDur: BigNumberish,
+      approvedMediatorOnly: boolean,
+      approvedMarketOnly: boolean
     ],
     [void],
     "nonpayable"
@@ -1260,6 +1683,27 @@ export interface MediatorManager extends BaseContract {
     OwnershipTransferredEvent.OutputObject
   >;
   getEvent(
+    key: "PoolMarketApproval"
+  ): TypedContractEvent<
+    PoolMarketApprovalEvent.InputTuple,
+    PoolMarketApprovalEvent.OutputTuple,
+    PoolMarketApprovalEvent.OutputObject
+  >;
+  getEvent(
+    key: "PoolMediatorApproval"
+  ): TypedContractEvent<
+    PoolMediatorApprovalEvent.InputTuple,
+    PoolMediatorApprovalEvent.OutputTuple,
+    PoolMediatorApprovalEvent.OutputObject
+  >;
+  getEvent(
+    key: "TicketBlocked"
+  ): TypedContractEvent<
+    TicketBlockedEvent.InputTuple,
+    TicketBlockedEvent.OutputTuple,
+    TicketBlockedEvent.OutputObject
+  >;
+  getEvent(
     key: "TicketCancelled"
   ): TypedContractEvent<
     TicketCancelledEvent.InputTuple,
@@ -1274,6 +1718,13 @@ export interface MediatorManager extends BaseContract {
     TicketDrainedEvent.OutputObject
   >;
   getEvent(
+    key: "TicketPaused"
+  ): TypedContractEvent<
+    TicketPausedEvent.InputTuple,
+    TicketPausedEvent.OutputTuple,
+    TicketPausedEvent.OutputObject
+  >;
+  getEvent(
     key: "TicketPurchased"
   ): TypedContractEvent<
     TicketPurchasedEvent.InputTuple,
@@ -1286,6 +1737,13 @@ export interface MediatorManager extends BaseContract {
     TicketSlashedEvent.InputTuple,
     TicketSlashedEvent.OutputTuple,
     TicketSlashedEvent.OutputObject
+  >;
+  getEvent(
+    key: "TicketSlashedByOwner"
+  ): TypedContractEvent<
+    TicketSlashedByOwnerEvent.InputTuple,
+    TicketSlashedByOwnerEvent.OutputTuple,
+    TicketSlashedByOwnerEvent.OutputObject
   >;
   getEvent(
     key: "Undrafted"
@@ -1309,6 +1767,13 @@ export interface MediatorManager extends BaseContract {
     UpdatedMarketCoreEvent.OutputObject
   >;
   getEvent(
+    key: "UpdatedMaxPause"
+  ): TypedContractEvent<
+    UpdatedMaxPauseEvent.InputTuple,
+    UpdatedMaxPauseEvent.OutputTuple,
+    UpdatedMaxPauseEvent.OutputObject
+  >;
+  getEvent(
     key: "UpdatedRandomnessProvider"
   ): TypedContractEvent<
     UpdatedRandomnessProviderEvent.InputTuple,
@@ -1316,25 +1781,11 @@ export interface MediatorManager extends BaseContract {
     UpdatedRandomnessProviderEvent.OutputObject
   >;
   getEvent(
-    key: "UpdatedTicketCancelDuration"
+    key: "UpdatedTicketDurations"
   ): TypedContractEvent<
-    UpdatedTicketCancelDurationEvent.InputTuple,
-    UpdatedTicketCancelDurationEvent.OutputTuple,
-    UpdatedTicketCancelDurationEvent.OutputObject
-  >;
-  getEvent(
-    key: "UpdatedTicketExpireDuration"
-  ): TypedContractEvent<
-    UpdatedTicketExpireDurationEvent.InputTuple,
-    UpdatedTicketExpireDurationEvent.OutputTuple,
-    UpdatedTicketExpireDurationEvent.OutputObject
-  >;
-  getEvent(
-    key: "UpdatedTicketMatureDuration"
-  ): TypedContractEvent<
-    UpdatedTicketMatureDurationEvent.InputTuple,
-    UpdatedTicketMatureDurationEvent.OutputTuple,
-    UpdatedTicketMatureDurationEvent.OutputObject
+    UpdatedTicketDurationsEvent.InputTuple,
+    UpdatedTicketDurationsEvent.OutputTuple,
+    UpdatedTicketDurationsEvent.OutputObject
   >;
   getEvent(
     key: "UpdatedTicketParams"
@@ -1385,6 +1836,39 @@ export interface MediatorManager extends BaseContract {
       OwnershipTransferredEvent.OutputObject
     >;
 
+    "PoolMarketApproval(uint256,address,bool)": TypedContractEvent<
+      PoolMarketApprovalEvent.InputTuple,
+      PoolMarketApprovalEvent.OutputTuple,
+      PoolMarketApprovalEvent.OutputObject
+    >;
+    PoolMarketApproval: TypedContractEvent<
+      PoolMarketApprovalEvent.InputTuple,
+      PoolMarketApprovalEvent.OutputTuple,
+      PoolMarketApprovalEvent.OutputObject
+    >;
+
+    "PoolMediatorApproval(uint256,address,bool)": TypedContractEvent<
+      PoolMediatorApprovalEvent.InputTuple,
+      PoolMediatorApprovalEvent.OutputTuple,
+      PoolMediatorApprovalEvent.OutputObject
+    >;
+    PoolMediatorApproval: TypedContractEvent<
+      PoolMediatorApprovalEvent.InputTuple,
+      PoolMediatorApprovalEvent.OutputTuple,
+      PoolMediatorApprovalEvent.OutputObject
+    >;
+
+    "TicketBlocked(address,uint256,bool)": TypedContractEvent<
+      TicketBlockedEvent.InputTuple,
+      TicketBlockedEvent.OutputTuple,
+      TicketBlockedEvent.OutputObject
+    >;
+    TicketBlocked: TypedContractEvent<
+      TicketBlockedEvent.InputTuple,
+      TicketBlockedEvent.OutputTuple,
+      TicketBlockedEvent.OutputObject
+    >;
+
     "TicketCancelled(address,uint256)": TypedContractEvent<
       TicketCancelledEvent.InputTuple,
       TicketCancelledEvent.OutputTuple,
@@ -1407,6 +1891,17 @@ export interface MediatorManager extends BaseContract {
       TicketDrainedEvent.OutputObject
     >;
 
+    "TicketPaused(address,uint256,bool,uint256)": TypedContractEvent<
+      TicketPausedEvent.InputTuple,
+      TicketPausedEvent.OutputTuple,
+      TicketPausedEvent.OutputObject
+    >;
+    TicketPaused: TypedContractEvent<
+      TicketPausedEvent.InputTuple,
+      TicketPausedEvent.OutputTuple,
+      TicketPausedEvent.OutputObject
+    >;
+
     "TicketPurchased(address,uint256,uint256,uint256,uint256,uint256)": TypedContractEvent<
       TicketPurchasedEvent.InputTuple,
       TicketPurchasedEvent.OutputTuple,
@@ -1427,6 +1922,17 @@ export interface MediatorManager extends BaseContract {
       TicketSlashedEvent.InputTuple,
       TicketSlashedEvent.OutputTuple,
       TicketSlashedEvent.OutputObject
+    >;
+
+    "TicketSlashedByOwner(address,uint256,uint256)": TypedContractEvent<
+      TicketSlashedByOwnerEvent.InputTuple,
+      TicketSlashedByOwnerEvent.OutputTuple,
+      TicketSlashedByOwnerEvent.OutputObject
+    >;
+    TicketSlashedByOwner: TypedContractEvent<
+      TicketSlashedByOwnerEvent.InputTuple,
+      TicketSlashedByOwnerEvent.OutputTuple,
+      TicketSlashedByOwnerEvent.OutputObject
     >;
 
     "Undrafted(address,uint256,bool,address)": TypedContractEvent<
@@ -1462,6 +1968,17 @@ export interface MediatorManager extends BaseContract {
       UpdatedMarketCoreEvent.OutputObject
     >;
 
+    "UpdatedMaxPause(uint256)": TypedContractEvent<
+      UpdatedMaxPauseEvent.InputTuple,
+      UpdatedMaxPauseEvent.OutputTuple,
+      UpdatedMaxPauseEvent.OutputObject
+    >;
+    UpdatedMaxPause: TypedContractEvent<
+      UpdatedMaxPauseEvent.InputTuple,
+      UpdatedMaxPauseEvent.OutputTuple,
+      UpdatedMaxPauseEvent.OutputObject
+    >;
+
     "UpdatedRandomnessProvider(address)": TypedContractEvent<
       UpdatedRandomnessProviderEvent.InputTuple,
       UpdatedRandomnessProviderEvent.OutputTuple,
@@ -1473,37 +1990,15 @@ export interface MediatorManager extends BaseContract {
       UpdatedRandomnessProviderEvent.OutputObject
     >;
 
-    "UpdatedTicketCancelDuration(uint256)": TypedContractEvent<
-      UpdatedTicketCancelDurationEvent.InputTuple,
-      UpdatedTicketCancelDurationEvent.OutputTuple,
-      UpdatedTicketCancelDurationEvent.OutputObject
+    "UpdatedTicketDurations(uint256,uint256,uint256,uint256)": TypedContractEvent<
+      UpdatedTicketDurationsEvent.InputTuple,
+      UpdatedTicketDurationsEvent.OutputTuple,
+      UpdatedTicketDurationsEvent.OutputObject
     >;
-    UpdatedTicketCancelDuration: TypedContractEvent<
-      UpdatedTicketCancelDurationEvent.InputTuple,
-      UpdatedTicketCancelDurationEvent.OutputTuple,
-      UpdatedTicketCancelDurationEvent.OutputObject
-    >;
-
-    "UpdatedTicketExpireDuration(uint256)": TypedContractEvent<
-      UpdatedTicketExpireDurationEvent.InputTuple,
-      UpdatedTicketExpireDurationEvent.OutputTuple,
-      UpdatedTicketExpireDurationEvent.OutputObject
-    >;
-    UpdatedTicketExpireDuration: TypedContractEvent<
-      UpdatedTicketExpireDurationEvent.InputTuple,
-      UpdatedTicketExpireDurationEvent.OutputTuple,
-      UpdatedTicketExpireDurationEvent.OutputObject
-    >;
-
-    "UpdatedTicketMatureDuration(uint256)": TypedContractEvent<
-      UpdatedTicketMatureDurationEvent.InputTuple,
-      UpdatedTicketMatureDurationEvent.OutputTuple,
-      UpdatedTicketMatureDurationEvent.OutputObject
-    >;
-    UpdatedTicketMatureDuration: TypedContractEvent<
-      UpdatedTicketMatureDurationEvent.InputTuple,
-      UpdatedTicketMatureDurationEvent.OutputTuple,
-      UpdatedTicketMatureDurationEvent.OutputObject
+    UpdatedTicketDurations: TypedContractEvent<
+      UpdatedTicketDurationsEvent.InputTuple,
+      UpdatedTicketDurationsEvent.OutputTuple,
+      UpdatedTicketDurationsEvent.OutputObject
     >;
 
     "UpdatedTicketParams(uint256,uint256,uint256,uint256,uint256,uint256,uint256)": TypedContractEvent<
@@ -1517,7 +2012,7 @@ export interface MediatorManager extends BaseContract {
       UpdatedTicketParamsEvent.OutputObject
     >;
 
-    "UpdatedTicketPool(uint256,uint256,uint256,uint256,uint256,uint256,uint256)": TypedContractEvent<
+    "UpdatedTicketPool(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool)": TypedContractEvent<
       UpdatedTicketPoolEvent.InputTuple,
       UpdatedTicketPoolEvent.OutputTuple,
       UpdatedTicketPoolEvent.OutputObject

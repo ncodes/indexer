@@ -1,5 +1,7 @@
-import { BaseModel } from './base';
 import { Transaction } from 'objection';
+import { BaseModel } from './base';
+
+type K = keyof ContractsParams;
 
 export enum FeeName {
   InstantSwapFeeBp = 'instantSwapFeeBp',
@@ -135,13 +137,14 @@ export default class Meta extends BaseModel {
   static async updateContractsParams(
     network: string,
     txn: Transaction,
-    updFn: (params: { [key: string]: string }) => void,
+    updFn: (params: { ContractParamKey: string }) => void,
   ) {
     const key = Meta.makeNetKey(network, MetaKeys.ContractsParams);
     const existing = await Meta.get(key, txn);
     if (!existing || !existing.value) throw new Error('Contracts params not initialized');
     const obj = JSON.parse(existing.value);
     if (updFn) updFn(obj);
+
     await Meta.update(key, JSON.stringify(obj), txn);
   }
 

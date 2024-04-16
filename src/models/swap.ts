@@ -784,4 +784,33 @@ export default class Swap extends BaseModel {
       .orderBy('createdAt', 'DESC')
       .first();
   }
+
+  /**
+   * Count the number of swaps completed by a taker for a given liquidity
+   * @param taker The address of the taker/swapper
+   * @param market The market address
+   * @param provider The liquidity provider address
+   * @param lid The liquidity id
+   * @param txn Optional transaction object
+   * @returns
+   */
+  static async countSwapsOfTakerForLiquidity(
+    taker: string,
+    market: string,
+    provider: string,
+    lid: number,
+    txn?: Transaction,
+  ) {
+    return this.query(txn)
+      .where('taker', 'ILIKE', taker)
+      .where('marketAddress', 'ilike', market)
+      .where('provider', 'ilike', provider)
+      .where('lid', lid)
+      .whereNotDeleted()
+      .count('id')
+      .first()
+      .then((res: any) => {
+        return res.count;
+      });
+  }
 }

@@ -12,6 +12,7 @@ export { FeePool__factory } from "./FeePool__factory";
 export { LPPool__factory } from "./LPPool__factory";
 export { MarketCore__factory } from "./MarketCore__factory";
 export { MediatorManager__factory } from "./MediatorManager__factory";
+export { MinerRegistry__factory } from "./MinerRegistry__factory";
 export { NFT__factory } from "./NFT__factory";
 export { Token__factory } from "./Token__factory";
 export { TokenPool__factory } from "./TokenPool__factory";

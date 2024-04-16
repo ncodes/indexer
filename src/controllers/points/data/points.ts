@@ -1,4 +1,4 @@
-export const MarketPoints = {
+export const PointMap = {
   'market:created': 10,
 
   // Set swap point per unit in a market
@@ -68,4 +68,7 @@ export const MarketPoints = {
   'ticket:undrafted': 0,
   'ticket:undrafter': 1,
   'ticket:slashed': 0,
+
+  'twitter:connect': 30,
+  'discord:connect': 30,
 };

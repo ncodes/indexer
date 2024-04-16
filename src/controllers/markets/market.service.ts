@@ -1,7 +1,6 @@
 import { getTokenInfo } from '@jointlabs/chains-info';
 import { Injectable, Logger } from '@nestjs/common';
 import * as _ from 'lodash';
-import { handleAxiosError } from '../../common/errors/http_response_error';
 import Liquidity from '../../models/liquidity';
 import Market from '../../models/market';
 import MarketPrice from '../../models/market_price';
@@ -9,6 +8,7 @@ import Meta from '../../models/meta';
 import Swap from '../../models/swap';
 import { MetadataService } from '../../services/metadata/metadata.service';
 
+const UnknownTokenLogoURL = 'https://storage.googleapis.com/joint-images/token-logos/unknown.svg';
 @Injectable()
 export class MarketService {
   logger = new Logger(MarketService.name);
@@ -44,7 +44,7 @@ export class MarketService {
           quoteInfo = await this.metadataSrv.getTokenInfo(net, quoteAddress);
           mkt.lowestPriceUsd = await this.metadataSrv.tryToUsd(net, lowestPrice, quoteAddress, quoteInfo);
         } catch (e) {
-          this.logger.error('failed to fetch token info: ' + quoteAddress, handleAxiosError(e).message);
+          this.logger.error('failed to fetch token info: ' + quoteAddress);
         }
       }
 
@@ -75,7 +75,7 @@ export class MarketService {
           baseInfo = await this.metadataSrv.getTokenInfo(net, baseAddress);
           mkt.baseLogo = baseInfo.logoURI;
         } catch (e) {
-          this.logger.error('failed to fetch token info: ' + quoteAddress, handleAxiosError(e).message);
+          this.logger.error('failed to fetch token info: ' + quoteAddress);
         }
 
         // Try to find logo in local token list.
@@ -84,7 +84,7 @@ export class MarketService {
           if (info) mkt.baseLogo = info.logoURI;
         }
 
-        mkt.baseLogo = mkt.baseLogo || 'https://storage.googleapis.com/joint-images/token-logos/unknown.svg';
+        mkt.baseLogo = mkt.baseLogo || UnknownTokenLogoURL;
       }
 
       if (select.includes(`quoteLogo`) || !select.length) {
@@ -92,7 +92,7 @@ export class MarketService {
           quoteInfo = await this.metadataSrv.getTokenInfo(net, quoteAddress);
           mkt.quoteLogo = quoteInfo.logoURI;
         } catch (e) {
-          this.logger.error('failed to fetch token info: ' + quoteAddress, handleAxiosError(e).message);
+          this.logger.error('failed to fetch token info: ' + quoteAddress);
         }
 
         // Try to find logo in local token list.
@@ -101,7 +101,7 @@ export class MarketService {
           if (info) mkt.quoteLogo = info.logoURI;
         }
 
-        mkt.quoteLogo = mkt.quoteLogo || 'https://storage.googleapis.com/joint-images/token-logos/unknown.svg';
+        mkt.quoteLogo = mkt.quoteLogo || UnknownTokenLogoURL;
       }
 
       if (select.includes(`amountSwapped`) || !select.length) {
@@ -109,7 +109,7 @@ export class MarketService {
           baseInfo = await this.metadataSrv.getTokenInfo(net, baseAddress);
           mkt.amountSwappedUsd = await this.metadataSrv.tryToUsd(net, mkt.amountSwapped, mkt.baseAddress, baseInfo);
         } catch (e) {
-          this.logger.error('failed to fetch token info: ' + quoteAddress, handleAxiosError(e).message);
+          this.logger.error('failed to fetch token info: ' + quoteAddress);
         }
       }
 
@@ -126,12 +126,21 @@ export class MarketService {
         mkt.disputeDelayDur = await Meta.getContractParam(mkt.network, 'defaultDisputeDelayDur');
       }
 
-      if (!mkt.evidenceDur) {
-        mkt.evidenceDur = await Meta.getContractParam(mkt.network, 'evidenceDur');
-      }
+      if (!mkt.evidenceDur || !mkt.predictDur) {
+        const poolParamKey = Meta.makeMediatorPoolKey(mkt.network, mkt.mediatorPoolId);
+        const poolInfo = await Meta.getJSON<PoolParams>(poolParamKey);
 
-      if (!mkt.predictDur) {
-        mkt.predictDur = await Meta.getContractParam(mkt.network, 'predictDur');
+        if (!mkt.evidenceDur) {
+          mkt.evidenceDur = poolInfo.evidenceDur
+            ? poolInfo.evidenceDur
+            : await Meta.getContractParam(mkt.network, 'evidenceDur');
+        }
+
+        if (!mkt.predictDur) {
+          mkt.predictDur = poolInfo.predictDur
+            ? poolInfo.predictDur
+            : await Meta.getContractParam(mkt.network, 'predictDur');
+        }
       }
 
       return Promise.resolve();

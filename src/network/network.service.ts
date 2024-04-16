@@ -18,6 +18,7 @@ import { CoreHandler } from './core/core.handler';
 import { DisputeManagerHandler } from './disputemanager/dispute_manager.handler';
 import { MarketCoreHandler } from './marketcore/market_core.handler';
 import { MediatorManagerHandler } from './mediatormanager/mediator_manager.handler';
+import { MinerRegistryHandler } from './miner_registry/miner_registry.handler';
 import { NFTHandler } from './nft/nft.handler';
 import { getNetworkParams } from './params';
 import Processor from './processor';
@@ -147,6 +148,7 @@ export default class NetworkService {
       ),
       new BadgeManagerHandler(this, provider, network, this.contractMgr.contracts[network]),
       new AssetRegistryHandler(provider, network, this.contractMgr.contracts[network]),
+      new MinerRegistryHandler(provider, network, this.contractMgr.contracts[network]),
     ];
 
     // Create event processor

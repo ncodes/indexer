@@ -185,7 +185,6 @@ export class MiscController {
 
   @Get('req-country-code')
   async getRequestCountryCode(@Req() req: Request) {
-    return ok().data({ code: 'NG' }).build();
     return ok().data({ code: req.headers['cf-ipcountry'] }).build();
   }
 }

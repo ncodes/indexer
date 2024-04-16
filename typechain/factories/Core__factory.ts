@@ -65,9 +65,9 @@ const _abi = [
       },
       {
         indexed: false,
-        internalType: "bool",
-        name: "released",
-        type: "bool",
+        internalType: "uint256",
+        name: "action",
+        type: "uint256",
       },
     ],
     name: "FinalizedByManagerSig",
@@ -505,6 +505,12 @@ const _abi = [
       },
       {
         indexed: false,
+        internalType: "address",
+        name: "payer",
+        type: "address",
+      },
+      {
+        indexed: false,
         internalType: "uint256",
         name: "disputeDelayDur",
         type: "uint256",
@@ -550,7 +556,13 @@ const _abi = [
       {
         indexed: false,
         internalType: "address",
-        name: "asset",
+        name: "owner",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "token",
         type: "address",
       },
       {
@@ -561,6 +573,31 @@ const _abi = [
       },
     ],
     name: "TransferInventorBalance",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "address",
+        name: "owner",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "token",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+    ],
+    name: "TransferOperatorBalance",
     type: "event",
   },
   {
@@ -932,6 +969,19 @@ const _abi = [
       },
     ],
     name: "UpdatedMinTimeToPay",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "address",
+        name: "addr",
+        type: "address",
+      },
+    ],
+    name: "UpdatedMinerRegistry",
     type: "event",
   },
   {
@@ -1334,12 +1384,12 @@ const _abi = [
     inputs: [
       {
         internalType: "address",
-        name: "owner",
+        name: "_owner",
         type: "address",
       },
       {
         internalType: "address",
-        name: "asset",
+        name: "_asset",
         type: "address",
       },
     ],
@@ -1371,17 +1421,17 @@ const _abi = [
     inputs: [
       {
         internalType: "address",
-        name: "mid",
+        name: "_mid",
         type: "address",
       },
       {
         internalType: "address",
-        name: "owner",
+        name: "_owner",
         type: "address",
       },
       {
         internalType: "uint256",
-        name: "lid",
+        name: "_lid",
         type: "uint256",
       },
     ],
@@ -1549,16 +1599,6 @@ const _abi = [
               {
                 internalType: "uint256",
                 name: "disputeDelayDur",
-                type: "uint256",
-              },
-              {
-                internalType: "uint256",
-                name: "evidenceDur",
-                type: "uint256",
-              },
-              {
-                internalType: "uint256",
-                name: "predictDur",
                 type: "uint256",
               },
             ],
@@ -1896,17 +1936,17 @@ const _abi = [
     inputs: [
       {
         internalType: "address",
-        name: "mid",
+        name: "_mid",
         type: "address",
       },
       {
         internalType: "address",
-        name: "owner",
+        name: "_owner",
         type: "address",
       },
       {
         internalType: "uint256",
-        name: "lid",
+        name: "_lid",
         type: "uint256",
       },
     ],
@@ -2000,6 +2040,29 @@ const _abi = [
       },
     ],
     name: "markOrderAsPaid",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "id",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "expireAt",
+        type: "uint256",
+      },
+      {
+        internalType: "bytes",
+        name: "signature",
+        type: "bytes",
+      },
+    ],
+    name: "markOrderAsPaidByManagerSig",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -2390,6 +2453,19 @@ const _abi = [
         type: "address",
       },
     ],
+    name: "setMinerRegistry",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "addr",
+        type: "address",
+      },
+    ],
     name: "setNFT",
     outputs: [],
     stateMutability: "nonpayable",
@@ -2680,6 +2756,11 @@ const _abi = [
         name: "operatorMgr",
         type: "address",
       },
+      {
+        internalType: "contract IMinerRegistry",
+        name: "minerReg",
+        type: "address",
+      },
     ],
     stateMutability: "view",
     type: "function",
@@ -2753,7 +2834,7 @@ const _abi = [
     ],
     name: "swapQuoteForBase",
     outputs: [],
-    stateMutability: "nonpayable",
+    stateMutability: "payable",
     type: "function",
   },
   {
@@ -2863,34 +2944,34 @@ const _abi = [
     ],
     name: "updateFungibleLiquidity",
     outputs: [],
-    stateMutability: "nonpayable",
+    stateMutability: "payable",
     type: "function",
   },
   {
     inputs: [
       {
         internalType: "address",
-        name: "marketId",
+        name: "_marketId",
         type: "address",
       },
       {
         internalType: "address",
-        name: "owner",
+        name: "_owner",
         type: "address",
       },
       {
         internalType: "uint256",
-        name: "lid",
+        name: "_lid",
         type: "uint256",
       },
       {
         internalType: "uint256",
-        name: "price",
+        name: "_price",
         type: "uint256",
       },
       {
         internalType: "uint256",
-        name: "expireAt",
+        name: "_expireAt",
         type: "uint256",
       },
     ],

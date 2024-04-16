@@ -1,1 +1,3 @@
-Your ticket, #{{ticket.index}}, was slashed for {{reason}}. <a href="{{ticketManageLink}}">Manage Tickets</a>
+Your ticket, #{{ticket.index}}, was slashed 
+{{#unless byGov}}for {{reason}}{{else}}by governance{{/unless}}. 
+<a href="{{ticketManageLink}}">Manage Tickets</a>

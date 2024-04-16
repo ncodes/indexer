@@ -1,22 +1,12 @@
-import { Body, Controller, Delete, Get, Post, Put, Query, Req, Res, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Put, Query, Req, UseGuards, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { isAxiosError } from 'axios';
 import { isEmail } from 'class-validator';
-import { Request, Response } from 'express';
+import { Request } from 'express';
 import { transaction } from 'objection';
 import { authenticator, totp } from 'otplib';
-import { isEqualStr, sha1 } from '../../common/common';
-import { handleAxiosError } from '../../common/errors/http_response_error';
+import { sha1 } from '../../common/common';
 import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
-import {
-  ErrBadSignature,
-  ErrorMessages,
-  ErrorTypes,
-  ok,
-  throw400,
-  throw404,
-  throw500,
-} from '../../common/responses/responses';
+import { ErrBadSignature, ErrorMessages, ErrorTypes, ok, throw400, throw404 } from '../../common/responses/responses';
 import { Roles } from '../../common/roles';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
@@ -27,7 +17,7 @@ import Session from '../../models/session';
 import User from '../../models/user';
 import { UserService } from '../users/user.service';
 import { AuthService } from './auth.service';
-import { AuthByDiscordDTO, AuthDTO, GetAuthorizerDTO, VerifyEmailDTO } from './dto';
+import { AuthDTO, GetAuthorizerDTO, VerifyEmailDTO } from './dto';
 import { hasSeenSignature, makeSession, parseWalletSignature } from './utils';
 
 /**
@@ -188,69 +178,5 @@ export class AuthController {
     if (!user) throw404(ErrorMessages.UserNotFound);
 
     return ok().data(user).build<User>();
-  }
-
-  /**
-   * Verify a user's discord account
-   * @param res The response object
-   * @param body The request body
-   * @returns
-   */
-  @Post('/verify-discord')
-  async verifyDiscord(@Res() res: Response, @Body(new ValidationPipe(CommonValidationPipeOpt)) body: AuthByDiscordDTO) {
-    let user = await User.getByAddress(body.address);
-
-    // Create user if not found
-    // Enable referrer state for the user
-    if (!user) {
-      user = await User.create({ role: Roles.User, address: body.address });
-      await this.userSrv.enableReferrerOps(true, body.refCode, user);
-    }
-
-    // Get access token
-    let authData: { access_token: string };
-    try {
-      authData = await this.authSrv.getDiscordAccessToken(body.code);
-    } catch (error) {
-      if (isAxiosError(error)) {
-        const axiosErr = handleAxiosError(error);
-        throw400((axiosErr.message as any).error_description, ErrorTypes.Auth);
-      } else {
-        throw500('server error');
-      }
-    }
-
-    // Get user info
-    let getUserResp: any;
-    try {
-      getUserResp = await this.authSrv.getDiscordAuthedUser(authData.access_token);
-    } catch (error) {
-      throw500('server error');
-    }
-
-    // Get user guilds
-    let guildsListResp: any[];
-    try {
-      guildsListResp = await this.authSrv.getAuthedUserDiscordGuilds(authData.access_token);
-    } catch (error) {
-      throw500('server error');
-    }
-
-    // Find existing user with the same discord ID
-    const existingUser = await User.getByDiscordId(getUserResp.username);
-    if (existingUser && !isEqualStr(existingUser.address, user.address)) {
-      throw400('Discord account is already linked to another user', ErrorTypes.Auth);
-    }
-
-    // Find guild with a specific ID
-    const guild = guildsListResp.find((guild: { id: any }) => guild.id === this.cfgSrv.get('app.discord.jointGuildId'));
-    if (!guild) throw404('Not a member of Joint discord server');
-
-    // Update the user's discord ID
-    await User.updateById(user.id, {
-      discordId: getUserResp.username,
-    });
-
-    return ok(res).status(200).data({ ok: true }).build();
   }
 }

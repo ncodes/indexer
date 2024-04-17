@@ -49,6 +49,8 @@ export default class Point extends BaseModel {
   redenominated: boolean;
   // Pre-redomination point
   oldPoint: string;
+  // Whether the point is a trialnet point
+  isTrialnet: boolean;
 
   // Not persisted
   owner: User;
@@ -62,6 +64,7 @@ export default class Point extends BaseModel {
   $beforeInsert() {
     super.$beforeInsert();
     this.id = 'point_' + randStr(24);
+    if (this.isTrialnet == undefined) this.isTrialnet = true;
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
@@ -284,9 +287,14 @@ export default class Point extends BaseModel {
   }
 
   // Get total points of address
-  static async getTotalPointsByAddress(address: string, txn?: Transaction) {
+  static async getTotalPointsByAddress(address: string, isTrialnet?: boolean, txn?: Transaction) {
     return this.query(txn)
       .where('address', 'ilike', address)
+      .whereNot((q) => {
+        if (isTrialnet != undefined) {
+          return q.where({ isTrialnet });
+        }
+      })
       .whereNotDeleted()
       .sum('point as totalPoints')
       .first()
@@ -382,6 +390,6 @@ export default class Point extends BaseModel {
    * @returns
    */
   static getNonRedominatedPoints(limit = 100, txn?: Transaction) {
-    return this.query(txn).where('redenominated', false).whereNotDeleted().limit(limit);
+    return this.query(txn).where('redenominated', false).where('isTrialnet', false).whereNotDeleted().limit(limit);
   }
 }

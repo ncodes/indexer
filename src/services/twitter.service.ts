@@ -25,7 +25,7 @@ interface Datum {
 }
 
 interface Referencedtweet {
-  type: 'quoted' | 'replied_to';
+  type: 'quoted' | 'replied_to' | 'retweeted';
   id: string;
 }
 

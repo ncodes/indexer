@@ -76,6 +76,16 @@ export default class TwitterEngagement extends BaseModel {
   }
 
   /**
+   * Get by tweetId
+   * @param tweetId The tweet ID
+   * @param txn Optional transaction object
+   * @returns
+   */
+  static getByTweetId(tweetId: string, txn?: Transaction) {
+    return this.query(txn).where({ tweetId }).whereNotDeleted().first();
+  }
+
+  /**
    * updateById updates a record by ID
    * @param id the notification id
    * @param udp the fields to be updated

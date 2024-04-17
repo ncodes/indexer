@@ -36,7 +36,7 @@ export default class MentionedTweetFinder extends Base {
         const lastId = await Meta.get('mentionedTweetFinder:lastId');
 
         const result = await this.twitterSrv.search(
-          '@0xJoint',
+          '(@0xJoint) OR (P2P)',
           lastId ? lastId.value : undefined,
           undefined,
           10,
@@ -51,21 +51,27 @@ export default class MentionedTweetFinder extends Base {
           );
 
           for (const tweet of result.data) {
+            const text = tweet.text.toLowerCase();
+            if (!text.includes('$p2p') && !text.includes('@0xjoint')) continue;
+
+            this.logger.log(`Processing tweet: ${tweet.id}`);
+
             const type = tweet.referenced_tweets ? tweet.referenced_tweets[0].type : 'tweet';
-            const user = await User.getByTwitterUserId(tweet.author_id);
+            const tweetOwner = await User.getByTwitterUserId(tweet.author_id);
+            const referencedTweetId = tweet.referenced_tweets ? tweet.referenced_tweets[0].id : undefined;
             const existing = await TwitterEngagement.getByTypeAndTweetId(type, tweet.id);
             if (!existing) {
               await TwitterEngagement.create({
                 tweetId: tweet.id,
-                userId: user?.id,
+                userId: tweetOwner?.id,
                 twitterUserId: tweet.author_id,
-                address: user?.address,
+                address: tweetOwner?.address,
                 type: type,
-                referencedTweetId: tweet.referenced_tweets ? tweet.referenced_tweets[0].id : undefined,
+                referencedTweetId,
               });
             }
 
-            if (user) {
+            if (tweetOwner) {
               const name = `tweet-finder-${tweet.id}`;
               const existingPoint = await Point.getByName(name);
               if (!existingPoint) {
@@ -76,10 +82,34 @@ export default class MentionedTweetFinder extends Base {
                 else if (type == 'retweeted') point = this.cfgSrv.get('app.pointPerRetweet');
                 await Point.create({
                   name: `tweet-finder-${tweet.id}`,
-                  address: user?.address,
+                  address: tweetOwner?.address,
                   point: point,
                   action: PointAction.TweetSearch,
                 });
+              }
+            }
+
+            if (referencedTweetId) {
+              const referencedEngagement = await TwitterEngagement.getByTweetId(referencedTweetId);
+              if (referencedEngagement) {
+                const referencedTweetOwner = await User.getByTwitterUserId(referencedEngagement.twitterUserId);
+                if (!referencedTweetOwner || referencedTweetOwner.id == tweetOwner.id) {
+                  continue;
+                }
+
+                const name = `tweet-finder-ref-${tweet.id}-${referencedTweetId}`;
+                const existingPoint = await Point.getByName(name);
+                if (!existingPoint) {
+                  if (referencedTweetOwner) {
+                    const point = this.cfgSrv.get('app.pointPerReference');
+                    await Point.create({
+                      name,
+                      address: referencedTweetOwner?.address,
+                      point: point,
+                      action: PointAction.TweetSearch,
+                    });
+                  }
+                }
               }
             }
           }

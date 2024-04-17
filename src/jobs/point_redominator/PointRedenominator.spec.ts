@@ -48,8 +48,9 @@ describe('PointRedenominator', () => {
     });
 
     it('should correctly redenominate all points', async () => {
-      let p1 = await Point.create({ point: '1000000000000', redenominated: false });
-      let p2 = await Point.create({ point: '2000000000000', redenominated: false });
+      let p1 = await Point.create({ point: '1000000000000', isTrialnet: false, redenominated: false });
+      let p2 = await Point.create({ point: '2000000000000', isTrialnet: false, redenominated: false });
+      let p3 = await Point.create({ point: '2000000000000', isTrialnet: true, redenominated: false });
 
       await expect(job.process()).resolves.toBeUndefined();
       p1 = await Point.getById(p1.id);
@@ -62,6 +63,10 @@ describe('PointRedenominator', () => {
       expect(p2.redenominated).toBe(true);
       expect(p2.point).toBe('200000000');
       expect(p2.oldPoint).toBe('2000000000000');
+
+      await expect(job.process()).resolves.toBeUndefined();
+      p3 = await Point.getById(p3.id);
+      expect(p3.redenominated).toBe(false);
 
       await expect(job.process()).resolves.toBeUndefined();
       p1 = await Point.getById(p1.id);

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Param, Query, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as _ from 'lodash';
 import { recoverMessageAddress } from 'viem';
@@ -61,7 +61,7 @@ export class PointController {
    * @param body.sig The signature
    * @returns
    */
-  @Post('/from-energon-balance')
+  // @Post('/from-energon-balance')
   async createPointFromEnergonBalance(
     @Body(new ValidationPipe(CommonValidationPipeOpt)) body: CreatePointFromEnergonBalance,
   ) {
@@ -120,7 +120,7 @@ export class PointController {
    * @param body.sig The signature
    * @returns
    */
-  @Post('/from-nft-owned')
+  // @Post('/from-nft-owned')
   async createPointFromNFTOwned(
     @Body(new ValidationPipe(CommonValidationPipeOpt)) body: CreatePointFromEnergonBalance,
   ) {
@@ -173,7 +173,7 @@ export class PointController {
    * @param body.sig The signature
    * @returns
    */
-  @Post('/from-galxe')
+  // @Post('/from-galxe')
   async createPointFromGalxe(@Body(new ValidationPipe(CommonValidationPipeOpt)) body: CreatePointFromEnergonBalance) {
     try {
       const address = await recoverMessageAddress({

@@ -578,7 +578,7 @@ export class MediatorManagerHandler extends Handler {
       owner,
       amount: commify(formatEther(amount)),
       voted,
-      asset: 'P2P',
+      asset: 'JOIN',
     });
   }
 
@@ -635,7 +635,7 @@ export class MediatorManagerHandler extends Handler {
       owner,
       amount: commify(formatEther(amount)),
       byGov: true,
-      asset: 'P2P',
+      asset: 'JOIN',
     });
   }
 

@@ -33,7 +33,7 @@ const NetworkServiceMock = jest.fn().mockImplementation(() => {
     getContracts: jest.fn().mockImplementation(() => {
       return {
         p2pToken: {
-          target: '0xP2P',
+          target: '0xJOIN',
         },
         mediatorMgr: {
           getTicketPrice: mockGetTicketPrice,

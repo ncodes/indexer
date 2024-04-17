@@ -10,11 +10,11 @@ export default class AssetRegistry extends BaseModel {
   network: string = undefined;
   // Asset address
   address: string = undefined;
-  // The asset exchange rate to P2P (e.g 1 ASSET -> P2P)
+  // The asset exchange rate to JOIN (e.g 1 ASSET -> JOIN)
   curRate: string = undefined;
   // The basis point fee to charged by protocol on the asset
   feeBp: number = undefined;
-  // The fixed fee rate charged by the protocol (denominated in P2P)
+  // The fixed fee rate charged by the protocol (denominated in JOIN)
   feeFixed: string = undefined;
   // Indicates whether the asset is verified
   verified: boolean = undefined;

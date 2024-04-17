@@ -34,9 +34,9 @@ export class AssetRegistryHandler extends Handler {
   /**
    * Updated an assets registry information
    * @param address The asset address
-   * @param curRate The asset exchange rate to P2P (e.g 1 ASSET -> P2P)
+   * @param curRate The asset exchange rate to JOIN (e.g 1 ASSET -> JOIN)
    * @param feeBp The basis point fee to charged by protocol on the asset
-   * @param feeFixed The fixed fee rate charged by the protocol (denominated in P2P)
+   * @param feeFixed The fixed fee rate charged by the protocol (denominated in JOIN)
    * @param verified Indicates whether the asset is verified
    * @param stable Indicates whether the asset is a stablecoin
    * @param shareable Indicates whether fee earned on the asset are shareable

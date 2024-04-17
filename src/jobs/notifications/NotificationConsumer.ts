@@ -804,7 +804,7 @@ export class NoticationConsumer {
       ...job,
       ...job.data,
       userAddrShort: shortenAddr(job.recipientAddr),
-      asset: 'P2P',
+      asset: 'JOIN',
       title: 'Dispute Outcome',
       orderLink: `${job.appUrl}/swap/${swap.orderId}`,
       btnValue: 'View Order',

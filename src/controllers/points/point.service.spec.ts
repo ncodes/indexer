@@ -18,7 +18,7 @@ const ConfigServiceMock = jest.fn().mockImplementation(() => {
 
 jest.mock('./data/points.ts', () => {
   return {
-    MarketPoints: {
+    PointMap: {
       'swap:instant': 10,
       'swap:interactive': 15,
       'swap:0xMarket': 20,

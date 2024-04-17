@@ -84,7 +84,7 @@ export default class SwapService {
 
     // SYNTH/SYNTH
     if (Market.isSynth(baseType) && Market.isSynth(quoteType)) {
-      info.symbol = 'P2P';
+      info.symbol = 'JOIN';
       info.fee = toDec(swap.marketCreatorFee).add(swap.protocolFee).toFixed();
       info.address = getContractsAddress(swap.network, 'token');
     }

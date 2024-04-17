@@ -998,10 +998,10 @@ export class CoreHandler extends Handler {
   /**
    * The protocol fees was updated
    * @param instantSwapFeeBp The new instant swap fee in basis point
-   * @param syntheticSwapFeeBp The new p2p swap fee in basis point
+   * @param syntheticSwapFeeBp The new JOIN swap fee in basis point
    * @param stableSwapFeeBp The new stable asset swap fee in basis point
-   * @param fixedSynthSwapFee The new fee for SYNTH/SYNTH swap (in P2P)
-   * @param fixedNFTSwapFee The new fee for NFT/NFT swap (in P2P)
+   * @param fixedSynthSwapFee The new fee for SYNTH/SYNTH swap (in JOIN)
+   * @param fixedNFTSwapFee The new fee for NFT/NFT swap (in JOIN)
    * @param instantNFTSwapFeeBp The new fee for NFT/ERC20 swap in basis point
    * @param _event The event object
    * @param txn The transaction object

@@ -663,7 +663,7 @@ describe('MediatorManagerHandler', () => {
         owner,
         voted,
         amount: '0.00000000000000001',
-        asset: 'P2P',
+        asset: 'JOIN',
       });
     });
   });
@@ -710,7 +710,7 @@ describe('MediatorManagerHandler', () => {
         ticket,
         owner,
         amount: '0.00000000000000001',
-        asset: 'P2P',
+        asset: 'JOIN',
         byGov: true,
       });
     });

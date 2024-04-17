@@ -12,7 +12,7 @@ import SwapService from './swap.service';
 
 jest.mock('../../common/common', () => ({
   ...jest.requireActual('../../common/common'),
-  getContractsAddress: jest.fn().mockReturnValue('0xP2PAddress'),
+  getContractsAddress: jest.fn().mockReturnValue('0xJOINAddress'),
 }));
 
 const mockCfgGet = jest.fn();
@@ -194,8 +194,8 @@ describe('SwapsService', () => {
       swap.protocolFee = '20';
       const res = service.getFeeInfo(swap);
       expect(res).toEqual({
-        symbol: 'P2P',
-        address: '0xP2PAddress',
+        symbol: 'JOIN',
+        address: '0xJOINAddress',
         fee: '30',
       });
     });

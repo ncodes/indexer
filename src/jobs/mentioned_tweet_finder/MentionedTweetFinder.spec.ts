@@ -3,13 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { DBService } from '../../db/db.service';
-import { ExchangeRateService } from '../../services/exchange_rate.service';
+import { TwitterService } from '../../services/twitter.service';
 import MentionedTweetFinder from './MentionedTweetFinder';
-
-const mockUpdateCache = jest.fn();
-const ExchangeRateServiceMock = jest.fn().mockImplementation(() => {
-  return { updateCache: mockUpdateCache };
-});
 
 describe('MentionedTweetFinder', () => {
   let app: INestApplication;
@@ -27,15 +22,10 @@ describe('MentionedTweetFinder', () => {
 
   beforeEach(async () => {
     await db.truncateTables();
-    ExchangeRateServiceMock.mockClear();
-    mockUpdateCache.mockReset();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ConfigService, MentionedTweetFinder],
-    })
-      .overrideProvider(ExchangeRateService)
-      .useValue(new ExchangeRateServiceMock())
-      .compile();
+      providers: [ConfigService, MentionedTweetFinder, TwitterService],
+    }).compile();
 
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());
@@ -47,11 +37,6 @@ describe('MentionedTweetFinder', () => {
     it('should return undefined if job is already processing', async () => {
       job.setProcessing(true);
       await expect(job.process()).resolves.toBeUndefined();
-    });
-
-    it('should call price service to update price of assets', async () => {
-      await expect(job.process()).resolves.toBeUndefined();
-      expect(mockUpdateCache).toHaveBeenCalled();
     });
   });
 });

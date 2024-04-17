@@ -36,7 +36,7 @@ export default class MentionedTweetFinder extends Base {
         const lastId = await Meta.get('mentionedTweetFinder:lastId');
 
         const result = await this.twitterSrv.search(
-          '($P2P) OR (@0xJoint)',
+          '@0xJoint',
           lastId ? lastId.value : undefined,
           undefined,
           10,

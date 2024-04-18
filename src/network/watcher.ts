@@ -7,10 +7,12 @@ import { Handler } from './handler';
 import Processor from './processor';
 
 export class Watcher {
-  logger = new Logger(Watcher.name);
-  handlers: Handler[] = [];
+  private logger = new Logger(Watcher.name);
+  private handlers: Handler[] = [];
   private isSyncing = false;
   private lastActiveTime = Date.now();
+  private pendingBlocks: number[] = [];
+  private processingPendingBlocks = false;
 
   /**
    * Initialize the watcher
@@ -28,6 +30,7 @@ export class Watcher {
   async add(...handlers: Handler[]) {
     this.handlers = handlers;
     this.sync();
+    this.processPendingBlocks();
   }
 
   /**
@@ -134,7 +137,46 @@ export class Watcher {
   }
 
   /**
-   * Watch for event on new block
+   * Process new pending blocks.
+   */
+  processPendingBlocks() {
+    setInterval(async () => {
+      if (this.processingPendingBlocks) return;
+      this.processingPendingBlocks = true;
+
+      const newBlock = this.pendingBlocks.shift();
+      if (!newBlock) {
+        this.processingPendingBlocks = false;
+        return;
+      }
+
+      try {
+        const key = this.makeSyncKey();
+        let meta = await Meta.get(key);
+        if (!meta || meta.value == '0') meta = new Meta({ value: this.getLaunchHeight() });
+        if (parseInt(meta.value) >= newBlock) return;
+
+        this.logInfo(`Processing pending block: ${newBlock}`);
+
+        // Process events
+        await this.fetchAndProcessEvents(newBlock - 1, newBlock);
+
+        this.logInfo(`Finished processing block: ${newBlock}`);
+
+        // Update the last sync height
+        await Meta.update(key, newBlock.toString());
+      } catch (e) {
+        this.logError('Error:processPendingBlocks: ', e);
+        this.logError('Attempt to restarting sync after processPendingBlocks error');
+        this.sync();
+      } finally {
+        this.processingPendingBlocks = false;
+      }
+    }, 500);
+  }
+
+  /**
+   * Watch and cache new blocks
    */
   watchBlock() {
     const listener = async (curBlock: number) => {
@@ -142,19 +184,14 @@ export class Watcher {
         const key = this.makeSyncKey();
         let meta = await Meta.get(key);
         if (!meta || meta.value == '0') meta = new Meta({ value: this.getLaunchHeight() });
-        if (parseInt(meta.value) >= curBlock) {
-          return;
-        }
+        if (parseInt(meta.value) >= curBlock) return;
 
-        this.logInfo(`New block: ${curBlock}`, { isSyncing: this.isSyncing });
+        this.logInfo(`New block received`, { isSyncing: this.isSyncing });
 
-        // Process events
-        await this.fetchAndProcessEvents(curBlock - 1, curBlock);
-
-        this.logInfo(`Finished processing block: ${curBlock}`);
-
-        // Update the last sync height
-        await Meta.update(key, curBlock.toString());
+        // Cache new block
+        // Sort pending blocks in ascending order
+        this.pendingBlocks.push(curBlock);
+        this.pendingBlocks.sort();
       } catch (e) {
         this.logError('Error:watchBlock: ', e);
         this.provider.off('block', listener);

@@ -168,7 +168,8 @@ export class Watcher {
       } catch (e) {
         this.logError('Error:processPendingBlocks: ', e);
         this.logError('Attempt to restarting sync after processPendingBlocks error');
-        this.sync();
+        this.pendingBlocks.push(newBlock);
+        this.pendingBlocks.sort();
       } finally {
         this.processingPendingBlocks = false;
       }
@@ -185,8 +186,6 @@ export class Watcher {
         let meta = await Meta.get(key);
         if (!meta || meta.value == '0') meta = new Meta({ value: this.getLaunchHeight() });
         if (parseInt(meta.value) >= curBlock) return;
-
-        this.logInfo(`New block received`, { isSyncing: this.isSyncing });
 
         // Cache new block
         // Sort pending blocks in ascending order

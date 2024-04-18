@@ -173,7 +173,7 @@ export class Watcher {
       } finally {
         this.processingPendingBlocks = false;
       }
-    }, 500);
+    }, 10);
   }
 
   /**

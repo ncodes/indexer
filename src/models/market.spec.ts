@@ -47,6 +47,23 @@ describe('Market', () => {
   });
 
   describe('.search', function () {
+    it('should return correct result when `hidden` is set', async () => {
+      const mkt = await Market.create({ address: '0xMarket', network: 'localhost', hidden: false });
+      const mkt2 = await Market.create({ address: '0xMarket2', network: 'localhost', hidden: true });
+      const mkt3 = await Market.create({ address: '0xMarket', network: net });
+      let res = (await Market.search({ hidden: true })) as Market[];
+      expect(res).toHaveLength(1);
+      expect(res[0].id).toEqual(mkt2.id);
+
+      res = (await Market.search({ hidden: false })) as Market[];
+      expect(res).toHaveLength(2);
+      expect(res[0].id).toEqual(mkt3.id);
+      expect(res[1].id).toEqual(mkt.id);
+
+      res = (await Market.search({ hidden: undefined })) as Market[];
+      expect(res).toHaveLength(3);
+    });
+
     it('should return correct result when `network` is set', async () => {
       const mkt = await Market.create({ address: '0xMarket', network: net });
       await Market.create({ address: '0xMarket', network: 'localhost' });

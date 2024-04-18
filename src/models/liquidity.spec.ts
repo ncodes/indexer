@@ -32,6 +32,23 @@ describe('Liquidity', () => {
   });
 
   describe('.search', function () {
+    it('should return correct result when `hidden` is set', async () => {
+      const mkt = await Liquidity.create({ network: net, marketAddress, amount: '1' });
+      const mkt2 = await Liquidity.create({ network: net, marketAddress, amount: '1', hidden: true });
+      const mkt3 = await Liquidity.create({ network: net, marketAddress, amount: '1', hidden: false });
+      let res = await Liquidity.search({ network: net });
+      expect(res).toHaveLength(3);
+
+      res = await Liquidity.search({ network: net, hidden: true });
+      expect(res).toHaveLength(1);
+      expect(res[0].id).toEqual(mkt2.id);
+
+      res = await Liquidity.search({ network: net, hidden: false });
+      expect(res).toHaveLength(2);
+      expect(res[0].id).toEqual(mkt3.id);
+      expect(res[1].id).toEqual(mkt.id);
+    });
+
     it('should return correct result when `quoteUsdRate` is set', async () => {
       await Liquidity.create({ network: net, marketAddress, amount: '1', price: powOf(1000, 18).toString() });
       const res = await Liquidity.search({

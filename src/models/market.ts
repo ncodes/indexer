@@ -36,6 +36,7 @@ interface MarketSearchParams {
   permSwap?: boolean;
   permPut?: boolean;
   instant?: boolean;
+  hidden?: boolean;
   countOnly?: boolean;
   limit?: number;
   offset?: number;
@@ -121,6 +122,8 @@ export default class Market extends BaseModel {
   avgReleaseDur: number = undefined;
   // The lowest price in the market
   lowestPrice: string = undefined;
+  // Indicates the market is hidden
+  hidden: boolean;
 
   // *** Non-persisted fields **//
   totalLiquidity: string = undefined;
@@ -454,6 +457,7 @@ export default class Market extends BaseModel {
       countOnly,
       limit,
       offset,
+      hidden,
       select = [],
       relations = undefined,
     }: MarketSearchParams,
@@ -558,6 +562,10 @@ export default class Market extends BaseModel {
 
     if (offer !== undefined) {
       q2 = q2.where('offerOnly', offer);
+    }
+
+    if (hidden != undefined) {
+      q2 = q2.where({ hidden });
     }
 
     if (countOnly) {

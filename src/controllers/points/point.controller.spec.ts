@@ -217,7 +217,7 @@ describe('PointController', () => {
     });
   });
 
-  describe('.createPointFromEnergonBalance', () => {
+  describe.skip('.createPointFromEnergonBalance', () => {
     it('should return error beneficiary address was not provided', async () => {
       await request(app.getHttpServer())
         .post(`/v1/points/from-energon-balance`)

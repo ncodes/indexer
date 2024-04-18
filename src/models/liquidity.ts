@@ -102,7 +102,10 @@ export default class Liquidity extends BaseModel {
   paymentMethods: string[];
   // Indicate if messaging is enabled
   messagingEnabled: boolean;
+  // The time messaging enablement status was last updated
   messagingEnabledUpdatedAt: string;
+  // Whether the liquidity is hidden
+  hidden: boolean;
 
   /** Not Persisted */
   totalSwaps24h: string;
@@ -356,6 +359,7 @@ export default class Liquidity extends BaseModel {
     limit,
     offset,
     select = [],
+    hidden,
     txn,
   }: {
     network?: string;
@@ -379,6 +383,7 @@ export default class Liquidity extends BaseModel {
     limit?: number;
     offset?: number;
     select?: any[];
+    hidden?: boolean;
     txn?: Objection.Transaction;
   }) {
     select = this.makeSelectList(select);
@@ -517,6 +522,10 @@ export default class Liquidity extends BaseModel {
       )`,
         [paymentMethods],
       );
+    }
+
+    if (hidden != undefined) {
+      q = q.where('s.hidden', hidden);
     }
 
     if (offset != undefined) {

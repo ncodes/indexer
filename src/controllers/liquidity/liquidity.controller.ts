@@ -172,6 +172,7 @@ export class LiquidityController {
         limit: Math.min(q.limit || 25, 50),
         offset: q.offset,
         select: q.select,
+        hidden: false,
       });
 
       for (const liquidity of liquidities) {

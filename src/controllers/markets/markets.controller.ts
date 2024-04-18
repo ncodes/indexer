@@ -143,6 +143,7 @@ export class MarketsController {
       offset: q.offset,
       select: q.select,
       relations: undefined,
+      hidden: false,
     });
 
     if (q.count) {

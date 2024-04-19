@@ -47,6 +47,8 @@ export class CreateQuestDTO {
   @IsNotEmpty({ message: makeValidatorMsg('link is required', 'link') })
   link: string;
 
+  tag: string;
+
   @ValidateIf((o) => o.type == 'follow')
   @IsNotEmpty({ message: makeValidatorMsg('account is required', 'account') })
   account: string;

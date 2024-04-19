@@ -21,7 +21,13 @@ export class Watcher {
    * @param provider The network provider
    * @param processor The processor object
    */
-  constructor(public name: string, public network: string, private provider: Provider, private processor: Processor) {}
+  constructor(
+    public name: string,
+    public network: string,
+    private provider: Provider,
+    private processor: Processor,
+    private batchSize: number,
+  ) {}
 
   /**
    * Add handlers and start synchronizing them
@@ -144,31 +150,39 @@ export class Watcher {
       if (this.processingPendingBlocks) return;
       this.processingPendingBlocks = true;
 
-      const newBlock = this.pendingBlocks.shift();
-      if (!newBlock) {
+      // If the size of the pending blocks is less than the batch size, return
+      if (this.pendingBlocks.length < this.batchSize) {
+        this.processingPendingBlocks = false;
+        return;
+      }
+
+      // Slice pending block up to batch size
+      const blocks = this.pendingBlocks.splice(0, this.batchSize);
+
+      if (blocks.length == 0) {
         this.processingPendingBlocks = false;
         return;
       }
 
       try {
+        const lastBlock = blocks[blocks.length - 1];
         const key = this.makeSyncKey();
         let meta = await Meta.get(key);
         if (!meta || meta.value == '0') meta = new Meta({ value: this.getLaunchHeight() });
-        if (parseInt(meta.value) >= newBlock) return;
+        if (parseInt(meta.value) >= lastBlock) return;
 
-        this.logInfo(`Processing pending block: ${newBlock}`);
+        this.logInfo(`Processing pending blocks`, { from: blocks[0] - 1, to: lastBlock });
 
         // Process events
-        await this.fetchAndProcessEvents(newBlock - 1, newBlock);
-
-        this.logInfo(`Finished processing block: ${newBlock}`);
+        await this.fetchAndProcessEvents(blocks[0] - 1, lastBlock);
+        this.logInfo(`Finished processing block`, { from: blocks[0] - 1, to: lastBlock });
 
         // Update the last sync height
-        await Meta.update(key, newBlock.toString());
+        await Meta.update(key, lastBlock.toString());
       } catch (e) {
         this.logError('Error:processPendingBlocks: ', e);
         this.logError('Attempt to restarting sync after processPendingBlocks error');
-        this.pendingBlocks.push(newBlock);
+        this.pendingBlocks = [...blocks, ...this.pendingBlocks];
         this.pendingBlocks.sort();
       } finally {
         this.processingPendingBlocks = false;

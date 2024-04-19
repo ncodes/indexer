@@ -54,10 +54,10 @@ export default class NetworkService {
   private async watch() {
     if (isProd()) {
       await this.startWatcher('sepolia', 'sepolia');
-      await this.startWatcher('arbitrum', 'arbitrum');
+      await this.startWatcher('arbitrum', 'arbitrum', 20);
       await this.startNFTWatcher('NFT_WATCHER', 'ethereum');
     } else {
-      await this.startWatcher('localhost', 'localhost');
+      await this.startWatcher('localhost', 'localhost', 1);
       await this.startNFTWatcher('NFT_WATCHER', 'localhost');
     }
     this.restartWatcherSync();
@@ -126,8 +126,9 @@ export default class NetworkService {
    * Connect and watch contracts.
    * @param name The name of the watcher
    * @param network The name of the network
+   * @param batchSize The number of blocks to process at once
    */
-  private async startWatcher(name: string, network: ChainNames) {
+  private async startWatcher(name: string, network: ChainNames, batchSize = 1) {
     // Load initial contract params
     await this.loadInitialContractParams(network);
 
@@ -157,7 +158,7 @@ export default class NetworkService {
 
     // Create event watcher
     if (!this.isWatcherDisabled(name)) {
-      const watcher = new Watcher(name, network, provider, processor);
+      const watcher = new Watcher(name, network, provider, processor, batchSize);
       await watcher.add(...handlers);
       this.watchers.push(watcher);
     } else {
@@ -184,7 +185,7 @@ export default class NetworkService {
 
     // Create event watcher
     if (!this.isWatcherDisabled(name)) {
-      const watcher = new Watcher(name, network, provider, processor);
+      const watcher = new Watcher(name, network, provider, processor, 1);
       await watcher.add(...handlers);
       this.watchers.push(watcher);
     } else {

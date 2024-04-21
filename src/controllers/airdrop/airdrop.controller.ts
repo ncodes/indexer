@@ -36,6 +36,7 @@ import DiscordService from '../../services/discord.service';
 import { TwitterService } from '../../services/twitter.service';
 import { NFTAllocations } from '../points/data/nft_allocation';
 import { PointMap } from '../points/data/points';
+import AirdropService from './airdrop.service';
 import { ApplyPresale, CreateLuckyCodeDTO, CreateQuestDTO, RequestQuestVerify, VoteQuest } from './dto';
 
 function randomInteger(min, max) {
@@ -46,7 +47,12 @@ function randomInteger(min, max) {
 export class AirdropController {
   private logger = new Logger(AirdropController.name);
 
-  constructor(private cfgSrv: ConfigService, private twitterSrv: TwitterService, private discordSrv: DiscordService) {}
+  constructor(
+    private cfgSrv: ConfigService,
+    private twitterSrv: TwitterService,
+    private discordSrv: DiscordService,
+    private airdroSrv: AirdropService,
+  ) {}
 
   /**
    * Link twitter user to a user account
@@ -59,7 +65,10 @@ export class AirdropController {
   async linkTwitterUser(@Req() req: Request, @Param('code') code: string) {
     // Get user basic information
     const accessToken = await this.twitterSrv.getOAuthToken(code);
-    const userInfo = await new Client(accessToken).users.findMyUser();
+    const userInfo = await new Client(accessToken).users.findMyUser({
+      'user.fields': ['public_metrics', 'created_at', 'profile_image_url', 'verified'],
+      expansions: ['pinned_tweet_id'],
+    });
 
     // Check if twitter user already linked to another account
     const userWithTwitter = await User.getByTwitterUsername(userInfo.data.username);

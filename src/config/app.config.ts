@@ -33,6 +33,14 @@ export default () => ({
     maxSwapVideoSize: process.env.MAX_SWAP_VIDEO_SIZE,
     maxSwapDocSize: process.env.MAX_SWAP_DOC_SIZE,
     infuraUASecret: process.env.INFURA_UA_SECRET,
+    raffle: {
+      minTicketPct: process.env.RAFFLE_MIN_TICKET_PCT,
+      maxTicketPct: process.env.RAFFLE_MAX_TICKET_PCT,
+      pctWinners: process.env.RAFFLE_PCT_WINNERS,
+      reward: process.env.RAFFLE_REWARD,
+      hostReward: process.env.RAFFLE_HOST_REWARD,
+      minHostFollowers: process.env.RAFFLE_MIN_HOST_FOLLOWERS,
+    },
     fileUpload: {
       maxImageSize: process.env.FILE_UPLOAD_MAX_IMAGE_SIZE,
       maxVideoSize: process.env.FILE_UPLOAD_MAX_VIDEO_SIZE,

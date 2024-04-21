@@ -10,6 +10,7 @@ import Point from '../../models/point';
 import Swap from '../../models/swap';
 import User from '../../models/user';
 import { JointLinkService } from '../../services/joint_link.service';
+import AirdropService from '../airdrop/airdrop.service';
 import ConvosService from '../convos/convos.service';
 import { NFTAllocations } from '../points/data/nft_allocation';
 import { DeviceType } from './dto';
@@ -22,6 +23,7 @@ export class UserService {
     private chatNotifSrv: ConvosService,
     private jntLinkSrv: JointLinkService,
     private cfgSrv: ConfigService,
+    private airdropSrv: AirdropService,
   ) {}
 
   /**

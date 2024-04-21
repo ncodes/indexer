@@ -10,6 +10,7 @@ import User from '../../models/user';
 import { JointLinkService } from '../../services/joint_link.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { RedisService } from '../../services/redis/redis.service';
+import AirdropService from '../airdrop/airdrop.service';
 import ConvosService from '../convos/convos.service';
 import { MarketService } from '../markets/market.service';
 import { UserService } from './user.service';
@@ -56,7 +57,15 @@ describe('UserService', () => {
 
     module = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
-      providers: [UserService, MarketService, MetadataService, RedisService, ConvosService, JointLinkService],
+      providers: [
+        UserService,
+        MarketService,
+        AirdropService,
+        MetadataService,
+        RedisService,
+        ConvosService,
+        JointLinkService,
+      ],
     })
       .overrideProvider(MetadataService)
       .useValue(new MetadataServiceMock())

@@ -1,5 +1,5 @@
 /* tslint:disable:max-classes-per-file */
-import { IsEthereumAddress, IsIn, IsNotEmpty, Matches, ValidateIf } from 'class-validator';
+import { IsEthereumAddress, IsIn, IsNotEmpty, IsOptional, Matches, ValidateIf } from 'class-validator';
 import { makeValidatorMsg } from '../../common/validations/validation';
 import { QuestType } from '../../models/quest';
 
@@ -117,4 +117,13 @@ export class ApplyPresale {
 
   @IsNotEmpty({ message: makeValidatorMsg('country is required', 'country') })
   country: string;
+}
+
+export class GetRaffles {
+  constructor(init?: Partial<GetRaffles>) {
+    Object.assign(this, init);
+  }
+
+  @IsOptional()
+  userId: string;
 }

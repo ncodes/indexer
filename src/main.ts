@@ -11,6 +11,10 @@ dayjs.extend(utc);
 
 sourceMapSupport.install();
 
+(BigInt.prototype as any).toJSON = function () {
+  return this.toString();
+};
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: appLogger,

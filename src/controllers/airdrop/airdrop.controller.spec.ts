@@ -12,6 +12,7 @@ import Quest from '../../models/quest';
 import Swap from '../../models/swap';
 import User from '../../models/user';
 import DiscordService from '../../services/discord.service';
+import { RedisService } from '../../services/redis/redis.service';
 import { TwitterService } from '../../services/twitter.service';
 import { makeSession } from '../auth/utils';
 import { AirdropController } from './airdrop.controller';
@@ -55,7 +56,7 @@ describe('AirdropController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [AirdropController],
-      providers: [ConfigService, TwitterService, DiscordService],
+      providers: [ConfigService, TwitterService, DiscordService, RedisService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())

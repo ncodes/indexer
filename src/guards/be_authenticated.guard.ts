@@ -24,26 +24,34 @@ export class BeAuthenticatedGuard implements CanActivate {
         return rej(notPermitted.build());
       }
 
-      let decoded;
       try {
-        decoded = jwt.verify(req.token, this.cfg.get('auth.jwtSecret'));
-      } catch (e) {
+        const session = await checkToken(this.cfg, req.token);
+        req.session = session;
+        req.user = session.owner;
+        return res(true);
+      } catch (error) {
         return rej(notPermitted.build());
       }
-
-      const session = await Session.getById(decoded.id);
-      if (!session) {
-        return rej(notPermitted.build());
-      }
-
-      if (!session.owner) {
-        return rej(notPermitted.build());
-      }
-
-      req.session = session;
-      req.user = session.owner;
-
-      return res(true);
     });
   }
+}
+
+export async function checkToken(cfgSrv: ConfigService, token: string) {
+  let decoded: jwt.JwtPayload;
+  try {
+    decoded = jwt.verify(token, cfgSrv.get('auth.jwtSecret')) as jwt.JwtPayload;
+  } catch (e) {
+    throw new Error('Invalid token');
+  }
+
+  const session = await Session.getById(decoded.id);
+  if (!session) {
+    throw new Error('Invalid token');
+  }
+
+  if (!session.owner) {
+    throw new Error('Invalid token');
+  }
+
+  return session;
 }

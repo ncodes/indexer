@@ -1,3 +1,4 @@
+import * as moment from 'moment';
 import Objection, { Transaction } from 'objection';
 import { randStr } from '../common/common';
 import { TapSpendType } from '../controllers/airdrop/constants';
@@ -115,5 +116,28 @@ export default class TapSpend extends BaseModel {
       .count()
       .first()
       .then((res) => (res ? parseInt(res.count) : 0));
+  }
+
+  /**
+   * Count number of spends of a type by a user within now() - period.
+   * @param userId The user ID
+   * @param type The spend type
+   * @param period The period in the past (in seconds)
+   * @param txn Optional transaction object
+   * @returns
+   */
+  static async countSpendFrom(userId: string, type: TapSpendType, period: number, txn?: Transaction): Promise<number> {
+    return this.query(txn)
+      .where({ userId, type })
+      .where('createdAt', '>', moment().subtract(period, 's').toISOString())
+      .whereNotDeleted()
+      .count()
+      .first()
+      .then((res) => (res ? parseInt(res.count) : 0));
+  }
+
+  // Get the last spend of a user by user id and type
+  static getLastSpend(userId: string, type: TapSpendType, txn?: Transaction) {
+    return this.query(txn).where({ userId, type }).whereNotDeleted().orderBy('createdAt', 'desc').first();
   }
 }

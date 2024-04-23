@@ -1,8 +1,17 @@
 export enum TapSpendType {
   HyperFire = 'hyper-fire',
   AntiOverheat = 'anti-overheat',
-  HyperCoolant = 'hyper-coolant',
+  HyperCool = 'hyper-cool',
+  RapidFire = 'rapid-fire',
+  InstantCool = 'instant-cool',
 }
+
+export const MaxRapidFirePerPeriod = 3;
+export const RapidFireWindow = 12 * 60 * 60; // 12 hours
+export const RapidFireActiveTime = 20;
+
+export const MaxInstantCoolPerPeriod = 3;
+export const InstantCoolWindow = 12 * 60 * 60; // 12 hours
 
 export const TapSpendLevelCost: Record<TapSpendType, Record<number, { cost: string; increment: number }>> = {
   [TapSpendType.HyperFire]: {
@@ -33,7 +42,7 @@ export const TapSpendLevelCost: Record<TapSpendType, Record<number, { cost: stri
     [11]: { cost: '128000', increment: 5000 },
     [12]: { cost: '256000', increment: 5500 },
   },
-  [TapSpendType.HyperCoolant]: {
+  [TapSpendType.HyperCool]: {
     [1]: { cost: '0', increment: 1 },
     [2]: { cost: '2000', increment: 1 },
     [3]: { cost: '10000', increment: 2 },
@@ -47,4 +56,6 @@ export const TapSpendLevelCost: Record<TapSpendType, Record<number, { cost: stri
     [11]: { cost: '6400000', increment: 10 },
     [12]: { cost: '12800000', increment: 11 },
   },
+  [TapSpendType.RapidFire]: {},
+  [TapSpendType.InstantCool]: {},
 };

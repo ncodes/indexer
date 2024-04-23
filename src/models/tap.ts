@@ -80,11 +80,15 @@ export default class Tap extends BaseModel {
   /**
    * Get the tap count for a user
    * @param userId The user ID
+   * @param ignoreSpends Whether to ignore spends
    * @param txn Optional transaction object
    * @returns
    */
-  static async getTapCount(userId: string, txn?: Transaction) {
-    const totalSpend = await TapSpend.getTotalSpend(userId, undefined, txn);
+  static async getTapCount(userId: string, ignoreSpends?: boolean, txn?: Transaction) {
+    let totalSpend = '0';
+    if (!ignoreSpends) {
+      totalSpend = await TapSpend.getTotalSpend(userId, undefined, txn);
+    }
 
     return this.query(txn)
       .where('userId', userId)

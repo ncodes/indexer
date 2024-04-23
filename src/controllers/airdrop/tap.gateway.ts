@@ -17,7 +17,15 @@ import Tap from '../../models/tap';
 import TapSpend from '../../models/tap_spend';
 import { RedisService } from '../../services/redis/redis.service';
 import { toDec } from './../../common/common';
-import { TapSpendLevelCost, TapSpendType } from './constants';
+import {
+  InstantCoolWindow,
+  MaxInstantCoolPerPeriod,
+  MaxRapidFirePerPeriod,
+  RapidFireActiveTime,
+  RapidFireWindow,
+  TapSpendLevelCost,
+  TapSpendType,
+} from './constants';
 
 @WebSocketGateway({ namespace: '/v1/taps', pingTimeout: 30000 })
 export default class TapGateway implements OnGatewayConnection {
@@ -142,9 +150,20 @@ export default class TapGateway implements OnGatewayConnection {
       });
     }
 
-    // Update the overheat level and last update time
-    const newOverheatLvl = overheatLvl - tapIncrement;
-    await this.redisSrv.set(`tap:overheat:${userId}`, newOverheatLvl.toString());
+    // Check if rapid fire is active
+    const lastRapidFire = await TapSpend.getLastSpend(userId, TapSpendType.RapidFire);
+    const rapidFireOn = !lastRapidFire ? false : moment().diff(lastRapidFire.createdAt, 's') < RapidFireActiveTime;
+
+    // Only update new overheat level if rapid fire is not active
+    let newOverheatLvl = 0n;
+    if (!rapidFireOn) {
+      newOverheatLvl = overheatLvl - tapIncrement;
+      await this.redisSrv.set(`tap:overheat:${userId}`, newOverheatLvl.toString());
+    } else {
+      newOverheatLvl = overheatLvl;
+    }
+
+    // Update the last overheat updated time
     const overheatLastUpdated = now.unix();
     await this.redisSrv.set(`tap:overheat:lastUpdated:${userId}`, overheatLastUpdated.toString());
 
@@ -260,9 +279,42 @@ export default class TapGateway implements OnGatewayConnection {
       return { success: false, message: 'Not authenticated' };
     }
 
+    // General info
     const maxOverheatLvl = await this.getMaxOverheatLevel(userId);
     const tapCount = await Tap.getTapCount(userId);
-    const rank = this.getRank(toDec(tapCount));
+    const tapCountWithoutSpend = await Tap.getTapCount(userId, true);
+    const rank = this.getRank(toDec(tapCountWithoutSpend));
+
+    // HyperFire boost info
+    const hyperFireLevel = (await TapSpend.countSpend(userId, TapSpendType.HyperFire)) + 1;
+    const hyperFireCost = TapSpendLevelCost[TapSpendType.HyperFire][hyperFireLevel]?.cost;
+    const hyperFireIncrement = TapSpendLevelCost[TapSpendType.HyperFire][hyperFireLevel]?.increment;
+    const hyperFireNextLevelCost = TapSpendLevelCost[TapSpendType.HyperFire][hyperFireLevel + 1].cost;
+    const hyperFireNextLevelIncrement = TapSpendLevelCost[TapSpendType.HyperFire][hyperFireLevel + 1].increment;
+
+    // AntiOverheat boost info
+    const antiOverheatLevel = (await TapSpend.countSpend(userId, TapSpendType.AntiOverheat)) + 1;
+    const antiOverheatCost = TapSpendLevelCost[TapSpendType.AntiOverheat][antiOverheatLevel]?.cost;
+    const antiOverheatIncrement = TapSpendLevelCost[TapSpendType.AntiOverheat][antiOverheatLevel]?.increment;
+    const antiOverheatNextLevelCost = TapSpendLevelCost[TapSpendType.AntiOverheat][antiOverheatLevel + 1]?.cost;
+    const antiOverheatNextLevelIncrement =
+      TapSpendLevelCost[TapSpendType.AntiOverheat][antiOverheatLevel + 1]?.increment;
+
+    // AntiOverheat boost info
+    const hyperCoolLevel = (await TapSpend.countSpend(userId, TapSpendType.HyperCool)) + 1;
+    const hyperCoolCost = TapSpendLevelCost[TapSpendType.HyperCool][hyperCoolLevel]?.cost;
+    const hyperCoolIncrement = TapSpendLevelCost[TapSpendType.HyperCool][hyperCoolLevel]?.increment;
+    const hyperCoolNextLevelCost = TapSpendLevelCost[TapSpendType.HyperCool][hyperCoolLevel + 1]?.cost;
+    const hyperCoolNextLevelIncrement = TapSpendLevelCost[TapSpendType.HyperCool][hyperCoolLevel + 1]?.increment;
+
+    // RapidFire boost info
+    const numRapidFireUsed = await TapSpend.countSpendFrom(userId, TapSpendType.RapidFire, RapidFireWindow);
+    const lastRapidFire = await TapSpend.getLastSpend(userId, TapSpendType.RapidFire);
+    const rapidFireOn = !lastRapidFire ? false : moment().diff(lastRapidFire.createdAt, 's') < RapidFireActiveTime;
+
+    // InstantCool boost info
+    const numInstantCoolUsed = await TapSpend.countSpendFrom(userId, TapSpendType.InstantCool, InstantCoolWindow);
+    const lastInstantCool = await TapSpend.getLastSpend(userId, TapSpendType.InstantCool);
 
     return {
       success: true,
@@ -270,6 +322,40 @@ export default class TapGateway implements OnGatewayConnection {
       tapCount: tapCount,
       tapIncrement: await this.getTapIncrement(userId),
       rank,
+      rapidFire: {
+        active: rapidFireOn,
+        numUsed: numRapidFireUsed,
+        maxPerWindow: MaxRapidFirePerPeriod,
+        lastUsedAt: lastRapidFire?.createdAt,
+        windowDur: RapidFireWindow,
+      },
+      instantCool: {
+        numUsed: numInstantCoolUsed,
+        maxPerWindow: MaxInstantCoolPerPeriod,
+        lastUsedAt: lastInstantCool?.createdAt,
+        windowDur: InstantCoolWindow,
+      },
+      hyperFire: {
+        level: hyperFireLevel,
+        cost: hyperFireCost,
+        increment: hyperFireIncrement + 1,
+        nextLevelCost: hyperFireNextLevelCost,
+        nextLevelIncrement: hyperFireNextLevelIncrement + 1,
+      },
+      antiOverheat: {
+        level: antiOverheatLevel,
+        cost: antiOverheatCost,
+        increment: antiOverheatIncrement,
+        nextLevelCost: antiOverheatNextLevelCost,
+        nextLevelIncrement: antiOverheatNextLevelIncrement,
+      },
+      hyperCool: {
+        level: hyperCoolLevel,
+        cost: hyperCoolCost,
+        increment: hyperCoolIncrement,
+        nextLevelCost: hyperCoolNextLevelCost,
+        nextLevelIncrement: hyperCoolNextLevelIncrement,
+      },
     };
   }
 
@@ -300,14 +386,85 @@ export default class TapGateway implements OnGatewayConnection {
       userId,
       type: TapSpendType.HyperFire,
       amount: nextLevelCost,
-      createdAt: moment().toISOString(),
-      updatedAt: moment().toISOString(),
     });
 
     return {
       success: true,
       message: 'HyperFire boost purchased',
       currentLevel: currentLevel + 1,
+    };
+  }
+
+  /**
+   * Handle RapidFire boost request
+   * @param socket The socket object
+   */
+  @SubscribeMessage('applyRapidFire')
+  async handleApplyRapidFire(@ConnectedSocket() socket: Socket) {
+    const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
+    if (!userId) {
+      this.disconnectAfter(socket, 1);
+      return { success: false, message: 'Not authenticated' };
+    }
+
+    // Count number of rapid fire spends within the last 12 hours
+    const numRapidFireUsed = await TapSpend.countSpendFrom(userId, TapSpendType.RapidFire, RapidFireWindow);
+    if (numRapidFireUsed >= MaxRapidFirePerPeriod) {
+      return { success: false, message: 'Maximum reached' };
+    }
+
+    const rapidFireSpend = await TapSpend.create({
+      userId,
+      type: TapSpendType.RapidFire,
+      amount: '0',
+    });
+
+    return {
+      success: true,
+      message: 'RapidFire boost applied',
+      usedRapidFire: numRapidFireUsed,
+      maxRapidFirePerWindow: MaxRapidFirePerPeriod,
+      lastRapidFireAt: rapidFireSpend.createdAt,
+      rapidFireWindow: RapidFireWindow,
+    };
+  }
+
+  /**
+   * Handlle InstantCool boost request
+   * @param socket The socket object
+   */
+  @SubscribeMessage('applyInstantCool')
+  async handleApplyInstantCool(@ConnectedSocket() socket: Socket) {
+    const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
+    if (!userId) {
+      this.disconnectAfter(socket, 1);
+      return { success: false, message: 'Not authenticated' };
+    }
+
+    // Count number of instant cool spends within the last 12 hours
+    const numInstantCoolUsed = await TapSpend.countSpendFrom(userId, TapSpendType.InstantCool, InstantCoolWindow);
+    if (numInstantCoolUsed >= MaxInstantCoolPerPeriod) {
+      return { success: false, message: 'Maximum reached' };
+    }
+
+    const instantCoolSpend = await TapSpend.create({
+      userId,
+      type: TapSpendType.InstantCool,
+      amount: '0',
+    });
+
+    // Update overheat level to max
+    const newOverheatLvl = await this.getMaxOverheatLevel(userId);
+    await this.redisSrv.set(`tap:overheat:${userId}`, newOverheatLvl.toString());
+    await this.redisSrv.set(`tap:overheat:lastUpdated:${userId}`, moment().unix().toString());
+
+    return {
+      success: true,
+      message: 'InstantCool boost applied',
+      usedInstantCool: numInstantCoolUsed,
+      maxInstantCoolPerWindow: MaxRapidFirePerPeriod,
+      lastInstantCoolAt: instantCoolSpend.createdAt,
+      instantCoolWindow: InstantCoolWindow,
     };
   }
 
@@ -355,10 +512,10 @@ export default class TapGateway implements OnGatewayConnection {
   }
 
   /**
-   * Handle the HyperCoolant boost purchase request
+   * Handle the HyperCool boost purchase request
    * @param socket The socket object
    */
-  @SubscribeMessage('buyHyperCoolant')
+  @SubscribeMessage('buyHyperCool')
   async handleBuyHyperCoolant(@ConnectedSocket() socket: Socket) {
     const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
     if (!userId) {
@@ -367,8 +524,8 @@ export default class TapGateway implements OnGatewayConnection {
     }
 
     const curentTapCount = await Tap.getTapCount(userId);
-    const currentLevel = (await TapSpend.countSpend(userId, TapSpendType.HyperCoolant)) + 1;
-    const nextLevelCost = TapSpendLevelCost[TapSpendType.HyperCoolant][currentLevel + 1]?.cost;
+    const currentLevel = (await TapSpend.countSpend(userId, TapSpendType.HyperCool)) + 1;
+    const nextLevelCost = TapSpendLevelCost[TapSpendType.HyperCool][currentLevel + 1]?.cost;
     if (!nextLevelCost) {
       return { success: false, message: 'Maximum level reached' };
     }
@@ -379,7 +536,7 @@ export default class TapGateway implements OnGatewayConnection {
 
     await TapSpend.create({
       userId,
-      type: TapSpendType.HyperCoolant,
+      type: TapSpendType.HyperCool,
       amount: nextLevelCost,
       createdAt: moment().toISOString(),
       updatedAt: moment().toISOString(),
@@ -463,8 +620,18 @@ export default class TapGateway implements OnGatewayConnection {
     const baseLevelIncr = BigInt(TapSpendLevelCost[TapSpendType.HyperFire][1]?.increment);
     const curLevel = (await TapSpend.countSpend(userId, TapSpendType.HyperFire)) + 1;
     const curLevelIncr = BigInt(TapSpendLevelCost[TapSpendType.HyperFire][curLevel]?.increment);
-    if (curLevelIncr) return baseLevelIncr + curLevelIncr;
-    return baseLevelIncr;
+
+    let incr = baseLevelIncr;
+
+    // Apply level increment
+    if (curLevel > 1) incr += curLevelIncr;
+
+    // Apply rapid fire increment
+    const lastRapidFire = await TapSpend.getLastSpend(userId, TapSpendType.RapidFire);
+    const rapidFireOn = !lastRapidFire ? false : moment().diff(lastRapidFire.createdAt, 's') < RapidFireActiveTime;
+    if (rapidFireOn) incr *= 5n;
+
+    return incr;
   }
 
   /**
@@ -486,9 +653,9 @@ export default class TapGateway implements OnGatewayConnection {
    * @returns
    */
   async getCoolingIncrement(userId: string) {
-    const baseLevelIncr = BigInt(TapSpendLevelCost[TapSpendType.HyperCoolant][1]?.increment);
-    const curLevel = (await TapSpend.countSpend(userId, TapSpendType.HyperCoolant)) + 1;
-    const curLevelIncr = BigInt(TapSpendLevelCost[TapSpendType.HyperCoolant][curLevel]?.increment);
+    const baseLevelIncr = BigInt(TapSpendLevelCost[TapSpendType.HyperCool][1]?.increment);
+    const curLevel = (await TapSpend.countSpend(userId, TapSpendType.HyperCool)) + 1;
+    const curLevelIncr = BigInt(TapSpendLevelCost[TapSpendType.HyperCool][curLevel]?.increment);
     if (curLevel > 1) return baseLevelIncr + curLevelIncr;
     return Number(baseLevelIncr);
   }

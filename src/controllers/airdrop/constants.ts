@@ -6,12 +6,15 @@ export enum TapSpendType {
   InstantCool = 'instant-cool',
 }
 
-export const MaxRapidFirePerPeriod = 3;
+export const MaxRapidFirePerWindow = 3;
 export const RapidFireWindow = 12 * 60 * 60; // 12 hours
 export const RapidFireActiveTime = 20;
 
-export const MaxInstantCoolPerPeriod = 3;
+export const MaxInstantCoolPerWindow = 3;
 export const InstantCoolWindow = 12 * 60 * 60; // 12 hours
+
+export const MultiplierApplyWindow = 30; // 12 hours
+export const MultiplierApplyMaxPerWindow = 1;
 
 export const TapSpendLevelCost: Record<TapSpendType, Record<number, { cost: string; increment: number }>> = {
   [TapSpendType.HyperFire]: {

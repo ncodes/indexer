@@ -2,6 +2,7 @@ import Objection, { Transaction } from 'objection';
 import { randStr } from '../common/common';
 import { toDec } from './../common/common';
 import { BaseModel } from './base';
+import MultiplierSpend from './multiplier_spend';
 import TapSpend from './tap_spend';
 
 /**
@@ -90,13 +91,15 @@ export default class Tap extends BaseModel {
       totalSpend = await TapSpend.getTotalSpend(userId, undefined, txn);
     }
 
+    const totalMultiplierTaps = await MultiplierSpend.getTotalTaps(userId, txn);
+
     return this.query(txn)
       .where('userId', userId)
       .whereNotDeleted()
       .count()
       .first()
       .then((res) => {
-        return res ? toDec(res.count).sub(totalSpend).toFixed() : '0';
+        return res ? toDec(res.count).add(totalMultiplierTaps).sub(totalSpend).toFixed(0) : '0';
       });
   }
 }

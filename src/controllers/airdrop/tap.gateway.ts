@@ -4,6 +4,7 @@ import {
   ConnectedSocket,
   MessageBody,
   OnGatewayConnection,
+  OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
@@ -13,14 +14,19 @@ import * as moment from 'moment';
 import { Server, Socket } from 'socket.io';
 import { isProd } from '../../common/common';
 import { checkToken } from '../../guards/be_authenticated.guard';
+import MultiplierSpend from '../../models/multiplier_spend';
+import Swap from '../../models/swap';
 import Tap from '../../models/tap';
 import TapSpend from '../../models/tap_spend';
+import User from '../../models/user';
 import { RedisService } from '../../services/redis/redis.service';
 import { toDec } from './../../common/common';
 import {
   InstantCoolWindow,
-  MaxInstantCoolPerPeriod,
-  MaxRapidFirePerPeriod,
+  MaxInstantCoolPerWindow,
+  MaxRapidFirePerWindow,
+  MultiplierApplyMaxPerWindow,
+  MultiplierApplyWindow,
   RapidFireActiveTime,
   RapidFireWindow,
   TapSpendLevelCost,
@@ -28,7 +34,7 @@ import {
 } from './constants';
 
 @WebSocketGateway({ namespace: '/v1/taps', pingTimeout: 30000 })
-export default class TapGateway implements OnGatewayConnection {
+export default class TapGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
   logger = new Logger(TapGateway.name);
 
@@ -59,6 +65,14 @@ export default class TapGateway implements OnGatewayConnection {
         if (!userId) socket.disconnect(true);
       }, 3000);
     }
+  }
+
+  /**
+   * Called when a connection is disconnected.
+   * @param socket The socket object
+   */
+  handleDisconnect(socket: Socket) {
+    this.redisSrv.delete(`tap:client:${socket.id}`);
   }
 
   /**
@@ -114,7 +128,6 @@ export default class TapGateway implements OnGatewayConnection {
   async handleTap(@ConnectedSocket() socket: Socket) {
     const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
     if (!userId) {
-      this.disconnectAfter(socket, 1);
       return { success: false, message: 'Not authenticated' };
     }
 
@@ -188,7 +201,6 @@ export default class TapGateway implements OnGatewayConnection {
   async handleOverheatPing(@ConnectedSocket() socket: Socket) {
     const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
     if (!userId) {
-      this.disconnectAfter(socket, 1);
       return { success: false, message: 'Not authenticated' };
     }
 
@@ -259,7 +271,6 @@ export default class TapGateway implements OnGatewayConnection {
   async countTaps(@ConnectedSocket() socket: Socket) {
     const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
     if (!userId) {
-      this.disconnectAfter(socket, 1);
       return { success: false, message: 'Not authenticated' };
     }
 
@@ -275,7 +286,6 @@ export default class TapGateway implements OnGatewayConnection {
   async handleInfo(@ConnectedSocket() socket: Socket) {
     const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
     if (!userId) {
-      this.disconnectAfter(socket, 1);
       return { success: false, message: 'Not authenticated' };
     }
 
@@ -316,6 +326,9 @@ export default class TapGateway implements OnGatewayConnection {
     const numInstantCoolUsed = await TapSpend.countSpendFrom(userId, TapSpendType.InstantCool, InstantCoolWindow);
     const lastInstantCool = await TapSpend.getLastSpend(userId, TapSpendType.InstantCool);
 
+    // Multiplier info
+    const multiplierBal = await this.getMultiplierBalance(userId);
+
     return {
       success: true,
       maxOverheatLvl: Number(maxOverheatLvl),
@@ -325,13 +338,13 @@ export default class TapGateway implements OnGatewayConnection {
       rapidFire: {
         active: rapidFireOn,
         numUsed: numRapidFireUsed,
-        maxPerWindow: MaxRapidFirePerPeriod,
+        maxPerWindow: MaxRapidFirePerWindow,
         lastUsedAt: lastRapidFire?.createdAt,
         windowDur: RapidFireWindow,
       },
       instantCool: {
         numUsed: numInstantCoolUsed,
-        maxPerWindow: MaxInstantCoolPerPeriod,
+        maxPerWindow: MaxInstantCoolPerWindow,
         lastUsedAt: lastInstantCool?.createdAt,
         windowDur: InstantCoolWindow,
       },
@@ -356,6 +369,9 @@ export default class TapGateway implements OnGatewayConnection {
         nextLevelCost: hyperCoolNextLevelCost,
         nextLevelIncrement: hyperCoolNextLevelIncrement,
       },
+      multiplier: {
+        balance: multiplierBal,
+      },
     };
   }
 
@@ -367,7 +383,6 @@ export default class TapGateway implements OnGatewayConnection {
   async handleBuyHyperFire(@ConnectedSocket() socket: Socket) {
     const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
     if (!userId) {
-      this.disconnectAfter(socket, 1);
       return { success: false, message: 'Not authenticated' };
     }
 
@@ -403,13 +418,12 @@ export default class TapGateway implements OnGatewayConnection {
   async handleApplyRapidFire(@ConnectedSocket() socket: Socket) {
     const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
     if (!userId) {
-      this.disconnectAfter(socket, 1);
       return { success: false, message: 'Not authenticated' };
     }
 
     // Count number of rapid fire spends within the last 12 hours
     const numRapidFireUsed = await TapSpend.countSpendFrom(userId, TapSpendType.RapidFire, RapidFireWindow);
-    if (numRapidFireUsed >= MaxRapidFirePerPeriod) {
+    if (numRapidFireUsed >= MaxRapidFirePerWindow) {
       return { success: false, message: 'Maximum reached' };
     }
 
@@ -423,7 +437,7 @@ export default class TapGateway implements OnGatewayConnection {
       success: true,
       message: 'RapidFire boost applied',
       usedRapidFire: numRapidFireUsed,
-      maxRapidFirePerWindow: MaxRapidFirePerPeriod,
+      maxRapidFirePerWindow: MaxRapidFirePerWindow,
       lastRapidFireAt: rapidFireSpend.createdAt,
       rapidFireWindow: RapidFireWindow,
     };
@@ -437,13 +451,12 @@ export default class TapGateway implements OnGatewayConnection {
   async handleApplyInstantCool(@ConnectedSocket() socket: Socket) {
     const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
     if (!userId) {
-      this.disconnectAfter(socket, 1);
       return { success: false, message: 'Not authenticated' };
     }
 
     // Count number of instant cool spends within the last 12 hours
     const numInstantCoolUsed = await TapSpend.countSpendFrom(userId, TapSpendType.InstantCool, InstantCoolWindow);
-    if (numInstantCoolUsed >= MaxInstantCoolPerPeriod) {
+    if (numInstantCoolUsed >= MaxInstantCoolPerWindow) {
       return { success: false, message: 'Maximum reached' };
     }
 
@@ -462,9 +475,56 @@ export default class TapGateway implements OnGatewayConnection {
       success: true,
       message: 'InstantCool boost applied',
       usedInstantCool: numInstantCoolUsed,
-      maxInstantCoolPerWindow: MaxRapidFirePerPeriod,
+      maxInstantCoolPerWindow: MaxRapidFirePerWindow,
       lastInstantCoolAt: instantCoolSpend.createdAt,
       instantCoolWindow: InstantCoolWindow,
+    };
+  }
+
+  /**
+   * * Apply a specific amount of multiplier
+   * @param socket The socket object
+   * @param amount The amount of multiplier to apply
+   * @returns
+   */
+  @SubscribeMessage('applyMultiplier')
+  async handleApplyMultiplier(@ConnectedSocket() socket: Socket, @MessageBody('amount') amount: string) {
+    const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
+    if (!userId) {
+      return { success: false, message: 'Not authenticated' };
+    }
+
+    if (!amount || toDec(amount).lte(0)) {
+      return { success: false, message: 'Invalid amount' };
+    } else if (toDec(amount).lte(1)) {
+      return { success: false, message: 'Amount too low' };
+    }
+
+    const multiplierBal = await this.getMultiplierBalance(userId);
+
+    // Make sure the user has enough multiplier balance
+    if (toDec(multiplierBal).lt(amount)) {
+      return { success: false, message: 'Insufficient balance' };
+    }
+
+    // Make sure the spend limit hasn't been reached
+    const curWindowSpend = await MultiplierSpend.getTotalSpendFrom(userId, MultiplierApplyWindow);
+    if (toDec(curWindowSpend).gte(MultiplierApplyMaxPerWindow)) {
+      return { success: false, message: 'Spend limit reached' };
+    }
+
+    // Create a multiplier spend record
+    const curTaps = await Tap.getTapCount(userId);
+    await MultiplierSpend.create({
+      userId,
+      amount,
+      taps: toDec(curTaps).mul(amount).sub(curTaps).toFixed(),
+    });
+
+    return {
+      success: true,
+      message: 'Multiplier boost applied',
+      newBalance: await this.getMultiplierBalance(userId),
     };
   }
 
@@ -476,7 +536,6 @@ export default class TapGateway implements OnGatewayConnection {
   async handleBuyAntiOverheat(@ConnectedSocket() socket: Socket) {
     const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
     if (!userId) {
-      this.disconnectAfter(socket, 1);
       return { success: false, message: 'Not authenticated' };
     }
 
@@ -516,10 +575,9 @@ export default class TapGateway implements OnGatewayConnection {
    * @param socket The socket object
    */
   @SubscribeMessage('buyHyperCool')
-  async handleBuyHyperCoolant(@ConnectedSocket() socket: Socket) {
+  async handleBuyHyperCool(@ConnectedSocket() socket: Socket) {
     const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
     if (!userId) {
-      this.disconnectAfter(socket, 1);
       return { success: false, message: 'Not authenticated' };
     }
 
@@ -550,50 +608,24 @@ export default class TapGateway implements OnGatewayConnection {
   }
 
   /**
-   * Handle boost info request
-   * @param socket The socket object
-   * @returns
+   * Get the total multiplier balance for a user
+   * @param userId The user ID
+   * @returns 0 if user does not exist, otherwise the total multiplier balance
    */
-  @SubscribeMessage('getBoostInfo')
-  async getBoostInfo(@ConnectedSocket() socket: Socket) {
-    const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
-    if (!userId) {
-      this.disconnectAfter(socket, 1);
-      return { success: false, message: 'Not authenticated' };
-    }
+  async getMultiplierBalance(userId: string) {
+    const user = await User.getById(userId);
+    if (!user) return '0';
 
-    // HyperFire boost info
-    const hyperFireLevel = (await TapSpend.countSpend(userId, TapSpendType.HyperFire)) + 1;
-    const hyperFireCost = TapSpendLevelCost[TapSpendType.HyperFire][hyperFireLevel]?.cost;
-    const hyperFireIncrement = TapSpendLevelCost[TapSpendType.HyperFire][hyperFireLevel]?.increment;
-    const hyperFireNextLevelCost = TapSpendLevelCost[TapSpendType.HyperFire][hyperFireLevel + 1].cost;
-    const hyperFireNextLevelIncrement = TapSpendLevelCost[TapSpendType.HyperFire][hyperFireLevel + 1].increment;
+    const totalMultipliers = await Swap.getTotalAmountByMarketProviderTaker(
+      this.cfg.get('app.tapoff.multiplierMarket'),
+      this.cfg.get('app.tapoff.multiplierProvider'),
+      user.address,
+    );
 
-    // AntiOverheat boost info
-    const antiOverheatLevel = (await TapSpend.countSpend(userId, TapSpendType.AntiOverheat)) + 1;
-    const antiOverheatCost = TapSpendLevelCost[TapSpendType.AntiOverheat][antiOverheatLevel]?.cost;
-    const antiOverheatIncrement = TapSpendLevelCost[TapSpendType.AntiOverheat][antiOverheatLevel]?.increment;
-    const antiOverheatNextLevelCost = TapSpendLevelCost[TapSpendType.AntiOverheat][antiOverheatLevel + 1]?.cost;
-    const antiOverheatNextLevelIncrement =
-      TapSpendLevelCost[TapSpendType.AntiOverheat][antiOverheatLevel + 1]?.increment;
-
-    return {
-      success: true,
-      hyperFire: {
-        level: hyperFireLevel,
-        cost: hyperFireCost,
-        increment: hyperFireIncrement + 1,
-        nextLevelCost: hyperFireNextLevelCost,
-        nextLevelIncrement: hyperFireNextLevelIncrement + 1,
-      },
-      antiOverheat: {
-        level: antiOverheatLevel,
-        cost: antiOverheatCost,
-        increment: antiOverheatIncrement,
-        nextLevelCost: antiOverheatNextLevelCost,
-        nextLevelIncrement: antiOverheatNextLevelIncrement,
-      },
-    };
+    return toDec(totalMultipliers)
+      .div(1e18)
+      .sub(await MultiplierSpend.getTotalSpend(userId))
+      .toFixed();
   }
 
   getRank(tapCount: Decimal) {

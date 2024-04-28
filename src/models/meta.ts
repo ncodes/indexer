@@ -1,8 +1,6 @@
 import { Transaction } from 'objection';
 import { BaseModel } from './base';
 
-type K = keyof ContractsParams;
-
 export enum FeeName {
   InstantSwapFeeBp = 'instantSwapFeeBp',
   SynthSwapFeeBp = 'syntheticSwapFeeBp',

@@ -245,6 +245,9 @@ export default class User extends BaseModel {
   static async countReferred(address: string) {
     return this.query()
       .where('referrer', 'ilike', address)
+      .where((q) => {
+        return q.whereRaw('"twitterUserId" is not null').orWhereRaw('"discordId" is not null');
+      })
       .whereNotDeleted()
       .count('id')
       .first()
@@ -260,6 +263,26 @@ export default class User extends BaseModel {
    * @param txn Optional transaction object
    */
   static getReferred(address: string, limit: number, txn?: Transaction) {
-    return this.query(txn).where('referrer', 'ilike', address).whereNotDeleted().select('address').limit(limit);
+    return this.query(txn)
+      .where('referrer', 'ilike', address)
+      .where((q) => {
+        return q.whereRaw('"twitterUserId" is not null').orWhereRaw('"discordId" is not null');
+      })
+      .whereNotDeleted()
+      .select('address')
+      .limit(limit);
+  }
+
+  // Get recent n referrees of a referrer
+  static getRecentReferred(address: string, limit: number) {
+    return this.query()
+      .where('referrer', 'ilike', address)
+      .where((q) => {
+        return q.whereRaw('"twitterUserId" is not null').orWhereRaw('"discordId" is not null');
+      })
+      .whereNotDeleted()
+      .select('address', 'createdAt')
+      .orderBy('createdAt', 'desc')
+      .limit(limit);
   }
 }

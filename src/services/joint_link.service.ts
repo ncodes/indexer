@@ -8,11 +8,11 @@ export class JointLinkService {
   constructor(private cfgSrv: ConfigService) {}
 
   /**
-   * Create a short link
+   * Create a short referral link
    * @param code The code to use
    * @returns
    */
-  async createLink(code: string): Promise<{
+  async createReferralLink(code: string): Promise<{
     url: string;
     normalizedUrl: string;
     shortUrl: string;

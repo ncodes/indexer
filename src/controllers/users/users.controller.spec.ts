@@ -15,6 +15,7 @@ import User from '../../models/user';
 import NetworkService from '../../network/network.service';
 import { JointLinkService } from '../../services/joint_link.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
+import AirdropService from '../airdrop/airdrop.service';
 import { makeSession } from '../auth/utils';
 import ConvosService from '../convos/convos.service';
 import { UserService } from './user.service';
@@ -69,7 +70,15 @@ describe('UsersController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [UsersController],
-      providers: [ConfigService, NetworkService, UserService, MetadataService, ConvosService, JointLinkService],
+      providers: [
+        ConfigService,
+        NetworkService,
+        UserService,
+        AirdropService,
+        MetadataService,
+        ConvosService,
+        JointLinkService,
+      ],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())

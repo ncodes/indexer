@@ -14,9 +14,12 @@ import { DBService } from '../../db/db.service';
 import { NotificationService } from '../../jobs/notifications/NotificationService';
 import { NotificationID } from '../../jobs/notifications/common';
 import Session from '../../models/session';
+import Tap from '../../models/tap';
 import User from '../../models/user';
 import { JointLinkService } from '../../services/joint_link.service';
 import { RedisService } from '../../services/redis/redis.service';
+import AirdropService from '../airdrop/airdrop.service';
+import { RefereeBonus } from '../airdrop/constants';
 import ConvosService from '../convos/convos.service';
 import { UserService } from '../users/user.service';
 import { AuthController } from './auth.controller';
@@ -44,7 +47,7 @@ const mockCreateLink = jest
   .mockResolvedValue({ url: 'url', normalizedUrl: 'normalizedUrl', shortUrl: 'shortUrl' });
 const MockJointLinkService = jest.fn().mockImplementation(() => {
   return {
-    createLink: mockCreateLink,
+    createReferralLink: mockCreateLink,
   };
 });
 
@@ -97,6 +100,7 @@ describe('AuthController', () => {
         NotificationService,
         JointLinkService,
         AuthService,
+        AirdropService,
       ],
     })
       .overrideProvider(ConfigService)
@@ -404,6 +408,10 @@ describe('AuthController', () => {
             expect(res.body.data.user.referrer).toEqual(referrer.address);
             expect(res.body.data.user.refCode).toHaveLength(5);
             expect(mockCreateLink).toHaveBeenCalledTimes(1);
+
+            const newUserTapBonus = await Tap.getTapCount(res.body.data.user.id);
+            expect(newUserTapBonus).toBeDefined();
+            expect(newUserTapBonus).toEqual(RefereeBonus.toString());
           });
       });
 

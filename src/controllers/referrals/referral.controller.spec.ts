@@ -2,12 +2,14 @@ import { INestApplication } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
+import { randStr, shortenAddr } from '../../common/common';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { Roles } from '../../common/roles';
 import { DBService } from '../../db/db.service';
 import Point, { PointAction } from '../../models/point';
 import User from '../../models/user';
+import { makeSession } from '../auth/utils';
 import { ReferralController } from './referral.controller';
 
 const mockCfgGet = jest.fn();
@@ -56,8 +58,10 @@ describe('ReferralController', () => {
   });
 
   let u: User;
+  let token: string;
   beforeEach(async () => {
     u = await User.create({ role: Roles.User, address: '0xAddress' });
+    token = await makeSession(u, randStr(), '5', mockCfgGet('auth.jwtSecret'));
   });
 
   describe('.getInfo', () => {
@@ -87,10 +91,10 @@ describe('ReferralController', () => {
         });
     });
 
-    it('should return 200 and number of referred users when address is associated with a user and users were referred', async () => {
+    it('should return 200 and number of referred users when address is associated with a user and users were referred and have connected discord or twitter', async () => {
       u = await User.updateById(u.id, { refCode: 'refCode' });
-      await User.create({ referrer: u.address, address: '0xAddress2' });
-      await User.create({ referrer: u.address, address: '0xAddress3' });
+      await User.create({ referrer: u.address, address: '0xAddress2', twitterUserId: '123' });
+      await User.create({ referrer: u.address, address: '0xAddress3', discordId: '234' });
       await Point.create({ point: '100', address: u.address, referrer: u.address });
       await Point.create({ point: '100', address: u.address, referrer: u.address });
       await request(app.getHttpServer())
@@ -437,6 +441,50 @@ describe('ReferralController', () => {
         .expect((res) => {
           expect(res.body.data.length).toBe(1);
           expect(p2.address).toBe(res.body.data[0].address);
+        });
+    });
+  });
+
+  describe('.getRecentReferrees', () => {
+    it('should return 401 when authorization header is missing', async () => {
+      await User.updateById(u.id, { address: '0xAddress', email: '0x@email.com' });
+      await request(app.getHttpServer())
+        .get(`/v1/referrals/recent-referees`)
+        .expect(401)
+        .expect({
+          error: {
+            type: 'authentication_error',
+            message: 'authorization header is required',
+          },
+        });
+    });
+
+    it('should return 200 and referred users that have discord or twitter ID set', async () => {
+      await User.updateById(u.id, { address: '0xAddress', email: '0x@email.com' });
+      await User.create({ address: '0xAddress2', referrer: u.address, twitterUserId: '123' });
+      await User.create({ address: '0xAddress3', referrer: u.address, discordId: '234' });
+      await request(app.getHttpServer())
+        .get(`/v1/referrals/recent-referees`)
+        .set('Authorization', 'bearer ' + token)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data).toHaveLength(2);
+          expect([shortenAddr('0xAddress2'), shortenAddr('0xAddress3')]).toContain(res.body.data[0].address);
+          expect([shortenAddr('0xAddress2'), shortenAddr('0xAddress3')]).toContain(res.body.data[1].address);
+        });
+    });
+
+    it('should return 200 and not return referred users that do not have discord or twitter ID set', async () => {
+      await User.updateById(u.id, { address: '0xAddress', email: '0x@email.com' });
+      await User.create({ address: '0xAddress2', referrer: u.address, twitterUserId: '123' });
+      await User.create({ address: '0xAddress3', referrer: u.address });
+      await request(app.getHttpServer())
+        .get(`/v1/referrals/recent-referees`)
+        .set('Authorization', 'bearer ' + token)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data).toHaveLength(1);
+          expect(res.body.data[0].address).toBe(shortenAddr('0xAddress2'));
         });
     });
   });

@@ -6,10 +6,13 @@ import BadgeGrant from '../../models/badge_grant';
 import Market, { AssetType } from '../../models/market';
 import { defaultNotificationSettings } from '../../models/notification_setting';
 import Swap from '../../models/swap';
+import Tap from '../../models/tap';
 import User from '../../models/user';
 import { JointLinkService } from '../../services/joint_link.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { RedisService } from '../../services/redis/redis.service';
+import AirdropService from '../airdrop/airdrop.service';
+import { RefereeBonus } from '../airdrop/constants';
 import ConvosService from '../convos/convos.service';
 import { MarketService } from '../markets/market.service';
 import { UserService } from './user.service';
@@ -26,7 +29,7 @@ const mockCreateLink = jest
   .mockResolvedValue({ url: 'url', normalizedUrl: 'normalizedUrl', shortUrl: 'shortUrl' });
 const MockJointLinkService = jest.fn().mockImplementation(() => {
   return {
-    createLink: mockCreateLink,
+    createReferralLink: mockCreateLink,
   };
 });
 
@@ -56,7 +59,15 @@ describe('UserService', () => {
 
     module = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
-      providers: [UserService, MarketService, MetadataService, RedisService, ConvosService, JointLinkService],
+      providers: [
+        UserService,
+        MarketService,
+        AirdropService,
+        MetadataService,
+        RedisService,
+        ConvosService,
+        JointLinkService,
+      ],
     })
       .overrideProvider(MetadataService)
       .useValue(new MetadataServiceMock())
@@ -246,6 +257,12 @@ describe('UserService', () => {
       expect(u.referrer).toEqual(referrer.address);
       expect(u.refCode).toHaveLength(5);
       expect(mockCreateLink).toBeCalledWith(u.refCode);
+
+      // Create referee bonus tap for the user
+      const taps = await Tap.query().where('userId', u.id);
+      expect(taps).toHaveLength(1);
+      expect(taps[0].bonus).toBeTruthy();
+      expect(taps[0].bonusValue).toEqual(RefereeBonus.toString());
     });
 
     it(`should return true and not set referrer when user is not new`, async () => {

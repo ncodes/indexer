@@ -813,4 +813,26 @@ export default class Swap extends BaseModel {
         return res.count;
       });
   }
+
+  /**
+   * Total amount of swaps completed by a taker for a given liquidity
+   * owned by a provider in a market
+   * @param market The market address
+   * @param provider The liquidity provider address
+   * @param taker The taker address
+   * @param txn Optional transaction object
+   * @returns
+   */
+  static async getTotalAmountByMarketProviderTaker(market: string, provider: string, taker: string, txn?: Transaction) {
+    return this.query(txn)
+      .where('marketAddress', 'ilike', market)
+      .where('provider', 'ilike', provider)
+      .where('taker', 'ilike', taker)
+      .whereNotDeleted()
+      .sum('amount')
+      .first()
+      .then((res: any) => {
+        return res.sum || '0';
+      });
+  }
 }

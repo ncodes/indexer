@@ -49,6 +49,11 @@ export default () => ({
       apiSecret: process.env.TWITTER_API_SECRET,
       callbackUrl: process.env.TWITTER_CALLBACK_URL,
     },
+    tapoff: {
+      multiplierMarket: process.env.TAPOFF_MULTIPLIER_MKT,
+      multiplierProvider: process.env.TAPOFF_MULTIPLIER_PROVIDER,
+      maxApplyPerWindow: process.env.TAPOFF_MULTIPLIER_MAX_APPLY_PER_WINDOW,
+    },
     redis: {
       url: process.env.REDIS_URL,
     },

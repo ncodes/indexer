@@ -12,13 +12,23 @@ import Quest from '../../models/quest';
 import Swap from '../../models/swap';
 import User from '../../models/user';
 import DiscordService from '../../services/discord.service';
-import { TwitterService } from '../../services/twitter.service';
+import { RedisService } from '../../services/redis/redis.service';
 import { makeSession } from '../auth/utils';
+import { TwitterService } from './../../services/twitter.service';
 import { AirdropController } from './airdrop.controller';
+import AirdropService from './airdrop.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
   return { get: mockCfgGet };
+});
+
+const DiscordServiceMock = jest.fn().mockImplementation(() => {
+  return {};
+});
+
+const RedisServiceMock = jest.fn().mockImplementation(() => {
+  return {};
 });
 
 describe('AirdropController', () => {
@@ -55,10 +65,14 @@ describe('AirdropController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [AirdropController],
-      providers: [ConfigService, TwitterService, DiscordService],
+      providers: [ConfigService, TwitterService, AirdropService, DiscordService, RedisService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
+      .overrideProvider(DiscordService)
+      .useValue(new DiscordServiceMock())
+      .overrideProvider(RedisService)
+      .useValue(new RedisServiceMock())
       .compile();
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());

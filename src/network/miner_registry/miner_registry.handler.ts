@@ -193,7 +193,7 @@ export class MinerRegistryHandler extends Handler {
    * @param event The event object
    * @param txn The transaction object
    */
-  async onRewardAdded(address: string, op: bigint, amount: bigint, _event: ContractCallEvent, txn?: Transaction) {
+  async onRewardAdded(address: string, op: bigint, amount: bigint, _event: ContractCallEvent, _txn?: Transaction) {
     await MinerReward.create({
       network: this.network,
       address,

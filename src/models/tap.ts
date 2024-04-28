@@ -1,3 +1,4 @@
+import * as moment from 'moment';
 import Objection, { Transaction } from 'objection';
 import { randStr } from '../common/common';
 import { toDec } from './../common/common';
@@ -11,6 +12,9 @@ import TapSpend from './tap_spend';
 export default class Tap extends BaseModel {
   userId: string;
   virtual: boolean;
+  bonusName: string;
+  bonus: boolean;
+  bonusValue: string;
 
   constructor(init?: Partial<Tap>) {
     super();
@@ -79,13 +83,13 @@ export default class Tap extends BaseModel {
   }
 
   /**
-   * Get the tap count for a user
-   * @param userId The user ID
+   * Get the tap count for a user or all users
+   * @param userId The user ID (optional)
    * @param ignoreSpends Whether to ignore spends
    * @param txn Optional transaction object
    * @returns
    */
-  static async getTapCount(userId: string, ignoreSpends?: boolean, txn?: Transaction) {
+  static async getTapCount(userId?: string, ignoreSpends?: boolean, txn?: Transaction) {
     let totalSpend = '0';
     if (!ignoreSpends) {
       totalSpend = await TapSpend.getTotalSpend(userId, undefined, txn);
@@ -93,13 +97,88 @@ export default class Tap extends BaseModel {
 
     const totalMultiplierTaps = await MultiplierSpend.getTotalTaps(userId, txn);
 
+    // get sum of bonus value for bonus taps
+    const totalBonusTaps = await this.query(txn)
+      .where((q) => {
+        if (userId) {
+          return q.where('userId', userId);
+        }
+      })
+      .where({ bonus: true })
+      .whereNotDeleted()
+      .sum('bonusValue')
+      .first()
+      .then((res: any) => {
+        return res.sum ? res.sum : '0';
+      });
+
     return this.query(txn)
-      .where('userId', userId)
+      .where((q) => {
+        if (userId) {
+          return q.where('userId', userId);
+        }
+      })
+      .where({ bonus: false })
       .whereNotDeleted()
       .count()
       .first()
       .then((res) => {
-        return res ? toDec(res.count).add(totalMultiplierTaps).sub(totalSpend).toFixed(0) : '0';
+        return res ? toDec(res.count).add(totalBonusTaps).add(totalMultiplierTaps).sub(totalSpend).toFixed(0) : '0';
       });
+  }
+
+  /**
+   * Count all taps
+   * @param txn
+   * @returns
+   */
+  static async count(txn?: Transaction) {
+    return this.query(txn)
+      .where({ bonus: false })
+      .whereNotDeleted()
+      .count('id')
+      .first()
+      .then((res) => {
+        return res.count;
+      });
+  }
+
+  /**
+   * Count all unique users
+   * @param txn Optional transaction object
+   * @returns
+   */
+  static async countTotalUniqueUsers(txn?: Transaction) {
+    return this.query(txn)
+      .where({ bonus: false })
+      .whereNotDeleted()
+      .countDistinct('userId')
+      .first()
+      .then((res) => {
+        return res?.count || '0';
+      });
+  }
+
+  /**
+   * Count all unique users in the since the last n seconds
+   * @param durInSec The duration in seconds
+   * @param txn Optional transaction object
+   * @returns
+   */
+  static async countUniqueUsersFrom(durInSec: number, txn?: Transaction) {
+    return this.query(txn)
+      .where({ bonus: false })
+      .whereNotDeleted()
+      .where('createdAt', '>', moment().subtract(durInSec, 's').toISOString())
+      .countDistinct('userId')
+      .first()
+      .then((res) => {
+        return res?.count || '0';
+      });
+  }
+
+  // Get by bonus name and user
+  static getByBonusNameAndUser(bonusName: string, userId: string, txn?: Transaction) {
+    return this.query(txn).where({ bonusName, userId }).whereNotDeleted().first();
   }
 }

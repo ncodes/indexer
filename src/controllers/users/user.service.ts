@@ -8,9 +8,11 @@ import NFTOwner from '../../models/nft_owner';
 import { defaultNotificationSettings } from '../../models/notification_setting';
 import Point from '../../models/point';
 import Swap from '../../models/swap';
+import Tap from '../../models/tap';
 import User from '../../models/user';
 import { JointLinkService } from '../../services/joint_link.service';
 import AirdropService from '../airdrop/airdrop.service';
+import { RefereeBonus } from '../airdrop/constants';
 import ConvosService from '../convos/convos.service';
 import { NFTAllocations } from '../points/data/nft_allocation';
 import { DeviceType } from './dto';
@@ -161,7 +163,7 @@ export class UserService {
    * @param user The user object
    */
   async enableReferrerOps(isNewUser: boolean, referrerRefCode: string, user: User) {
-    return transaction(User, async (User) => {
+    return transaction(User, Tap, async (User, Tap) => {
       if (user.refCode) return false;
 
       const referrer = referrerRefCode ? await User.getByRefCode(referrerRefCode) : undefined;
@@ -173,10 +175,20 @@ export class UserService {
       user.refCode = upd.refCode;
       user.referrer = upd.referrer;
 
-      await this.jntLinkSrv.createLink(user.refCode).catch((e) => {
+      await this.jntLinkSrv.createReferralLink(user.refCode).catch((e) => {
         this.logger.error(`enableReferrer: failed to create joint link`, e);
         throw e;
       });
+
+      // Grant enlisting TAPs to the referred user
+      if (isNewUser && referrer) {
+        await Tap.create({
+          userId: user.id,
+          bonus: true,
+          bonusName: 'referee_bonus',
+          bonusValue: RefereeBonus.toString(),
+        });
+      }
 
       return true;
     });

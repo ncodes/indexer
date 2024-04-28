@@ -2,12 +2,14 @@ import { INestApplication } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
+import { randStr } from '../../common/common';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { Roles } from '../../common/roles';
 import { DBService } from '../../db/db.service';
 import Point, { PointAction } from '../../models/point';
 import User from '../../models/user';
+import { makeSession } from '../auth/utils';
 import { ReferralController } from './referral.controller';
 
 const mockCfgGet = jest.fn();
@@ -56,8 +58,10 @@ describe('ReferralController', () => {
   });
 
   let u: User;
+  let token: string;
   beforeEach(async () => {
     u = await User.create({ role: Roles.User, address: '0xAddress' });
+    token = await makeSession(u, randStr(), '5', mockCfgGet('auth.jwtSecret'));
   });
 
   describe('.getInfo', () => {
@@ -437,6 +441,34 @@ describe('ReferralController', () => {
         .expect((res) => {
           expect(res.body.data.length).toBe(1);
           expect(p2.address).toBe(res.body.data[0].address);
+        });
+    });
+  });
+
+  describe('.getRecentReferrees', () => {
+    it('should return 401 when authorization header is missing', async () => {
+      await User.updateById(u.id, { address: '0xAddress', email: '0x@email.com' });
+      await request(app.getHttpServer())
+        .get(`/v1/referrals/recent-referrees`)
+        .expect(401)
+        .expect({
+          error: {
+            type: 'authentication_error',
+            message: 'authorization header is required',
+          },
+        });
+    });
+
+    it('should return 200 and correct result', async () => {
+      await User.updateById(u.id, { address: '0xAddress', email: '0x@email.com' });
+      await User.create({ address: '0xAddress2', referrer: u.address });
+      await User.create({ address: '0xAddress3', referrer: u.address });
+      await request(app.getHttpServer())
+        .get(`/v1/referrals/recent-referrees`)
+        .set('Authorization', 'bearer ' + token)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data).toEqual([{ address: '0xAd...ess3' }, { address: '0xAd...ess2' }]);
         });
     });
   });

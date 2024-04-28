@@ -85,9 +85,13 @@ export default class TapSpend extends BaseModel {
    * @param txn Optional transaction object
    * @returns
    */
-  static getTotalSpend(userId: string, type?: TapSpendType, txn?: Transaction): Promise<string> {
+  static getTotalSpend(userId?: string, type?: TapSpendType, txn?: Transaction): Promise<string> {
     return this.query(txn)
-      .where({ userId })
+      .where((q) => {
+        if (userId) {
+          q.where({ userId });
+        }
+      })
       .where((q) => {
         if (type) {
           q.where({ type });

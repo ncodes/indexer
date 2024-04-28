@@ -13,8 +13,69 @@ export const RapidFireActiveTime = 20;
 export const MaxInstantCoolPerWindow = 3;
 export const InstantCoolWindow = 12 * 60 * 60; // 12 hours
 
-export const MultiplierApplyWindow = 30; // 12 hours
+export const MultiplierApplyWindow = 12 * 60 * 60; // 12 hours
 export const MultiplierApplyMaxPerWindow = 1;
+export const MultiplierCost = '100';
+export const Multiplier = 10;
+
+export const RefereeBonus = 5000;
+export const FollowQuestBonus = 200000;
+
+export const RankInfo = {
+  Cadet: {
+    taps: 0,
+    reward: 5000,
+  },
+  Ensign: {
+    taps: 2000,
+    reward: 10000,
+  },
+  'Lieutenant Jnr': {
+    taps: 5000,
+    reward: 30000,
+  },
+  Lieutenant: {
+    taps: 50000,
+    reward: 50000,
+  },
+  Commander: {
+    taps: 250000,
+    reward: 100000,
+  },
+  Captain: {
+    taps: 500000,
+    reward: 200000,
+  },
+  Commodore: {
+    taps: 1000000,
+    reward: 350000,
+  },
+  'Rear Admiral': {
+    taps: 2500000,
+    reward: 500000,
+  },
+  'Vice Admiral': {
+    taps: 5000000,
+    reward: 750000,
+  },
+  Admiral: {
+    taps: 10000000,
+    reward: 1000000,
+  },
+};
+
+export const ReferralInfo = [
+  { count: 1, reward: 2000 },
+  { count: 3, reward: 50000 },
+  { count: 10, reward: 200000 },
+  { count: 25, reward: 250000 },
+  { count: 50, reward: 300000 },
+  { count: 100, reward: 500000 },
+  { count: 500, reward: 2000000 },
+  { count: 1000, reward: 2500000 },
+  { count: 10000, reward: 10000000 },
+  { count: 100000, reward: 100000000 },
+];
 
 export const TapSpendLevelCost: Record<TapSpendType, Record<number, { cost: string; increment: number }>> = {
   [TapSpendType.HyperFire]: {

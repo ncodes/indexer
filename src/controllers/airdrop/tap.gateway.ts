@@ -22,13 +22,18 @@ import User from '../../models/user';
 import { RedisService } from '../../services/redis/redis.service';
 import { toDec } from './../../common/common';
 import {
+  FollowQuestBonus,
   InstantCoolWindow,
   MaxInstantCoolPerWindow,
   MaxRapidFirePerWindow,
+  Multiplier,
   MultiplierApplyMaxPerWindow,
   MultiplierApplyWindow,
+  MultiplierCost,
+  RankInfo,
   RapidFireActiveTime,
   RapidFireWindow,
+  ReferralInfo,
   TapSpendLevelCost,
   TapSpendType,
 } from './constants';
@@ -236,7 +241,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
         let increment = await this.getCoolingIncrement(userId);
 
         if (parseInt(lastTapAt) == parseInt(lastOverheatUpdate)) {
-          increment = now.unix() - parseInt(lastTapAt) - 1;
+          increment = Math.max(now.unix() - parseInt(lastTapAt) - 1, Number(increment));
         }
 
         let newOverheatLvl = BigInt(increment) + BigInt(overheatLvl);
@@ -246,9 +251,11 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
           newOverheatLvl = maxOverheatLvl;
         }
 
-        overheatLvl = newOverheatLvl.toString();
-        await this.redisSrv.set(`tap:overheat:${userId}`, newOverheatLvl.toString());
-        await this.redisSrv.set(`tap:overheat:lastUpdated:${userId}`, now.unix().toString());
+        if (BigInt(overheatLvl) != newOverheatLvl) {
+          overheatLvl = newOverheatLvl.toString();
+          await this.redisSrv.set(`tap:overheat:${userId}`, newOverheatLvl.toString());
+          await this.redisSrv.set(`tap:overheat:lastUpdated:${userId}`, now.unix().toString());
+        }
       } else {
         return { success: false, message: 'Tap cooldown required' };
       }
@@ -289,6 +296,8 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       return { success: false, message: 'Not authenticated' };
     }
 
+    const user = await User.getById(userId);
+
     // General info
     const maxOverheatLvl = await this.getMaxOverheatLevel(userId);
     const tapCount = await Tap.getTapCount(userId);
@@ -299,13 +308,13 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
     const hyperFireLevel = (await TapSpend.countSpend(userId, TapSpendType.HyperFire)) + 1;
     const hyperFireCost = TapSpendLevelCost[TapSpendType.HyperFire][hyperFireLevel]?.cost;
     const hyperFireIncrement = TapSpendLevelCost[TapSpendType.HyperFire][hyperFireLevel]?.increment;
-    const hyperFireNextLevelCost = TapSpendLevelCost[TapSpendType.HyperFire][hyperFireLevel + 1].cost;
-    const hyperFireNextLevelIncrement = TapSpendLevelCost[TapSpendType.HyperFire][hyperFireLevel + 1].increment;
+    const hyperFireNextLevelCost = TapSpendLevelCost[TapSpendType.HyperFire][hyperFireLevel + 1]?.cost;
+    const hyperFireNextLevelIncrement = TapSpendLevelCost[TapSpendType.HyperFire][hyperFireLevel + 1]?.increment;
 
     // AntiOverheat boost info
     const antiOverheatLevel = (await TapSpend.countSpend(userId, TapSpendType.AntiOverheat)) + 1;
     const antiOverheatCost = TapSpendLevelCost[TapSpendType.AntiOverheat][antiOverheatLevel]?.cost;
-    const antiOverheatIncrement = TapSpendLevelCost[TapSpendType.AntiOverheat][antiOverheatLevel]?.increment;
+    const antiOverheatIncrement = TapSpendLevelCost[TapSpendType.AntiOverheat][antiOverheatLevel + 1]?.increment;
     const antiOverheatNextLevelCost = TapSpendLevelCost[TapSpendType.AntiOverheat][antiOverheatLevel + 1]?.cost;
     const antiOverheatNextLevelIncrement =
       TapSpendLevelCost[TapSpendType.AntiOverheat][antiOverheatLevel + 1]?.increment;
@@ -328,6 +337,42 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
 
     // Multiplier info
     const multiplierBal = await this.getMultiplierBalance(userId);
+    const curWindowSpend = await MultiplierSpend.getTotalSpendFrom(userId, MultiplierApplyWindow);
+    const lastMultiplierSpend = await MultiplierSpend.getLastSpend(userId);
+
+    const markedTwitterFollow = (await this.redisSrv.get(`tap:quest:follow:x:${userId}`)) == '1';
+    const markedTelegramFollow = (await this.redisSrv.get(`tap:quest:follow:telegram:${userId}`)) == '1';
+    const markedWebVisitFollow = (await this.redisSrv.get(`tap:quest:follow:webvisit:${userId}`)) == '1';
+
+    const followQuestCompleted =
+      markedTwitterFollow && markedTelegramFollow && markedWebVisitFollow && !!user.discordId;
+    const followQuestBonus = await Tap.getByBonusNameAndUser('follow_quests', userId);
+    const followQuestReward = FollowQuestBonus.toString();
+
+    const rankBonusClaimStatus = {
+      Cadet: !!(await Tap.getByBonusNameAndUser(`rank_bonus_Cadet`, userId)),
+      Ensign: !!(await Tap.getByBonusNameAndUser(`rank_bonus_Ensign`, userId)),
+      'Lieutenant Jnr': !!(await Tap.getByBonusNameAndUser(`rank_bonus_Lieutenant Jnr`, userId)),
+      Lieutenant: !!(await Tap.getByBonusNameAndUser(`rank_bonus_Lieutenant`, userId)),
+      Commander: !!(await Tap.getByBonusNameAndUser(`rank_bonus_Commander`, userId)),
+      Captain: !!(await Tap.getByBonusNameAndUser(`rank_bonus_Captain`, userId)),
+      Commodore: !!(await Tap.getByBonusNameAndUser(`rank_bonus_Commodore`, userId)),
+      'Rear Admiral': !!(await Tap.getByBonusNameAndUser(`rank_bonus_Rear Admiral`, userId)),
+      'Vice Admiral': !!(await Tap.getByBonusNameAndUser(`rank_bonus_Vice Admiral`, userId)),
+      Admiral: !!(await Tap.getByBonusNameAndUser(`rank_bonus_Admiral`, userId)),
+    };
+
+    const totalClaims = await this.redisSrv.get(`tap:referral:claims:${userId}`);
+    const numReferred = await User.countReferred(user.address);
+    const claimableReferrals = numReferred - parseInt(totalClaims || '0');
+
+    const gameStats = {
+      totalBalance: await Tap.getTapCount(),
+      totalShots: await Tap.count(),
+      totalPlayers: await Tap.countTotalUniqueUsers(),
+      totalPlayersLast24h: await Tap.countUniqueUsersFrom(86400),
+      totalPlayersLast1min: await Tap.countUniqueUsersFrom(60),
+    };
 
     return {
       success: true,
@@ -335,6 +380,18 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       tapCount: tapCount,
       tapIncrement: await this.getTapIncrement(userId),
       rank,
+      isDiscordConnected: !!user.discordId,
+      markedTwitterFollow,
+      markedTelegramFollow,
+      markedWebVisitFollow,
+      followQuestReward: followQuestReward as string,
+      followQuestCompleted,
+      followQuestBonusAwarded: !!followQuestBonus,
+      rankInfo: RankInfo,
+      rankBonusClaimStatus,
+      referralInfo: ReferralInfo,
+      claimableReferrals,
+      gameStats,
       rapidFire: {
         active: rapidFireOn,
         numUsed: numRapidFireUsed,
@@ -351,9 +408,9 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       hyperFire: {
         level: hyperFireLevel,
         cost: hyperFireCost,
-        increment: hyperFireIncrement + 1,
+        increment: hyperFireIncrement,
         nextLevelCost: hyperFireNextLevelCost,
-        nextLevelIncrement: hyperFireNextLevelIncrement + 1,
+        nextLevelIncrement: hyperFireNextLevelIncrement,
       },
       antiOverheat: {
         level: antiOverheatLevel,
@@ -371,6 +428,13 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       },
       multiplier: {
         balance: multiplierBal,
+        cost: MultiplierCost,
+        value: Multiplier,
+        canSpend: multiplierBal != '0' && toDec(curWindowSpend).lt(MultiplierApplyMaxPerWindow),
+        curWindowEndsAt:
+          (lastMultiplierSpend &&
+            moment(lastMultiplierSpend.createdAt).add(MultiplierApplyWindow, 's').toISOString()) ||
+          undefined,
       },
     };
   }
@@ -608,6 +672,162 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
   }
 
   /**
+   * Handle to mark 'follow' quest
+   * @param socket
+   * @returns
+   */
+  @SubscribeMessage('markFollows')
+  async handleMarkFollows(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody('x') x: boolean,
+    @MessageBody('telegram') telegram: boolean,
+    @MessageBody('webvisit') webvisit: boolean,
+  ) {
+    const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
+    if (!userId) {
+      return { success: false, message: 'Not authenticated' };
+    }
+
+    if (x) {
+      this.redisSrv.set(`tap:quest:follow:x:${userId}`, '1');
+    }
+
+    if (telegram) {
+      this.redisSrv.set(`tap:quest:follow:telegram:${userId}`, '1');
+    }
+
+    if (webvisit) {
+      this.redisSrv.set(`tap:quest:follow:webvisit:${userId}`, '1');
+    }
+
+    return {
+      success: true,
+      message: 'Follows marked',
+    };
+  }
+
+  /**
+   * Handle the claimQuestsReward event
+   * @param socket The socket object
+   * @returns
+   */
+  @SubscribeMessage('claimQuestsReward')
+  async handleClaimQuestsReward(@ConnectedSocket() socket: Socket) {
+    const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
+    if (!userId) {
+      return { success: false, message: 'Not authenticated' };
+    }
+
+    const user = await User.getById(userId);
+
+    const markedTwitterFollow = (await this.redisSrv.get(`tap:quest:follow:x:${userId}`)) == '1';
+    const markedTelegramFollow = (await this.redisSrv.get(`tap:quest:follow:telegram:${userId}`)) == '1';
+    const markedWebVisitFollow = (await this.redisSrv.get(`tap:quest:follow:webvisit:${userId}`)) == '1';
+
+    if (!markedTwitterFollow || !markedTelegramFollow || !markedWebVisitFollow || !user.discordId) {
+      return { success: false, message: 'Quests not completed' };
+    }
+
+    const existingBonus = await Tap.getByBonusNameAndUser('follow_quests', userId);
+    if (existingBonus) {
+      return { success: true, message: 'Quests reward already claimed' };
+    }
+
+    const reward = FollowQuestBonus.toString();
+    await Tap.create({
+      userId,
+      bonus: true,
+      bonusValue: reward,
+      bonusName: 'follow_quests',
+    });
+
+    return {
+      success: true,
+      message: 'Quests reward claimed',
+    };
+  }
+
+  /**
+   * Claim rank bonus
+   * @param socket The socket object
+   * @param rank The rank to claim bonus for
+   * @returns
+   */
+  @SubscribeMessage('claimRankBonus')
+  async handleClaimRankBonus(@ConnectedSocket() socket: Socket, @MessageBody('rank') rank: string) {
+    const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
+    if (!userId) {
+      return { success: false, message: 'Not authenticated' };
+    }
+
+    const existingBonus = await Tap.getByBonusNameAndUser(`rank_bonus_${rank}`, userId);
+    if (existingBonus) {
+      return { success: true, message: 'Rank bonus already claimed' };
+    }
+
+    await Tap.create({
+      userId,
+      bonus: true,
+      bonusValue: RankInfo[rank].reward,
+      bonusName: `rank_bonus_${rank}`,
+    });
+
+    return {
+      success: true,
+      message: 'Rank bonus claimed',
+    };
+  }
+
+  /**
+   * Claim bonus for referring a certain number of users
+   * @param socket The socket object
+   * @param count The number of users to request bonus for
+   * @returns
+   */
+  @SubscribeMessage('claimReferralBonus')
+  async handleClaimReferralBonus(@ConnectedSocket() socket: Socket, @MessageBody('count') count: number) {
+    const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
+    if (!userId) {
+      return { success: false, message: 'Not authenticated' };
+    }
+
+    const refInfo = ReferralInfo.find((info) => info.count == count);
+    if (!refInfo) {
+      return { success: false, message: 'Invalid referral count' };
+    }
+
+    // Total referred user claims
+    let totalClaims = await this.redisSrv.get(`tap:referral:claims:${userId}`);
+    if (!totalClaims) {
+      totalClaims = '0';
+    }
+
+    // Make sure the user has enough referrals
+    const user = await User.getById(userId);
+    const numReferred = await User.countReferred(user.address);
+    const claimable = numReferred - parseInt(totalClaims);
+    if (claimable < count) {
+      return { success: false, message: 'Insufficient referrals' };
+    }
+
+    // Mark the claim
+    await this.redisSrv.set(`tap:referral:claims:${userId}`, (parseInt(totalClaims) + count).toString());
+
+    // Create the bonus record
+    await Tap.create({
+      userId,
+      bonus: true,
+      bonusValue: refInfo.reward.toString(),
+      bonusName: `referral_bonus_${count}`,
+    });
+
+    return {
+      success: true,
+      message: 'Referral bonus claimed',
+    };
+  }
+
+  /**
    * Get the total multiplier balance for a user
    * @param userId The user ID
    * @returns 0 if user does not exist, otherwise the total multiplier balance
@@ -628,18 +848,15 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       .toFixed();
   }
 
-  getRank(tapCount: Decimal) {
+  getRank(taps: Decimal) {
     let rank = 'Cadet';
-    if (tapCount.gte(2000)) rank = 'Ensign';
-    if (tapCount.gte(5000)) rank = 'Lieutenant Jnr';
-    if (tapCount.gte(50000)) rank = 'Lieutenant';
-    if (tapCount.gte(250000)) rank = 'Commander';
-    if (tapCount.gte(500000)) rank = 'Captain';
-    if (tapCount.gte(1000000)) rank = 'Commodore';
-    if (tapCount.gte(2500000)) rank = 'Rear Admiral';
-    if (tapCount.gte(5000000)) rank = 'Vice Admiral';
-    if (tapCount.gte(10000000)) rank = 'Admiral';
-    if (tapCount.gte(50000000)) rank = 'Fleet Admiral';
+
+    for (const [key, value] of Object.entries(RankInfo)) {
+      if (taps.gte(value.taps)) {
+        rank = key;
+      }
+    }
+
     return rank;
   }
 

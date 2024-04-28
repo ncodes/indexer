@@ -1,6 +1,10 @@
-import { Controller, Get, Param, Query, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Param, Query, Req, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Request } from 'express';
+import { shortenAddr } from '../../common/common';
 import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
 import { ErrorMessages, ok, throw404 } from '../../common/responses/responses';
+import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
+import { HasKeyGuard } from '../../guards/has_token.guard';
 import Point from '../../models/point';
 import User from '../../models/user';
 import { GetLeaderboardDTO, GetRecentPoints } from './dto';
@@ -81,5 +85,21 @@ export class ReferralController {
       query.order,
     );
     return ok().data(points).build();
+  }
+
+  /**
+   * Get recent referees
+   * @param req The request object
+   * @returns
+   */
+  @UseGuards(BeAuthenticatedGuard)
+  @UseGuards(HasKeyGuard)
+  @Get('/recent-referees')
+  async getRecentReferees(@Req() req: Request) {
+    const res = (await User.getRecentReferred(req.user.address, 25)).map((u) => {
+      return { address: shortenAddr(u.address), joinedAt: u.createdAt };
+    });
+
+    return ok().data(res).build();
   }
 }

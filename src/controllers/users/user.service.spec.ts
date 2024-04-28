@@ -1,4 +1,4 @@
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as moment from 'moment';
 import { DBService } from '../../db/db.service';
@@ -6,6 +6,7 @@ import BadgeGrant from '../../models/badge_grant';
 import Market, { AssetType } from '../../models/market';
 import { defaultNotificationSettings } from '../../models/notification_setting';
 import Swap from '../../models/swap';
+import Tap from '../../models/tap';
 import User from '../../models/user';
 import { JointLinkService } from '../../services/joint_link.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
@@ -27,7 +28,7 @@ const mockCreateLink = jest
   .mockResolvedValue({ url: 'url', normalizedUrl: 'normalizedUrl', shortUrl: 'shortUrl' });
 const MockJointLinkService = jest.fn().mockImplementation(() => {
   return {
-    createLink: mockCreateLink,
+    createReferralLink: mockCreateLink,
   };
 });
 
@@ -247,6 +248,8 @@ describe('UserService', () => {
     });
 
     it(`should return true and set referrer when user is new`, async () => {
+      jest.spyOn(module.get(ConfigService), 'get').mockReturnValue(100);
+
       let u = await User.create({ address: user });
       const referrer = await User.create({ address: '0xReferrer', refCode: '0xReferrerCode' });
       const res = await service.enableReferrerOps(true, '0xReferrerCode', u);
@@ -255,6 +258,12 @@ describe('UserService', () => {
       expect(u.referrer).toEqual(referrer.address);
       expect(u.refCode).toHaveLength(5);
       expect(mockCreateLink).toBeCalledWith(u.refCode);
+
+      // Create referee bonus tap for the user
+      const taps = await Tap.query().where('userId', u.id);
+      expect(taps).toHaveLength(1);
+      expect(taps[0].bonus).toBeTruthy();
+      expect(taps[0].bonusValue).toEqual('100');
     });
 
     it(`should return true and not set referrer when user is not new`, async () => {

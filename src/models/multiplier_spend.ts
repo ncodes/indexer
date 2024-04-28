@@ -97,9 +97,13 @@ export default class MultiplierSpend extends BaseModel {
    * @param txn Optional transaction object
    * @returns
    */
-  static getTotalTaps(userId: string, txn?: Transaction): Promise<string> {
+  static getTotalTaps(userId?: string, txn?: Transaction): Promise<string> {
     return this.query(txn)
-      .where({ userId })
+      .where((q) => {
+        if (userId) {
+          q.where({ userId });
+        }
+      })
       .sum('taps')
       .first()
       .then((res) => (res as any).sum || '0');
@@ -119,5 +123,10 @@ export default class MultiplierSpend extends BaseModel {
       .sum('amount')
       .first()
       .then((res) => (res as any).sum || '0');
+  }
+
+  // Get the last spend of a user by user id
+  static getLastSpend(userId: string, txn?: Transaction) {
+    return this.query(txn).where({ userId }).whereNotDeleted().orderBy('createdAt', 'desc').first();
   }
 }

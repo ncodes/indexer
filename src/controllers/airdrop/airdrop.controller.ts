@@ -252,7 +252,7 @@ export class AirdropController {
    */
   @UseGuards(BeAuthenticatedGuard)
   @UseGuards(HasKeyGuard)
-  @Post('/claim-alloc/nft')
+  // @Post('/claim-alloc/nft')
   async claimNFTAllocation(@Req() req: Request) {
     if (!isLocal()) throw400('Not available');
 
@@ -285,7 +285,7 @@ export class AirdropController {
    */
   @UseGuards(BeAuthenticatedGuard)
   @UseGuards(HasKeyGuard)
-  @Post('/claim-alloc/early-member')
+  // @Post('/claim-alloc/early-member')
   async claimEarlyMemberAllocation(@Req() req: Request) {
     if (!isLocal()) throw400('Not available');
 
@@ -314,7 +314,7 @@ export class AirdropController {
    */
   @UseGuards(BeAuthenticatedGuard)
   @UseGuards(HasKeyGuard)
-  @Post('/claim-alloc/points')
+  // @Post('/claim-alloc/points')
   async claimPointsAllocation(@Req() req: Request) {
     if (!isLocal()) throw400('Not available');
 

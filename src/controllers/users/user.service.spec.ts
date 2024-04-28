@@ -1,4 +1,4 @@
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as moment from 'moment';
 import { DBService } from '../../db/db.service';
@@ -12,6 +12,7 @@ import { JointLinkService } from '../../services/joint_link.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { RedisService } from '../../services/redis/redis.service';
 import AirdropService from '../airdrop/airdrop.service';
+import { RefereeBonus } from '../airdrop/constants';
 import ConvosService from '../convos/convos.service';
 import { MarketService } from '../markets/market.service';
 import { UserService } from './user.service';
@@ -248,8 +249,6 @@ describe('UserService', () => {
     });
 
     it(`should return true and set referrer when user is new`, async () => {
-      jest.spyOn(module.get(ConfigService), 'get').mockReturnValue(100);
-
       let u = await User.create({ address: user });
       const referrer = await User.create({ address: '0xReferrer', refCode: '0xReferrerCode' });
       const res = await service.enableReferrerOps(true, '0xReferrerCode', u);
@@ -263,7 +262,7 @@ describe('UserService', () => {
       const taps = await Tap.query().where('userId', u.id);
       expect(taps).toHaveLength(1);
       expect(taps[0].bonus).toBeTruthy();
-      expect(taps[0].bonusValue).toEqual('100');
+      expect(taps[0].bonusValue).toEqual(RefereeBonus.toString());
     });
 
     it(`should return true and not set referrer when user is not new`, async () => {

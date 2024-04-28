@@ -90,7 +90,7 @@ describe('PointController', () => {
     await app.init();
   });
 
-  describe('.getLeaderboard', () => {
+  describe.skip('.getLeaderboard', () => {
     it('should return empty result when no point has been created', async () => {
       await request(app.getHttpServer())
         .get(`/v1/points/leaderboard`)

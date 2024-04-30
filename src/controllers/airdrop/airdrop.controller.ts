@@ -25,18 +25,19 @@ import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import { IsRootAdmin } from '../../guards/is_basic_admin';
 import Allocation from '../../models/allocations';
+import Battle from '../../models/battle';
 import LuckyCode from '../../models/lucky_code';
 import NFTOwner from '../../models/nft_owner';
 import Point, { PointAction } from '../../models/point';
 import Quest from '../../models/quest';
 import Swap from '../../models/swap';
+import Tap from '../../models/tap';
 import User from '../../models/user';
 import { powOf } from '../../network/common';
 import DiscordService from '../../services/discord.service';
 import { TwitterService } from '../../services/twitter.service';
 import { NFTAllocations } from '../points/data/nft_allocation';
 import { PointMap } from '../points/data/points';
-import AirdropService from './airdrop.service';
 import { ApplyPresale, CreateLuckyCodeDTO, CreateQuestDTO, RequestQuestVerify, VoteQuest } from './dto';
 
 function randomInteger(min, max) {
@@ -47,12 +48,7 @@ function randomInteger(min, max) {
 export class AirdropController {
   private logger = new Logger(AirdropController.name);
 
-  constructor(
-    private cfgSrv: ConfigService,
-    private twitterSrv: TwitterService,
-    private discordSrv: DiscordService,
-    private airdroSrv: AirdropService,
-  ) {}
+  constructor(private cfgSrv: ConfigService, private twitterSrv: TwitterService, private discordSrv: DiscordService) {}
 
   /**
    * Link twitter user to a user account
@@ -594,5 +590,46 @@ export class AirdropController {
     });
 
     return ok().data({ ok: true }).build();
+  }
+
+  @UseGuards(BeAuthenticatedGuard)
+  @UseGuards(HasKeyGuard)
+  @Get('/bond-balance')
+  async getBondBalance(@Req() req: Request) {
+    const user = req.user;
+    const bondBalance = await Swap.getTotalAmountByMarketProviderTaker(
+      this.cfgSrv.get('app.tapoff.multiplierMarket'),
+      this.cfgSrv.get('app.tapoff.multiplierProvider'),
+      user.address,
+    );
+    return ok().data({ balance: bondBalance }).build();
+  }
+
+  @UseGuards(BeAuthenticatedGuard)
+  @UseGuards(HasKeyGuard)
+  @Get('/battle-info')
+  async getBattleInfo() {
+    const latestBattle = await Battle.getLatestBattle();
+    if (!latestBattle) throw400('No battle found');
+
+    const totalBattleTaps = await Tap.getBattleTapCount(latestBattle.id);
+    const totalDroidSideTaps = await Tap.getBattleTapCount(latestBattle.id, 'droid');
+    const totalBanditSideTaps = await Tap.getBattleTapCount(latestBattle.id, 'bandit');
+    const numDroids = await User.countBattleSide(latestBattle.id, 'droid');
+    const numBandits = await User.countBattleSide(latestBattle.id, 'bandit');
+    const nextBattleTime = moment(latestBattle.createdAt).utc().add(1, 'day').startOf('day').toISOString();
+
+    return ok()
+      .data({
+        battleId: latestBattle.id,
+        battleIndex: latestBattle.sn,
+        battleTaps: totalBattleTaps,
+        nextBattleTime,
+        droidTaps: totalDroidSideTaps,
+        banditTaps: totalBanditSideTaps,
+        numDroids,
+        numBandits,
+      })
+      .build();
   }
 }

@@ -53,6 +53,7 @@ export default () => ({
       multiplierMarket: process.env.TAPOFF_MULTIPLIER_MKT,
       multiplierProvider: process.env.TAPOFF_MULTIPLIER_PROVIDER,
       maxApplyPerWindow: process.env.TAPOFF_MULTIPLIER_MAX_APPLY_PER_WINDOW,
+      battleAlloc: process.env.TAPOFF_BATTLE_ALLOC,
     },
     redis: {
       url: process.env.REDIS_URL,

@@ -30,6 +30,8 @@ export default class User extends BaseModel {
   presaleCountry: string;
   ipCountry: string;
   presaleApproved: boolean;
+  curBattleId: string;
+  battleSide: 'droid' | 'bandit';
 
   // Not persisted
   totalUnclaimedAlloc: string;
@@ -104,9 +106,10 @@ export default class User extends BaseModel {
   /**
    * getById finds a user by ID
    * @param id The user id
+   * @
    */
-  static getById(id: string) {
-    return this.query().whereNotDeleted().withGraphFetched('notificationSettings').findById(id);
+  static getById(id: string, relations = 'notificationSettings') {
+    return this.query().whereNotDeleted().withGraphFetched(relations).findById(id);
   }
 
   /**
@@ -284,5 +287,23 @@ export default class User extends BaseModel {
       .select('address', 'createdAt')
       .orderBy('createdAt', 'desc')
       .limit(limit);
+  }
+
+  /**
+   * Count users belonging to a side in the given battle
+   * @param battleId The battle ID
+   * @param side The side to count
+   * @returns
+   */
+  static async countBattleSide(battleId: string, side: 'droid' | 'bandit') {
+    return this.query()
+      .where('curBattleId', battleId)
+      .where('battleSide', side)
+      .whereNotDeleted()
+      .count('id')
+      .first()
+      .then((res: any) => {
+        return parseInt(res.count || '0');
+      });
   }
 }

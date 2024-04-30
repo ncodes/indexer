@@ -136,6 +136,8 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       return { success: false, message: 'Not authenticated' };
     }
 
+    const user = await User.getById(userId);
+
     // Get the user's tap overheat level. If it has not been set, create it
     let overheatLvl = BigInt((await this.redisSrv.get(`tap:overheat:${userId}`)) || '0');
     if (!overheatLvl) {
@@ -160,11 +162,11 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
     // Create a tap record
     const now = moment();
     for (let i = 0; i < tapIncrement; i++) {
-      await Tap.create({
+      Tap.create({
         userId,
         virtual: i > 0,
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
+        battleId: user.curBattleId,
+        battleSide: user.battleSide,
       });
     }
 
@@ -188,6 +190,9 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
     // Update last tap time
     await this.redisSrv.set(`tap:lastUpdated:${userId}`, now.unix().toString());
 
+    // Update battle status
+    this.updateBattleState(user);
+
     return {
       success: true,
       overheatLvl: newOverheatLvl,
@@ -195,6 +200,20 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       tapCount: await Tap.getTapCount(userId),
       tapIncrement,
     };
+  }
+
+  async updateBattleState(user: User) {
+    const curBattleId = await this.redisSrv.get('tapoff:battle:current');
+    if (curBattleId) {
+      if (user.curBattleId != curBattleId) {
+        const countDroidSide = await User.countBattleSide(curBattleId, 'droid');
+        const countBanditSide = await User.countBattleSide(curBattleId, 'bandit');
+        await User.updateById(user.id, {
+          curBattleId,
+          battleSide: countDroidSide > countBanditSide ? 'bandit' : 'droid',
+        });
+      }
+    }
   }
 
   /**
@@ -739,6 +758,8 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       bonus: true,
       bonusValue: reward,
       bonusName: 'follow_quests',
+      battleId: user.battleSide,
+      battleSide: user.battleSide,
     });
 
     return {
@@ -765,11 +786,15 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       return { success: true, message: 'Rank bonus already claimed' };
     }
 
+    const user = await User.getById(userId);
+
     await Tap.create({
       userId,
       bonus: true,
       bonusValue: RankInfo[rank].reward,
       bonusName: `rank_bonus_${rank}`,
+      battleId: user.battleSide,
+      battleSide: user.battleSide,
     });
 
     return {
@@ -819,6 +844,8 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       bonus: true,
       bonusValue: refInfo.reward.toString(),
       bonusName: `referral_bonus_${count}`,
+      battleId: user.battleSide,
+      battleSide: user.battleSide,
     });
 
     return {

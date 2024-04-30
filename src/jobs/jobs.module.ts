@@ -5,6 +5,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ConfigService } from '../config/config.service';
 import { ExchangeRateServiceModule } from '../services/exchange_rate.service';
 import { TwitterService } from '../services/twitter.service';
+import { RedisService } from './../services/redis/redis.service';
+import BattleManager from './battle_manager/BattleManager';
 import OnCommitPeriodEnd from './dispute_notifications/on_commit_period_end/onCommitPeriodEnd';
 import OnEvidencePeriodEnd from './dispute_notifications/on_evidence_period_end/onEvidencePeriodEnd';
 import OnRevealPeriodEnd from './dispute_notifications/on_reveal_period_end/onRevealPeriodEnd';
@@ -30,6 +32,10 @@ if (['1', 'true'].includes(process.env.ENABLE_MENTIONED_TWEET_FINDER)) {
 
 if (['1', 'true'].includes(process.env.ENABLE_POINT_REDENOMINATOR)) {
   providers.push(PointRedenominator);
+}
+
+if (['1', 'true'].includes(process.env.ENABLE_BATTLE_MANAGER)) {
+  providers.push(RedisService, BattleManager);
 }
 
 @Module({

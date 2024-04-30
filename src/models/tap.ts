@@ -15,6 +15,8 @@ export default class Tap extends BaseModel {
   bonusName: string;
   bonus: boolean;
   bonusValue: string;
+  battleId: string;
+  battleSide: string;
 
   constructor(init?: Partial<Tap>) {
     super();
@@ -124,6 +126,39 @@ export default class Tap extends BaseModel {
       .first()
       .then((res) => {
         return res ? toDec(res.count).add(totalBonusTaps).add(totalMultiplierTaps).sub(totalSpend).toFixed(0) : '0';
+      });
+  }
+
+  static async getBattleTapCount(battleId?: string, battleSide?: 'droid' | 'bandit', txn?: Transaction) {
+    // get sum of bonus value for bonus taps
+    const totalBonusTaps = await this.query(txn)
+      .where({ battleId })
+      .where((q) => {
+        if (battleSide) {
+          return q.where('battleSide', battleSide);
+        }
+      })
+      .where({ bonus: true })
+      .whereNotDeleted()
+      .sum('bonusValue')
+      .first()
+      .then((res: any) => {
+        return res.sum ? res.sum : '0';
+      });
+
+    return this.query(txn)
+      .where({ battleId })
+      .where((q) => {
+        if (battleSide) {
+          return q.where('battleSide', battleSide);
+        }
+      })
+      .where({ bonus: false })
+      .whereNotDeleted()
+      .count()
+      .first()
+      .then((res) => {
+        return res ? toDec(res.count).add(totalBonusTaps).toFixed(0) : '0';
       });
   }
 

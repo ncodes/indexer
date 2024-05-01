@@ -134,7 +134,6 @@ export default class NetworkService {
 
     // Initialize handlers
     const provider = this.contractMgr.providers[network];
-    console.log(this.contractMgr.contracts, network);
     const handlers = [
       new MarketCoreHandler(this, this.notifSrv, provider, network, this.contractMgr.contracts[network]),
       new MediatorManagerHandler(this, this.notifSrv, provider, network, this.contractMgr.contracts[network]),

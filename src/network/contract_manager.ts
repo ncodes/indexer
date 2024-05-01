@@ -51,7 +51,7 @@ export class ContractManager {
 
     const rpcUrl = getChainByName(chain).rpcUrl;
     if (!rpcUrl) {
-      this.logger.debug('initChain: rpcUrl is not defined...skipping chain', { chain });
+      this.logger.debug('initChain: rpcUrl is not defined...skipping chain', JSON.stringify({ chain }));
       return;
     }
 

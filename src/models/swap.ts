@@ -823,7 +823,12 @@ export default class Swap extends BaseModel {
    * @param txn Optional transaction object
    * @returns
    */
-  static async getTotalAmountByMarketProviderTaker(market: string, provider: string, taker: string, txn?: Transaction) {
+  static async getTotalAmountByMarketProviderTaker(
+    market: string,
+    provider: string,
+    taker: string,
+    txn?: Transaction,
+  ): Promise<string> {
     return this.query(txn)
       .where('marketAddress', 'ilike', market)
       .where('provider', 'ilike', provider)

@@ -127,3 +127,19 @@ export class GetRaffles {
   @IsOptional()
   userId: string;
 }
+
+export class StakeBondDTO {
+  constructor(init?: Partial<StakeBondDTO>) {
+    Object.assign(this, init);
+  }
+
+  @IsNotEmpty({ message: makeValidatorMsg('amount is required', 'amount') })
+  amount: string;
+
+  @IsNotEmpty({ message: makeValidatorMsg('side is required', 'side') })
+  @IsIn(['droid', 'bandit'], { message: makeValidatorMsg('invalid side provided', 'side') })
+  side: 'droid' | 'bandit';
+
+  @IsNotEmpty({ message: makeValidatorMsg('battleId is required', 'battleId') })
+  battleId: string;
+}

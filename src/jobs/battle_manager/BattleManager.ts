@@ -2,8 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import { transaction } from 'objection';
-import { isProd } from '../../common/common';
+import { isProd, toDec } from '../../common/common';
+import Allocation from '../../models/allocations';
 import Battle from '../../models/battle';
+import BondSpend from '../../models/bond_spend';
+import Tap from '../../models/tap';
 import { RedisService } from '../../services/redis/redis.service';
 import { Base } from '../base';
 
@@ -19,7 +22,7 @@ export default class BattleManager extends Base {
     this.schedule();
   }
 
-  @Cron(isProd() ? '0 0 * * *' : '*/60 * * * * *')
+  @Cron(isProd() ? '0 0 * * *' : '*/5 * * * *')
   schedule() {
     this.process().catch((e) => this.logger.error(e.message || 'failed to get exchange rate'));
   }
@@ -29,14 +32,53 @@ export default class BattleManager extends Base {
     this.setProcessing(true);
 
     try {
-      await transaction(Battle, async (Battle) => {
-        const battle = await Battle.create({
-          allocation: this.cfgSrv.get('app.tapoff.battleAlloc'),
-        });
+      return transaction(Battle, BondSpend, Allocation, async (Battle, BondSpend, Allocation) => {
+        const curBattle = await Battle.getLatestBattle();
 
-        await this.redisSrv.set('tapoff:battle:current', battle.id);
+        // Create new battle
+        const allocation = this.cfgSrv.get('app.tapoff.battleAlloc');
+        const newBattle = await Battle.create({ allocation });
+        await this.redisSrv.set('tapoff:battle:current', newBattle.id);
 
-        console.log('Battle is coming');
+        if (!curBattle) return;
+
+        // Get percentage of taps for each side
+        const totalDroidTaps = await Tap.getBattleTapCount(curBattle.id, 'droid');
+        const totalBanditTaps = await Tap.getBattleTapCount(curBattle.id, 'bandit');
+        const totalTaps = toDec(totalDroidTaps).add(totalBanditTaps);
+        const droidTapsPct = toDec(totalDroidTaps).div(totalTaps).mul(100);
+        const banditTapsPct = toDec(totalBanditTaps).div(totalTaps).mul(100);
+
+        // Calculate allocation for each side
+        const droidSideAlloc = toDec(allocation).mul(droidTapsPct).div(100);
+        const banditSideAlloc = toDec(allocation).mul(banditTapsPct).div(100);
+
+        // Get the total stakeScore for each side
+        const droidStakeScore = await BondSpend.getTotalStakeScore(curBattle.id, 'droid');
+        const banditStakeScore = await BondSpend.getTotalStakeScore(curBattle.id, 'bandit');
+
+        // Get unallocated bond spends
+        const unallocated = await BondSpend.getUnallocatedSpend(curBattle);
+
+        for (const spend of unallocated) {
+          const sideAlloc = spend.side === 'droid' ? droidSideAlloc : banditSideAlloc;
+          const sideStakeScore = spend.side === 'droid' ? droidStakeScore : banditStakeScore;
+
+          // Calculate the percentage of the spend stakeScore in the total stakeScore
+          const spendPct = toDec(spend.stakeScore).div(sideStakeScore).mul(100);
+
+          // Calculate the allocation for the spend
+          const spendAlloc = sideAlloc.mul(spendPct).div(100);
+
+          // Create the allocation
+          const alloc = await Allocation.create({
+            name: curBattle.id,
+            owner: spend.userId,
+            amount: spendAlloc.mul(10 ** 18).toFixed(0),
+          });
+
+          await BondSpend.updateById(spend.id, { allocationId: alloc.id });
+        }
       });
     } catch (e) {
       this.logger.error(e.message);

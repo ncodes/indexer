@@ -75,7 +75,7 @@ export default class Battle extends BaseModel {
   }
 
   // Get the latest battle
-  static getLatestBattle() {
-    return this.query().whereNotDeleted().orderBy('createdAt', 'desc').first();
+  static getLatestBattle(txn?: Transaction) {
+    return this.query(txn).whereNotDeleted().orderBy('createdAt', 'desc').first();
   }
 }

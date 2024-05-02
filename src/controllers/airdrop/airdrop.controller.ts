@@ -20,12 +20,13 @@ import { transaction } from 'objection';
 import { Client } from 'twitter-api-sdk';
 import { isLocal } from '../../common/common';
 import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
-import { ok, throw400, throw401 } from '../../common/responses/responses';
+import { ok, throw400, throw401, throw404 } from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import { IsRootAdmin } from '../../guards/is_basic_admin';
 import Allocation from '../../models/allocations';
 import Battle from '../../models/battle';
+import BondSpend from '../../models/bond_spend';
 import LuckyCode from '../../models/lucky_code';
 import NFTOwner from '../../models/nft_owner';
 import Point, { PointAction } from '../../models/point';
@@ -33,12 +34,13 @@ import Quest from '../../models/quest';
 import Swap from '../../models/swap';
 import Tap from '../../models/tap';
 import User from '../../models/user';
-import { powOf } from '../../network/common';
+import { pow10, powOf } from '../../network/common';
 import DiscordService from '../../services/discord.service';
 import { TwitterService } from '../../services/twitter.service';
 import { NFTAllocations } from '../points/data/nft_allocation';
 import { PointMap } from '../points/data/points';
-import { ApplyPresale, CreateLuckyCodeDTO, CreateQuestDTO, RequestQuestVerify, VoteQuest } from './dto';
+import { toDec } from './../../common/common';
+import { ApplyPresale, CreateLuckyCodeDTO, CreateQuestDTO, RequestQuestVerify, StakeBondDTO, VoteQuest } from './dto';
 
 function randomInteger(min, max) {
   return Math.floor(Math.random() * (max - min + 1) + min);
@@ -592,17 +594,26 @@ export class AirdropController {
     return ok().data({ ok: true }).build();
   }
 
-  @UseGuards(BeAuthenticatedGuard)
-  @UseGuards(HasKeyGuard)
-  @Get('/bond-balance')
-  async getBondBalance(@Req() req: Request) {
+  async getTotalBondBalance(@Req() req: Request) {
     const user = req.user;
     const bondBalance = await Swap.getTotalAmountByMarketProviderTaker(
       this.cfgSrv.get('app.tapoff.multiplierMarket'),
       this.cfgSrv.get('app.tapoff.multiplierProvider'),
       user.address,
     );
-    return ok().data({ balance: bondBalance }).build();
+
+    const totalBondSpend = await BondSpend.getTotalSpend(user.id);
+
+    return toDec(bondBalance).div(pow10(18)).sub(toDec(totalBondSpend)).toFixed();
+  }
+
+  @UseGuards(BeAuthenticatedGuard)
+  @UseGuards(HasKeyGuard)
+  @Get('/bond-balance')
+  async getBondBalance(@Req() req: Request) {
+    return ok()
+      .data({ balance: await this.getTotalBondBalance(req) })
+      .build();
   }
 
   @UseGuards(BeAuthenticatedGuard)
@@ -629,6 +640,43 @@ export class AirdropController {
         banditTaps: totalBanditSideTaps,
         numDroids,
         numBandits,
+      })
+      .build();
+  }
+
+  @UseGuards(BeAuthenticatedGuard)
+  @UseGuards(HasKeyGuard)
+  @Post('/stake-bond')
+  async stakeBond(@Req() req: Request, @Body(new ValidationPipe(CommonValidationPipeOpt)) body: StakeBondDTO) {
+    // Get battle
+    const battle = await Battle.getById(body.battleId);
+    if (!battle) {
+      throw404('Battle not found');
+    }
+
+    // Get recent battle
+    const latestBattle = await Battle.getLatestBattle();
+    if (battle.id !== latestBattle.id) {
+      throw400('Cannot stake bond for an old battle');
+    }
+
+    const bondBalance = await this.getTotalBondBalance(req);
+    if (toDec(bondBalance).lt(body.amount)) {
+      throw400('Insufficient bond balance');
+    }
+
+    // Create bond spend
+    await BondSpend.create({
+      userId: req.user.id,
+      battleId: body.battleId,
+      amount: body.amount,
+      side: body.side,
+    });
+
+    return ok()
+      .data({
+        balance: toDec(bondBalance).sub(body.amount).toFixed(),
+        amount: body.amount,
       })
       .build();
   }

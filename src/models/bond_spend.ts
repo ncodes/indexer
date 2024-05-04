@@ -1,5 +1,6 @@
 import Objection, { Transaction, raw } from 'objection';
 import { randStr } from '../common/common';
+import Allocation from './allocations';
 import { BaseModel } from './base';
 import Battle from './battle';
 
@@ -15,6 +16,7 @@ export default class BondSpend extends BaseModel {
 
   // Not persisted
   stakeScore: string;
+  allocation: Allocation;
 
   constructor(init?: Partial<BondSpend>) {
     super();
@@ -38,7 +40,16 @@ export default class BondSpend extends BaseModel {
   }
 
   static get relationMappings() {
-    return {};
+    return {
+      allocation: {
+        relation: BaseModel.BelongsToOneRelation,
+        modelClass: Allocation,
+        join: {
+          from: 'bond_spends.allocationId',
+          to: 'allocations.id',
+        },
+      },
+    };
   }
 
   /**
@@ -137,5 +148,19 @@ export default class BondSpend extends BaseModel {
       )
       .first()
       .then((result: any) => result.totalStakeScore || '0');
+  }
+
+  static async findByUserId(userId: string, limit = 25, txn?: Transaction) {
+    return this.query(txn)
+      .where('userId', userId)
+      .whereNotDeleted()
+      .withGraphFetched('allocation')
+      .limit(limit)
+      .orderBy('createdAt', 'desc');
+  }
+
+  // Delete by battle id
+  static deleteByBattleId(battleId: string, txn?: Transaction) {
+    return this.query(txn).where('battleId', battleId).delete();
   }
 }

@@ -597,8 +597,8 @@ export class AirdropController {
   async getTotalBondBalance(@Req() req: Request) {
     const user = req.user;
     const bondBalance = await Swap.getTotalAmountByMarketProviderTaker(
-      this.cfgSrv.get('app.tapoff.multiplierMarket'),
-      this.cfgSrv.get('app.tapoff.multiplierProvider'),
+      this.cfgSrv.get('app.tapoff.bondMarket'),
+      this.cfgSrv.get('app.tapoff.bondProvider'),
       user.address,
     );
 
@@ -619,7 +619,7 @@ export class AirdropController {
   @UseGuards(BeAuthenticatedGuard)
   @UseGuards(HasKeyGuard)
   @Get('/battle-info')
-  async getBattleInfo() {
+  async getBattleInfo(@Req() req: Request) {
     const latestBattle = await Battle.getLatestBattle();
     if (!latestBattle) throw400('No battle found');
 
@@ -630,16 +630,32 @@ export class AirdropController {
     const numBandits = await User.countBattleSide(latestBattle.id, 'bandit');
     const nextBattleTime = moment(latestBattle.createdAt).utc().add(1, 'day').startOf('day').toISOString();
 
+    // Get all bond spend for this user
+    const spendRes: { amount: string; side: string; allocation: string; createdAt: string; battleId: string }[] = [];
+    const spends = await BondSpend.findByUserId(req.user.id);
+    for (const spend of spends) {
+      const alloc = toDec(spend.allocation?.amount || '0');
+      spendRes.push({
+        amount: spend.amount,
+        side: spend.side,
+        allocation: alloc.isPos() ? alloc.toFixed() : '0',
+        createdAt: spend.createdAt,
+        battleId: spend.battleId,
+      });
+    }
+
     return ok()
       .data({
         battleId: latestBattle.id,
         battleIndex: latestBattle.sn,
         battleTaps: totalBattleTaps,
+        battleAllocation: latestBattle.allocation,
         nextBattleTime,
         droidTaps: totalDroidSideTaps,
         banditTaps: totalBanditSideTaps,
         numDroids,
         numBandits,
+        spends: spendRes,
       })
       .build();
   }

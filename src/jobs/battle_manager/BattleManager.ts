@@ -32,20 +32,29 @@ export default class BattleManager extends Base {
     this.setProcessing(true);
 
     try {
+      const curBattle = await Battle.getLatestBattle();
+
+      // Create new battle
+      const allocation = this.cfgSrv.get('app.tapoff.battleAlloc');
+      const newBattle = await Battle.create({ allocation });
+      await this.redisSrv.set('tapoff:battle:current', newBattle.id);
+
+      if (!curBattle) return;
+
+      // Process allocation for the previous battle
       return transaction(Battle, BondSpend, Allocation, async (Battle, BondSpend, Allocation) => {
-        const curBattle = await Battle.getLatestBattle();
-
-        // Create new battle
-        const allocation = this.cfgSrv.get('app.tapoff.battleAlloc');
-        const newBattle = await Battle.create({ allocation });
-        await this.redisSrv.set('tapoff:battle:current', newBattle.id);
-
-        if (!curBattle) return;
-
         // Get percentage of taps for each side
         const totalDroidTaps = await Tap.getBattleTapCount(curBattle.id, 'droid');
         const totalBanditTaps = await Tap.getBattleTapCount(curBattle.id, 'bandit');
         const totalTaps = toDec(totalDroidTaps).add(totalBanditTaps);
+
+        // If no taps, delete all bond spend for this battle
+        // effectively returning all bond spend to the users
+        if (totalTaps.isZero()) {
+          await BondSpend.deleteByBattleId(curBattle.id);
+          return;
+        }
+
         const droidTapsPct = toDec(totalDroidTaps).div(totalTaps).mul(100);
         const banditTapsPct = toDec(totalBanditTaps).div(totalTaps).mul(100);
 
@@ -70,14 +79,18 @@ export default class BattleManager extends Base {
           // Calculate the allocation for the spend
           const spendAlloc = sideAlloc.mul(spendPct).div(100);
 
-          // Create the allocation
-          const alloc = await Allocation.create({
-            name: curBattle.id,
-            owner: spend.userId,
-            amount: spendAlloc.mul(10 ** 18).toFixed(0),
-          });
+          // Create the allocation if it doesn't exist
+          const allocName = `${curBattle.id}_${spend.id}`;
+          const existingAlloc = await Allocation.getByName(allocName);
+          if (!existingAlloc) {
+            const alloc = await Allocation.create({
+              name: allocName,
+              owner: spend.userId,
+              amount: spendAlloc.mul(10 ** 18).toFixed(0),
+            });
 
-          await BondSpend.updateById(spend.id, { allocationId: alloc.id });
+            await BondSpend.updateById(spend.id, { allocationId: alloc.id });
+          }
         }
       });
     } catch (e) {

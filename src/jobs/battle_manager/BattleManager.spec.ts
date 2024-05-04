@@ -78,6 +78,34 @@ describe('BattleManager', () => {
       expect(battle.allocation).toBe('1000');
     });
 
+    it('should delete bond spend and create no allocation for battles where no taps where created', async () => {
+      const battle = await Battle.create({ allocation: '1000' });
+
+      await BondSpend.create({
+        userId: u.id,
+        battleId: battle.id,
+        side: 'droid',
+        amount: '10',
+      });
+
+      await BondSpend.create({
+        userId: u2.id,
+        battleId: battle.id,
+        side: 'bandit',
+        amount: '10',
+      });
+
+      await expect(job.process()).resolves.toBeUndefined();
+
+      const allocs = await Allocation.query().where({ name: battle.id });
+      expect(allocs).toHaveLength(0);
+
+      const bondSpends = await BondSpend.query().where({ battleId: battle.id });
+      expect(bondSpends).toHaveLength(2);
+      expect(bondSpends[0].deletedAt).toBeDefined();
+      expect(bondSpends[1].deletedAt).toBeDefined();
+    });
+
     it('should create correct allocations when equal taps for both battle sides and equal bond spend for bond holders on both sides', async () => {
       const battle = await Battle.create({ allocation: '1000' });
 

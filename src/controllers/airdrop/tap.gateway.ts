@@ -139,11 +139,13 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
     const user = await User.getById(userId);
 
     // Get the user's tap overheat level. If it has not been set, create it
-    let overheatLvl = BigInt((await this.redisSrv.get(`tap:overheat:${userId}`)) || '0');
-    if (!overheatLvl) {
-      console.log('LOG HERE A', overheatLvl, await this.redisSrv.get(`tap:overheat:${userId}`));
+    let overheatLvl = BigInt(0);
+    const overheatLvlStr = await this.redisSrv.get(`tap:overheat:${userId}`);
+    if (!overheatLvlStr) {
       overheatLvl = await this.getMaxOverheatLevel(userId);
       await this.redisSrv.set(`tap:overheat:${userId}`, overheatLvl.toString());
+    } else {
+      overheatLvl = BigInt(overheatLvlStr);
     }
 
     // Number of taps to create
@@ -156,7 +158,6 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       if (overheatLvl <= 0) {
         return { success: false, message: 'You are overheating' };
       } else {
-        console.log('LOG HERE B', overheatLvl, tapIncrement);
         tapIncrement = overheatLvl;
       }
     }
@@ -182,7 +183,6 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       newOverheatLvl = overheatLvl - tapIncrement;
       await this.redisSrv.set(`tap:overheat:${userId}`, newOverheatLvl.toString());
     } else {
-      console.log('LOG HERE C', overheatLvl, tapIncrement);
       newOverheatLvl = overheatLvl;
     }
 

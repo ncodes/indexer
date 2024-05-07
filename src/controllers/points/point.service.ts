@@ -91,16 +91,16 @@ export class PointService {
         );
       }
 
-      // await Point.create(
-      //   {
-      //     network: market.network,
-      //     name: `${PointAction.InstantSwap}:${event.transactionHash}:provider:${swap.provider}`,
-      //     address: swap.provider,
-      //     point: point.mul(level).toString(),
-      //     action: PointAction.InstantSwap,
-      //   },
-      //   txn,
-      // );
+      await Point.create(
+        {
+          network: market.network,
+          name: `${PointAction.InstantSwap}:${event.transactionHash}:provider:${swap.provider}`,
+          address: swap.provider,
+          point: point.mul(level).toString(),
+          action: PointAction.InstantSwap,
+        },
+        txn,
+      );
 
       // // Give providers's referrer a share of the point
       // const provider = await User.getByAddress(swap.provider);
@@ -170,16 +170,16 @@ export class PointService {
         );
       }
 
-      // await Point.create(
-      //   {
-      //     network: market.network,
-      //     name: `${PointAction.InteractiveSwap}:${event.transactionHash}:provider:${swap.provider}`,
-      //     address: swap.provider,
-      //     point: point.mul(level).toString(),
-      //     action: PointAction.InteractiveSwap,
-      //   },
-      //   txn,
-      // );
+      await Point.create(
+        {
+          network: market.network,
+          name: `${PointAction.InteractiveSwap}:${event.transactionHash}:provider:${swap.provider}`,
+          address: swap.provider,
+          point: point.mul(level).toString(),
+          action: PointAction.InteractiveSwap,
+        },
+        txn,
+      );
 
       // // Give provider's referrer a share of the point
       // const provider = await User.getByAddress(swap.provider);
@@ -244,7 +244,7 @@ export class PointService {
       let actual = point.mul(level);
       if (actual.isZero() || actual.isNaN()) actual = toDec(0);
 
-      const providerPoint = await Point.create(
+      await Point.create(
         {
           network: market.network,
           name,
@@ -256,21 +256,21 @@ export class PointService {
       );
 
       // Give provider's referrer a share of the point
-      const providerUser = await User.getByAddress(provider);
-      if (providerUser && providerUser.referrer) {
-        await Point.create(
-          {
-            network: market.network,
-            name: `${name}:ref`,
-            address: providerUser.referrer,
-            referrer: providerUser.referrer,
-            referee: providerUser.address,
-            point: toDec(providerPoint.point).mul(ReferrerPointSharePct).toFixed(),
-            action: PointAction.LiquidityAddRef,
-          },
-          txn,
-        );
-      }
+      // const providerUser = await User.getByAddress(provider);
+      // if (providerUser && providerUser.referrer) {
+      //   await Point.create(
+      //     {
+      //       network: market.network,
+      //       name: `${name}:ref`,
+      //       address: providerUser.referrer,
+      //       referrer: providerUser.referrer,
+      //       referee: providerUser.address,
+      //       point: toDec(providerPoint.point).mul(ReferrerPointSharePct).toFixed(),
+      //       action: PointAction.LiquidityAddRef,
+      //     },
+      //     txn,
+      //   );
+      // }
     }
 
     if (existingPoint && add) {
@@ -280,17 +280,17 @@ export class PointService {
         txn,
       );
 
-      // Update provider's referrer share of the point
-      const existingRefPoint = await Point.getByName(`${name}:ref`);
-      if (existingRefPoint) {
-        await Point.updateById(
-          existingRefPoint.id,
-          {
-            point: toDec(existingRefPoint.point).add(point.mul(level).mul(ReferrerPointSharePct)).toFixed(),
-          },
-          txn,
-        );
-      }
+      // // Update provider's referrer share of the point
+      // const existingRefPoint = await Point.getByName(`${name}:ref`);
+      // if (existingRefPoint) {
+      //   await Point.updateById(
+      //     existingRefPoint.id,
+      //     {
+      //       point: toDec(existingRefPoint.point).add(point.mul(level).mul(ReferrerPointSharePct)).toFixed(),
+      //     },
+      //     txn,
+      //   );
+      // }
     }
 
     if (existingPoint && !add) {
@@ -301,16 +301,16 @@ export class PointService {
       );
 
       // Update provider's referrer share of the point
-      const existingRefPoint = await Point.getByName(`${name}:ref`);
-      if (existingRefPoint) {
-        await Point.updateById(
-          existingRefPoint.id,
-          {
-            point: toDec(existingRefPoint.point).sub(point.mul(level).mul(ReferrerPointSharePct)).toFixed(),
-          },
-          txn,
-        );
-      }
+      // const existingRefPoint = await Point.getByName(`${name}:ref`);
+      // if (existingRefPoint) {
+      //   await Point.updateById(
+      //     existingRefPoint.id,
+      //     {
+      //       point: toDec(existingRefPoint.point).sub(point.mul(level).mul(ReferrerPointSharePct)).toFixed(),
+      //     },
+      //     txn,
+      //   );
+      // }
     }
 
     return true;

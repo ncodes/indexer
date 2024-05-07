@@ -24,18 +24,18 @@ export const FollowQuestBonus = 200000;
 export const RankInfo = {
   Cadet: {
     taps: 0,
-    reward: 5000,
+    reward: 1000,
   },
   Ensign: {
-    taps: 2000,
-    reward: 10000,
+    taps: 10000,
+    reward: 5000,
   },
   'Lieutenant Jnr': {
-    taps: 5000,
-    reward: 30000,
+    taps: 30000,
+    reward: 20000,
   },
   Lieutenant: {
-    taps: 50000,
+    taps: 100000,
     reward: 50000,
   },
   Commander: {
@@ -43,30 +43,30 @@ export const RankInfo = {
     reward: 100000,
   },
   Captain: {
-    taps: 500000,
+    taps: 1000000,
     reward: 200000,
   },
   Commodore: {
-    taps: 1000000,
+    taps: 3000000,
     reward: 350000,
   },
   'Rear Admiral': {
-    taps: 2500000,
+    taps: 5000000,
     reward: 500000,
   },
   'Vice Admiral': {
-    taps: 5000000,
+    taps: 10000000,
     reward: 750000,
   },
   Admiral: {
-    taps: 10000000,
+    taps: 100000000,
     reward: 1000000,
   },
 };
 
 export const ReferralInfo = [
-  { count: 1, reward: 2000 },
-  { count: 3, reward: 50000 },
+  { count: 1, reward: 5000 },
+  { count: 3, reward: 30000 },
   { count: 10, reward: 200000 },
   { count: 25, reward: 250000 },
   { count: 50, reward: 300000 },

@@ -686,11 +686,11 @@ describe('PointService', () => {
         expect(parseFloat(providerPoint.point)).toEqual(expectedPoints);
         expect(providerPoint.action).toEqual(PointAction.LiquidityAdd);
 
-        let providerRefPoint = await Point.getByAddress('0xProviderRef');
-        expect(providerRefPoint).not.toBeUndefined();
-        expect(providerRefPoint.address).toEqual('0xProviderRef');
-        expect(providerRefPoint.referee).toEqual('0xProvider');
-        expect(parseFloat(providerRefPoint.point)).toEqual(expectedPoints * ReferrerPointSharePct);
+        // let providerRefPoint = await Point.getByAddress('0xProviderRef');
+        // expect(providerRefPoint).not.toBeUndefined();
+        // expect(providerRefPoint.address).toEqual('0xProviderRef');
+        // expect(providerRefPoint.referee).toEqual('0xProvider');
+        // expect(parseFloat(providerRefPoint.point)).toEqual(expectedPoints * ReferrerPointSharePct);
 
         // Add liquidity again
         await expect(
@@ -701,9 +701,9 @@ describe('PointService', () => {
         expect(providerPoint2).not.toBeUndefined();
         expect(parseFloat(providerPoint2.point)).toEqual(expectedPoints * 2);
 
-        providerRefPoint = await Point.getByAddress('0xProviderRef');
-        expect(providerRefPoint).not.toBeUndefined();
-        expect(parseFloat(providerRefPoint.point)).toEqual(expectedPoints * ReferrerPointSharePct * 2);
+        // providerRefPoint = await Point.getByAddress('0xProviderRef');
+        // expect(providerRefPoint).not.toBeUndefined();
+        // expect(parseFloat(providerRefPoint.point)).toEqual(expectedPoints * ReferrerPointSharePct * 2);
 
         // Should deduct point of liquidity is removed
         await expect(
@@ -714,9 +714,9 @@ describe('PointService', () => {
         expect(providerPoint3).not.toBeUndefined();
         expect(parseFloat(providerPoint3.point)).toEqual(expectedPoints);
 
-        providerRefPoint = await Point.getByAddress('0xProviderRef');
-        expect(providerRefPoint).not.toBeUndefined();
-        expect(parseFloat(providerRefPoint.point)).toEqual(expectedPoints * ReferrerPointSharePct);
+        // providerRefPoint = await Point.getByAddress('0xProviderRef');
+        // expect(providerRefPoint).not.toBeUndefined();
+        // expect(parseFloat(providerRefPoint.point)).toEqual(expectedPoints * ReferrerPointSharePct);
       });
     });
   });

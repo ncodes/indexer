@@ -569,7 +569,8 @@ export class AirdropController {
     if (!quest) throw400('Quest not found');
     if (quest.type != 'swap') throw400('Invalid quest type');
 
-    const name = `swap-verify-${questId}-${req.user.id}`;
+    const startOfToday = moment().utc().startOf('day').toISOString();
+    const name = `swap-verify-${questId}-${req.user.id}-${startOfToday}`;
     const existing = await Point.getByName(name);
     if (existing) throw400('Already verified');
 
@@ -578,6 +579,7 @@ export class AirdropController {
       quest.marketAddress,
       quest.provider,
       quest.lid,
+      startOfToday,
     );
 
     if (count < parseInt(quest.count)) {

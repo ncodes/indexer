@@ -799,6 +799,7 @@ export default class Swap extends BaseModel {
     market: string,
     provider: string,
     lid: number,
+    createdAfter: string,
     txn?: Transaction,
   ) {
     return this.query(txn)
@@ -806,6 +807,7 @@ export default class Swap extends BaseModel {
       .where('marketAddress', 'ilike', market)
       .where('provider', 'ilike', provider)
       .where('lid', lid)
+      .where('createdAt', '>=', createdAfter)
       .whereNotDeleted()
       .count('id')
       .first()

@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
+import * as moment from 'moment';
 import * as request from 'supertest';
 import { randStr } from '../../common/common';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
@@ -812,7 +813,8 @@ describe('AirdropController', () => {
 
     it('should return 400 when points have been previously awarded', async () => {
       const quest = await Quest.create({ type: 'swap' });
-      await Point.create({ name: `swap-verify-${quest.id}-${u.id}` });
+      const startOfToday = moment().utc().startOf('day').toISOString();
+      await Point.create({ name: `swap-verify-${quest.id}-${u.id}-${startOfToday}` });
       await request(app.getHttpServer())
         .post(`/v1/airdrop/verify-swap/${quest.id}`)
         .set('Authorization', 'bearer ' + token)
@@ -855,7 +857,8 @@ describe('AirdropController', () => {
         .set('Authorization', 'bearer ' + token)
         .expect(201);
 
-      const point = await Point.getByName(`swap-verify-${quest.id}-${u.id}`);
+      const startOfToday = moment().utc().startOf('day').toISOString();
+      const point = await Point.getByName(`swap-verify-${quest.id}-${u.id}-${startOfToday}`);
       expect(point).toBeDefined();
       expect(point.point).toEqual(quest.engagePoints.toString());
       expect(point.action).toEqual(PointAction.Quest);

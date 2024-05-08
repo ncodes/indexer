@@ -360,6 +360,7 @@ export class AirdropController {
       priority: body.priority,
       marketAddress: body.marketAddress,
       provider: body.provider,
+      count: body.count.toString(),
       lid: body.lid,
     });
 

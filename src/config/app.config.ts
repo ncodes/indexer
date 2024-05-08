@@ -56,6 +56,7 @@ export default () => ({
       battleAlloc: process.env.TAPOFF_BATTLE_ALLOC,
       bondMarket: process.env.TAPOFF_BOND_MKT,
       bondProvider: process.env.TAPOFF_BOND_PROVIDER,
+      minBondStake: process.env.TAPOFF_BOND_MIN_BOND_STAKE,
     },
     redis: {
       url: process.env.REDIS_URL,

@@ -672,8 +672,15 @@ export class AirdropController {
 
     // Get recent battle
     const latestBattle = await Battle.getLatestBattle();
+    console.log(battle.id, latestBattle.id);
     if (battle.id !== latestBattle.id) {
       throw400('Cannot stake bond for an old battle');
+    }
+
+    // Make sure amount is not less than minimum bond stake
+    const minBondStake = this.cfgSrv.get('app.tapoff.minBondStake') || '0';
+    if (toDec(body.amount).lt(minBondStake)) {
+      throw400(`Amount is too low. Minimum is ${minBondStake} BOND`);
     }
 
     const bondBalance = await this.getTotalBondBalance(req);

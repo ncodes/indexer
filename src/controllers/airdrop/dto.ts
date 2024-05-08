@@ -74,10 +74,12 @@ export class CreateQuestDTO {
 
   @ValidateIf((o) => o.type == 'swap')
   @IsNotEmpty({ message: makeValidatorMsg('provider is required', 'provider') })
+  @IsOptional()
   provider: string;
 
   @ValidateIf((o) => o.type == 'swap')
   @IsNotEmpty({ message: makeValidatorMsg('lid is required', 'lid') })
+  @IsOptional()
   lid: number;
 
   count: number;

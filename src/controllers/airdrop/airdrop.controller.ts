@@ -400,12 +400,12 @@ export class AirdropController {
   async createVerifyQuest(@Req() req: Request, @Param('questId') questId, @Body() body: RequestQuestVerify) {
     if (!req.user.twitterUserId) throw400('Twitter not linked');
 
+    const quest = await Quest.getById(questId);
+    if (!quest) throw400('Quest not found');
+
     const id = body.link ? this.twitterSrv.getTweetIdFromUrl(body.link) : req.user.id;
     const existing = await Quest.findByName(`verify-${questId}-${id}`);
     if (existing) throw400('Verification request already exists');
-
-    const quest = await Quest.getById(questId);
-    if (!quest) throw400('Quest not found');
 
     body = plainToInstance(RequestQuestVerify, {
       type: quest.type,
@@ -578,8 +578,8 @@ export class AirdropController {
     const count = await Swap.countSwapsOfTakerForLiquidity(
       req.user.address,
       quest.marketAddress,
-      quest.provider,
-      quest.lid,
+      quest.provider ?? undefined,
+      quest.lid ?? undefined,
       startOfToday,
     );
 

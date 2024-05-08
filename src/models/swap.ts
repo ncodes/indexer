@@ -797,16 +797,20 @@ export default class Swap extends BaseModel {
   static async countSwapsOfTakerForLiquidity(
     taker: string,
     market: string,
-    provider: string,
-    lid: number,
-    createdAfter: string,
+    provider?: string,
+    lid?: number,
+    createdAfter?: string,
     txn?: Transaction,
   ) {
     return this.query(txn)
       .where('taker', 'ILIKE', taker)
       .where('marketAddress', 'ilike', market)
-      .where('provider', 'ilike', provider)
-      .where('lid', lid)
+      .where((q) => {
+        if (provider) return q.where('provider', 'ilike', provider);
+      })
+      .where((q) => {
+        if (lid) return q.where('lid', lid);
+      })
       .where('createdAt', '>=', createdAfter)
       .whereNotDeleted()
       .count('id')

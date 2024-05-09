@@ -37,7 +37,7 @@ export default class MentionedTweetFinder extends Base {
         const lastId = await Meta.get('mentionedTweetFinder:lastId');
 
         const result = await this.twitterSrv.search(
-          '(@0xJoint) OR (JOIN)',
+          '@0xJoint',
           lastId ? lastId.value : undefined,
           undefined,
           10,
@@ -52,9 +52,6 @@ export default class MentionedTweetFinder extends Base {
           );
 
           for (const tweet of result.data) {
-            const text = tweet.text.toLowerCase();
-            if (!text.includes('$JOIN') && !text.includes('@0xjoint')) continue;
-
             this.logger.log(`Processing tweet: ${tweet.id}`);
 
             const type = tweet.referenced_tweets ? tweet.referenced_tweets[0].type : 'tweet';

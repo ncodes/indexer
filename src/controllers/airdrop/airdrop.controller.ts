@@ -109,7 +109,7 @@ export class AirdropController {
   @UseGuards(HasKeyGuard)
   @Put('/unlink-twitter')
   async unlinkTwitter(@Req() req: Request) {
-    await User.updateById(req.user.id, { twitterUsername: null, twitterToken: null });
+    await User.updateById(req.user.id, { twitterUsername: null, twitterToken: null, twitterUserId: null });
     return ok().data({ ok: true }).build();
   }
 

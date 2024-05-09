@@ -21,7 +21,7 @@ export default class MentionedTweetFinder extends Base {
     this.schedule();
   }
 
-  @Cron('*/3 * * * *')
+  @Cron('*/15 * * * *')
   schedule() {
     this.process().catch((e) => this.logger.error(e.message || 'failed to get exchange rate'));
   }

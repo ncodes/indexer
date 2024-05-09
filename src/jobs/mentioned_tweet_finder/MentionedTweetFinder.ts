@@ -34,6 +34,7 @@ export default class MentionedTweetFinder extends Base {
       let nextToken: string;
       while (true) {
         const lastId = await Meta.get('mentionedTweetFinder:lastId');
+        console.log('LOG>', 'LAST ID: ', lastId);
 
         const result = await this.twitterSrv.search(
           '(@0xJoint) OR (JOIN)',
@@ -42,6 +43,7 @@ export default class MentionedTweetFinder extends Base {
           10,
           nextToken,
         );
+        console.log('LOG>', 'RESULT: ', result);
 
         if (!newLastId) newLastId = result.meta.newest_id;
 

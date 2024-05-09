@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
+import { delay } from '../../common/common';
 import Meta from '../../models/meta';
 import Point, { PointAction } from '../../models/point';
 import TwitterEngagement from '../../models/twitter_engagement';
@@ -119,6 +120,7 @@ export default class MentionedTweetFinder extends Base {
 
         if (result.meta.next_token) {
           nextToken = result.meta.next_token;
+          await delay(2000);
           continue;
         } else if (newLastId) {
           await Meta.update(`mentionedTweetFinder:lastId`, newLastId);

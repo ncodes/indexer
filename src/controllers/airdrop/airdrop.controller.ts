@@ -14,6 +14,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { plainToInstance } from 'class-transformer';
 import { isNegative, validate } from 'class-validator';
+import * as cronParser from 'cron-parser';
 import { Request } from 'express';
 import * as moment from 'moment';
 import { transaction } from 'objection';
@@ -641,7 +642,9 @@ export class AirdropController {
     const totalBanditSideTaps = await Tap.getBattleTapCount(latestBattle.id, 'bandit');
     const numDroids = await User.countBattleSide(latestBattle.id, 'droid');
     const numBandits = await User.countBattleSide(latestBattle.id, 'bandit');
-    const nextBattleTime = moment(latestBattle.createdAt).utc().add(1, 'day').startOf('day').toISOString();
+
+    const cron = cronParser.parseExpression(this.cfgSrv.get('app.tapoff.battleManagerCron'));
+    const nextBattleTime = moment(cron.next().toDate()).toISOString();
 
     // Get all bond spend for this user
     const spendRes: { amount: string; side: string; allocation: string; createdAt: string; battleId: string }[] = [];

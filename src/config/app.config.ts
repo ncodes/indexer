@@ -57,6 +57,7 @@ export default () => ({
       bondMarket: process.env.TAPOFF_BOND_MKT,
       bondProvider: process.env.TAPOFF_BOND_PROVIDER,
       minBondStake: process.env.TAPOFF_BOND_MIN_BOND_STAKE,
+      battleManagerCron: process.env.BATTLE_MANAGER_CRON,
     },
     redis: {
       url: process.env.REDIS_URL,

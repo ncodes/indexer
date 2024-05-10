@@ -207,15 +207,13 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
 
   async updateBattleState(user: User) {
     const curBattleId = await this.redisSrv.get('tapoff:battle:current');
-    if (curBattleId) {
-      if (user.curBattleId != curBattleId) {
-        const countDroidSide = await User.countBattleSide(curBattleId, 'droid');
-        const countBanditSide = await User.countBattleSide(curBattleId, 'bandit');
-        await User.updateById(user.id, {
-          curBattleId,
-          battleSide: countDroidSide > countBanditSide ? 'bandit' : 'droid',
-        });
-      }
+    if (curBattleId && user.curBattleId != curBattleId) {
+      const countDroidSide = await User.countBattleSide(curBattleId, 'droid');
+      const countBanditSide = await User.countBattleSide(curBattleId, 'bandit');
+      await User.updateById(user.id, {
+        curBattleId,
+        battleSide: countDroidSide > countBanditSide ? 'bandit' : 'droid',
+      });
     }
   }
 

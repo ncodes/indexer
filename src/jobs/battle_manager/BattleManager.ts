@@ -22,8 +22,7 @@ export default class BattleManager extends Base {
     this.schedule();
   }
 
-  // @Cron(isProd() ? '0 0 * * *' : '*/5 * * * *')
-  @Cron('0 0/6 * * *')
+  @Cron(process.env.BATTLE_MANAGER_CRON)
   schedule() {
     this.process().catch((e) => this.logger.error(e.message || 'failed to get exchange rate'));
   }

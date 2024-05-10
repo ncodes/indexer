@@ -33,6 +33,7 @@ import Point, { PointAction } from '../../models/point';
 import Quest from '../../models/quest';
 import Swap from '../../models/swap';
 import Tap from '../../models/tap';
+import TwitterEngagement from '../../models/twitter_engagement';
 import User from '../../models/user';
 import { pow10, powOf } from '../../network/common';
 import DiscordService from '../../services/discord.service';
@@ -404,8 +405,16 @@ export class AirdropController {
     if (!quest) throw400('Quest not found');
 
     const id = body.link ? this.twitterSrv.getTweetIdFromUrl(body.link) : req.user.id;
-    const existing = await Quest.findByName(`verify-${questId}-${id}`);
+    const name = `verify-${questId}-${id}`;
+    const existing = await Quest.findByName(name);
     if (existing) throw400('Verification request already exists');
+
+    // Make sure the tweet has not been registered
+    // as a twitter engagement
+    if (body.link) {
+      const te = await TwitterEngagement.getByTweetId(id);
+      if (te) throw400('Link already used for another quest');
+    }
 
     body = plainToInstance(RequestQuestVerify, {
       type: quest.type,
@@ -427,16 +436,17 @@ export class AirdropController {
     // Make sure link was not reused
     if (body.link) {
       const tweetId = body.link.replace(/\/$/, '').split('/').pop();
-      const record = await Quest.findByTweetID(tweetId);
+      const record = await Quest.findByTweetId(tweetId);
       if (record) throw400('Link already used for another quest');
     }
 
     // Create verify quest
     const verifyQuest = await Quest.create({
-      name: `verify-${questId}-${req.user.id}`,
+      name: name,
       type: 'verify',
       responderLink: body.link,
       responderId: req.user.id,
+      tweetId: body.link ? id : undefined,
       questId,
     });
 

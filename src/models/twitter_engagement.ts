@@ -82,7 +82,7 @@ export default class TwitterEngagement extends BaseModel {
    * @returns
    */
   static getByTweetId(tweetId: string, txn?: Transaction) {
-    return this.query(txn).where({ tweetId }).whereNotDeleted().first();
+    return this.query(txn).where('tweetId', 'ilike', tweetId).whereNotDeleted().first();
   }
 
   /**

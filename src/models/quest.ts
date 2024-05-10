@@ -14,6 +14,7 @@ export default class Quest extends BaseModel {
   name: string;
   type: QuestType;
   link: string;
+  tweetId: string;
   account: string;
   tag: string;
   engageBond: number;
@@ -220,8 +221,11 @@ export default class Quest extends BaseModel {
     return this.query(txn).whereNotDeleted().patchAndFetchById(id, udp);
   }
 
-  // Find quest where responder link begins with a string
-  static findByTweetID(id: string, txn?: Transaction) {
-    return this.query(txn).where('responderLink', 'ilike', `%${id}%`).whereNotDeleted().first();
+  static findByTweetId(tweetId: string, txn?: Transaction) {
+    return this.query(txn).where('tweetId', tweetId).whereNotDeleted().first();
+  }
+
+  static findByQuestId(questId: string, txn?: Transaction) {
+    return this.query(txn).where('questId', questId).whereNotDeleted().first();
   }
 }

@@ -11,6 +11,7 @@ import { DBService } from '../../db/db.service';
 import Point, { PointAction } from '../../models/point';
 import Quest from '../../models/quest';
 import Swap from '../../models/swap';
+import TwitterEngagement from '../../models/twitter_engagement';
 import User from '../../models/user';
 import DiscordService from '../../services/discord.service';
 import { RedisService } from '../../services/redis/redis.service';
@@ -228,6 +229,22 @@ describe('AirdropController', () => {
         });
     });
 
+    it('should return 400 when twitter url has been used by twitter engagement record', async () => {
+      await TwitterEngagement.create({ tweetId: '1450144651940294656' });
+      const quest = await Quest.create({ type: 'tweet' });
+      await request(app.getHttpServer())
+        .post(`/v1/airdrop/request-verify/${quest.id}`)
+        .set('Authorization', 'bearer ' + token)
+        .send({ link: 'https://twitter.com/StarTrek/status/1450144651940294656' })
+        .expect(400)
+        .expect({
+          error: {
+            type: 'invalid_request_error',
+            message: 'Link already used for another quest',
+          },
+        });
+    });
+
     it('should return 400 when max request reached', async () => {
       const quest = await Quest.create({ type: 'tweet' });
       await Quest.create({ type: 'verify', responderId: u.id });
@@ -248,7 +265,7 @@ describe('AirdropController', () => {
 
     it('should return 400 when link was already used', async () => {
       const quest = await Quest.create({ type: 'tweet' });
-      await Quest.create({ responderLink: 'https://x.com/StarTrek/status/1450144651940294656/' });
+      await Quest.create({ tweetId: '1450144651940294656' });
       await request(app.getHttpServer())
         .post(`/v1/airdrop/request-verify/${quest.id}`)
         .set('Authorization', 'bearer ' + token)
@@ -262,7 +279,19 @@ describe('AirdropController', () => {
         });
     });
 
-    it('should return 201 and create verify quest', async () => {
+    it('should return 201 when link was already used', async () => {
+      const quest = await Quest.create({ type: 'tweet' });
+      await request(app.getHttpServer())
+        .post(`/v1/airdrop/request-verify/${quest.id}`)
+        .set('Authorization', 'bearer ' + token)
+        .send({ link: 'https://twitter.com/StarTrek/status/1450144651940294656' })
+        .expect(201);
+      const verifyQuest = await Quest.findByQuestId(quest.id);
+      expect(verifyQuest).toBeDefined();
+      expect(verifyQuest.tweetId).toEqual('1450144651940294656');
+    });
+
+    it('should return 201 and create verify follow quest', async () => {
       const quest = await Quest.create({ type: 'follow', engageBond: 100 });
       await Quest.create({});
       await request(app.getHttpServer())

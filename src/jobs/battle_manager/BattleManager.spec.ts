@@ -97,7 +97,7 @@ describe('BattleManager', () => {
 
       await expect(job.process()).resolves.toBeUndefined();
 
-      const allocs = await Allocation.query().where({ name: battle.id });
+      const allocs = await Allocation.query().where({});
       expect(allocs).toHaveLength(0);
 
       const bondSpends = await BondSpend.query().where({ battleId: battle.id });
@@ -128,7 +128,7 @@ describe('BattleManager', () => {
 
       await expect(job.process()).resolves.toBeUndefined();
 
-      const allocs = await Allocation.query().where({ name: battle.id });
+      const allocs = await Allocation.query().where({});
       expect(allocs).toHaveLength(2);
       expect(allocs[0].owner).toBe(u.id);
       expect(allocs[0].amount).toEqual(powOf(500, 18).toString());
@@ -171,7 +171,7 @@ describe('BattleManager', () => {
 
       await expect(job.process()).resolves.toBeUndefined();
 
-      const allocs = await Allocation.query().where({ name: battle.id });
+      const allocs = await Allocation.query().where({});
       expect(allocs).toHaveLength(2);
       expect(allocs[0].owner).toBe(u.id);
       expect(allocs[0].amount).toEqual(powOf(400, 18).toString());
@@ -226,7 +226,7 @@ describe('BattleManager', () => {
 
       await expect(job.process()).resolves.toBeUndefined();
 
-      const allocs = await Allocation.query().where({ name: battle.id });
+      const allocs = await Allocation.query().where({});
       expect(allocs).toHaveLength(3);
       expect(allocs[0].owner).toBe(u.id);
       expect(allocs[0].amount).toEqual(powOf(400, 18).toString());

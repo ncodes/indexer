@@ -4,6 +4,7 @@ import { Cron } from '@nestjs/schedule';
 import { delay } from '../../common/common';
 import Meta from '../../models/meta';
 import Point, { PointAction } from '../../models/point';
+import Quest from '../../models/quest';
 import TwitterEngagement from '../../models/twitter_engagement';
 import User from '../../models/user';
 import { TwitterService } from '../../services/twitter.service';
@@ -67,6 +68,12 @@ export default class MentionedTweetFinder extends Base {
                 type: type,
                 referencedTweetId,
               });
+            }
+
+            const hasQuest = await Quest.findByTweetId(tweet.id);
+            if (hasQuest) {
+              this.logger.log(`Quest already associated with this tweet: ${tweet.id}`);
+              continue;
             }
 
             if (tweetOwner) {

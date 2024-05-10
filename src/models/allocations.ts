@@ -104,16 +104,20 @@ export default class Allocation extends BaseModel {
     });
   }
 
-  // Get total unclaimed allocations by address
   /**
-   * Get total sum of unclaimed allocations by address
+   * Get total sum of unclaimed allocations
    * @param address The address
+   * @param userId Optional user ID
    * @param txn Optional transaction object
    * @returns
    */
-  static getTotalUnclaimedByAddress(address: string, txn?: Transaction) {
+  static getTotalUnclaimed(address: string, userId?: string, txn?: Transaction) {
     return this.query(txn)
-      .where('owner', 'ilike', address)
+      .where((q) => {
+        q = q.where('owner', 'ilike', address);
+        if (userId) q.orWhere('owner', userId);
+        return q;
+      })
       .where('claimed', false)
       .sum('amount as total')
       .first()

@@ -94,7 +94,7 @@ export class UserService {
         user.notificationSettings = defaultNotificationSettings;
       }
 
-      user.totalUnclaimedAlloc = await Allocation.getTotalUnclaimedByAddress(user.address);
+      user.totalUnclaimedAlloc = await Allocation.getTotalUnclaimed(user.address, user.id);
 
       // Points allocation information
       user.points = parseInt(await Point.getTotalPointsByAddress(user.address));

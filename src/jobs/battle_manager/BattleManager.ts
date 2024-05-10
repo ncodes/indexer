@@ -32,6 +32,8 @@ export default class BattleManager extends Base {
     if (this.isProcessing()) return;
     this.setProcessing(true);
 
+    this.logger.log('Processing battle');
+
     try {
       const curBattle = await Battle.getLatestBattle();
 

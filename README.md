@@ -1,8 +1,6 @@
 # Indexer
 
-The indexer indexes the events emitted by the Joint Protocol's contracts.
-It watches for events, transforms them and stores them in a database. The
-indexer also offers a REST API service for querying the database. Joint Interfaces can leverage these APIs to access the protocol state.
+The indexer indexes the events emitted by the Joint Protocol's contracts. It watches for events, transforms them and stores them in a database. The indexer also offers a REST API service for querying the database. Joint Interfaces can leverage these APIs to access the protocol state.
 
 ## Pre-requisites
 

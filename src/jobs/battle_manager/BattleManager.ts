@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import { transaction } from 'objection';
-import { isProd, toDec } from '../../common/common';
+import { toDec } from '../../common/common';
 import Allocation from '../../models/allocations';
 import Battle from '../../models/battle';
 import BondSpend from '../../models/bond_spend';
@@ -22,7 +22,8 @@ export default class BattleManager extends Base {
     this.schedule();
   }
 
-  @Cron(isProd() ? '0 0 * * *' : '*/5 * * * *')
+  // @Cron(isProd() ? '0 0 * * *' : '*/5 * * * *')
+  @Cron('0 0/6 * * *')
   schedule() {
     this.process().catch((e) => this.logger.error(e.message || 'failed to get exchange rate'));
   }

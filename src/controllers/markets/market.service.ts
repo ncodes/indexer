@@ -88,7 +88,6 @@ export class MarketService {
           mkt.quoteLogo = quoteInfo.logoURI;
         } catch (e) {
           this.logger.error('failed to fetch token info: ' + quoteAddress);
-          mkt.quoteLogo = UnknownTokenLogoURL;
         }
 
         // If no base log, find it in local token list.

@@ -1,3 +1,4 @@
+import { getTokenInfo } from '@jointlabs/chains-info';
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import * as moment from 'moment';
@@ -75,6 +76,11 @@ export default class MarketMetaManager extends Base {
       } catch (error) {
         this.logger.error('failed to fetch base token logo for market ' + market.baseAddress, error);
       }
+
+      // If no base logo, find it in local network token list.
+      if (!market.baseLogo) {
+        market.baseLogo = getTokenInfo(market.network, market.baseAddress)?.logoURI;
+      }
     }
 
     if (!market.quoteLogo) {
@@ -83,6 +89,11 @@ export default class MarketMetaManager extends Base {
         market.quoteLogo = tokenInfo.logoURI;
       } catch (error) {
         this.logger.error(`failed to fetch quote token logo for market` + market.quoteAddress, error);
+      }
+
+      // If no quote logo, find it in local network token list.
+      if (!market.quoteLogo) {
+        market.quoteLogo = getTokenInfo(market.network, market.quoteAddress)?.logoURI;
       }
     }
   }

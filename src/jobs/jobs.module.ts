@@ -49,7 +49,7 @@ if (['1', 'true'].includes(process.env.ENABLE_BATTLE_MANAGER)) {
 }
 
 if (['1', 'true'].includes(process.env.ENABLE_MARKET_META_MANAGER)) {
-  providers.push(MetadataService, MarketMetaManager);
+  providers.push(RedisService, MetadataService, MarketMetaManager);
   imports.push(NetworkModule);
 }
 

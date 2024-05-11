@@ -1,4 +1,3 @@
-import { getTokenInfo } from '@jointlabs/chains-info';
 import { Injectable, Logger } from '@nestjs/common';
 import * as _ from 'lodash';
 import Liquidity from '../../models/liquidity';
@@ -39,6 +38,7 @@ export class MarketService {
         mkt.highestPrice24h = await Liquidity.getHighestPrice(net, address, undefined, 24);
       }
 
+      // TODO: get used price from market.quotePriceUsd
       if (!mkt.lowestPriceUsd && (select.includes(`lowestPrice`) || !select.length)) {
         try {
           quoteInfo = await this.metadataSrv.getTokenInfo(net, quoteAddress);
@@ -71,31 +71,14 @@ export class MarketService {
       }
 
       if (select.includes(`baseLogo`) || !select.length) {
-        try {
-          baseInfo = await this.metadataSrv.getTokenInfo(net, baseAddress);
-          mkt.baseLogo = baseInfo.logoURI;
-        } catch (e) {
-          this.logger.error('failed to fetch token info: ' + quoteAddress);
-        }
-
-        // If no base log, find it in local token list.
-        mkt.baseLogo = !mkt.baseLogo ? getTokenInfo(net, baseAddress)?.logoURI || UnknownTokenLogoURL : mkt.baseLogo;
+        if (!mkt.baseLogo) mkt.baseLogo = UnknownTokenLogoURL;
       }
 
       if (select.includes(`quoteLogo`) || !select.length) {
-        try {
-          quoteInfo = await this.metadataSrv.getTokenInfo(net, quoteAddress);
-          mkt.quoteLogo = quoteInfo.logoURI;
-        } catch (e) {
-          this.logger.error('failed to fetch token info: ' + quoteAddress);
-        }
-
-        // If no base log, find it in local token list.
-        mkt.quoteLogo = !mkt.quoteLogo
-          ? getTokenInfo(net, quoteAddress)?.logoURI || UnknownTokenLogoURL
-          : mkt.quoteLogo;
+        if (!mkt.quoteLogo) mkt.quoteLogo = UnknownTokenLogoURL;
       }
 
+      // TODO: get used price from market.basePriceUsd
       if (select.includes(`amountSwapped`) || !select.length) {
         try {
           baseInfo = await this.metadataSrv.getTokenInfo(net, baseAddress);
@@ -105,6 +88,7 @@ export class MarketService {
         }
       }
 
+      // TODO: get used price from market.quotePriceUsd
       if (!mkt.totalLiquidityUsd && (select.includes(`totalLiquidity`) || !select.length)) {
         try {
           baseInfo = await this.metadataSrv.getTokenInfo(net, baseAddress);

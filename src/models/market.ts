@@ -62,6 +62,10 @@ export default class Market extends BaseModel {
   baseType: AssetType = undefined;
   // The base asset decimals (if applicable)
   baseDecimals: number = undefined;
+  // The base asset logo URL
+  baseLogo: string = undefined;
+  // The base asset price in USD
+  basePriceUsd: string = undefined;
   // The quote asset symbol
   quote: string = undefined;
   // The quote asset token address
@@ -70,6 +74,10 @@ export default class Market extends BaseModel {
   quoteDecimals: number;
   // Indicates the type of quote asset
   quoteType: AssetType = undefined;
+  // The quote asset logo URL
+  quoteLogo: string = undefined;
+  // The quote asset price in USD
+  quotePriceUsd: string = undefined;
   // Indicates whether this is an instant market
   instant: boolean = undefined;
   // Indicates that offers can have zero price
@@ -124,6 +132,8 @@ export default class Market extends BaseModel {
   lowestPrice: string = undefined;
   // Indicates the market is hidden
   hidden: boolean;
+  // The last time the metadata was updated
+  lastMetaUpdatedAt: string = undefined;
 
   // *** Non-persisted fields **//
   totalLiquidity: string = undefined;
@@ -132,8 +142,6 @@ export default class Market extends BaseModel {
   lowestPriceUsd: number;
   totalLiquidityUsd: number = undefined;
   numDisputes: number;
-  baseLogo: string;
-  quoteLogo: string;
   numProviders: string;
   lowestPrice24h: string;
   highestPrice24h: string;
@@ -643,5 +651,22 @@ export default class Market extends BaseModel {
         .then(resolve)
         .catch(reject);
     });
+  }
+
+  /**
+   * Find markets whose meta has not been updated since a given period
+   * @param periodAt The last time the meta was updated
+   * @param limit The number of records to return
+   * @param txn
+   * @returns
+   */
+  static async findMarketsToUpdateMeta(periodAt: string, limit: number, txn?: Transaction) {
+    return this.query(txn)
+      .where((q) => {
+        q.where('lastMetaUpdatedAt', '<', periodAt).orWhereNull('lastMetaUpdatedAt');
+      })
+      .whereNotDeleted()
+      .orderBy('lastSwapAt', 'DESC')
+      .limit(limit);
   }
 }

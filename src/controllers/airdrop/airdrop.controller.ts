@@ -647,7 +647,15 @@ export class AirdropController {
     const nextBattleTime = moment(cron.next().toDate()).toISOString();
 
     // Get all bond spend for this user
-    const spendRes: { amount: string; side: string; allocation: string; createdAt: string; battleId: string }[] = [];
+    const spendRes: {
+      amount: string;
+      side: string;
+      allocation: string;
+      createdAt: string;
+      battleId: string;
+      sideAllocPct: number;
+      allocPct: number;
+    }[] = [];
     const spends = await BondSpend.findByUserId(req.user.id);
     for (const spend of spends) {
       const alloc = toDec(spend.allocation?.amount || '0');
@@ -657,6 +665,8 @@ export class AirdropController {
         allocation: alloc.isPos() ? alloc.toFixed() : '0',
         createdAt: spend.createdAt,
         battleId: spend.battleId,
+        sideAllocPct: spend.sideAllocPct,
+        allocPct: spend.allocPct,
       });
     }
 

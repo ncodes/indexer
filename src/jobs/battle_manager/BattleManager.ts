@@ -91,7 +91,11 @@ export default class BattleManager extends Base {
               amount: spendAlloc.mul(10 ** 18).toFixed(0),
             });
 
-            await BondSpend.updateById(spend.id, { allocationId: alloc.id });
+            await BondSpend.updateById(spend.id, {
+              allocationId: alloc.id,
+              sideAllocPct: (spend.side === 'droid' ? droidTapsPct : banditTapsPct).toNumber(),
+              allocPct: spendPct.toNumber(),
+            });
           }
         }
       });

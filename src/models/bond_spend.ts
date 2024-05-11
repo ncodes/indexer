@@ -13,6 +13,8 @@ export default class BondSpend extends BaseModel {
   amount: string;
   side: 'droid' | 'bandit';
   allocationId: string;
+  sideAllocPct: number;
+  allocPct: number;
 
   // Not persisted
   stakeScore: string;

@@ -39,18 +39,25 @@ export default class MarketMetaManager extends Base {
           await this.getLogoUrls(markets[i]),
           await this.getDecimals(markets[i]),
           await this.updatePrices(markets[i]),
-        ]).finally(async () => {
-          await Market.updateById(markets[i].id, {
-            baseLogo: markets[i].baseLogo,
-            quoteLogo: markets[i].quoteLogo,
-            baseDecimals: markets[i].baseDecimals,
-            quoteDecimals: markets[i].quoteDecimals,
-            basePriceUsd: markets[i].basePriceUsd,
-            quotePriceUsd: markets[i].quotePriceUsd,
-            lastMetaUpdatedAt: moment().utc().toISOString(),
+        ])
+          .then(() => {
+            this.logger.log(`Successfully fetched all meta for market ${markets[i].id}`);
+          })
+          .catch((e) => {
+            this.logger.error(`failed to update market ${markets[i].id} meta: ${e}`);
+          })
+          .finally(async () => {
+            await Market.updateById(markets[i].id, {
+              baseLogo: markets[i].baseLogo,
+              quoteLogo: markets[i].quoteLogo,
+              baseDecimals: markets[i].baseDecimals,
+              quoteDecimals: markets[i].quoteDecimals,
+              basePriceUsd: markets[i].basePriceUsd,
+              quotePriceUsd: markets[i].quotePriceUsd,
+              lastMetaUpdatedAt: moment().utc().toISOString(),
+            });
+            this.logger.log(`Updated meta for market ${markets[i].id}`);
           });
-          this.logger.log(`Updated meta for market ${markets[i].id}`);
-        });
       }
     } catch (e) {
       this.logger.error(e.message);
@@ -62,42 +69,57 @@ export default class MarketMetaManager extends Base {
 
   async getLogoUrls(market: Market) {
     if (!market.baseLogo) {
-      const tokenInfo = await this.metadataSrv.getTokenInfo(market.network, market.baseAddress);
-      market.baseLogo = tokenInfo.logoURI;
+      try {
+        const tokenInfo = await this.metadataSrv.getTokenInfo(market.network, market.baseAddress);
+        market.baseLogo = tokenInfo.logoURI;
+      } catch (error) {
+        this.logger.error('failed to fetch base token logo for market ' + market.baseAddress);
+      }
     }
 
     if (!market.quoteLogo) {
-      const tokenInfo = await this.metadataSrv.getTokenInfo(market.network, market.quoteAddress);
-      market.quoteLogo = tokenInfo.logoURI;
-    }
-
-    if (!market.baseDecimals) {
-      const tokenInfo = await this.metadataSrv.getTokenInfo(market.network, market.baseAddress);
-      market.baseDecimals = tokenInfo.decimals;
-    }
-
-    if (!market.quoteDecimals) {
-      const tokenInfo = await this.metadataSrv.getTokenInfo(market.network, market.quoteAddress);
-      market.quoteDecimals = tokenInfo.decimals;
+      try {
+        const tokenInfo = await this.metadataSrv.getTokenInfo(market.network, market.quoteAddress);
+        market.quoteLogo = tokenInfo.logoURI;
+      } catch (error) {
+        this.logger.error('failed to fetch quote token logi for market ' + market.quoteAddress);
+      }
     }
   }
 
   async getDecimals(market: Market) {
     if (!market.baseDecimals) {
-      const tokenInfo = await this.metadataSrv.getTokenInfo(market.network, market.baseAddress);
-      market.baseDecimals = tokenInfo.decimals;
+      try {
+        const tokenInfo = await this.metadataSrv.getTokenInfo(market.network, market.baseAddress);
+        market.baseDecimals = tokenInfo.decimals;
+      } catch (error) {
+        this.logger.error('failed to fetch base token decimals for market ' + market.baseAddress);
+      }
     }
 
     if (!market.quoteDecimals) {
-      const tokenInfo = await this.metadataSrv.getTokenInfo(market.network, market.quoteAddress);
-      market.quoteDecimals = tokenInfo.decimals;
+      try {
+        const tokenInfo = await this.metadataSrv.getTokenInfo(market.network, market.quoteAddress);
+        market.quoteDecimals = tokenInfo.decimals;
+      } catch (error) {
+        this.logger.error('failed to fetch quote token decimals for market ' + market.quoteAddress);
+      }
     }
   }
 
   async updatePrices(market: Market) {
-    const baseInfo = await this.metadataSrv.getTokenInfo(market.network, market.baseAddress);
-    market.basePriceUsd = baseInfo.price.toString();
-    const quoteInfo = await this.metadataSrv.getTokenInfo(market.network, market.quoteAddress);
-    market.quotePriceUsd = quoteInfo.price.toString();
+    try {
+      const baseInfo = await this.metadataSrv.getTokenInfo(market.network, market.baseAddress);
+      market.basePriceUsd = baseInfo.price.toString();
+    } catch (error) {
+      this.logger.error('failed to fetch base token price for market ' + market.baseAddress);
+    }
+
+    try {
+      const quoteInfo = await this.metadataSrv.getTokenInfo(market.network, market.quoteAddress);
+      market.quotePriceUsd = quoteInfo.price.toString();
+    } catch (error) {
+      this.logger.error('failed to fetch quote token price for market ' + market.quoteAddress);
+    }
   }
 }

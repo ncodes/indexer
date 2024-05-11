@@ -44,7 +44,7 @@ export default class MarketMetaManager extends Base {
             this.logger.log(`Successfully fetched all meta for market ${markets[i].id}`);
           })
           .catch((e) => {
-            this.logger.error(`failed to update market ${markets[i].id} meta: ${e}`);
+            this.logger.error(`failed to update market ${markets[i].id} meta`, e);
           })
           .finally(async () => {
             await Market.updateById(markets[i].id, {
@@ -73,7 +73,7 @@ export default class MarketMetaManager extends Base {
         const tokenInfo = await this.metadataSrv.getTokenInfo(market.network, market.baseAddress);
         market.baseLogo = tokenInfo.logoURI;
       } catch (error) {
-        this.logger.error('failed to fetch base token logo for market ' + market.baseAddress);
+        this.logger.error('failed to fetch base token logo for market ' + market.baseAddress, error);
       }
     }
 
@@ -82,7 +82,7 @@ export default class MarketMetaManager extends Base {
         const tokenInfo = await this.metadataSrv.getTokenInfo(market.network, market.quoteAddress);
         market.quoteLogo = tokenInfo.logoURI;
       } catch (error) {
-        this.logger.error('failed to fetch quote token logi for market ' + market.quoteAddress);
+        this.logger.error(`failed to fetch quote token logo for market` + market.quoteAddress, error);
       }
     }
   }
@@ -93,7 +93,7 @@ export default class MarketMetaManager extends Base {
         const tokenInfo = await this.metadataSrv.getTokenInfo(market.network, market.baseAddress);
         market.baseDecimals = tokenInfo.decimals;
       } catch (error) {
-        this.logger.error('failed to fetch base token decimals for market ' + market.baseAddress);
+        this.logger.error('failed to fetch base token decimals for market ' + market.baseAddress, error);
       }
     }
 
@@ -102,7 +102,7 @@ export default class MarketMetaManager extends Base {
         const tokenInfo = await this.metadataSrv.getTokenInfo(market.network, market.quoteAddress);
         market.quoteDecimals = tokenInfo.decimals;
       } catch (error) {
-        this.logger.error('failed to fetch quote token decimals for market ' + market.quoteAddress);
+        this.logger.error('failed to fetch quote token decimals for market ' + market.quoteAddress, error);
       }
     }
   }
@@ -112,14 +112,14 @@ export default class MarketMetaManager extends Base {
       const baseInfo = await this.metadataSrv.getTokenInfo(market.network, market.baseAddress);
       market.basePriceUsd = baseInfo.price.toString();
     } catch (error) {
-      this.logger.error('failed to fetch base token price for market ' + market.baseAddress);
+      this.logger.error('failed to fetch base token price for market ' + market.baseAddress, error);
     }
 
     try {
       const quoteInfo = await this.metadataSrv.getTokenInfo(market.network, market.quoteAddress);
       market.quotePriceUsd = quoteInfo.price.toString();
     } catch (error) {
-      this.logger.error('failed to fetch quote token price for market ' + market.quoteAddress);
+      this.logger.error('failed to fetch quote token price for market ' + market.quoteAddress, error);
     }
   }
 }

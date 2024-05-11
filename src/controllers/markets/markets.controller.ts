@@ -147,20 +147,15 @@ export class MarketsController {
       relations: undefined,
       hidden: false,
     });
-    const timeElapsed = moment().diff(now, 'milliseconds');
-    console.log(`TimeCheck: Market search took ${timeElapsed}ms`);
 
     if (q.count) {
       return ok().data({ count: result }).build();
     }
 
-    now = moment();
     const markets = result as Market[];
     for (const m of markets) {
       await this.marketSrv.extendMarket(m, q.select);
     }
-    const timeElapsed2 = moment().diff(now, 'milliseconds');
-    console.log(`TimeCheck: Market extend took ${timeElapsed2}ms`);
 
     return ok().data(result).build();
   }

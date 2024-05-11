@@ -136,8 +136,10 @@ export class MetadataService {
     if (network && !isValidChain(network)) return Promise.reject('network not supported');
 
     // If the token is a contract, try to get the decimals if not provided
-    if (info.isContract && network && isProd() && !info.decimals)
-      info.decimals = toNumber(await this.netSrv.getERC20Contract(network as ChainNames, contract).decimals());
+    if (info.isContract && network && isProd() && !info.decimals) {
+      const decimal = await this.netSrv.getERC20Contract(network as ChainNames, contract).decimals();
+      info.decimals = toNumber(decimal);
+    }
 
     // In dev mode, set decimals to 18 if not provided
     if (isDev() && !info.decimals) info.decimals = 18;

@@ -971,10 +971,10 @@
     "@types/yargs" "^17.0.8"
     chalk "^4.0.0"
 
-"@jointlabs/chains-info@0.0.54":
-  version "0.0.54"
-  resolved "https://registry.yarnpkg.com/@jointlabs/chains-info/-/chains-info-0.0.54.tgz#597d3ad0c4337a23aad770a721d3d9c5c6f6bc27"
-  integrity sha512-kLChbBTT3Sal7uP3Tx45rVF9Pw9ceNS81pCWhDnEqpHQGNkv9mxVR3D6bHcB213TtX6Fh8NIRS2UbAtFtxHL9A==
+"@jointlabs/chains-info@^0.0.55":
+  version "0.0.55"
+  resolved "https://registry.yarnpkg.com/@jointlabs/chains-info/-/chains-info-0.0.55.tgz#95bd2d60f4566580d10ded46bdf06b0db53c9ca4"
+  integrity sha512-bx9pttoON7L4ZDnxR4PZlcubzG1g4dXtxNIXqoQN4u7OveoqezuOqg7g4thd+3YS6rUn7rs9VWCLneSR4goZmw==
   dependencies:
     lodash "^4.17.21"
     react "^18.2.0"

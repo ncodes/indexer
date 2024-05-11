@@ -1,5 +1,6 @@
 import { Controller, Get, Param, Query, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as moment from 'moment';
 import { isProd } from '../../common/common';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ok, throw400, throw404 } from '../../common/responses/responses';
@@ -118,6 +119,7 @@ export class MarketsController {
       ? await this.metadataSrv.tryToUsd(q.net, '1', q.quote, { refetch: true, isHD: true })
       : undefined;
 
+    let now = moment();
     const result = await Market.search({
       network: q.net,
       creator: q.creator,
@@ -145,15 +147,20 @@ export class MarketsController {
       relations: undefined,
       hidden: false,
     });
+    const timeElapsed = moment().diff(now, 'milliseconds');
+    console.log(`TimeCheck: Market search took ${timeElapsed}ms`);
 
     if (q.count) {
       return ok().data({ count: result }).build();
     }
 
+    now = moment();
     const markets = result as Market[];
     for (const m of markets) {
       await this.marketSrv.extendMarket(m, q.select);
     }
+    const timeElapsed2 = moment().diff(now, 'milliseconds');
+    console.log(`TimeCheck: Market extend took ${timeElapsed2}ms`);
 
     return ok().data(result).build();
   }

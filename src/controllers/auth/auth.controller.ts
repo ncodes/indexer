@@ -71,17 +71,15 @@ export class AuthController {
       // Create user if not found, Set email as unverified.
       // If user was found and email is different, update email as unverified.
       if (!user) {
-        const otpSecret = authenticator.generateSecret();
         user = await User.create({
           address: sigData.address,
           emailUnverified: sigData.email,
           role: Roles.User,
-          otpSecret,
+          otpSecret: authenticator.generateSecret(),
         });
       } else {
-        const otpSecret = authenticator.generateSecret();
         user = await User.updateById(user.id, {
-          otpSecret: user.otpSecret ?? otpSecret,
+          otpSecret: user.otpSecret ?? authenticator.generateSecret(),
           emailUnverified: user.email !== sigData.email ? sigData.email : null,
         });
         user.notificationSettings = notifSettings;
@@ -94,10 +92,7 @@ export class AuthController {
       token = await makeSession(user, body.sig, this.cfgSrv.get('auth.jwtExpMin'), this.cfgSrv.get('auth.jwtSecret'));
     } else {
       const otp = totp.generate(user.otpSecret);
-      this.notifSrv.notify(NotificationID.VerifyNewEmail, undefined, undefined, {
-        user,
-        otp,
-      });
+      this.notifSrv.notify(NotificationID.VerifyNewEmail, undefined, undefined, { user, otp });
     }
 
     // Register device for notifications.

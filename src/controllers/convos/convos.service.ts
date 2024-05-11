@@ -24,9 +24,7 @@ export default class ConvosService {
    */
   async registerInstallation(installationId: string, deviceType: 'email', deviceToken: string) {
     const client = this.getClient();
-    const typeToDeliveryType = {
-      email: 'emailDeviceToken',
-    };
+    const typeToDeliveryType = { email: 'emailDeviceToken' };
     return client.registerInstallation({
       installationId,
       deliveryMechanism: {

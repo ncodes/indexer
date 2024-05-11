@@ -1,3 +1,4 @@
+import { getTokenInfo } from '@jointlabs/chains-info';
 import { Injectable, Logger } from '@nestjs/common';
 import * as _ from 'lodash';
 import Liquidity from '../../models/liquidity';
@@ -7,7 +8,7 @@ import Meta from '../../models/meta';
 import Swap from '../../models/swap';
 import { MetadataService } from '../../services/metadata/metadata.service';
 
-const UnknownTokenLogoURL = 'https://storage.googleapis.com/joint-images/token-logos/unknown.svg';
+const UnknownTokenLogoURL = 'https://files.joint.exchange/images/unknown.svg';
 @Injectable()
 export class MarketService {
   logger = new Logger(MarketService.name);
@@ -75,8 +76,10 @@ export class MarketService {
           mkt.baseLogo = baseInfo.logoURI;
         } catch (e) {
           this.logger.error('failed to fetch token info: ' + quoteAddress);
-          mkt.baseLogo = UnknownTokenLogoURL;
         }
+
+        // If no base log, find it in local token list.
+        mkt.baseLogo = !mkt.baseLogo ? getTokenInfo(net, baseAddress)?.logoURI || UnknownTokenLogoURL : mkt.baseLogo;
       }
 
       if (select.includes(`quoteLogo`) || !select.length) {
@@ -87,6 +90,11 @@ export class MarketService {
           this.logger.error('failed to fetch token info: ' + quoteAddress);
           mkt.quoteLogo = UnknownTokenLogoURL;
         }
+
+        // If no base log, find it in local token list.
+        mkt.quoteLogo = !mkt.quoteLogo
+          ? getTokenInfo(net, quoteAddress)?.logoURI || UnknownTokenLogoURL
+          : mkt.quoteLogo;
       }
 
       if (select.includes(`amountSwapped`) || !select.length) {

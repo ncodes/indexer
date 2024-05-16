@@ -255,13 +255,16 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       const lastOverheatUpdate = await this.redisSrv.get(`tap:overheat:lastUpdated:${userId}`);
 
       // If the difference between the last updated time
-      // if the last tap time is more than 1 second ago (cool down).
+      // and the last tap time is more than 1 second ago (cool down).
       // Increment the overheat level by the number of seconds since the last tap or ping.
       if (now.unix() - parseInt(lastTapAt) > 1) {
         let increment = await this.getCoolingIncrement(userId);
 
         if (parseInt(lastTapAt) == parseInt(lastOverheatUpdate)) {
           increment = Math.max(now.unix() - parseInt(lastTapAt) - 1, Number(increment));
+        } else {
+          const secDiff = now.unix() - parseInt(lastOverheatUpdate);
+          increment = Number(increment) * secDiff;
         }
 
         let newOverheatLvl = BigInt(increment) + BigInt(overheatLvl);

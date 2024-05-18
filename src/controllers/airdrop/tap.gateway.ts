@@ -790,6 +790,11 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       return { success: true, message: 'Rank bonus already claimed' };
     }
 
+    const taps = toDec(await Tap.getTapCount(userId));
+    if (taps.lt(RankInfo[rank].taps)) {
+      return { success: false, message: 'Insufficient taps' };
+    }
+
     const user = await User.getById(userId);
 
     await Tap.create({

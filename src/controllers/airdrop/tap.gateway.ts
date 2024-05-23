@@ -12,7 +12,7 @@ import {
 import Decimal from 'decimal.js';
 import * as moment from 'moment';
 import { Server, Socket } from 'socket.io';
-import { isProd } from '../../common/common';
+import { isProd, logIf } from '../../common/common';
 import { checkToken } from '../../guards/be_authenticated.guard';
 import MultiplierSpend from '../../models/multiplier_spend';
 import Swap from '../../models/swap';
@@ -138,18 +138,26 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
 
     const user = await User.getById(userId);
 
+    const logTarget = '0x09D82FFd6Ab6E8E4cAEB51dD9C86F1c07e4E94C6'.toLowerCase();
+
+    logIf('TAPLOG, logging', user.address.toLowerCase() == logTarget);
+
     // Get the user's tap overheat level. If it has not been set, create it
     let overheatLvl = BigInt(0);
     const overheatLvlStr = await this.redisSrv.get(`tap:overheat:${userId}`);
     if (!overheatLvlStr) {
+      logIf('TAPLOG, set initial overheat level', user.address.toLowerCase() == logTarget);
       overheatLvl = await this.getMaxOverheatLevel(userId);
       await this.redisSrv.set(`tap:overheat:${userId}`, overheatLvl.toString());
     } else {
+      logIf('TAPLOG, set current overheat level', user.address.toLowerCase() == logTarget);
       overheatLvl = BigInt(overheatLvlStr);
     }
 
     // Number of taps to create
+    logIf('TAPLOG, getting tap increment', user.address.toLowerCase() == logTarget);
     let tapIncrement = await this.getTapIncrement(userId);
+    logIf('TAPLOG, done getting tap increment', user.address.toLowerCase() == logTarget);
 
     // Check if user has overheated (overheatLvl <= 0), return error if true.
     // If the user has not overheated, but the tapCount is greater than the overheatLvl,
@@ -163,6 +171,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
     }
 
     // Create a tap record
+    logIf(`TAPLOG, creating taps count=${tapIncrement}`, user.address.toLowerCase() == logTarget);
     const now = moment();
     for (let i = 0; i < tapIncrement; i++) {
       Tap.create({
@@ -187,20 +196,28 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
     }
 
     // Update the last overheat updated time
+    logIf('TAPLOG, update last overheat time', user.address.toLowerCase() == logTarget);
     const overheatLastUpdated = now.unix();
     await this.redisSrv.set(`tap:overheat:lastUpdated:${userId}`, overheatLastUpdated.toString());
 
     // Update last tap time
+    logIf('TAPLOG, update last tap time', user.address.toLowerCase() == logTarget);
     await this.redisSrv.set(`tap:lastUpdated:${userId}`, now.unix().toString());
 
     // Update battle status
+    logIf('TAPLOG, update battle state', user.address.toLowerCase() == logTarget);
     this.updateBattleState(user);
+
+    logIf('TAPLOG, get tap count', user.address.toLowerCase() == logTarget);
+    const tapCount = await Tap.getTapCount(userId);
+
+    logIf('TAPLOG, return response', user.address.toLowerCase() == logTarget);
 
     return {
       success: true,
       overheatLvl: newOverheatLvl,
       overheatLastUpdated,
-      tapCount: await Tap.getTapCount(userId),
+      tapCount,
       tapIncrement,
     };
   }

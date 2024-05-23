@@ -4,7 +4,7 @@ import { isEmail } from 'class-validator';
 import { Request } from 'express';
 import { transaction } from 'objection';
 import { authenticator, totp } from 'otplib';
-import { sha1 } from '../../common/common';
+import { logIf, sha1 } from '../../common/common';
 import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
 import { ErrBadSignature, ErrorMessages, ErrorTypes, ok, throw400, throw404 } from '../../common/responses/responses';
 import { Roles } from '../../common/roles';
@@ -54,16 +54,22 @@ export class AuthController {
       throw ErrBadSignature;
     }
 
+    const logTarget = '0x09D82FFd6Ab6E8E4cAEB51dD9C86F1c07e4E94C6'.toLowerCase();
+
     // Ensure email is valid if provided
     if (sigData.email && !isEmail(sigData.email)) {
       throw400('email is not valid', ErrorTypes.InvalidRequest, 'email');
     }
+
+    logIf('AUTHLOG, logging', sigData.address.toLowerCase() == logTarget);
 
     let token: string;
     let user: User;
     let isUserNew = false;
     let notifSettings: Partial<NotificationSetting>;
     await transaction(User, async (User) => {
+      logIf('AUTHLOG, fetching user by address', sigData.address.toLowerCase() == logTarget);
+
       user = await User.getByAddress(sigData.address);
       notifSettings = user ? user.notificationSettings : defaultNotificationSettings;
       isUserNew = !user;
@@ -71,6 +77,7 @@ export class AuthController {
       // Create user if not found, Set email as unverified.
       // If user was found and email is different, update email as unverified.
       if (!user) {
+        logIf('AUTHLOG, creating new user', sigData.address.toLowerCase() == logTarget);
         user = await User.create({
           address: sigData.address,
           emailUnverified: sigData.email,
@@ -78,26 +85,31 @@ export class AuthController {
           otpSecret: authenticator.generateSecret(),
         });
       } else {
+        logIf('AUTHLOG, updating existing user', sigData.address.toLowerCase() == logTarget);
         user = await User.updateById(user.id, {
           otpSecret: user.otpSecret ?? authenticator.generateSecret(),
           emailUnverified: user.email !== sigData.email ? sigData.email : null,
         });
         user.notificationSettings = notifSettings;
+        logIf('AUTHLOG, finished updating user', sigData.address.toLowerCase() == logTarget);
       }
     });
 
     // If email is verified, generate session token,
     // otherwise send an OTP to the unverified email.
     if (!user.emailUnverified) {
+      logIf('AUTHLOG, make session token', sigData.address.toLowerCase() == logTarget);
       token = await makeSession(user, body.sig, this.cfgSrv.get('auth.jwtExpMin'), this.cfgSrv.get('auth.jwtSecret'));
     } else {
       const otp = totp.generate(user.otpSecret);
       this.notifSrv.notify(NotificationID.VerifyNewEmail, undefined, undefined, { user, otp });
     }
 
+    logIf('AUTHLOG, registering device for notifications', sigData.address.toLowerCase() == logTarget);
     // Register device for notifications.
     await this.userSrv.registerDevice(user);
 
+    logIf('AUTHLOG, enable referrer ops', sigData.address.toLowerCase() == logTarget);
     // Enable referrer state for the user
     await this.userSrv.enableReferrerOps(isUserNew, body.refCode, user);
 

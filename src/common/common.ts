@@ -141,3 +141,9 @@ export function getContractsAddress(network: string, name: ContractNames) {
 export function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+export function logIf(log: string, condition: boolean) {
+  if (condition) {
+    console.log(log);
+  }
+}

@@ -48,11 +48,11 @@ export class UsersController {
 
     let user = req.user;
     if (user) {
-      logIf('GETUSERLOG, logging', user.address);
+      logIf('GETUSERLOG, logging', user?.address);
     }
 
     if (!user) {
-      logIf('GETUSERLOG, get user', user.address);
+      logIf('GETUSERLOG, get user', user?.address);
       user = await User.getByAddress(address);
       if (!user && !q.no404) throw404(ErrorMessages.UserNotFound);
       if (!user && q.no404) {
@@ -69,13 +69,13 @@ export class UsersController {
       }
     }
 
-    logIf('GETUSERLOG, extend user', user.address);
+    logIf('GETUSERLOG, extend user', user?.address);
     await this.userSrv.extendUser(user, q.net);
-    logIf('GETUSERLOG, done extending', user.address);
+    logIf('GETUSERLOG, done extending', user?.address);
 
-    logIf('GETUSERLOG, desenitize user', user.address);
+    logIf('GETUSERLOG, desenitize user', user?.address);
     if (!req.user) user.desensitize();
-    logIf('GETUSERLOG, return response', user.address);
+    logIf('GETUSERLOG, return response', user?.address);
 
     return ok().data(user).build<User>();
   }

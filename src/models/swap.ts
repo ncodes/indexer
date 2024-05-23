@@ -609,7 +609,6 @@ export default class Swap extends BaseModel {
       if (disputed !== undefined) q = q.where({ byDispute: disputed });
       if (instant !== undefined) q = q.where({ instant });
       q.count('id')
-        .whereNotDeleted()
         .first()
         .then((res: any) => {
           return resolve(res.count);

@@ -97,7 +97,7 @@ export default class Tap extends BaseModel {
       totalSpend = await TapSpend.getTotalSpend(userId, undefined, txn);
     }
 
-    const totalMultiplierTaps = await MultiplierSpend.getTotalTaps(userId, txn);
+    const totalMultiplierTaps = toDec(await MultiplierSpend.getTotalTaps(userId, txn)).toDP(0);
 
     // get sum of bonus value for bonus taps
     const totalBonusTaps = await this.query(txn)
@@ -121,7 +121,6 @@ export default class Tap extends BaseModel {
         }
       })
       .where({ bonus: false })
-      .whereNotDeleted()
       .count()
       .first()
       .then((res) => {

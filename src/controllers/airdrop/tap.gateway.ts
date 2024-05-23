@@ -12,7 +12,7 @@ import {
 import Decimal from 'decimal.js';
 import * as moment from 'moment';
 import { Server, Socket } from 'socket.io';
-import { isProd, logIf } from '../../common/common';
+import { isLocal, logIf } from '../../common/common';
 import { checkToken } from '../../guards/be_authenticated.guard';
 import MultiplierSpend from '../../models/multiplier_spend';
 import Swap from '../../models/swap';
@@ -46,17 +46,6 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
   constructor(private cfg: ConfigService, private redisSrv: RedisService) {}
 
   /**
-   * Disconnect the socket after a few seconds
-   * @param socket The socket object
-   * @param seconds The number of seconds to wait before disconnecting
-   */
-  disconnectAfter(socket: Socket, seconds: number) {
-    setTimeout(() => {
-      socket.disconnect(true);
-    }, seconds * 1000);
-  }
-
-  /**
    * Called when a new connection is made.
    * In production, disconnects the socket
    * if the user is not authenticated within
@@ -64,12 +53,13 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    * @param socket The socket object
    */
   handleConnection(socket: Socket) {
-    if (isProd()) {
-      setTimeout(async () => {
-        const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
-        if (!userId) socket.disconnect(true);
-      }, 3000);
-    }
+    if (isLocal()) return;
+    setTimeout(async () => {
+      const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
+      if (!userId) {
+        socket.disconnect(true);
+      }
+    }, 5000);
   }
 
   /**
@@ -319,7 +309,9 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       return { success: false, message: 'Not authenticated' };
     }
 
-    return { success: true, count: await Tap.getTapCount(userId) };
+    const count = await Tap.getTapCount(userId);
+
+    return { success: true, count };
   }
 
   /**
@@ -338,6 +330,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
 
     // General info
     const maxOverheatLvl = await this.getMaxOverheatLevel(userId);
+    const overheatLvl = await this.redisSrv.get(`tap:overheat:${userId}`);
     const tapCount = await Tap.getTapCount(userId);
     const tapCountWithoutSpend = await Tap.getTapCount(userId, true);
     const rank = this.getRank(toDec(tapCountWithoutSpend));
@@ -415,6 +408,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
     return {
       success: true,
       maxOverheatLvl: Number(maxOverheatLvl),
+      overheatLvl: parseInt(overheatLvl),
       tapCount: tapCount,
       tapIncrement: await this.getTapIncrement(userId),
       rank,

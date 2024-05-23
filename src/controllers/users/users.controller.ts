@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { isAddress } from 'ethers';
 import express from 'express';
 import { transaction } from 'objection';
-import { isEqualStr, toDec } from '../../common/common';
+import { isEqualStr, logIf, toDec } from '../../common/common';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ErrorMessages, ok, throw401, throw404 } from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
@@ -47,7 +47,12 @@ export class UsersController {
     }
 
     let user = req.user;
+    if (user) {
+      logIf('GETUSERLOG, logging', user.address);
+    }
+
     if (!user) {
+      logIf('GETUSERLOG, get user', user.address);
       user = await User.getByAddress(address);
       if (!user && !q.no404) throw404(ErrorMessages.UserNotFound);
       if (!user && q.no404) {
@@ -64,9 +69,13 @@ export class UsersController {
       }
     }
 
+    logIf('GETUSERLOG, extend user', user.address);
     await this.userSrv.extendUser(user, q.net);
+    logIf('GETUSERLOG, done extending', user.address);
 
+    logIf('GETUSERLOG, desenitize user', user.address);
     if (!req.user) user.desensitize();
+    logIf('GETUSERLOG, return response', user.address);
 
     return ok().data(user).build<User>();
   }

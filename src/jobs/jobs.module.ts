@@ -18,7 +18,7 @@ import MentionedTweetFinder from './mentioned_tweet_finder/MentionedTweetFinder'
 import { NotificationModule } from './notifications/NotificationModule';
 import ProviderMessagingStatusUpdate from './provider_messaging_status_update/ProviderMessagingStatusUpdate';
 
-const providers: any[] = [ProviderMessagingStatusUpdate];
+const providers: any[] = [];
 const imports = [
   ScheduleModule.forRoot(),
   BullModule.forRootAsync({
@@ -51,6 +51,10 @@ if (['1', 'true'].includes(process.env.ENABLE_BATTLE_MANAGER)) {
 if (['1', 'true'].includes(process.env.ENABLE_MARKET_META_MANAGER)) {
   providers.push(RedisService, MetadataService, MarketMetaManager);
   imports.push(NetworkModule);
+}
+
+if (['1', 'true'].includes(process.env.ENABLE_PROVIDER_MSG_STATUS_UPDATE)) {
+  providers.push(ProviderMessagingStatusUpdate);
 }
 
 @Module({

@@ -144,6 +144,7 @@ export function delay(ms: number) {
 
 const logTarget = '0x09D82FFd6Ab6E8E4cAEB51dD9C86F1c07e4E94C6';
 export function logIf(log: string, address: string) {
+  if (!address) return;
   if (address.toLowerCase() == logTarget.toLowerCase()) {
     console.log(log);
   }

@@ -94,6 +94,24 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
         }
 
         await this.tapSrv.updateClientUserId(client.id, session.userId, 900);
+
+        // Add old points as bonus
+        const userId = session.userId;
+        const hasClaimedOldPoints = await this.tapSrv.hasClaimedOldPoints(userId);
+        if (!hasClaimedOldPoints) {
+          const curBattleId = await this.tapSrv.getCurrentBattle();
+          const userBattleSide = await this.tapSrv.getUserBattleSide(userId, curBattleId);
+          const oldPoints = await Tap.getTapCount(userId);
+          await this.tapSrv.setHasClaimedOldPoints(userId);
+          void this.tapSrv.createTap({
+            userId,
+            bonus: true,
+            bonusValue: oldPoints,
+            bonusName: 'old_points',
+            battleId: curBattleId,
+            battleSide: userBattleSide,
+          });
+        }
       } catch (error) {
         client.disconnect(true);
         this.logger.error(authErr);

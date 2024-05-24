@@ -456,6 +456,18 @@ export default class TapService {
   async getReferralClaimCount(userId: string) {
     return this.redisSrv.get(buildReferralClaimCountKey(userId));
   }
+
+  setHasClaimedOldPoints(userId: string) {
+    return this.redisSrv.set(buildHasClaimedOldPoints(userId), '1');
+  }
+
+  hasClaimedOldPoints(userId: string) {
+    return this.redisSrv.exist(buildHasClaimedOldPoints(userId));
+  }
+}
+
+function buildHasClaimedOldPoints(userId: string): string {
+  return `tapwar:tap:claimedOldPoints:${userId}`;
 }
 
 function buildReferralClaimCountKey(userId: string): string {

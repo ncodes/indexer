@@ -41,11 +41,11 @@ export default class MultiplierSpend extends BaseModel {
    * @param data The record info
    * @param txn Optional transaction object
    */
-  // static create(data: Partial<MultiplierSpend>, txn?: Transaction): Promise<MultiplierSpend> {
-  //   return new Promise(async (resolve, reject) => {
-  //     return this.query(txn).insertAndFetch(data).then(resolve).catch(reject);
-  //   });
-  // }
+  static create(data: Partial<MultiplierSpend>, txn?: Transaction): Promise<MultiplierSpend> {
+    return new Promise(async (resolve, reject) => {
+      return this.query(txn).insertAndFetch(data).then(resolve).catch(reject);
+    });
+  }
 
   /**
    * find a record
@@ -83,13 +83,13 @@ export default class MultiplierSpend extends BaseModel {
    * @param txn Optional transaction object
    * @returns
    */
-  // static getTotalSpend(userId: string, txn?: Transaction): Promise<string> {
-  //   return this.query(txn)
-  //     .where({ userId })
-  //     .sum('amount')
-  //     .first()
-  //     .then((res) => (res as any).sum || '0');
-  // }
+  static getTotalSpend(userId: string, txn?: Transaction): Promise<string> {
+    return this.query(txn)
+      .where({ userId })
+      .sum('amount')
+      .first()
+      .then((res) => (res as any).sum || '0');
+  }
 
   /**
    * Get the sum of taps for a user
@@ -97,17 +97,17 @@ export default class MultiplierSpend extends BaseModel {
    * @param txn Optional transaction object
    * @returns
    */
-  // static getTotalTaps(userId?: string, txn?: Transaction): Promise<string> {
-  //   return this.query(txn)
-  //     .where((q) => {
-  //       if (userId) {
-  //         q.where({ userId });
-  //       }
-  //     })
-  //     .sum('taps')
-  //     .first()
-  //     .then((res) => (res as any).sum || '0');
-  // }
+  static getTotalTaps(userId?: string, txn?: Transaction): Promise<string> {
+    return this.query(txn)
+      .where((q) => {
+        if (userId) {
+          q.where({ userId });
+        }
+      })
+      .sum('taps')
+      .first()
+      .then((res) => (res as any).sum || '0');
+  }
 
   /**
    * Get sum of spend for a user since the given period
@@ -116,17 +116,17 @@ export default class MultiplierSpend extends BaseModel {
    * @param txn
    * @returns
    */
-  // static getTotalSpendFrom(userId: string, period: number, txn?: Transaction): Promise<string> {
-  //   return this.query(txn)
-  //     .where({ userId })
-  //     .where('createdAt', '>=', moment().subtract(period, 's').toISOString())
-  //     .sum('amount')
-  //     .first()
-  //     .then((res) => (res as any).sum || '0');
-  // }
+  static getTotalSpendFrom(userId: string, period: number, txn?: Transaction): Promise<string> {
+    return this.query(txn)
+      .where({ userId })
+      .where('createdAt', '>=', moment().subtract(period, 's').toISOString())
+      .sum('amount')
+      .first()
+      .then((res) => (res as any).sum || '0');
+  }
 
   // Get the last spend of a user by user id
-  // static getLastSpend(userId: string, txn?: Transaction) {
-  //   return this.query(txn).where({ userId }).whereNotDeleted().orderBy('createdAt', 'desc').first();
-  // }
+  static getLastSpend(userId: string, txn?: Transaction) {
+    return this.query(txn).where({ userId }).whereNotDeleted().orderBy('createdAt', 'desc').first();
+  }
 }

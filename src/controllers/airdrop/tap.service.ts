@@ -330,17 +330,10 @@ export default class TapService {
     if (ignoreActivePlayerUpdate) return;
     const activePlayer = await this.redisSrv.get(buildActivePlayerKey(tap.userId));
     if (!activePlayer) {
+      await this.redisSrv.setEx(buildActivePlayerKey(tap.userId), '1', 60);
+
       const curActivePlayers = parseInt((await this.redisSrv.get(buildActivePlayersKey())) || '0');
       if (curActivePlayers === 0) {
-        await this.redisSrv.setEx(buildActivePlayersKey(), '1', 60);
-      } else {
-        await this.redisSrv.incrBy(buildActivePlayersKey(), 1);
-      }
-      await this.redisSrv.setEx(buildActivePlayerKey(tap.userId), '1', 60);
-    } else {
-      await this.redisSrv.setEx(buildActivePlayerKey(tap.userId), '1', 60);
-      const curActivePlayers = parseInt((await this.redisSrv.get(buildActivePlayersKey())) || '0');
-      if (curActivePlayers > 1) {
         await this.redisSrv.setEx(buildActivePlayersKey(), '1', 60);
       } else {
         await this.redisSrv.incrBy(buildActivePlayersKey(), 1);

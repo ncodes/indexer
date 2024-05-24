@@ -62,6 +62,26 @@ export class RedisService {
   }
 
   /**
+   * zAdd adds a member to a sorted set
+   * @param key The name of the sorted set
+   * @param score The score of the member
+   * @param member The member to add
+   */
+  async zAdd(key: string, score: number, member: string) {
+    return this.client.zadd(key, score, member);
+  }
+
+  /**
+   * zRevRangeByScore gets a range of members from a sorted set from highest to lowest
+   * @param key The name of the sorted set
+   * @param start The minimum score
+   * @param stop The maximum score
+   */
+  async zRevRangeByScore(key: string, start: number, stop: number) {
+    return this.client.zrevrangebyscore(key, start, stop);
+  }
+
+  /**
    * delete deletes a key
    * @param key The target key
    */

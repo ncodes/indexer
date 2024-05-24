@@ -331,13 +331,7 @@ export default class TapService {
     const activePlayer = await this.redisSrv.get(buildActivePlayerKey(tap.userId));
     if (!activePlayer) {
       await this.redisSrv.setEx(buildActivePlayerKey(tap.userId), '1', 60);
-
-      const curActivePlayers = parseInt((await this.redisSrv.get(buildActivePlayersKey())) || '0');
-      if (curActivePlayers === 0) {
-        await this.redisSrv.setEx(buildActivePlayersKey(), '1', 60);
-      } else {
-        await this.redisSrv.incrBy(buildActivePlayersKey(), 1);
-      }
+      await this.redisSrv.zAdd(buildActivePlayersKey(), moment().unix(), tap.userId);
     }
   }
 
@@ -345,7 +339,10 @@ export default class TapService {
    * Get the active players in the last minute
    */
   async getActivePlayersInLastMinute() {
-    return (await this.redisSrv.get(buildActivePlayersKey())) || '0';
+    const now = moment().unix();
+    const minAgo = moment().subtract(1, 'minute').unix();
+    const players = await this.redisSrv.zRevRangeByScore(buildActivePlayersKey(), now, minAgo);
+    return (players?.length || 0).toString();
   }
 
   /**

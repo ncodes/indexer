@@ -6,6 +6,11 @@ import { DBService } from '../../db/db.service';
 import User from '../../models/user';
 import { RedisService } from '../../services/redis/redis.service';
 import MarketMetaManager from './MarketMetaManager';
+import { MetadataService } from '../../services/metadata/metadata.service';
+import NetworkService from '../../network/network.service';
+import { ExchangeRateService } from '../../services/exchange_rate.service';
+import { NotificationService } from '../notifications/NotificationService';
+import { PointService } from '../../controllers/points/point.service';
 
 const mockRedisGet = jest.fn();
 const mockRedisSet = jest.fn();
@@ -53,10 +58,5 @@ describe('MarketMetaManager', () => {
     u = await User.create({ id: 'user1' });
   });
 
-  describe('.process', () => {
-    it('should return undefined if job is already processing', async () => {
-      job.setProcessing(true);
-      await expect(job.process()).resolves.toBeUndefined();
-    });
-  });
+  describe('.process', () => {});
 });

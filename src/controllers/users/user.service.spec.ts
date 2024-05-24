@@ -16,6 +16,8 @@ import { RefereeBonus } from '../airdrop/constants';
 import ConvosService from '../convos/convos.service';
 import { MarketService } from '../markets/market.service';
 import { UserService } from './user.service';
+import CacheService from '../../cacher/cache.service';
+import TapService from '../airdrop/tap.service';
 
 const mockTryToUsd = jest.fn();
 const MetadataServiceMock = jest.fn().mockImplementation(() => {
@@ -30,6 +32,16 @@ const mockCreateLink = jest
 const MockJointLinkService = jest.fn().mockImplementation(() => {
   return {
     createReferralLink: mockCreateLink,
+  };
+});
+
+const MockRedis = jest.fn().mockImplementation(() => {
+  return {
+    get: jest.fn(),
+    set: jest.fn(),
+    incrBy: jest.fn(),
+    sAdd: jest.fn(),
+    setEx: jest.fn(),
   };
 });
 
@@ -67,12 +79,14 @@ describe('UserService', () => {
         RedisService,
         ConvosService,
         JointLinkService,
+        CacheService,
+        TapService,
       ],
     })
       .overrideProvider(MetadataService)
       .useValue(new MetadataServiceMock())
       .overrideProvider(RedisService)
-      .useValue(new (jest.fn())())
+      .useValue(new MockRedis())
       .overrideProvider(JointLinkService)
       .useValue(new MockJointLinkService())
       .compile();
@@ -251,6 +265,9 @@ describe('UserService', () => {
     it(`should return true and set referrer when user is new`, async () => {
       let u = await User.create({ address: user });
       const referrer = await User.create({ address: '0xReferrer', refCode: '0xReferrerCode' });
+
+      const mockCreateTap = jest.spyOn(module.get(TapService), 'createTap').mockResolvedValue(undefined);
+
       const res = await service.enableReferrerOps(true, '0xReferrerCode', u);
       expect(res).toBeTruthy();
       u = await User.getById(u.id);
@@ -259,10 +276,12 @@ describe('UserService', () => {
       expect(mockCreateLink).toBeCalledWith(u.refCode);
 
       // Create referee bonus tap for the user
-      const taps = await Tap.query().where('userId', u.id);
-      expect(taps).toHaveLength(1);
-      expect(taps[0].bonus).toBeTruthy();
-      expect(taps[0].bonusValue).toEqual(RefereeBonus.toString());
+      expect(mockCreateTap).toBeCalledWith({
+        userId: u.id,
+        bonus: true,
+        bonusName: 'referee_bonus',
+        bonusValue: RefereeBonus.toString(),
+      });
     });
 
     it(`should return true and not set referrer when user is not new`, async () => {

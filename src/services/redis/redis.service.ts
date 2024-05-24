@@ -39,8 +39,7 @@ export class RedisService {
    * @param key The target key
    */
   async get(key: string): Promise<string> {
-    const res = await this.client.get(key);
-    return res;
+    return await this.client.get(key);
   }
 
   /**
@@ -53,12 +52,12 @@ export class RedisService {
   }
 
   /**
-   * setWithExpire sets a key that expires
+   * setEx sets a key that expires
    * @param key The target key
    * @param value The value stored with the key.
    * @param expireSec The number of second to keep to key around
    */
-  async setWithExpire(key: string, value: string, expireSec: number): Promise<void> {
+  async setEx(key: string, value: string, expireSec: number): Promise<void> {
     await this.client.setex(key, expireSec, value);
   }
 
@@ -89,11 +88,55 @@ export class RedisService {
   }
 
   /**
+   * lRange gets a range of values from a list
+   * @param key The name of the list
+   * @param start The start index
+   * @param end The end index
+   */
+  async lRange(key: string, start: number, end: number): Promise<string[]> {
+    return this.client.lrange(key, start, end);
+  }
+
+  /**
+   * incrBy increments a key by a value
+   * @param key The target key
+   * @param incr The value to increment by
+   */
+  async incrBy(key: string, incr: number | string): Promise<number> {
+    return this.client.incrby(key, incr);
+  }
+
+  /**
+   * lLen gets the length of a list
+   * @param key The name of the list
+   */
+  async lLen(key: string): Promise<number> {
+    return this.client.llen(key);
+  }
+
+  /**
    * lPop pops a value from the head of a list
    * @param key The name of the list
    */
   async lPop(key: string): Promise<string> {
     return this.client.lpop(key);
+  }
+
+  /**
+   * sAdd adds a value to a set
+   * @param key The name of the set
+   * @param value The value to add
+   */
+  async sAdd(key: string, value: string): Promise<number> {
+    return this.client.sadd(key, value);
+  }
+
+  /**
+   * sCard gets the cardinality of a set
+   * @param key The name of the set
+   */
+  async sCard(key: string): Promise<number> {
+    return this.client.scard(key);
   }
 
   /**

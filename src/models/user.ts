@@ -96,17 +96,19 @@ export default class User extends BaseModel {
   /**
    * create creates a user
    * @param data The transfer info
+   * @param cacheFunc Optional cache function
    */
-  static create(data: Partial<User>): Promise<User> {
-    return new Promise((resolve, reject) => {
-      return this.query().insert(data).then(resolve).catch(reject);
-    });
+  static async create(data: Partial<User>, cacheFunc?: (user: User) => void) {
+    const user = await this.query().insert(data);
+    if (cacheFunc) cacheFunc(user);
+    return user;
   }
 
   /**
    * getById finds a user by ID
    * @param id The user id
    * @
+   * @param relations
    */
   static getById(id: string, relations = 'notificationSettings') {
     return this.query().whereNotDeleted().withGraphFetched(relations).findById(id);
@@ -227,18 +229,27 @@ export default class User extends BaseModel {
    * updateById updates a user by ID
    * @param id the user id
    * @param udp the fields to be updated
+   * @param cacheFunc Optional cache function
    */
-  static updateById(id: string, udp: Partial<User>) {
-    return this.query().whereNotDeleted().patchAndFetchById(id, udp);
+  static async updateById(id: string, udp: Partial<User>, cacheFunc?: (user: User) => void) {
+    const upd = await this.query().whereNotDeleted().patchAndFetchById(id, udp);
+    if (cacheFunc) cacheFunc(upd);
+    return upd;
   }
 
   /**
    * updateByAddress updates a user by address
    * @param address the user address
-   * @param udp the fields to be updated
+   * @param update the fields to be updated
+   * @param cacheFunc Optional cache function
    */
-  static updateByAddress(address: string, udp: Partial<User>) {
-    return this.query().where('address', 'ILIKE', address).whereNotDeleted().patch(udp);
+  static async updateByAddress(address: string, update: Partial<User>, cacheFunc?: (user: User) => void) {
+    const upd = await this.query().where('address', 'ILIKE', address).whereNotDeleted().patch(update);
+    if (cacheFunc) {
+      const newUser = await this.getByAddress(address);
+      cacheFunc(newUser);
+    }
+    return upd;
   }
 
   /**
@@ -276,7 +287,7 @@ export default class User extends BaseModel {
       .limit(limit);
   }
 
-  // Get recent n referrees of a referrer
+  // Get recent n referees of a referrer
   static getRecentReferred(address: string, limit: number) {
     return this.query()
       .where('referrer', 'ilike', address)
@@ -287,23 +298,5 @@ export default class User extends BaseModel {
       .select('address', 'createdAt')
       .orderBy('createdAt', 'desc')
       .limit(limit);
-  }
-
-  /**
-   * Count users belonging to a side in the given battle
-   * @param battleId The battle ID
-   * @param side The side to count
-   * @returns
-   */
-  static async countBattleSide(battleId: string, side: 'droid' | 'bandit') {
-    return this.query()
-      .where('curBattleId', battleId)
-      .where('battleSide', side)
-      .whereNotDeleted()
-      .count('id')
-      .first()
-      .then((res: any) => {
-        return parseInt(res.count || '0');
-      });
   }
 }

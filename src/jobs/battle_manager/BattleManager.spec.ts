@@ -7,11 +7,12 @@ import { DBService } from '../../db/db.service';
 import Allocation from '../../models/allocations';
 import Battle from '../../models/battle';
 import BondSpend from '../../models/bond_spend';
-import Tap from '../../models/tap';
 import User from '../../models/user';
 import { powOf } from '../../network/common';
 import { RedisService } from '../../services/redis/redis.service';
 import BattleManager from './BattleManager';
+import TapService from '../../controllers/airdrop/tap.service';
+import CacheService from '../../cacher/cache.service';
 
 const mockRedisGet = jest.fn();
 const mockRedisSet = jest.fn();
@@ -41,7 +42,7 @@ describe('BattleManager', () => {
     await db.truncateTables();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ConfigService, BattleManager, RedisService],
+      providers: [ConfigService, BattleManager, RedisService, CacheService, TapService],
     })
       .overrideProvider(RedisService)
       .useClass(RedisServiceMock)
@@ -109,8 +110,12 @@ describe('BattleManager', () => {
     it('should create correct allocations when equal taps for both battle sides and equal bond spend for bond holders on both sides', async () => {
       const battle = await Battle.create({ allocation: '1000' });
 
-      await Tap.create({ battleId: battle.id, battleSide: 'droid' });
-      await Tap.create({ battleId: battle.id, battleSide: 'bandit' });
+      jest
+        .spyOn(app.get(TapService), 'getBattlePlayerCount')
+        .mockImplementation((_battleId: string, side: 'droid' | 'bandit'): Promise<number> => {
+          if (side === 'droid') return Promise.resolve(1);
+          return Promise.resolve(1);
+        });
 
       await BondSpend.create({
         userId: u.id,
@@ -144,16 +149,12 @@ describe('BattleManager', () => {
     it('should create correct allocations when one side has more taps and equal bond spend for bond holders on both sides', async () => {
       const battle = await Battle.create({ allocation: '1000' });
 
-      await Tap.create({ battleId: battle.id, battleSide: 'droid' });
-      await Tap.create({ battleId: battle.id, battleSide: 'droid' });
-      await Tap.create({ battleId: battle.id, battleSide: 'droid' });
-      await Tap.create({ battleId: battle.id, battleSide: 'droid' });
-      await Tap.create({ battleId: battle.id, battleSide: 'bandit' });
-      await Tap.create({ battleId: battle.id, battleSide: 'bandit' });
-      await Tap.create({ battleId: battle.id, battleSide: 'bandit' });
-      await Tap.create({ battleId: battle.id, battleSide: 'bandit' });
-      await Tap.create({ battleId: battle.id, battleSide: 'bandit' });
-      await Tap.create({ battleId: battle.id, battleSide: 'bandit' });
+      jest
+        .spyOn(app.get(TapService), 'getBattlePlayerCount')
+        .mockImplementation((_battleId: string, side: 'droid' | 'bandit'): Promise<number> => {
+          if (side === 'droid') return Promise.resolve(4);
+          return Promise.resolve(6);
+        });
 
       await BondSpend.create({
         userId: u.id,
@@ -187,16 +188,12 @@ describe('BattleManager', () => {
     it('should create correct allocations when one side has more taps and non-equal bond spend for bond holders on both sides', async () => {
       const battle = await Battle.create({ allocation: '1000' });
 
-      await Tap.create({ battleId: battle.id, battleSide: 'droid' });
-      await Tap.create({ battleId: battle.id, battleSide: 'droid' });
-      await Tap.create({ battleId: battle.id, battleSide: 'droid' });
-      await Tap.create({ battleId: battle.id, battleSide: 'droid' });
-      await Tap.create({ battleId: battle.id, battleSide: 'bandit' });
-      await Tap.create({ battleId: battle.id, battleSide: 'bandit' });
-      await Tap.create({ battleId: battle.id, battleSide: 'bandit' });
-      await Tap.create({ battleId: battle.id, battleSide: 'bandit' });
-      await Tap.create({ battleId: battle.id, battleSide: 'bandit' });
-      await Tap.create({ battleId: battle.id, battleSide: 'bandit' });
+      jest
+        .spyOn(app.get(TapService), 'getBattlePlayerCount')
+        .mockImplementation((_battleId: string, side: 'droid' | 'bandit'): Promise<number> => {
+          if (side === 'droid') return Promise.resolve(4);
+          return Promise.resolve(6);
+        });
 
       const now = moment();
 

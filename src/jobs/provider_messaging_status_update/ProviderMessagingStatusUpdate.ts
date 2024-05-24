@@ -4,6 +4,7 @@ import { Cron } from '@nestjs/schedule';
 import { Client } from '@xmtp/xmtp-js';
 import { Wallet } from 'ethers';
 import * as moment from 'moment';
+import CacheService from '../../cacher/cache.service';
 import Liquidity from '../../models/liquidity';
 import User from '../../models/user';
 import { Base } from '../base';
@@ -16,7 +17,7 @@ export default class ProviderMessagingStatusUpdate extends Base {
   private logger = new Logger(ProviderMessagingStatusUpdate.name);
   public xmtp: Client;
 
-  constructor(private cfgSrv: ConfigService) {
+  constructor(private cfgSrv: ConfigService, private cacheSrv: CacheService) {
     super();
     this.schedule();
   }
@@ -62,8 +63,12 @@ export default class ProviderMessagingStatusUpdate extends Base {
       messagingEnabledUpdatedAt: moment().toISOString(),
     });
 
-    await User.updateByAddress(provider, {
-      messagingEnabled: enabled,
-    });
+    await User.updateByAddress(
+      provider,
+      {
+        messagingEnabled: enabled,
+      },
+      this.cacheSrv.cacheUser.bind(this.cacheSrv),
+    );
   }
 }

@@ -4,7 +4,7 @@ import { Cron } from '@nestjs/schedule';
 import * as moment from 'moment';
 import Market from '../../models/market';
 import { Base } from '../base';
-import { MetadataService } from './../../services/metadata/metadata.service';
+import { MetadataService } from '../../services/metadata/metadata.service';
 
 /**
  * MarketMetaManager manages market meta data

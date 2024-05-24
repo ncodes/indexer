@@ -10,6 +10,8 @@ import User from '../../models/user';
 import { RedisService } from '../../services/redis/redis.service';
 import { makeSession } from '../auth/utils';
 import TapGateway from './tap.gateway';
+import CacheService from '../../cacher/cache.service';
+import TapService from './tap.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -58,7 +60,7 @@ describe('AirdropController', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [ConfigModule.forRoot({})],
       controllers: [],
-      providers: [ConfigService, RedisService, TapGateway],
+      providers: [ConfigService, RedisService, TapGateway, CacheService, TapService],
     })
       .overrideProvider(ConfigService)
       .useValue(new ConfigServiceMock())
@@ -84,41 +86,66 @@ describe('AirdropController', () => {
   });
 
   describe('.updateBattleState', () => {
-    it('should do nothing when no current battle', async () => {
-      mockRedisGet.mockResolvedValue(undefined);
-      await expect(cnt.updateBattleState(u)).resolves.toBeUndefined();
-      expect(mockRedisGet).toBeCalledTimes(1);
-      const user = await User.getById(u.id);
-      expect(user.curBattleId).toBeNull();
+    it('should do nothing when user has a battle side', async () => {
+      const mockGetCurBattle = jest.spyOn(app.get(TapService), 'getCurrentBattle');
+      await expect(cnt.updateBattleState(u.id, 'battle_123', 'droid')).resolves.toBeUndefined();
+      expect(mockGetCurBattle).toBeCalledTimes(0);
     });
 
-    it('should update users battle and assign a battle side', async () => {
-      mockRedisGet.mockResolvedValue('battle123');
+    describe('when user does not have a battle side', () => {
+      it('should update users battle and assign a battle side', async () => {
+        const mockGetCurBattle = jest.spyOn(app.get(TapService), 'getCurrentBattle').mockResolvedValue('battle_123');
 
-      await expect(cnt.updateBattleState(u)).resolves.toBeUndefined();
-      expect(mockRedisGet).toBeCalledTimes(1);
-      let user = await User.getById(u.id);
-      expect(user.curBattleId).toEqual('battle123');
-      expect(user.battleSide).toEqual('droid');
+        const mockGetBattlePlayerCount = jest
+          .spyOn(app.get(TapService), 'getBattlePlayerCount')
+          .mockImplementation((_battleId: string, _side: 'droid' | 'bandit'): Promise<number> => {
+            return Promise.resolve(0);
+          });
 
-      // user 2
-      await expect(cnt.updateBattleState(u2)).resolves.toBeUndefined();
-      user = await User.getById(u2.id);
-      expect(user.curBattleId).toEqual('battle123');
-      expect(user.battleSide).toEqual('bandit');
+        const mockIncrBattlePlayerCount = jest
+          .spyOn(app.get(TapService), 'incrBattlePlayerCount')
+          .mockResolvedValue(undefined);
+        const mockSetUserBattleSide = jest.spyOn(app.get(TapService), 'setUserBattleSide').mockResolvedValue(undefined);
 
-      // user 3
-      await expect(cnt.updateBattleState(u3)).resolves.toBeUndefined();
-      user = await User.getById(u3.id);
-      expect(user.curBattleId).toEqual('battle123');
-      expect(user.battleSide).toEqual('droid');
+        await expect(cnt.updateBattleState(u.id, 'battle_123', '')).resolves.toBeUndefined();
+        expect(mockGetCurBattle).toBeCalledTimes(1);
+        expect(mockGetBattlePlayerCount).toBeCalledTimes(2);
+        expect(mockIncrBattlePlayerCount).toBeCalledWith('battle_123', 'droid');
+        expect(mockSetUserBattleSide).toBeCalledWith(u.id, 'battle_123', 'droid');
 
-      // new battle
-      mockRedisGet.mockResolvedValue('battleXYZ');
-      await expect(cnt.updateBattleState(u)).resolves.toBeUndefined();
-      user = await User.getById(u.id);
-      expect(user.curBattleId).toEqual('battleXYZ');
-      expect(user.battleSide).toEqual('droid');
+        // user 2
+        mockGetBattlePlayerCount.mockImplementation((battleId: string, side: 'droid' | 'bandit'): Promise<number> => {
+          if (side === 'droid') return Promise.resolve(1);
+          return Promise.resolve(0);
+        });
+        mockGetCurBattle.mockClear();
+        mockGetBattlePlayerCount.mockClear();
+        mockIncrBattlePlayerCount.mockClear();
+        mockSetUserBattleSide.mockClear();
+
+        await expect(cnt.updateBattleState(u.id, 'battle_123', '')).resolves.toBeUndefined();
+        expect(mockGetCurBattle).toBeCalledTimes(1);
+        expect(mockGetBattlePlayerCount).toBeCalledTimes(2);
+        expect(mockIncrBattlePlayerCount).toBeCalledWith('battle_123', 'bandit');
+        expect(mockSetUserBattleSide).toBeCalledWith(u.id, 'battle_123', 'bandit');
+
+        // user 3
+        mockGetBattlePlayerCount.mockImplementation((battleId: string, side: 'droid' | 'bandit'): Promise<number> => {
+          if (side === 'droid') return Promise.resolve(1);
+          return Promise.resolve(1);
+        });
+
+        mockGetCurBattle.mockClear();
+        mockGetBattlePlayerCount.mockClear();
+        mockIncrBattlePlayerCount.mockClear();
+        mockSetUserBattleSide.mockClear();
+
+        await expect(cnt.updateBattleState(u.id, 'battle_123', '')).resolves.toBeUndefined();
+        expect(mockGetCurBattle).toBeCalledTimes(1);
+        expect(mockGetBattlePlayerCount).toBeCalledTimes(2);
+        expect(mockIncrBattlePlayerCount).toBeCalledWith('battle_123', 'droid');
+        expect(mockSetUserBattleSide).toBeCalledWith(u.id, 'battle_123', 'droid');
+      });
     });
   });
 });

@@ -7,10 +7,20 @@ import { DBService } from '../../db/db.service';
 import Liquidity from '../../models/liquidity';
 import User from '../../models/user';
 import ProviderMessagingStatusUpdate from './ProviderMessagingStatusUpdate';
+import CacheService from '../../cacher/cache.service';
+import { RedisService } from '../../services/redis/redis.service';
 
 const mockNotify = jest.fn();
 const MockNotifierService = jest.fn().mockImplementation(() => {
   return { notify: mockNotify };
+});
+
+const mockRedisGet = jest.fn();
+const RedisMock = jest.fn().mockImplementation(() => {
+  return {
+    set: jest.fn(),
+    get: mockRedisGet,
+  };
 });
 
 describe('OnRevealPeriodEnd', () => {
@@ -35,8 +45,11 @@ describe('OnRevealPeriodEnd', () => {
     await db.truncateTables();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ConfigService, ProviderMessagingStatusUpdate],
-    }).compile();
+      providers: [ConfigService, ProviderMessagingStatusUpdate, RedisService, CacheService],
+    })
+      .overrideProvider(RedisService)
+      .useValue(new RedisMock())
+      .compile();
 
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());

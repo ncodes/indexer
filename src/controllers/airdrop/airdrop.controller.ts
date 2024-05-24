@@ -16,11 +16,8 @@ import { plainToInstance } from 'class-transformer';
 import { isNegative, validate } from 'class-validator';
 import * as cronParser from 'cron-parser';
 import { Request } from 'express';
-import * as moment from 'moment';
-import { transaction } from 'objection';
 import { Client } from 'twitter-api-sdk';
-import { isLocal } from '../../common/common';
-import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
+import * as moment from 'moment';
 import { ok, throw400, throw401, throw404 } from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
@@ -41,8 +38,12 @@ import DiscordService from '../../services/discord.service';
 import { TwitterService } from '../../services/twitter.service';
 import { NFTAllocations } from '../points/data/nft_allocation';
 import { PointMap } from '../points/data/points';
-import { toDec } from './../../common/common';
+import { isLocal, toDec } from '../../common/common';
 import { ApplyPresale, CreateLuckyCodeDTO, CreateQuestDTO, RequestQuestVerify, StakeBondDTO, VoteQuest } from './dto';
+import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
+import { transaction } from 'objection';
+import CacheService from '../../cacher/cache.service';
+import TapService from './tap.service';
 
 function randomInteger(min, max) {
   return Math.floor(Math.random() * (max - min + 1) + min);
@@ -52,11 +53,18 @@ function randomInteger(min, max) {
 export class AirdropController {
   private logger = new Logger(AirdropController.name);
 
-  constructor(private cfgSrv: ConfigService, private twitterSrv: TwitterService, private discordSrv: DiscordService) {}
+  constructor(
+    private cfgSrv: ConfigService,
+    private twitterSrv: TwitterService,
+    private discordSrv: DiscordService,
+    private cacheSrv: CacheService,
+    private tapSrv: TapService,
+  ) {}
 
   /**
    * Link twitter user to a user account
-   * @param code The twitter user authorization code
+   * @param req The request object
+   * @param code The Twitter user authorization code
    * @returns
    */
   @UseGuards(BeAuthenticatedGuard)
@@ -79,12 +87,16 @@ export class AirdropController {
     }
 
     await transaction(User, Point, async (User, Point) => {
-      const user = await User.updateById(req.user.id, {
-        twitterUserId: userInfo.data.id,
-        twitterUsername: userInfo.data.username,
-        twitterToken: accessToken,
-        twitterLinkedAt: moment().toISOString(),
-      });
+      const user = await User.updateById(
+        req.user.id,
+        {
+          twitterUserId: userInfo.data.id,
+          twitterUsername: userInfo.data.username,
+          twitterToken: accessToken,
+          twitterLinkedAt: moment().toISOString(),
+        },
+        this.cacheSrv.cacheUser.bind(this.cacheSrv),
+      );
 
       // Grant point if not previously granted for this twitter user
       // and the user has not connected twitter before
@@ -113,7 +125,11 @@ export class AirdropController {
   @UseGuards(HasKeyGuard)
   @Put('/unlink-twitter')
   async unlinkTwitter(@Req() req: Request) {
-    await User.updateById(req.user.id, { twitterUsername: null, twitterToken: null, twitterUserId: null });
+    await User.updateById(
+      req.user.id,
+      { twitterUsername: null, twitterToken: null, twitterUserId: null },
+      this.cacheSrv.cacheUser.bind(this.cacheSrv),
+    );
     return ok().data({ ok: true }).build();
   }
 
@@ -150,12 +166,16 @@ export class AirdropController {
     const userJointGuildInfo = await this.discordSrv.getUserGuildInfo(accessToken, jointGuildId);
 
     await transaction(User, Point, async (User, Point) => {
-      const user = await User.updateById(req.user.id, {
-        discordId: discordUser.username,
-        discordToken: accessToken,
-        discordLinkedAt: moment().toISOString(),
-        isEarlyDiscordMember: userJointGuildInfo.roles.includes('1041308260600397884'),
-      });
+      const user = await User.updateById(
+        req.user.id,
+        {
+          discordId: discordUser.username,
+          discordToken: accessToken,
+          discordLinkedAt: moment().toISOString(),
+          isEarlyDiscordMember: userJointGuildInfo.roles.includes('1041308260600397884'),
+        },
+        this.cacheSrv.cacheUser.bind(this.cacheSrv),
+      );
 
       // Grant point if not previously granted for this discord user
       // and the user has not connected discord before
@@ -184,7 +204,11 @@ export class AirdropController {
   @UseGuards(HasKeyGuard)
   @Put('/unlink-discord')
   async unlinkDiscord(@Req() req: Request) {
-    await User.updateById(req.user.id, { discordId: null, discordToken: null });
+    await User.updateById(
+      req.user.id,
+      { discordId: null, discordToken: null },
+      this.cacheSrv.cacheUser.bind(this.cacheSrv),
+    );
     return ok().data({ ok: true }).build();
   }
 
@@ -558,11 +582,15 @@ export class AirdropController {
     const quest = await Quest.findByTypeAndName('private-sale', 'main');
     if (!quest) throw400('Quest not found');
 
-    await User.updateById(req.user.id, {
-      presale: true,
-      presaleCountry: body.country,
-      ipCountry: req.headers['cf-ipcountry'] as string,
-    });
+    await User.updateById(
+      req.user.id,
+      {
+        presale: true,
+        presaleCountry: body.country,
+        ipCountry: req.headers['cf-ipcountry'] as string,
+      },
+      this.cacheSrv.cacheUser.bind(this.cacheSrv),
+    );
 
     // Deduct engage point
     await Point.create({
@@ -639,11 +667,11 @@ export class AirdropController {
     const latestBattle = await Battle.getLatestBattle();
     if (!latestBattle) throw400('No battle found');
 
-    const totalBattleTaps = await Tap.getBattleTapCount(latestBattle.id);
-    const totalDroidSideTaps = await Tap.getBattleTapCount(latestBattle.id, 'droid');
-    const totalBanditSideTaps = await Tap.getBattleTapCount(latestBattle.id, 'bandit');
-    const numDroids = await User.countBattleSide(latestBattle.id, 'droid');
-    const numBandits = await User.countBattleSide(latestBattle.id, 'bandit');
+    const totalBattleTaps = await this.tapSrv.getBattleTapCount(latestBattle.id);
+    const totalDroidSideTaps = await this.tapSrv.getBattleTapCount(latestBattle.id, 'droid');
+    const totalBanditSideTaps = await this.tapSrv.getBattleTapCount(latestBattle.id, 'bandit');
+    const numDroids = await this.tapSrv.getBattlePlayerCount(latestBattle.id, 'droid');
+    const numBandits = await this.tapSrv.getBattlePlayerCount(latestBattle.id, 'bandit');
 
     const cron = cronParser.parseExpression(this.cfgSrv.get('app.tapoff.battleManagerCron'));
     const nextBattleTime = moment(cron.next().toDate()).toISOString();

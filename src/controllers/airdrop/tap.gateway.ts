@@ -12,15 +12,11 @@ import {
 import Decimal from 'decimal.js';
 import * as moment from 'moment';
 import { Server, Socket } from 'socket.io';
-import { isLocal, logIf } from '../../common/common';
 import { checkToken } from '../../guards/be_authenticated.guard';
-import MultiplierSpend from '../../models/multiplier_spend';
 import Swap from '../../models/swap';
 import Tap from '../../models/tap';
-import TapSpend from '../../models/tap_spend';
 import User from '../../models/user';
-import { RedisService } from '../../services/redis/redis.service';
-import { toDec } from './../../common/common';
+import { isLocal, toDec } from '../../common/common';
 import {
   FollowQuestBonus,
   InstantCoolWindow,
@@ -37,13 +33,15 @@ import {
   TapSpendLevelCost,
   TapSpendType,
 } from './constants';
+import TapService from './tap.service';
+import CacheService from '../../cacher/cache.service';
 
 @WebSocketGateway({ namespace: '/v1/taps', pingTimeout: 30000 })
 export default class TapGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
   logger = new Logger(TapGateway.name);
 
-  constructor(private cfg: ConfigService, private redisSrv: RedisService) {}
+  constructor(private cfg: ConfigService, private tapSrv: TapService, private cacheSrv: CacheService) {}
 
   /**
    * Called when a new connection is made.
@@ -55,7 +53,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
   handleConnection(socket: Socket) {
     if (isLocal()) return;
     setTimeout(async () => {
-      const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
+      const userId = await this.tapSrv.getClientUserId(socket.id);
       if (!userId) {
         socket.disconnect(true);
       }
@@ -67,7 +65,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    * @param socket The socket object
    */
   handleDisconnect(socket: Socket) {
-    this.redisSrv.delete(`tap:client:${socket.id}`);
+    void this.tapSrv.deleteClientUserId(socket.id);
   }
 
   /**
@@ -95,7 +93,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
           return;
         }
 
-        this.redisSrv.setWithExpire(`tap:client:${client.id}`, session.userId, 900);
+        await this.tapSrv.updateClientUserId(client.id, session.userId, 900);
       } catch (error) {
         client.disconnect(true);
         this.logger.error(authErr);
@@ -110,7 +108,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    */
   @SubscribeMessage('auth')
   async handleAuth(@ConnectedSocket() socket: Socket, @MessageBody('token') token: string) {
-    this._handleAuth(socket, token);
+    void this._handleAuth(socket, token);
     return { success: true };
   }
 
@@ -121,31 +119,25 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    */
   @SubscribeMessage('tap')
   async handleTap(@ConnectedSocket() socket: Socket) {
-    const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
+    const userId = await this.tapSrv.getClientUserId(socket.id);
     if (!userId) {
       return { success: false, message: 'Not authenticated' };
     }
 
-    const user = await User.getById(userId);
-
-    logIf('TAPLOG, logging', user.address);
+    const user = await this.cacheSrv.getUserByUserId(userId);
 
     // Get the user's tap overheat level. If it has not been set, create it
-    let overheatLvl = BigInt(0);
-    const overheatLvlStr = await this.redisSrv.get(`tap:overheat:${userId}`);
+    let overheatLvl: bigint;
+    const overheatLvlStr = await this.tapSrv.getUserTapOverheatLevel(userId);
     if (!overheatLvlStr) {
-      logIf('TAPLOG, set initial overheat level', user.address);
       overheatLvl = await this.getMaxOverheatLevel(userId);
-      await this.redisSrv.set(`tap:overheat:${userId}`, overheatLvl.toString());
+      await this.tapSrv.updateUserTapOverheatLevel(userId, overheatLvl);
     } else {
-      logIf('TAPLOG, set current overheat level', user.address);
       overheatLvl = BigInt(overheatLvlStr);
     }
 
     // Number of taps to create
-    logIf('TAPLOG, getting tap increment', user.address);
     let tapIncrement = await this.getTapIncrement(userId);
-    logIf('TAPLOG, done getting tap increment', user.address);
 
     // Check if user has overheated (overheatLvl <= 0), return error if true.
     // If the user has not overheated, but the tapCount is greater than the overheatLvl,
@@ -158,49 +150,47 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       }
     }
 
+    const curBattleId = await this.tapSrv.getCurrentBattle();
+    const userBattleSide = await this.tapSrv.getUserBattleSide(userId, curBattleId);
+
     // Create a tap record
-    logIf(`TAPLOG, creating taps count=${tapIncrement}`, user.address);
     const now = moment();
     for (let i = 0; i < tapIncrement; i++) {
-      Tap.create({
-        userId,
-        virtual: i > 0,
-        battleId: user.curBattleId,
-        battleSide: user.battleSide,
-      });
+      void this.tapSrv.createTap(
+        {
+          userId,
+          virtual: i > 0,
+          battleId: curBattleId,
+          battleSide: userBattleSide,
+        },
+        i > 0,
+      );
     }
 
     // Check if rapid fire is active
-    const lastRapidFire = await TapSpend.getLastSpend(userId, TapSpendType.RapidFire);
+    const lastRapidFire = await this.tapSrv.getLastTapSpend(userId, TapSpendType.RapidFire);
     const rapidFireOn = !lastRapidFire ? false : moment().diff(lastRapidFire.createdAt, 's') < RapidFireActiveTime;
 
     // Only update new overheat level if rapid fire is not active
-    let newOverheatLvl = 0n;
+    let newOverheatLvl: bigint;
     if (!rapidFireOn) {
       newOverheatLvl = overheatLvl - tapIncrement;
-      await this.redisSrv.set(`tap:overheat:${userId}`, newOverheatLvl.toString());
+      await this.tapSrv.updateUserTapOverheatLevel(userId, newOverheatLvl);
     } else {
       newOverheatLvl = overheatLvl;
     }
 
     // Update the last overheat updated time
-    logIf('TAPLOG, update last overheat time', user.address);
     const overheatLastUpdated = now.unix();
-    await this.redisSrv.set(`tap:overheat:lastUpdated:${userId}`, overheatLastUpdated.toString());
+    await this.tapSrv.updateUserLastOverheatUpdateTime(userId, overheatLastUpdated.toString());
 
     // Update last tap time
-    logIf('TAPLOG, update last tap time', user.address);
-    await this.redisSrv.set(`tap:lastUpdated:${userId}`, now.unix().toString());
+    await this.tapSrv.updateUserLastTapTime(userId, now.unix().toString());
 
     // Update battle status
-    logIf('TAPLOG, update battle state', user.address);
-    this.updateBattleState(user);
+    void this.updateBattleState(user.id, curBattleId, userBattleSide);
 
-    logIf('TAPLOG, get tap count', user.address);
-    const tapCount = await Tap.getTapCount(userId);
-
-    logIf('TAPLOG, return response', user.address);
-
+    const tapCount = await this.tapSrv.getTapCount(userId);
     return {
       success: true,
       overheatLvl: newOverheatLvl,
@@ -210,15 +200,20 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
     };
   }
 
-  async updateBattleState(user: User) {
-    const curBattleId = await this.redisSrv.get('tapoff:battle:current');
-    if (curBattleId && user.curBattleId != curBattleId) {
-      const countDroidSide = await User.countBattleSide(curBattleId, 'droid');
-      const countBanditSide = await User.countBattleSide(curBattleId, 'bandit');
-      await User.updateById(user.id, {
-        curBattleId,
-        battleSide: countDroidSide > countBanditSide ? 'bandit' : 'droid',
-      });
+  /**
+   * Update the user's battle side
+   * @param userId The user ID
+   * @param curBattleId The current battle ID
+   * @param userBattleSide The user's battle side
+   */
+  async updateBattleState(userId: string, curBattleId: string, userBattleSide: string) {
+    if (!userBattleSide) {
+      curBattleId = await this.tapSrv.getCurrentBattle();
+      const countDroidSide = await this.tapSrv.getBattlePlayerCount(curBattleId, 'droid');
+      const countBanditSide = await this.tapSrv.getBattlePlayerCount(curBattleId, 'bandit');
+      const battleSide = countDroidSide > countBanditSide ? 'bandit' : 'droid';
+      await this.tapSrv.incrBattlePlayerCount(curBattleId, battleSide);
+      await this.tapSrv.setUserBattleSide(userId, curBattleId, battleSide);
     }
   }
 
@@ -229,7 +224,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    */
   @SubscribeMessage('ping')
   async handleOverheatPing(@ConnectedSocket() socket: Socket) {
-    const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
+    const userId = await this.tapSrv.getClientUserId(socket.id);
     if (!userId) {
       return { success: false, message: 'Not authenticated' };
     }
@@ -237,27 +232,27 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
     const now = moment();
 
     // Make sure at least 1 second has passed since the last ping time
-    const lastPingAt = await this.redisSrv.get(`tap:ping:lastUpdated:${userId}`);
+    const lastPingAt = await this.tapSrv.getLastPingUpdateTime(userId);
     if (lastPingAt && now.unix() - parseInt(lastPingAt) < 1) {
       return { success: false, message: 'Ping cooldown required' };
     }
 
     // Record last ping time
-    await this.redisSrv.set(`tap:ping:lastUpdated:${userId}`, now.unix().toString());
+    await this.tapSrv.updatePingLastUpdatedTime(userId, now.unix().toString());
 
     // Get last overheat level and last tap time
-    let overheatLvl = await this.redisSrv.get(`tap:overheat:${userId}`);
-    const lastTapAt = await this.redisSrv.get(`tap:lastUpdated:${userId}`);
+    let overheatLvl = await this.tapSrv.getUserTapOverheatLevel(userId);
+    const lastTapAt = await this.tapSrv.getUserLastTapTime(userId);
 
     // User is a new player, set initial overheat level and
     // last overheat updated time and return
     if (!lastTapAt) {
       const newUserOverheatLevel = await this.getMaxOverheatLevel(userId);
-      await this.redisSrv.set(`tap:overheat:${userId}`, newUserOverheatLevel.toString());
-      await this.redisSrv.set(`tap:overheat:lastUpdated:${userId}`, now.unix().toString());
+      await this.tapSrv.updateUserTapOverheatLevel(userId, newUserOverheatLevel);
+      await this.tapSrv.updateUserLastOverheatUpdateTime(userId, now.unix().toString());
     } else {
       // Compute new overheat level
-      const lastOverheatUpdate = await this.redisSrv.get(`tap:overheat:lastUpdated:${userId}`);
+      const lastOverheatUpdate = await this.tapSrv.getUserLastOverheatUpdateTime(userId);
 
       // If the difference between the last updated time
       // and the last tap time is more than 1 second ago (cool down).
@@ -281,8 +276,8 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
 
         if (BigInt(overheatLvl) != newOverheatLvl) {
           overheatLvl = newOverheatLvl.toString();
-          await this.redisSrv.set(`tap:overheat:${userId}`, newOverheatLvl.toString());
-          await this.redisSrv.set(`tap:overheat:lastUpdated:${userId}`, now.unix().toString());
+          await this.tapSrv.updateUserTapOverheatLevel(userId, newOverheatLvl);
+          await this.tapSrv.updateUserLastOverheatUpdateTime(userId, now.unix().toString());
         }
       } else {
         return { success: false, message: 'Tap cooldown required' };
@@ -304,12 +299,12 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    */
   @SubscribeMessage('countTaps')
   async countTaps(@ConnectedSocket() socket: Socket) {
-    const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
+    const userId = await this.tapSrv.getClientUserId(socket.id);
     if (!userId) {
       return { success: false, message: 'Not authenticated' };
     }
 
-    const count = await Tap.getTapCount(userId);
+    const count = await this.tapSrv.getTapCount(userId);
 
     return { success: true, count };
   }
@@ -321,7 +316,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    */
   @SubscribeMessage('info')
   async handleInfo(@ConnectedSocket() socket: Socket) {
-    const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
+    const userId = await this.tapSrv.getClientUserId(socket.id);
     if (!userId) {
       return { success: false, message: 'Not authenticated' };
     }
@@ -330,20 +325,20 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
 
     // General info
     const maxOverheatLvl = await this.getMaxOverheatLevel(userId);
-    const overheatLvl = await this.redisSrv.get(`tap:overheat:${userId}`);
-    const tapCount = await Tap.getTapCount(userId);
-    const tapCountWithoutSpend = await Tap.getTapCount(userId, true);
+    const overheatLvl = await this.tapSrv.getUserTapOverheatLevel(userId);
+    const tapCount = await this.tapSrv.getTapCount(userId);
+    const tapCountWithoutSpend = await this.tapSrv.getTapCount(userId, true);
     const rank = this.getRank(toDec(tapCountWithoutSpend));
 
     // HyperFire boost info
-    const hyperFireLevel = (await TapSpend.countSpend(userId, TapSpendType.HyperFire)) + 1;
+    const hyperFireLevel = (await this.tapSrv.countTapSpends(userId, TapSpendType.HyperFire)) + 1;
     const hyperFireCost = TapSpendLevelCost[TapSpendType.HyperFire][hyperFireLevel]?.cost;
     const hyperFireIncrement = TapSpendLevelCost[TapSpendType.HyperFire][hyperFireLevel]?.increment;
     const hyperFireNextLevelCost = TapSpendLevelCost[TapSpendType.HyperFire][hyperFireLevel + 1]?.cost;
     const hyperFireNextLevelIncrement = TapSpendLevelCost[TapSpendType.HyperFire][hyperFireLevel + 1]?.increment;
 
     // AntiOverheat boost info
-    const antiOverheatLevel = (await TapSpend.countSpend(userId, TapSpendType.AntiOverheat)) + 1;
+    const antiOverheatLevel = (await this.tapSrv.countTapSpends(userId, TapSpendType.AntiOverheat)) + 1;
     const antiOverheatCost = TapSpendLevelCost[TapSpendType.AntiOverheat][antiOverheatLevel]?.cost;
     const antiOverheatIncrement = TapSpendLevelCost[TapSpendType.AntiOverheat][antiOverheatLevel + 1]?.increment;
     const antiOverheatNextLevelCost = TapSpendLevelCost[TapSpendType.AntiOverheat][antiOverheatLevel + 1]?.cost;
@@ -351,58 +346,63 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       TapSpendLevelCost[TapSpendType.AntiOverheat][antiOverheatLevel + 1]?.increment;
 
     // AntiOverheat boost info
-    const hyperCoolLevel = (await TapSpend.countSpend(userId, TapSpendType.HyperCool)) + 1;
+    const hyperCoolLevel = (await this.tapSrv.countTapSpends(userId, TapSpendType.HyperCool)) + 1;
     const hyperCoolCost = TapSpendLevelCost[TapSpendType.HyperCool][hyperCoolLevel]?.cost;
     const hyperCoolIncrement = TapSpendLevelCost[TapSpendType.HyperCool][hyperCoolLevel]?.increment;
     const hyperCoolNextLevelCost = TapSpendLevelCost[TapSpendType.HyperCool][hyperCoolLevel + 1]?.cost;
     const hyperCoolNextLevelIncrement = TapSpendLevelCost[TapSpendType.HyperCool][hyperCoolLevel + 1]?.increment;
 
     // RapidFire boost info
-    const numRapidFireUsed = await TapSpend.countSpendFrom(userId, TapSpendType.RapidFire, RapidFireWindow);
-    const lastRapidFire = await TapSpend.getLastSpend(userId, TapSpendType.RapidFire);
+    const numRapidFireUsed = await this.tapSrv.countTapSpendsFrom(userId, TapSpendType.RapidFire, RapidFireWindow);
+    const lastRapidFire = await this.tapSrv.getLastTapSpend(userId, TapSpendType.RapidFire);
     const rapidFireOn = !lastRapidFire ? false : moment().diff(lastRapidFire.createdAt, 's') < RapidFireActiveTime;
 
     // InstantCool boost info
-    const numInstantCoolUsed = await TapSpend.countSpendFrom(userId, TapSpendType.InstantCool, InstantCoolWindow);
-    const lastInstantCool = await TapSpend.getLastSpend(userId, TapSpendType.InstantCool);
+    const numInstantCoolUsed = await this.tapSrv.countTapSpendsFrom(
+      userId,
+      TapSpendType.InstantCool,
+      InstantCoolWindow,
+    );
+    const lastInstantCool = await this.tapSrv.getLastTapSpend(userId, TapSpendType.InstantCool);
 
     // Multiplier info
     const multiplierBal = await this.getMultiplierBalance(userId);
-    const curWindowSpend = await MultiplierSpend.getTotalSpendFrom(userId, MultiplierApplyWindow);
-    const lastMultiplierSpend = await MultiplierSpend.getLastSpend(userId);
+    const curWindowSpend = await this.tapSrv.getTotalMultiplierSpendFrom(userId, MultiplierApplyWindow);
+    const lastMultiplierSpend = await this.tapSrv.getLastMultiplierSpend(userId);
 
-    const markedTwitterFollow = (await this.redisSrv.get(`tap:quest:follow:x:${userId}`)) == '1';
-    const markedTelegramFollow = (await this.redisSrv.get(`tap:quest:follow:telegram:${userId}`)) == '1';
-    const markedWebVisitFollow = (await this.redisSrv.get(`tap:quest:follow:webvisit:${userId}`)) == '1';
+    const markedTwitterFollow = await this.tapSrv.hasMarkedUserFollowQuest(userId, 'x');
+    const markedTelegramFollow = await this.tapSrv.hasMarkedUserFollowQuest(userId, 'telegram');
+    const markedWebVisitFollow = await this.tapSrv.hasMarkedUserFollowQuest(userId, 'webvisit');
 
     const followQuestCompleted =
       markedTwitterFollow && markedTelegramFollow && markedWebVisitFollow && !!user.discordId;
-    const followQuestBonus = await Tap.getByBonusNameAndUser('follow_quests', userId);
+    const followQuestBonus = await this.tapSrv.hasBonusTap(userId, 'follow_quests');
     const followQuestReward = FollowQuestBonus.toString();
 
     const rankBonusClaimStatus = {
-      Cadet: !!(await Tap.getByBonusNameAndUser(`rank_bonus_Cadet`, userId)),
-      Ensign: !!(await Tap.getByBonusNameAndUser(`rank_bonus_Ensign`, userId)),
-      'Lieutenant Jnr': !!(await Tap.getByBonusNameAndUser(`rank_bonus_Lieutenant Jnr`, userId)),
-      Lieutenant: !!(await Tap.getByBonusNameAndUser(`rank_bonus_Lieutenant`, userId)),
-      Commander: !!(await Tap.getByBonusNameAndUser(`rank_bonus_Commander`, userId)),
-      Captain: !!(await Tap.getByBonusNameAndUser(`rank_bonus_Captain`, userId)),
-      Commodore: !!(await Tap.getByBonusNameAndUser(`rank_bonus_Commodore`, userId)),
-      'Rear Admiral': !!(await Tap.getByBonusNameAndUser(`rank_bonus_Rear Admiral`, userId)),
-      'Vice Admiral': !!(await Tap.getByBonusNameAndUser(`rank_bonus_Vice Admiral`, userId)),
-      Admiral: !!(await Tap.getByBonusNameAndUser(`rank_bonus_Admiral`, userId)),
+      Cadet: await this.tapSrv.hasBonusTap(userId, `rank_bonus_Cadet`),
+      Ensign: await this.tapSrv.hasBonusTap(userId, `rank_bonus_Ensign`),
+      'Lieutenant Jnr': await this.tapSrv.hasBonusTap(userId, `rank_bonus_Lieutenant Jnr`),
+      Lieutenant: await this.tapSrv.hasBonusTap(userId, `rank_bonus_Lieutenant`),
+      Commander: await this.tapSrv.hasBonusTap(userId, `rank_bonus_Commander`),
+      Captain: await this.tapSrv.hasBonusTap(userId, `rank_bonus_Captain`),
+      Commodore: await this.tapSrv.hasBonusTap(userId, `rank_bonus_Commodore`),
+      'Rear Admiral': await this.tapSrv.hasBonusTap(userId, `rank_bonus_Rear Admiral`),
+      'Vice Admiral': await this.tapSrv.hasBonusTap(userId, `rank_bonus_Vice Admiral`),
+      Admiral: await this.tapSrv.hasBonusTap(userId, `rank_bonus_Admiral`),
     };
 
-    const totalClaims = await this.redisSrv.get(`tap:referral:claims:${userId}`);
+    const totalClaims = await this.tapSrv.getReferralClaimCount(userId);
     const numReferred = await User.countReferred(user.address);
     const claimableReferrals = numReferred - parseInt(totalClaims || '0');
 
+    const startOfDay = moment().startOf('day').toISOString();
     const gameStats = {
-      totalBalance: await Tap.getTapCount(),
-      totalShots: await Tap.count(),
-      totalPlayers: await Tap.countTotalUniqueUsers(),
-      totalPlayersLast24h: await Tap.countUniqueUsersFrom(86400),
-      totalPlayersLast1min: await Tap.countUniqueUsersFrom(60),
+      totalBalance: await this.tapSrv.getTapCount(),
+      totalShots: await this.tapSrv.getTapCount(undefined, false, true),
+      totalPlayers: (await this.tapSrv.getTotalUniquePlayers()).toString(),
+      totalPlayersLast24h: (await this.tapSrv.getTotalUniquePlayersForDay(startOfDay)).toString(),
+      totalPlayersLast1min: await this.tapSrv.getActivePlayersInLastMinute(),
     };
 
     return {
@@ -477,13 +477,13 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    */
   @SubscribeMessage('buyHyperFire')
   async handleBuyHyperFire(@ConnectedSocket() socket: Socket) {
-    const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
+    const userId = await this.tapSrv.getClientUserId(socket.id);
     if (!userId) {
       return { success: false, message: 'Not authenticated' };
     }
 
-    const currentLevel = (await TapSpend.countSpend(userId, TapSpendType.HyperFire)) + 1;
-    const curentTapCount = await Tap.getTapCount(userId);
+    const currentLevel = (await this.tapSrv.countTapSpends(userId, TapSpendType.HyperFire)) + 1;
+    const curentTapCount = await this.tapSrv.getTapCount(userId);
     const nextLevelCost = TapSpendLevelCost[TapSpendType.HyperFire][currentLevel + 1]?.cost;
     if (!nextLevelCost) {
       return { success: false, message: 'Maximum level reached' };
@@ -493,7 +493,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       return { success: false, message: 'Insufficient taps' };
     }
 
-    await TapSpend.create({
+    await this.tapSrv.createTapSpend({
       userId,
       type: TapSpendType.HyperFire,
       amount: nextLevelCost,
@@ -512,18 +512,18 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    */
   @SubscribeMessage('applyRapidFire')
   async handleApplyRapidFire(@ConnectedSocket() socket: Socket) {
-    const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
+    const userId = await this.tapSrv.getClientUserId(socket.id);
     if (!userId) {
       return { success: false, message: 'Not authenticated' };
     }
 
     // Count number of rapid fire spends within the last 12 hours
-    const numRapidFireUsed = await TapSpend.countSpendFrom(userId, TapSpendType.RapidFire, RapidFireWindow);
+    const numRapidFireUsed = await this.tapSrv.countTapSpendsFrom(userId, TapSpendType.RapidFire, RapidFireWindow);
     if (numRapidFireUsed >= MaxRapidFirePerWindow) {
       return { success: false, message: 'Maximum reached' };
     }
 
-    const rapidFireSpend = await TapSpend.create({
+    const rapidFireSpend = await this.tapSrv.createTapSpend({
       userId,
       type: TapSpendType.RapidFire,
       amount: '0',
@@ -540,23 +540,27 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
   }
 
   /**
-   * Handlle InstantCool boost request
+   * Handle InstantCool boost request
    * @param socket The socket object
    */
   @SubscribeMessage('applyInstantCool')
   async handleApplyInstantCool(@ConnectedSocket() socket: Socket) {
-    const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
+    const userId = await this.tapSrv.getClientUserId(socket.id);
     if (!userId) {
       return { success: false, message: 'Not authenticated' };
     }
 
     // Count number of instant cool spends within the last 12 hours
-    const numInstantCoolUsed = await TapSpend.countSpendFrom(userId, TapSpendType.InstantCool, InstantCoolWindow);
+    const numInstantCoolUsed = await this.tapSrv.countTapSpendsFrom(
+      userId,
+      TapSpendType.InstantCool,
+      InstantCoolWindow,
+    );
     if (numInstantCoolUsed >= MaxInstantCoolPerWindow) {
       return { success: false, message: 'Maximum reached' };
     }
 
-    const instantCoolSpend = await TapSpend.create({
+    const instantCoolSpend = await this.tapSrv.createTapSpend({
       userId,
       type: TapSpendType.InstantCool,
       amount: '0',
@@ -564,8 +568,8 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
 
     // Update overheat level to max
     const newOverheatLvl = await this.getMaxOverheatLevel(userId);
-    await this.redisSrv.set(`tap:overheat:${userId}`, newOverheatLvl.toString());
-    await this.redisSrv.set(`tap:overheat:lastUpdated:${userId}`, moment().unix().toString());
+    await this.tapSrv.updateUserTapOverheatLevel(userId, newOverheatLvl);
+    await this.tapSrv.updateUserLastOverheatUpdateTime(userId, moment().unix().toString());
 
     return {
       success: true,
@@ -585,7 +589,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    */
   @SubscribeMessage('applyMultiplier')
   async handleApplyMultiplier(@ConnectedSocket() socket: Socket, @MessageBody('amount') amount: string) {
-    const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
+    const userId = await this.tapSrv.getClientUserId(socket.id);
     if (!userId) {
       return { success: false, message: 'Not authenticated' };
     }
@@ -604,14 +608,14 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
     }
 
     // Make sure the spend limit hasn't been reached
-    const curWindowSpend = await MultiplierSpend.getTotalSpendFrom(userId, MultiplierApplyWindow);
+    const curWindowSpend = await this.tapSrv.getTotalMultiplierSpendFrom(userId, MultiplierApplyWindow);
     if (toDec(curWindowSpend).gte(MultiplierApplyMaxPerWindow)) {
       return { success: false, message: 'Spend limit reached' };
     }
 
     // Create a multiplier spend record
-    const curTaps = await Tap.getTapCount(userId);
-    await MultiplierSpend.create({
+    const curTaps = await this.tapSrv.getTapCount(userId);
+    await this.tapSrv.createMultiplierSpend({
       userId,
       amount,
       taps: toDec(curTaps).mul(amount).sub(curTaps).toFixed(),
@@ -630,13 +634,13 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    */
   @SubscribeMessage('buyAntiOverheat')
   async handleBuyAntiOverheat(@ConnectedSocket() socket: Socket) {
-    const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
+    const userId = await this.tapSrv.getClientUserId(socket.id);
     if (!userId) {
       return { success: false, message: 'Not authenticated' };
     }
 
-    const curentTapCount = await Tap.getTapCount(userId);
-    const currentLevel = (await TapSpend.countSpend(userId, TapSpendType.AntiOverheat)) + 1;
+    const curentTapCount = await this.tapSrv.getTapCount(userId);
+    const currentLevel = (await this.tapSrv.countTapSpends(userId, TapSpendType.AntiOverheat)) + 1;
     const nextLevelCost = TapSpendLevelCost[TapSpendType.AntiOverheat][currentLevel + 1]?.cost;
     if (!nextLevelCost) {
       return { success: false, message: 'Maximum level reached' };
@@ -646,7 +650,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       return { success: false, message: 'Insufficient taps' };
     }
 
-    await TapSpend.create({
+    await this.tapSrv.createTapSpend({
       userId,
       type: TapSpendType.AntiOverheat,
       amount: nextLevelCost,
@@ -656,8 +660,8 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
 
     // Reset the overheat level to the new level
     const newMaxOverheatLvl = await this.getMaxOverheatLevel(userId);
-    await this.redisSrv.set(`tap:overheat:${userId}`, newMaxOverheatLvl.toString());
-    await this.redisSrv.set(`tap:overheat:lastUpdated:${userId}`, moment().unix().toString());
+    await this.tapSrv.updateUserTapOverheatLevel(userId, newMaxOverheatLvl);
+    await this.tapSrv.updateUserLastOverheatUpdateTime(userId, moment().unix().toString());
 
     return {
       success: true,
@@ -672,13 +676,13 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    */
   @SubscribeMessage('buyHyperCool')
   async handleBuyHyperCool(@ConnectedSocket() socket: Socket) {
-    const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
+    const userId = await this.tapSrv.getClientUserId(socket.id);
     if (!userId) {
       return { success: false, message: 'Not authenticated' };
     }
 
-    const curentTapCount = await Tap.getTapCount(userId);
-    const currentLevel = (await TapSpend.countSpend(userId, TapSpendType.HyperCool)) + 1;
+    const curentTapCount = await this.tapSrv.getTapCount(userId);
+    const currentLevel = (await this.tapSrv.countTapSpends(userId, TapSpendType.HyperCool)) + 1;
     const nextLevelCost = TapSpendLevelCost[TapSpendType.HyperCool][currentLevel + 1]?.cost;
     if (!nextLevelCost) {
       return { success: false, message: 'Maximum level reached' };
@@ -688,7 +692,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       return { success: false, message: 'Insufficient taps' };
     }
 
-    await TapSpend.create({
+    await this.tapSrv.createTapSpend({
       userId,
       type: TapSpendType.HyperCool,
       amount: nextLevelCost,
@@ -705,7 +709,10 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
 
   /**
    * Handle to mark 'follow' quest
-   * @param socket
+   * @param socket The socket object
+   * @param x The x follow
+   * @param telegram The telegram follow
+   * @param webvisit The web visit
    * @returns
    */
   @SubscribeMessage('markFollows')
@@ -715,21 +722,21 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
     @MessageBody('telegram') telegram: boolean,
     @MessageBody('webvisit') webvisit: boolean,
   ) {
-    const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
+    const userId = await this.tapSrv.getClientUserId(socket.id);
     if (!userId) {
       return { success: false, message: 'Not authenticated' };
     }
 
     if (x) {
-      this.redisSrv.set(`tap:quest:follow:x:${userId}`, '1');
+      void this.tapSrv.markUserfollowQuest(userId, 'x');
     }
 
     if (telegram) {
-      this.redisSrv.set(`tap:quest:follow:telegram:${userId}`, '1');
+      void this.tapSrv.markUserfollowQuest(userId, 'telegram');
     }
 
     if (webvisit) {
-      this.redisSrv.set(`tap:quest:follow:webvisit:${userId}`, '1');
+      void this.tapSrv.markUserfollowQuest(userId, 'webvisit');
     }
 
     return {
@@ -745,28 +752,28 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    */
   @SubscribeMessage('claimQuestsReward')
   async handleClaimQuestsReward(@ConnectedSocket() socket: Socket) {
-    const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
+    const userId = await this.tapSrv.getClientUserId(socket.id);
     if (!userId) {
       return { success: false, message: 'Not authenticated' };
     }
 
     const user = await User.getById(userId);
 
-    const markedTwitterFollow = (await this.redisSrv.get(`tap:quest:follow:x:${userId}`)) == '1';
-    const markedTelegramFollow = (await this.redisSrv.get(`tap:quest:follow:telegram:${userId}`)) == '1';
-    const markedWebVisitFollow = (await this.redisSrv.get(`tap:quest:follow:webvisit:${userId}`)) == '1';
+    const markedTwitterFollow = await this.tapSrv.hasMarkedUserFollowQuest(userId, 'x');
+    const markedTelegramFollow = await this.tapSrv.hasMarkedUserFollowQuest(userId, 'telegram');
+    const markedWebVisitFollow = await this.tapSrv.hasMarkedUserFollowQuest(userId, 'webvisit');
 
     if (!markedTwitterFollow || !markedTelegramFollow || !markedWebVisitFollow || !user.discordId) {
       return { success: false, message: 'Quests not completed' };
     }
 
-    const existingBonus = await Tap.getByBonusNameAndUser('follow_quests', userId);
+    const existingBonus = await this.tapSrv.hasBonusTap(userId, 'follow_quests');
     if (existingBonus) {
       return { success: true, message: 'Quests reward already claimed' };
     }
 
     const reward = FollowQuestBonus.toString();
-    await Tap.create({
+    await this.tapSrv.createTap({
       userId,
       bonus: true,
       bonusValue: reward,
@@ -789,24 +796,24 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    */
   @SubscribeMessage('claimRankBonus')
   async handleClaimRankBonus(@ConnectedSocket() socket: Socket, @MessageBody('rank') rank: string) {
-    const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
+    const userId = await this.tapSrv.getClientUserId(socket.id);
     if (!userId) {
       return { success: false, message: 'Not authenticated' };
     }
 
-    const existingBonus = await Tap.getByBonusNameAndUser(`rank_bonus_${rank}`, userId);
+    const existingBonus = await this.tapSrv.hasBonusTap(userId, `rank_bonus_${rank}`);
     if (existingBonus) {
       return { success: true, message: 'Rank bonus already claimed' };
     }
 
-    const taps = toDec(await Tap.getTapCount(userId));
+    const taps = toDec(await this.tapSrv.getTapCount(userId));
     if (taps.lt(RankInfo[rank].taps)) {
       return { success: false, message: 'Insufficient taps' };
     }
 
     const user = await User.getById(userId);
 
-    await Tap.create({
+    await this.tapSrv.createTap({
       userId,
       bonus: true,
       bonusValue: RankInfo[rank].reward,
@@ -829,7 +836,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    */
   @SubscribeMessage('claimReferralBonus')
   async handleClaimReferralBonus(@ConnectedSocket() socket: Socket, @MessageBody('count') count: number) {
-    const userId = await this.redisSrv.get(`tap:client:${socket.id}`);
+    const userId = await this.tapSrv.getClientUserId(socket.id);
     if (!userId) {
       return { success: false, message: 'Not authenticated' };
     }
@@ -840,7 +847,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
     }
 
     // Total referred user claims
-    let totalClaims = await this.redisSrv.get(`tap:referral:claims:${userId}`);
+    let totalClaims = await this.tapSrv.getReferralClaimCount(userId);
     if (!totalClaims) {
       totalClaims = '0';
     }
@@ -854,10 +861,10 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
     }
 
     // Mark the claim
-    await this.redisSrv.set(`tap:referral:claims:${userId}`, (parseInt(totalClaims) + count).toString());
+    await this.tapSrv.setReferralClaimCount(userId, parseInt(totalClaims) + count);
 
     // Create the bonus record
-    await Tap.create({
+    await this.tapSrv.createTap({
       userId,
       bonus: true,
       bonusValue: refInfo.reward.toString(),
@@ -889,7 +896,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
 
     return toDec(totalMultipliers)
       .div(1e18)
-      .sub(await MultiplierSpend.getTotalSpend(userId))
+      .sub(await this.tapSrv.getTotalMultiplierSpend(userId))
       .toFixed();
   }
 
@@ -912,7 +919,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    */
   async getTapIncrement(userId: string) {
     const baseLevelIncr = BigInt(TapSpendLevelCost[TapSpendType.HyperFire][1]?.increment);
-    const curLevel = (await TapSpend.countSpend(userId, TapSpendType.HyperFire)) + 1;
+    const curLevel = (await this.tapSrv.countTapSpends(userId, TapSpendType.HyperFire)) + 1;
     const curLevelIncr = BigInt(TapSpendLevelCost[TapSpendType.HyperFire][curLevel]?.increment);
 
     let incr = baseLevelIncr;
@@ -921,7 +928,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
     if (curLevel > 1) incr += curLevelIncr;
 
     // Apply rapid fire increment
-    const lastRapidFire = await TapSpend.getLastSpend(userId, TapSpendType.RapidFire);
+    const lastRapidFire = await this.tapSrv.getLastTapSpend(userId, TapSpendType.RapidFire);
     const rapidFireOn = !lastRapidFire ? false : moment().diff(lastRapidFire.createdAt, 's') < RapidFireActiveTime;
     if (rapidFireOn) incr *= 5n;
 
@@ -935,7 +942,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    */
   async getMaxOverheatLevel(userId: string) {
     const baseLevelIncr = BigInt(TapSpendLevelCost[TapSpendType.AntiOverheat][1]?.increment);
-    const curLevel = (await TapSpend.countSpend(userId, TapSpendType.AntiOverheat)) + 1;
+    const curLevel = (await this.tapSrv.countTapSpends(userId, TapSpendType.AntiOverheat)) + 1;
     const curLevelIncr = BigInt(TapSpendLevelCost[TapSpendType.AntiOverheat][curLevel]?.increment);
     if (curLevel > 1) return baseLevelIncr + curLevelIncr;
     return baseLevelIncr;
@@ -948,7 +955,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    */
   async getCoolingIncrement(userId: string) {
     const baseLevelIncr = BigInt(TapSpendLevelCost[TapSpendType.HyperCool][1]?.increment);
-    const curLevel = (await TapSpend.countSpend(userId, TapSpendType.HyperCool)) + 1;
+    const curLevel = (await this.tapSrv.countTapSpends(userId, TapSpendType.HyperCool)) + 1;
     const curLevelIncr = BigInt(TapSpendLevelCost[TapSpendType.HyperCool][curLevel]?.increment);
     if (curLevel > 1) return baseLevelIncr + curLevelIncr;
     return Number(baseLevelIncr);

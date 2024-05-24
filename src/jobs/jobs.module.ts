@@ -17,6 +17,8 @@ import MarketMetaManager from './market_meta_manager/MarketMetaManager';
 import MentionedTweetFinder from './mentioned_tweet_finder/MentionedTweetFinder';
 import { NotificationModule } from './notifications/NotificationModule';
 import ProviderMessagingStatusUpdate from './provider_messaging_status_update/ProviderMessagingStatusUpdate';
+import TapService from '../controllers/airdrop/tap.service';
+import CacheService from '../cacher/cache.service';
 
 const providers: any[] = [];
 const imports = [
@@ -45,7 +47,7 @@ if (['1', 'true'].includes(process.env.ENABLE_MENTIONED_TWEET_FINDER)) {
 }
 
 if (['1', 'true'].includes(process.env.ENABLE_BATTLE_MANAGER)) {
-  providers.push(RedisService, BattleManager);
+  providers.push(RedisService, CacheService, TapService, BattleManager);
 }
 
 if (['1', 'true'].includes(process.env.ENABLE_MARKET_META_MANAGER)) {

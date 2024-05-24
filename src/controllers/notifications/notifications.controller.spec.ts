@@ -33,11 +33,11 @@ const NotifierServiceMock = jest.fn().mockImplementation(() => {
 });
 
 const mockExist = jest.fn();
-const mockSetWithExpire = jest.fn();
+const mockSetEx = jest.fn();
 const RedisServiceMock = jest.fn().mockImplementation(() => {
   return {
     exist: mockExist,
-    setWithExpire: mockSetWithExpire,
+    setEx: mockSetEx,
   };
 });
 

@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { transaction } from 'objection';
-import { isEqualStr, isLocal, logIf, randStr, toDec } from '../../common/common';
+import CacheService from '../../cacher/cache.service';
 import Allocation from '../../models/allocations';
 import BadgeGrant from '../../models/badge_grant';
 import NFTOwner from '../../models/nft_owner';
@@ -16,6 +16,8 @@ import { RefereeBonus } from '../airdrop/constants';
 import ConvosService from '../convos/convos.service';
 import { NFTAllocations } from '../points/data/nft_allocation';
 import { DeviceType } from './dto';
+import TapService from '../airdrop/tap.service';
+import { isEqualStr, isLocal, randStr, toDec } from '../../common/common';
 
 @Injectable()
 export class UserService {
@@ -26,6 +28,8 @@ export class UserService {
     private jntLinkSrv: JointLinkService,
     private cfgSrv: ConfigService,
     private airdropSrv: AirdropService,
+    private cacheSrv: CacheService,
+    private tapSrv: TapService,
   ) {}
 
   /**
@@ -36,8 +40,6 @@ export class UserService {
    */
   async extendUser(user: User, network?: string) {
     try {
-      logIf('GETUSERLOG, counting swap', user?.address);
-
       const totalSwaps = await Swap.countByStatus({
         network,
         marketAddress: undefined,
@@ -50,10 +52,8 @@ export class UserService {
       });
       user.totalSwaps = parseInt(totalSwaps);
 
-      logIf('GETUSERLOG, compute completion rate', user?.address);
       user.completionRate = await Swap.getCompletionRate(network, undefined, undefined, user.address);
 
-      logIf('GETUSERLOG, search badge', user?.address);
       const badges = await BadgeGrant.search(network, undefined, undefined, user.address);
       user.badges = (badges as BadgeGrant[]).map((b) => {
         const arr = [b.badge];
@@ -61,7 +61,6 @@ export class UserService {
         return arr.join('/');
       });
 
-      logIf('GETUSERLOG, compute swap volume', user?.address);
       user.volume = await Swap.getVolume(network, undefined, undefined, undefined, user.address);
       user.volumeUsd = toDec(
         await Swap.getVolume(
@@ -79,7 +78,6 @@ export class UserService {
         .toDP(0)
         .toNumber();
 
-      logIf('GETUSERLOG, compute recent swap', user?.address);
       const lastSwap = await Swap.getRecentSwap(network, user.address, undefined);
       user.lastActiveAt = undefined;
       if (lastSwap) {
@@ -101,17 +99,14 @@ export class UserService {
         user.notificationSettings = defaultNotificationSettings;
       }
 
-      logIf('GETUSERLOG, compute unclaimed allocation', user?.address);
       user.totalUnclaimedAlloc = await Allocation.getTotalUnclaimed(user.address, user.id);
 
       // Points allocation information
-      logIf('GETUSERLOG, compute total points by address', user?.address);
       user.points = parseInt(await Point.getTotalPointsByAddress(user.address));
       user.pointsAllocs = 0; // TODO: use proper calculation
       user.pointsAllocsClaimed = !!(await Allocation.getByName(`points:${user.address}`));
 
       // NFT allocation information
-      logIf('GETUSERLOG, compute NFT ownership alloc', user?.address);
       const nftsOwned = await NFTOwner.findByAddress(user.address);
       user.nft = { count: nftsOwned.length, totalAlloc: 0, claimed: false };
       if (isLocal()) {
@@ -119,12 +114,10 @@ export class UserService {
           user.nft.totalAlloc = (user.nft.totalAlloc ?? 0) + NFTAllocations[n.tokenId.toString()];
         }
       }
-      logIf('GETUSERLOG, check nft alloc claim', user?.address);
       user.nft.claimed = !!(await Allocation.getByName(`droidpd:${user.address}`));
 
       // Early Discord member allocation information
       user.earlyDiscordMemberAlloc = user.isEarlyDiscordMember ? this.cfgSrv.get('app.discord.earlyMemberAlloc') : '0';
-      logIf('GETUSERLOG, check early member alloc claim', user?.address);
       user.earlyDiscordMemberClaimed = !!(await Allocation.getByName(`early_member:${user.address}`));
     } catch (e) {
       return Promise.reject(e);
@@ -142,7 +135,7 @@ export class UserService {
 
     if (!user.deviceTokenEmail) {
       await this.chatNotifSrv.registerInstallation(user.id, 'email', token);
-      await User.updateById(user.id, { deviceTokenEmail: token });
+      await User.updateById(user.id, { deviceTokenEmail: token }, this.cacheSrv.cacheUser.bind(this.cacheSrv));
       user.deviceTokenEmail = token;
     }
 
@@ -160,7 +153,7 @@ export class UserService {
     await this.chatNotifSrv.unregisterInstallation(user.id);
 
     if (deviceType === 'email') {
-      await User.updateById(user.id, { deviceTokenEmail: null });
+      await User.updateById(user.id, { deviceTokenEmail: null }, this.cacheSrv.cacheUser.bind(this.cacheSrv));
     } else {
       throw new Error(`Unknown device type ${deviceType}`);
     }
@@ -179,10 +172,14 @@ export class UserService {
       if (user.refCode) return false;
 
       const referrer = referrerRefCode ? await User.getByRefCode(referrerRefCode) : undefined;
-      const upd = await User.updateById(user.id, {
-        refCode: randStr(5).toLowerCase(),
-        referrer: isNewUser && referrer ? referrer.address : null,
-      });
+      const upd = await User.updateById(
+        user.id,
+        {
+          refCode: randStr(5).toLowerCase(),
+          referrer: isNewUser && referrer ? referrer.address : null,
+        },
+        this.cacheSrv.cacheUser.bind(this.cacheSrv),
+      );
 
       user.refCode = upd.refCode;
       user.referrer = upd.referrer;
@@ -194,7 +191,7 @@ export class UserService {
 
       // Grant enlisting TAPs to the referred user
       if (isNewUser && referrer) {
-        await Tap.create({
+        await this.tapSrv.createTap({
           userId: user.id,
           bonus: true,
           bonusName: 'referee_bonus',

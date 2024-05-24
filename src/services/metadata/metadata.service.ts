@@ -75,7 +75,7 @@ export class MetadataService {
     if (!info) return Promise.reject(ErrTokenNotFound);
 
     // Cache the logo URL for 7 days
-    await this.redisSrv.setWithExpire(`token_logo_${symbolOrNetwork}_${contract}`, info.logoURI, 60 * 60 * 24 * 7);
+    await this.redisSrv.setEx(`token_logo_${symbolOrNetwork}_${contract}`, info.logoURI, 60 * 60 * 24 * 7);
 
     return Promise.resolve(info.logoURI);
   }
@@ -127,7 +127,7 @@ export class MetadataService {
       // Cache the address as a 'bad' address so subsequent requests will not immediately attempt to fetch again.
       // It could be the address has been de-listed from the source or it never existed.
       // TODO: Permanently blacklist the address after a certain number of failures over a duration of time.
-      await this.redisSrv.setWithExpire(`bad_address_${contract}`, JSON.stringify({}), 60);
+      await this.redisSrv.setEx(`bad_address_${contract}`, JSON.stringify({}), 60);
       throw e;
     }
 
@@ -145,7 +145,7 @@ export class MetadataService {
     if (isDev() && !info.decimals) info.decimals = 18;
 
     // Cache the token info for n seconds
-    await this.redisSrv.setWithExpire(`token_info_${contract}`, JSON.stringify(info), 30);
+    await this.redisSrv.setEx(`token_info_${contract}`, JSON.stringify(info), 30);
 
     return info;
   }

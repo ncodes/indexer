@@ -5,6 +5,7 @@ import { ethers } from 'ethers';
 import * as moment from 'moment';
 import { authenticator, totp } from 'otplib';
 import * as request from 'supertest';
+import CacheService from '../../cacher/cache.service';
 import { randStr, sha1 } from '../../common/common';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import { NoopLogger } from '../../common/loggers/noop_logger';
@@ -14,7 +15,6 @@ import { DBService } from '../../db/db.service';
 import { NotificationService } from '../../jobs/notifications/NotificationService';
 import { NotificationID } from '../../jobs/notifications/common';
 import Session from '../../models/session';
-import Tap from '../../models/tap';
 import User from '../../models/user';
 import { JointLinkService } from '../../services/joint_link.service';
 import { RedisService } from '../../services/redis/redis.service';
@@ -25,14 +25,18 @@ import { UserService } from '../users/user.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { makeSession } from './utils';
+import TapService from '../airdrop/tap.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
   return { get: mockCfgGet };
 });
 
+const mockSet = jest.fn();
 const RedisServiceMock = jest.fn().mockImplementation(() => {
-  return {};
+  return {
+    set: mockSet,
+  };
 });
 
 const mockNotify = jest.fn();
@@ -101,6 +105,8 @@ describe('AuthController', () => {
         JointLinkService,
         AuthService,
         AirdropService,
+        CacheService,
+        TapService,
       ],
     })
       .overrideProvider(ConfigService)
@@ -233,6 +239,7 @@ describe('AuthController', () => {
       const sig = await wallet.signMessage(msg.toString());
 
       const mockRegDevice = jest.spyOn(app.get(UserService), 'registerDevice').mockResolvedValue(undefined);
+      const mockCacheUpdateUser = jest.spyOn(app.get(CacheService), 'cacheUser');
 
       await request(app.getHttpServer())
         .post(`/v1/auth`)
@@ -264,6 +271,8 @@ describe('AuthController', () => {
 
           const session = await Session.getBySignature(sha1(sig));
           expect(session).not.toBeDefined();
+
+          expect(mockCacheUpdateUser).toBeCalled();
         });
     });
 
@@ -276,6 +285,7 @@ describe('AuthController', () => {
 
         let user = await User.create({ address: wallet.address });
         const mockRegDevice = jest.spyOn(app.get(UserService), 'registerDevice').mockResolvedValue(undefined);
+        const mockCacheUpdateUser = jest.spyOn(app.get(CacheService), 'cacheUser');
 
         await request(app.getHttpServer())
           .post(`/v1/auth`)
@@ -296,6 +306,8 @@ describe('AuthController', () => {
 
             const session = await Session.getBySignature(sha1(sig));
             expect(session).not.toBeDefined();
+
+            expect(mockCacheUpdateUser).toBeCalled();
           });
       });
     });
@@ -309,6 +321,7 @@ describe('AuthController', () => {
 
         let user = await User.create({ address: wallet.address, email: 'person@gmail.com' });
         const mockRegDevice = jest.spyOn(app.get(UserService), 'registerDevice').mockResolvedValue(undefined);
+        const mockCacheUpdateUser = jest.spyOn(app.get(CacheService), 'cacheUser');
 
         await request(app.getHttpServer())
           .post(`/v1/auth`)
@@ -330,6 +343,8 @@ describe('AuthController', () => {
 
             const session = await Session.getBySignature(sha1(sig));
             expect(session).toBeDefined();
+
+            expect(mockCacheUpdateUser).toBeCalled();
           });
       });
     });
@@ -344,6 +359,8 @@ describe('AuthController', () => {
         await User.create({ address: wallet.address, email: 'person@gmail.com' });
         jest.spyOn(app.get(UserService), 'registerDevice').mockResolvedValue(undefined);
 
+        const mockCacheUpdateUser = jest.spyOn(app.get(CacheService), 'cacheUser');
+
         await request(app.getHttpServer())
           .post(`/v1/auth`)
           .send({
@@ -355,6 +372,8 @@ describe('AuthController', () => {
             expect(res.body.data.token).toBeDefined();
             expect(res.body.data.user).toBeDefined();
             expect(res.body.data.user.refCode).toHaveLength(5);
+
+            expect(mockCacheUpdateUser).toBeCalled();
           });
       });
     });
@@ -369,6 +388,8 @@ describe('AuthController', () => {
         await User.create({ address: wallet.address, email: 'person@gmail.com', refCode: 'abcde' });
         jest.spyOn(app.get(UserService), 'registerDevice').mockResolvedValue(undefined);
 
+        const mockCacheUpdateUser = jest.spyOn(app.get(CacheService), 'cacheUser');
+
         await request(app.getHttpServer())
           .post(`/v1/auth`)
           .send({
@@ -380,6 +401,8 @@ describe('AuthController', () => {
             expect(res.body.data.token).toBeDefined();
             expect(res.body.data.user).toBeDefined();
             expect(res.body.data.user.refCode).toEqual('abcde');
+
+            expect(mockCacheUpdateUser).toBeCalled();
           });
       });
     });
@@ -395,6 +418,8 @@ describe('AuthController', () => {
 
         const referrer = await User.create({ address: '0xReferrer', refCode: '12345' });
 
+        const mockCreateTap = jest.spyOn(app.get(TapService), 'createTap').mockResolvedValue(undefined);
+
         await request(app.getHttpServer())
           .post(`/v1/auth`)
           .send({
@@ -409,9 +434,13 @@ describe('AuthController', () => {
             expect(res.body.data.user.refCode).toHaveLength(5);
             expect(mockCreateLink).toHaveBeenCalledTimes(1);
 
-            const newUserTapBonus = await Tap.getTapCount(res.body.data.user.id);
-            expect(newUserTapBonus).toBeDefined();
-            expect(newUserTapBonus).toEqual(RefereeBonus.toString());
+            // Should create bonus tap for user
+            expect(mockCreateTap).toBeCalledWith({
+              userId: res.body.data.user.id,
+              bonus: true,
+              bonusName: 'referee_bonus',
+              bonusValue: RefereeBonus.toString(),
+            });
           });
       });
 

@@ -33,6 +33,7 @@ import { InstructionsModule } from './instructions/instructions.module';
 import { JobsModule } from './jobs/jobs.module';
 import { NetworkModule } from './network/network.module';
 import { RedisModule } from './services/redis/redis.module';
+import { CacheModule } from './cacher/cache.module';
 
 /**
  * Get a list of modules to be loaded.
@@ -65,6 +66,7 @@ function getModules() {
     PointModule,
     ReferralModule,
     AirdropModule,
+    CacheModule,
   ];
 
   return process.env.OFF != 'true' ? modules : [];

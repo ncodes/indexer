@@ -23,7 +23,7 @@ export const FollowQuestBonus = 200000;
 
 export const RankInfo = {
   Cadet: {
-    taps: 0,
+    taps: 1,
     reward: 1000,
   },
   Ensign: {

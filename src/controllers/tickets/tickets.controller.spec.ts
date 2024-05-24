@@ -371,7 +371,7 @@ describe('TicketsController', () => {
     describe('status: expired is set', () => {
       it('should return correct ticket list when ticket has no market and' + ' past join time', async () => {
         const mockTicket = jest.spyOn(app.get(TicketsService), 'extendTicket');
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
 
         await Market.create({ network: net, address: '0xMarket' });
         const now = moment();
@@ -397,7 +397,7 @@ describe('TicketsController', () => {
     describe('status: "expiring" is set', () => {
       it('should return correct ticket list when ticket', async () => {
         const mockTicket = jest.spyOn(app.get(TicketsService), 'extendTicket');
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
 
         await Market.create({ network: net, address: '0xMarket' });
         const now = moment();

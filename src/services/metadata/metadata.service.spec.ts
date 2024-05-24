@@ -16,7 +16,7 @@ const mockGet = jest.fn();
 const mockRedisService = jest.fn().mockImplementation(() => {
   return {
     get: mockGet,
-    setWithExpire: jest.fn(),
+    setEx: jest.fn(),
   };
 });
 

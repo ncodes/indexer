@@ -2,10 +2,6 @@ import { Body, Controller, Delete, Get, Post, Put, Query, Req, UseGuards, Valida
 import { ConfigService } from '@nestjs/config';
 import { isEmail } from 'class-validator';
 import { Request } from 'express';
-import { transaction } from 'objection';
-import { authenticator, totp } from 'otplib';
-import { logIf, sha1 } from '../../common/common';
-import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
 import { ErrBadSignature, ErrorMessages, ErrorTypes, ok, throw400, throw404 } from '../../common/responses/responses';
 import { Roles } from '../../common/roles';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
@@ -19,6 +15,11 @@ import { UserService } from '../users/user.service';
 import { AuthService } from './auth.service';
 import { AuthDTO, GetAuthorizerDTO, VerifyEmailDTO } from './dto';
 import { hasSeenSignature, makeSession, parseWalletSignature } from './utils';
+import CacheService from '../../cacher/cache.service';
+import { authenticator, totp } from 'otplib';
+import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
+import { sha1 } from '../../common/common';
+import { transaction } from 'objection';
 
 /**
  * AuthController handles all authentication functionalities.
@@ -30,6 +31,7 @@ export class AuthController {
     private authSrv: AuthService,
     private userSrv: UserService,
     private notifSrv: NotificationService,
+    private cacheSrv: CacheService,
   ) {}
 
   /**
@@ -59,15 +61,11 @@ export class AuthController {
       throw400('email is not valid', ErrorTypes.InvalidRequest, 'email');
     }
 
-    logIf('AUTHLOG, logging', sigData.address);
-
     let token: string;
     let user: User;
     let isUserNew = false;
     let notifSettings: Partial<NotificationSetting>;
     await transaction(User, async (User) => {
-      logIf('AUTHLOG, fetching user by address', sigData.address);
-
       user = await User.getByAddress(sigData.address);
       notifSettings = user ? user.notificationSettings : defaultNotificationSettings;
       isUserNew = !user;
@@ -75,39 +73,40 @@ export class AuthController {
       // Create user if not found, Set email as unverified.
       // If user was found and email is different, update email as unverified.
       if (!user) {
-        logIf('AUTHLOG, creating new user', sigData.address);
-        user = await User.create({
-          address: sigData.address,
-          emailUnverified: sigData.email,
-          role: Roles.User,
-          otpSecret: authenticator.generateSecret(),
-        });
+        user = await User.create(
+          {
+            address: sigData.address,
+            emailUnverified: sigData.email,
+            role: Roles.User,
+            otpSecret: authenticator.generateSecret(),
+          },
+          this.cacheSrv.cacheUser.bind(this.cacheSrv),
+        );
       } else {
-        logIf('AUTHLOG, updating existing user', sigData.address);
-        user = await User.updateById(user.id, {
-          otpSecret: user.otpSecret ?? authenticator.generateSecret(),
-          emailUnverified: user.email !== sigData.email ? sigData.email : null,
-        });
+        user = await User.updateById(
+          user.id,
+          {
+            otpSecret: user.otpSecret ?? authenticator.generateSecret(),
+            emailUnverified: user.email !== sigData.email ? sigData.email : null,
+          },
+          this.cacheSrv.cacheUser.bind(this.cacheSrv),
+        );
         user.notificationSettings = notifSettings;
-        logIf('AUTHLOG, finished updating user', sigData.address);
       }
     });
 
     // If email is verified, generate session token,
     // otherwise send an OTP to the unverified email.
     if (!user.emailUnverified) {
-      logIf('AUTHLOG, make session token', sigData.address);
       token = await makeSession(user, body.sig, this.cfgSrv.get('auth.jwtExpMin'), this.cfgSrv.get('auth.jwtSecret'));
     } else {
       const otp = totp.generate(user.otpSecret);
-      this.notifSrv.notify(NotificationID.VerifyNewEmail, undefined, undefined, { user, otp });
+      void this.notifSrv.notify(NotificationID.VerifyNewEmail, undefined, undefined, { user, otp });
     }
 
-    logIf('AUTHLOG, registering device for notifications', sigData.address);
     // Register device for notifications.
     await this.userSrv.registerDevice(user);
 
-    logIf('AUTHLOG, enable referrer ops', sigData.address);
     // Enable referrer state for the user
     await this.userSrv.enableReferrerOps(isUserNew, body.refCode, user);
 
@@ -133,7 +132,12 @@ export class AuthController {
     if (!totp.verify({ secret: user.otpSecret, token: body.otp })) throw400('invalid otp', ErrorTypes.InvalidRequest);
     totp.resetOptions();
 
-    user = await User.updateById(user.id, { email: user.emailUnverified, emailUnverified: null });
+    user = await User.updateById(
+      user.id,
+      { email: user.emailUnverified, emailUnverified: null },
+      this.cacheSrv.cacheUser.bind(this.cacheSrv),
+    );
+
     const token = await makeSession(
       user,
       undefined,

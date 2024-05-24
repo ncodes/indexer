@@ -204,14 +204,10 @@ describe('MarketsService', () => {
     });
 
     describe(`select=['baseLogo or quoteLogo']`, () => {
-      it(`should return correct value when token was found in local list`, async () => {
-        jest.spyOn(module.get(MetadataService), 'getTokenInfo').mockImplementation((network, address) => {
-          return { '0xBase': { logoURI: 'logo_url' }, '0xQuote': { logoURI: 'logo_url_quote' } }[address] as any;
-        });
-
+      it(`should return unknown logo link when token was found`, async () => {
         await service.extendMarket(market, ['baseLogo', 'quoteLogo']);
-        expect(market.baseLogo).toBe('logo_url');
-        expect(market.quoteLogo).toBe('logo_url_quote');
+        expect(market.baseLogo).toBe('https://files.joint.exchange/images/unknown.svg');
+        expect(market.quoteLogo).toBe('https://files.joint.exchange/images/unknown.svg');
       });
     });
 

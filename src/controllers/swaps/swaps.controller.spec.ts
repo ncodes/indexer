@@ -142,7 +142,7 @@ describe('SwapsController', () => {
         marketAddress: market.address,
         provider: '0xProvider',
       });
-      jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
+      jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
       jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(null);
       await request(app.getHttpServer())
         .get(`/v1/swaps/1`)
@@ -203,7 +203,7 @@ describe('SwapsController', () => {
           provider: '0xProvider2',
         });
 
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
         jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(null);
 
         await request(app.getHttpServer())
@@ -267,7 +267,7 @@ describe('SwapsController', () => {
           baseAddress: '0xBase2',
         });
 
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
         jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(null);
 
         await request(app.getHttpServer())
@@ -330,7 +330,7 @@ describe('SwapsController', () => {
           quoteAddress: '0xQuote2',
         });
 
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
         jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(null);
 
         await request(app.getHttpServer())
@@ -387,7 +387,7 @@ describe('SwapsController', () => {
           createdAt: now.clone().subtract(5, 's').toISOString(),
         });
 
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
         jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(null);
 
         await request(app.getHttpServer())
@@ -457,7 +457,7 @@ describe('SwapsController', () => {
           paid: false,
         });
 
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
         jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(null);
 
         await request(app.getHttpServer())
@@ -553,7 +553,7 @@ describe('SwapsController', () => {
           instant: true,
         });
 
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
         jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(null);
 
         await request(app.getHttpServer())
@@ -616,7 +616,7 @@ describe('SwapsController', () => {
           provider: '0xProvider',
         });
 
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
         jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(null);
 
         await request(app.getHttpServer())
@@ -661,7 +661,7 @@ describe('SwapsController', () => {
           provider: '0xProvider',
         });
 
-        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue();
+        jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
         jest.spyOn(app.get(LiquidityService), 'extendLiquidity').mockResolvedValue(null);
 
         await request(app.getHttpServer())

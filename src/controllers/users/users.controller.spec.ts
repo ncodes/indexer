@@ -20,6 +20,9 @@ import { makeSession } from '../auth/utils';
 import ConvosService from '../convos/convos.service';
 import { UserService } from './user.service';
 import { UsersController } from './users.controller';
+import CacheService from '../../cacher/cache.service';
+import TapService from '../airdrop/tap.service';
+import { RedisService } from '../../services/redis/redis.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -37,6 +40,10 @@ const NetworkServiceMock = jest.fn().mockImplementation(() => {
       return {};
     }),
   };
+});
+
+const RedisServiceMock = jest.fn().mockImplementation(() => {
+  return {};
 });
 
 describe('UsersController', () => {
@@ -78,6 +85,9 @@ describe('UsersController', () => {
         MetadataService,
         ConvosService,
         JointLinkService,
+        RedisService,
+        CacheService,
+        TapService,
       ],
     })
       .overrideProvider(ConfigService)
@@ -86,6 +96,8 @@ describe('UsersController', () => {
       .useValue(new MetadataServiceMock())
       .overrideProvider(NetworkService)
       .useValue(new NetworkServiceMock())
+      .overrideProvider(RedisService)
+      .useValue(new RedisServiceMock())
       .compile();
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());

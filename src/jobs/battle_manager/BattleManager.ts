@@ -9,6 +9,7 @@ import BondSpend from '../../models/bond_spend';
 import Tap from '../../models/tap';
 import { RedisService } from '../../services/redis/redis.service';
 import { Base } from '../base';
+import TapService from '../../controllers/airdrop/tap.service';
 
 /**
  * BattleManager manages daily battle progress and calculations
@@ -17,7 +18,7 @@ import { Base } from '../base';
 export default class BattleManager extends Base {
   private logger = new Logger(BattleManager.name);
 
-  constructor(private cfgSrv: ConfigService, private redisSrv: RedisService) {
+  constructor(private cfgSrv: ConfigService, private tapSrv: TapService) {
     super();
     this.schedule();
   }
@@ -39,15 +40,15 @@ export default class BattleManager extends Base {
       // Create new battle
       const allocation = this.cfgSrv.get('app.tapoff.battleAlloc');
       const newBattle = await Battle.create({ allocation });
-      await this.redisSrv.set('tapoff:battle:current', newBattle.id);
+      await this.tapSrv.updateCurrentBattle(newBattle.id);
 
       if (!curBattle) return;
 
       // Process allocation for the previous battle
-      return transaction(Battle, BondSpend, Allocation, async (Battle, BondSpend, Allocation) => {
+      return transaction(BondSpend, Allocation, async (BondSpend, Allocation) => {
         // Get percentage of taps for each side
-        const totalDroidTaps = await Tap.getBattleTapCount(curBattle.id, 'droid');
-        const totalBanditTaps = await Tap.getBattleTapCount(curBattle.id, 'bandit');
+        const totalDroidTaps = await this.tapSrv.getBattlePlayerCount(curBattle.id, 'droid');
+        const totalBanditTaps = await this.tapSrv.getBattlePlayerCount(curBattle.id, 'bandit');
         const totalTaps = toDec(totalDroidTaps).add(totalBanditTaps);
 
         // If no taps, delete all bond spend for this battle

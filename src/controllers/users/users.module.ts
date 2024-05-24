@@ -8,10 +8,12 @@ import AirdropService from '../airdrop/airdrop.service';
 import ConvosService from '../convos/convos.service';
 import { UserService } from './user.service';
 import { UsersController } from './users.controller';
+import CacheService from '../../cacher/cache.service';
+import TapService from '../airdrop/tap.service';
 
 @Module({
   imports: [NetworkModule, NotificationModule, RedisModule],
   controllers: [UsersController],
-  providers: [UserService, AirdropService, MetadataService, ConvosService, JointLinkService],
+  providers: [UserService, AirdropService, MetadataService, ConvosService, JointLinkService, CacheService, TapService],
 })
 export class UsersModule {}

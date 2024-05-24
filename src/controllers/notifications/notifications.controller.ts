@@ -64,7 +64,7 @@ export class NotificationsController {
   /**
    * Mark a notification as `read`
    * @param req The request object
-   * @param id The notification ID
+   * @param q The query object
    */
   @UseGuards(BeAuthenticatedGuard)
   @UseGuards(HasKeyGuard)
@@ -127,7 +127,7 @@ export class NotificationsController {
     // notification represents a text message, delivery or read receipt, we cannot
     // determine if a notification is a message that should result to a
     // notification. To avoid sending notification for read receipts, we lock.
-    await this.redisSrv.setWithExpire(lockHash, '1', 15);
+    await this.redisSrv.setEx(lockHash, '1', 15);
 
     let isOk = false;
     if (recipient) {

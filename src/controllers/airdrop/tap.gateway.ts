@@ -103,7 +103,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
           const userBattleSide = await this.tapSrv.getUserBattleSide(userId, curBattleId);
           const oldPoints = await Tap.getTapCount(userId);
           await this.tapSrv.setHasClaimedOldPoints(userId);
-          void this.tapSrv.createTap({
+          await this.tapSrv.createTap({
             userId,
             bonus: true,
             bonusValue: oldPoints,

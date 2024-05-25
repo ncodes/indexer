@@ -33,7 +33,7 @@ export default class MentionedTweetFinder extends Base {
 
     try {
       let newLastId: string;
-      let nextToken: string;
+      let nextToken: string = undefined;
       while (true) {
         const lastId = await Meta.get('mentionedTweetFinder:lastId');
 
@@ -55,11 +55,16 @@ export default class MentionedTweetFinder extends Base {
           for (const tweet of result.data) {
             this.logger.log(`Processing tweet: ${tweet.id}`);
 
+            console.log('A');
             const type = tweet.referenced_tweets ? tweet.referenced_tweets[0].type : 'tweet';
+            console.log('B');
             const tweetOwner = await User.getByTwitterUserId(tweet.author_id);
+            console.log('RefTweet', tweet.referenced_tweets);
             const referencedTweetId = tweet.referenced_tweets ? tweet.referenced_tweets[0].id : undefined;
+            console.log('D');
             const existing = await TwitterEngagement.getByTypeAndTweetId(type, tweet.id);
             if (!existing) {
+              console.log('E');
               await TwitterEngagement.create({
                 tweetId: tweet.id,
                 userId: tweetOwner?.id,
@@ -69,6 +74,7 @@ export default class MentionedTweetFinder extends Base {
                 referencedTweetId,
               });
             }
+            console.log('F');
 
             const hasQuest = await Quest.findByTweetId(tweet.id);
             if (hasQuest) {
@@ -125,7 +131,6 @@ export default class MentionedTweetFinder extends Base {
         if (result.meta.next_token) {
           nextToken = result.meta.next_token;
           await delay(2000);
-          continue;
         } else if (newLastId) {
           await Meta.update(`mentionedTweetFinder:lastId`, newLastId);
           break;

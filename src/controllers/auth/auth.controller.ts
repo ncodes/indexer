@@ -18,7 +18,7 @@ import { hasSeenSignature, makeSession, parseWalletSignature } from './utils';
 import CacheService from '../../cacher/cache.service';
 import { authenticator, totp } from 'otplib';
 import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
-import { sha1 } from '../../common/common';
+import { isLocal, sha1 } from '../../common/common';
 import { transaction } from 'objection';
 
 /**

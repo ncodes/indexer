@@ -35,6 +35,7 @@ import {
 } from './constants';
 import TapService from './tap.service';
 import CacheService from '../../cacher/cache.service';
+import TPS from '../../models/tps';
 
 @WebSocketGateway({ namespace: '/v1/taps', pingTimeout: 30000 })
 export default class TapGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -208,6 +209,11 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
     // Update battle status
     void this.updateBattleState(user.id, curBattleId, userBattleSide);
 
+    // Log TPS
+    this.tapSrv.getUserTapsPerPeriod(userId, 60).then((count) => {
+      this.logTPS(userId, Math.round(count / 60));
+    });
+
     const tapCount = await this.tapSrv.getTapCount(userId);
     return {
       success: true,
@@ -216,6 +222,14 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       tapCount,
       tapIncrement,
     };
+  }
+
+  async logTPS(userId: string, tps: number) {
+    const logged = await this.tapSrv.hasTPSLogged(userId);
+    if (!logged) {
+      await TPS.create({ userId, tps });
+      await this.tapSrv.markTPSAsLogged(userId, 60);
+    }
   }
 
   /**
@@ -339,7 +353,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       return { success: false, message: 'Not authenticated' };
     }
 
-    const user = await User.getById(userId);
+    const user = await this.cacheSrv.getUserByUserId(userId);
 
     // General info
     const maxOverheatLvl = await this.getMaxOverheatLevel(userId);
@@ -775,7 +789,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       return { success: false, message: 'Not authenticated' };
     }
 
-    const user = await User.getById(userId);
+    const user = await this.cacheSrv.getUserByUserId(userId);
 
     const markedTwitterFollow = await this.tapSrv.hasMarkedUserFollowQuest(userId, 'x');
     const markedTelegramFollow = await this.tapSrv.hasMarkedUserFollowQuest(userId, 'telegram');
@@ -829,7 +843,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       return { success: false, message: 'Insufficient taps' };
     }
 
-    const user = await User.getById(userId);
+    const user = await this.cacheSrv.getUserByUserId(userId);
 
     await this.tapSrv.createTap({
       userId,
@@ -871,7 +885,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
     }
 
     // Make sure the user has enough referrals
-    const user = await User.getById(userId);
+    const user = await this.cacheSrv.getUserByUserId(userId);
     const numReferred = await User.countReferred(user.address);
     const claimable = numReferred - parseInt(totalClaims);
     if (claimable < count) {
@@ -903,7 +917,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    * @returns 0 if user does not exist, otherwise the total multiplier balance
    */
   async getMultiplierBalance(userId: string) {
-    const user = await User.getById(userId);
+    const user = await this.cacheSrv.getUserByUserId(userId);
     if (!user) return '0';
 
     const totalMultipliers = await Swap.getTotalAmountByMarketProviderTaker(

@@ -307,6 +307,8 @@ export default class TapService {
       await this.redisSrv.rPush(buildTapKey(tap.userId), JSON.stringify(tap));
       await this.redisSrv.incrBy(buildTotalTapsKey(), 1);
       await this.redisSrv.incrBy(buildTotalNonBonusTapsKey(), 1);
+      const now = moment(tap.createdAt);
+      await this.redisSrv.zAdd(buildUserTapTimeKey(tap.userId), now.valueOf(), now.valueOf().toString());
     }
 
     if (tap.bonus) {
@@ -343,6 +345,18 @@ export default class TapService {
     const minAgo = moment().subtract(1, 'minute').unix();
     const players = await this.redisSrv.zRevRangeByScore(buildActivePlayersKey(), now, minAgo);
     return (players?.length || 0).toString();
+  }
+
+  /**
+   * Get user taps per period
+   * @param userId The user id
+   * @param period The period in seconds
+   */
+  async getUserTapsPerPeriod(userId: string, period: number) {
+    const now = moment();
+    const periodAgo = now.clone().subtract(period, 'seconds').valueOf();
+    const taps = await this.redisSrv.zRevRangeByScore(buildUserTapTimeKey(userId), now.valueOf(), periodAgo);
+    return taps.length;
   }
 
   /**
@@ -464,8 +478,32 @@ export default class TapService {
   hasClaimedOldPoints(userId: string) {
     return this.redisSrv.exist(buildHasClaimedOldPoints(userId));
   }
+
+  /**
+   * Mark a user has having their TPS logged
+   * @param userId The user id
+   * @param expireSec The expiration time before the next log
+   */
+  markTPSAsLogged(userId: string, expireSec: number) {
+    return this.redisSrv.setEx(buildTPSLogTimeKey(userId), '1', expireSec);
+  }
+
+  /**
+   * Check if a user has their TPS logged
+   * @param userId The user id
+   */
+  hasTPSLogged(userId: string) {
+    return this.redisSrv.exist(buildTPSLogTimeKey(userId));
+  }
 }
 
+function buildTPSLogTimeKey(userId: string): string {
+  return `tapwar:tps:logged:${userId}`;
+}
+
+function buildUserTapTimeKey(userId: string): string {
+  return `tapwar:tap:time:${userId}`;
+}
 function buildHasClaimedOldPoints(userId: string): string {
   return `tapwar:tap:claimedOldPoints:${userId}`;
 }

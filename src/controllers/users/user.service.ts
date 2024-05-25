@@ -18,6 +18,7 @@ import { NFTAllocations } from '../points/data/nft_allocation';
 import { DeviceType } from './dto';
 import TapService from '../airdrop/tap.service';
 import { isEqualStr, isLocal, randStr, toDec } from '../../common/common';
+import TPS from '../../models/tps';
 
 @Injectable()
 export class UserService {

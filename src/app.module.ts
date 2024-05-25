@@ -34,6 +34,7 @@ import { JobsModule } from './jobs/jobs.module';
 import { NetworkModule } from './network/network.module';
 import { RedisModule } from './services/redis/redis.module';
 import { CacheModule } from './cacher/cache.module';
+import { TGBotModule } from './controllers/tgbot/tgbot.module';
 
 /**
  * Get a list of modules to be loaded.
@@ -67,6 +68,7 @@ function getModules() {
     ReferralModule,
     AirdropModule,
     CacheModule,
+    TGBotModule,
   ];
 
   return process.env.OFF != 'true' ? modules : [];

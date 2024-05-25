@@ -59,6 +59,9 @@ export default () => ({
       minBondStake: process.env.TAPOFF_BOND_MIN_BOND_STAKE,
       battleManagerCron: process.env.BATTLE_MANAGER_CRON,
     },
+    tgbot: {
+      token: process.env.TGBOT_TOKEN,
+    },
     redis: {
       url: process.env.REDIS_URL,
     },

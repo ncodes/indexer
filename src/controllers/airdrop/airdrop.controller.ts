@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToInstance } from 'class-transformer';
-import { isNegative, validate } from 'class-validator';
+import { isEthereumAddress, isNegative, validate } from 'class-validator';
 import * as cronParser from 'cron-parser';
 import { Request } from 'express';
 import { Client } from 'twitter-api-sdk';
@@ -44,6 +44,7 @@ import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
 import { transaction } from 'objection';
 import CacheService from '../../cacher/cache.service';
 import TapService from './tap.service';
+import TPS from '../../models/tps';
 
 function randomInteger(min, max) {
   return Math.floor(Math.random() * (max - min + 1) + min);
@@ -757,6 +758,27 @@ export class AirdropController {
         balance: toDec(bondBalance).sub(body.amount).toFixed(),
         amount: body.amount,
       })
+      .build();
+  }
+
+  @UseGuards(IsRootAdmin)
+  @Get('/user-tps/:addressOrUserId')
+  async getUserAvgTps(@Param('addressOrUserId') addressOrUserId: string) {
+    if (isEthereumAddress(addressOrUserId)) {
+      const user = await User.getByAddress(addressOrUserId);
+      if (!user) throw404('User not found');
+      addressOrUserId = user.id;
+    }
+    return ok()
+      .data({ tps: await TPS.getUserAvgTPS(addressOrUserId) })
+      .build();
+  }
+
+  @UseGuards(IsRootAdmin)
+  @Get('/avg-tps')
+  async getAvgTps() {
+    return ok()
+      .data({ tps: await TPS.getUserAvgTPS() })
       .build();
   }
 }

@@ -78,7 +78,7 @@ export default class TPS extends BaseModel {
   }
 
   /**
-   * Get the average TPS for a user
+   * Get the average TPS for a user.
    * @param userId The user ID (optional)
    * @param startDate The start date (optional)
    * @param endDate The end date (optional)

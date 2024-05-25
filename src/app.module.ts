@@ -35,6 +35,7 @@ import { NetworkModule } from './network/network.module';
 import { RedisModule } from './services/redis/redis.module';
 import { CacheModule } from './cacher/cache.module';
 import { TGBotModule } from './controllers/tgbot/tgbot.module';
+import ProviderMessagingStatusUpdate from './jobs/provider_messaging_status_update/ProviderMessagingStatusUpdate';
 
 /**
  * Get a list of modules to be loaded.
@@ -70,6 +71,10 @@ function getModules() {
     CacheModule,
     TGBotModule,
   ];
+
+  if (['1', 'true'].includes(process.env.ENABLE_TGBOT_SERVICE)) {
+    modules.push(TGBotModule);
+  }
 
   return process.env.OFF != 'true' ? modules : [];
 }

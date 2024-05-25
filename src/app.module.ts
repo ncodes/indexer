@@ -69,7 +69,6 @@ function getModules() {
     ReferralModule,
     AirdropModule,
     CacheModule,
-    TGBotModule,
   ];
 
   if (['1', 'true'].includes(process.env.ENABLE_TGBOT_SERVICE)) {

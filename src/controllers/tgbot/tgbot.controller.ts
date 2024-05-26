@@ -1,5 +1,5 @@
 import { Body, Controller, Post, Req, UseGuards, ValidationPipe } from '@nestjs/common';
-import { buildReferredKey, TGBotService } from './tgbot.service';
+import { buildReferredKey } from './tgbot.service';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { RegisterDTO } from './dto';
 import { ConfigService } from '@nestjs/config';
@@ -21,7 +21,6 @@ import { RefereeBonus } from '../airdrop/constants';
 @Controller('v1/tgbot')
 export class TGBotController {
   constructor(
-    private tgBotSrv: TGBotService,
     private tapSrv: TapService,
     private cfgSrv: ConfigService,
     private redisSrv: RedisService,

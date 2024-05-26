@@ -61,6 +61,7 @@ export default () => ({
     },
     tgbot: {
       token: process.env.TGBOT_TOKEN,
+      tapWarLink: process.env.TGBOT_TAPWAR_LINK,
     },
     redis: {
       url: process.env.REDIS_URL,

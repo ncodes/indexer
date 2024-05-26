@@ -36,7 +36,7 @@ export class TGBotService implements OnModuleInit {
 
   createMenu() {
     const menu = new Menu('main')
-      .webApp('🕹️ Play Game', 'https://jointapp.vercel.app/tapwar')
+      .webApp('🕹️ Play Game', this.cfgSrv.get('app.tgbot.tapWarLink'))
       .row()
       .url('🌎 Joint Web', 'https://joint.exchange')
       .row()

@@ -21,11 +21,7 @@ export class TGBotService implements OnModuleInit {
   }
 
   async initService() {
-    await this.bot.api.setMyCommands([
-      { command: 'start', description: 'Start the bot' },
-      { command: 'help', description: 'Show help text' },
-      { command: 'settings', description: 'Open settings' },
-    ]);
+    await this.bot.api.setMyCommands([{ command: 'start', description: 'Start the bot' }], {});
 
     const menu = this.createMenu();
 

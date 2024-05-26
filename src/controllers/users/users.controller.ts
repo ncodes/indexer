@@ -20,45 +20,45 @@ import { getTokenEnergonAlloc } from '../points/point.service';
 import * as galxePoints from './data/glaxe.json';
 import { GetQueryDTO, LogOnlineStatusDTO, RegisterDeviceDTO } from './dto';
 import { UserService } from './user.service';
+import { isEthereumAddress } from 'class-validator';
 
 @Controller('v1/users')
 export class UsersController {
   constructor(private userSrv: UserService, private netSrv: NetworkService, private cfgSrv: ConfigService) {}
 
   /**
-   * Get a user by address. Sensitive user fields are removed
+   * Get a user by address or user ID. Sensitive user fields are removed
    * if the request does not contain a valid session token.
    * @param req The request object
-   * @param address The target user address
+   * @param addressOrUserId The target user address
    * @param q The query object
    * @param [q.net] The network name
    * @param [q.no404] Return a zero User object if user was not found
    */
   @UseGuards(MayBeAuthenticatedGuard)
   @UseGuards(MayHaveKeyGuard)
-  @Get('/:address')
+  @Get('/:addressOrUserId')
   async get(
     @Req() req: express.Request,
-    @Param('address') address: string,
+    @Param('addressOrUserId') addressOrUserId: string,
     @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO,
   ) {
-    if (req.user && !isEqualStr(req.user.address, address)) {
+    if (req.user && !isEqualStr(req.user.address, addressOrUserId) && !isEqualStr(req.user.id, addressOrUserId)) {
       throw401(ErrorMessages.NoAuthPermission);
     }
 
     let user = req.user;
-    if (user) {
-      logIf('GETUSERLOG, logging', user?.address);
-    }
-
     if (!user) {
-      logIf('GETUSERLOG, get user', user?.address);
-      user = await User.getByAddress(address);
+      user = isEthereumAddress(addressOrUserId)
+        ? await User.getByAddress(addressOrUserId)
+        : await User.getById(addressOrUserId);
+
       if (!user && !q.no404) throw404(ErrorMessages.UserNotFound);
+
       if (!user && q.no404) {
         return ok()
           .data({
-            address,
+            address: addressOrUserId,
             volume: '0',
             volumeUsd: 0,
             totalSwaps: 0,
@@ -69,13 +69,9 @@ export class UsersController {
       }
     }
 
-    logIf('GETUSERLOG, extend user', user?.address);
     await this.userSrv.extendUser(user, q.net);
-    logIf('GETUSERLOG, done extending', user?.address);
 
-    logIf('GETUSERLOG, desenitize user', user?.address);
     if (!req.user) user.desensitize();
-    logIf('GETUSERLOG, return response', user?.address);
 
     return ok().data(user).build<User>();
   }
@@ -112,6 +108,7 @@ export class UsersController {
   /**
    * Log the online status of a user
    * @param req The request object
+   * @param res The response object
    * @param body The request body
    */
   @UseGuards(BeAuthenticatedGuard)

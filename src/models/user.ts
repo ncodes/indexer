@@ -2,6 +2,7 @@ import Objection, { Model, Transaction } from 'objection';
 import { randStr } from '../common/common';
 import { BaseModel } from './base';
 import NotificationSetting from './notification_setting';
+import * as moment from 'moment';
 
 /**
  * User represents a user model
@@ -32,6 +33,9 @@ export default class User extends BaseModel {
   presaleApproved: boolean;
   curBattleId: string;
   battleSide: 'droid' | 'bandit';
+  telegramUserId: number;
+  telegramUsername: string;
+  telegramLastAuthAt: string;
 
   // Not persisted
   totalUnclaimedAlloc: string;
@@ -57,6 +61,8 @@ export default class User extends BaseModel {
   $beforeInsert() {
     super.$beforeInsert();
     this.id = 'user_' + randStr(24);
+    this.createdAt = this.createdAt ? this.createdAt : moment().toISOString();
+    this.updatedAt = this.createdAt;
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
@@ -162,7 +168,7 @@ export default class User extends BaseModel {
    */
   static getByRefCode(refCode: string, txn?: Transaction) {
     return this.query(txn)
-      .select('address')
+      .select('id', 'address')
       .where('refCode', 'ILIKE', refCode)
       .whereNotDeleted()
       .withGraphFetched('notificationSettings')
@@ -260,7 +266,10 @@ export default class User extends BaseModel {
     return this.query()
       .where('referrer', 'ilike', address)
       .where((q) => {
-        return q.whereRaw('"twitterUserId" is not null').orWhereRaw('"discordId" is not null');
+        return q
+          .whereRaw('"twitterUserId" is not null')
+          .orWhereRaw('"discordId" is not null')
+          .orWhereRaw('"telegramUserId" is not null');
       })
       .whereNotDeleted()
       .count('id')
@@ -280,7 +289,10 @@ export default class User extends BaseModel {
     return this.query(txn)
       .where('referrer', 'ilike', address)
       .where((q) => {
-        return q.whereRaw('"twitterUserId" is not null').orWhereRaw('"discordId" is not null');
+        return q
+          .whereRaw('"twitterUserId" is not null')
+          .orWhereRaw('"discordId" is not null')
+          .orWhereRaw('"telegramUserId" is not null');
       })
       .whereNotDeleted()
       .select('address')
@@ -292,11 +304,22 @@ export default class User extends BaseModel {
     return this.query()
       .where('referrer', 'ilike', address)
       .where((q) => {
-        return q.whereRaw('"twitterUserId" is not null').orWhereRaw('"discordId" is not null');
+        return q
+          .whereRaw('"twitterUserId" is not null')
+          .orWhereRaw('"discordId" is not null')
+          .orWhereRaw('"telegramUserId" is not null');
       })
       .whereNotDeleted()
       .select('address', 'createdAt')
       .orderBy('createdAt', 'desc')
       .limit(limit);
+  }
+
+  /**
+   * Get user by telegram user ID
+   * @param telegramUserId The telegram user ID
+   */
+  static getByTelegramUserId(telegramUserId: number) {
+    return this.query().where('telegramUserId', telegramUserId).whereNotDeleted().first();
   }
 }

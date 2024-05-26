@@ -50,6 +50,8 @@ describe('UsersController', () => {
   let app: INestApplication;
   const db = DBService.getForTest();
   const net = 'ethereum';
+  const address = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
+  const address2 = '0x70997970C51812dc3A010C7d01b50e0d17dc79C8';
   let cfgObj = {};
 
   afterEach(async () => {
@@ -108,14 +110,14 @@ describe('UsersController', () => {
   let u: User;
   let token: string;
   beforeEach(async () => {
-    u = await User.create({ role: Roles.User, address: '0xAddress' });
+    u = await User.create({ role: Roles.User, address });
     token = await makeSession(u, randStr(), '5', mockCfgGet('auth.jwtSecret'));
   });
 
   describe('.get', () => {
     it('should return 404 when user with matching address was not found', async () => {
       await request(app.getHttpServer())
-        .get(`/v1/users/0xAddress2`)
+        .get(`/v1/users/${address2}`)
         .send({})
         .expect(404)
         .expect({
@@ -125,12 +127,12 @@ describe('UsersController', () => {
 
     it('should return 200 and zero User when user with matching address was not found but no404=true', async () => {
       await request(app.getHttpServer())
-        .get(`/v1/users/0xAddress2`)
+        .get(`/v1/users/${address2}`)
         .query({ no404: true })
         .expect(200)
         .expect({
           data: {
-            address: '0xAddress2',
+            address: address2,
             volume: '0',
             volumeUsd: 0,
             totalSwaps: 0,
@@ -140,32 +142,53 @@ describe('UsersController', () => {
         });
     });
 
-    it('should return 401 when provided address did not match auth token user address', async () => {
-      await User.updateById(u.id, {
-        address: '0xAddress',
-        email: '0x@email.com',
-      });
-      await request(app.getHttpServer())
-        .get(`/v1/users/0xAddress2`)
-        .send({})
-        .set('Authorization', 'bearer ' + token)
-        .expect(401)
-        .expect({
-          error: {
-            type: 'authentication_error',
-            message: 'not permitted to perform this action',
-          },
+    describe('when address is provided as param', () => {
+      it('should return 401 when provided address did not match auth token user address', async () => {
+        await User.updateById(u.id, {
+          address,
+          email: '0x@email.com',
         });
+        await request(app.getHttpServer())
+          .get(`/v1/users/${address2}`)
+          .send({})
+          .set('Authorization', 'bearer ' + token)
+          .expect(401)
+          .expect({
+            error: {
+              type: 'authentication_error',
+              message: 'not permitted to perform this action',
+            },
+          });
+      });
+    });
+
+    describe('when userID is provided as param', () => {
+      it('should return 401 when provided user ID did not match auth token user ID', async () => {
+        await User.updateById(u.id, {
+          email: '0x@email.com',
+        });
+        await request(app.getHttpServer())
+          .get(`/v1/users/user123`)
+          .send({})
+          .set('Authorization', 'bearer ' + token)
+          .expect(401)
+          .expect({
+            error: {
+              type: 'authentication_error',
+              message: 'not permitted to perform this action',
+            },
+          });
+      });
     });
 
     it('should return 200 and de-sensitized user data when token was not provided', async () => {
       const mockExtendUser = jest.spyOn(app.get(UserService), 'extendUser').mockResolvedValue(undefined);
       await User.updateById(u.id, {
-        address: '0xAddress',
+        address,
         email: '0x@email.com',
       });
       await request(app.getHttpServer())
-        .get(`/v1/users/0xAddress`)
+        .get(`/v1/users/${address}`)
         .send({})
         .expect(200)
         .expect((res) => {
@@ -176,29 +199,51 @@ describe('UsersController', () => {
         });
     });
 
-    it('should return 200 and full user data when token was provided', async () => {
-      const mockExtendUser = jest.spyOn(app.get(UserService), 'extendUser').mockResolvedValue(undefined);
-      await User.updateById(u.id, {
-        address: '0xAddress',
-        email: '0x@email.com',
-      });
-      await request(app.getHttpServer())
-        .get(`/v1/users/0xAddress`)
-        .set('Authorization', 'bearer ' + token)
-        .send({})
-        .expect(200)
-        .expect((res) => {
-          expect(res.body.data.object).toEqual('user');
-          expect(res.body.data.id).toEqual(u.id);
-          expect(res.body.data.email).toEqual('0x@email.com');
-          expect(mockExtendUser).toBeCalledTimes(1);
+    describe('when address is provided as param', () => {
+      it('should return 200 and full user data when token was provided', async () => {
+        const mockExtendUser = jest.spyOn(app.get(UserService), 'extendUser').mockResolvedValue(undefined);
+        await User.updateById(u.id, {
+          address,
+          email: '0x@email.com',
         });
+        await request(app.getHttpServer())
+          .get(`/v1/users/${address}`)
+          .set('Authorization', 'bearer ' + token)
+          .send({})
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data.object).toEqual('user');
+            expect(res.body.data.id).toEqual(u.id);
+            expect(res.body.data.email).toEqual('0x@email.com');
+            expect(mockExtendUser).toBeCalledTimes(1);
+          });
+      });
+    });
+
+    describe('when userID is provided as param', () => {
+      it('should return 200 and full user data when token was provided', async () => {
+        const mockExtendUser = jest.spyOn(app.get(UserService), 'extendUser').mockResolvedValue(undefined);
+        await User.updateById(u.id, {
+          email: '0x@email.com',
+        });
+        await request(app.getHttpServer())
+          .get(`/v1/users/${u.id}`)
+          .set('Authorization', 'bearer ' + token)
+          .send({})
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data.object).toEqual('user');
+            expect(res.body.data.id).toEqual(u.id);
+            expect(res.body.data.email).toEqual('0x@email.com');
+            expect(mockExtendUser).toBeCalledTimes(1);
+          });
+      });
     });
   });
 
   describe('.registerDevice', () => {
     it('should return 401 when authorization header is missing', async () => {
-      await User.updateById(u.id, { address: '0xAddress', email: '0x@email.com' });
+      await User.updateById(u.id, { address, email: '0x@email.com' });
       await request(app.getHttpServer())
         .post(`/v1/users/register-device`)
         .expect(401)
@@ -212,7 +257,7 @@ describe('UsersController', () => {
 
     it('should return 201 on success', async () => {
       jest.spyOn(app.get(UserService), 'registerDevice').mockResolvedValue(undefined);
-      await User.updateById(u.id, { address: '0xAddress', email: '0x@email.com' });
+      await User.updateById(u.id, { address, email: '0x@email.com' });
       await request(app.getHttpServer())
         .post(`/v1/users/register-device`)
         .set('Authorization', 'bearer ' + token)
@@ -224,7 +269,7 @@ describe('UsersController', () => {
 
   describe('.unregisterDevice', () => {
     it('should return 401 when authorization header is missing', async () => {
-      await User.updateById(u.id, { address: '0xAddress', email: '0x@email.com' });
+      await User.updateById(u.id, { address, email: '0x@email.com' });
       await request(app.getHttpServer())
         .delete(`/v1/users/unregister-device`)
         .expect(401)
@@ -237,7 +282,7 @@ describe('UsersController', () => {
     });
 
     it('should return 400 when type is not provided', async () => {
-      await User.updateById(u.id, { address: '0xAddress', email: '0x@email.com' });
+      await User.updateById(u.id, { address, email: '0x@email.com' });
       await request(app.getHttpServer())
         .delete(`/v1/users/unregister-device`)
         .set('Authorization', 'bearer ' + token)
@@ -252,7 +297,7 @@ describe('UsersController', () => {
     });
 
     it('should return 400 when device type is unknown', async () => {
-      await User.updateById(u.id, { address: '0xAddress', email: '0x@email.com' });
+      await User.updateById(u.id, { address, email: '0x@email.com' });
       await request(app.getHttpServer())
         .delete(`/v1/users/unregister-device`)
         .set('Authorization', 'bearer ' + token)
@@ -269,7 +314,7 @@ describe('UsersController', () => {
 
     it('should return 200 on success', async () => {
       jest.spyOn(app.get(UserService), 'unregisterDevice').mockResolvedValue(true);
-      await User.updateById(u.id, { address: '0xAddress', email: '0x@email.com' });
+      await User.updateById(u.id, { address, email: '0x@email.com' });
       await request(app.getHttpServer())
         .delete(`/v1/users/unregister-device`)
         .set('Authorization', 'bearer ' + token)

@@ -12,7 +12,22 @@ import validator from 'validator';
 export const CommonValidationPipeOpt: ValidationPipeOptions = {
   transform: true,
   exceptionFactory: (errors) => {
-    const firstMsg = errors[0].constraints[Object.keys(errors[0].constraints)[0]];
+    let constraints = errors[0].constraints;
+
+    while (true) {
+      if (constraints) {
+        break;
+      } else {
+        constraints = errors[0].children[0].constraints;
+        errors = errors[0].children;
+      }
+    }
+
+    if (!constraints && errors[0].children.length > 0) {
+      constraints = errors[0].children[0].constraints;
+    }
+
+    const firstMsg = constraints[Object.keys(constraints)[0]];
 
     if (validator.isJSON(firstMsg)) {
       const err = JSON.parse(firstMsg);

@@ -55,6 +55,8 @@ export class TGBotService implements OnModuleInit {
         void this.handleReferredUser(ctx.match.split('-')[1], ctx.from.id);
       }
 
+      await this.redisSrv.set(buildChatKey(ctx.from.id), ctx.chatId.toString());
+
       await ctx.replyWithPhoto('https://files.joint.exchange/images/tgbot_welcome2.png', {
         caption: `
 Hey @${ctx.from.username}! Welcome to Joint's <b>TapWar game!</b>
@@ -103,8 +105,16 @@ Jump in and start playing TapWar to earn JOIN tokens. Invite your friends and co
       }
     });
   }
+
+  async getChatId(tgId: number) {
+    return Number(await this.redisSrv.get(buildChatKey(tgId)));
+  }
 }
 
 export function buildReferredKey(tgId: number) {
   return `tg:referred:${tgId}`;
+}
+
+export function buildChatKey(tgId: number) {
+  return `tg:bot_chat:${tgId}`;
 }

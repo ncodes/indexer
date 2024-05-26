@@ -15,5 +15,6 @@ import TapService from '../airdrop/tap.service';
   imports: [NetworkModule, NotificationModule, RedisModule],
   controllers: [UsersController],
   providers: [UserService, AirdropService, MetadataService, ConvosService, JointLinkService, CacheService, TapService],
+  exports: [UserService],
 })
 export class UsersModule {}

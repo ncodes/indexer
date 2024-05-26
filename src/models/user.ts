@@ -36,6 +36,7 @@ export default class User extends BaseModel {
   telegramUserId: number;
   telegramUsername: string;
   telegramLastAuthAt: string;
+  telegramBotChatId: number;
 
   // Not persisted
   totalUnclaimedAlloc: string;

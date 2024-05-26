@@ -6,6 +6,7 @@ export enum Roles {
   Admin = 'admin',
   App = 'app',
   User = 'user',
+  TelegramLinkedUser = 'tg_user',
 }
 
 /**

@@ -5,7 +5,7 @@
 exports.up = function (knex) {
   return Promise.all([
     knex.schema.table('users', (table) => {
-      table.integer('telegramUserId');
+      table.bigint('telegramUserId');
       table.string('telegramUsername');
       table.timestamp('telegramLastAuthAt');
     }),

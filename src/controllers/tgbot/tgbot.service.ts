@@ -61,7 +61,7 @@ Hey @${ctx.from.username}! Welcome to Joint's <b>TapWar game!</b>
 
 Joint is a decentralized peer-to-peer exchanage that allows you to trade tokens with other users directly. 
 
-We are getting ready to launch the JOIN tokens. <b>TapWar</b> is one way to earn JOIN tokens! We invite you to PLAY! 🕹️
+We are getting ready to launch the JOIN tokens. <b>TapWar</b> allows you to earn JOIN tokens! We invite you to PLAY! 🕹️
 
 Jump in and start playing TapWar to earn JOIN tokens. Invite your friends and communities. The more invites the higher your JOINs. 
 `,
@@ -84,7 +84,9 @@ Jump in and start playing TapWar to earn JOIN tokens. Invite your friends and co
     if (isProd() && getReferredUser) return;
 
     // Mark the user as referred by the referrer in redis
-    await this.redisSrv.set(buildReferredKey(referredTgId), getReferrerUser.address);
+    if (getReferrerUser) {
+      await this.redisSrv.set(buildReferredKey(referredTgId), getReferrerUser.address);
+    }
   }
 
   handleErrors() {

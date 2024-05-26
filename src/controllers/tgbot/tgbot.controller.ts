@@ -56,6 +56,12 @@ export class TGBotController {
       referrer = await this.redisSrv.get(buildReferredKey(body.initDataUnsafe.user.id));
     }
 
+    // Find existing user with matching telegram user id
+    const existingTelegramUser = await User.getByTelegramUserId(body.initDataUnsafe.user.id);
+    if (existingTelegramUser.id !== req.user.id) {
+      return throw401('Telegram account already linked to another account');
+    }
+
     const user = await User.updateById(
       req.user.id,
       {

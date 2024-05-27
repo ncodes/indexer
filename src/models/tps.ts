@@ -85,7 +85,7 @@ export default class TPS extends BaseModel {
    * @param txn Optional transaction object
    */
   static async getUserAvgTPS(userId?: string, startDate?: string, endDate?: string, txn?: Transaction) {
-    const res = await this.query(txn)
+    let q = this.query(txn)
       .where((q) => {
         if (userId) q = q.where('userId', userId);
         return q;
@@ -94,10 +94,12 @@ export default class TPS extends BaseModel {
         if (startDate) q = q.where('createdAt', '>=', startDate);
         if (endDate) q = q.where('createdAt', '<=', endDate);
         return q;
-      })
-      .avg('tps')
-      .groupBy('userId')
-      .first();
+      });
+
+    if (userId) q = q.groupBy('userId');
+
+    const res = await q.avg('tps').first();
+
     return Math.ceil((res as any).avg || '0');
   }
 }

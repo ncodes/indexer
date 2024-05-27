@@ -102,6 +102,10 @@ export class TGBotController {
     // If the user has no referrer, check if the user was referred.
     // If so, set the referrer to the referrer's address.
     let referrer = await this.redisSrv.get(buildReferredKey(body.initDataUnsafe.user.id));
+    let refCode = '';
+    if (referrer) {
+      [referrer, refCode] = referrer.split(',');
+    }
 
     // Get existing telegram linked user. Create it if it doesn't exist.
     let user = await User.getByTelegramUserId(body.initDataUnsafe.user.id);
@@ -154,18 +158,11 @@ ${privateKey}`,
 
     const token = await makeSession(user, undefined, '10080', this.cfgSrv.get('auth.jwtSecret'));
     if (isProd()) await this.userSrv.registerDevice(user);
-    await this.userSrv.enableReferrerOps(isUserNew, '', user);
+    await this.userSrv.enableReferrerOps(isUserNew, refCode, user);
 
     // If the user was referred, delete the referrer key.
-    // Also create referral bonus tap for the referred user.
-    if (referrer) {
+    if (referrer && isUserNew) {
       await this.redisSrv.delete(buildReferredKey(body.initDataUnsafe.user.id));
-      await this.tapSrv.createTap({
-        userId: user.id,
-        bonus: true,
-        bonusName: 'referee_bonus',
-        bonusValue: RefereeBonus.toString(),
-      });
     }
 
     return ok().data({ user: user.desensitize(), token }).build();

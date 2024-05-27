@@ -87,7 +87,7 @@ Jump in and start playing TapWar to earn JOIN tokens. Invite your friends and co
 
     // Mark the user as referred by the referrer in redis
     if (getReferrerUser) {
-      await this.redisSrv.set(buildReferredKey(referredTgId), getReferrerUser.address);
+      await this.redisSrv.set(buildReferredKey(referredTgId), `${getReferrerUser.address},${referrerCode}`);
     }
   }
 

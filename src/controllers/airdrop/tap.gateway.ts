@@ -448,7 +448,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       tapCount: tapCount,
       tapIncrement: await this.getTapIncrement(userId),
       rank,
-      isDiscordConnected: !!user.discordId,
+      isDiscordConnected: user.role == Roles.TelegramLinkedUser || !!user.discordId,
       markedTwitterFollow,
       markedTelegramFollow,
       markedWebVisitFollow,

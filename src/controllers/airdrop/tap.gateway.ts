@@ -36,6 +36,7 @@ import {
 import TapService from './tap.service';
 import CacheService from '../../cacher/cache.service';
 import TPS from '../../models/tps';
+import { Roles } from '../../common/roles';
 
 @WebSocketGateway({ namespace: '/v1/taps', pingTimeout: 30000 })
 export default class TapGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -407,7 +408,10 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
     const markedWebVisitFollow = await this.tapSrv.hasMarkedUserFollowQuest(userId, 'webvisit');
 
     const followQuestCompleted =
-      markedTwitterFollow && markedTelegramFollow && markedWebVisitFollow && !!user.discordId;
+      markedTwitterFollow &&
+      markedTelegramFollow &&
+      markedWebVisitFollow &&
+      (user.role == Roles.TelegramLinkedUser || !!user.discordId);
     const followQuestBonus = await this.tapSrv.hasBonusTap(userId, 'follow_quests');
     const followQuestReward = FollowQuestBonus.toString();
 
@@ -795,7 +799,12 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
     const markedTelegramFollow = await this.tapSrv.hasMarkedUserFollowQuest(userId, 'telegram');
     const markedWebVisitFollow = await this.tapSrv.hasMarkedUserFollowQuest(userId, 'webvisit');
 
-    if (!markedTwitterFollow || !markedTelegramFollow || !markedWebVisitFollow || !user.discordId) {
+    if (
+      !markedTwitterFollow ||
+      !markedTelegramFollow ||
+      !markedWebVisitFollow ||
+      (user.role != Roles.TelegramLinkedUser && !user.discordId)
+    ) {
       return { success: false, message: 'Quests not completed' };
     }
 

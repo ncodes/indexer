@@ -79,7 +79,6 @@ export default class User extends BaseModel {
 
   desensitize() {
     delete this.email;
-    delete this.role;
     return this;
   }
 

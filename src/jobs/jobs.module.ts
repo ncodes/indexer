@@ -19,6 +19,8 @@ import { NotificationModule } from './notifications/NotificationModule';
 import ProviderMessagingStatusUpdate from './provider_messaging_status_update/ProviderMessagingStatusUpdate';
 import TapService from '../controllers/airdrop/tap.service';
 import CacheService from '../cacher/cache.service';
+import TapReminder from './tap_reminer/TapReminder';
+import { TGBotService } from '../controllers/tgbot/tgbot.service';
 
 const providers: any[] = [];
 const imports = [
@@ -57,6 +59,10 @@ if (['1', 'true'].includes(process.env.ENABLE_MARKET_META_MANAGER)) {
 
 if (['1', 'true'].includes(process.env.ENABLE_PROVIDER_MSG_STATUS_UPDATE)) {
   providers.push(ProviderMessagingStatusUpdate);
+}
+
+if (['1', 'true'].includes(process.env.ENABLE_TAP_REMINDER)) {
+  providers.push(CacheService, TGBotService, TapReminder, TapService, TGBotService);
 }
 
 @Module({

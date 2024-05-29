@@ -60,8 +60,10 @@ export default () => ({
       battleManagerCron: process.env.BATTLE_MANAGER_CRON,
     },
     tgbot: {
+      enableService: process.env.ENABLE_TGBOT_SERVICE,
       token: process.env.TGBOT_TOKEN,
       tapWarLink: process.env.TGBOT_TAPWAR_LINK,
+      tapReminderInterval: process.env.TAP_REMINDER_INTERVAL,
     },
     redis: {
       url: process.env.REDIS_URL,

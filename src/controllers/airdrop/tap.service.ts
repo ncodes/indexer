@@ -387,6 +387,13 @@ export default class TapService {
   }
 
   /**
+   * Get players
+   */
+  async getPlayers() {
+    return this.redisSrv.sMembers(buildTapPlayerSetKey());
+  }
+
+  /**
    * Get total players for a day
    * @param isoDate The iso date
    */
@@ -515,6 +522,28 @@ export default class TapService {
   hasTPSLogged(userId: string) {
     return this.redisSrv.exist(buildTPSLogTimeKey(userId));
   }
+
+  /**
+   * Set the last time a TapWar reminder was sent
+   * @param userId The user id
+   * @param unixTime The unix time
+   */
+  setLastReminderSentTime(userId: string, unixTime: number) {
+    return this.redisSrv.set(buildLastReminderSentTime(userId), unixTime.toString());
+  }
+
+  /**
+   * Get the last time a TapWar reminder was sent
+   * @param userId The user id
+   */
+  async getLastReminderSentTime(userId: string) {
+    const val = await this.redisSrv.get(buildLastReminderSentTime(userId));
+    return val ? parseInt(val) : 0;
+  }
+}
+
+function buildLastReminderSentTime(userId: string): string {
+  return `tapwar:tap:lastReminderSent:${userId}`;
 }
 
 function buildTPSLogTimeKey(userId: string): string {

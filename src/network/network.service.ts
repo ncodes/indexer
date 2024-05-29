@@ -82,7 +82,7 @@ export default class NetworkService {
 
   /**
    * Get an  ERC20 contract
-   * @para chain The chain name
+   * @param chain The chain name
    * @param address The contract address
    */
   getERC20Contract(chain: ChainNames, address: string): ERC20 {
@@ -111,7 +111,7 @@ export default class NetworkService {
 
   /**
    * Load initial contracts params for a given network
-   * @param network The network name
+   * @param chain The name of the chain
    */
   private async loadInitialContractParams(chain: ChainNames) {
     const key = Meta.makeNetKey(chain, MetaKeys.ContractsParams);

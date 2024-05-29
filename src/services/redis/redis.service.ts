@@ -160,6 +160,14 @@ export class RedisService {
   }
 
   /**
+   * sMembers gets all the members of a set
+   * @param key The name of the set
+   */
+  async sMembers(key: string): Promise<string[]> {
+    return this.client.smembers(key);
+  }
+
+  /**
    * Lock a resource
    * @param resources The resources to lock
    * @param duration The duration to lock the resources for

@@ -1,10 +1,11 @@
 import { ConfigService } from '@nestjs/config';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { Bot, GrammyError, HttpError } from 'grammy';
+import { Bot, GrammyError, HttpError, RawApi } from 'grammy';
 import { Menu } from '@grammyjs/menu';
 import User from '../../models/user';
 import { isProd } from '../../common/common';
 import { RedisService } from '../../services/redis/redis.service';
+import { Other } from 'grammy/out/core/api';
 
 @Injectable()
 export class TGBotService implements OnModuleInit {
@@ -23,7 +24,7 @@ export class TGBotService implements OnModuleInit {
   async initService() {
     await this.bot.api.setMyCommands([{ command: 'start', description: 'Start the bot' }], {});
 
-    const menu = this.createMenu();
+    const menu = this.createMenus();
 
     // Handle start command
     this.handleStart(menu);
@@ -31,10 +32,22 @@ export class TGBotService implements OnModuleInit {
     // Handle errors
     this.handleErrors();
 
-    void this.bot.start();
+    if (['1', 'true'].includes(this.cfgSrv.get('app.tgbot.enableService'))) {
+      void this.bot.start();
+    }
   }
 
-  createMenu() {
+  /**
+   * Send a message to a chat
+   * @param chatId The chat ID
+   * @param msg The message to send
+   * @param others Other options
+   */
+  async sendMessage(chatId: number, msg: string, others?: Other<RawApi, 'sendMessage', 'text' | 'chat_id'>) {
+    return this.bot.api.sendMessage(chatId, msg, others);
+  }
+
+  createMenus() {
     const menu = new Menu('main')
       .webApp('🕹️ Play Game', this.cfgSrv.get('app.tgbot.tapWarLink'))
       .row()

@@ -57,17 +57,21 @@ export default class TapReminder extends Base {
         const user = await this.cacheSrv.getUserByUserId(userId);
         if (!user || !user.telegramBotChatId) continue;
 
-        await this.tgBotSrv.sendMessage(
-          user.telegramBotChatId,
-          `Hey Warrior! It's time to tap again! 💪.
+        try {
+          await this.tgBotSrv.sendMessage(
+            user.telegramBotChatId,
+            `Hey Warrior! It's time to tap again! 💪.
 The battle is still on and all your comrades are waiting for you to tap.
 Let's go! 🚀`,
-          { reply_markup: new InlineKeyboard().webApp('🕹️Play', this.cfgSrv.get('app.tgbot.tapWarLink')) },
-        );
-
-        this.logger.log(`Sent Tap reminder to user ${userId}`);
+            { reply_markup: new InlineKeyboard().webApp('🕹️Play', this.cfgSrv.get('app.tgbot.tapWarLink')) },
+          );
+        } catch (e) {
+          this.logger.error(`Failed to send Tap reminder to user ${userId}`, e);
+        }
 
         await this.tapSrv.setLastReminderSentTime(userId, moment().unix());
+
+        this.logger.log(`Sent Tap reminder to user ${userId}`);
       }
     } catch (e) {
       this.logger.error(e.message);

@@ -12,5 +12,6 @@ import TapService from './tap.service';
   imports: [],
   controllers: [AirdropController],
   providers: [TwitterService, DiscordService, AirdropService, TapGateway, RedisService, TapService, CacheService],
+  exports: [TapService, RedisService],
 })
 export class AirdropModule {}

@@ -46,7 +46,14 @@ export default class TapService {
    */
   async createTapSpend(data: Partial<TapSpend>) {
     if (!data.createdAt) data.createdAt = moment().toISOString();
-    await this.redisSrv.rPush(buildTapSpendListKey(data.userId), JSON.stringify(data));
+    await this.redisSrv.rPush(
+      buildTapSpendListKey(data.userId),
+      JSON.stringify({
+        createdAt: data.createdAt,
+        amount: data.amount,
+        type: data.type,
+      }),
+    );
     return data;
   }
 
@@ -100,10 +107,18 @@ export default class TapService {
   /**
    * Get tap spends of a user
    * @param userId The user id
+   * @param type The spend type
    */
-  async getTapSpends(userId: string): Promise<Partial<TapSpend>[]> {
+  async getTapSpends(userId: string, type?: string): Promise<Partial<TapSpend>[]> {
     const spends = await this.redisSrv.lRange(buildTapSpendListKey(userId), 0, -1);
-    const tapSpends = spends.map((s) => JSON.parse(s) as Partial<TapSpend>);
+
+    let tapSpends = spends.map((s) => {
+      const spend = JSON.parse(s) as Partial<TapSpend>;
+      return type && spend.type !== type ? null : spend;
+    });
+
+    tapSpends = tapSpends.filter((s) => s !== null) as Partial<TapSpend>[];
+
     return tapSpends.sort((a, b) => {
       return moment(a.createdAt).diff(moment(b.createdAt));
     });
@@ -115,7 +130,7 @@ export default class TapService {
    * @param type The spend type
    */
   async getLastTapSpend(userId: string, type: string): Promise<Partial<TapSpend> | null> {
-    const spends = await this.getTapSpends(userId);
+    const spends = await this.getTapSpends(userId, type);
     if (spends.length === 0) return null;
     const spend = spends[spends.length - 1];
     if (type && spend.type !== type) return null;
@@ -304,7 +319,12 @@ export default class TapService {
     if (!tap.createdAt) tap.createdAt = moment().toISOString();
 
     if (!tap.bonus) {
-      await this.redisSrv.rPush(buildTapKey(tap.userId), JSON.stringify(tap));
+      await this.redisSrv.rPush(
+        buildTapKey(tap.userId),
+        JSON.stringify({
+          createdAt: tap.createdAt,
+        }),
+      );
       await this.redisSrv.incrBy(buildTotalTapsKey(), 1);
       await this.redisSrv.incrBy(buildTotalNonBonusTapsKey(), 1);
       const now = moment(tap.createdAt);

@@ -6,8 +6,8 @@ import TapService from '../../controllers/airdrop/tap.service';
 import * as moment from 'moment';
 import CacheService from '../../cacher/cache.service';
 import { TGBotService } from '../../controllers/tgbot/tgbot.service';
-import { Menu } from '@grammyjs/menu';
-import { InlineKeyboard } from 'grammy';
+// import { Menu } from '@grammyjs/menu';
+// import { InlineKeyboard } from 'grammy';
 
 /**
  * BattleManager manages daily battle progress and calculations
@@ -58,13 +58,13 @@ export default class TapReminder extends Base {
         if (!user || !user.telegramBotChatId) continue;
 
         try {
-          await this.tgBotSrv.sendMessage(
-            user.telegramBotChatId,
-            `Hey Warrior! It's time to tap again! 💪.
-The battle is still on and all your comrades are waiting for you to tap.
-Let's go! 🚀`,
-            { reply_markup: new InlineKeyboard().webApp('🕹️Play', this.cfgSrv.get('app.tgbot.tapWarLink')) },
-          );
+          //           await this.tgBotSrv.sendMessage(
+          //             user.telegramBotChatId,
+          //             `Hey Warrior! It's time to tap again! 💪.
+          // The battle is still on and all your comrades are waiting for you to tap.
+          // Let's go! 🚀`,
+          //             { reply_markup: new InlineKeyboard().webApp('🕹️Play', this.cfgSrv.get('app.tgbot.tapWarLink')) },
+          //           );
         } catch (e) {
           this.logger.error(`Failed to send Tap reminder to user ${userId}`, e);
         }

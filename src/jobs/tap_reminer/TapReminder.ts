@@ -65,13 +65,12 @@ export default class TapReminder extends Base {
           // Let's go! 🚀`,
           //             { reply_markup: new InlineKeyboard().webApp('🕹️Play', this.cfgSrv.get('app.tgbot.tapWarLink')) },
           //           );
+          this.logger.log(`Sent Tap reminder to user ${userId}`);
         } catch (e) {
           this.logger.error(`Failed to send Tap reminder to user ${userId}`, e);
         }
 
         await this.tapSrv.setLastReminderSentTime(userId, moment().unix());
-
-        this.logger.log(`Sent Tap reminder to user ${userId}`);
       }
     } catch (e) {
       this.logger.error(e.message);

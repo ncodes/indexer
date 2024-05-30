@@ -63,7 +63,7 @@ if (['1', 'true'].includes(process.env.ENABLE_PROVIDER_MSG_STATUS_UPDATE)) {
 
 if (['1', 'true'].includes(process.env.ENABLE_TAP_REMINDER)) {
   imports.push(TGBotModule);
-  providers.push(CacheService, TapReminder);
+  providers.push(CacheService, RedisService, TapReminder);
 }
 
 @Module({

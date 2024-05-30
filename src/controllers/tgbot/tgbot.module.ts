@@ -12,5 +12,6 @@ import { UsersModule } from '../users/users.module';
   imports: [RedisModule, UsersModule],
   controllers: [TGBotController],
   providers: [ConfigService, TGBotService, RedisService, CacheService, TapService],
+  exports: [TGBotService, TapService],
 })
 export class TGBotModule {}

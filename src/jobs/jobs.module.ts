@@ -20,8 +20,7 @@ import ProviderMessagingStatusUpdate from './provider_messaging_status_update/Pr
 import TapService from '../controllers/airdrop/tap.service';
 import CacheService from '../cacher/cache.service';
 import TapReminder from './tap_reminer/TapReminder';
-import { TGBotService } from '../controllers/tgbot/tgbot.service';
-import { AirdropModule } from '../controllers/airdrop/airdrop.module';
+import { TGBotModule } from '../controllers/tgbot/tgbot.module';
 
 const providers: any[] = [];
 const imports = [
@@ -63,8 +62,8 @@ if (['1', 'true'].includes(process.env.ENABLE_PROVIDER_MSG_STATUS_UPDATE)) {
 }
 
 if (['1', 'true'].includes(process.env.ENABLE_TAP_REMINDER)) {
-  imports.push(AirdropModule);
-  providers.push(CacheService, TGBotService, TapReminder);
+  imports.push(TGBotModule);
+  providers.push(CacheService, TapReminder);
 }
 
 @Module({

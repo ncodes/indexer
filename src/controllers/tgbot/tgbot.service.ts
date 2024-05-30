@@ -18,6 +18,7 @@ export class TGBotService implements OnModuleInit {
 
   async onModuleInit() {
     this.logger.log('TGBotService initialized');
+
     void this.initService();
   }
 
@@ -32,9 +33,18 @@ export class TGBotService implements OnModuleInit {
     // Handle errors
     this.handleErrors();
 
-    if (['1', 'true'].includes(this.cfgSrv.get('app.tgbot.enableService'))) {
-      void this.bot.start();
-    }
+    // Run after some time to allow any previous deployment still running to finish.
+    // Otherwise, an error is thrown when trying to start the bot.
+    setTimeout(() => {
+      try {
+        if (['1', 'true'].includes(this.cfgSrv.get('app.tgbot.enableService'))) {
+          this.logger.log('Starting bot service');
+          void this.bot.start();
+        }
+      } catch (e) {
+        this.logger.error('failed to start bot service', e);
+      }
+    }, 10000);
   }
 
   /**

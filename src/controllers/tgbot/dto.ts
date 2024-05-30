@@ -35,7 +35,12 @@ class InitDataUnsafeDTO {
   @IsNotEmpty({ message: makeValidatorMsg('query_id is required', 'initDataUnsafe.query_id') })
   query_id: string;
 
-  @IsNotEmpty({ message: makeValidatorMsg('user is required', 'initDataUnsafe.user') })
+  @IsNotEmpty({
+    message: makeValidatorMsg(
+      'user is required. Make sure your Telegram account has a username set.',
+      'initDataUnsafe.user',
+    ),
+  })
   @ValidateNested()
   @Type(() => UserDataDTO)
   user: UserDataDTO;

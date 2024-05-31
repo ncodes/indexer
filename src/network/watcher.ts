@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { Interface, Log, Provider, ZeroAddress } from 'ethers';
-import { delay, isEqualStr } from '../common/common';
+import { delay, isEqualStr, isProd } from '../common/common';
 import Meta from '../models/meta';
 import { ContractCallEvent } from './common';
 import { Handler } from './handler';
@@ -20,6 +20,7 @@ export class Watcher {
    * @param network The network name
    * @param provider The network provider
    * @param processor The processor object
+   * @param batchSize The amount of events to process per time
    */
   constructor(
     public name: string,
@@ -35,7 +36,7 @@ export class Watcher {
    */
   async add(...handlers: Handler[]) {
     this.handlers = handlers;
-    this.sync();
+    void this.sync();
     this.processPendingBlocks();
   }
 
@@ -205,11 +206,15 @@ export class Watcher {
         // Sort pending blocks in ascending order
         this.pendingBlocks.push(curBlock);
         this.pendingBlocks.sort();
+
+        // Wait for provider to have indexed the block, otherwise
+        // they may not return events for the blocks.
+        if (isProd()) await delay(1000);
       } catch (e) {
         this.logError('Error:watchBlock: ', e);
-        this.provider.off('block', listener);
+        void this.provider.off('block', listener);
         this.logError('Attempt to restarting sync after watchBlock error');
-        this.sync();
+        void this.sync();
       }
     };
 
@@ -257,13 +262,13 @@ export class Watcher {
       await Meta.update(key, endBlock.toString());
 
       this.isSyncing = false;
-      this.sync();
+      void this.sync();
     } catch (e) {
       this.logError(`Error:sync(): ` + e.message, e.stack);
       this.logInfo('Attempt to restarting sync() after sync error');
       this.isSyncing = false;
       await delay(5000);
-      this.sync();
+      void this.sync();
     }
   }
 }

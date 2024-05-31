@@ -321,6 +321,7 @@ export default class TapService {
     if (!tap.bonus) {
       await this.redisSrv.incrBy(buildTotalTapsKey(), 1);
       await this.redisSrv.incrBy(buildTotalNonBonusTapsKey(), 1);
+      await this.redisSrv.incrBy(buildUserTotalNonBonusTapsKey(tap.userId), 1);
       const now = moment(tap.createdAt);
       await this.redisSrv.zAdd(buildUserTapTimeKey(tap.userId), now.valueOf(), now.valueOf().toString());
     }
@@ -416,7 +417,7 @@ export default class TapService {
    */
   async getTotalNonBonusTaps(userId: string): Promise<string> {
     const oldScore = await this.redisSrv.lLen(buildTapKey(userId));
-    const newScore = toDec((await this.redisSrv.get(buildTotalNonBonusTapsKey())) || '0');
+    const newScore = toDec((await this.redisSrv.get(buildUserTotalNonBonusTapsKey(userId))) || '0');
     return toDec(oldScore).add(newScore).toFixed(0);
   }
 
@@ -643,6 +644,10 @@ function buildTotalTapsKey(): string {
 
 function buildTotalNonBonusTapsKey(): string {
   return `tapwar:tap:total:nonBonus`;
+}
+
+function buildUserTotalNonBonusTapsKey(userId: string): string {
+  return `tapwar:tap:user:total:nonBonus:${userId}`;
 }
 
 function buildUserBattleSideKey(userId: string, battleId: string) {

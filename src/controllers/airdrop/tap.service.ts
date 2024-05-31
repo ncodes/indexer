@@ -319,12 +319,6 @@ export default class TapService {
     if (!tap.createdAt) tap.createdAt = moment().toISOString();
 
     if (!tap.bonus) {
-      await this.redisSrv.rPush(
-        buildTapKey(tap.userId),
-        JSON.stringify({
-          createdAt: tap.createdAt,
-        }),
-      );
       await this.redisSrv.incrBy(buildTotalTapsKey(), 1);
       await this.redisSrv.incrBy(buildTotalNonBonusTapsKey(), 1);
       const now = moment(tap.createdAt);
@@ -420,8 +414,10 @@ export default class TapService {
    * Get the total taps of a user that are not bonus
    * @param userId The user id
    */
-  getTotalNonBonusTaps(userId: string): Promise<number> {
-    return this.redisSrv.lLen(buildTapKey(userId));
+  async getTotalNonBonusTaps(userId: string): Promise<string> {
+    const oldScore = await this.redisSrv.lLen(buildTapKey(userId));
+    const newScore = toDec((await this.redisSrv.get(buildTotalNonBonusTapsKey())) || '0');
+    return toDec(oldScore).add(newScore).toFixed(0);
   }
 
   /**

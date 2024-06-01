@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { Interface, Log, Provider, ZeroAddress } from 'ethers';
-import { delay, isEqualStr, isProd } from '../common/common';
+import { delay, isEqualStr } from '../common/common';
 import Meta from '../models/meta';
 import { ContractCallEvent } from './common';
 import { Handler } from './handler';
@@ -188,7 +188,7 @@ export class Watcher {
       } finally {
         this.processingPendingBlocks = false;
       }
-    }, 10);
+    }, 5000);
   }
 
   /**
@@ -206,10 +206,6 @@ export class Watcher {
         // Sort pending blocks in ascending order
         this.pendingBlocks.push(curBlock);
         this.pendingBlocks.sort();
-
-        // Wait for provider to have indexed the block, otherwise
-        // they may not return events for the blocks.
-        if (isProd()) await delay(1000);
       } catch (e) {
         this.logError('Error:watchBlock: ', e);
         void this.provider.off('block', listener);

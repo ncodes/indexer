@@ -64,6 +64,7 @@ export default () => ({
       token: process.env.TGBOT_TOKEN,
       tapWarLink: process.env.TGBOT_TAPWAR_LINK,
       tapReminderInterval: process.env.TAP_REMINDER_INTERVAL,
+      maxTPS: process.env.TAP_MAX_TPS,
     },
     redis: {
       url: process.env.REDIS_URL,

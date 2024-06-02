@@ -537,6 +537,28 @@ export default class TapService {
     const val = await this.redisSrv.get(buildLastReminderSentTime(userId));
     return val ? parseInt(val) : 0;
   }
+
+  /**
+   * Mark a user's tap delay
+   * @param userId The user id
+   * @param delay The delay in seconds
+   */
+  markUserTapDelay(userId: string, delay: number) {
+    const delayTill = moment().add(delay, 'seconds');
+    return this.redisSrv.setEx(buildUserTapDelayKey(userId), delayTill.unix().toString(), delay);
+  }
+
+  /**
+   * Get the user's tap delay end time
+   * @param userId The user id
+   */
+  getUserTapDelayEndTime(userId: string) {
+    return this.redisSrv.get(buildUserTapDelayKey(userId));
+  }
+}
+
+function buildUserTapDelayKey(userId: string): string {
+  return `tapwar:tap:delay:${userId}`;
 }
 
 function buildLastReminderSentTime(userId: string): string {

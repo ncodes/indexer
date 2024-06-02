@@ -43,7 +43,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
   @WebSocketServer() server: Server;
   logger = new Logger(TapGateway.name);
 
-  constructor(private cfg: ConfigService, private tapSrv: TapService, private cacheSrv: CacheService) {}
+  constructor(private cfgSrv: ConfigService, private tapSrv: TapService, private cacheSrv: CacheService) {}
 
   /**
    * Called when a new connection is made.
@@ -88,7 +88,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       this.logger.error(authErr);
     } else {
       try {
-        const session = await checkToken(this.cfg, token);
+        const session = await checkToken(this.cfgSrv, token);
         if (!session) {
           client.disconnect(true);
           this.logger.error(authErr);
@@ -142,6 +142,23 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
     const userId = await this.tapSrv.getClientUserId(socket.id);
     if (!userId) {
       return { success: false, message: 'Not authenticated' };
+    }
+
+    // Ensure user is not currently blocked
+    const delayEndAt = await this.tapSrv.getUserTapDelayEndTime(userId);
+    if (delayEndAt) {
+      const activeIn = moment.unix(parseInt(delayEndAt)).diff(moment(), 's');
+      return { success: false, message: `Temporary block. Expires in ${activeIn}s` };
+    }
+
+    // Ensure user is not tapping too fast.
+    // If yes, block the user for a short period
+    const tps = await this.tapSrv.getUserTapsPerPeriod(userId, 1);
+    const maxTps = parseInt(this.cfgSrv.get('app.tgbot.maxTPS'));
+    if (tps > maxTps) {
+      const blockDur = 60;
+      await this.tapSrv.markUserTapDelay(userId, blockDur);
+      return { success: false, message: `You are tapping too fast. Blocked for ${blockDur}s` };
     }
 
     const user = await this.cacheSrv.getUserByUserId(userId);
@@ -930,8 +947,8 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
     if (!user) return '0';
 
     const totalMultipliers = await Swap.getTotalAmountByMarketProviderTaker(
-      this.cfg.get('app.tapoff.multiplierMarket'),
-      this.cfg.get('app.tapoff.multiplierProvider'),
+      this.cfgSrv.get('app.tapoff.multiplierMarket'),
+      this.cfgSrv.get('app.tapoff.multiplierProvider'),
       user.address,
     );
 

@@ -557,7 +557,7 @@ export default class TapService {
 }
 
 function buildUserTapDelayKey(userId: string): string {
-  return `tapwar:tap:delay:${userId}`;
+  return `tapwar:tap:delay2:${userId}`;
 }
 
 function buildLastReminderSentTime(userId: string): string {

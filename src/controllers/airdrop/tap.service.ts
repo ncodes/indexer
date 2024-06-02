@@ -313,9 +313,9 @@ export default class TapService {
   /**
    * Create a tap
    * @param tap The tap object
-   * @param ignoreActivePlayerUpdate Whether to ignore updating the active players
+   * @param isTapSet Whether the tap is part of a set
    */
-  async createTap(tap: Partial<Tap>, ignoreActivePlayerUpdate = false) {
+  async createTap(tap: Partial<Tap>, isTapSet = false) {
     if (!tap.createdAt) tap.createdAt = moment().toISOString();
 
     if (!tap.bonus) {
@@ -323,7 +323,10 @@ export default class TapService {
       await this.redisSrv.incrBy(buildTotalNonBonusTapsKey(), 1);
       await this.redisSrv.incrBy(buildUserTotalNonBonusTapsKey(tap.userId), 1);
       const now = moment(tap.createdAt);
-      await this.redisSrv.zAdd(buildUserTapTimeKey(tap.userId), now.valueOf(), randStr(10));
+
+      if (!isTapSet) {
+        await this.redisSrv.zAdd(buildUserTapTimeKey(tap.userId), now.valueOf(), randStr(10));
+      }
     }
 
     if (tap.bonus) {
@@ -344,7 +347,7 @@ export default class TapService {
     await this.redisSrv.sAdd(buildTapPlayerCurrentDaySetKey(currentStartOfDay), tap.userId);
 
     // Update the active players
-    if (ignoreActivePlayerUpdate) return;
+    if (isTapSet) return;
     const activePlayer = await this.redisSrv.get(buildActivePlayerKey(tap.userId));
     if (!activePlayer) {
       await this.redisSrv.setEx(buildActivePlayerKey(tap.userId), '1', 60);
@@ -557,7 +560,7 @@ export default class TapService {
 }
 
 function buildUserTapDelayKey(userId: string): string {
-  return `tapwar:tap:delay2:${userId}`;
+  return `tapwar:tap:delay3:${userId}`;
 }
 
 function buildLastReminderSentTime(userId: string): string {

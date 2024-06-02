@@ -153,10 +153,11 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
 
     // Ensure user is not tapping too fast.
     // If yes, block the user for a short period
-    const tps = await this.tapSrv.getUserTapsPerPeriod(userId, 1);
+    const now = moment();
+    const tpm = await this.tapSrv.getUserTapsPerPeriod(userId, now.valueOf(), now.clone().subtract(60, 's').valueOf());
     const maxTps = parseInt(this.cfgSrv.get('app.tgbot.maxTPS'));
-    if (tps > maxTps) {
-      const blockDur = 60;
+    if (tpm > maxTps * 60) {
+      const blockDur = Math.round(60 * (tpm / maxTps));
       await this.tapSrv.markUserTapDelay(userId, blockDur);
       return { success: false, message: `You are tapping too fast. Blocked for ${blockDur}s` };
     }
@@ -191,7 +192,6 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
     const userBattleSide = await this.tapSrv.getUserBattleSide(userId, curBattleId);
 
     // Create a tap record
-    const now = moment();
     for (let i = 0; i < tapIncrement; i++) {
       void this.tapSrv.createTap(
         {
@@ -228,7 +228,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
     void this.updateBattleState(user.id, curBattleId, userBattleSide);
 
     // Log TPS
-    this.tapSrv.getUserTapsPerPeriod(userId, 60).then((count) => {
+    this.tapSrv.getUserTapsPerPeriod(userId, now.valueOf(), now.clone().subtract(60, 's').valueOf()).then((count) => {
       this.logTPS(userId, Math.round(count / 60));
     });
 

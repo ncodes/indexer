@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { RedisService } from '../../services/redis/redis.service';
 import CacheService from '../../cacher/cache.service';
-import { toDec } from '../../common/common';
+import { randStr, sha1, toDec } from '../../common/common';
 import * as moment from 'moment';
 import Tap from '../../models/tap';
 import TapSpend from '../../models/tap_spend';
@@ -323,7 +323,7 @@ export default class TapService {
       await this.redisSrv.incrBy(buildTotalNonBonusTapsKey(), 1);
       await this.redisSrv.incrBy(buildUserTotalNonBonusTapsKey(tap.userId), 1);
       const now = moment(tap.createdAt);
-      await this.redisSrv.zAdd(buildUserTapTimeKey(tap.userId), now.valueOf(), now.valueOf().toString());
+      await this.redisSrv.zAdd(buildUserTapTimeKey(tap.userId), now.valueOf(), randStr(10));
     }
 
     if (tap.bonus) {
@@ -365,12 +365,11 @@ export default class TapService {
   /**
    * Get user taps per period
    * @param userId The user id
-   * @param period The period in seconds
+   * @param startPeriod The start period in milliseconds
+   * @param endPeriod The end period in milliseconds
    */
-  async getUserTapsPerPeriod(userId: string, period: number) {
-    const now = moment();
-    const periodAgo = now.clone().subtract(period, 'seconds').valueOf();
-    const taps = await this.redisSrv.zRevRangeByScore(buildUserTapTimeKey(userId), now.valueOf(), periodAgo);
+  async getUserTapsPerPeriod(userId: string, startPeriod: number, endPeriod: number) {
+    const taps = await this.redisSrv.zRevRangeByScore(buildUserTapTimeKey(userId), startPeriod, endPeriod);
     return taps.length;
   }
 

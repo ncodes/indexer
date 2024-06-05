@@ -253,7 +253,7 @@ describe('UserService', () => {
     });
   });
 
-  describe('.enableReferrer', () => {
+  describe('.enableReferrerOps', () => {
     it(`should return false when user already has a ref code`, async () => {
       const referrer = '0xReferrer';
       const u = await User.create({ address: user, refCode: '12345' });

@@ -172,11 +172,19 @@ export class UserService {
     return transaction(User, Tap, async (User, Tap) => {
       if (user.refCode) return false;
 
+      // Generate a new unique referrer code
+      let newRefCode = '';
+      while (true) {
+        newRefCode = randStr(5).toLowerCase();
+        const isRefCodeExists = await User.getByRefCode(newRefCode);
+        if (!isRefCodeExists) break;
+      }
+
       const referrer = referrerRefCode ? await User.getByRefCode(referrerRefCode) : undefined;
       const upd = await User.updateById(
         user.id,
         {
-          refCode: randStr(5).toLowerCase(),
+          refCode: newRefCode,
           referrer: isNewUser && referrer ? referrer.address : null,
         },
         this.cacheSrv.cacheUser.bind(this.cacheSrv),

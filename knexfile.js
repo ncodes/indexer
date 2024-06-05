@@ -30,7 +30,8 @@ module.exports = {
     },
     pool: {
       min: 0,
-      max: 7,
+      max: 60,
+      idleTimeoutMillis: 600000,
     },
   },
 };

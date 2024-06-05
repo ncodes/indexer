@@ -77,8 +77,18 @@ export class RedisService {
    * @param start The minimum score
    * @param stop The maximum score
    */
-  async zRevRangeByScore(key: string, start: number, stop: number) {
+  async zRevRangeByScore(key: string, start: number | string, stop: number | string) {
     return this.client.zrevrangebyscore(key, start, stop);
+  }
+
+  /**
+   * zRemRangeByScore removes a range of members from a sorted set
+   * @param key The name of the sorted set
+   * @param start The minimum score
+   * @param stop The maximum score
+   */
+  async zRemRangeByScore(key: string, start: number | string, stop: number | string) {
+    return this.client.zremrangebyscore(key, start, stop);
   }
 
   /**

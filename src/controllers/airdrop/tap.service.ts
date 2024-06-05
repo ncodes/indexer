@@ -377,6 +377,15 @@ export default class TapService {
   }
 
   /**
+   * Delete taps of a user up to a time
+   * @param userId The user id
+   * @param uptoMs The time in milliseconds
+   */
+  async deleteTapTimeUpto(userId: string, uptoMs: number) {
+    return this.redisSrv.zRemRangeByScore(buildUserTapTimeKey(userId), 0, uptoMs);
+  }
+
+  /**
    * Get total players
    */
   async getTotalUniquePlayers() {

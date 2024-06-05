@@ -232,6 +232,8 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       this.logTPS(userId, Math.round(count / 60));
     });
 
+    void this.cleanUser(userId);
+
     const tapCount = await this.tapSrv.getTapCount(userId);
     return {
       success: true,
@@ -240,6 +242,12 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       tapCount,
       tapIncrement,
     };
+  }
+
+  async cleanUser(userId: string) {
+    // Delete >1 days old tap times
+    const oldTime = moment().subtract('1', 'days').valueOf();
+    return this.tapSrv.deleteTapTimeUpto(userId, oldTime);
   }
 
   async logTPS(userId: string, tps: number) {

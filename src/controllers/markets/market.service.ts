@@ -44,7 +44,7 @@ export class MarketService {
           quoteInfo = await this.metadataSrv.getTokenInfo(net, quoteAddress);
           mkt.lowestPriceUsd = await this.metadataSrv.tryToUsd(net, lowestPrice, quoteAddress, quoteInfo);
         } catch (e) {
-          this.logger.error('failed to fetch token info: ' + quoteAddress);
+          this.logger.debug('failed to fetch token info: ' + quoteAddress);
         }
       }
 
@@ -84,7 +84,7 @@ export class MarketService {
           baseInfo = await this.metadataSrv.getTokenInfo(net, baseAddress);
           mkt.amountSwappedUsd = await this.metadataSrv.tryToUsd(net, mkt.amountSwapped, mkt.baseAddress, baseInfo);
         } catch (e) {
-          this.logger.error('failed to fetch token info: ' + quoteAddress);
+          this.logger.debug('failed to fetch token info: ' + quoteAddress);
         }
       }
 
@@ -94,7 +94,7 @@ export class MarketService {
           baseInfo = await this.metadataSrv.getTokenInfo(net, baseAddress);
           mkt.totalLiquidityUsd = await this.metadataSrv.tryToUsd(net, totalLiquidity, baseAddress, baseInfo);
         } catch (e) {
-          this.logger.error('failed to fetch token info: ' + baseAddress);
+          this.logger.debug('failed to fetch token info: ' + baseAddress);
         }
       }
 

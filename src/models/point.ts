@@ -273,17 +273,15 @@ export default class Point extends BaseModel {
    * @param txn Optional transaction object
    * @returns
    */
-  static getRankByAddress(address: string, txn?: Transaction) {
-    return this.query(txn)
+  static async getRankByAddress(address: string, txn?: Transaction) {
+    const res = await this.query(txn)
       .select('address')
       .sum('point as totalPoints')
       .whereNotDeleted()
       .groupBy('address')
-      .orderBy('totalPoints', 'desc')
-      .then((res: any) => {
-        const rank = res.findIndex((r) => isEqualStr(r.address, address));
-        return rank + 1;
-      });
+      .orderBy('totalPoints', 'desc');
+    const rank = res.findIndex((r) => isEqualStr(r.address, address));
+    return rank + 1;
   }
 
   // Get total points of address

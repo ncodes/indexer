@@ -41,6 +41,7 @@ export default class User extends BaseModel {
   // Not persisted
   totalUnclaimedAlloc: string;
   points: number;
+  rank: number;
   pointsAllocs: number;
   pointsAllocsClaimed: boolean;
   totalSwaps: number;

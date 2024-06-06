@@ -104,6 +104,7 @@ export class UserService {
 
       // Points allocation information
       user.points = parseInt(await Point.getTotalPointsByAddress(user.address));
+      user.rank = await Point.getRankByAddress(user.address);
       user.pointsAllocs = 0; // TODO: use proper calculation
       user.pointsAllocsClaimed = !!(await Allocation.getByName(`points:${user.address}`));
 

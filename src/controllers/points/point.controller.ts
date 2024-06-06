@@ -27,7 +27,7 @@ export class PointController {
    * @param [query.limit] The limit of addresses to get
    * @returns
    */
-  @Get('/leaderboard')
+  // @Get('/leaderboard')
   async getLeaderboard(@Query(new ValidationPipe(CommonValidationPipeOpt)) query: GetLeaderboardDTO) {
     const result = await Point.getTopAddresses(parseInt(query.limit) || 100, query.address);
     const countAddresses = await Point.countDistinctAddresses(query.address);

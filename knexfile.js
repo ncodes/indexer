@@ -29,8 +29,8 @@ module.exports = {
       tableName: 'knex_migrations',
     },
     pool: {
-      min: 10,
-      max: 50,
+      min: 0,
+      max: process.env.DB_POOL_MAX || 50,
       acquireTimeoutMillis: 300000,
       createTimeoutMillis: 300000,
       destroyTimeoutMillis: 300000,

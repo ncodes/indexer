@@ -18,8 +18,7 @@ export default class MarketMetaManager extends Base {
     this.schedule();
   }
 
-  // Every 10 seconds
-  @Cron('*/60 * * * * *')
+  @Cron(process.env.MARKET_MGR_CRON)
   schedule() {
     this.process().catch((e) => this.logger.error(e.message || 'failed to get exchange rate'));
   }

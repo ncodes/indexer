@@ -237,8 +237,6 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
 
     const tapCount = await this.tapSrv.getTapCount(userId);
 
-    console.log('TAP_DUR', moment().diff(now, 'ms'), 'ms');
-
     return {
       success: true,
       overheatLvl: newOverheatLvl,
@@ -345,8 +343,6 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
         return { success: false, message: 'Tap cooldown required' };
       }
     }
-
-    console.log('PING_DUR', moment().diff(now, 'ms'), 'ms');
 
     return {
       success: true,
@@ -472,8 +468,6 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       totalPlayersLast24h: (await this.tapSrv.getTotalUniquePlayersForDay(startOfDay)).toString(),
       totalPlayersLast1min: await this.tapSrv.getActivePlayersInLastMinute(),
     };
-
-    console.log('INFO_DUR', moment().diff(now, 'ms'), 'ms');
 
     return {
       success: true,

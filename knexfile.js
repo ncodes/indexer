@@ -30,7 +30,7 @@ module.exports = {
     },
     pool: {
       min: 0,
-      max: process.env.DB_POOL_MAX || 50,
+      max: process.env.DB_POOL_MAX ? parseInt(process.env.DB_POOL_MAX) : 5,
       acquireTimeoutMillis: 300000,
       createTimeoutMillis: 300000,
       destroyTimeoutMillis: 300000,

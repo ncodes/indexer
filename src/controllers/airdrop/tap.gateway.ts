@@ -139,6 +139,8 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    */
   @SubscribeMessage('tap')
   async handleTap(@ConnectedSocket() socket: Socket) {
+    const now = moment();
+
     const userId = await this.tapSrv.getClientUserId(socket.id);
     if (!userId) {
       return { success: false, message: 'Not authenticated' };
@@ -153,7 +155,6 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
 
     // Ensure user is not tapping too fast.
     // If yes, block the user for a short period
-    const now = moment();
     const tpm = await this.tapSrv.getUserTapsPerPeriod(userId, now.valueOf(), now.clone().subtract(60, 's').valueOf());
     const maxTps = parseInt(this.cfgSrv.get('app.tgbot.maxTPS'));
     if (tpm > maxTps * 60) {
@@ -235,6 +236,9 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
     void this.cleanUser(userId);
 
     const tapCount = await this.tapSrv.getTapCount(userId);
+
+    console.log('TAP_DUR', moment().diff(now, 's'));
+
     return {
       success: true,
       overheatLvl: newOverheatLvl,
@@ -282,12 +286,12 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    */
   @SubscribeMessage('ping')
   async handleOverheatPing(@ConnectedSocket() socket: Socket) {
+    const now = moment();
+
     const userId = await this.tapSrv.getClientUserId(socket.id);
     if (!userId) {
       return { success: false, message: 'Not authenticated' };
     }
-
-    const now = moment();
 
     // Make sure at least 1 second has passed since the last ping time
     const lastPingAt = await this.tapSrv.getLastPingUpdateTime(userId);
@@ -342,6 +346,8 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       }
     }
 
+    console.log('PING_DUR', moment().diff(now, 's'));
+
     return {
       success: true,
       lastTapAt: parseInt(lastTapAt),
@@ -379,6 +385,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       return { success: false, message: 'Not authenticated' };
     }
 
+    const now = moment();
     const user = await this.cacheSrv.getUserByUserId(userId);
 
     // General info
@@ -465,6 +472,8 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       totalPlayersLast24h: (await this.tapSrv.getTotalUniquePlayersForDay(startOfDay)).toString(),
       totalPlayersLast1min: await this.tapSrv.getActivePlayersInLastMinute(),
     };
+
+    console.log('INFO_DUR', moment().diff(now, 's'));
 
     return {
       success: true,

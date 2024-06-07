@@ -237,7 +237,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
 
     const tapCount = await this.tapSrv.getTapCount(userId);
 
-    console.log('TAP_DUR', moment().diff(now, 's'));
+    console.log('TAP_DUR', moment().diff(now, 'ms'), 'ms');
 
     return {
       success: true,
@@ -346,7 +346,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       }
     }
 
-    console.log('PING_DUR', moment().diff(now, 's'));
+    console.log('PING_DUR', moment().diff(now, 'ms'), 'ms');
 
     return {
       success: true,
@@ -473,7 +473,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
       totalPlayersLast1min: await this.tapSrv.getActivePlayersInLastMinute(),
     };
 
-    console.log('INFO_DUR', moment().diff(now, 's'));
+    console.log('INFO_DUR', moment().diff(now, 'ms'), 'ms');
 
     return {
       success: true,

@@ -74,14 +74,4 @@ export default class ChainEvent extends BaseModel {
       return Promise.reject(error);
     }
   }
-
-  /**
-   * find finds a record
-   * @param q the query parameter
-   */
-  static find(q: Partial<ChainEvent>): Promise<ChainEvent> {
-    return new Promise((resolve, reject) => {
-      this.query().where(q).whereNotDeleted().first().then(resolve).catch(reject);
-    });
-  }
 }

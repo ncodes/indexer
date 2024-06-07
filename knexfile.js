@@ -29,8 +29,14 @@ module.exports = {
       tableName: 'knex_migrations',
     },
     pool: {
-      min: 0,
+      min: 5,
       max: 20,
+      acquireTimeoutMillis: 300000,
+      createTimeoutMillis: 300000,
+      destroyTimeoutMillis: 300000,
+      idleTimeoutMillis: 30000,
+      reapIntervalMillis: 1000,
+      createRetryIntervalMillis: 2000,
     },
   },
 };

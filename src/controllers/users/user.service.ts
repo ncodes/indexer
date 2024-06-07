@@ -170,7 +170,7 @@ export class UserService {
    * @param user The user object
    */
   async enableReferrerOps(isNewUser: boolean, referrerRefCode: string, user: User) {
-    return transaction(User, Tap, async (User, Tap) => {
+    return transaction(User, async (User) => {
       if (user.refCode) return false;
 
       // Generate a new unique referrer code

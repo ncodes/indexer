@@ -59,9 +59,7 @@ export default class TapReminder extends Base {
         try {
           await this.tgBotSrv.sendMessage(
             user.telegramBotChatId,
-            `Hey Warrior! It's time to tap again! 💪.
-          The battle is still on and all your comrades are waiting for you to tap.
-          Let's go! 🚀`,
+            `Hey Warrior! It's time to play again! 💪. The battle is still on and all your comrades are waiting for you to tap. Let's go! 🚀`,
             { reply_markup: new InlineKeyboard().webApp('🕹️Play', this.cfgSrv.get('app.tgbot.tapWarLink')) },
           );
           this.logger.log(`Sent Tap reminder to user ${userId}`);

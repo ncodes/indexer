@@ -82,6 +82,8 @@ export class CreateQuestDTO {
   @IsOptional()
   lid: number;
 
+  @ValidateIf((o) => o.type == 'swap')
+  @IsNotEmpty({ message: makeValidatorMsg('count is required', 'lid') })
   count: number;
 
   priority: number;

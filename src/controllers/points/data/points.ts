@@ -2,12 +2,12 @@ export const PointMap = {
   'market:created': 10,
 
   // Set swap point per unit in a market
-  'swap:0x6716da1959059E384D0851C4f8518f5269d10Bad': 1000,
-  'swap:0x9920e6F478a72691FC1d83bb3EC50d3892325D33': 1000,
-  'swap:0x43C6176Fdd5bCc2dBb0aB42C685236f70D769aaD': 1000,
-  'swap:0xC343A83CA282E0dc5D2a65923B7aF042797ffef3': 1000,
-  'swap:0x0d57EcEF1376C956E7bA9e14e7f6a97e18Ce1030': 1000,
-  'swap:0x061002B5e6F1a30cFc343b40Cfbc0067F0839b95': 1000,
+  'swap:0x6716da1959059E384D0851C4f8518f5269d10Bad': 20_000,
+  'swap:0x9920e6F478a72691FC1d83bb3EC50d3892325D33': 20_000,
+  'swap:0x43C6176Fdd5bCc2dBb0aB42C685236f70D769aaD': 10_000,
+  'swap:0xC343A83CA282E0dc5D2a65923B7aF042797ffef3': 10_000,
+  'swap:0x0d57EcEF1376C956E7bA9e14e7f6a97e18Ce1030': 10_000,
+  'swap:0x061002B5e6F1a30cFc343b40Cfbc0067F0839b95': 10_000,
 
   // Set swap points per unit for all instant markets.
   // Set to zero to not incentivize unknown instant markets
@@ -27,10 +27,10 @@ export const PointMap = {
   'swap:paid': 100,
 
   // Set the point per unit of liquidity added to a specific market
-  'liq:0x6716da1959059E384D0851C4f8518f5269d10Bad': 1000,
-  'liq:0x9920e6F478a72691FC1d83bb3EC50d3892325D33': 1000,
-  'liq:0x43C6176Fdd5bCc2dBb0aB42C685236f70D769aaD': 1000,
-  'liq:0xC343A83CA282E0dc5D2a65923B7aF042797ffef3': 1000,
+  'liq:0x6716da1959059E384D0851C4f8518f5269d10Bad': 50_000,
+  'liq:0x9920e6F478a72691FC1d83bb3EC50d3892325D33': 50_000,
+  'liq:0x43C6176Fdd5bCc2dBb0aB42C685236f70D769aaD': 50_000,
+  'liq:0xC343A83CA282E0dc5D2a65923B7aF042797ffef3': 100_000,
 
   // Set the point per unit of liquidity added to all instant markets.
   // Set to zero to not incentivize unknown instant markets
@@ -73,4 +73,7 @@ export const PointMap = {
 
   'twitter:connect': 1000,
   'discord:connect': 1000,
+
+  'liq:0x6860b3a2DCcE7BC1Be763211fb050056d7c1A8D7': 50_000, // local
+  'swap:0x6860b3a2DCcE7BC1Be763211fb050056d7c1A8D7': 50_000, // local
 };

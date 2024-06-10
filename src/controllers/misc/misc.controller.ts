@@ -16,6 +16,7 @@ import AssetRegistry from '../../models/asset_registry';
 import Meta, { FeeName } from '../../models/meta';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { ErrTokenNotFound, MetadataService } from '../../services/metadata/metadata.service';
+import { PointMap } from '../points/data/points';
 
 @Controller('v1/misc')
 export class MiscController {
@@ -186,5 +187,10 @@ export class MiscController {
   @Get('req-country-code')
   async getRequestCountryCode(@Req() req: Request) {
     return ok().data({ code: req.headers['cf-ipcountry'] }).build();
+  }
+
+  @Get('point/:name')
+  async getPoint(@Param('name') name: string) {
+    return ok().data(PointMap[name]).build();
   }
 }

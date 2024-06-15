@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { Interface, Log, Provider, ZeroAddress } from 'ethers';
+import { ethers, Interface, Log, Provider, ZeroAddress } from 'ethers';
 import { delay, isEqualStr } from '../common/common';
 import Meta from '../models/meta';
 import { ContractCallEvent } from './common';
@@ -13,6 +13,10 @@ export class Watcher {
   private lastActiveTime = Date.now();
   private pendingBlocks: number[] = [];
   private processingPendingBlocks = false;
+
+  // If topics are set, only listen to these topics.
+  // Map handler to topics
+  private topics: string[] = [];
 
   /**
    * Initialize the watcher
@@ -29,6 +33,10 @@ export class Watcher {
     private processor: Processor,
     private batchSize: number,
   ) {}
+
+  setTopics(topics: string[]) {
+    this.topics = topics;
+  }
 
   /**
    * Add handlers and start synchronizing them
@@ -76,9 +84,10 @@ export class Watcher {
    * Get event from log
    * @param log The log object
    * @param iface The contract interface
+   * @param contractAddress The contract address
    * @returns
    */
-  getEventFromLog(log: Log, iface: Interface): ContractCallEvent {
+  getEventFromLog(log: Log, iface: Interface, contractAddress?: string): ContractCallEvent {
     const parsed = iface.parseLog({
       data: log.data,
       topics: log.topics as string[],
@@ -91,6 +100,7 @@ export class Watcher {
       transactionIndex: log.transactionIndex,
       transactionHash: log.transactionHash,
       address: log.address,
+      contract: contractAddress,
       eventSignature: parsed.signature,
       removed: log.removed,
       getBlock: () => this.provider.getBlock(log.blockNumber),
@@ -108,25 +118,41 @@ export class Watcher {
     this.logInfo(`Fetching events`, { curBlock });
 
     // Query latest logs for all contracts
+    const encodedTopics = this.topics.map((t) => ethers.keccak256(ethers.toUtf8Bytes(t)));
     const logs = await this.provider.getLogs({
       fromBlock: prevBlock ? prevBlock : curBlock,
       toBlock: curBlock,
-      address: this.handlers
-        .map((h) => h.getContract().target)
-        .filter((addr) => {
-          return !isEqualStr(ZeroAddress, addr as string);
-        }),
+      topics: encodedTopics,
+      address:
+        this.topics.length == 0
+          ? this.handlers
+              .map((h) => h.getContract().target)
+              .filter((addr) => {
+                return !isEqualStr(ZeroAddress, addr as string);
+              })
+          : undefined,
     });
 
     this.logInfo(`Found ${logs.length} logs`);
 
     // Extract the events from the logs
-    const events: ContractCallEvent[] = [
-      ...logs.map((log: Log) => {
-        const handler = this.handlers.find((h) => isEqualStr(h.getContract().target as string, log.address));
-        return this.getEventFromLog(log, handler.getContract().interface);
-      }),
+    let events: ContractCallEvent[] = [
+      ...(await Promise.all(
+        logs.map(async (log: Log) => {
+          if (this.topics.length) {
+            const tx = await this.provider.getTransaction(log.transactionHash);
+            const handler = this.handlers.find((h) => isEqualStr(h.getContract().target as string, tx.to));
+            if (!handler) return;
+            return this.getEventFromLog(log, handler.getContract().interface, handler.getContract().target as string);
+          } else {
+            const handler = this.handlers.find((h) => isEqualStr(h.getContract().target as string, log.address));
+            return this.getEventFromLog(log, handler.getContract().interface);
+          }
+        }),
+      )),
     ];
+
+    events = events.filter((e) => !!e);
 
     this.lastActiveTime = Date.now();
 
@@ -137,7 +163,7 @@ export class Watcher {
           block: e.blockNumber,
           txIndex: e.transactionIndex,
           eventIndex: e.logIndex,
-          contract: e.address,
+          contract: e.contract ? e.contract : e.address,
         });
       }),
     );

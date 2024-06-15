@@ -33,6 +33,7 @@ import {
   Token,
   TokenPool,
 } from '../typechain';
+import { AbiTypes } from '@jointlabs/chains-info';
 
 declare global {
   namespace Express {
@@ -69,6 +70,11 @@ declare global {
     minerRegistry?: MinerRegistry;
     energon?: Energon;
     nft?: NFT;
+    uniswapV2Router?: AbiTypes.UniswapV2Router;
+    uniswapV2Router2?: AbiTypes.UniswapV2Router2;
+    uniswapV3Router?: AbiTypes.UniswapV3Router;
+    uniswapV3Router2?: AbiTypes.UniswapV3Router2;
+    uniswapV3RouterUniversal?: AbiTypes.UniswapV3RouterUniversal;
   }
 
   interface ContractMarket {

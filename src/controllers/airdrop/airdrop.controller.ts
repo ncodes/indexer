@@ -74,7 +74,6 @@ export class AirdropController {
   async linkTwitterUser(@Req() req: Request, @Param('code') code: string) {
     // Get user basic information
     const accessToken = await this.twitterSrv.getOAuthToken(code);
-    console.log('Access Token', accessToken);
 
     const userInfo = await new Client(accessToken).users.findMyUser({
       'user.fields': ['public_metrics', 'created_at', 'profile_image_url', 'verified'],
@@ -729,7 +728,6 @@ export class AirdropController {
 
     // Get recent battle
     const latestBattle = await Battle.getLatestBattle();
-    console.log(battle.id, latestBattle.id);
     if (battle.id !== latestBattle.id) {
       throw400('Cannot stake bond for an old battle');
     }

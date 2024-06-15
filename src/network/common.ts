@@ -12,6 +12,7 @@ export interface ContractCallEvent {
   transactionIndex: number;
   transactionHash: string;
   address: string;
+  contract?: string;
   eventSignature: string;
   removed: boolean;
   getBlock: () => Promise<Block>;

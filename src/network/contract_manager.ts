@@ -1,4 +1,4 @@
-import { ChainNames, getChainByName, getChainNames } from '@jointlabs/chains-info';
+import { Abi, AbiTypes, ChainNames, getChainByName, getChainNames } from '@jointlabs/chains-info';
 import { Logger } from '@nestjs/common';
 import { Contract, FetchRequest, JsonRpcProvider, Provider } from 'ethers';
 import * as assetRegABI from '../../abi/AssetRegistry.json';
@@ -115,5 +115,45 @@ export class ContractManager {
 
     const nftAddress = getChainByName(chain).contracts['nft'].address;
     if (nftAddress) this.contracts[chain].nft = new Contract(nftAddress, nftABI, provider) as unknown as NFT;
+
+    const uniswapV2Router = getChainByName(chain).contracts['uniswapV2Router']?.address;
+    if (uniswapV2Router)
+      this.contracts[chain].uniswapV2Router = new Contract(
+        uniswapV2Router,
+        Abi.UniswapV2Router,
+        provider,
+      ) as unknown as AbiTypes.UniswapV2Router;
+
+    const uniswapV2Router2 = getChainByName(chain).contracts['uniswapV2Router2']?.address;
+    if (uniswapV2Router2)
+      this.contracts[chain].uniswapV2Router2 = new Contract(
+        uniswapV2Router2,
+        Abi.UniswapV2Router2,
+        provider,
+      ) as unknown as AbiTypes.UniswapV2Router2;
+
+    const uniswapV3Router = getChainByName(chain).contracts['uniswapV3Router']?.address;
+    if (uniswapV3Router)
+      this.contracts[chain].uniswapV3Router = new Contract(
+        uniswapV3Router,
+        Abi.UniswapV3Router,
+        provider,
+      ) as unknown as AbiTypes.UniswapV3Router;
+
+    const uniswapV3Router2 = getChainByName(chain).contracts['uniswapV3Router02']?.address;
+    if (uniswapV3Router2)
+      this.contracts[chain].uniswapV3Router2 = new Contract(
+        uniswapV3Router2,
+        Abi.UniswapV3Router2,
+        provider,
+      ) as unknown as AbiTypes.UniswapV3Router2;
+
+    const uniswapV3RouterUniversal = getChainByName(chain).contracts['uniswapV3UniversalRouter']?.address;
+    if (uniswapV3RouterUniversal)
+      this.contracts[chain].uniswapV3RouterUniversal = new Contract(
+        uniswapV3RouterUniversal,
+        Abi.UniswapV3RouterUniversal,
+        provider,
+      ) as unknown as AbiTypes.UniswapV3RouterUniversal;
   }
 }

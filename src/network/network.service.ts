@@ -23,6 +23,7 @@ import { NFTHandler } from './nft/nft.handler';
 import { getNetworkParams } from './params';
 import Processor from './processor';
 import { Watcher } from './watcher';
+import { UniswapRouter } from './dexuser/uniswap_router.handler';
 
 @Injectable()
 export default class NetworkService {
@@ -56,9 +57,11 @@ export default class NetworkService {
       await this.startWatcher('sepolia', 'sepolia');
       await this.startWatcher('arbitrum', 'arbitrum', 20);
       await this.startNFTWatcher('NFT_WATCHER', 'ethereum');
+      await this.startDexWatcher('dex-watcher-eth', 'ethereum');
     } else {
       await this.startWatcher('localhost', 'localhost', 1);
       await this.startNFTWatcher('NFT_WATCHER', 'localhost');
+      await this.startDexWatcher('DEX_WATCHER_ETH', 'ethereum');
     }
     this.restartWatcherSync();
   }
@@ -163,6 +166,31 @@ export default class NetworkService {
       this.watchers.push(watcher);
     } else {
       this.logger.log('General Watcher is disabled');
+    }
+  }
+
+  private async startDexWatcher(name: string, network: ChainNames) {
+    await this.loadInitialContractParams(network);
+
+    const provider = this.contractMgr.providers[network];
+    const handlers = [
+      new UniswapRouter(this, provider, network, this.contractMgr.contracts[network].uniswapV2Router),
+      new UniswapRouter(this, provider, network, this.contractMgr.contracts[network].uniswapV2Router2),
+      new UniswapRouter(this, provider, network, this.contractMgr.contracts[network].uniswapV3Router),
+      new UniswapRouter(this, provider, network, this.contractMgr.contracts[network].uniswapV3Router2),
+      new UniswapRouter(this, provider, network, this.contractMgr.contracts[network].uniswapV3RouterUniversal),
+    ];
+
+    const processor = new Processor(network);
+    await processor.add(...handlers);
+
+    if (!this.isWatcherDisabled(name)) {
+      const watcher = new Watcher(name, network, provider, processor, 1);
+      watcher.setTopics(['Swap(address,uint256,uint256,uint256,uint256,address)']);
+      await watcher.add(...handlers);
+      this.watchers.push(watcher);
+    } else {
+      this.logger.log('DEX watcher is disabled');
     }
   }
 

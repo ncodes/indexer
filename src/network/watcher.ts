@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { ethers, Interface, Log, Provider, ZeroAddress } from 'ethers';
+import { ethers, Interface, Log, LogDescription, Provider, ZeroAddress } from 'ethers';
 import { delay, isEqualStr } from '../common/common';
 import Meta from '../models/meta';
 import { ContractCallEvent } from './common';
@@ -80,18 +80,7 @@ export class Watcher {
     this.logger.error(`Watcher:${this.name}: ${message}`, context);
   }
 
-  /**
-   * Get event from log
-   * @param log The log object
-   * @param iface The contract interface
-   * @param contractAddress The contract address
-   * @returns
-   */
-  getEventFromLog(log: Log, iface: Interface, contractAddress?: string): ContractCallEvent {
-    const parsed = iface.parseLog({
-      data: log.data,
-      topics: log.topics as string[],
-    });
+  parsedLogToCallEvent(parsed: LogDescription, log: Log, contractAddress?: string) {
     return {
       event: parsed.name,
       args: parsed.args,
@@ -106,6 +95,21 @@ export class Watcher {
       getBlock: () => this.provider.getBlock(log.blockNumber),
       getTransaction: () => this.provider.getTransaction(log.transactionHash),
     };
+  }
+
+  /**
+   * Get event from log
+   * @param log The log object
+   * @param iface The contract interface
+   * @param contractAddress The contract address
+   * @returns
+   */
+  getEventFromLog(log: Log, iface: Interface, contractAddress?: string): ContractCallEvent {
+    const parsed = iface.parseLog({
+      data: log.data,
+      topics: log.topics as string[],
+    });
+    return this.parsedLogToCallEvent(parsed, log, contractAddress);
   }
 
   /**
@@ -140,10 +144,16 @@ export class Watcher {
       ...(await Promise.all(
         logs.map(async (log: Log) => {
           if (this.topics.length) {
-            const tx = await this.provider.getTransaction(log.transactionHash);
-            const handler = this.handlers.find((h) => isEqualStr(h.getContract().target as string, tx.to));
+            const parsed = new Interface([
+              'event Swap(address indexed sender, uint amount0In, uint amount1In, uint amount0Out, uint amount1Out, address indexed to)',
+            ]).parseLog({ data: log.data, topics: log.topics as string[] });
+
+            if (!parsed) return;
+
+            const handler = this.handlers.find((h) => isEqualStr(h.getContract().target as string, parsed.args[0]));
             if (!handler) return;
-            return this.getEventFromLog(log, handler.getContract().interface, handler.getContract().target as string);
+
+            return this.parsedLogToCallEvent(parsed, log, handler.getContract().target as string);
           } else {
             const handler = this.handlers.find((h) => isEqualStr(h.getContract().target as string, log.address));
             return this.getEventFromLog(log, handler.getContract().interface);

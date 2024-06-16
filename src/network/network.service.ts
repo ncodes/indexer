@@ -58,11 +58,11 @@ export default class NetworkService {
       await this.startWatcher('arbitrum', 'arbitrum', 20);
       await this.startNFTWatcher('NFT_WATCHER', 'ethereum');
       await this.startDexWatcher('DEX_WATCHER_ETH', 'ethereum');
-      await this.startDexWatcher('DEX_WATCHER_ETH-2', 'ethereum');
-      await this.startDexWatcher('DEX_WATCHER_ETH-3', 'ethereum');
-      await this.startDexWatcher('DEX_WATCHER_ETH-4', 'ethereum');
-      await this.startDexWatcher('DEX_WATCHER_ETH-5', 'ethereum');
-      await this.startDexWatcher('DEX_WATCHER_ETH-6', 'ethereum');
+      await this.startDexWatcher('DEX_WATCHER_ETH_2', 'ethereum');
+      await this.startDexWatcher('DEX_WATCHER_ETH_3', 'ethereum');
+      await this.startDexWatcher('DEX_WATCHER_ETH_4', 'ethereum');
+      await this.startDexWatcher('DEX_WATCHER_ETH_5', 'ethereum');
+      await this.startDexWatcher('DEX_WATCHER_ETH_6', 'ethereum');
     } else {
       await this.startWatcher('localhost', 'localhost', 1);
       await this.startNFTWatcher('NFT_WATCHER', 'localhost');

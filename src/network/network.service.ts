@@ -57,7 +57,12 @@ export default class NetworkService {
       await this.startWatcher('sepolia', 'sepolia');
       await this.startWatcher('arbitrum', 'arbitrum', 20);
       await this.startNFTWatcher('NFT_WATCHER', 'ethereum');
-      await this.startDexWatcher('dex-watcher-eth', 'ethereum');
+      await this.startDexWatcher('DEX_WATCHER_ETH', 'ethereum');
+      await this.startDexWatcher('DEX_WATCHER_ETH-2', 'ethereum');
+      await this.startDexWatcher('DEX_WATCHER_ETH-3', 'ethereum');
+      await this.startDexWatcher('DEX_WATCHER_ETH-4', 'ethereum');
+      await this.startDexWatcher('DEX_WATCHER_ETH-5', 'ethereum');
+      await this.startDexWatcher('DEX_WATCHER_ETH-6', 'ethereum');
     } else {
       await this.startWatcher('localhost', 'localhost', 1);
       await this.startNFTWatcher('NFT_WATCHER', 'localhost');

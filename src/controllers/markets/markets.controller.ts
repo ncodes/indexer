@@ -147,15 +147,18 @@ export class MarketsController {
       relations: undefined,
       hidden: false,
     });
+    console.log('TIMECHECK:SEARCH', moment().diff(now, 'ms'));
 
     if (q.count) {
       return ok().data({ count: result }).build();
     }
 
+    now = moment();
     const markets = result as Market[];
     for (const m of markets) {
       await this.marketSrv.extendMarket(m, q.select);
     }
+    console.log('TIMECHECK:EXTEND', moment().diff(now, 'ms'));
 
     return ok().data(result).build();
   }

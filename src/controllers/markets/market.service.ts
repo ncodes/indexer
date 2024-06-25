@@ -6,6 +6,7 @@ import MarketPrice from '../../models/market_price';
 import Meta from '../../models/meta';
 import Swap from '../../models/swap';
 import { MetadataService } from '../../services/metadata/metadata.service';
+import * as moment from 'moment';
 
 const UnknownTokenLogoURL = 'https://files.joint.exchange/images/unknown.svg';
 @Injectable()
@@ -25,20 +26,27 @@ export class MarketService {
     try {
       let baseInfo: TokenMetadata, quoteInfo: TokenMetadata;
       const { address, network: net, baseAddress, quoteAddress, totalLiquidity, lowestPrice } = mkt;
+      let now = moment();
 
       if (select.includes(`numProviders`) || !select.length) {
         mkt.numProviders = await Liquidity.countProvidersInMarket(net, address);
       }
+      console.log('TIMECHECK:NUMPROVIDERS', moment().diff(now, 'ms'));
 
+      now = moment();
       if (select.includes(`lowestPrice24h`) || !select.length) {
         mkt.lowestPrice24h = await Liquidity.getLowestPrice(net, address, undefined, 24);
       }
+      console.log('TIMECHECK:LOWESTPRICE24H', moment().diff(now, 'ms'));
 
+      now = moment();
       if (select.includes(`highestPrice24h`) || !select.length) {
         mkt.highestPrice24h = await Liquidity.getHighestPrice(net, address, undefined, 24);
       }
+      console.log('TIMECHECK:HIGHESTPRICE24H', moment().diff(now, 'ms'));
 
       // TODO: get used price from market.quotePriceUsd
+      now = moment();
       if (!mkt.lowestPriceUsd && (select.includes(`lowestPrice`) || !select.length)) {
         try {
           quoteInfo = await this.metadataSrv.getTokenInfo(net, quoteAddress);
@@ -47,11 +55,15 @@ export class MarketService {
           this.logger.debug('failed to fetch token info: ' + quoteAddress);
         }
       }
+      console.log('TIMECHECK:LOWESTPRICEUSD', moment().diff(now, 'ms'));
 
+      now = moment();
       if (select.includes(`totalSwaps24h`) || !select.length) {
         mkt.totalSwaps24h = await Swap.countLiquiditySwaps(net, address, undefined, undefined, mkt.isInstant(), 1440);
       }
+      console.log('TIMECHECK:TOTALSWAPS24H', moment().diff(now, 'ms'));
 
+      now = moment();
       if (select.includes(`volume24h`) || !select.length) {
         mkt.volume24h = await Swap.getVolume(
           net,
@@ -65,20 +77,26 @@ export class MarketService {
           true,
         );
       }
+      console.log('TIMECHECK:VOLUME24H', moment().diff(now, 'ms'));
 
+      now = moment();
       if (select.includes(`priceChange`) || !select.length) {
         mkt.priceChange = await MarketPrice.priceChange(net, address, undefined, undefined, 24);
       }
+      console.log('TIMECHECK:PRICECHANGE', moment().diff(now, 'ms'));
 
       if (select.includes(`baseLogo`) || !select.length) {
         if (!mkt.baseLogo) mkt.baseLogo = UnknownTokenLogoURL;
       }
 
+      now = moment();
       if (select.includes(`quoteLogo`) || !select.length) {
         if (!mkt.quoteLogo) mkt.quoteLogo = UnknownTokenLogoURL;
       }
+      console.log('TIMECHECK:QUOTELOGO', moment().diff(now, 'ms'));
 
       // TODO: get used price from market.basePriceUsd
+      now = moment();
       if (select.includes(`amountSwapped`) || !select.length) {
         try {
           baseInfo = await this.metadataSrv.getTokenInfo(net, baseAddress);
@@ -87,8 +105,10 @@ export class MarketService {
           this.logger.debug('failed to fetch token info: ' + quoteAddress);
         }
       }
+      console.log('TIMECHECK:AMOUNTSWAPPEDUSD', moment().diff(now, 'ms'));
 
       // TODO: get used price from market.quotePriceUsd
+      now = moment();
       if (!mkt.totalLiquidityUsd && (select.includes(`totalLiquidity`) || !select.length)) {
         try {
           baseInfo = await this.metadataSrv.getTokenInfo(net, baseAddress);
@@ -97,11 +117,15 @@ export class MarketService {
           this.logger.debug('failed to fetch token info: ' + baseAddress);
         }
       }
+      console.log('TIMECHECK:TOTALLIQUIDITYUSD', moment().diff(now, 'ms'));
 
+      now = moment();
       if (!mkt.disputeDelayDur) {
         mkt.disputeDelayDur = await Meta.getContractParam(mkt.network, 'defaultDisputeDelayDur');
       }
+      console.log('TIMECHECK:DISPUTEDELAYDUR', moment().diff(now, 'ms'));
 
+      now = moment();
       if (!mkt.evidenceDur || !mkt.predictDur) {
         const poolParamKey = Meta.makeMediatorPoolKey(mkt.network, mkt.mediatorPoolId);
         const poolInfo = await Meta.getJSON<PoolParams>(poolParamKey);
@@ -118,6 +142,7 @@ export class MarketService {
             : await Meta.getContractParam(mkt.network, 'predictDur');
         }
       }
+      console.log('TIMECHECK:EVIDENCEDUR', moment().diff(now, 'ms'));
     } catch (error) {
       return Promise.reject(error);
     }

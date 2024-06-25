@@ -57,16 +57,15 @@ export default class NetworkService {
       await this.startWatcher('sepolia', 'sepolia');
       await this.startWatcher('arbitrum', 'arbitrum', 20);
       await this.startNFTWatcher('NFT_WATCHER', 'ethereum');
-      await this.startDexWatcher('DEX_WATCHER_ETH', 'ethereum');
-      await this.startDexWatcher('DEX_WATCHER_ETH_2', 'ethereum');
-      await this.startDexWatcher('DEX_WATCHER_ETH_3', 'ethereum');
-      await this.startDexWatcher('DEX_WATCHER_ETH_4', 'ethereum');
-      await this.startDexWatcher('DEX_WATCHER_ETH_5', 'ethereum');
-      await this.startDexWatcher('DEX_WATCHER_ETH_6', 'ethereum');
     } else {
-      await this.startWatcher('localhost', 'localhost', 1);
-      await this.startNFTWatcher('NFT_WATCHER', 'localhost');
-      await this.startDexWatcher('DEX_WATCHER_ETH', 'ethereum');
+      void this.startWatcher('localhost', 'localhost', 1);
+      void this.startNFTWatcher('NFT_WATCHER', 'localhost');
+      // void this.startDexWatcher('DEX_WATCHER_ETH', 'ethereum');
+      // void this.startDexWatcher('DEX_WATCHER_ETH_2', 'ethereum');
+      // void this.startDexWatcher('DEX_WATCHER_ETH_3', 'ethereum');
+      // void this.startDexWatcher('DEX_WATCHER_ETH_4', 'ethereum');
+      // void this.startDexWatcher('DEX_WATCHER_ETH_5', 'ethereum');
+      // void this.startDexWatcher('DEX_WATCHER_ETH_6', 'ethereum');
     }
     this.restartWatcherSync();
   }
@@ -232,10 +231,10 @@ export default class NetworkService {
    * @returns
    */
   isWatcherDisabled(name?: string) {
-    let disabled = ['true', '1'].includes(this.cfgSrv.get('app.disableWatcher'));
-    if (!disabled && name) {
+    let disabledWatcher = ['true', '1'].includes(this.cfgSrv.get('app.disableWatcher'));
+    if (!disabledWatcher && name) {
       const disabledWatchers = this.cfgSrv.get('app.disabledWatchers');
-      disabled =
+      disabledWatcher =
         disabledWatchers &&
         disabledWatchers
           .split(',')
@@ -243,6 +242,13 @@ export default class NetworkService {
           .includes(name.toLowerCase());
     }
 
-    return disabled;
+    if (disabledWatcher) {
+      const forcedEnabledWatcher = this.cfgSrv.get('app.enabledOnlyWatcher');
+      if (forcedEnabledWatcher && name) {
+        disabledWatcher = !(name.toLowerCase() == forcedEnabledWatcher.toLowerCase());
+      }
+    }
+
+    return disabledWatcher;
   }
 }

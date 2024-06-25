@@ -224,7 +224,7 @@ export class Watcher {
       } finally {
         this.processingPendingBlocks = false;
       }
-    }, 5000);
+    }, 1000);
   }
 
   /**

@@ -10,6 +10,7 @@ import { MarketService } from '../markets/market.service';
 import SwapService from '../swaps/swap.service';
 import { LiquidityService } from './liquidity.service';
 import { GetParamDTO, GetQueryDTO, ListQueryDTO } from './query.dto';
+import { isEqualStr } from '../../common/common';
 
 @Controller('v1/liquidities')
 export class LiquidityController {
@@ -150,7 +151,7 @@ export class LiquidityController {
     }
 
     if (!q.count) {
-      const liquidities = await Liquidity.search({
+      let liquidities = await Liquidity.search({
         network: q.net,
         marketAddress: q.market,
         base: q.base,
@@ -174,6 +175,14 @@ export class LiquidityController {
         select: q.select,
         hidden: false,
       });
+
+      // TODO: remove
+      // IDO market should only return IDO liquidity
+      if (q.market && isEqualStr(q.market, '0xEEA2f6BEed812f17a3A0dB2B93c7e8EdA44cA97E')) {
+        liquidities = liquidities.filter((l) => {
+          return isEqualStr(l.provider, '0xAEA70653A241c7a02BB3624935c51f052390A077');
+        });
+      }
 
       for (const liquidity of liquidities) {
         await this.liqSrv.extendLiquidity(liquidity, q.select);

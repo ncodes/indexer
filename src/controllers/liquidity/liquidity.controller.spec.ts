@@ -50,7 +50,7 @@ describe('LiquidityController', () => {
   let app: INestApplication;
   const db = DBService.getForTest();
   const net = 'ethereum';
-  const marketAddress = '0xMarket';
+  let marketAddress = '';
   const marketAddress2 = '0xMarket2';
   let cfgObj = {};
 
@@ -72,6 +72,8 @@ describe('LiquidityController', () => {
     mockCfgGet.mockReset();
     mockGetContractParam.mockReset();
     mockGetMarketCore.mockReset();
+
+    marketAddress = '0xMarket';
 
     cfgObj = { 'auth.jwtSecret': 'secret_secret', 'app.badges.kyc': 'kyc' };
     mockCfgGet.mockReset().mockImplementation((args) => {
@@ -339,6 +341,48 @@ describe('LiquidityController', () => {
         });
     });
 
+    describe('market matches IDO market', () => {
+      it('should return 200 and only IDO liquidity', async () => {
+        await Market.updateByNetworkAddress(net, marketAddress, {
+          address: '0xEEA2f6BEed812f17a3A0dB2B93c7e8EdA44cA97E',
+        });
+
+        marketAddress = '0xEEA2f6BEed812f17a3A0dB2B93c7e8EdA44cA97E';
+
+        const liq = await Liquidity.create({
+          network: net,
+          provider: '0xAEA70653A241c7a02BB3624935c51f052390A077',
+          marketAddress,
+          amount: '10',
+        });
+
+        await Liquidity.create({
+          network: net,
+          provider: '0xProvider',
+          marketAddress,
+          amount: '10',
+        });
+
+        const mockExtendLiquidity = jest
+          .spyOn(app.get(LiquidityService), 'extendLiquidity')
+          .mockResolvedValue(undefined);
+
+        const mockExtendMarket = jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(undefined);
+
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities`)
+          .query({ net, market: marketAddress })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data).toHaveLength(1);
+            expect(res.body.data[0].id).toEqual(liq.id);
+            expect(mockExtendLiquidity).toHaveBeenCalled();
+            expect(mockExtendMarket).toHaveBeenCalled();
+          });
+      });
+    });
+
     describe('provider is set', () => {
       it('should return 200 and the correct liquidity records', async () => {
         const liq = await Liquidity.create({
@@ -497,7 +541,7 @@ describe('LiquidityController', () => {
       });
     });
 
-    describe('liquidy is reached max open order', () => {
+    describe('liquidity is reached max open order', () => {
       it('should return 200 and not include the liquidity', async () => {
         await Liquidity.create({
           network: net,
@@ -561,7 +605,7 @@ describe('LiquidityController', () => {
       });
     });
 
-    describe('liquidy is reached max open dispute', () => {
+    describe('liquidity is reached max open dispute', () => {
       it('should return 200 and not include the liquidity', async () => {
         await Liquidity.create({
           network: net,

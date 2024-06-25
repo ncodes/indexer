@@ -335,6 +335,7 @@ export default class Liquidity extends BaseModel {
    * @param limit The number of records to return (optional).
    * @param offset The query offset (optional)
    * @param select Select specific fields (optional)
+   * @param hidden Filter by hidden status (optional)
    * @param txn Optional transaction object
    */
   static search({

@@ -39,7 +39,15 @@ import { TwitterService } from '../../services/twitter.service';
 import { NFTAllocations } from '../points/data/nft_allocation';
 import { PointMap } from '../points/data/points';
 import { isLocal, toDec } from '../../common/common';
-import { ApplyPresale, CreateLuckyCodeDTO, CreateQuestDTO, RequestQuestVerify, StakeBondDTO, VoteQuest } from './dto';
+import {
+  ApplyPresale,
+  CreateLuckyCodeDTO,
+  CreateQuestDTO,
+  GrantTapsBonus,
+  RequestQuestVerify,
+  StakeBondDTO,
+  VoteQuest,
+} from './dto';
 import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
 import { transaction } from 'objection';
 import CacheService from '../../cacher/cache.service';
@@ -770,6 +778,28 @@ export class AirdropController {
     return ok()
       .data({ tps: await TPS.getUserAvgTPS(addressOrUserId) })
       .build();
+  }
+
+  @UseGuards(IsRootAdmin)
+  @Post('/grant-taps')
+  async grantTAPBonus(@Body(new ValidationPipe(CommonValidationPipeOpt)) body: GrantTapsBonus) {
+    let user: User;
+    if (body.addressOrTelegramId.startsWith('0x')) {
+      user = await User.getByAddress(body.addressOrTelegramId);
+    } else {
+      user = await User.getByTelegramUsername(body.addressOrTelegramId);
+    }
+
+    if (!user) throw404('User not found');
+
+    await this.tapSrv.createTap({
+      userId: user.id,
+      bonus: true,
+      bonusValue: body.amount,
+      bonusName: body.name,
+    });
+
+    return ok().data({ ok: true }).build();
   }
 
   @UseGuards(IsRootAdmin)

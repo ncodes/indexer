@@ -147,3 +147,18 @@ export class StakeBondDTO {
   @IsNotEmpty({ message: makeValidatorMsg('battleId is required', 'battleId') })
   battleId: string;
 }
+
+export class GrantTapsBonus {
+  constructor(init?: Partial<GrantTapsBonus>) {
+    Object.assign(this, init);
+  }
+
+  @IsNotEmpty({ message: makeValidatorMsg('name is required', 'name') })
+  name: string;
+
+  @IsNotEmpty({ message: makeValidatorMsg('amount is required', 'amount') })
+  amount: string;
+
+  @IsNotEmpty({ message: makeValidatorMsg('addressOrTelegramId is required', 'addressOrTelegramId') })
+  addressOrTelegramId: string;
+}

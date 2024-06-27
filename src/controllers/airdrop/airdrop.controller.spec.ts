@@ -35,6 +35,13 @@ const RedisServiceMock = jest.fn().mockImplementation(() => {
   return {};
 });
 
+const mockCreateTap = jest.fn();
+const TapServiceMock = jest.fn().mockImplementation(() => {
+  return {
+    createTap: mockCreateTap,
+  };
+});
+
 describe('AirdropController', () => {
   let app: INestApplication;
   const db = DBService.getForTest();
@@ -56,10 +63,13 @@ describe('AirdropController', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     mockCfgGet.mockReset();
+    mockCreateTap.mockReset();
 
     cfgObj = {
       'auth.jwtSecret': 'secret_secret',
       'app.maxDailyQuestVerify': 3,
+      'app.rootAdminUser': 'admin',
+      'app.rootAdminPass': 'admin',
     };
 
     mockCfgGet.mockReset().mockImplementation((args) => {
@@ -85,6 +95,8 @@ describe('AirdropController', () => {
       .useValue(new DiscordServiceMock())
       .overrideProvider(RedisService)
       .useValue(new RedisServiceMock())
+      .overrideProvider(TapService)
+      .useValue(new TapServiceMock())
       .compile();
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());
@@ -911,6 +923,100 @@ describe('AirdropController', () => {
             type: 'invalid_request_error',
             message: 'Already verified',
           },
+        });
+    });
+  });
+
+  describe('.grantTAPBonus', () => {
+    it('should return 401 when not authorized', async () => {
+      await request(app.getHttpServer())
+        .post(`/v1/airdrop/grant-taps`)
+        .send({})
+        .expect(401)
+        .expect({
+          error: {
+            type: 'authentication_error',
+            message: 'authorization header is required',
+          },
+        });
+    });
+
+    it('should return 400 when name was not provided', async () => {
+      await request(app.getHttpServer())
+        .post(`/v1/airdrop/grant-taps`)
+        .auth('admin', 'admin')
+        .send({})
+        .expect(400)
+        .expect({
+          error: {
+            message: 'name is required',
+            param: 'name',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 400 when amount was not provided', async () => {
+      await request(app.getHttpServer())
+        .post(`/v1/airdrop/grant-taps`)
+        .auth('admin', 'admin')
+        .send({ name: 'custom' })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'amount is required',
+            param: 'name',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 400 when user ID was not provided', async () => {
+      await request(app.getHttpServer())
+        .post(`/v1/airdrop/grant-taps`)
+        .auth('admin', 'admin')
+        .send({ name: 'custom', amount: '1000' })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'addressOrTelegramId is required',
+            param: 'addressOrTelegramId',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 404 when user was not found', async () => {
+      await request(app.getHttpServer())
+        .post(`/v1/airdrop/grant-taps`)
+        .auth('admin', 'admin')
+        .send({ name: 'custom', amount: '1000', addressOrTelegramId: '0xUnknown' })
+        .expect(404)
+        .expect({
+          error: { message: 'User not found' },
+        });
+    });
+
+    it('should return 201 when TAP bonus was successfully created', async () => {
+      await request(app.getHttpServer())
+        .post(`/v1/airdrop/grant-taps`)
+        .auth('admin', 'admin')
+        .send({ name: 'custom', amount: '1000', addressOrTelegramId: u.address })
+        .expect(201)
+        .expect({
+          data: { ok: true },
+        });
+    });
+
+    it('should return 201 when TAP bonus was successfully created (using user telegram ID)', async () => {
+      u = await User.updateById(u.id, { telegramUsername: 'user123' });
+      await request(app.getHttpServer())
+        .post(`/v1/airdrop/grant-taps`)
+        .auth('admin', 'admin')
+        .send({ name: 'custom', amount: '1000', addressOrTelegramId: u.telegramUsername })
+        .expect(201)
+        .expect({
+          data: { ok: true },
         });
     });
   });

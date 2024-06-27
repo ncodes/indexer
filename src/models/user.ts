@@ -323,4 +323,12 @@ export default class User extends BaseModel {
   static getByTelegramUserId(telegramUserId: number) {
     return this.query().where('telegramUserId', telegramUserId).whereNotDeleted().first();
   }
+
+  /**
+   * Get user by telegram username
+   * @param telegramUsername The telegram username
+   */
+  static getByTelegramUsername(telegramUsername: string) {
+    return this.query().where('telegramUsername', telegramUsername).whereNotDeleted().first();
+  }
 }

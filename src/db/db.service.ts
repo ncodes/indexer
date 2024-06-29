@@ -23,7 +23,6 @@ export class DBService {
 
   /**
    * Get DB services suitable for production environment
-   * @returns {DBService}
    */
   getForProd() {
     const config = this.cfgService.get('knex')[process.env.NODE_ENV];
@@ -51,7 +50,6 @@ export class DBService {
 
   /**
    * Get DB services suitable for test environment
-   * @returns {DBService}
    */
   static getForTest() {
     const config = knexJSON.test;

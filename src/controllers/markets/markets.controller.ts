@@ -119,6 +119,8 @@ export class MarketsController {
       ? await this.metadataSrv.tryToUsd(q.net, '1', q.quote, { refetch: true, isHD: true })
       : undefined;
 
+    let now = moment();
+
     const result = await Market.search({
       network: q.net,
       creator: q.creator,
@@ -147,14 +149,18 @@ export class MarketsController {
       hidden: false,
     });
 
+    console.log('TIMELOG: FETCH', moment().diff(now, 'ms'));
+
     if (q.count) {
       return ok().data({ count: result }).build();
     }
 
     const markets = result as Market[];
+    now = moment();
     for (const m of markets) {
       await this.marketSrv.extendMarket(m, q.select);
     }
+    console.log('TIMELOG: EXTEND', moment().diff(now, 'ms'));
 
     return ok().data(result).build();
   }

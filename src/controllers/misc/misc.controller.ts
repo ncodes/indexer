@@ -17,6 +17,7 @@ import Meta, { FeeName } from '../../models/meta';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { ErrTokenNotFound, MetadataService } from '../../services/metadata/metadata.service';
 import { PointMap } from '../points/data/points';
+import { Model } from 'objection';
 
 @Controller('v1/misc')
 export class MiscController {
@@ -192,5 +193,18 @@ export class MiscController {
   @Get('point/:name')
   async getPoint(@Param('name') name: string) {
     return ok().data(PointMap[name]).build();
+  }
+
+  @Get('/pool-info')
+  async getDBPoolInfo() {
+    const knex = Model.knex();
+    return ok()
+      .data({
+        numUsed: knex.client.pool.numUsed(),
+        numFree: knex.client.pool.numFree(),
+        numPendingAcquires: knex.client.pool.numPendingAcquires(),
+        numPendingCreates: knex.client.pool.numPendingCreates(),
+      })
+      .build();
   }
 }

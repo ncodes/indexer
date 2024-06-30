@@ -80,7 +80,7 @@ export class NoticationConsumer {
       locals.cost = toFixed(
         toDec(amount)
           .mul(price)
-          .div(pow10(quoteDecimals * 2)),
+          .div(pow10(baseDecimals + quoteDecimals)),
         8,
       );
       subject = await this.mailer.render(`${template}.subject`, locals);
@@ -169,7 +169,7 @@ export class NoticationConsumer {
       locals.cost = toFixed(
         toDec(amount)
           .mul(price)
-          .div(pow10(quoteDecimals * 2)),
+          .div(pow10(quoteDecimals + baseDecimals)),
         8,
       );
       locals.payer = isEqualStr(swap.getPayer(), job.recipientAddr);
@@ -215,7 +215,7 @@ export class NoticationConsumer {
       locals.cost = toFixed(
         toDec(amount)
           .mul(price)
-          .div(pow10(quoteDecimals * 2)),
+          .div(pow10(quoteDecimals + baseDecimals)),
         8,
       );
       locals.cancelAt = toTimezone(swap.cancelAt, user.timezone).fromNow(true);

@@ -31,12 +31,12 @@ module.exports = {
     pool: {
       min: process.env.DB_POOL_MIN ? parseInt(process.env.DB_POOL_MIN) : 0,
       max: process.env.DB_POOL_MAX ? parseInt(process.env.DB_POOL_MAX) : 5,
-      acquireTimeoutMillis: 300000,
-      createTimeoutMillis: 300000,
-      destroyTimeoutMillis: 300000,
-      idleTimeoutMillis: 300000,
-      reapIntervalMillis: 1000,
-      createRetryIntervalMillis: 2000,
+      // acquireTimeoutMillis: 300000,
+      // createTimeoutMillis: 300000,
+      // destroyTimeoutMillis: 300000,
+      // idleTimeoutMillis: 300000,
+      // reapIntervalMillis: 1000,
+      // createRetryIntervalMillis: 2000,
     },
   },
 };

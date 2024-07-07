@@ -242,6 +242,7 @@ export class Watcher {
         // Sort pending blocks in ascending order
         this.pendingBlocks.push(curBlock);
         this.pendingBlocks.sort();
+        this.logger.log('Pending Blocks', this.pendingBlocks);
       } catch (e) {
         this.logError('Error:watchBlock: ', e);
         void this.provider.off('block', listener);

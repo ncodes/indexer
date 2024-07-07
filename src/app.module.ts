@@ -36,6 +36,7 @@ import { RedisModule } from './services/redis/redis.module';
 import { CacheModule } from './cacher/cache.module';
 import { TGBotModule } from './controllers/tgbot/tgbot.module';
 import ProviderMessagingStatusUpdate from './jobs/provider_messaging_status_update/ProviderMessagingStatusUpdate';
+import { HealthModule } from './controllers/health/health.module';
 
 /**
  * Get a list of modules to be loaded.
@@ -54,6 +55,7 @@ function getModules() {
     BadgesModule,
     LiquidityModule,
     MiscModule,
+    HealthModule,
     NotificationsModule,
     ConvosModule,
     SwapsModule,
@@ -75,7 +77,7 @@ function getModules() {
     modules.push(TGBotModule);
   }
 
-  return process.env.OFF != 'true' ? modules : [];
+  return process.env.OFF != 'true' ? modules : [HealthModule];
 }
 
 @Module({

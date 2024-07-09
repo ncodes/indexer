@@ -60,12 +60,6 @@ export default class NetworkService {
     } else {
       void this.startWatcher('localhost', 'localhost', 1);
       void this.startNFTWatcher('NFT_WATCHER', 'localhost');
-      // void this.startDexWatcher('DEX_WATCHER_ETH', 'ethereum');
-      // void this.startDexWatcher('DEX_WATCHER_ETH_2', 'ethereum');
-      // void this.startDexWatcher('DEX_WATCHER_ETH_3', 'ethereum');
-      // void this.startDexWatcher('DEX_WATCHER_ETH_4', 'ethereum');
-      // void this.startDexWatcher('DEX_WATCHER_ETH_5', 'ethereum');
-      void this.startDexWatcher('DEX_WATCHER_ETH_6', 'ethereum');
     }
     this.restartWatcherSync();
   }
@@ -77,6 +71,15 @@ export default class NetworkService {
    */
   getContracts(chain: ChainNames) {
     return this.contractMgr.contracts[chain];
+  }
+
+  /**
+   * Get a watcher by name
+   * @param name The name of the watcher
+   * @returns
+   */
+  getWatcher(name: string): Watcher {
+    return this.watchers.find((w) => w.name == name);
   }
 
   /**

@@ -179,9 +179,6 @@ export class Watcher {
     );
   }
 
-  /**
-   * Process new pending blocks.
-   */
   processPendingBlocks() {
     setInterval(async () => {
       if (this.processingPendingBlocks) return;
@@ -206,16 +203,13 @@ export class Watcher {
         const key = this.makeSyncKey();
         let meta = await Meta.get(key);
         if (!meta || meta.value == '0') meta = new Meta({ value: this.getLaunchHeight() });
-        if (parseInt(meta.value) >= lastBlock) return;
 
         this.logInfo(`Processing pending blocks`, { from: blocks[0] - 1, to: lastBlock });
 
-        // Process events
         await this.fetchAndProcessEvents(blocks[0] - 1, lastBlock);
         this.logInfo(`Finished processing block`, { from: blocks[0] - 1, to: lastBlock });
 
-        // Update the last sync height
-        await Meta.update(key, lastBlock.toString());
+        if (parseInt(meta.value) < lastBlock) await Meta.update(key, lastBlock.toString());
       } catch (e) {
         this.logError('Error:processPendingBlocks: ', e);
         this.logError('Attempt to restarting sync after processPendingBlocks error');
@@ -227,9 +221,12 @@ export class Watcher {
     }, 1000);
   }
 
-  /**
-   * Watch and cache new blocks
-   */
+  addToPendingBlocks(block: number) {
+    this.pendingBlocks.push(block);
+    this.pendingBlocks.sort();
+    this.logger.log('Pending Blocks', this.pendingBlocks);
+  }
+
   watchBlock() {
     const listener = async (curBlock: number) => {
       try {
@@ -237,12 +234,7 @@ export class Watcher {
         let meta = await Meta.get(key);
         if (!meta || meta.value == '0') meta = new Meta({ value: this.getLaunchHeight() });
         if (parseInt(meta.value) >= curBlock) return;
-
-        // Cache new block
-        // Sort pending blocks in ascending order
-        this.pendingBlocks.push(curBlock);
-        this.pendingBlocks.sort();
-        this.logger.log('Pending Blocks', this.pendingBlocks);
+        this.addToPendingBlocks(curBlock);
       } catch (e) {
         this.logError('Error:watchBlock: ', e);
         void this.provider.off('block', listener);

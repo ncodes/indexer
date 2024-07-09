@@ -12,6 +12,7 @@ export class Watcher {
   private isSyncing = false;
   private lastActiveTime = Date.now();
   private pendingBlocks: number[] = [];
+  private priorityPendingBlocks: number[] = [];
   private processingPendingBlocks = false;
 
   // If topics are set, only listen to these topics.
@@ -184,6 +185,17 @@ export class Watcher {
       if (this.processingPendingBlocks) return;
       this.processingPendingBlocks = true;
 
+      // Process priority pending blocks first
+      if (this.priorityPendingBlocks.length > 0) {
+        const blocks = [...this.priorityPendingBlocks];
+        this.logInfo(`Processing priority pending blocks`, { from: blocks[0] - 1, to: blocks[blocks.length - 1] });
+        await this.fetchAndProcessEvents(blocks[0] - 1, blocks[blocks.length - 1]);
+        this.logInfo(`Finished processing priority blocks`, { from: blocks[0] - 1, to: blocks[blocks.length - 1] });
+        this.priorityPendingBlocks = [];
+        this.processingPendingBlocks = false;
+        return;
+      }
+
       // If the size of the pending blocks is less than the batch size, return
       if (this.pendingBlocks.length < this.batchSize) {
         this.processingPendingBlocks = false;
@@ -207,7 +219,7 @@ export class Watcher {
         this.logInfo(`Processing pending blocks`, { from: blocks[0] - 1, to: lastBlock });
 
         await this.fetchAndProcessEvents(blocks[0] - 1, lastBlock);
-        this.logInfo(`Finished processing block`, { from: blocks[0] - 1, to: lastBlock });
+        this.logInfo(`Finished processing blocks`, { from: blocks[0] - 1, to: lastBlock });
 
         if (parseInt(meta.value) < lastBlock) await Meta.update(key, lastBlock.toString());
       } catch (e) {
@@ -225,6 +237,12 @@ export class Watcher {
     this.pendingBlocks.push(block);
     this.pendingBlocks.sort();
     this.logger.log('Pending Blocks', this.pendingBlocks);
+  }
+
+  addToPriorityPendingBlocks(block: number) {
+    this.priorityPendingBlocks.push(block);
+    this.priorityPendingBlocks.sort();
+    this.logger.log('Priority Pending Blocks', this.priorityPendingBlocks);
   }
 
   watchBlock() {

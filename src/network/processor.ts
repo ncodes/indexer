@@ -6,6 +6,7 @@ import { isDev, isEqualStr, isTest, shortenAddr } from '../common/common';
 import ChainEvent from '../models/chain_events';
 import { ContractCallEvent } from './common';
 import { Handler } from './handler';
+import * as console from 'console';
 
 export interface UnprocessedEvent {
   event: ContractCallEvent;
@@ -63,17 +64,20 @@ export default class Processor {
 
   /**
    * Add an event to the unprocessed queue
-   * @param event The target event
+   * @param e The target event
    */
-  addEvent(event: UnprocessedEvent): Promise<any> {
-    const eventId = this.makeEventId(event);
-    if (this.seen.has(eventId)) return;
+  addEvent(e: UnprocessedEvent): Promise<any> {
+    const eventId = this.makeEventId(e);
+    if (this.seen.has(eventId)) {
+      this.logger.debug(`(Event: ${e.event.event}, Contract: ${shortenAddr(e.contract)}): Previously seen event`);
+      return;
+    }
     this.seen.set(eventId, true);
 
     // Add a promise to the event and push it to the queue
     const deferred = defer();
-    event.promise = deferred;
-    this.unprocessed.push(event);
+    e.promise = deferred;
+    this.unprocessed.push(e);
 
     // Sort the queue to ensure correct order
     sortArray(this.unprocessed, {

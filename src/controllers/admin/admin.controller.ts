@@ -17,7 +17,7 @@ export class AdminController {
   async forceIndexBlock(@Param('indexer') indexer: string, @Param('blockNumber') blockNumber: string) {
     const watcher = this.netSrv.getWatcher(indexer);
     if (!watcher) throw404('watcher was not found');
-    watcher.addToPendingBlocks(parseInt(blockNumber));
+    watcher.addToPriorityPendingBlocks(parseInt(blockNumber));
     return ok().data({ ok: true }).build();
   }
 }

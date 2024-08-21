@@ -1,6 +1,16 @@
 import { getChainNames } from '@jointlabs/meta';
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, Matches, Validate } from 'class-validator';
+import {
+  IsBoolean,
+  IsIn,
+  IsNotEmpty,
+  IsNumber,
+  IsNumberString,
+  IsOptional,
+  IsString,
+  Matches,
+  Validate,
+} from 'class-validator';
 import { toNumber } from 'lodash';
 import { toBoolean } from 'underscore.string';
 import { LiquidityDescriptionValidator, makeValidatorMsg } from '../../common/validations/validation';
@@ -34,6 +44,22 @@ export class GetParamDTO {
   @IsNumber(undefined, { message: makeValidatorMsg('liquidity ID must be a number', 'lid') })
   @IsNotEmpty({ message: makeValidatorMsg('liquidity ID is required', 'lid') })
   public lid: number;
+}
+
+export class FillQueryDTO {
+  @IsIn(getChainNames(), { message: makeValidatorMsg('network is unknown', 'net') })
+  @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
+  public net?: string;
+}
+
+export class FillParamDTO {
+  @IsNumberString({}, { message: makeValidatorMsg('must be a number', 'amount') })
+  @IsOptional()
+  public amount?: string;
+
+  @IsString({ message: makeValidatorMsg('must be a string', 'mid') })
+  @IsNotEmpty({ message: makeValidatorMsg('market address is required', 'mid') })
+  public mid: string;
 }
 
 class LiquidityDTO {

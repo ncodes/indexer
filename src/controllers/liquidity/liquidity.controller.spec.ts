@@ -12,7 +12,7 @@ import { DBService } from '../../db/db.service';
 import BadgeGrant from '../../models/badge_grant';
 import Event, { Events } from '../../models/event';
 import Liquidity from '../../models/liquidity';
-import Market from '../../models/market';
+import Market, { AssetType } from '../../models/market';
 import Meta, { MetaKeys } from '../../models/meta';
 import Offer from '../../models/offer';
 import Swap from '../../models/swap';
@@ -1300,6 +1300,101 @@ describe('LiquidityController', () => {
             expect(mockExtendMarket).toHaveBeenCalled();
           });
       });
+    });
+  });
+
+  describe('.fill', function () {
+    it('should return 400 when network was not provided', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/liquidities/fill/0x123/100`)
+        .query({})
+        .set('Authorization', 'bearer ' + token)
+        .expect(400)
+        .expect({
+          error: {
+            message: 'network is required',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 404 when market was not found', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/liquidities/fill/0x123/100`)
+        .query({ net })
+        .set('Authorization', 'bearer ' + token)
+        .expect(404)
+        .expect({
+          error: { message: 'market not found' },
+        });
+    });
+
+    it('should return 500 when market is not instant', async () => {
+      await Market.create({
+        network: net,
+        address: marketAddress,
+        baseType: AssetType.ERC20,
+        quoteType: AssetType.SYNTH,
+      });
+
+      await request(app.getHttpServer())
+        .get(`/v1/liquidities/fill/${marketAddress}/100`)
+        .query({ net })
+        .set('Authorization', 'bearer ' + token)
+        .expect(500)
+        .expect((res) => {
+          expect(res.body).toEqual({ error: { type: 'api_error', message: 'not implemented' } });
+        });
+    });
+
+    it('should return 200 when market is instant', async () => {
+      await Market.create({
+        network: net,
+        address: marketAddress,
+        baseType: AssetType.ERC20,
+        quoteType: AssetType.NATIVE,
+      });
+
+      const liq0 = await Liquidity.create({
+        marketAddress,
+        lid: 0,
+        provider: '0xProvider',
+        amount: '50',
+        price: '2',
+      });
+
+      const liq1 = await Liquidity.create({
+        marketAddress,
+        lid: 1,
+        provider: '0xProvider',
+        amount: '50',
+        price: '1',
+      });
+
+      await Liquidity.create({
+        marketAddress,
+        lid: 2,
+        provider: '0xProvider',
+        amount: '50',
+        price: '3',
+      });
+
+      await request(app.getHttpServer())
+        .get(`/v1/liquidities/fill/${marketAddress}/100`)
+        .query({ net })
+        .set('Authorization', 'bearer ' + token)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data.fillers).toHaveLength(2);
+          expect(res.body.data.fillers[0].id).toEqual(liq1.id);
+          expect(res.body.data.fillers[0].amountFilled).toEqual('50');
+          expect(res.body.data.fillers[1].id).toEqual(liq0.id);
+          expect(res.body.data.fillers[1].amountFilled).toEqual('50');
+          expect(res.body.data.totalFilled).toEqual('100');
+          expect(res.body.data.filled).toBeTruthy();
+          expect(res.body.data.amount).toEqual('100');
+        });
     });
   });
 });

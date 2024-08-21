@@ -9,8 +9,8 @@ import { MetadataService } from '../../services/metadata/metadata.service';
 import { MarketService } from '../markets/market.service';
 import SwapService from '../swaps/swap.service';
 import { LiquidityService } from './liquidity.service';
-import { GetParamDTO, GetQueryDTO, ListQueryDTO } from './query.dto';
-import { isEqualStr } from '../../common/common';
+import { FillParamDTO, FillQueryDTO, GetParamDTO, GetQueryDTO, ListQueryDTO } from './query.dto';
+import { isEqualStr, toDec } from '../../common/common';
 
 @Controller('v1/liquidities')
 export class LiquidityController {
@@ -21,6 +21,25 @@ export class LiquidityController {
     private metadataSrv: MetadataService,
     private swapSrv: SwapService,
   ) {}
+
+  /**
+   * Generate fill information for an amount
+   * @param p The param object
+   * @param p.mid The market ID
+   * @param p.amount The amount to fill
+   * @param q The query object
+   * @param [q.net] The network name
+   */
+  @Get('fill/:mid/:amount')
+  async fill(
+    @Param(new ValidationPipe(ValPipeOpt)) p: FillParamDTO,
+    @Query(new ValidationPipe(ValPipeOpt)) q: FillQueryDTO,
+  ) {
+    const market = await Market.getMarket(q.net, p.mid);
+    if (!market) throw404('market not found');
+    const fillers = await Liquidity.fillers(market, p.amount);
+    return ok().data(fillers).build();
+  }
 
   /**
    * Get a liquidity

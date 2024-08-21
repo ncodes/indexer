@@ -2,7 +2,7 @@ import { AbiCoder, getCreate2Address, keccak256, toUtf8Bytes } from 'ethers';
 import * as _ from 'lodash';
 import * as moment from 'moment';
 import Objection, { Model, Transaction, raw } from 'objection';
-import { randStr } from '../common/common';
+import { randStr, toDec } from '../common/common';
 import { BaseModel } from './base';
 import Market, { AssetType } from './market';
 
@@ -117,6 +117,7 @@ export default class Liquidity extends BaseModel {
   maxSwapUsd: number;
   online: boolean;
   lastTimeOnline: string;
+  amountFilled: string;
 
   /** Relations */
   market: Market;
@@ -310,6 +311,36 @@ export default class Liquidity extends BaseModel {
         )
       : ['*'];
     return select;
+  }
+
+  /**
+   * Get providers that can fill a given amount of liquidity in a market
+   * @param market The target market
+   * @param amount The amount to fill
+   * @param txn Optional transaction object
+   */
+  static async fillers(market: Market, amount: string, txn?: Transaction) {
+    let q = this.query(txn);
+
+    if (market.isInstant()) {
+      q = q.select('id', 'lid', 'provider', 'amount', 'price').where('amount', '>', 0).orderBy('price', 'asc');
+    } else {
+      throw new Error('not implemented');
+    }
+
+    const result = await q.execute();
+    const fillers: Liquidity[] = [];
+    let totalFilled = toDec(0);
+    let amountLeft = toDec(amount);
+    for (const f of result) {
+      if (totalFilled.gte(amount)) break;
+      fillers.push(f);
+      totalFilled = totalFilled.add(f.amount);
+      f.amountFilled = (amountLeft.lte(f.amount) ? amountLeft : f.amount).toString();
+      amountLeft = amountLeft.sub(f.amountFilled);
+    }
+
+    return { fillers, totalFilled, amount, filled: totalFilled.gte(amount) };
   }
 
   /**

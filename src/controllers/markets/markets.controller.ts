@@ -205,6 +205,8 @@ export class MarketsController {
    * @param [q.net] The network where it exists
    * @param [q.creator] Filter by creator address
    * @param [q.select] Select extend fields to return
+   * @param [q.baseType] Filter by base asset type
+   * @param [q.quoteType] Filter by quote asset type
    */
   @Get('/:base/:quote')
   async getByBaseAndQuote(
@@ -212,7 +214,16 @@ export class MarketsController {
     @Param('quote') quote: string,
     @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO,
   ) {
-    const market = await Market.getMarketByBaseAndQuote(q.net, base, quote, q.creator, q.select, undefined);
+    const market = await Market.getMarketByBaseAndQuote(
+      q.net,
+      base,
+      quote,
+      q.creator,
+      q.baseType,
+      q.quoteType,
+      q.select,
+      undefined,
+    );
     if (!market) throw404('market not found');
     await this.marketSrv.extendMarket(market, q.select);
     return ok().data(market).build();

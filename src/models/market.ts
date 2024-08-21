@@ -344,6 +344,8 @@ export default class Market extends BaseModel {
    * @param baseAddress The base asset address
    * @param quoteAddress The quote asset address
    * @param creator The market creator address
+   * @param baseType The base asset type
+   * @param quoteType The quote asset type
    * @param select Select specific fields (optional)
    * @param relations Indicate the relations to fetch
    * @param noJoins If set, it will not join the related tables or create derived fields
@@ -354,13 +356,15 @@ export default class Market extends BaseModel {
     baseAddress: string,
     quoteAddress: string,
     creator?: string,
+    baseType?: AssetType,
+    quoteType?: AssetType,
     select = [],
     relations: string = undefined,
     noJoins = false,
     txn?: Objection.Transaction,
   ) {
     select = this.makeSelectList(select);
-    return this.buildMarketsQuery({ select, noJoins, creator }, txn)
+    return this.buildMarketsQuery({ select, noJoins, creator, baseType, quoteType }, txn)
       .where('network', 'ilike', network)
       .where('baseAddress', 'ilike', baseAddress)
       .where('quoteAddress', 'ilike', quoteAddress)
@@ -407,6 +411,8 @@ export default class Market extends BaseModel {
    * @param baseUsdRate The USD rate used for base USD conversions
    * @param quoteUsdRate The USD rate used for quote USD conversions
    * @param creator The market creator address
+   * @param baseType The base asset type
+   * @param quoteType The quote asset type
    * @param noJoins If set, it will not join the related tables or create derived fields
    * @param txn Optional transaction object
    * @returns
@@ -417,8 +423,18 @@ export default class Market extends BaseModel {
       baseUsdRate,
       quoteUsdRate,
       creator,
+      baseType,
+      quoteType,
       noJoins,
-    }: { select?: string[]; baseUsdRate?: number; quoteUsdRate?: number; creator?: string; noJoins?: boolean },
+    }: {
+      select?: string[];
+      baseUsdRate?: number;
+      quoteUsdRate?: number;
+      creator?: string;
+      baseType?: AssetType;
+      quoteType?: AssetType;
+      noJoins?: boolean;
+    },
     txn?: Objection.Transaction,
   ) {
     let sub = this.query(txn);
@@ -452,6 +468,9 @@ export default class Market extends BaseModel {
     let q = this.query().from(sub2.as('markets'));
 
     if (creator) q = q.where('creator', 'ILIKE', creator);
+
+    if (baseType) q = q.where('baseType', baseType);
+    if (quoteType) q = q.where('quoteType', quoteType);
 
     return q;
   }

@@ -4,6 +4,7 @@ import { IsBoolean, IsIn, IsNotEmpty, IsNumber, IsOptional, Matches } from 'clas
 import { toNumber } from 'lodash';
 import { toBoolean } from 'underscore.string';
 import { makeValidatorMsg } from '../../common/validations/validation';
+import { AssetType } from '../../models/market';
 
 export class GetQueryDTO {
   @IsIn(getChainNames(), { message: makeValidatorMsg('network is unknown', 'net') })
@@ -16,6 +17,12 @@ export class GetQueryDTO {
 
   @IsOptional()
   public creator?: string;
+
+  @IsOptional()
+  public baseType?: AssetType;
+
+  @IsOptional()
+  public quoteType?: AssetType;
 }
 
 export class ListQueryDTO {

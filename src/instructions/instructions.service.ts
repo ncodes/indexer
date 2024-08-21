@@ -1,4 +1,4 @@
-import { ChainNames } from '@jointlabs/chains-info';
+import { ChainNames } from '@jointlabs/meta';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import PinataClient, { PinataPinListResponse } from '@pinata/sdk';

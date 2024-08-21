@@ -1,4 +1,4 @@
-import { ContractNames, getChainByName } from '@jointlabs/chains-info';
+import { ContractNames, getChainByName } from '@jointlabs/meta';
 import * as crypto from 'crypto';
 import * as dayjs from 'dayjs';
 import * as utc from 'dayjs/plugin/utc';

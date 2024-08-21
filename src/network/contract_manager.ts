@@ -1,4 +1,4 @@
-import { Abi, AbiTypes, ChainNames, getChainByName, getChainNames } from '@jointlabs/chains-info';
+import { Abi, AbiTypes, ChainNames, getChainByName, getChainNames } from '@jointlabs/meta';
 import { Logger } from '@nestjs/common';
 import { Contract, FetchRequest, JsonRpcProvider, Provider } from 'ethers';
 import * as assetRegABI from '../../abi/AssetRegistry.json';

@@ -1,4 +1,4 @@
-import { ChainNames } from '@jointlabs/chains-info';
+import { ChainNames } from '@jointlabs/meta';
 import * as _ from 'lodash';
 import Objection, { QueryBuilderType, raw, Transaction } from 'objection';
 import { randStr } from '../common/common';
@@ -316,6 +316,7 @@ export default class Market extends BaseModel {
    * @param marketAddress The record id
    * @param select Select specific fields (optional)
    * @param relations Indicate the relations to fetch
+   * @param noJoins If set, it will not join the related tables or create derived fields
    * @param txn Optional transaction object
    */
   static getMarket(
@@ -330,6 +331,35 @@ export default class Market extends BaseModel {
     return this.buildMarketsQuery({ select, noJoins }, txn)
       .where('network', 'ilike', network)
       .where('address', 'ilike', marketAddress)
+      .whereNotDeleted()
+      .withGraphFetched(relations)
+      .first();
+  }
+
+  /**
+   * getMarketByBaseAndQuote finds a market by its base and quote addresses
+   * @param network The network name
+   * @param baseAddress The base asset address
+   * @param quoteAddress The quote asset address
+   * @param select Select specific fields (optional)
+   * @param relations Indicate the relations to fetch
+   * @param noJoins If set, it will not join the related tables or create derived fields
+   * @param txn Optional transaction object
+   */
+  static getMarketByBaseAndQuote(
+    network: string,
+    baseAddress: string,
+    quoteAddress: string,
+    select = [],
+    relations: string = undefined,
+    noJoins = false,
+    txn?: Objection.Transaction,
+  ) {
+    select = this.makeSelectList(select);
+    return this.buildMarketsQuery({ select, noJoins }, txn)
+      .where('network', 'ilike', network)
+      .where('baseAddress', 'ilike', baseAddress)
+      .where('quoteAddress', 'ilike', quoteAddress)
       .whereNotDeleted()
       .withGraphFetched(relations)
       .first();
@@ -370,6 +400,9 @@ export default class Market extends BaseModel {
   /**
    * Create markets query builder. The base for all markets query.
    * @param select The fields to select
+   * @param baseUsdRate The USD rate used for base USD conversions
+   * @param quoteUsdRate The USD rate used for quote USD conversions
+   * @param noJoins If set, it will not join the related tables or create derived fields
    * @param txn Optional transaction object
    * @returns
    */
@@ -396,7 +429,7 @@ export default class Market extends BaseModel {
         });
     }
 
-    // Subclass the markets query to perform further queries on it
+    // Subclass the markets query to perform further queries against it
     let sub2 = this.query()
       .select(...select)
       .from(sub.as('sub'));

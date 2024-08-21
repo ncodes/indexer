@@ -1,4 +1,4 @@
-import { ChainNames } from '@jointlabs/chains-info';
+import { ChainNames } from '@jointlabs/meta';
 import { INestApplication } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';

@@ -1,4 +1,4 @@
-import { ChainNames } from '@jointlabs/chains-info';
+import { ChainNames } from '@jointlabs/meta';
 
 interface FeaturedAsset {
   // The asset symbol

@@ -1,4 +1,4 @@
-import { ChainNames, TokenLists, findTokenInLocalhost, getTokenInfo, isValidChain } from '@jointlabs/chains-info';
+import { ChainNames, TokenLists, findTokenInLocalhost, getTokenInfo, isValidChain } from '@jointlabs/meta';
 import { Controller, Get, Logger, Param } from '@nestjs/common';
 import { toDec } from '../../common/common';
 import { FeaturedAssets } from '../../common/featured_assets';

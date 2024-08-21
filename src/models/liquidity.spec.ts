@@ -1,4 +1,4 @@
-import { ChainNames } from '@jointlabs/chains-info';
+import { ChainNames } from '@jointlabs/meta';
 import * as moment from 'moment';
 import { DBService } from '../db/db.service';
 import { powOf } from '../network/common';

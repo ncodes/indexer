@@ -1,4 +1,4 @@
-import { ChainNames } from '@jointlabs/chains-info';
+import { ChainNames } from '@jointlabs/meta';
 import { DBService } from '../db/db.service';
 import { powOf } from '../network/common';
 import Liquidity from './liquidity';

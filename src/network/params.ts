@@ -1,4 +1,4 @@
-import { ChainNames, getContractsParams } from '@jointlabs/chains-info';
+import { ChainNames, getContractsParams } from '@jointlabs/meta';
 
 export function getNetworkParams(network: ChainNames): ContractsParams {
   return {
@@ -29,5 +29,6 @@ export function getNetworkParams(network: ChainNames): ContractsParams {
     evidenceDur: getContractsParams(network).disputeManager.evidenceDur,
     predictDur: getContractsParams(network).disputeManager.predictDur,
     operatorBond: getContractsParams(network).others.operatorBond,
+    nativeAssetAddr: getContractsParams(network).others.nativeAssetAddr,
   };
 }

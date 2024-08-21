@@ -1,6 +1,5 @@
 import { Controller, Get, Param, Query, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as moment from 'moment';
 import { isProd } from '../../common/common';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ok, throw400, throw404 } from '../../common/responses/responses';
@@ -53,6 +52,26 @@ export class MarketsController {
   @Get(':mid')
   async get(@Param('mid') marketAddress: string, @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO) {
     const market = await Market.getMarket(q.net, marketAddress, q.select, undefined);
+    if (!market) throw404('market not found');
+    await this.marketSrv.extendMarket(market, q.select);
+    return ok().data(market).build();
+  }
+
+  /**
+   * Get a market by base and quote addresses
+   * @param base The base asset address
+   * @param quote The quote asset address
+   * @param q The query object
+   * @param [q.net] The network where it exists
+   * @param [q.select] Select extend fields to return
+   */
+  @Get('/:base/:quote')
+  async getByBaseAndQuote(
+    @Param('base') base: string,
+    @Param('quote') quote: string,
+    @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO,
+  ) {
+    const market = await Market.getMarketByBaseAndQuote(q.net, base, quote, q.select, undefined);
     if (!market) throw404('market not found');
     await this.marketSrv.extendMarket(market, q.select);
     return ok().data(market).build();

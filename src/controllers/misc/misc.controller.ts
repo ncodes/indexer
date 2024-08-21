@@ -1,11 +1,4 @@
-import {
-  ChainNames,
-  TokenLists,
-  contractsParams,
-  getChainByName,
-  getTokenInfo,
-  isValidChain,
-} from '@jointlabs/chains-info';
+import { ChainNames, TokenLists, contractsParams, getChainByName, getTokenInfo, isValidChain } from '@jointlabs/meta';
 import { Controller, Get, Param, Query, Req } from '@nestjs/common';
 import { Client } from '@xmtp/xmtp-js';
 import { Wallet } from 'ethers';

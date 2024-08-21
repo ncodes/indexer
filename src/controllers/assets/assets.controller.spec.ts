@@ -24,9 +24,9 @@ import { AssetsController } from './assets.controller';
 // Note: We use var because const will not jest hoist correctly.
 // eslint-disable-next-line no-var
 var mockFindTokenInLocalhost: jest.Mock<any, any, any>;
-jest.mock('@jointlabs/chains-info', () => {
+jest.mock('@jointlabs/meta', () => {
   mockFindTokenInLocalhost = jest.fn();
-  const orig = jest.requireActual('@jointlabs/chains-info');
+  const orig = jest.requireActual('@jointlabs/meta');
   return {
     ...orig,
     findTokenInLocalhost: mockFindTokenInLocalhost,

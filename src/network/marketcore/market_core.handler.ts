@@ -1,4 +1,4 @@
-import { ChainNames, findTokenInLocalhost, findTokenInSynthetic } from '@jointlabs/chains-info';
+import { ChainNames, findTokenInLocalhost, findTokenInSynthetic } from '@jointlabs/meta';
 import { Logger } from '@nestjs/common';
 import { Provider } from 'ethers';
 import { Transaction } from 'objection';
@@ -14,6 +14,7 @@ import PermittedTrader from '../../models/permitted_trader';
 import { ContractCallEvent, toNumber } from '../common';
 import { Handler } from '../handler';
 import NetworkService from '../network.service';
+import Meta from '../../models/meta';
 
 export class MarketCoreHandler extends Handler {
   public logger = new Logger(MarketCoreHandler.name);
@@ -130,6 +131,10 @@ export class MarketCoreHandler extends Handler {
         return this.onUpdatedMarketManager(id, managerAddr, event, txn);
       },
     );
+
+    this.on('UpdatedNativeAssetAddr', async (addr: string, event: ContractCallEvent, txn?: Transaction) => {
+      return this.onParameterUpdate('nativeAssetAddr', addr, event, txn);
+    });
   }
 
   /**
@@ -137,14 +142,14 @@ export class MarketCoreHandler extends Handler {
    * @param id The market ID
    * @param put The PUT badges
    * @param swap The SWAP badges
-   * @param event The event object
+   * @param _event The event object
    * @param txn The db transaction object
    */
   async onUpdatedMarketBadges(
     id: string,
     put: [string, string][],
     swap: [string, string][],
-    event: ContractCallEvent,
+    _event: ContractCallEvent,
     txn?: Transaction,
   ) {
     await Market.updateByNetworkAddress(
@@ -161,10 +166,10 @@ export class MarketCoreHandler extends Handler {
   /**
    * Enabled zero-priced liquidity for a market
    * @param id The market ID
-   * @param event The event object
+   * @param _event The event object
    * @param txn The db transaction object
    */
-  async onEnabledZeroOfferPrice(id: string, event: ContractCallEvent, txn?: Transaction) {
+  async onEnabledZeroOfferPrice(id: string, _event: ContractCallEvent, txn?: Transaction) {
     await Market.updateByNetworkAddress(this.network, id, { enabledZeroOfferPrice: true }, txn);
   }
 
@@ -173,14 +178,14 @@ export class MarketCoreHandler extends Handler {
    * @param id The market ID
    * @param oldOwner The old owner address
    * @param newOwner The new owner address
-   * @param event The event object
+   * @param _event The event object
    * @param txn The db transaction object
    */
   async onTransferredOwnership(
     id: string,
     oldOwner: string,
     newOwner: string,
-    event: ContractCallEvent,
+    _event: ContractCallEvent,
     txn?: Transaction,
   ) {
     await Market.updateByNetworkAddress(this.network, id, { creator: newOwner }, txn);
@@ -360,7 +365,7 @@ export class MarketCoreHandler extends Handler {
 
     // Notify approved user
     const market = await Market.getMarket(this.network, marketAddress, [], undefined, true, txn);
-    this.notifSrv.notify(NotificationID.PutApproved, this.network, address, {
+    void void this.notifSrv.notify(NotificationID.PutApproved, this.network, address, {
       market,
     });
   }
@@ -380,7 +385,7 @@ export class MarketCoreHandler extends Handler {
 
     // Notify revoked user
     const market = await Market.getMarket(this.network, marketAddress, [], undefined, true, txn);
-    this.notifSrv.notify(NotificationID.PutRevoked, this.network, address, { market });
+    void this.notifSrv.notify(NotificationID.PutRevoked, this.network, address, { market });
   }
 
   /**
@@ -395,7 +400,7 @@ export class MarketCoreHandler extends Handler {
 
     // Notify approved user
     const market = await Market.getMarket(this.network, marketAddress, [], undefined, true, txn);
-    this.notifSrv.notify(NotificationID.SwapApproved, this.network, address, { market });
+    void this.notifSrv.notify(NotificationID.SwapApproved, this.network, address, { market });
   }
 
   /**
@@ -410,7 +415,7 @@ export class MarketCoreHandler extends Handler {
 
     // Notify revoked user
     const market = await Market.getMarket(this.network, marketAddress, [], undefined, true, txn);
-    this.notifSrv.notify(NotificationID.SwapRevoked, this.network, address, { market });
+    void this.notifSrv.notify(NotificationID.SwapRevoked, this.network, address, { market });
   }
 
   /**
@@ -428,7 +433,7 @@ export class MarketCoreHandler extends Handler {
    * Updated dispute durations
    * @param id The market ID
    * @param disputeDelayDur Number of seconds before dispute can be started
-   * @param event The event object
+   * @param _event The event object
    * @param txn The db transaction object
    */
   async onUpdatedDisputeDelayDuration(
@@ -449,5 +454,16 @@ export class MarketCoreHandler extends Handler {
    */
   async onUpdatedMarketManager(id: string, managerAddr: string, event: ContractCallEvent, txn?: Transaction) {
     await Market.updateByNetworkAddress(this.network, id, { manager: managerAddr }, txn);
+  }
+
+  /**
+   * Updated a parameter
+   * @param param The parameter name
+   * @param value The updated value
+   * @param _event The event object
+   * @param txn The transaction object
+   */
+  async onParameterUpdate(param: keyof ContractsParams, value: string, _event: ContractCallEvent, txn?: Transaction) {
+    await Meta.updateContractsParams(this.network, txn, (params) => (params[param] = value));
   }
 }

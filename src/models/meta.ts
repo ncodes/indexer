@@ -138,11 +138,11 @@ export default class Meta extends BaseModel {
     updFn: (params: { ContractParamKey: string }) => void,
   ) {
     const key = Meta.makeNetKey(network, MetaKeys.ContractsParams);
-    const existing = await Meta.get(key, txn);
-    if (!existing || !existing.value) throw new Error('Contracts params not initialized');
+    let existing = await Meta.get(key, txn);
+    if (!existing) existing = await Meta.create(key, JSON.stringify({}), txn);
+    if (!existing.value) existing.value = '{}';
     const obj = JSON.parse(existing.value);
     if (updFn) updFn(obj);
-
     await Meta.update(key, JSON.stringify(obj), txn);
   }
 

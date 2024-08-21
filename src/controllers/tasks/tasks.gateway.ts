@@ -1,4 +1,4 @@
-import { isValidChain } from '@jointlabs/chains-info';
+import { isValidChain } from '@jointlabs/meta';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {

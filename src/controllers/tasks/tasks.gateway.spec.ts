@@ -6,7 +6,7 @@ import { NoopLogger } from '../../common/loggers/noop_logger';
 import { DBService } from '../../db/db.service';
 import MineTask, { MineTaskType } from '../../models/mine_task';
 
-import { ChainNames } from '@jointlabs/chains-info';
+import { ChainNames } from '@jointlabs/meta';
 import { AssignFuncResult, CheckStatusFuncResult, TasksGateway } from './tasks.gateway';
 import { QueuedTask, makeMinerId } from './types';
 

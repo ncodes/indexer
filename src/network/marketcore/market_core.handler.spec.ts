@@ -1,4 +1,4 @@
-import { ChainNames } from '@jointlabs/chains-info';
+import { ChainNames } from '@jointlabs/meta';
 import * as moment from 'moment';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { DBService } from '../../db/db.service';
@@ -9,12 +9,13 @@ import LiquidityProvider from '../../models/market_provider';
 import PermittedTrader from '../../models/permitted_trader';
 import { toBigInt } from '../common';
 import { MarketCoreHandler } from './market_core.handler';
+import Meta, { MetaKeys } from '../../models/meta';
 
 // eslint-disable-next-line no-var
 var mockFindTokenInSynthetic: jest.Mock<any, any, any>;
-jest.mock('@jointlabs/chains-info', () => {
+jest.mock('@jointlabs/meta', () => {
   mockFindTokenInSynthetic = jest.fn();
-  const orig = jest.requireActual('@jointlabs/chains-info');
+  const orig = jest.requireActual('@jointlabs/meta');
   return {
     ...orig,
     findTokenInSynthetic: mockFindTokenInSynthetic,
@@ -509,6 +510,16 @@ describe('MarketCoreHandler', () => {
       await expect(handler.onUpdatedMarketManager(marketAddress, '0xNewManager', null)).resolves.toBeUndefined();
       const updMkt = await Market.getById(mkt.id);
       expect(updMkt.manager).toEqual('0xNewManager');
+    });
+  });
+
+  describe('.onParameterUpdate', () => {
+    it('should update native asset address', async () => {
+      await expect(handler.onParameterUpdate('nativeAssetAddr', '0xNewAsset', null)).resolves.toBeUndefined();
+      const upd = await Meta.get(Meta.makeNetKey(net, MetaKeys.ContractsParams));
+      expect(upd).toBeDefined();
+      const value = await Meta.getContractParam(net, 'nativeAssetAddr');
+      expect(value).toEqual('0xNewAsset');
     });
   });
 });

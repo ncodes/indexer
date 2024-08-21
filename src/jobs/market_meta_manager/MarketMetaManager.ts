@@ -1,4 +1,4 @@
-import { getTokenInfo } from '@jointlabs/chains-info';
+import { getTokenInfo } from '@jointlabs/meta';
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import * as moment from 'moment';

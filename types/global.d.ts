@@ -6,7 +6,7 @@ import {
   MediatorManagerParams,
   MinerRegistryParams,
   OthersParams,
-} from '@jointlabs/chains-info/src/types';
+} from '@jointlabs/meta/src/types';
 import { BigNumber } from 'ethers';
 import { NotificationID } from '../src/jobs/notifications/common';
 import Convo from '../src/models/convo';
@@ -33,7 +33,7 @@ import {
   Token,
   TokenPool,
 } from '../typechain';
-import { AbiTypes } from '@jointlabs/chains-info';
+import { AbiTypes } from '@jointlabs/meta';
 
 declare global {
   namespace Express {

@@ -1,7 +1,7 @@
-import { ChainNames } from '@jointlabs/chains-info';
+import { ChainNames } from '@jointlabs/meta';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Contract, Provider } from 'ethers';
+import { BaseContract, Contract, Provider } from 'ethers';
 import * as erc20TokenABI from '../../abi/ERC20.json';
 import { ERC20 } from '../../typechain';
 import { isProd, isTest } from '../common/common';
@@ -49,9 +49,6 @@ export default class NetworkService {
     });
   }
 
-  /**
-   * Watch event
-   */
   private async watch() {
     if (isProd()) {
       await this.startWatcher('sepolia', 'sepolia');
@@ -127,7 +124,6 @@ export default class NetworkService {
     const key = Meta.makeNetKey(chain, MetaKeys.ContractsParams);
     const params = await Meta.get(key);
     if (params && params.value) return;
-
     await Meta.create(key, JSON.stringify(getNetworkParams(chain)));
     this.logger.log('Loaded initial contracts parameters');
   }
@@ -181,11 +177,36 @@ export default class NetworkService {
 
     const provider = this.contractMgr.providers[network];
     const handlers = [
-      new UniswapRouter(this, provider, network, this.contractMgr.contracts[network].uniswapV2Router),
-      new UniswapRouter(this, provider, network, this.contractMgr.contracts[network].uniswapV2Router2),
-      new UniswapRouter(this, provider, network, this.contractMgr.contracts[network].uniswapV3Router),
-      new UniswapRouter(this, provider, network, this.contractMgr.contracts[network].uniswapV3Router2),
-      new UniswapRouter(this, provider, network, this.contractMgr.contracts[network].uniswapV3RouterUniversal),
+      new UniswapRouter(
+        this,
+        provider,
+        network,
+        this.contractMgr.contracts[network].uniswapV2Router as unknown as BaseContract,
+      ),
+      new UniswapRouter(
+        this,
+        provider,
+        network,
+        this.contractMgr.contracts[network].uniswapV2Router2 as unknown as BaseContract,
+      ),
+      new UniswapRouter(
+        this,
+        provider,
+        network,
+        this.contractMgr.contracts[network].uniswapV3Router as unknown as BaseContract,
+      ),
+      new UniswapRouter(
+        this,
+        provider,
+        network,
+        this.contractMgr.contracts[network].uniswapV3Router2 as unknown as BaseContract,
+      ),
+      new UniswapRouter(
+        this,
+        provider,
+        network,
+        this.contractMgr.contracts[network].uniswapV3RouterUniversal as unknown as BaseContract,
+      ),
     ];
 
     const processor = new Processor(network);

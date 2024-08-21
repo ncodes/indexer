@@ -15,8 +15,8 @@ import { makeSession } from '../auth/utils';
 import { BadgeService } from './badge.service';
 import { BadgesController } from './badges.controller';
 
-jest.mock('@jointlabs/chains-info', () => {
-  const actual = jest.requireActual('@jointlabs/chains-info');
+jest.mock('@jointlabs/meta', () => {
+  const actual = jest.requireActual('@jointlabs/meta');
   return {
     ...actual,
     BadgeManifest: {},

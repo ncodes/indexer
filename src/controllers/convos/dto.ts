@@ -1,4 +1,4 @@
-import { getChainNames } from '@jointlabs/chains-info';
+import { getChainNames } from '@jointlabs/meta';
 import { ArrayMinSize, IsIn, IsNotEmpty, ValidateIf } from 'class-validator';
 import { makeValidatorMsg } from '../../common/validations/validation';
 

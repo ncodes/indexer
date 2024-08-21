@@ -441,7 +441,7 @@ export class MediatorManagerHandler extends Handler {
     await this.netSrv.pointSrv.grantPoint('ticket:drafter', this.network, drafter, event, txn);
 
     // Send notification
-    this.notifSrv.notify(NotificationID.TicketDrafted, this.network, owner, {
+    void this.notifSrv.notify(NotificationID.TicketDrafted, this.network, owner, {
       owner,
       ticketId: toNumber(ticketId),
       dispute,
@@ -451,13 +451,13 @@ export class MediatorManagerHandler extends Handler {
       // Send notification to provider and taker when fully drafted
       const swap = await Swap.get(this.network, toNumber(orderId), undefined, undefined, txn);
       const locals = { dispute, evidencePhaseHoursLeft: moment(dispute.evidenceEndAt).fromNow(true) };
-      this.notifSrv.notify(NotificationID.FullyDrafted, this.network, swap.provider, locals);
-      this.notifSrv.notify(NotificationID.FullyDrafted, this.network, swap.taker, locals);
+      void this.notifSrv.notify(NotificationID.FullyDrafted, this.network, swap.provider, locals);
+      void this.notifSrv.notify(NotificationID.FullyDrafted, this.network, swap.taker, locals);
 
       // Send notification to drafted mediators
       const drafted = await Draft.getAll(this.network, marketAddress, toNumber(orderId), toNumber(disputeId), txn);
       for (const draft of drafted) {
-        this.notifSrv.notify(NotificationID.EvidencePhaseStarted, this.network, draft.owner, locals);
+        void this.notifSrv.notify(NotificationID.EvidencePhaseStarted, this.network, draft.owner, locals);
       }
     }
   }
@@ -573,7 +573,7 @@ export class MediatorManagerHandler extends Handler {
     await this.netSrv.pointSrv.grantPoint('ticket:slashed', this.network, owner, event, txn);
 
     // Send notification
-    this.notifSrv.notify(NotificationID.TicketSlashed, this.network, owner, {
+    void this.notifSrv.notify(NotificationID.TicketSlashed, this.network, owner, {
       ticket,
       owner,
       amount: commify(formatEther(amount)),
@@ -630,7 +630,7 @@ export class MediatorManagerHandler extends Handler {
     await this.netSrv.pointSrv.grantPoint('ticket:slashed', this.network, owner, event, txn);
 
     // Send notification
-    this.notifSrv.notify(NotificationID.TicketSlashed, this.network, owner, {
+    void this.notifSrv.notify(NotificationID.TicketSlashed, this.network, owner, {
       ticket,
       owner,
       amount: commify(formatEther(amount)),
@@ -659,10 +659,10 @@ export class MediatorManagerHandler extends Handler {
   }
 
   /**
-   * A ticket was paused or ununpaused
+   * A ticket was paused or unpaused
    * @param owner The ticket owner
    * @param ticketId The unique id of the ticket
-   * @param unpaused Indicates whether the ticket was unpaused
+   * @param paused Indicates whether the ticket was unpaused
    * @param pauseDur The amount of duration the ticket can remain paused before it expires
    * @param _event The event object
    * @param txn The database transaction handle
@@ -672,11 +672,11 @@ export class MediatorManagerHandler extends Handler {
     ticketId: bigint,
     paused: boolean,
     pauseDur: bigint,
-    event: ContractCallEvent,
+    _event: ContractCallEvent,
     txn?: Transaction,
   ) {
     const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, toNumber(ticketId), undefined, txn);
-    const blockTime = await getBlockTime(event);
+    const blockTime = await getBlockTime(_event);
     const pauseExpireAt = blockTime + toNumber(pauseDur);
     await Ticket.updateById(
       ticket.id,
@@ -694,7 +694,7 @@ export class MediatorManagerHandler extends Handler {
    * @param poolId The ID of the pool
    * @param address The address of the mediator or market
    * @param approved Indicates whether the address is approved or no longer approved
-   * @param event The event object
+   * @param _event The event object
    * @param txn The database transaction handle
    */
   async onPoolApprovalUpdate(

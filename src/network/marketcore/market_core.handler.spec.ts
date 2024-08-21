@@ -1,4 +1,4 @@
-import { ChainNames } from '@jointlabs/meta';
+import { ChainNames, getChainByName } from '@jointlabs/meta';
 import * as moment from 'moment';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { DBService } from '../../db/db.service';
@@ -141,6 +141,35 @@ describe('MarketCoreHandler', () => {
       });
     });
 
+    describe('new ERC20/NATIVE market', function () {
+      it('should create market and set correct symbol and decimals', async () => {
+        await expect(
+          handler.onNewMarket(
+            marketAddress,
+            creator,
+            baseAsset,
+            quoteAsset,
+            AssetType.ERC20,
+            AssetType.NATIVE,
+            false,
+            false,
+            toBigInt(1),
+            toBigInt(1),
+            { transactionHash: txHash } as any,
+          ),
+        ).resolves.toBeUndefined();
+
+        const chainInfo = getChainByName(net);
+
+        const market = await Market.getByAddress(marketAddress);
+        expect(market).toBeDefined();
+        expect(market.quote).toEqual(chainInfo.symbol);
+        expect(market.quoteType).toEqual(AssetType.NATIVE);
+        expect(market.quoteDecimals).toEqual(18);
+        expect(market.pair).toEqual(`${base}${chainInfo.symbol}`);
+      });
+    });
+
     describe('new ERC20/SYNTH market', function () {
       it('should create market and fetch synthetic asset symbol and decimal from internal list', async () => {
         mockFindTokenInSynthetic.mockReturnValue({
@@ -205,7 +234,7 @@ describe('MarketCoreHandler', () => {
           expect(market.base).toEqual(base);
           expect(market.baseAddress).toEqual(baseAsset);
           expect(market.quoteAddress).toEqual(quoteAsset);
-          expect(market.quote).toEqual('UNKNW');
+          expect(market.quote).toEqual('???');
           expect(market.quoteDecimals).toEqual(18);
           expect(market.pair).toEqual(`${market.base}${market.quote}`);
         });
@@ -239,7 +268,7 @@ describe('MarketCoreHandler', () => {
     });
 
     describe('new ERC20/ERC1155 market', function () {
-      it('should create market but not set symbol and decimal for ERC271 asset', async () => {
+      it('should create market but not set symbol and decimal for ERC1155 asset', async () => {
         await expect(
           handler.onNewMarket(
             marketAddress,
@@ -261,6 +290,39 @@ describe('MarketCoreHandler', () => {
         expect(market.quoteType).toEqual(AssetType.ERC1155);
         expect(market.quoteDecimals).toEqual(0);
         expect(market.pair).toEqual(`${base}`);
+      });
+    });
+
+    describe('new NATIVE/ERC20 market', function () {
+      it('should create market and set correct symbol and decimals', async () => {
+        await expect(
+          handler.onNewMarket(
+            marketAddress,
+            creator,
+            baseAsset,
+            quoteAsset,
+            AssetType.NATIVE,
+            AssetType.ERC20,
+            false,
+            false,
+            toBigInt(1),
+            toBigInt(1),
+            { transactionHash: txHash } as any,
+          ),
+        ).resolves.toBeUndefined();
+
+        const chainInfo = getChainByName(net);
+
+        const market = await Market.getByAddress(marketAddress);
+        expect(market).toBeDefined();
+        expect(market.base).toEqual(chainInfo.symbol);
+        expect(market.baseType).toEqual(AssetType.NATIVE);
+        expect(market.baseDecimals).toEqual(18);
+        expect(market.quote).toEqual(quote);
+        expect(market.quoteType).toEqual(AssetType.ERC20);
+        expect(market.quoteDecimals).toEqual(18);
+        expect(market.pair).toEqual(`${chainInfo.symbol}${quote}`);
+        expect(market.instant).toBeTruthy();
       });
     });
   });

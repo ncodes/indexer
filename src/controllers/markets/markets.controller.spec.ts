@@ -21,6 +21,7 @@ import { RedisService } from '../../services/redis/redis.service';
 import { makeSession } from '../auth/utils';
 import { MarketService } from './market.service';
 import { MarketsController } from './markets.controller';
+import Meta, { MetaKeys } from '../../models/meta';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -1496,6 +1497,55 @@ describe('MarketsController', () => {
             expect(res.body.data.count).toEqual('2');
           });
       });
+    });
+  });
+
+  describe('.getByBaseAndQuote', () => {
+    it('should return 400 when network is unknown', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/markets/0x123/0x456`)
+        .query({ net: 'net1' })
+        .set('Authorization', 'bearer ' + token)
+        .expect(400)
+        .expect({
+          error: {
+            message: 'network is unknown',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 404 when market was not found', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/markets/0x123/0x456`)
+        .query({ net })
+        .set('Authorization', 'bearer ' + token)
+        .expect(404)
+        .expect({
+          error: { message: 'market not found' },
+        });
+    });
+
+    it('should return 200 and correct result', async () => {
+      const mockExtendMarket = jest.spyOn(app.get(MarketService), 'extendMarket').mockResolvedValue(null);
+
+      const market = await Market.create({
+        network: net,
+        address: '0x123',
+        baseAddress: '0xBase',
+        quoteAddress: '0xQuote',
+      });
+
+      await request(app.getHttpServer())
+        .get(`/v1/markets/0xBase/0xQuote`)
+        .query({ net })
+        .set('Authorization', 'bearer ' + token)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data.id).toEqual(market.id);
+          expect(mockExtendMarket).toBeCalledTimes(1);
+        });
     });
   });
 });

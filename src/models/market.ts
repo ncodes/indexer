@@ -9,6 +9,7 @@ export enum AssetType {
   ERC20,
   ERC721,
   ERC1155,
+  NATIVE,
 }
 
 export interface Asset {
@@ -193,23 +194,8 @@ export default class Market extends BaseModel {
     return {};
   }
 
-  /**
-   * Checks if the market is an instant swap market
-   */
-  isInstant() {
-    const { baseType, quoteType } = this;
-    return Market.isInstant(baseType, quoteType);
-  }
-
-  isFungible() {
-    return (
-      (Market.isERC20(this.baseType) || Market.isSynth(this.baseType)) &&
-      (Market.isERC20(this.quoteType) || Market.isSynth(this.quoteType))
-    );
-  }
-
-  involvesERC20() {
-    return Market.isERC20(this.baseType) || Market.isERC20(this.quoteType);
+  static isNative(assetType: AssetType) {
+    return assetType == AssetType.NATIVE;
   }
 
   static isERC20(assetType: AssetType) {
@@ -225,11 +211,24 @@ export default class Market extends BaseModel {
   }
 
   static isFungible(assetType: AssetType) {
-    return assetType == AssetType.ERC20 || assetType == AssetType.SYNTH;
+    return assetType == AssetType.ERC20 || assetType == AssetType.SYNTH || assetType == AssetType.NATIVE;
   }
 
   static isNFT(assetType: AssetType) {
     return assetType == AssetType.ERC721 || assetType == AssetType.ERC1155;
+  }
+
+  isInstant() {
+    const { baseType, quoteType } = this;
+    return Market.isInstant(baseType, quoteType);
+  }
+
+  isFungible() {
+    return Market.isFungible(this.baseType) && Market.isFungible(this.quoteType);
+  }
+
+  involvesERC20() {
+    return Market.isERC20(this.baseType) || Market.isERC20(this.quoteType);
   }
 
   /**
@@ -238,13 +237,16 @@ export default class Market extends BaseModel {
    * @param quoteType The quote asset type
    */
   static isInstant(baseType: AssetType, quoteType: AssetType) {
-    const baseIsNFT = baseType == AssetType.ERC721 || baseType == AssetType.ERC1155;
-    const quoteIsNFT = quoteType == AssetType.ERC721 || quoteType == AssetType.ERC1155;
     return (
-      (baseType == AssetType.ERC20 && quoteType == AssetType.ERC20) ||
-      (baseType == AssetType.ERC20 && quoteIsNFT) ||
-      (baseIsNFT && quoteType == AssetType.ERC20) ||
-      (baseIsNFT && quoteIsNFT)
+      (Market.isERC20(baseType) && Market.isERC20(quoteType)) || // ERC20/ERC20
+      (Market.isERC20(baseType) && Market.isNFT(quoteType)) || // ERC20/NFT
+      (Market.isERC20(baseType) && Market.isNative(quoteType)) || // ERC20/NATIVE
+      (Market.isNFT(baseType) && Market.isERC20(quoteType)) || // NFT/ERC20
+      (Market.isNFT(baseType) && Market.isNFT(quoteType)) || // NFT/NFT
+      (Market.isNFT(baseType) && Market.isNative(quoteType)) || // NFT/NATIVE
+      (Market.isNative(baseType) && Market.isNative(quoteType)) || // NATIVE/NATIVE
+      (Market.isNative(baseType) && Market.isERC20(quoteType)) || // NATIVE/ERC20
+      (Market.isNative(baseType) && Market.isNFT(quoteType)) // NATIVE/NFT
     );
   }
 

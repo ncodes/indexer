@@ -1,4 +1,4 @@
-import { ChainNames, findTokenInLocalhost, findTokenInSynthetic } from '@jointlabs/meta';
+import { ChainNames, findTokenInLocalhost, findTokenInSynthetic, getChainByName } from '@jointlabs/meta';
 import { Logger } from '@nestjs/common';
 import { Provider } from 'ethers';
 import { Transaction } from 'objection';
@@ -249,6 +249,18 @@ export class MarketCoreHandler extends Handler {
       quoteDecimals: number;
 
     if (!isDev(true)) {
+      if (Market.isNative(baseType)) {
+        const chainInfo = getChainByName(this.network);
+        baseSymbol = chainInfo.symbol;
+        baseDecimals = 18;
+      }
+
+      if (Market.isNative(quoteType)) {
+        const chainInfo = getChainByName(this.network);
+        quoteSymbol = chainInfo.symbol;
+        quoteDecimals = 18;
+      }
+
       if (Market.isERC20(baseType)) {
         const baseToken = this.newContract(baseAsset, erc20ABI, this.provider);
         baseSymbol = (await baseToken.symbol()).toUpperCase();
@@ -275,13 +287,13 @@ export class MarketCoreHandler extends Handler {
 
       if (Market.isSynth(baseType)) {
         const token = findTokenInSynthetic(baseAsset);
-        baseSymbol = token ? token.symbol.toUpperCase() : 'UNKNW';
+        baseSymbol = token ? token.symbol.toUpperCase() : '???';
         baseDecimals = token ? token.decimals : 18;
       }
 
       if (Market.isSynth(quoteType)) {
         const token = findTokenInSynthetic(quoteAsset);
-        quoteSymbol = token ? token.symbol.toUpperCase() : 'UNKNW';
+        quoteSymbol = token ? token.symbol.toUpperCase() : '???';
         quoteDecimals = token ? token.decimals : 18;
       }
     } else {
@@ -295,7 +307,7 @@ export class MarketCoreHandler extends Handler {
           baseSymbol = (await baseToken.symbol()).toUpperCase();
           baseDecimals = await baseToken.decimals();
         } catch (error) {
-          baseSymbol = 'UNKNW';
+          baseSymbol = '???';
           baseDecimals = 18;
         }
       }
@@ -310,7 +322,7 @@ export class MarketCoreHandler extends Handler {
           quoteSymbol = (await quoteToken.symbol()).toUpperCase();
           quoteDecimals = await quoteToken.decimals();
         } catch (error) {
-          quoteSymbol = 'UNKNW';
+          quoteSymbol = '???';
           quoteDecimals = 18;
         }
       }

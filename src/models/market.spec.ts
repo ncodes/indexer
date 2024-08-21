@@ -2,7 +2,7 @@ import { ChainNames } from '@jointlabs/meta';
 import { DBService } from '../db/db.service';
 import { powOf } from '../network/common';
 import Liquidity from './liquidity';
-import Market from './market';
+import Market, { AssetType } from './market';
 
 describe('Market', () => {
   const db = DBService.getForTest();
@@ -18,6 +18,122 @@ describe('Market', () => {
 
   beforeEach(async () => {
     await db.truncateTables();
+  });
+
+  describe('.isFungible', () => {
+    it('should return true for ERC20/ERC20', () => {
+      const market = new Market({ baseType: AssetType.ERC20, quoteType: AssetType.ERC20 });
+      expect(market.isFungible()).toBeTruthy();
+    });
+
+    it('should return true for ERC20/SYNTH', () => {
+      const market = new Market({ baseType: AssetType.ERC20, quoteType: AssetType.SYNTH });
+      expect(market.isFungible()).toBeTruthy();
+    });
+
+    it('should return true for ERC20/NATIVE', () => {
+      const market = new Market({ baseType: AssetType.ERC20, quoteType: AssetType.NATIVE });
+      expect(market.isFungible()).toBeTruthy();
+    });
+
+    it('should return true for ERC20/NFT', () => {
+      const market = new Market({ baseType: AssetType.ERC20, quoteType: AssetType.ERC721 });
+      expect(market.isFungible()).toBeFalsy();
+    });
+
+    it('should return true for NATIVE/NATIVE', () => {
+      const market = new Market({ baseType: AssetType.NATIVE, quoteType: AssetType.NATIVE });
+      expect(market.isFungible()).toBeTruthy();
+    });
+
+    it('should return true for NATIVE/ERC20', () => {
+      const market = new Market({ baseType: AssetType.NATIVE, quoteType: AssetType.ERC20 });
+      expect(market.isFungible()).toBeTruthy();
+    });
+
+    it('should return true for NATIVE/NFT', () => {
+      const market = new Market({ baseType: AssetType.NATIVE, quoteType: AssetType.ERC721 });
+      expect(market.isFungible()).toBeFalsy();
+    });
+
+    it('should return true for NATIVE/SYNTH', () => {
+      const market = new Market({ baseType: AssetType.NATIVE, quoteType: AssetType.SYNTH });
+      expect(market.isFungible()).toBeTruthy();
+    });
+
+    it('should return true for SYNTH/ERC20', () => {
+      const market = new Market({ baseType: AssetType.SYNTH, quoteType: AssetType.ERC20 });
+      expect(market.isFungible()).toBeTruthy();
+    });
+
+    it('should return true for SYNTH/NFT', () => {
+      const market = new Market({ baseType: AssetType.SYNTH, quoteType: AssetType.ERC721 });
+      expect(market.isFungible()).toBeFalsy();
+    });
+
+    it('should return true for SYNTH/SYNTH', () => {
+      const market = new Market({ baseType: AssetType.SYNTH, quoteType: AssetType.SYNTH });
+      expect(market.isFungible()).toBeTruthy();
+    });
+
+    it('should return true for SYNTH/NATIVE', () => {
+      const market = new Market({ baseType: AssetType.SYNTH, quoteType: AssetType.NATIVE });
+      expect(market.isFungible()).toBeTruthy();
+    });
+
+    it('should return true for NFT/ERC20', () => {
+      const market = new Market({ baseType: AssetType.ERC721, quoteType: AssetType.ERC20 });
+      expect(market.isFungible()).toBeFalsy();
+    });
+
+    it('should return true for NFT/NFT', () => {
+      const market = new Market({ baseType: AssetType.ERC721, quoteType: AssetType.ERC721 });
+      expect(market.isFungible()).toBeFalsy();
+    });
+
+    it('should return true for NFT/NATIVE', () => {
+      const market = new Market({ baseType: AssetType.ERC721, quoteType: AssetType.NATIVE });
+      expect(market.isFungible()).toBeFalsy();
+    });
+
+    it('should return true for NFT/SYNTH', () => {
+      const market = new Market({ baseType: AssetType.ERC721, quoteType: AssetType.SYNTH });
+      expect(market.isFungible()).toBeFalsy();
+    });
+  });
+
+  describe('.isInstant', () => {
+    it('should return correct value', () => {
+      expect(Market.isInstant(AssetType.ERC20, AssetType.ERC20)).toBeTruthy();
+      expect(Market.isInstant(AssetType.ERC20, AssetType.NATIVE)).toBeTruthy();
+      expect(Market.isInstant(AssetType.ERC20, AssetType.SYNTH)).toBeFalsy();
+      expect(Market.isInstant(AssetType.ERC20, AssetType.ERC721)).toBeTruthy();
+      expect(Market.isInstant(AssetType.ERC20, AssetType.ERC1155)).toBeTruthy();
+
+      expect(Market.isInstant(AssetType.NATIVE, AssetType.ERC20)).toBeTruthy();
+      expect(Market.isInstant(AssetType.NATIVE, AssetType.NATIVE)).toBeTruthy();
+      expect(Market.isInstant(AssetType.NATIVE, AssetType.SYNTH)).toBeFalsy();
+      expect(Market.isInstant(AssetType.NATIVE, AssetType.ERC721)).toBeTruthy();
+      expect(Market.isInstant(AssetType.NATIVE, AssetType.ERC1155)).toBeTruthy();
+
+      expect(Market.isInstant(AssetType.SYNTH, AssetType.ERC20)).toBeFalsy();
+      expect(Market.isInstant(AssetType.SYNTH, AssetType.NATIVE)).toBeFalsy();
+      expect(Market.isInstant(AssetType.SYNTH, AssetType.SYNTH)).toBeFalsy();
+      expect(Market.isInstant(AssetType.SYNTH, AssetType.ERC721)).toBeFalsy();
+      expect(Market.isInstant(AssetType.SYNTH, AssetType.ERC1155)).toBeFalsy();
+
+      expect(Market.isInstant(AssetType.ERC721, AssetType.ERC20)).toBeTruthy();
+      expect(Market.isInstant(AssetType.ERC721, AssetType.NATIVE)).toBeTruthy();
+      expect(Market.isInstant(AssetType.ERC721, AssetType.SYNTH)).toBeFalsy();
+      expect(Market.isInstant(AssetType.ERC721, AssetType.ERC721)).toBeTruthy();
+      expect(Market.isInstant(AssetType.ERC721, AssetType.ERC1155)).toBeTruthy();
+
+      expect(Market.isInstant(AssetType.ERC1155, AssetType.ERC20)).toBeTruthy();
+      expect(Market.isInstant(AssetType.ERC1155, AssetType.NATIVE)).toBeTruthy();
+      expect(Market.isInstant(AssetType.ERC1155, AssetType.SYNTH)).toBeFalsy();
+      expect(Market.isInstant(AssetType.ERC1155, AssetType.ERC721)).toBeTruthy();
+      expect(Market.isInstant(AssetType.ERC1155, AssetType.ERC1155)).toBeTruthy();
+    });
   });
 
   describe('.getById', () => {

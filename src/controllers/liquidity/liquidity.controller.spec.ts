@@ -1306,7 +1306,7 @@ describe('LiquidityController', () => {
   describe('.fill', function () {
     it('should return 400 when network was not provided', async () => {
       await request(app.getHttpServer())
-        .get(`/v1/liquidities/fill/0x123/100`)
+        .get(`/v1/liquidities/0x123/100/fill`)
         .query({})
         .set('Authorization', 'bearer ' + token)
         .expect(400)
@@ -1321,7 +1321,7 @@ describe('LiquidityController', () => {
 
     it('should return 404 when market was not found', async () => {
       await request(app.getHttpServer())
-        .get(`/v1/liquidities/fill/0x123/100`)
+        .get(`/v1/liquidities/0x123/100/fill`)
         .query({ net })
         .set('Authorization', 'bearer ' + token)
         .expect(404)
@@ -1339,7 +1339,7 @@ describe('LiquidityController', () => {
       });
 
       await request(app.getHttpServer())
-        .get(`/v1/liquidities/fill/${marketAddress}/100`)
+        .get(`/v1/liquidities/${marketAddress}/100/fill`)
         .query({ net })
         .set('Authorization', 'bearer ' + token)
         .expect(500)
@@ -1381,7 +1381,7 @@ describe('LiquidityController', () => {
       });
 
       await request(app.getHttpServer())
-        .get(`/v1/liquidities/fill/${marketAddress}/100`)
+        .get(`/v1/liquidities/${marketAddress}/100/fill`)
         .query({ net })
         .set('Authorization', 'bearer ' + token)
         .expect(200)

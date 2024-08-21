@@ -314,12 +314,12 @@ export default class Liquidity extends BaseModel {
   }
 
   /**
-   * Get providers that can fill a given amount of liquidity in a market
+   * Get liquidities that can fill a given amount
    * @param market The target market
    * @param amount The amount to fill
    * @param txn Optional transaction object
    */
-  static async fillers(market: Market, amount: string, txn?: Transaction) {
+  static async fill(market: Market, amount: string, txn?: Transaction) {
     let q = this.query(txn);
 
     if (market.isInstant()) {

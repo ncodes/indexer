@@ -106,7 +106,6 @@ export class MarketService {
       if (!mkt.evidenceDur || !mkt.predictDur) {
         const poolParamKey = Meta.makeMediatorPoolKey(mkt.network, mkt.mediatorPoolId);
         const poolInfo = await Meta.getJSON<PoolParams>(poolParamKey);
-        console.log(poolInfo);
 
         if (!mkt.evidenceDur) {
           mkt.evidenceDur = poolInfo.evidenceDur

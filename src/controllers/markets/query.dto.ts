@@ -13,6 +13,9 @@ export class GetQueryDTO {
   @Transform(({ value }) => (value as string).split(','))
   @IsOptional()
   public select?: string[];
+
+  @IsOptional()
+  public creator?: string;
 }
 
 export class ListQueryDTO {

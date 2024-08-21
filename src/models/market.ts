@@ -343,6 +343,7 @@ export default class Market extends BaseModel {
    * @param network The network name
    * @param baseAddress The base asset address
    * @param quoteAddress The quote asset address
+   * @param creator The market creator address
    * @param select Select specific fields (optional)
    * @param relations Indicate the relations to fetch
    * @param noJoins If set, it will not join the related tables or create derived fields
@@ -352,13 +353,14 @@ export default class Market extends BaseModel {
     network: string,
     baseAddress: string,
     quoteAddress: string,
+    creator?: string,
     select = [],
     relations: string = undefined,
     noJoins = false,
     txn?: Objection.Transaction,
   ) {
     select = this.makeSelectList(select);
-    return this.buildMarketsQuery({ select, noJoins }, txn)
+    return this.buildMarketsQuery({ select, noJoins, creator }, txn)
       .where('network', 'ilike', network)
       .where('baseAddress', 'ilike', baseAddress)
       .where('quoteAddress', 'ilike', quoteAddress)
@@ -404,6 +406,7 @@ export default class Market extends BaseModel {
    * @param select The fields to select
    * @param baseUsdRate The USD rate used for base USD conversions
    * @param quoteUsdRate The USD rate used for quote USD conversions
+   * @param creator The market creator address
    * @param noJoins If set, it will not join the related tables or create derived fields
    * @param txn Optional transaction object
    * @returns
@@ -413,8 +416,9 @@ export default class Market extends BaseModel {
       select,
       baseUsdRate,
       quoteUsdRate,
+      creator,
       noJoins,
-    }: { select?: string[]; baseUsdRate?: number; quoteUsdRate?: number; noJoins?: boolean },
+    }: { select?: string[]; baseUsdRate?: number; quoteUsdRate?: number; creator?: string; noJoins?: boolean },
     txn?: Objection.Transaction,
   ) {
     let sub = this.query(txn);
@@ -445,7 +449,11 @@ export default class Market extends BaseModel {
         sub2 = sub2.select(raw('"lowestPrice" * ?? / POW(10,"quoteDecimals") as "lowestPriceUsd"', [quoteUsdRate]));
     }
 
-    return this.query().from(sub2.as('markets'));
+    let q = this.query().from(sub2.as('markets'));
+
+    if (creator) q = q.where('creator', 'ILIKE', creator);
+
+    return q;
   }
 
   /**

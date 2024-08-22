@@ -1396,8 +1396,8 @@ describe('LiquidityController', () => {
           expect(res.body.data.liquidities[1].id).toEqual(liq0.id);
           expect(res.body.data.liquidities[1].costFilled).toEqual(powOf(50, 18).toString());
           expect(res.body.data.liquidities[1].amountFilled).toEqual(powOf(25, 18).toString());
-          expect(res.body.data.totalFilled).toEqual(cost);
-          expect(res.body.data.amountFilled).toEqual(powOf(75, 18).toString());
+          expect(res.body.data.totalCostFilled).toEqual(cost);
+          expect(res.body.data.totalAmountFilled).toEqual(powOf(75, 18).toString());
           expect(res.body.data.filled).toBeTruthy();
           expect(res.body.data.cost).toEqual(cost);
         });
@@ -1416,8 +1416,8 @@ describe('LiquidityController', () => {
           expect(res.body.data.liquidities[1].id).toEqual(liq0.id);
           expect(res.body.data.liquidities[1].costFilled).toEqual(powOf(60, 18).toString());
           expect(res.body.data.liquidities[1].amountFilled).toEqual(powOf(30, 18).toString());
-          expect(res.body.data.totalFilled).toEqual(cost);
-          expect(res.body.data.amountFilled).toEqual(powOf(80, 18).toString());
+          expect(res.body.data.totalCostFilled).toEqual(cost);
+          expect(res.body.data.totalAmountFilled).toEqual(powOf(80, 18).toString());
           expect(res.body.data.filled).toBeTruthy();
           expect(res.body.data.cost).toEqual(cost);
         });
@@ -1439,8 +1439,8 @@ describe('LiquidityController', () => {
           expect(res.body.data.liquidities[2].id).toEqual(liq2.id);
           expect(res.body.data.liquidities[2].costFilled).toEqual(powOf(10, 18).toString());
           expect(res.body.data.liquidities[2].amountFilled).toEqual('3333333333333333333.3');
-          expect(res.body.data.totalFilled).toEqual(cost);
-          expect(res.body.data.amountFilled).toEqual('103333333333333333330');
+          expect(res.body.data.totalCostFilled).toEqual(cost);
+          expect(res.body.data.totalAmountFilled).toEqual('103333333333333333330');
           expect(res.body.data.filled).toBeTruthy();
           expect(res.body.data.cost).toEqual(cost);
         });
@@ -1453,7 +1453,7 @@ describe('LiquidityController', () => {
         .expect(200)
         .expect((res) => {
           expect(res.body.data.liquidities).toHaveLength(3);
-          expect(res.body.data.totalFilled).toEqual(cost);
+          expect(res.body.data.totalCostFilled).toEqual(cost);
           expect(res.body.data.filled).toBeTruthy();
           expect(res.body.data.cost).toEqual(cost);
         });
@@ -1466,7 +1466,7 @@ describe('LiquidityController', () => {
         .expect(200)
         .expect((res) => {
           expect(res.body.data.liquidities).toHaveLength(3);
-          expect(res.body.data.totalFilled).toEqual(powOf(300, 18).toString());
+          expect(res.body.data.totalCostFilled).toEqual(powOf(300, 18).toString());
           expect(res.body.data.filled).toBeFalsy();
           expect(res.body.data.cost).toEqual(cost);
         });

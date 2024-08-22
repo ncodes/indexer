@@ -371,10 +371,10 @@ export default class Liquidity extends BaseModel {
 
       return {
         liquidities,
-        totalFilled: totalFilled.toFixed(),
+        totalCostFilled: totalFilled.toFixed(),
         cost,
         filled: totalFilled.gte(cost),
-        amountFilled: amountFilled.toFixed(),
+        totalAmountFilled: amountFilled.toFixed(),
       };
     }
 

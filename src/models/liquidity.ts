@@ -5,6 +5,7 @@ import Objection, { Model, Transaction, raw } from 'objection';
 import { randStr, toDec } from '../common/common';
 import { BaseModel } from './base';
 import Market, { AssetType } from './market';
+import { pow10 } from '../network/common';
 
 /**
  * Derive a liquidity address
@@ -117,6 +118,7 @@ export default class Liquidity extends BaseModel {
   maxSwapUsd: number;
   online: boolean;
   lastTimeOnline: string;
+  costFilled: string;
   amountFilled: string;
 
   /** Relations */
@@ -316,31 +318,58 @@ export default class Liquidity extends BaseModel {
   /**
    * Get liquidities that can fill a given amount
    * @param market The target market
-   * @param amount The amount to fill
+   * @param cost The amount to spend (Quote amount)
    * @param txn Optional transaction object
    */
-  static async fill(market: Market, amount: string, txn?: Transaction) {
-    let q = this.query(txn);
+  static async fill(market: Market, cost: string, txn?: Transaction) {
+    const { quoteDecimals, baseDecimals } = market;
 
     if (market.isInstant()) {
-      q = q.select('id', 'lid', 'provider', 'amount', 'price').where('amount', '>', 0).orderBy('price', 'asc');
-    } else {
-      throw new Error('not implemented');
+      const q = this.query(txn)
+        .with('sample', (builder) => {
+          builder
+            .select(
+              'id',
+              'provider',
+              'lid',
+              'amount',
+              'price',
+              raw('price * amount / power(10,??) AS cost', quoteDecimals),
+              raw(`SUM(amount * price / power(10,??)) OVER (ORDER BY price,amount DESC) AS cumulative_cost`, [
+                quoteDecimals,
+              ]),
+            )
+            .from(Liquidity.tableName);
+        })
+        .from('sample')
+        .select('*')
+        .where('cumulative_cost', '<=', cost)
+        .orWhereRaw('cumulative_cost - ?? < ?', ['cost', cost])
+        .orderBy('price', 'asc');
+
+      const liquidities = await q.execute();
+
+      let totalFilled = toDec(0);
+      for (const f of liquidities as (Liquidity & { cost: string; cumulative_cost: string })[]) {
+        const unfilled = toDec(cost).sub(totalFilled);
+        if (toDec(f.cost).lte(unfilled)) {
+          f.costFilled = f.cost.toString();
+          totalFilled = totalFilled.add(f.cost);
+          f.amountFilled = toDec(f.costFilled).div(toDec(f.price)).mul(pow10(baseDecimals)).toFixed();
+        } else {
+          f.costFilled = unfilled.toFixed();
+          totalFilled = totalFilled.add(f.costFilled);
+          f.amountFilled = toDec(f.costFilled).div(toDec(f.price)).mul(pow10(baseDecimals)).toFixed();
+        }
+
+        delete f.cumulative_cost;
+        delete f.cost;
+      }
+
+      return { liquidities, totalFilled: totalFilled.toFixed(), cost, filled: totalFilled.gte(cost) };
     }
 
-    const result = await q.execute();
-    const fillers: Liquidity[] = [];
-    let totalFilled = toDec(0);
-    let amountLeft = toDec(amount);
-    for (const f of result) {
-      if (totalFilled.gte(amount)) break;
-      fillers.push(f);
-      totalFilled = totalFilled.add(f.amount);
-      f.amountFilled = (amountLeft.lte(f.amount) ? amountLeft : f.amount).toString();
-      amountLeft = amountLeft.sub(f.amountFilled);
-    }
-
-    return { fillers, totalFilled, amount, filled: totalFilled.gte(amount) };
+    throw new Error('not implemented');
   }
 
   /**

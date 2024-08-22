@@ -53,9 +53,9 @@ export class FillQueryDTO {
 }
 
 export class FillParamDTO {
-  @IsNumberString({}, { message: makeValidatorMsg('must be a number', 'amount') })
+  @IsNumberString({}, { message: makeValidatorMsg('must be a number', 'cost') })
   @IsOptional()
-  public amount?: string;
+  public cost?: string;
 
   @IsString({ message: makeValidatorMsg('must be a string', 'mid') })
   @IsNotEmpty({ message: makeValidatorMsg('market address is required', 'mid') })

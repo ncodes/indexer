@@ -1402,7 +1402,6 @@ describe('LiquidityController', () => {
         await request(app.getHttpServer())
           .get(`/v1/liquidities/${marketAddress}/${amount}/quote/fill`)
           .query({ net })
-          .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
             expect(res.body.data.liquidities).toHaveLength(2);
@@ -1416,13 +1415,13 @@ describe('LiquidityController', () => {
             expect(res.body.data.totalQuantityFilled).toEqual(powOf(75, 18).toString());
             expect(res.body.data.filled).toBeTruthy();
             expect(res.body.data.amount).toEqual(amount);
+            expect(res.body.data.side).toEqual('quote');
           });
 
         amount = powOf(110, 18).toString();
         await request(app.getHttpServer())
           .get(`/v1/liquidities/${marketAddress}/${amount}/quote/fill`)
           .query({ net })
-          .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
             expect(res.body.data.liquidities).toHaveLength(2);
@@ -1436,13 +1435,13 @@ describe('LiquidityController', () => {
             expect(res.body.data.totalQuantityFilled).toEqual(powOf(80, 18).toString());
             expect(res.body.data.filled).toBeTruthy();
             expect(res.body.data.amount).toEqual(amount);
+            expect(res.body.data.side).toEqual('quote');
           });
 
         amount = powOf(160, 18).toString();
         await request(app.getHttpServer())
           .get(`/v1/liquidities/${marketAddress}/${amount}/quote/fill`)
           .query({ net })
-          .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
             expect(res.body.data.liquidities).toHaveLength(3);
@@ -1459,30 +1458,160 @@ describe('LiquidityController', () => {
             expect(res.body.data.totalQuantityFilled).toEqual('103333333333333333330');
             expect(res.body.data.filled).toBeTruthy();
             expect(res.body.data.amount).toEqual(amount);
+            expect(res.body.data.side).toEqual('quote');
           });
 
         amount = powOf(300, 18).toString();
         await request(app.getHttpServer())
           .get(`/v1/liquidities/${marketAddress}/${amount}/quote/fill`)
           .query({ net })
-          .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
             expect(res.body.data.liquidities).toHaveLength(3);
             expect(res.body.data.totalAmountFilled).toEqual(amount);
             expect(res.body.data.filled).toBeTruthy();
             expect(res.body.data.amount).toEqual(amount);
+            expect(res.body.data.side).toEqual('quote');
           });
 
         amount = powOf(301, 18).toString();
         await request(app.getHttpServer())
           .get(`/v1/liquidities/${marketAddress}/${amount}/quote/fill`)
           .query({ net })
-          .set('Authorization', 'bearer ' + token)
           .expect(200)
           .expect((res) => {
             expect(res.body.data.liquidities).toHaveLength(3);
             expect(res.body.data.totalAmountFilled).toEqual(powOf(300, 18).toString());
+            expect(res.body.data.filled).toBeFalsy();
+            expect(res.body.data.amount).toEqual(amount);
+            expect(res.body.data.side).toEqual('quote');
+          });
+      });
+    });
+
+    describe('side = base', () => {
+      it('should return 200 when market is instant', async () => {
+        await Market.create({
+          network: net,
+          address: marketAddress,
+          baseType: AssetType.ERC20,
+          quoteType: AssetType.NATIVE,
+          baseDecimals: 18,
+          quoteDecimals: 18,
+        });
+
+        const liq0 = await Liquidity.create({
+          marketAddress,
+          lid: 0,
+          provider: '0xProvider',
+          amount: powOf(50, 18).toString(),
+          price: powOf(2, 18).toString(),
+        });
+
+        const liq1 = await Liquidity.create({
+          marketAddress,
+          lid: 1,
+          provider: '0xProvider',
+          amount: powOf(50, 18).toString(),
+          price: powOf(1, 18).toString(),
+        });
+
+        const liq2 = await Liquidity.create({
+          marketAddress,
+          lid: 2,
+          provider: '0xProvider',
+          amount: powOf(50, 18).toString(),
+          price: powOf(3, 18).toString(),
+        });
+
+        let amount = powOf(100, 18).toString();
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities/${marketAddress}/${amount}/base/fill`)
+          .query({ net })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data.liquidities).toHaveLength(2);
+            expect(res.body.data.liquidities[0].id).toEqual(liq1.id);
+            expect(res.body.data.liquidities[0].quantityFilled).toEqual(powOf(50, 18).toString());
+            expect(res.body.data.liquidities[0].amountFilled).toEqual(powOf(50, 18).toString());
+            expect(res.body.data.liquidities[1].id).toEqual(liq0.id);
+            expect(res.body.data.liquidities[1].amountFilled).toEqual(powOf(50, 18).toString());
+            expect(res.body.data.liquidities[1].quantityFilled).toEqual(powOf(100, 18).toString());
+            expect(res.body.data.totalAmountFilled).toEqual(amount);
+            expect(res.body.data.totalQuantityFilled).toEqual(powOf(150, 18).toString());
+            expect(res.body.data.filled).toBeTruthy();
+            expect(res.body.data.amount).toEqual(amount);
+            expect(res.body.data.side).toEqual('base');
+          });
+
+        amount = powOf(110, 18).toString();
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities/${marketAddress}/${amount}/base/fill`)
+          .query({ net })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data.liquidities).toHaveLength(3);
+            expect(res.body.data.liquidities[0].id).toEqual(liq1.id);
+            expect(res.body.data.liquidities[0].quantityFilled).toEqual(powOf(50, 18).toString());
+            expect(res.body.data.liquidities[0].amountFilled).toEqual(powOf(50, 18).toString());
+            expect(res.body.data.liquidities[1].id).toEqual(liq0.id);
+            expect(res.body.data.liquidities[1].amountFilled).toEqual(powOf(50, 18).toString());
+            expect(res.body.data.liquidities[1].quantityFilled).toEqual(powOf(100, 18).toString());
+            expect(res.body.data.liquidities[2].id).toEqual(liq2.id);
+            expect(res.body.data.liquidities[2].amountFilled).toEqual(powOf(10, 18).toString());
+            expect(res.body.data.liquidities[2].quantityFilled).toEqual(powOf(30, 18).toString());
+            expect(res.body.data.totalAmountFilled).toEqual(amount);
+            expect(res.body.data.totalQuantityFilled).toEqual(powOf(180, 18).toString());
+            expect(res.body.data.filled).toBeTruthy();
+            expect(res.body.data.amount).toEqual(amount);
+            expect(res.body.data.side).toEqual('base');
+          });
+
+        amount = powOf(160, 18).toString();
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities/${marketAddress}/${amount}/base/fill`)
+          .query({ net })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data.liquidities).toHaveLength(3);
+            expect(res.body.data.liquidities[0].id).toEqual(liq1.id);
+            expect(res.body.data.liquidities[0].quantityFilled).toEqual(powOf(50, 18).toString());
+            expect(res.body.data.liquidities[0].amountFilled).toEqual(powOf(50, 18).toString());
+            expect(res.body.data.liquidities[1].id).toEqual(liq0.id);
+            expect(res.body.data.liquidities[1].amountFilled).toEqual(powOf(50, 18).toString());
+            expect(res.body.data.liquidities[1].quantityFilled).toEqual(powOf(100, 18).toString());
+            expect(res.body.data.liquidities[2].id).toEqual(liq2.id);
+            expect(res.body.data.liquidities[2].amountFilled).toEqual(powOf(50, 18).toString());
+            expect(res.body.data.liquidities[2].quantityFilled).toEqual(powOf(150, 18).toString());
+            expect(res.body.data.totalAmountFilled).toEqual(powOf(150, 18).toString());
+            expect(res.body.data.totalQuantityFilled).toEqual(powOf(300, 18).toString());
+            expect(res.body.data.filled).toBeFalsy();
+            expect(res.body.data.amount).toEqual(amount);
+            expect(res.body.data.side).toEqual('base');
+          });
+
+        amount = powOf(150, 18).toString();
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities/${marketAddress}/${amount}/base/fill`)
+          .query({ net })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data.liquidities).toHaveLength(3);
+            expect(res.body.data.totalAmountFilled).toEqual(amount);
+            expect(res.body.data.filled).toBeTruthy();
+            expect(res.body.data.amount).toEqual(amount);
+            expect(res.body.data.side).toEqual('base');
+          });
+
+        amount = powOf(151, 18).toString();
+        await request(app.getHttpServer())
+          .get(`/v1/liquidities/${marketAddress}/${amount}/base/fill`)
+          .query({ net })
+          .set('Authorization', 'bearer ' + token)
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data.liquidities).toHaveLength(3);
+            expect(res.body.data.totalAmountFilled).toEqual(powOf(150, 18).toString());
             expect(res.body.data.filled).toBeFalsy();
             expect(res.body.data.amount).toEqual(amount);
           });

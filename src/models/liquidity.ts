@@ -326,57 +326,113 @@ export default class Liquidity extends BaseModel {
     const { quoteDecimals, baseDecimals } = market;
 
     if (market.isInstant()) {
-      const q = this.query(txn)
-        .with('sample', (builder) => {
-          builder
-            .select(
-              'id',
-              'provider',
-              'lid',
-              'amount',
-              'price',
-              raw('price * amount / power(10,??) AS cost', quoteDecimals),
-              raw(`SUM(amount * price / power(10,??)) OVER (ORDER BY price,amount DESC) AS cumulative_cost`, [
-                quoteDecimals,
-              ]),
-            )
-            .from(Liquidity.tableName);
-        })
-        .from('sample')
-        .select('*')
-        .where('cumulative_cost', '<=', amount)
-        .orWhereRaw('cumulative_cost - ?? < ?', ['cost', amount])
-        .orderBy('price', 'asc');
+      if (side === 'quote') {
+        const q = this.query(txn)
+          .with('sample', (builder) => {
+            builder
+              .select(
+                'id',
+                'provider',
+                'lid',
+                'amount',
+                'price',
+                raw('price * amount / power(10,??) AS cost', quoteDecimals),
+                raw(`SUM(amount * price / power(10,??)) OVER (ORDER BY price,amount DESC) AS cumulative_cost`, [
+                  quoteDecimals,
+                ]),
+              )
+              .from(Liquidity.tableName);
+          })
+          .from('sample')
+          .select('*')
+          .where('cumulative_cost', '<=', amount)
+          .orWhereRaw('cumulative_cost - ?? < ?', ['cost', amount])
+          .orderBy('price', 'asc');
 
-      const liquidities = await q.execute();
+        const liquidities = await q.execute();
 
-      let totalFilled = toDec(0);
-      let amountFilled = toDec(0);
-      for (const f of liquidities as (Liquidity & { cost: string; cumulative_cost: string })[]) {
-        const unfilled = toDec(amount).sub(totalFilled);
-        if (toDec(f.cost).lte(unfilled)) {
-          f.amountFilled = f.cost.toString();
-          totalFilled = totalFilled.add(f.cost);
-          f.quantityFilled = toDec(f.amountFilled).div(toDec(f.price)).mul(pow10(baseDecimals)).toFixed();
-          amountFilled = amountFilled.add(f.quantityFilled);
-        } else {
-          f.amountFilled = unfilled.toFixed();
-          totalFilled = totalFilled.add(f.amountFilled);
-          f.quantityFilled = toDec(f.amountFilled).div(toDec(f.price)).mul(pow10(baseDecimals)).toFixed();
-          amountFilled = amountFilled.add(f.quantityFilled);
+        let totalFilled = toDec(0);
+        let amountFilled = toDec(0);
+        for (const f of liquidities as (Liquidity & { cost: string; cumulative_cost: string })[]) {
+          const unfilled = toDec(amount).sub(totalFilled);
+          if (toDec(f.cost).lte(unfilled)) {
+            f.amountFilled = f.cost.toString();
+            totalFilled = totalFilled.add(f.cost);
+            f.quantityFilled = toDec(f.amountFilled).div(toDec(f.price)).mul(pow10(baseDecimals)).toFixed();
+            amountFilled = amountFilled.add(f.quantityFilled);
+          } else {
+            f.amountFilled = unfilled.toFixed();
+            totalFilled = totalFilled.add(f.amountFilled);
+            f.quantityFilled = toDec(f.amountFilled).div(toDec(f.price)).mul(pow10(baseDecimals)).toFixed();
+            amountFilled = amountFilled.add(f.quantityFilled);
+          }
+
+          delete f.cumulative_cost;
+          delete f.cost;
         }
 
-        delete f.cumulative_cost;
-        delete f.cost;
+        return {
+          liquidities,
+          totalAmountFilled: totalFilled.toFixed(),
+          amount,
+          filled: totalFilled.gte(amount),
+          totalQuantityFilled: amountFilled.toFixed(),
+          side,
+        };
       }
 
-      return {
-        liquidities,
-        totalAmountFilled: totalFilled.toFixed(),
-        amount,
-        filled: totalFilled.gte(amount),
-        totalQuantityFilled: amountFilled.toFixed(),
-      };
+      if (side === 'base') {
+        const q = this.query(txn)
+          .with('sample', (builder) => {
+            builder
+              .select(
+                'id',
+                'provider',
+                'lid',
+                'amount',
+                'price',
+                raw('price * amount / power(10,??) AS cost', quoteDecimals),
+                raw(`SUM(amount) OVER (ORDER BY price,amount DESC) AS cumulative_amount`),
+              )
+              .from(Liquidity.tableName);
+          })
+          .from('sample')
+          .select('*')
+          .where('cumulative_amount', '<=', amount)
+          .orWhereRaw('cumulative_amount - ?? < ?', ['amount', amount])
+          .orderBy('price', 'asc');
+
+        const liquidities = await q.execute();
+
+        let totalFilled = toDec(0);
+        let amountFilled = toDec(0);
+        for (const f of liquidities as (Liquidity & { cost: string; cumulative_amount: string })[]) {
+          const unfilled = toDec(amount).sub(totalFilled);
+          if (toDec(f.amount).lte(unfilled)) {
+            f.amountFilled = f.amount.toString();
+            totalFilled = totalFilled.add(f.amount);
+            f.quantityFilled = toDec(f.amountFilled).mul(toDec(f.price)).div(pow10(quoteDecimals)).toFixed();
+            amountFilled = amountFilled.add(f.quantityFilled);
+          } else {
+            f.amountFilled = unfilled.toFixed();
+            totalFilled = totalFilled.add(f.amountFilled);
+            f.quantityFilled = toDec(f.amountFilled).mul(toDec(f.price)).div(pow10(quoteDecimals)).toFixed();
+            amountFilled = amountFilled.add(f.quantityFilled);
+          }
+
+          delete f.cumulative_amount;
+          delete f.cost;
+        }
+
+        return {
+          liquidities,
+          totalAmountFilled: totalFilled.toFixed(),
+          amount,
+          filled: totalFilled.gte(amount),
+          totalQuantityFilled: amountFilled.toFixed(),
+          side,
+        };
+      }
     }
 
     throw new Error('not implemented');

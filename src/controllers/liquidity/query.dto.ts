@@ -53,13 +53,18 @@ export class FillQueryDTO {
 }
 
 export class FillParamDTO {
-  @IsNumberString({}, { message: makeValidatorMsg('must be a number', 'cost') })
+  @IsNumberString({}, { message: makeValidatorMsg('must be a number', 'amount') })
   @IsOptional()
-  public cost?: string;
+  public amount?: string;
 
   @IsString({ message: makeValidatorMsg('must be a string', 'mid') })
   @IsNotEmpty({ message: makeValidatorMsg('market address is required', 'mid') })
   public mid: string;
+
+  @IsIn(['base', 'quote'], { message: makeValidatorMsg('must be either base or quote', 'side') })
+  @IsString({ message: makeValidatorMsg('must be a string', 'side') })
+  @IsNotEmpty({ message: makeValidatorMsg('side is required', 'side') })
+  public side: 'base' | 'quote';
 }
 
 class LiquidityDTO {

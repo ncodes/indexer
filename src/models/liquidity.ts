@@ -118,8 +118,8 @@ export default class Liquidity extends BaseModel {
   maxSwapUsd: number;
   online: boolean;
   lastTimeOnline: string;
-  costFilled: string;
   amountFilled: string;
+  quantityFilled: string;
 
   /** Relations */
   market: Market;
@@ -318,10 +318,11 @@ export default class Liquidity extends BaseModel {
   /**
    * Get liquidities that can fill a given amount
    * @param market The target market
-   * @param cost The amount to spend (Quote amount)
+   * @param side The side of the market to fill (base or quote)
+   * @param amount The amount to fill (base or quote amount)
    * @param txn Optional transaction object
    */
-  static async fill(market: Market, cost: string, txn?: Transaction) {
+  static async fill(market: Market, side: 'base' | 'quote', amount: string, txn?: Transaction) {
     const { quoteDecimals, baseDecimals } = market;
 
     if (market.isInstant()) {
@@ -343,8 +344,8 @@ export default class Liquidity extends BaseModel {
         })
         .from('sample')
         .select('*')
-        .where('cumulative_cost', '<=', cost)
-        .orWhereRaw('cumulative_cost - ?? < ?', ['cost', cost])
+        .where('cumulative_cost', '<=', amount)
+        .orWhereRaw('cumulative_cost - ?? < ?', ['cost', amount])
         .orderBy('price', 'asc');
 
       const liquidities = await q.execute();
@@ -352,17 +353,17 @@ export default class Liquidity extends BaseModel {
       let totalFilled = toDec(0);
       let amountFilled = toDec(0);
       for (const f of liquidities as (Liquidity & { cost: string; cumulative_cost: string })[]) {
-        const unfilled = toDec(cost).sub(totalFilled);
+        const unfilled = toDec(amount).sub(totalFilled);
         if (toDec(f.cost).lte(unfilled)) {
-          f.costFilled = f.cost.toString();
+          f.amountFilled = f.cost.toString();
           totalFilled = totalFilled.add(f.cost);
-          f.amountFilled = toDec(f.costFilled).div(toDec(f.price)).mul(pow10(baseDecimals)).toFixed();
-          amountFilled = amountFilled.add(f.amountFilled);
+          f.quantityFilled = toDec(f.amountFilled).div(toDec(f.price)).mul(pow10(baseDecimals)).toFixed();
+          amountFilled = amountFilled.add(f.quantityFilled);
         } else {
-          f.costFilled = unfilled.toFixed();
-          totalFilled = totalFilled.add(f.costFilled);
-          f.amountFilled = toDec(f.costFilled).div(toDec(f.price)).mul(pow10(baseDecimals)).toFixed();
-          amountFilled = amountFilled.add(f.amountFilled);
+          f.amountFilled = unfilled.toFixed();
+          totalFilled = totalFilled.add(f.amountFilled);
+          f.quantityFilled = toDec(f.amountFilled).div(toDec(f.price)).mul(pow10(baseDecimals)).toFixed();
+          amountFilled = amountFilled.add(f.quantityFilled);
         }
 
         delete f.cumulative_cost;
@@ -371,10 +372,10 @@ export default class Liquidity extends BaseModel {
 
       return {
         liquidities,
-        totalCostFilled: totalFilled.toFixed(),
-        cost,
-        filled: totalFilled.gte(cost),
-        totalAmountFilled: amountFilled.toFixed(),
+        totalAmountFilled: totalFilled.toFixed(),
+        amount,
+        filled: totalFilled.gte(amount),
+        totalQuantityFilled: amountFilled.toFixed(),
       };
     }
 

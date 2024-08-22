@@ -26,18 +26,18 @@ export class LiquidityController {
    * Generate fill information for an amount
    * @param p The param object
    * @param p.mid The market ID
-   * @param p.cost The amount to pay (Quote amount)
+   * @param p.amount The amount to pay (Quote or Base amount)
    * @param q The query object
    * @param [q.net] The network name
    */
-  @Get(':mid/:cost/fill')
+  @Get(':mid/:amount/:side/fill')
   async fill(
     @Param(new ValidationPipe(ValPipeOpt)) p: FillParamDTO,
     @Query(new ValidationPipe(ValPipeOpt)) q: FillQueryDTO,
   ) {
     const market = await Market.getMarket(q.net, p.mid);
     if (!market) throw404('market not found');
-    const fillers = await Liquidity.fill(market, p.cost);
+    const fillers = await Liquidity.fill(market, p.side, p.amount);
     return ok().data(fillers).build();
   }
 

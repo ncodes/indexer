@@ -350,23 +350,32 @@ export default class Liquidity extends BaseModel {
       const liquidities = await q.execute();
 
       let totalFilled = toDec(0);
+      let amountFilled = toDec(0);
       for (const f of liquidities as (Liquidity & { cost: string; cumulative_cost: string })[]) {
         const unfilled = toDec(cost).sub(totalFilled);
         if (toDec(f.cost).lte(unfilled)) {
           f.costFilled = f.cost.toString();
           totalFilled = totalFilled.add(f.cost);
           f.amountFilled = toDec(f.costFilled).div(toDec(f.price)).mul(pow10(baseDecimals)).toFixed();
+          amountFilled = amountFilled.add(f.amountFilled);
         } else {
           f.costFilled = unfilled.toFixed();
           totalFilled = totalFilled.add(f.costFilled);
           f.amountFilled = toDec(f.costFilled).div(toDec(f.price)).mul(pow10(baseDecimals)).toFixed();
+          amountFilled = amountFilled.add(f.amountFilled);
         }
 
         delete f.cumulative_cost;
         delete f.cost;
       }
 
-      return { liquidities, totalFilled: totalFilled.toFixed(), cost, filled: totalFilled.gte(cost) };
+      return {
+        liquidities,
+        totalFilled: totalFilled.toFixed(),
+        cost,
+        filled: totalFilled.gte(cost),
+        amountFilled: amountFilled.toFixed(),
+      };
     }
 
     throw new Error('not implemented');

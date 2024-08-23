@@ -381,6 +381,10 @@ export class CoreHandler extends Handler {
     this.on('UpdatedMaxOpenDisputes', async (value: bigint, event: ContractCallEvent, txn?: Transaction) => {
       return this.onParameterUpdate('maxOpenDisputes', value.toString(), event, txn);
     });
+
+    this.on('UpdatedNFT', async (address: string, event: ContractCallEvent, txn?: Transaction) => {
+      return this.onParameterUpdate('nftAddress', address, event, txn);
+    });
   }
 
   /**

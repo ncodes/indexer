@@ -22,11 +22,11 @@ export class AssetRegistryHandler extends Handler {
         feeFixed: bigint,
         verified: boolean,
         stable: boolean,
-        shareable: boolean,
+        sharable: boolean,
         event: Event,
         txn?: Transaction,
       ) => {
-        return this.onAssetRegistryUpdated(address, curRate, feeBp, feeFixed, verified, stable, shareable, event, txn);
+        return this.onAssetRegistryUpdated(address, curRate, feeBp, feeFixed, verified, stable, sharable, event, txn);
       },
     );
   }
@@ -39,8 +39,8 @@ export class AssetRegistryHandler extends Handler {
    * @param feeFixed The fixed fee rate charged by the protocol (denominated in JOIN)
    * @param verified Indicates whether the asset is verified
    * @param stable Indicates whether the asset is a stablecoin
-   * @param shareable Indicates whether fee earned on the asset are shareable
-   * @param event The event object
+   * @param sharable Indicates whether fee earned on the asset are sharable
+   * @param _event The event object
    * @param txn The db transaction object
    */
   async onAssetRegistryUpdated(
@@ -51,7 +51,7 @@ export class AssetRegistryHandler extends Handler {
     verified: boolean,
     stable: boolean,
     sharable: boolean,
-    event: Event,
+    _event: Event,
     txn?: Transaction,
   ) {
     await AssetRegistry.deleteByAddress(this.network, address, txn);

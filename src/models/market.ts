@@ -218,6 +218,10 @@ export default class Market extends BaseModel {
     return assetType == AssetType.ERC721 || assetType == AssetType.ERC1155;
   }
 
+  static isOnchain(assetType: AssetType) {
+    return Market.isERC20(assetType) || Market.isNFT(assetType) || Market.isNative(assetType);
+  }
+
   isInstant() {
     const { baseType, quoteType } = this;
     return Market.isInstant(baseType, quoteType);
@@ -229,6 +233,15 @@ export default class Market extends BaseModel {
 
   involvesERC20() {
     return Market.isERC20(this.baseType) || Market.isERC20(this.quoteType);
+  }
+
+  involvesERC20OrNative() {
+    return (
+      Market.isERC20(this.baseType) ||
+      Market.isNative(this.baseType) ||
+      Market.isERC20(this.quoteType) ||
+      Market.isNative(this.quoteType)
+    );
   }
 
   /**

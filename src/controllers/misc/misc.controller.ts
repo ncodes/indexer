@@ -1,5 +1,5 @@
 import { ChainNames, TokenLists, contractsParams, getChainByName, getTokenInfo, isValidChain } from '@jointlabs/meta';
-import { Controller, Get, Param, Query, Req } from '@nestjs/common';
+import { Controller, Get, Logger, Param, Query, Req } from '@nestjs/common';
 import { Client } from '@xmtp/xmtp-js';
 import { Wallet } from 'ethers';
 import { Request } from 'express';
@@ -11,13 +11,17 @@ import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { ErrTokenNotFound, MetadataService } from '../../services/metadata/metadata.service';
 import { PointMap } from '../points/data/points';
 import { Model } from 'objection';
+import { FeeCalculatorService } from '../../services/fee_calculator.service';
 
 @Controller('v1/misc')
 export class MiscController {
+  logger = new Logger(MiscController.name);
+
   constructor(
     private cfgSrv: ConfigService,
     private metadataSrv: MetadataService,
     private exRateSvr: ExchangeRateService,
+    private feeCalcSvr: FeeCalculatorService,
   ) {}
 
   @Get('health')
@@ -199,5 +203,33 @@ export class MiscController {
         numPendingCreates: knex.client.pool.numPendingCreates(),
       })
       .build();
+  }
+
+  @Get('compute-fee')
+  async computeFee(
+    @Query('net') network: string,
+    @Query('mid') marketAddress: string,
+    @Query('provider') provider: string,
+    @Query('lid') lid: string,
+    @Query('taker') taker: string,
+    @Query('orderAmount') orderAmount: string,
+    @Query('orderPrice') orderPrice: string,
+  ) {
+    const result = await this.feeCalcSvr
+      .calculateFee({
+        network,
+        marketAddress,
+        provider,
+        lid,
+        taker,
+        orderAmount,
+        orderPrice,
+      })
+      .catch((e) => {
+        this.logger.error(e);
+        return Promise.reject(new Error('failed to compute fee'));
+      });
+
+    return ok().data(result).build();
   }
 }

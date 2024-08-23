@@ -79,12 +79,11 @@ export default class NFTOwner extends BaseModel {
     });
   }
 
-  // Delete by address and token ID
   /**
-   * Dele
-   * @param address
-   * @param tokenId
-   * @param txn
+   * Delete by address and token ID
+   * @param address The address of the owner
+   * @param tokenId The token ID
+   * @param txn Optional transaction object
    * @returns
    */
   static deleteByAddressAndTokenId(address: string, tokenId: number, txn?: Transaction) {

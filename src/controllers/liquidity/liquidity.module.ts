@@ -7,10 +7,11 @@ import { MarketService } from '../markets/market.service';
 import SwapService from '../swaps/swap.service';
 import { LiquidityController } from './liquidity.controller';
 import { LiquidityService } from './liquidity.service';
+import { FeeCalculatorService } from '../../services/fee_calculator.service';
 
 @Module({
   imports: [NetworkModule, RedisModule],
   controllers: [LiquidityController],
-  providers: [LiquidityService, MarketService, MetadataService, ConfigService, SwapService],
+  providers: [LiquidityService, MarketService, MetadataService, ConfigService, SwapService, FeeCalculatorService],
 })
 export class LiquidityModule {}

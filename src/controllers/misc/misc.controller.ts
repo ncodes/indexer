@@ -205,12 +205,11 @@ export class MiscController {
       .build();
   }
 
-  @Get('compute-fee')
+  @Get('compute-fees')
   async computeFee(
     @Query('net') network: string,
     @Query('mid') marketAddress: string,
     @Query('provider') provider: string,
-    @Query('lid') lid: string,
     @Query('taker') taker: string,
     @Query('orderAmount') orderAmount: string,
     @Query('orderPrice') orderPrice: string,
@@ -220,7 +219,6 @@ export class MiscController {
         network,
         marketAddress,
         provider,
-        lid,
         taker,
         orderAmount,
         orderPrice,

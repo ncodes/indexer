@@ -29,7 +29,6 @@ export class FeeCalculatorService {
     network: string;
     marketAddress: string;
     provider: string;
-    lid: string;
     taker: string;
     orderAmount: string;
     orderPrice: string;

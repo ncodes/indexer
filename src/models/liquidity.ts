@@ -21,6 +21,21 @@ export function makeLiqAddress(marketAddress: string, provider: string, lid: num
   );
 }
 
+export interface FillResult {
+  side: string;
+  liquidities: Liquidity[];
+  totalAmountFilled: string;
+  amount: string;
+  filled: boolean;
+  totalQuantityFilled: string;
+  totalQuantityFilledAfterFees?: string;
+  totalFees?: string;
+  totalProtoFee?: string;
+  totalMktFee?: string;
+  protoFeePct?: number;
+  mktFeePct?: number;
+}
+
 /**
  * Liquidity represents a liquidity model
  */
@@ -120,6 +135,9 @@ export default class Liquidity extends BaseModel {
   lastTimeOnline: string;
   amountFilled: string;
   quantityFilled: string;
+  protoFee: string;
+  mktCreatorFee: string;
+  quantityFilledAfterFees: string;
 
   /** Relations */
   market: Market;
@@ -322,10 +340,10 @@ export default class Liquidity extends BaseModel {
    * @param amount The amount to fill (base or quote amount)
    * @param txn Optional transaction object
    */
-  static async fill(market: Market, side: 'base' | 'quote', amount: string, txn?: Transaction) {
+  static async fill(market: Market, side: 'base' | 'quote', amount: string, txn?: Transaction): Promise<FillResult> {
     const { quoteDecimals, baseDecimals } = market;
 
-    if (market.isInstant()) {
+    if (market.isFungible()) {
       if (side === 'quote') {
         const q = this.query(txn)
           .with('sample', (builder) => {

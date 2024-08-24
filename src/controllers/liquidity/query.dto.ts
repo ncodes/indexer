@@ -50,6 +50,9 @@ export class FillQueryDTO {
   @IsIn(getChainNames(), { message: makeValidatorMsg('network is unknown', 'net') })
   @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
   public net?: string;
+
+  @IsOptional()
+  public taker: string;
 }
 
 export class FillParamDTO {

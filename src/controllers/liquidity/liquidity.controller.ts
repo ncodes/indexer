@@ -10,7 +10,9 @@ import { MarketService } from '../markets/market.service';
 import SwapService from '../swaps/swap.service';
 import { LiquidityService } from './liquidity.service';
 import { FillParamDTO, FillQueryDTO, GetParamDTO, GetQueryDTO, ListQueryDTO } from './query.dto';
-import { isEqualStr } from '../../common/common';
+import { isEqualStr, toDec } from '../../common/common';
+import { FeeCalculatorService } from '../../services/fee_calculator.service';
+import { toHD, toLD } from '../../network/common';
 
 @Controller('v1/liquidities')
 export class LiquidityController {
@@ -20,13 +22,14 @@ export class LiquidityController {
     private cfgSrv: ConfigService,
     private metadataSrv: MetadataService,
     private swapSrv: SwapService,
+    private feeCalcSrv: FeeCalculatorService,
   ) {}
 
   /**
    * Generate fill information for an amount
    * @param p The param object
    * @param p.mid The market ID
-   * @param p.amount The amount to pay (Quote or Base amount)
+   * @param p.amount The amount corresponding to the side (Quote or Base)
    * @param q The query object
    * @param [q.net] The network name
    */
@@ -37,8 +40,57 @@ export class LiquidityController {
   ) {
     const market = await Market.getMarket(q.net, p.mid);
     if (!market) throw404('market not found');
-    const fillers = await Liquidity.fill(market, p.side, p.amount);
-    return ok().data(fillers).build();
+
+    const { baseDecimals, quoteDecimals } = market;
+
+    const fillInfo = await Liquidity.fill(market, p.side, p.amount);
+
+    let totalQtyFilledAfterFees = toDec(0);
+    let totalProtoFee = toDec(0);
+    let totalMktFee = toDec(0);
+    let protoFeePct = toDec(0);
+    let mktFeePct = toDec(0);
+    for (const liq of fillInfo.liquidities) {
+      const fees = await this.feeCalcSrv.calculateFee({
+        network: q.net,
+        marketAddress: p.mid,
+        provider: liq.provider,
+        taker: q.taker,
+        orderAmount: liq.amountFilled,
+        orderPrice: liq.price,
+      });
+
+      const { protoFee, mktCreatorFee, feeBp, mktFeeBp } = fees;
+      liq.protoFee = protoFee;
+      liq.mktCreatorFee = mktCreatorFee;
+      totalProtoFee = totalProtoFee.add(toDec(protoFee));
+      totalMktFee = totalMktFee.add(toDec(mktCreatorFee));
+      protoFeePct = toDec(feeBp).div(100);
+      mktFeePct = toDec(mktFeeBp).div(100);
+
+      if (p.side === 'quote') {
+        liq.quantityFilledAfterFees = toDec(liq.quantityFilled).sub(toDec(protoFee).add(mktCreatorFee)).toFixed();
+      }
+
+      if (p.side === 'base') {
+        const totalFeePct = protoFeePct.add(mktFeePct).div(100);
+        const amtHD = toHD(p.amount, baseDecimals);
+        const priceHD = toHD(liq.price, quoteDecimals);
+        const newQuantity = toDec(amtHD).div(toDec(1).sub(totalFeePct)).mul(priceHD);
+        liq.quantityFilledAfterFees = toLD(newQuantity.toFixed(), quoteDecimals).toFixed();
+      }
+
+      totalQtyFilledAfterFees = totalQtyFilledAfterFees.add(liq.quantityFilledAfterFees);
+    }
+
+    fillInfo.totalQuantityFilledAfterFees = totalQtyFilledAfterFees.toFixed();
+    fillInfo.totalProtoFee = totalProtoFee.toFixed();
+    fillInfo.totalMktFee = totalMktFee.toFixed();
+    fillInfo.totalFees = toDec(fillInfo.totalProtoFee).add(fillInfo.totalMktFee).toFixed();
+    fillInfo.protoFeePct = protoFeePct.toNumber();
+    fillInfo.mktFeePct = mktFeePct.toNumber();
+
+    return ok().data(fillInfo).build();
   }
 
   /**

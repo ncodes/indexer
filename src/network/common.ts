@@ -127,3 +127,11 @@ export function commify(value) {
 
   return `${neg}${whole}.${frac}`;
 }
+
+export function toHD(amount: string, decimals: number) {
+  return toDec(amount).div(pow10(decimals));
+}
+
+export function toLD(amount: string, decimals: number) {
+  return toDec(amount).mul(pow10(decimals));
+}

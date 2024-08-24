@@ -8,6 +8,7 @@ import * as moment from 'moment';
 import * as notifier from 'node-notifier';
 import { uid } from 'uid';
 import * as util from 'util';
+import { pow10 } from '../network/common';
 
 dayjs.extend(utc);
 

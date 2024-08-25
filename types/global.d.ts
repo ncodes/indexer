@@ -100,8 +100,6 @@ declare global {
   interface ContractLiquidity {
     amount: BigNumber;
     price: BigNumber;
-    minSwap: BigNumber;
-    maxSwap: BigNumber;
     timeToPay: BigNumber;
     openOrders: BigNumber;
     paused: boolean;

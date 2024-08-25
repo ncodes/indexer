@@ -166,8 +166,6 @@ describe('CoreHandler', () => {
           toBigInt(300),
           [toBigInt(1)],
           [toBigInt(2)],
-          toBigInt(1),
-          toBigInt(20),
           toBigInt(10),
           undefined,
         ),
@@ -186,8 +184,6 @@ describe('CoreHandler', () => {
       expect(liq.price).toEqual('300');
       expect(liq.wantAndIds).toEqual([2]);
       expect(liq.wantOrIds).toEqual([1]);
-      expect(liq.minSwap).toEqual('1');
-      expect(liq.maxSwap).toEqual('20');
       expect(liq.timeToPay).toEqual(10);
 
       market = await Market.getById(market.id, true);
@@ -208,8 +204,6 @@ describe('CoreHandler', () => {
       expect(event.creator).toEqual(provider);
       expect(event.amount).toEqual(liq.amount);
       expect(event.price).toEqual(liq.price);
-      expect(event.minSwap).toEqual(liq.minSwap);
-      expect(event.maxSwap).toEqual(liq.maxSwap);
       expect(event.target).toEqual(liq.target);
       expect(event.timeToPay).toEqual(liq.timeToPay);
       expect(event.paused).toEqual(liq.paused);
@@ -245,8 +239,6 @@ describe('CoreHandler', () => {
           [toBigInt(1)],
           [toBigInt(2)],
           toBigInt(1),
-          toBigInt(20),
-          toBigInt(10),
           undefined,
         ),
       ).resolves.toBeUndefined();
@@ -264,6 +256,7 @@ describe('CoreHandler', () => {
         quote: QUOTE,
         quoteAddress: quoteAddress,
       });
+
       const lid = 1;
       await Liquidity.create({
         network: net,
@@ -276,8 +269,6 @@ describe('CoreHandler', () => {
         target: '0xTarget',
         lid: lid,
         timeToPay: 50,
-        minSwap: '10',
-        maxSwap: '30',
       });
 
       const amount = toBigInt(10);
@@ -293,8 +284,6 @@ describe('CoreHandler', () => {
           toBigInt(430),
           [toBigInt(3)],
           [toBigInt(4)],
-          toBigInt(2),
-          toBigInt(20),
           toBigInt(10),
           undefined,
         ),
@@ -307,8 +296,6 @@ describe('CoreHandler', () => {
       expect(liq.price).toEqual('430');
       expect(liq.wantOrIds).toEqual([3]);
       expect(liq.wantAndIds).toEqual([4]);
-      expect(liq.minSwap).toEqual('2');
-      expect(liq.maxSwap).toEqual('20');
       expect(liq.timeToPay).toEqual(10);
       expect(liq.target).toEqual('0xNewTarget');
 
@@ -350,15 +337,6 @@ describe('CoreHandler', () => {
       expect(eventTimeToPay.creator).toEqual(provider);
       expect(eventTimeToPay.timeToPay).toEqual(10);
 
-      const eventMinSwap = await Event.find({ network: net, action: Events.LiquiditySwapLimitUpdate });
-      expect(eventMinSwap).toBeDefined();
-      expect(eventMinSwap.marketAddress).toEqual(market.address);
-      expect(eventMinSwap.lid).toEqual(liq.lid);
-      expect(eventMinSwap.provider).toEqual(provider);
-      expect(eventMinSwap.creator).toEqual(provider);
-      expect(eventMinSwap.minSwap).toEqual('2');
-      expect(eventMinSwap.maxSwap).toEqual('20');
-
       expect(mockGrantOnLiquidityUpdate).toBeCalled();
     });
 
@@ -396,8 +374,6 @@ describe('CoreHandler', () => {
           [toBigInt(3)],
           [toBigInt(4)],
           toBigInt(2),
-          toBigInt(20),
-          toBigInt(10),
           undefined,
         ),
       ).resolves.toBeUndefined();
@@ -450,8 +426,6 @@ describe('CoreHandler', () => {
           [toBigInt(3)],
           [toBigInt(4)],
           toBigInt(2),
-          toBigInt(20),
-          toBigInt(10),
           undefined,
         ),
       ).resolves.toBeUndefined();
@@ -477,8 +451,6 @@ describe('CoreHandler', () => {
           [toBigInt(3)],
           [toBigInt(4)],
           toBigInt(2),
-          toBigInt(20),
-          toBigInt(10),
           undefined,
         ),
       ).resolves.toBeUndefined();
@@ -488,7 +460,7 @@ describe('CoreHandler', () => {
     });
 
     it('should remove liquidity amount from market total liquidity if paused=true and the reverse if paused=false', async () => {
-      let market = await Market.create({
+      const market = await Market.create({
         network: net,
         address: marketAddress,
         base: BASE,
@@ -521,8 +493,6 @@ describe('CoreHandler', () => {
           [toBigInt(3)],
           [toBigInt(4)],
           toBigInt(2),
-          toBigInt(20),
-          toBigInt(10),
           undefined,
         ),
       ).resolves.toBeUndefined();
@@ -531,8 +501,6 @@ describe('CoreHandler', () => {
       expect(liq.provider).toEqual(provider);
       expect(liq.amount).toEqual('100');
       expect(liq.paused).toEqual(true);
-
-      market = await Market.getById(market.id, true);
 
       // unpause the liquidity
       await expect(
@@ -548,8 +516,6 @@ describe('CoreHandler', () => {
           [toBigInt(3)],
           [toBigInt(4)],
           toBigInt(2),
-          toBigInt(20),
-          toBigInt(10),
           undefined,
         ),
       ).resolves.toBeUndefined();
@@ -595,8 +561,6 @@ describe('CoreHandler', () => {
             [toBigInt(3)],
             [toBigInt(4)],
             toBigInt(2),
-            toBigInt(20),
-            toBigInt(10),
             undefined,
           ),
         ).resolves.toBeUndefined();
@@ -649,8 +613,6 @@ describe('CoreHandler', () => {
       expect(liq.price).toEqual('300');
       expect(liq.wantAndIds).toEqual([2]);
       expect(liq.wantOrIds).toEqual([1]);
-      expect(liq.minSwap).toEqual(null);
-      expect(liq.maxSwap).toEqual(null);
       expect(liq.timeToPay).toEqual(1);
 
       market = await Market.getById(market.id, true);
@@ -711,8 +673,6 @@ describe('CoreHandler', () => {
       expect(liq.amount).toEqual(liq.ids.length.toString());
       expect(liq.wantOrIds).toEqual([3]);
       expect(liq.wantAndIds).toEqual([4]);
-      expect(liq.minSwap).toEqual(null);
-      expect(liq.maxSwap).toEqual(null);
       expect(liq.timeToPay).toEqual(2);
 
       market = await Market.getById(market.id, true);

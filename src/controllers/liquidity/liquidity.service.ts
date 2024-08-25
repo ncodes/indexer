@@ -52,15 +52,7 @@ export class LiquidityService {
         liq.amountUsd = await this.metadataSrv.tryToUsd(net, liq.amount, baseAddress);
       }
 
-      if (!liq.minSwapUsd && ((select.includes(`minSwapUsd`) && !isZero(liq.minSwap)) || !select.length)) {
-        liq.minSwapUsd = await this.metadataSrv.tryToUsd(net, liq.minSwap, baseAddress);
-      }
-
-      if (!liq.maxSwapUsd && ((select.includes(`maxSwapUsd`) && !isZero(liq.maxSwap)) || !select.length)) {
-        liq.maxSwapUsd = await this.metadataSrv.tryToUsd(net, liq.maxSwap, baseAddress);
-      }
-
-      if (!liq.lastTimeOnline && ((select.includes(`lastTimeOnline`) && !isZero(liq.maxSwap)) || !select.length)) {
+      if (!liq.lastTimeOnline && (select.includes(`lastTimeOnline`) || !select.length)) {
         liq.online = await OnlineStatus.isOnline(net, provider);
         liq.lastTimeOnline = await OnlineStatus.isLastTimeOnline(net, provider);
       }

@@ -13,7 +13,7 @@ import type {
   ContractRunner,
   ContractMethod,
   Listener,
-} from "ethers";
+} from 'ethers';
 import type {
   TypedContractEvent,
   TypedDeferredTopicFilter,
@@ -21,15 +21,13 @@ import type {
   TypedLogDescription,
   TypedListener,
   TypedContractMethod,
-} from "./common";
+} from './common';
 
 export declare namespace Structs {
   export type LiquidityStruct = {
     ids: BigNumberish[];
     amount: BigNumberish;
     price: BigNumberish;
-    minSwap: BigNumberish;
-    maxSwap: BigNumberish;
     timeToPay: BigNumberish;
     openOrders: BigNumberish;
     openDisputes: BigNumberish;
@@ -59,7 +57,7 @@ export declare namespace Structs {
     wantOrIds: bigint[],
     wantAndIds: bigint[],
     paused: boolean,
-    target: string
+    target: string,
   ] & {
     ids: bigint[];
     amount: bigint;
@@ -103,7 +101,7 @@ export declare namespace Structs {
     put: boolean,
     swap: boolean,
     offerOnly: boolean,
-    allowZeroOfferPrice: boolean
+    allowZeroOfferPrice: boolean,
   ] & {
     put: boolean;
     swap: boolean;
@@ -138,7 +136,7 @@ export declare namespace Structs {
     manager: string,
     base: Structs.AssetStructOutput,
     quote: Structs.AssetStructOutput,
-    perms: Structs.MarketPermsStructOutput
+    perms: Structs.MarketPermsStructOutput,
   ] & {
     createdAt: bigint;
     numOrders: bigint;
@@ -187,7 +185,7 @@ export declare namespace Structs {
     operator: bigint,
     accepted: boolean,
     cancelled: boolean,
-    executed: boolean
+    executed: boolean,
   ] & {
     creator: string;
     marketId: string;
@@ -249,7 +247,7 @@ export declare namespace Structs {
     paid: boolean,
     released: boolean,
     disputed: boolean,
-    cancelled: boolean
+    cancelled: boolean,
   ] & {
     marketId: string;
     provider: string;
@@ -294,7 +292,7 @@ export declare namespace StructsLib {
     fixedSynthSwapFee: bigint,
     fixedNFTSwapFee: bigint,
     maxOpenOrders: bigint,
-    maxOpenDisputes: bigint
+    maxOpenDisputes: bigint,
   ] & {
     instantSwapFeeBp: bigint;
     synthSwapFeeBp: bigint;
@@ -311,174 +309,149 @@ export declare namespace StructsLib {
     ammEthPoolFee: BigNumberish;
   };
 
-  export type UintSlotState2StructOutput = [
-    nftDiscountBp: bigint,
-    ammEthPoolFee: bigint
-  ] & { nftDiscountBp: bigint; ammEthPoolFee: bigint };
+  export type UintSlotState2StructOutput = [nftDiscountBp: bigint, ammEthPoolFee: bigint] & {
+    nftDiscountBp: bigint;
+    ammEthPoolFee: bigint;
+  };
 }
 
 export interface CoreInterface extends Interface {
   getFunction(
     nameOrSignature:
-      | "acceptOffer"
-      | "canCreateDispute"
-      | "cancelOffer"
-      | "cancelOrder"
-      | "cancelOrderByDispute"
-      | "cancelOrderByManagerSig"
-      | "computeSwapFee"
-      | "configureFeePool"
-      | "createOffer"
-      | "executeOffer"
-      | "feeBalanceOf"
-      | "getFeeBPs"
-      | "getLiquidity"
-      | "getLiquidityManager"
-      | "getMarket"
-      | "getOffer"
-      | "getOrder"
-      | "getReqSwapBadges"
-      | "hasLiquidity"
-      | "hasOrder"
-      | "inventorBalanceOf"
-      | "isVerified"
-      | "markAsDisputed"
-      | "markOrderAsPaid"
-      | "markOrderAsPaidByManagerSig"
-      | "onERC1155BatchReceived"
-      | "onERC1155Received"
-      | "operatorBalanceOf"
-      | "owner"
-      | "releaseOrder"
-      | "releaseOrderByDispute"
-      | "releaseOrderByManagerSig"
-      | "renounceOwnership"
-      | "setAmmInfo"
-      | "setAmmPoolInfo"
-      | "setAssetRegistry"
-      | "setBadgeMgr"
-      | "setDiscountForNFTHolder"
-      | "setDisputeManager"
-      | "setFeePool"
-      | "setFeePurse"
-      | "setInventor"
-      | "setLiquidityManager"
-      | "setMarketCore"
-      | "setMaxOpenDisputes"
-      | "setMaxOpenOrders"
-      | "setMinTimeToPay"
-      | "setMinerRegistry"
-      | "setNFT"
-      | "setOperator"
-      | "setOrderGraceDur"
-      | "setProtoFee"
-      | "setProtoFeeSplit"
-      | "setSwapBadgeForLiquidity"
-      | "shareablesBalanceOf"
-      | "state"
-      | "state2"
-      | "supportsInterface"
-      | "swapQuoteForBase"
-      | "togglePause"
-      | "transferOwnership"
-      | "transferToFeePool"
-      | "unacceptOffer"
-      | "updateFungibleLiquidity"
-      | "updateLiquidityPrice"
-      | "updateNonFungibleLiquidity"
-      | "updateOffer"
-      | "updateOpenDisputesCount"
-      | "withdrawFeeBalance"
-      | "withdrawInventorBalance"
-      | "withdrawOperatorBalance"
+      | 'acceptOffer'
+      | 'canCreateDispute'
+      | 'cancelOffer'
+      | 'cancelOrder'
+      | 'cancelOrderByDispute'
+      | 'cancelOrderByManagerSig'
+      | 'computeSwapFee'
+      | 'configureFeePool'
+      | 'createOffer'
+      | 'executeOffer'
+      | 'feeBalanceOf'
+      | 'getFeeBPs'
+      | 'getLiquidity'
+      | 'getLiquidityManager'
+      | 'getMarket'
+      | 'getOffer'
+      | 'getOrder'
+      | 'getReqSwapBadges'
+      | 'hasLiquidity'
+      | 'hasOrder'
+      | 'inventorBalanceOf'
+      | 'isVerified'
+      | 'markAsDisputed'
+      | 'markOrderAsPaid'
+      | 'markOrderAsPaidByManagerSig'
+      | 'onERC1155BatchReceived'
+      | 'onERC1155Received'
+      | 'operatorBalanceOf'
+      | 'owner'
+      | 'releaseOrder'
+      | 'releaseOrderByDispute'
+      | 'releaseOrderByManagerSig'
+      | 'renounceOwnership'
+      | 'setAmmInfo'
+      | 'setAmmPoolInfo'
+      | 'setAssetRegistry'
+      | 'setBadgeMgr'
+      | 'setDiscountForNFTHolder'
+      | 'setDisputeManager'
+      | 'setFeePool'
+      | 'setFeePurse'
+      | 'setInventor'
+      | 'setLiquidityManager'
+      | 'setMarketCore'
+      | 'setMaxOpenDisputes'
+      | 'setMaxOpenOrders'
+      | 'setMinTimeToPay'
+      | 'setMinerRegistry'
+      | 'setNFT'
+      | 'setOperator'
+      | 'setOrderGraceDur'
+      | 'setProtoFee'
+      | 'setProtoFeeSplit'
+      | 'setSwapBadgeForLiquidity'
+      | 'shareablesBalanceOf'
+      | 'state'
+      | 'state2'
+      | 'supportsInterface'
+      | 'swapQuoteForBase'
+      | 'togglePause'
+      | 'transferOwnership'
+      | 'transferToFeePool'
+      | 'unacceptOffer'
+      | 'updateFungibleLiquidity'
+      | 'updateLiquidityPrice'
+      | 'updateNonFungibleLiquidity'
+      | 'updateOffer'
+      | 'updateOpenDisputesCount'
+      | 'withdrawFeeBalance'
+      | 'withdrawInventorBalance'
+      | 'withdrawOperatorBalance',
   ): FunctionFragment;
 
   getEvent(
     nameOrSignatureOrTopic:
-      | "FinalizedByManagerSig"
-      | "NFTDiscountUpdated"
-      | "NewOffer"
-      | "OfferAccepted"
-      | "OfferCancelled"
-      | "OfferExecuted"
-      | "OfferUnaccepted"
-      | "OfferUpdated"
-      | "OrderCancelled"
-      | "OwnershipTransferred"
-      | "ProtocolFeeSplitUpdated"
-      | "ProtocolFeeUpdated"
-      | "Swap"
-      | "SwapOrder"
-      | "SwapOrderPaid"
-      | "TogglePause"
-      | "TransferInventorBalance"
-      | "TransferOperatorBalance"
-      | "TransferredToFeePool"
-      | "UpdatedAMMInfo"
-      | "UpdatedAMMPoolInfo"
-      | "UpdatedAssetRegistry"
-      | "UpdatedBadge"
-      | "UpdatedDisputeManager"
-      | "UpdatedFeePool"
-      | "UpdatedFeePoolConfig"
-      | "UpdatedFeePurse"
-      | "UpdatedFungibleLiquidity"
-      | "UpdatedInventor"
-      | "UpdatedLiquidityManager"
-      | "UpdatedLiquiditySwapBadges"
-      | "UpdatedMarketCore"
-      | "UpdatedMaxOpenDisputes"
-      | "UpdatedMaxOpenOrders"
-      | "UpdatedMinTimeToPay"
-      | "UpdatedMinerRegistry"
-      | "UpdatedNFT"
-      | "UpdatedNonFungibleLiquidity"
-      | "UpdatedOperator"
-      | "UpdatedOrderGraceDur"
-      | "UpdatedPrice"
+      | 'FinalizedByManagerSig'
+      | 'NFTDiscountUpdated'
+      | 'NewOffer'
+      | 'OfferAccepted'
+      | 'OfferCancelled'
+      | 'OfferExecuted'
+      | 'OfferUnaccepted'
+      | 'OfferUpdated'
+      | 'OrderCancelled'
+      | 'OwnershipTransferred'
+      | 'ProtocolFeeSplitUpdated'
+      | 'ProtocolFeeUpdated'
+      | 'Swap'
+      | 'SwapOrder'
+      | 'SwapOrderPaid'
+      | 'TogglePause'
+      | 'TransferInventorBalance'
+      | 'TransferOperatorBalance'
+      | 'TransferredToFeePool'
+      | 'UpdatedAMMInfo'
+      | 'UpdatedAMMPoolInfo'
+      | 'UpdatedAssetRegistry'
+      | 'UpdatedBadge'
+      | 'UpdatedDisputeManager'
+      | 'UpdatedFeePool'
+      | 'UpdatedFeePoolConfig'
+      | 'UpdatedFeePurse'
+      | 'UpdatedFungibleLiquidity'
+      | 'UpdatedInventor'
+      | 'UpdatedLiquidityManager'
+      | 'UpdatedLiquiditySwapBadges'
+      | 'UpdatedMarketCore'
+      | 'UpdatedMaxOpenDisputes'
+      | 'UpdatedMaxOpenOrders'
+      | 'UpdatedMinTimeToPay'
+      | 'UpdatedMinerRegistry'
+      | 'UpdatedNFT'
+      | 'UpdatedNonFungibleLiquidity'
+      | 'UpdatedOperator'
+      | 'UpdatedOrderGraceDur'
+      | 'UpdatedPrice',
   ): EventFragment;
 
+  encodeFunctionData(functionFragment: 'acceptOffer', values: [BigNumberish, BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'canCreateDispute', values: [BigNumberish, AddressLike]): string;
+  encodeFunctionData(functionFragment: 'cancelOffer', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'cancelOrder', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'cancelOrderByDispute', values: [BigNumberish]): string;
   encodeFunctionData(
-    functionFragment: "acceptOffer",
-    values: [BigNumberish, BigNumberish]
+    functionFragment: 'cancelOrderByManagerSig',
+    values: [BigNumberish, BigNumberish, BytesLike],
   ): string;
   encodeFunctionData(
-    functionFragment: "canCreateDispute",
-    values: [BigNumberish, AddressLike]
+    functionFragment: 'computeSwapFee',
+    values: [AddressLike, AddressLike, BigNumberish, AddressLike, BigNumberish, BigNumberish],
   ): string;
+  encodeFunctionData(functionFragment: 'configureFeePool', values: [BigNumberish]): string;
   encodeFunctionData(
-    functionFragment: "cancelOffer",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "cancelOrder",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "cancelOrderByDispute",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "cancelOrderByManagerSig",
-    values: [BigNumberish, BigNumberish, BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "computeSwapFee",
-    values: [
-      AddressLike,
-      AddressLike,
-      BigNumberish,
-      AddressLike,
-      BigNumberish,
-      BigNumberish
-    ]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "configureFeePool",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "createOffer",
+    functionFragment: 'createOffer',
     values: [
       AddressLike,
       AddressLike,
@@ -488,205 +461,78 @@ export interface CoreInterface extends Interface {
       BigNumberish,
       BigNumberish[],
       BigNumberish,
-      BigNumberish
-    ]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "executeOffer",
-    values: [BigNumberish, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "feeBalanceOf",
-    values: [AddressLike, AddressLike]
-  ): string;
-  encodeFunctionData(functionFragment: "getFeeBPs", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "getLiquidity",
-    values: [AddressLike, AddressLike, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getLiquidityManager",
-    values: [AddressLike, AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getMarket",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getOffer",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getOrder",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getReqSwapBadges",
-    values: [AddressLike, BigNumberish, AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "hasLiquidity",
-    values: [AddressLike, AddressLike, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "hasOrder",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "inventorBalanceOf",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "isVerified",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "markAsDisputed",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "markOrderAsPaid",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "markOrderAsPaidByManagerSig",
-    values: [BigNumberish, BigNumberish, BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "onERC1155BatchReceived",
-    values: [
-      AddressLike,
-      AddressLike,
-      BigNumberish[],
-      BigNumberish[],
-      BytesLike
-    ]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "onERC1155Received",
-    values: [AddressLike, AddressLike, BigNumberish, BigNumberish, BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "operatorBalanceOf",
-    values: [AddressLike, AddressLike]
-  ): string;
-  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "releaseOrder",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "releaseOrderByDispute",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "releaseOrderByManagerSig",
-    values: [BigNumberish, BigNumberish, BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "renounceOwnership",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setAmmInfo",
-    values: [AddressLike, AddressLike, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setAmmPoolInfo",
-    values: [AddressLike, AddressLike, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setAssetRegistry",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setBadgeMgr",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setDiscountForNFTHolder",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setDisputeManager",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setFeePool",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setFeePurse",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setInventor",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setLiquidityManager",
-    values: [AddressLike, AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setMarketCore",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setMaxOpenDisputes",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setMaxOpenOrders",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setMinTimeToPay",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setMinerRegistry",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(functionFragment: "setNFT", values: [AddressLike]): string;
-  encodeFunctionData(
-    functionFragment: "setOperator",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setOrderGraceDur",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setProtoFee",
-    values: [
       BigNumberish,
-      BigNumberish,
-      BigNumberish,
-      BigNumberish,
-      BigNumberish,
-      BigNumberish
-    ]
+    ],
+  ): string;
+  encodeFunctionData(functionFragment: 'executeOffer', values: [BigNumberish, BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'feeBalanceOf', values: [AddressLike, AddressLike]): string;
+  encodeFunctionData(functionFragment: 'getFeeBPs', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'getLiquidity', values: [AddressLike, AddressLike, BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'getLiquidityManager', values: [AddressLike, AddressLike]): string;
+  encodeFunctionData(functionFragment: 'getMarket', values: [AddressLike]): string;
+  encodeFunctionData(functionFragment: 'getOffer', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'getOrder', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'getReqSwapBadges', values: [AddressLike, BigNumberish, AddressLike]): string;
+  encodeFunctionData(functionFragment: 'hasLiquidity', values: [AddressLike, AddressLike, BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'hasOrder', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'inventorBalanceOf', values: [AddressLike]): string;
+  encodeFunctionData(functionFragment: 'isVerified', values: [AddressLike]): string;
+  encodeFunctionData(functionFragment: 'markAsDisputed', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'markOrderAsPaid', values: [BigNumberish]): string;
+  encodeFunctionData(
+    functionFragment: 'markOrderAsPaidByManagerSig',
+    values: [BigNumberish, BigNumberish, BytesLike],
   ): string;
   encodeFunctionData(
-    functionFragment: "setProtoFeeSplit",
-    values: [BigNumberish, BigNumberish, BigNumberish]
+    functionFragment: 'onERC1155BatchReceived',
+    values: [AddressLike, AddressLike, BigNumberish[], BigNumberish[], BytesLike],
   ): string;
   encodeFunctionData(
-    functionFragment: "setSwapBadgeForLiquidity",
-    values: [AddressLike, BigNumberish, [string, string][]]
+    functionFragment: 'onERC1155Received',
+    values: [AddressLike, AddressLike, BigNumberish, BigNumberish, BytesLike],
   ): string;
+  encodeFunctionData(functionFragment: 'operatorBalanceOf', values: [AddressLike, AddressLike]): string;
+  encodeFunctionData(functionFragment: 'owner', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'releaseOrder', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'releaseOrderByDispute', values: [BigNumberish]): string;
   encodeFunctionData(
-    functionFragment: "shareablesBalanceOf",
-    values: [AddressLike]
+    functionFragment: 'releaseOrderByManagerSig',
+    values: [BigNumberish, BigNumberish, BytesLike],
   ): string;
-  encodeFunctionData(functionFragment: "state", values?: undefined): string;
-  encodeFunctionData(functionFragment: "state2", values?: undefined): string;
+  encodeFunctionData(functionFragment: 'renounceOwnership', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'setAmmInfo', values: [AddressLike, AddressLike, BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'setAmmPoolInfo', values: [AddressLike, AddressLike, BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'setAssetRegistry', values: [AddressLike]): string;
+  encodeFunctionData(functionFragment: 'setBadgeMgr', values: [AddressLike]): string;
+  encodeFunctionData(functionFragment: 'setDiscountForNFTHolder', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'setDisputeManager', values: [AddressLike]): string;
+  encodeFunctionData(functionFragment: 'setFeePool', values: [AddressLike]): string;
+  encodeFunctionData(functionFragment: 'setFeePurse', values: [AddressLike]): string;
+  encodeFunctionData(functionFragment: 'setInventor', values: [AddressLike]): string;
+  encodeFunctionData(functionFragment: 'setLiquidityManager', values: [AddressLike, AddressLike]): string;
+  encodeFunctionData(functionFragment: 'setMarketCore', values: [AddressLike]): string;
+  encodeFunctionData(functionFragment: 'setMaxOpenDisputes', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'setMaxOpenOrders', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'setMinTimeToPay', values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'setMinerRegistry', values: [AddressLike]): string;
+  encodeFunctionData(functionFragment: 'setNFT', values: [AddressLike]): string;
+  encodeFunctionData(functionFragment: 'setOperator', values: [AddressLike]): string;
+  encodeFunctionData(functionFragment: 'setOrderGraceDur', values: [BigNumberish]): string;
   encodeFunctionData(
-    functionFragment: "supportsInterface",
-    values: [BytesLike]
+    functionFragment: 'setProtoFee',
+    values: [BigNumberish, BigNumberish, BigNumberish, BigNumberish, BigNumberish, BigNumberish],
   ): string;
+  encodeFunctionData(functionFragment: 'setProtoFeeSplit', values: [BigNumberish, BigNumberish, BigNumberish]): string;
   encodeFunctionData(
-    functionFragment: "swapQuoteForBase",
+    functionFragment: 'setSwapBadgeForLiquidity',
+    values: [AddressLike, BigNumberish, [string, string][]],
+  ): string;
+  encodeFunctionData(functionFragment: 'shareablesBalanceOf', values: [AddressLike]): string;
+  encodeFunctionData(functionFragment: 'state', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'state2', values?: undefined): string;
+  encodeFunctionData(functionFragment: 'supportsInterface', values: [BytesLike]): string;
+  encodeFunctionData(
+    functionFragment: 'swapQuoteForBase',
     values: [
       AddressLike,
       AddressLike,
@@ -696,27 +542,15 @@ export interface CoreInterface extends Interface {
       BigNumberish,
       BigNumberish[],
       BigNumberish,
-      BigNumberish
-    ]
+      BigNumberish,
+    ],
   ): string;
+  encodeFunctionData(functionFragment: 'togglePause', values: [AddressLike, BigNumberish, BigNumberish]): string;
+  encodeFunctionData(functionFragment: 'transferOwnership', values: [AddressLike]): string;
+  encodeFunctionData(functionFragment: 'transferToFeePool', values: [AddressLike]): string;
+  encodeFunctionData(functionFragment: 'unacceptOffer', values: [BigNumberish]): string;
   encodeFunctionData(
-    functionFragment: "togglePause",
-    values: [AddressLike, BigNumberish, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "transferOwnership",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "transferToFeePool",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "unacceptOffer",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "updateFungibleLiquidity",
+    functionFragment: 'updateFungibleLiquidity',
     values: [
       AddressLike,
       BigNumberish,
@@ -725,15 +559,15 @@ export interface CoreInterface extends Interface {
       [BigNumberish, BigNumberish],
       BigNumberish[],
       BigNumberish[],
-      [BigNumberish, BigNumberish, BigNumberish, BigNumberish, BigNumberish]
-    ]
+      [BigNumberish, BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+    ],
   ): string;
   encodeFunctionData(
-    functionFragment: "updateLiquidityPrice",
-    values: [AddressLike, AddressLike, BigNumberish, BigNumberish, BigNumberish]
+    functionFragment: 'updateLiquidityPrice',
+    values: [AddressLike, AddressLike, BigNumberish, BigNumberish, BigNumberish],
   ): string;
   encodeFunctionData(
-    functionFragment: "updateNonFungibleLiquidity",
+    functionFragment: 'updateNonFungibleLiquidity',
     values: [
       AddressLike,
       BigNumberish,
@@ -743,299 +577,97 @@ export interface CoreInterface extends Interface {
       BigNumberish,
       BigNumberish[],
       BigNumberish[],
-      [BigNumberish, BigNumberish, BigNumberish]
-    ]
+      [BigNumberish, BigNumberish, BigNumberish],
+    ],
   ): string;
   encodeFunctionData(
-    functionFragment: "updateOffer",
-    values: [
-      BigNumberish,
-      BigNumberish,
-      BigNumberish,
-      BigNumberish[],
-      BigNumberish
-    ]
+    functionFragment: 'updateOffer',
+    values: [BigNumberish, BigNumberish, BigNumberish, BigNumberish[], BigNumberish],
   ): string;
   encodeFunctionData(
-    functionFragment: "updateOpenDisputesCount",
-    values: [AddressLike, AddressLike, BigNumberish, boolean]
+    functionFragment: 'updateOpenDisputesCount',
+    values: [AddressLike, AddressLike, BigNumberish, boolean],
   ): string;
-  encodeFunctionData(
-    functionFragment: "withdrawFeeBalance",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "withdrawInventorBalance",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "withdrawOperatorBalance",
-    values: [AddressLike]
-  ): string;
+  encodeFunctionData(functionFragment: 'withdrawFeeBalance', values: [AddressLike]): string;
+  encodeFunctionData(functionFragment: 'withdrawInventorBalance', values: [AddressLike]): string;
+  encodeFunctionData(functionFragment: 'withdrawOperatorBalance', values: [AddressLike]): string;
 
-  decodeFunctionResult(
-    functionFragment: "acceptOffer",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "canCreateDispute",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "cancelOffer",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "cancelOrder",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "cancelOrderByDispute",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "cancelOrderByManagerSig",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "computeSwapFee",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "configureFeePool",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "createOffer",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "executeOffer",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "feeBalanceOf",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "getFeeBPs", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "getLiquidity",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getLiquidityManager",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "getMarket", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "getOffer", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "getOrder", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "getReqSwapBadges",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "hasLiquidity",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "hasOrder", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "inventorBalanceOf",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "isVerified", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "markAsDisputed",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "markOrderAsPaid",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "markOrderAsPaidByManagerSig",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "onERC1155BatchReceived",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "onERC1155Received",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "operatorBalanceOf",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "releaseOrder",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "releaseOrderByDispute",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "releaseOrderByManagerSig",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "renounceOwnership",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "setAmmInfo", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "setAmmPoolInfo",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setAssetRegistry",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setBadgeMgr",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setDiscountForNFTHolder",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setDisputeManager",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "setFeePool", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "setFeePurse",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setInventor",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setLiquidityManager",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setMarketCore",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setMaxOpenDisputes",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setMaxOpenOrders",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setMinTimeToPay",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setMinerRegistry",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "setNFT", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "setOperator",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setOrderGraceDur",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setProtoFee",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setProtoFeeSplit",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setSwapBadgeForLiquidity",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "shareablesBalanceOf",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "state", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "state2", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "supportsInterface",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "swapQuoteForBase",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "togglePause",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "transferOwnership",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "transferToFeePool",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "unacceptOffer",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "updateFungibleLiquidity",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "updateLiquidityPrice",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "updateNonFungibleLiquidity",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "updateOffer",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "updateOpenDisputesCount",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "withdrawFeeBalance",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "withdrawInventorBalance",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "withdrawOperatorBalance",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: 'acceptOffer', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'canCreateDispute', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'cancelOffer', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'cancelOrder', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'cancelOrderByDispute', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'cancelOrderByManagerSig', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'computeSwapFee', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'configureFeePool', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'createOffer', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'executeOffer', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'feeBalanceOf', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'getFeeBPs', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'getLiquidity', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'getLiquidityManager', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'getMarket', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'getOffer', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'getOrder', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'getReqSwapBadges', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'hasLiquidity', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'hasOrder', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'inventorBalanceOf', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'isVerified', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'markAsDisputed', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'markOrderAsPaid', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'markOrderAsPaidByManagerSig', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'onERC1155BatchReceived', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'onERC1155Received', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'operatorBalanceOf', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'owner', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'releaseOrder', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'releaseOrderByDispute', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'releaseOrderByManagerSig', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'renounceOwnership', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setAmmInfo', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setAmmPoolInfo', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setAssetRegistry', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setBadgeMgr', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setDiscountForNFTHolder', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setDisputeManager', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setFeePool', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setFeePurse', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setInventor', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setLiquidityManager', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setMarketCore', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setMaxOpenDisputes', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setMaxOpenOrders', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setMinTimeToPay', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setMinerRegistry', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setNFT', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setOperator', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setOrderGraceDur', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setProtoFee', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setProtoFeeSplit', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'setSwapBadgeForLiquidity', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'shareablesBalanceOf', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'state', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'state2', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'supportsInterface', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'swapQuoteForBase', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'togglePause', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'transferOwnership', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'transferToFeePool', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'unacceptOffer', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'updateFungibleLiquidity', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'updateLiquidityPrice', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'updateNonFungibleLiquidity', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'updateOffer', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'updateOpenDisputesCount', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'withdrawFeeBalance', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'withdrawInventorBalance', data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: 'withdrawOperatorBalance', data: BytesLike): Result;
 }
 
 export namespace FinalizedByManagerSigEvent {
-  export type InputTuple = [
-    manager: AddressLike,
-    finalizer: AddressLike,
-    orderId: BigNumberish,
-    action: BigNumberish
-  ];
-  export type OutputTuple = [
-    manager: string,
-    finalizer: string,
-    orderId: bigint,
-    action: bigint
-  ];
+  export type InputTuple = [manager: AddressLike, finalizer: AddressLike, orderId: BigNumberish, action: BigNumberish];
+  export type OutputTuple = [manager: string, finalizer: string, orderId: bigint, action: bigint];
   export interface OutputObject {
     manager: string;
     finalizer: string;
@@ -1070,7 +702,7 @@ export namespace NewOfferEvent {
     amount: BigNumberish,
     price: BigNumberish,
     ids: BigNumberish[],
-    expireDuration: BigNumberish
+    expireDuration: BigNumberish,
   ];
   export type OutputTuple = [
     marketId: string,
@@ -1081,7 +713,7 @@ export namespace NewOfferEvent {
     amount: bigint,
     price: bigint,
     ids: bigint[],
-    expireDuration: bigint
+    expireDuration: bigint,
   ];
   export interface OutputObject {
     marketId: string;
@@ -1101,16 +733,8 @@ export namespace NewOfferEvent {
 }
 
 export namespace OfferAcceptedEvent {
-  export type InputTuple = [
-    offerId: BigNumberish,
-    acceptor: AddressLike,
-    executeAt: BigNumberish
-  ];
-  export type OutputTuple = [
-    offerId: bigint,
-    acceptor: string,
-    executeAt: bigint
-  ];
+  export type InputTuple = [offerId: BigNumberish, acceptor: AddressLike, executeAt: BigNumberish];
+  export type OutputTuple = [offerId: bigint, acceptor: string, executeAt: bigint];
   export interface OutputObject {
     offerId: bigint;
     acceptor: string;
@@ -1168,7 +792,7 @@ export namespace OfferUpdatedEvent {
     amount: BigNumberish,
     price: BigNumberish,
     ids: BigNumberish[],
-    execDelayDur: BigNumberish
+    execDelayDur: BigNumberish,
   ];
   export type OutputTuple = [
     offerId: bigint,
@@ -1176,7 +800,7 @@ export namespace OfferUpdatedEvent {
     amount: bigint,
     price: bigint,
     ids: bigint[],
-    execDelayDur: bigint
+    execDelayDur: bigint,
   ];
   export interface OutputObject {
     offerId: bigint;
@@ -1193,16 +817,8 @@ export namespace OfferUpdatedEvent {
 }
 
 export namespace OrderCancelledEvent {
-  export type InputTuple = [
-    orderID: BigNumberish,
-    canceller: AddressLike,
-    byDispute: boolean
-  ];
-  export type OutputTuple = [
-    orderID: bigint,
-    canceller: string,
-    byDispute: boolean
-  ];
+  export type InputTuple = [orderID: BigNumberish, canceller: AddressLike, byDispute: boolean];
+  export type OutputTuple = [orderID: bigint, canceller: string, byDispute: boolean];
   export interface OutputObject {
     orderID: bigint;
     canceller: string;
@@ -1228,16 +844,8 @@ export namespace OwnershipTransferredEvent {
 }
 
 export namespace ProtocolFeeSplitUpdatedEvent {
-  export type InputTuple = [
-    inventor: BigNumberish,
-    shared: BigNumberish,
-    operator: BigNumberish
-  ];
-  export type OutputTuple = [
-    inventor: bigint,
-    shared: bigint,
-    operator: bigint
-  ];
+  export type InputTuple = [inventor: BigNumberish, shared: BigNumberish, operator: BigNumberish];
+  export type OutputTuple = [inventor: bigint, shared: bigint, operator: bigint];
   export interface OutputObject {
     inventor: bigint;
     shared: bigint;
@@ -1256,7 +864,7 @@ export namespace ProtocolFeeUpdatedEvent {
     stableSwapFeeBp: BigNumberish,
     fixedSynthSwapFee: BigNumberish,
     fixedNFTSwapFee: BigNumberish,
-    instantNFTSwapFeeBp: BigNumberish
+    instantNFTSwapFeeBp: BigNumberish,
   ];
   export type OutputTuple = [
     instantSwapFeeBp: bigint,
@@ -1264,7 +872,7 @@ export namespace ProtocolFeeUpdatedEvent {
     stableSwapFeeBp: bigint,
     fixedSynthSwapFee: bigint,
     fixedNFTSwapFee: bigint,
-    instantNFTSwapFeeBp: bigint
+    instantNFTSwapFeeBp: bigint,
   ];
   export interface OutputObject {
     instantSwapFeeBp: bigint;
@@ -1290,7 +898,7 @@ export namespace SwapEvent {
     numTypeInfo: BigNumberish[],
     byDispute: boolean,
     idsFromProvider: BigNumberish[],
-    idsFromTaker: BigNumberish[]
+    idsFromTaker: BigNumberish[],
   ];
   export type OutputTuple = [
     mid: string,
@@ -1301,7 +909,7 @@ export namespace SwapEvent {
     numTypeInfo: bigint[],
     byDispute: boolean,
     idsFromProvider: bigint[],
-    idsFromTaker: bigint[]
+    idsFromTaker: bigint[],
   ];
   export interface OutputObject {
     mid: string;
@@ -1328,7 +936,7 @@ export namespace SwapOrderEvent {
     recipient: AddressLike,
     numTypeInfo: BigNumberish[],
     idsFromProvider: BigNumberish[],
-    idsFromTaker: BigNumberish[]
+    idsFromTaker: BigNumberish[],
   ];
   export type OutputTuple = [
     mid: string,
@@ -1337,7 +945,7 @@ export namespace SwapOrderEvent {
     recipient: string,
     numTypeInfo: bigint[],
     idsFromProvider: bigint[],
-    idsFromTaker: bigint[]
+    idsFromTaker: bigint[],
   ];
   export interface OutputObject {
     mid: string;
@@ -1355,16 +963,8 @@ export namespace SwapOrderEvent {
 }
 
 export namespace SwapOrderPaidEvent {
-  export type InputTuple = [
-    orderID: BigNumberish,
-    payer: AddressLike,
-    disputeDelayDur: BigNumberish
-  ];
-  export type OutputTuple = [
-    orderID: bigint,
-    payer: string,
-    disputeDelayDur: bigint
-  ];
+  export type InputTuple = [orderID: BigNumberish, payer: AddressLike, disputeDelayDur: BigNumberish];
+  export type OutputTuple = [orderID: bigint, payer: string, disputeDelayDur: bigint];
   export interface OutputObject {
     orderID: bigint;
     payer: string;
@@ -1377,18 +977,8 @@ export namespace SwapOrderPaidEvent {
 }
 
 export namespace TogglePauseEvent {
-  export type InputTuple = [
-    marketId: AddressLike,
-    provider: AddressLike,
-    lid: BigNumberish,
-    paused: boolean
-  ];
-  export type OutputTuple = [
-    marketId: string,
-    provider: string,
-    lid: bigint,
-    paused: boolean
-  ];
+  export type InputTuple = [marketId: AddressLike, provider: AddressLike, lid: BigNumberish, paused: boolean];
+  export type OutputTuple = [marketId: string, provider: string, lid: bigint, paused: boolean];
   export interface OutputObject {
     marketId: string;
     provider: string;
@@ -1402,11 +992,7 @@ export namespace TogglePauseEvent {
 }
 
 export namespace TransferInventorBalanceEvent {
-  export type InputTuple = [
-    owner: AddressLike,
-    token: AddressLike,
-    amount: BigNumberish
-  ];
+  export type InputTuple = [owner: AddressLike, token: AddressLike, amount: BigNumberish];
   export type OutputTuple = [owner: string, token: string, amount: bigint];
   export interface OutputObject {
     owner: string;
@@ -1420,11 +1006,7 @@ export namespace TransferInventorBalanceEvent {
 }
 
 export namespace TransferOperatorBalanceEvent {
-  export type InputTuple = [
-    owner: AddressLike,
-    token: AddressLike,
-    amount: BigNumberish
-  ];
+  export type InputTuple = [owner: AddressLike, token: AddressLike, amount: BigNumberish];
   export type OutputTuple = [owner: string, token: string, amount: bigint];
   export interface OutputObject {
     owner: string;
@@ -1438,18 +1020,8 @@ export namespace TransferOperatorBalanceEvent {
 }
 
 export namespace TransferredToFeePoolEvent {
-  export type InputTuple = [
-    token: AddressLike,
-    amount: BigNumberish,
-    convAsset: AddressLike,
-    convAmount: BigNumberish
-  ];
-  export type OutputTuple = [
-    token: string,
-    amount: bigint,
-    convAsset: string,
-    convAmount: bigint
-  ];
+  export type InputTuple = [token: AddressLike, amount: BigNumberish, convAsset: AddressLike, convAmount: BigNumberish];
+  export type OutputTuple = [token: string, amount: bigint, convAsset: string, convAmount: bigint];
   export interface OutputObject {
     token: string;
     amount: bigint;
@@ -1463,16 +1035,8 @@ export namespace TransferredToFeePoolEvent {
 }
 
 export namespace UpdatedAMMInfoEvent {
-  export type InputTuple = [
-    swapRouter: AddressLike,
-    ethErc20Addr: AddressLike,
-    poolFee: BigNumberish
-  ];
-  export type OutputTuple = [
-    swapRouter: string,
-    ethErc20Addr: string,
-    poolFee: bigint
-  ];
+  export type InputTuple = [swapRouter: AddressLike, ethErc20Addr: AddressLike, poolFee: BigNumberish];
+  export type OutputTuple = [swapRouter: string, ethErc20Addr: string, poolFee: bigint];
   export interface OutputObject {
     swapRouter: string;
     ethErc20Addr: string;
@@ -1485,11 +1049,7 @@ export namespace UpdatedAMMInfoEvent {
 }
 
 export namespace UpdatedAMMPoolInfoEvent {
-  export type InputTuple = [
-    input: AddressLike,
-    output: AddressLike,
-    poolFee: BigNumberish
-  ];
+  export type InputTuple = [input: AddressLike, output: AddressLike, poolFee: BigNumberish];
   export type OutputTuple = [input: string, output: string, poolFee: bigint];
   export interface OutputObject {
     input: string;
@@ -1588,7 +1148,7 @@ export namespace UpdatedFungibleLiquidityEvent {
     wantAndIds: BigNumberish[],
     minSwap: BigNumberish,
     maxSwap: BigNumberish,
-    timeToPay: BigNumberish
+    timeToPay: BigNumberish,
   ];
   export type OutputTuple = [
     provider: string,
@@ -1603,7 +1163,7 @@ export namespace UpdatedFungibleLiquidityEvent {
     wantAndIds: bigint[],
     minSwap: bigint,
     maxSwap: bigint,
-    timeToPay: bigint
+    timeToPay: bigint,
   ];
   export interface OutputObject {
     provider: string;
@@ -1643,14 +1203,9 @@ export namespace UpdatedLiquidityManagerEvent {
     marketId: AddressLike,
     provider: AddressLike,
     manager: AddressLike,
-    oldManager: AddressLike
+    oldManager: AddressLike,
   ];
-  export type OutputTuple = [
-    marketId: string,
-    provider: string,
-    manager: string,
-    oldManager: string
-  ];
+  export type OutputTuple = [marketId: string, provider: string, manager: string, oldManager: string];
   export interface OutputObject {
     marketId: string;
     provider: string;
@@ -1664,18 +1219,8 @@ export namespace UpdatedLiquidityManagerEvent {
 }
 
 export namespace UpdatedLiquiditySwapBadgesEvent {
-  export type InputTuple = [
-    market: AddressLike,
-    provider: AddressLike,
-    liq: BigNumberish,
-    badges: [string, string][]
-  ];
-  export type OutputTuple = [
-    market: string,
-    provider: string,
-    liq: bigint,
-    badges: [string, string][]
-  ];
+  export type InputTuple = [market: AddressLike, provider: AddressLike, liq: BigNumberish, badges: [string, string][]];
+  export type OutputTuple = [market: string, provider: string, liq: bigint, badges: [string, string][]];
   export interface OutputObject {
     market: string;
     provider: string;
@@ -1772,7 +1317,7 @@ export namespace UpdatedNonFungibleLiquidityEvent {
     price: BigNumberish,
     wantOrIds: BigNumberish[],
     wantAndIds: BigNumberish[],
-    timeToPay: BigNumberish
+    timeToPay: BigNumberish,
   ];
   export type OutputTuple = [
     provider: string,
@@ -1785,7 +1330,7 @@ export namespace UpdatedNonFungibleLiquidityEvent {
     price: bigint,
     wantOrIds: bigint[],
     wantAndIds: bigint[],
-    timeToPay: bigint
+    timeToPay: bigint,
   ];
   export interface OutputObject {
     provider: string;
@@ -1836,15 +1381,9 @@ export namespace UpdatedPriceEvent {
     provider: AddressLike,
     manager: AddressLike,
     lid: BigNumberish,
-    price: BigNumberish
+    price: BigNumberish,
   ];
-  export type OutputTuple = [
-    marketId: string,
-    provider: string,
-    manager: string,
-    lid: bigint,
-    price: bigint
-  ];
+  export type OutputTuple = [marketId: string, provider: string, manager: string, lid: bigint, price: bigint];
   export interface OutputObject {
     marketId: string;
     provider: string;
@@ -1867,70 +1406,44 @@ export interface Core extends BaseContract {
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
-    toBlock?: string | number | undefined
+    toBlock?: string | number | undefined,
   ): Promise<Array<TypedEventLog<TCEvent>>>;
   queryFilter<TCEvent extends TypedContractEvent>(
     filter: TypedDeferredTopicFilter<TCEvent>,
     fromBlockOrBlockhash?: string | number | undefined,
-    toBlock?: string | number | undefined
+    toBlock?: string | number | undefined,
   ): Promise<Array<TypedEventLog<TCEvent>>>;
 
-  on<TCEvent extends TypedContractEvent>(
-    event: TCEvent,
-    listener: TypedListener<TCEvent>
-  ): Promise<this>;
+  on<TCEvent extends TypedContractEvent>(event: TCEvent, listener: TypedListener<TCEvent>): Promise<this>;
   on<TCEvent extends TypedContractEvent>(
     filter: TypedDeferredTopicFilter<TCEvent>,
-    listener: TypedListener<TCEvent>
+    listener: TypedListener<TCEvent>,
   ): Promise<this>;
 
-  once<TCEvent extends TypedContractEvent>(
-    event: TCEvent,
-    listener: TypedListener<TCEvent>
-  ): Promise<this>;
+  once<TCEvent extends TypedContractEvent>(event: TCEvent, listener: TypedListener<TCEvent>): Promise<this>;
   once<TCEvent extends TypedContractEvent>(
     filter: TypedDeferredTopicFilter<TCEvent>,
-    listener: TypedListener<TCEvent>
+    listener: TypedListener<TCEvent>,
   ): Promise<this>;
 
-  listeners<TCEvent extends TypedContractEvent>(
-    event: TCEvent
-  ): Promise<Array<TypedListener<TCEvent>>>;
+  listeners<TCEvent extends TypedContractEvent>(event: TCEvent): Promise<Array<TypedListener<TCEvent>>>;
   listeners(eventName?: string): Promise<Array<Listener>>;
-  removeAllListeners<TCEvent extends TypedContractEvent>(
-    event?: TCEvent
-  ): Promise<this>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(event?: TCEvent): Promise<this>;
 
-  acceptOffer: TypedContractMethod<
-    [offerId: BigNumberish, delay: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+  acceptOffer: TypedContractMethod<[offerId: BigNumberish, delay: BigNumberish], [void], 'nonpayable'>;
 
-  canCreateDispute: TypedContractMethod<
-    [id: BigNumberish, addr: AddressLike],
-    [boolean],
-    "view"
-  >;
+  canCreateDispute: TypedContractMethod<[id: BigNumberish, addr: AddressLike], [boolean], 'view'>;
 
-  cancelOffer: TypedContractMethod<
-    [offerId: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+  cancelOffer: TypedContractMethod<[offerId: BigNumberish], [void], 'nonpayable'>;
 
-  cancelOrder: TypedContractMethod<[id: BigNumberish], [void], "nonpayable">;
+  cancelOrder: TypedContractMethod<[id: BigNumberish], [void], 'nonpayable'>;
 
-  cancelOrderByDispute: TypedContractMethod<
-    [id: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+  cancelOrderByDispute: TypedContractMethod<[id: BigNumberish], [void], 'nonpayable'>;
 
   cancelOrderByManagerSig: TypedContractMethod<
     [id: BigNumberish, expireAt: BigNumberish, signature: BytesLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   computeSwapFee: TypedContractMethod<
@@ -1940,17 +1453,13 @@ export interface Core extends BaseContract {
       lid: BigNumberish,
       taker: AddressLike,
       orderAmt: BigNumberish,
-      orderPrice: BigNumberish
+      orderPrice: BigNumberish,
     ],
     [[bigint, bigint, bigint, bigint]],
-    "view"
+    'view'
   >;
 
-  configureFeePool: TypedContractMethod<
-    [interval: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+  configureFeePool: TypedContractMethod<[interval: BigNumberish], [void], 'nonpayable'>;
 
   createOffer: TypedContractMethod<
     [
@@ -1962,219 +1471,127 @@ export interface Core extends BaseContract {
       price: BigNumberish,
       ids: BigNumberish[],
       deadline: BigNumberish,
-      operator: BigNumberish
+      operator: BigNumberish,
     ],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  executeOffer: TypedContractMethod<
-    [offerId: BigNumberish, txDeadline: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+  executeOffer: TypedContractMethod<[offerId: BigNumberish, txDeadline: BigNumberish], [void], 'nonpayable'>;
 
-  feeBalanceOf: TypedContractMethod<
-    [_owner: AddressLike, _asset: AddressLike],
-    [bigint],
-    "view"
-  >;
+  feeBalanceOf: TypedContractMethod<[_owner: AddressLike, _asset: AddressLike], [bigint], 'view'>;
 
-  getFeeBPs: TypedContractMethod<[], [[bigint, bigint, bigint]], "view">;
+  getFeeBPs: TypedContractMethod<[], [[bigint, bigint, bigint]], 'view'>;
 
   getLiquidity: TypedContractMethod<
     [_mid: AddressLike, _owner: AddressLike, _lid: BigNumberish],
     [Structs.LiquidityStructOutput],
-    "view"
+    'view'
   >;
 
-  getLiquidityManager: TypedContractMethod<
-    [marketId: AddressLike, provider: AddressLike],
-    [string],
-    "view"
-  >;
+  getLiquidityManager: TypedContractMethod<[marketId: AddressLike, provider: AddressLike], [string], 'view'>;
 
-  getMarket: TypedContractMethod<
-    [id: AddressLike],
-    [Structs.MarketStructOutput],
-    "view"
-  >;
+  getMarket: TypedContractMethod<[id: AddressLike], [Structs.MarketStructOutput], 'view'>;
 
-  getOffer: TypedContractMethod<
-    [id: BigNumberish],
-    [Structs.OfferStructOutput],
-    "view"
-  >;
+  getOffer: TypedContractMethod<[id: BigNumberish], [Structs.OfferStructOutput], 'view'>;
 
-  getOrder: TypedContractMethod<
-    [id: BigNumberish],
-    [Structs.OrderStructOutput],
-    "view"
-  >;
+  getOrder: TypedContractMethod<[id: BigNumberish], [Structs.OrderStructOutput], 'view'>;
 
   getReqSwapBadges: TypedContractMethod<
     [marketId: AddressLike, lid: BigNumberish, addr: AddressLike],
     [[string, string][]],
-    "view"
+    'view'
   >;
 
-  hasLiquidity: TypedContractMethod<
-    [_mid: AddressLike, _owner: AddressLike, _lid: BigNumberish],
-    [boolean],
-    "view"
-  >;
+  hasLiquidity: TypedContractMethod<[_mid: AddressLike, _owner: AddressLike, _lid: BigNumberish], [boolean], 'view'>;
 
-  hasOrder: TypedContractMethod<[id: BigNumberish], [boolean], "view">;
+  hasOrder: TypedContractMethod<[id: BigNumberish], [boolean], 'view'>;
 
-  inventorBalanceOf: TypedContractMethod<
-    [asset: AddressLike],
-    [bigint],
-    "view"
-  >;
+  inventorBalanceOf: TypedContractMethod<[asset: AddressLike], [bigint], 'view'>;
 
-  isVerified: TypedContractMethod<[addr: AddressLike], [boolean], "view">;
+  isVerified: TypedContractMethod<[addr: AddressLike], [boolean], 'view'>;
 
-  markAsDisputed: TypedContractMethod<[id: BigNumberish], [void], "nonpayable">;
+  markAsDisputed: TypedContractMethod<[id: BigNumberish], [void], 'nonpayable'>;
 
-  markOrderAsPaid: TypedContractMethod<
-    [id: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+  markOrderAsPaid: TypedContractMethod<[id: BigNumberish], [void], 'nonpayable'>;
 
   markOrderAsPaidByManagerSig: TypedContractMethod<
     [id: BigNumberish, expireAt: BigNumberish, signature: BytesLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   onERC1155BatchReceived: TypedContractMethod<
-    [
-      arg0: AddressLike,
-      arg1: AddressLike,
-      arg2: BigNumberish[],
-      arg3: BigNumberish[],
-      arg4: BytesLike
-    ],
+    [arg0: AddressLike, arg1: AddressLike, arg2: BigNumberish[], arg3: BigNumberish[], arg4: BytesLike],
     [string],
-    "nonpayable"
+    'nonpayable'
   >;
 
   onERC1155Received: TypedContractMethod<
-    [
-      arg0: AddressLike,
-      arg1: AddressLike,
-      arg2: BigNumberish,
-      arg3: BigNumberish,
-      arg4: BytesLike
-    ],
+    [arg0: AddressLike, arg1: AddressLike, arg2: BigNumberish, arg3: BigNumberish, arg4: BytesLike],
     [string],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  operatorBalanceOf: TypedContractMethod<
-    [operator: AddressLike, asset: AddressLike],
-    [bigint],
-    "view"
-  >;
+  operatorBalanceOf: TypedContractMethod<[operator: AddressLike, asset: AddressLike], [bigint], 'view'>;
 
-  owner: TypedContractMethod<[], [string], "view">;
+  owner: TypedContractMethod<[], [string], 'view'>;
 
-  releaseOrder: TypedContractMethod<[id: BigNumberish], [void], "nonpayable">;
+  releaseOrder: TypedContractMethod<[id: BigNumberish], [void], 'nonpayable'>;
 
-  releaseOrderByDispute: TypedContractMethod<
-    [id: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+  releaseOrderByDispute: TypedContractMethod<[id: BigNumberish], [void], 'nonpayable'>;
 
   releaseOrderByManagerSig: TypedContractMethod<
     [id: BigNumberish, expireAt: BigNumberish, signature: BytesLike],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
+  renounceOwnership: TypedContractMethod<[], [void], 'nonpayable'>;
 
   setAmmInfo: TypedContractMethod<
     [swapRouter: AddressLike, ethErc20Addr: AddressLike, poolFee: BigNumberish],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   setAmmPoolInfo: TypedContractMethod<
     [input: AddressLike, out: AddressLike, poolFee: BigNumberish],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  setAssetRegistry: TypedContractMethod<
-    [addr: AddressLike],
-    [void],
-    "nonpayable"
-  >;
+  setAssetRegistry: TypedContractMethod<[addr: AddressLike], [void], 'nonpayable'>;
 
-  setBadgeMgr: TypedContractMethod<[val: AddressLike], [void], "nonpayable">;
+  setBadgeMgr: TypedContractMethod<[val: AddressLike], [void], 'nonpayable'>;
 
-  setDiscountForNFTHolder: TypedContractMethod<
-    [bp: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+  setDiscountForNFTHolder: TypedContractMethod<[bp: BigNumberish], [void], 'nonpayable'>;
 
-  setDisputeManager: TypedContractMethod<
-    [addr: AddressLike],
-    [void],
-    "nonpayable"
-  >;
+  setDisputeManager: TypedContractMethod<[addr: AddressLike], [void], 'nonpayable'>;
 
-  setFeePool: TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+  setFeePool: TypedContractMethod<[addr: AddressLike], [void], 'nonpayable'>;
 
-  setFeePurse: TypedContractMethod<[val: AddressLike], [void], "nonpayable">;
+  setFeePurse: TypedContractMethod<[val: AddressLike], [void], 'nonpayable'>;
 
-  setInventor: TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+  setInventor: TypedContractMethod<[addr: AddressLike], [void], 'nonpayable'>;
 
-  setLiquidityManager: TypedContractMethod<
-    [marketId: AddressLike, manager: AddressLike],
-    [void],
-    "nonpayable"
-  >;
+  setLiquidityManager: TypedContractMethod<[marketId: AddressLike, manager: AddressLike], [void], 'nonpayable'>;
 
-  setMarketCore: TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+  setMarketCore: TypedContractMethod<[addr: AddressLike], [void], 'nonpayable'>;
 
-  setMaxOpenDisputes: TypedContractMethod<
-    [val: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+  setMaxOpenDisputes: TypedContractMethod<[val: BigNumberish], [void], 'nonpayable'>;
 
-  setMaxOpenOrders: TypedContractMethod<
-    [val: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+  setMaxOpenOrders: TypedContractMethod<[val: BigNumberish], [void], 'nonpayable'>;
 
-  setMinTimeToPay: TypedContractMethod<
-    [val: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+  setMinTimeToPay: TypedContractMethod<[val: BigNumberish], [void], 'nonpayable'>;
 
-  setMinerRegistry: TypedContractMethod<
-    [addr: AddressLike],
-    [void],
-    "nonpayable"
-  >;
+  setMinerRegistry: TypedContractMethod<[addr: AddressLike], [void], 'nonpayable'>;
 
-  setNFT: TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+  setNFT: TypedContractMethod<[addr: AddressLike], [void], 'nonpayable'>;
 
-  setOperator: TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+  setOperator: TypedContractMethod<[addr: AddressLike], [void], 'nonpayable'>;
 
-  setOrderGraceDur: TypedContractMethod<
-    [val: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+  setOrderGraceDur: TypedContractMethod<[val: BigNumberish], [void], 'nonpayable'>;
 
   setProtoFee: TypedContractMethod<
     [
@@ -2183,46 +1600,30 @@ export interface Core extends BaseContract {
       _stableSwapFeeBp: BigNumberish,
       _fixedSynthSwapFee: BigNumberish,
       _fixedNFTSwapFee: BigNumberish,
-      _instantNFTSwapFeeBp: BigNumberish
+      _instantNFTSwapFeeBp: BigNumberish,
     ],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   setProtoFeeSplit: TypedContractMethod<
-    [
-      inventorBP: BigNumberish,
-      sharedBP: BigNumberish,
-      operatorBP: BigNumberish
-    ],
+    [inventorBP: BigNumberish, sharedBP: BigNumberish, operatorBP: BigNumberish],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   setSwapBadgeForLiquidity: TypedContractMethod<
     [marketId: AddressLike, lid: BigNumberish, badgeIds: [string, string][]],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  shareablesBalanceOf: TypedContractMethod<
-    [asset: AddressLike],
-    [bigint],
-    "view"
-  >;
+  shareablesBalanceOf: TypedContractMethod<[asset: AddressLike], [bigint], 'view'>;
 
   state: TypedContractMethod<
     [],
     [
-      [
-        StructsLib.IntSlotStateStructOutput,
-        bigint,
-        bigint,
-        bigint,
-        bigint,
-        string,
-        string
-      ] & {
+      [StructsLib.IntSlotStateStructOutput, bigint, bigint, bigint, bigint, string, string] & {
         ints: StructsLib.IntSlotStateStructOutput;
         minTimeToPay: bigint;
         orderGraceDur: bigint;
@@ -2230,9 +1631,9 @@ export interface Core extends BaseContract {
         feePoolTxInterval: bigint;
         inventor: string;
         ammSwapRouter: string;
-      }
+      },
     ],
-    "view"
+    'view'
   >;
 
   state2: TypedContractMethod<
@@ -2250,7 +1651,7 @@ export interface Core extends BaseContract {
         string,
         string,
         string,
-        string
+        string,
       ] & {
         ints: StructsLib.UintSlotState2StructOutput;
         disputeManager: string;
@@ -2264,16 +1665,12 @@ export interface Core extends BaseContract {
         badge: string;
         operatorMgr: string;
         minerReg: string;
-      }
+      },
     ],
-    "view"
+    'view'
   >;
 
-  supportsInterface: TypedContractMethod<
-    [interfaceId: BytesLike],
-    [boolean],
-    "view"
-  >;
+  supportsInterface: TypedContractMethod<[interfaceId: BytesLike], [boolean], 'view'>;
 
   swapQuoteForBase: TypedContractMethod<
     [
@@ -2285,35 +1682,23 @@ export interface Core extends BaseContract {
       maxPrice: BigNumberish,
       ids: BigNumberish[],
       txDeadline: BigNumberish,
-      operator: BigNumberish
+      operator: BigNumberish,
     ],
     [void],
-    "payable"
+    'payable'
   >;
 
   togglePause: TypedContractMethod<
     [marketId: AddressLike, lid: BigNumberish, expireAt: BigNumberish],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  transferOwnership: TypedContractMethod<
-    [newOwner: AddressLike],
-    [void],
-    "nonpayable"
-  >;
+  transferOwnership: TypedContractMethod<[newOwner: AddressLike], [void], 'nonpayable'>;
 
-  transferToFeePool: TypedContractMethod<
-    [_token: AddressLike],
-    [void],
-    "nonpayable"
-  >;
+  transferToFeePool: TypedContractMethod<[_token: AddressLike], [void], 'nonpayable'>;
 
-  unacceptOffer: TypedContractMethod<
-    [offerId: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+  unacceptOffer: TypedContractMethod<[offerId: BigNumberish], [void], 'nonpayable'>;
 
   updateFungibleLiquidity: TypedContractMethod<
     [
@@ -2324,28 +1709,16 @@ export interface Core extends BaseContract {
       amountAndPrice: [BigNumberish, BigNumberish],
       wantOrIds: BigNumberish[],
       wantAndIds: BigNumberish[],
-      limits: [
-        BigNumberish,
-        BigNumberish,
-        BigNumberish,
-        BigNumberish,
-        BigNumberish
-      ]
+      limits: [BigNumberish, BigNumberish, BigNumberish, BigNumberish, BigNumberish],
     ],
     [void],
-    "payable"
+    'payable'
   >;
 
   updateLiquidityPrice: TypedContractMethod<
-    [
-      _marketId: AddressLike,
-      _owner: AddressLike,
-      _lid: BigNumberish,
-      _price: BigNumberish,
-      _expireAt: BigNumberish
-    ],
+    [_marketId: AddressLike, _owner: AddressLike, _lid: BigNumberish, _price: BigNumberish, _expireAt: BigNumberish],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   updateNonFungibleLiquidity: TypedContractMethod<
@@ -2358,89 +1731,46 @@ export interface Core extends BaseContract {
       price: BigNumberish,
       wantOrIds: BigNumberish[],
       wantAndIds: BigNumberish[],
-      limits: [BigNumberish, BigNumberish, BigNumberish]
+      limits: [BigNumberish, BigNumberish, BigNumberish],
     ],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   updateOffer: TypedContractMethod<
-    [
-      offerId: BigNumberish,
-      amount: BigNumberish,
-      price: BigNumberish,
-      ids: BigNumberish[],
-      deadline: BigNumberish
-    ],
+    [offerId: BigNumberish, amount: BigNumberish, price: BigNumberish, ids: BigNumberish[], deadline: BigNumberish],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
   updateOpenDisputesCount: TypedContractMethod<
-    [
-      marketId: AddressLike,
-      provider: AddressLike,
-      lid: BigNumberish,
-      incr: boolean
-    ],
+    [marketId: AddressLike, provider: AddressLike, lid: BigNumberish, incr: boolean],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
 
-  withdrawFeeBalance: TypedContractMethod<
-    [asset: AddressLike],
-    [void],
-    "nonpayable"
-  >;
+  withdrawFeeBalance: TypedContractMethod<[asset: AddressLike], [void], 'nonpayable'>;
 
-  withdrawInventorBalance: TypedContractMethod<
-    [asset: AddressLike],
-    [void],
-    "nonpayable"
-  >;
+  withdrawInventorBalance: TypedContractMethod<[asset: AddressLike], [void], 'nonpayable'>;
 
-  withdrawOperatorBalance: TypedContractMethod<
-    [_token: AddressLike],
-    [void],
-    "nonpayable"
-  >;
+  withdrawOperatorBalance: TypedContractMethod<[_token: AddressLike], [void], 'nonpayable'>;
 
-  getFunction<T extends ContractMethod = ContractMethod>(
-    key: string | FunctionFragment
-  ): T;
+  getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T;
 
   getFunction(
-    nameOrSignature: "acceptOffer"
-  ): TypedContractMethod<
-    [offerId: BigNumberish, delay: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+    nameOrSignature: 'acceptOffer',
+  ): TypedContractMethod<[offerId: BigNumberish, delay: BigNumberish], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "canCreateDispute"
-  ): TypedContractMethod<
-    [id: BigNumberish, addr: AddressLike],
-    [boolean],
-    "view"
-  >;
+    nameOrSignature: 'canCreateDispute',
+  ): TypedContractMethod<[id: BigNumberish, addr: AddressLike], [boolean], 'view'>;
+  getFunction(nameOrSignature: 'cancelOffer'): TypedContractMethod<[offerId: BigNumberish], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'cancelOrder'): TypedContractMethod<[id: BigNumberish], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'cancelOrderByDispute'): TypedContractMethod<[id: BigNumberish], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "cancelOffer"
-  ): TypedContractMethod<[offerId: BigNumberish], [void], "nonpayable">;
+    nameOrSignature: 'cancelOrderByManagerSig',
+  ): TypedContractMethod<[id: BigNumberish, expireAt: BigNumberish, signature: BytesLike], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "cancelOrder"
-  ): TypedContractMethod<[id: BigNumberish], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "cancelOrderByDispute"
-  ): TypedContractMethod<[id: BigNumberish], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "cancelOrderByManagerSig"
-  ): TypedContractMethod<
-    [id: BigNumberish, expireAt: BigNumberish, signature: BytesLike],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "computeSwapFee"
+    nameOrSignature: 'computeSwapFee',
   ): TypedContractMethod<
     [
       mid: AddressLike,
@@ -2448,16 +1778,14 @@ export interface Core extends BaseContract {
       lid: BigNumberish,
       taker: AddressLike,
       orderAmt: BigNumberish,
-      orderPrice: BigNumberish
+      orderPrice: BigNumberish,
     ],
     [[bigint, bigint, bigint, bigint]],
-    "view"
+    'view'
   >;
+  getFunction(nameOrSignature: 'configureFeePool'): TypedContractMethod<[interval: BigNumberish], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "configureFeePool"
-  ): TypedContractMethod<[interval: BigNumberish], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "createOffer"
+    nameOrSignature: 'createOffer',
   ): TypedContractMethod<
     [
       marketId: AddressLike,
@@ -2468,219 +1796,107 @@ export interface Core extends BaseContract {
       price: BigNumberish,
       ids: BigNumberish[],
       deadline: BigNumberish,
-      operator: BigNumberish
+      operator: BigNumberish,
     ],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "executeOffer"
-  ): TypedContractMethod<
-    [offerId: BigNumberish, txDeadline: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+    nameOrSignature: 'executeOffer',
+  ): TypedContractMethod<[offerId: BigNumberish, txDeadline: BigNumberish], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "feeBalanceOf"
-  ): TypedContractMethod<
-    [_owner: AddressLike, _asset: AddressLike],
-    [bigint],
-    "view"
-  >;
+    nameOrSignature: 'feeBalanceOf',
+  ): TypedContractMethod<[_owner: AddressLike, _asset: AddressLike], [bigint], 'view'>;
+  getFunction(nameOrSignature: 'getFeeBPs'): TypedContractMethod<[], [[bigint, bigint, bigint]], 'view'>;
   getFunction(
-    nameOrSignature: "getFeeBPs"
-  ): TypedContractMethod<[], [[bigint, bigint, bigint]], "view">;
-  getFunction(
-    nameOrSignature: "getLiquidity"
+    nameOrSignature: 'getLiquidity',
   ): TypedContractMethod<
     [_mid: AddressLike, _owner: AddressLike, _lid: BigNumberish],
     [Structs.LiquidityStructOutput],
-    "view"
+    'view'
   >;
   getFunction(
-    nameOrSignature: "getLiquidityManager"
+    nameOrSignature: 'getLiquidityManager',
+  ): TypedContractMethod<[marketId: AddressLike, provider: AddressLike], [string], 'view'>;
+  getFunction(
+    nameOrSignature: 'getMarket',
+  ): TypedContractMethod<[id: AddressLike], [Structs.MarketStructOutput], 'view'>;
+  getFunction(
+    nameOrSignature: 'getOffer',
+  ): TypedContractMethod<[id: BigNumberish], [Structs.OfferStructOutput], 'view'>;
+  getFunction(
+    nameOrSignature: 'getOrder',
+  ): TypedContractMethod<[id: BigNumberish], [Structs.OrderStructOutput], 'view'>;
+  getFunction(
+    nameOrSignature: 'getReqSwapBadges',
+  ): TypedContractMethod<[marketId: AddressLike, lid: BigNumberish, addr: AddressLike], [[string, string][]], 'view'>;
+  getFunction(
+    nameOrSignature: 'hasLiquidity',
+  ): TypedContractMethod<[_mid: AddressLike, _owner: AddressLike, _lid: BigNumberish], [boolean], 'view'>;
+  getFunction(nameOrSignature: 'hasOrder'): TypedContractMethod<[id: BigNumberish], [boolean], 'view'>;
+  getFunction(nameOrSignature: 'inventorBalanceOf'): TypedContractMethod<[asset: AddressLike], [bigint], 'view'>;
+  getFunction(nameOrSignature: 'isVerified'): TypedContractMethod<[addr: AddressLike], [boolean], 'view'>;
+  getFunction(nameOrSignature: 'markAsDisputed'): TypedContractMethod<[id: BigNumberish], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'markOrderAsPaid'): TypedContractMethod<[id: BigNumberish], [void], 'nonpayable'>;
+  getFunction(
+    nameOrSignature: 'markOrderAsPaidByManagerSig',
+  ): TypedContractMethod<[id: BigNumberish, expireAt: BigNumberish, signature: BytesLike], [void], 'nonpayable'>;
+  getFunction(
+    nameOrSignature: 'onERC1155BatchReceived',
   ): TypedContractMethod<
-    [marketId: AddressLike, provider: AddressLike],
+    [arg0: AddressLike, arg1: AddressLike, arg2: BigNumberish[], arg3: BigNumberish[], arg4: BytesLike],
     [string],
-    "view"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "getMarket"
+    nameOrSignature: 'onERC1155Received',
   ): TypedContractMethod<
-    [id: AddressLike],
-    [Structs.MarketStructOutput],
-    "view"
-  >;
-  getFunction(
-    nameOrSignature: "getOffer"
-  ): TypedContractMethod<
-    [id: BigNumberish],
-    [Structs.OfferStructOutput],
-    "view"
-  >;
-  getFunction(
-    nameOrSignature: "getOrder"
-  ): TypedContractMethod<
-    [id: BigNumberish],
-    [Structs.OrderStructOutput],
-    "view"
-  >;
-  getFunction(
-    nameOrSignature: "getReqSwapBadges"
-  ): TypedContractMethod<
-    [marketId: AddressLike, lid: BigNumberish, addr: AddressLike],
-    [[string, string][]],
-    "view"
-  >;
-  getFunction(
-    nameOrSignature: "hasLiquidity"
-  ): TypedContractMethod<
-    [_mid: AddressLike, _owner: AddressLike, _lid: BigNumberish],
-    [boolean],
-    "view"
-  >;
-  getFunction(
-    nameOrSignature: "hasOrder"
-  ): TypedContractMethod<[id: BigNumberish], [boolean], "view">;
-  getFunction(
-    nameOrSignature: "inventorBalanceOf"
-  ): TypedContractMethod<[asset: AddressLike], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "isVerified"
-  ): TypedContractMethod<[addr: AddressLike], [boolean], "view">;
-  getFunction(
-    nameOrSignature: "markAsDisputed"
-  ): TypedContractMethod<[id: BigNumberish], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "markOrderAsPaid"
-  ): TypedContractMethod<[id: BigNumberish], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "markOrderAsPaidByManagerSig"
-  ): TypedContractMethod<
-    [id: BigNumberish, expireAt: BigNumberish, signature: BytesLike],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "onERC1155BatchReceived"
-  ): TypedContractMethod<
-    [
-      arg0: AddressLike,
-      arg1: AddressLike,
-      arg2: BigNumberish[],
-      arg3: BigNumberish[],
-      arg4: BytesLike
-    ],
+    [arg0: AddressLike, arg1: AddressLike, arg2: BigNumberish, arg3: BigNumberish, arg4: BytesLike],
     [string],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "onERC1155Received"
-  ): TypedContractMethod<
-    [
-      arg0: AddressLike,
-      arg1: AddressLike,
-      arg2: BigNumberish,
-      arg3: BigNumberish,
-      arg4: BytesLike
-    ],
-    [string],
-    "nonpayable"
-  >;
+    nameOrSignature: 'operatorBalanceOf',
+  ): TypedContractMethod<[operator: AddressLike, asset: AddressLike], [bigint], 'view'>;
+  getFunction(nameOrSignature: 'owner'): TypedContractMethod<[], [string], 'view'>;
+  getFunction(nameOrSignature: 'releaseOrder'): TypedContractMethod<[id: BigNumberish], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'releaseOrderByDispute'): TypedContractMethod<[id: BigNumberish], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "operatorBalanceOf"
-  ): TypedContractMethod<
-    [operator: AddressLike, asset: AddressLike],
-    [bigint],
-    "view"
-  >;
+    nameOrSignature: 'releaseOrderByManagerSig',
+  ): TypedContractMethod<[id: BigNumberish, expireAt: BigNumberish, signature: BytesLike], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'renounceOwnership'): TypedContractMethod<[], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "owner"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
-    nameOrSignature: "releaseOrder"
-  ): TypedContractMethod<[id: BigNumberish], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "releaseOrderByDispute"
-  ): TypedContractMethod<[id: BigNumberish], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "releaseOrderByManagerSig"
-  ): TypedContractMethod<
-    [id: BigNumberish, expireAt: BigNumberish, signature: BytesLike],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "renounceOwnership"
-  ): TypedContractMethod<[], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "setAmmInfo"
+    nameOrSignature: 'setAmmInfo',
   ): TypedContractMethod<
     [swapRouter: AddressLike, ethErc20Addr: AddressLike, poolFee: BigNumberish],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "setAmmPoolInfo"
-  ): TypedContractMethod<
-    [input: AddressLike, out: AddressLike, poolFee: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+    nameOrSignature: 'setAmmPoolInfo',
+  ): TypedContractMethod<[input: AddressLike, out: AddressLike, poolFee: BigNumberish], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'setAssetRegistry'): TypedContractMethod<[addr: AddressLike], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'setBadgeMgr'): TypedContractMethod<[val: AddressLike], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "setAssetRegistry"
-  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
+    nameOrSignature: 'setDiscountForNFTHolder',
+  ): TypedContractMethod<[bp: BigNumberish], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'setDisputeManager'): TypedContractMethod<[addr: AddressLike], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'setFeePool'): TypedContractMethod<[addr: AddressLike], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'setFeePurse'): TypedContractMethod<[val: AddressLike], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'setInventor'): TypedContractMethod<[addr: AddressLike], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "setBadgeMgr"
-  ): TypedContractMethod<[val: AddressLike], [void], "nonpayable">;
+    nameOrSignature: 'setLiquidityManager',
+  ): TypedContractMethod<[marketId: AddressLike, manager: AddressLike], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'setMarketCore'): TypedContractMethod<[addr: AddressLike], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'setMaxOpenDisputes'): TypedContractMethod<[val: BigNumberish], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'setMaxOpenOrders'): TypedContractMethod<[val: BigNumberish], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'setMinTimeToPay'): TypedContractMethod<[val: BigNumberish], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'setMinerRegistry'): TypedContractMethod<[addr: AddressLike], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'setNFT'): TypedContractMethod<[addr: AddressLike], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'setOperator'): TypedContractMethod<[addr: AddressLike], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'setOrderGraceDur'): TypedContractMethod<[val: BigNumberish], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "setDiscountForNFTHolder"
-  ): TypedContractMethod<[bp: BigNumberish], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "setDisputeManager"
-  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "setFeePool"
-  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "setFeePurse"
-  ): TypedContractMethod<[val: AddressLike], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "setInventor"
-  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "setLiquidityManager"
-  ): TypedContractMethod<
-    [marketId: AddressLike, manager: AddressLike],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
-    nameOrSignature: "setMarketCore"
-  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "setMaxOpenDisputes"
-  ): TypedContractMethod<[val: BigNumberish], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "setMaxOpenOrders"
-  ): TypedContractMethod<[val: BigNumberish], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "setMinTimeToPay"
-  ): TypedContractMethod<[val: BigNumberish], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "setMinerRegistry"
-  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "setNFT"
-  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "setOperator"
-  ): TypedContractMethod<[addr: AddressLike], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "setOrderGraceDur"
-  ): TypedContractMethod<[val: BigNumberish], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "setProtoFee"
+    nameOrSignature: 'setProtoFee',
   ): TypedContractMethod<
     [
       _instantSwapFeeBp: BigNumberish,
@@ -2688,46 +1904,30 @@ export interface Core extends BaseContract {
       _stableSwapFeeBp: BigNumberish,
       _fixedSynthSwapFee: BigNumberish,
       _fixedNFTSwapFee: BigNumberish,
-      _instantNFTSwapFeeBp: BigNumberish
+      _instantNFTSwapFeeBp: BigNumberish,
     ],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "setProtoFeeSplit"
+    nameOrSignature: 'setProtoFeeSplit',
   ): TypedContractMethod<
-    [
-      inventorBP: BigNumberish,
-      sharedBP: BigNumberish,
-      operatorBP: BigNumberish
-    ],
+    [inventorBP: BigNumberish, sharedBP: BigNumberish, operatorBP: BigNumberish],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "setSwapBadgeForLiquidity"
+    nameOrSignature: 'setSwapBadgeForLiquidity',
   ): TypedContractMethod<
     [marketId: AddressLike, lid: BigNumberish, badgeIds: [string, string][]],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
-  getFunction(
-    nameOrSignature: "shareablesBalanceOf"
-  ): TypedContractMethod<[asset: AddressLike], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "state"
-  ): TypedContractMethod<
+  getFunction(nameOrSignature: 'shareablesBalanceOf'): TypedContractMethod<[asset: AddressLike], [bigint], 'view'>;
+  getFunction(nameOrSignature: 'state'): TypedContractMethod<
     [],
     [
-      [
-        StructsLib.IntSlotStateStructOutput,
-        bigint,
-        bigint,
-        bigint,
-        bigint,
-        string,
-        string
-      ] & {
+      [StructsLib.IntSlotStateStructOutput, bigint, bigint, bigint, bigint, string, string] & {
         ints: StructsLib.IntSlotStateStructOutput;
         minTimeToPay: bigint;
         orderGraceDur: bigint;
@@ -2735,13 +1935,11 @@ export interface Core extends BaseContract {
         feePoolTxInterval: bigint;
         inventor: string;
         ammSwapRouter: string;
-      }
+      },
     ],
-    "view"
+    'view'
   >;
-  getFunction(
-    nameOrSignature: "state2"
-  ): TypedContractMethod<
+  getFunction(nameOrSignature: 'state2'): TypedContractMethod<
     [],
     [
       [
@@ -2756,7 +1954,7 @@ export interface Core extends BaseContract {
         string,
         string,
         string,
-        string
+        string,
       ] & {
         ints: StructsLib.UintSlotState2StructOutput;
         disputeManager: string;
@@ -2770,15 +1968,13 @@ export interface Core extends BaseContract {
         badge: string;
         operatorMgr: string;
         minerReg: string;
-      }
+      },
     ],
-    "view"
+    'view'
   >;
+  getFunction(nameOrSignature: 'supportsInterface'): TypedContractMethod<[interfaceId: BytesLike], [boolean], 'view'>;
   getFunction(
-    nameOrSignature: "supportsInterface"
-  ): TypedContractMethod<[interfaceId: BytesLike], [boolean], "view">;
-  getFunction(
-    nameOrSignature: "swapQuoteForBase"
+    nameOrSignature: 'swapQuoteForBase',
   ): TypedContractMethod<
     [
       marketId: AddressLike,
@@ -2789,29 +1985,19 @@ export interface Core extends BaseContract {
       maxPrice: BigNumberish,
       ids: BigNumberish[],
       txDeadline: BigNumberish,
-      operator: BigNumberish
+      operator: BigNumberish,
     ],
     [void],
-    "payable"
+    'payable'
   >;
   getFunction(
-    nameOrSignature: "togglePause"
-  ): TypedContractMethod<
-    [marketId: AddressLike, lid: BigNumberish, expireAt: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+    nameOrSignature: 'togglePause',
+  ): TypedContractMethod<[marketId: AddressLike, lid: BigNumberish, expireAt: BigNumberish], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'transferOwnership'): TypedContractMethod<[newOwner: AddressLike], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'transferToFeePool'): TypedContractMethod<[_token: AddressLike], [void], 'nonpayable'>;
+  getFunction(nameOrSignature: 'unacceptOffer'): TypedContractMethod<[offerId: BigNumberish], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "transferOwnership"
-  ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "transferToFeePool"
-  ): TypedContractMethod<[_token: AddressLike], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "unacceptOffer"
-  ): TypedContractMethod<[offerId: BigNumberish], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "updateFungibleLiquidity"
+    nameOrSignature: 'updateFungibleLiquidity',
   ): TypedContractMethod<
     [
       marketId: AddressLike,
@@ -2821,32 +2007,20 @@ export interface Core extends BaseContract {
       amountAndPrice: [BigNumberish, BigNumberish],
       wantOrIds: BigNumberish[],
       wantAndIds: BigNumberish[],
-      limits: [
-        BigNumberish,
-        BigNumberish,
-        BigNumberish,
-        BigNumberish,
-        BigNumberish
-      ]
+      limits: [BigNumberish, BigNumberish, BigNumberish, BigNumberish, BigNumberish],
     ],
     [void],
-    "payable"
+    'payable'
   >;
   getFunction(
-    nameOrSignature: "updateLiquidityPrice"
+    nameOrSignature: 'updateLiquidityPrice',
   ): TypedContractMethod<
-    [
-      _marketId: AddressLike,
-      _owner: AddressLike,
-      _lid: BigNumberish,
-      _price: BigNumberish,
-      _expireAt: BigNumberish
-    ],
+    [_marketId: AddressLike, _owner: AddressLike, _lid: BigNumberish, _price: BigNumberish, _expireAt: BigNumberish],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "updateNonFungibleLiquidity"
+    nameOrSignature: 'updateNonFungibleLiquidity',
   ): TypedContractMethod<
     [
       marketId: AddressLike,
@@ -2857,336 +2031,277 @@ export interface Core extends BaseContract {
       price: BigNumberish,
       wantOrIds: BigNumberish[],
       wantAndIds: BigNumberish[],
-      limits: [BigNumberish, BigNumberish, BigNumberish]
+      limits: [BigNumberish, BigNumberish, BigNumberish],
     ],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "updateOffer"
+    nameOrSignature: 'updateOffer',
   ): TypedContractMethod<
-    [
-      offerId: BigNumberish,
-      amount: BigNumberish,
-      price: BigNumberish,
-      ids: BigNumberish[],
-      deadline: BigNumberish
-    ],
+    [offerId: BigNumberish, amount: BigNumberish, price: BigNumberish, ids: BigNumberish[], deadline: BigNumberish],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
   getFunction(
-    nameOrSignature: "updateOpenDisputesCount"
+    nameOrSignature: 'updateOpenDisputesCount',
   ): TypedContractMethod<
-    [
-      marketId: AddressLike,
-      provider: AddressLike,
-      lid: BigNumberish,
-      incr: boolean
-    ],
+    [marketId: AddressLike, provider: AddressLike, lid: BigNumberish, incr: boolean],
     [void],
-    "nonpayable"
+    'nonpayable'
   >;
+  getFunction(nameOrSignature: 'withdrawFeeBalance'): TypedContractMethod<[asset: AddressLike], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "withdrawFeeBalance"
-  ): TypedContractMethod<[asset: AddressLike], [void], "nonpayable">;
+    nameOrSignature: 'withdrawInventorBalance',
+  ): TypedContractMethod<[asset: AddressLike], [void], 'nonpayable'>;
   getFunction(
-    nameOrSignature: "withdrawInventorBalance"
-  ): TypedContractMethod<[asset: AddressLike], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "withdrawOperatorBalance"
-  ): TypedContractMethod<[_token: AddressLike], [void], "nonpayable">;
+    nameOrSignature: 'withdrawOperatorBalance',
+  ): TypedContractMethod<[_token: AddressLike], [void], 'nonpayable'>;
 
   getEvent(
-    key: "FinalizedByManagerSig"
+    key: 'FinalizedByManagerSig',
   ): TypedContractEvent<
     FinalizedByManagerSigEvent.InputTuple,
     FinalizedByManagerSigEvent.OutputTuple,
     FinalizedByManagerSigEvent.OutputObject
   >;
   getEvent(
-    key: "NFTDiscountUpdated"
+    key: 'NFTDiscountUpdated',
   ): TypedContractEvent<
     NFTDiscountUpdatedEvent.InputTuple,
     NFTDiscountUpdatedEvent.OutputTuple,
     NFTDiscountUpdatedEvent.OutputObject
   >;
   getEvent(
-    key: "NewOffer"
-  ): TypedContractEvent<
-    NewOfferEvent.InputTuple,
-    NewOfferEvent.OutputTuple,
-    NewOfferEvent.OutputObject
-  >;
+    key: 'NewOffer',
+  ): TypedContractEvent<NewOfferEvent.InputTuple, NewOfferEvent.OutputTuple, NewOfferEvent.OutputObject>;
   getEvent(
-    key: "OfferAccepted"
-  ): TypedContractEvent<
-    OfferAcceptedEvent.InputTuple,
-    OfferAcceptedEvent.OutputTuple,
-    OfferAcceptedEvent.OutputObject
-  >;
+    key: 'OfferAccepted',
+  ): TypedContractEvent<OfferAcceptedEvent.InputTuple, OfferAcceptedEvent.OutputTuple, OfferAcceptedEvent.OutputObject>;
   getEvent(
-    key: "OfferCancelled"
+    key: 'OfferCancelled',
   ): TypedContractEvent<
     OfferCancelledEvent.InputTuple,
     OfferCancelledEvent.OutputTuple,
     OfferCancelledEvent.OutputObject
   >;
   getEvent(
-    key: "OfferExecuted"
-  ): TypedContractEvent<
-    OfferExecutedEvent.InputTuple,
-    OfferExecutedEvent.OutputTuple,
-    OfferExecutedEvent.OutputObject
-  >;
+    key: 'OfferExecuted',
+  ): TypedContractEvent<OfferExecutedEvent.InputTuple, OfferExecutedEvent.OutputTuple, OfferExecutedEvent.OutputObject>;
   getEvent(
-    key: "OfferUnaccepted"
+    key: 'OfferUnaccepted',
   ): TypedContractEvent<
     OfferUnacceptedEvent.InputTuple,
     OfferUnacceptedEvent.OutputTuple,
     OfferUnacceptedEvent.OutputObject
   >;
   getEvent(
-    key: "OfferUpdated"
-  ): TypedContractEvent<
-    OfferUpdatedEvent.InputTuple,
-    OfferUpdatedEvent.OutputTuple,
-    OfferUpdatedEvent.OutputObject
-  >;
+    key: 'OfferUpdated',
+  ): TypedContractEvent<OfferUpdatedEvent.InputTuple, OfferUpdatedEvent.OutputTuple, OfferUpdatedEvent.OutputObject>;
   getEvent(
-    key: "OrderCancelled"
+    key: 'OrderCancelled',
   ): TypedContractEvent<
     OrderCancelledEvent.InputTuple,
     OrderCancelledEvent.OutputTuple,
     OrderCancelledEvent.OutputObject
   >;
   getEvent(
-    key: "OwnershipTransferred"
+    key: 'OwnershipTransferred',
   ): TypedContractEvent<
     OwnershipTransferredEvent.InputTuple,
     OwnershipTransferredEvent.OutputTuple,
     OwnershipTransferredEvent.OutputObject
   >;
   getEvent(
-    key: "ProtocolFeeSplitUpdated"
+    key: 'ProtocolFeeSplitUpdated',
   ): TypedContractEvent<
     ProtocolFeeSplitUpdatedEvent.InputTuple,
     ProtocolFeeSplitUpdatedEvent.OutputTuple,
     ProtocolFeeSplitUpdatedEvent.OutputObject
   >;
   getEvent(
-    key: "ProtocolFeeUpdated"
+    key: 'ProtocolFeeUpdated',
   ): TypedContractEvent<
     ProtocolFeeUpdatedEvent.InputTuple,
     ProtocolFeeUpdatedEvent.OutputTuple,
     ProtocolFeeUpdatedEvent.OutputObject
   >;
+  getEvent(key: 'Swap'): TypedContractEvent<SwapEvent.InputTuple, SwapEvent.OutputTuple, SwapEvent.OutputObject>;
   getEvent(
-    key: "Swap"
-  ): TypedContractEvent<
-    SwapEvent.InputTuple,
-    SwapEvent.OutputTuple,
-    SwapEvent.OutputObject
-  >;
+    key: 'SwapOrder',
+  ): TypedContractEvent<SwapOrderEvent.InputTuple, SwapOrderEvent.OutputTuple, SwapOrderEvent.OutputObject>;
   getEvent(
-    key: "SwapOrder"
-  ): TypedContractEvent<
-    SwapOrderEvent.InputTuple,
-    SwapOrderEvent.OutputTuple,
-    SwapOrderEvent.OutputObject
-  >;
+    key: 'SwapOrderPaid',
+  ): TypedContractEvent<SwapOrderPaidEvent.InputTuple, SwapOrderPaidEvent.OutputTuple, SwapOrderPaidEvent.OutputObject>;
   getEvent(
-    key: "SwapOrderPaid"
-  ): TypedContractEvent<
-    SwapOrderPaidEvent.InputTuple,
-    SwapOrderPaidEvent.OutputTuple,
-    SwapOrderPaidEvent.OutputObject
-  >;
+    key: 'TogglePause',
+  ): TypedContractEvent<TogglePauseEvent.InputTuple, TogglePauseEvent.OutputTuple, TogglePauseEvent.OutputObject>;
   getEvent(
-    key: "TogglePause"
-  ): TypedContractEvent<
-    TogglePauseEvent.InputTuple,
-    TogglePauseEvent.OutputTuple,
-    TogglePauseEvent.OutputObject
-  >;
-  getEvent(
-    key: "TransferInventorBalance"
+    key: 'TransferInventorBalance',
   ): TypedContractEvent<
     TransferInventorBalanceEvent.InputTuple,
     TransferInventorBalanceEvent.OutputTuple,
     TransferInventorBalanceEvent.OutputObject
   >;
   getEvent(
-    key: "TransferOperatorBalance"
+    key: 'TransferOperatorBalance',
   ): TypedContractEvent<
     TransferOperatorBalanceEvent.InputTuple,
     TransferOperatorBalanceEvent.OutputTuple,
     TransferOperatorBalanceEvent.OutputObject
   >;
   getEvent(
-    key: "TransferredToFeePool"
+    key: 'TransferredToFeePool',
   ): TypedContractEvent<
     TransferredToFeePoolEvent.InputTuple,
     TransferredToFeePoolEvent.OutputTuple,
     TransferredToFeePoolEvent.OutputObject
   >;
   getEvent(
-    key: "UpdatedAMMInfo"
+    key: 'UpdatedAMMInfo',
   ): TypedContractEvent<
     UpdatedAMMInfoEvent.InputTuple,
     UpdatedAMMInfoEvent.OutputTuple,
     UpdatedAMMInfoEvent.OutputObject
   >;
   getEvent(
-    key: "UpdatedAMMPoolInfo"
+    key: 'UpdatedAMMPoolInfo',
   ): TypedContractEvent<
     UpdatedAMMPoolInfoEvent.InputTuple,
     UpdatedAMMPoolInfoEvent.OutputTuple,
     UpdatedAMMPoolInfoEvent.OutputObject
   >;
   getEvent(
-    key: "UpdatedAssetRegistry"
+    key: 'UpdatedAssetRegistry',
   ): TypedContractEvent<
     UpdatedAssetRegistryEvent.InputTuple,
     UpdatedAssetRegistryEvent.OutputTuple,
     UpdatedAssetRegistryEvent.OutputObject
   >;
   getEvent(
-    key: "UpdatedBadge"
-  ): TypedContractEvent<
-    UpdatedBadgeEvent.InputTuple,
-    UpdatedBadgeEvent.OutputTuple,
-    UpdatedBadgeEvent.OutputObject
-  >;
+    key: 'UpdatedBadge',
+  ): TypedContractEvent<UpdatedBadgeEvent.InputTuple, UpdatedBadgeEvent.OutputTuple, UpdatedBadgeEvent.OutputObject>;
   getEvent(
-    key: "UpdatedDisputeManager"
+    key: 'UpdatedDisputeManager',
   ): TypedContractEvent<
     UpdatedDisputeManagerEvent.InputTuple,
     UpdatedDisputeManagerEvent.OutputTuple,
     UpdatedDisputeManagerEvent.OutputObject
   >;
   getEvent(
-    key: "UpdatedFeePool"
+    key: 'UpdatedFeePool',
   ): TypedContractEvent<
     UpdatedFeePoolEvent.InputTuple,
     UpdatedFeePoolEvent.OutputTuple,
     UpdatedFeePoolEvent.OutputObject
   >;
   getEvent(
-    key: "UpdatedFeePoolConfig"
+    key: 'UpdatedFeePoolConfig',
   ): TypedContractEvent<
     UpdatedFeePoolConfigEvent.InputTuple,
     UpdatedFeePoolConfigEvent.OutputTuple,
     UpdatedFeePoolConfigEvent.OutputObject
   >;
   getEvent(
-    key: "UpdatedFeePurse"
+    key: 'UpdatedFeePurse',
   ): TypedContractEvent<
     UpdatedFeePurseEvent.InputTuple,
     UpdatedFeePurseEvent.OutputTuple,
     UpdatedFeePurseEvent.OutputObject
   >;
   getEvent(
-    key: "UpdatedFungibleLiquidity"
+    key: 'UpdatedFungibleLiquidity',
   ): TypedContractEvent<
     UpdatedFungibleLiquidityEvent.InputTuple,
     UpdatedFungibleLiquidityEvent.OutputTuple,
     UpdatedFungibleLiquidityEvent.OutputObject
   >;
   getEvent(
-    key: "UpdatedInventor"
+    key: 'UpdatedInventor',
   ): TypedContractEvent<
     UpdatedInventorEvent.InputTuple,
     UpdatedInventorEvent.OutputTuple,
     UpdatedInventorEvent.OutputObject
   >;
   getEvent(
-    key: "UpdatedLiquidityManager"
+    key: 'UpdatedLiquidityManager',
   ): TypedContractEvent<
     UpdatedLiquidityManagerEvent.InputTuple,
     UpdatedLiquidityManagerEvent.OutputTuple,
     UpdatedLiquidityManagerEvent.OutputObject
   >;
   getEvent(
-    key: "UpdatedLiquiditySwapBadges"
+    key: 'UpdatedLiquiditySwapBadges',
   ): TypedContractEvent<
     UpdatedLiquiditySwapBadgesEvent.InputTuple,
     UpdatedLiquiditySwapBadgesEvent.OutputTuple,
     UpdatedLiquiditySwapBadgesEvent.OutputObject
   >;
   getEvent(
-    key: "UpdatedMarketCore"
+    key: 'UpdatedMarketCore',
   ): TypedContractEvent<
     UpdatedMarketCoreEvent.InputTuple,
     UpdatedMarketCoreEvent.OutputTuple,
     UpdatedMarketCoreEvent.OutputObject
   >;
   getEvent(
-    key: "UpdatedMaxOpenDisputes"
+    key: 'UpdatedMaxOpenDisputes',
   ): TypedContractEvent<
     UpdatedMaxOpenDisputesEvent.InputTuple,
     UpdatedMaxOpenDisputesEvent.OutputTuple,
     UpdatedMaxOpenDisputesEvent.OutputObject
   >;
   getEvent(
-    key: "UpdatedMaxOpenOrders"
+    key: 'UpdatedMaxOpenOrders',
   ): TypedContractEvent<
     UpdatedMaxOpenOrdersEvent.InputTuple,
     UpdatedMaxOpenOrdersEvent.OutputTuple,
     UpdatedMaxOpenOrdersEvent.OutputObject
   >;
   getEvent(
-    key: "UpdatedMinTimeToPay"
+    key: 'UpdatedMinTimeToPay',
   ): TypedContractEvent<
     UpdatedMinTimeToPayEvent.InputTuple,
     UpdatedMinTimeToPayEvent.OutputTuple,
     UpdatedMinTimeToPayEvent.OutputObject
   >;
   getEvent(
-    key: "UpdatedMinerRegistry"
+    key: 'UpdatedMinerRegistry',
   ): TypedContractEvent<
     UpdatedMinerRegistryEvent.InputTuple,
     UpdatedMinerRegistryEvent.OutputTuple,
     UpdatedMinerRegistryEvent.OutputObject
   >;
   getEvent(
-    key: "UpdatedNFT"
-  ): TypedContractEvent<
-    UpdatedNFTEvent.InputTuple,
-    UpdatedNFTEvent.OutputTuple,
-    UpdatedNFTEvent.OutputObject
-  >;
+    key: 'UpdatedNFT',
+  ): TypedContractEvent<UpdatedNFTEvent.InputTuple, UpdatedNFTEvent.OutputTuple, UpdatedNFTEvent.OutputObject>;
   getEvent(
-    key: "UpdatedNonFungibleLiquidity"
+    key: 'UpdatedNonFungibleLiquidity',
   ): TypedContractEvent<
     UpdatedNonFungibleLiquidityEvent.InputTuple,
     UpdatedNonFungibleLiquidityEvent.OutputTuple,
     UpdatedNonFungibleLiquidityEvent.OutputObject
   >;
   getEvent(
-    key: "UpdatedOperator"
+    key: 'UpdatedOperator',
   ): TypedContractEvent<
     UpdatedOperatorEvent.InputTuple,
     UpdatedOperatorEvent.OutputTuple,
     UpdatedOperatorEvent.OutputObject
   >;
   getEvent(
-    key: "UpdatedOrderGraceDur"
+    key: 'UpdatedOrderGraceDur',
   ): TypedContractEvent<
     UpdatedOrderGraceDurEvent.InputTuple,
     UpdatedOrderGraceDurEvent.OutputTuple,
     UpdatedOrderGraceDurEvent.OutputObject
   >;
   getEvent(
-    key: "UpdatedPrice"
-  ): TypedContractEvent<
-    UpdatedPriceEvent.InputTuple,
-    UpdatedPriceEvent.OutputTuple,
-    UpdatedPriceEvent.OutputObject
-  >;
+    key: 'UpdatedPrice',
+  ): TypedContractEvent<UpdatedPriceEvent.InputTuple, UpdatedPriceEvent.OutputTuple, UpdatedPriceEvent.OutputObject>;
 
   filters: {
-    "FinalizedByManagerSig(address,address,uint256,uint256)": TypedContractEvent<
+    'FinalizedByManagerSig(address,address,uint256,uint256)': TypedContractEvent<
       FinalizedByManagerSigEvent.InputTuple,
       FinalizedByManagerSigEvent.OutputTuple,
       FinalizedByManagerSigEvent.OutputObject
@@ -3197,7 +2312,7 @@ export interface Core extends BaseContract {
       FinalizedByManagerSigEvent.OutputObject
     >;
 
-    "NFTDiscountUpdated(uint256)": TypedContractEvent<
+    'NFTDiscountUpdated(uint256)': TypedContractEvent<
       NFTDiscountUpdatedEvent.InputTuple,
       NFTDiscountUpdatedEvent.OutputTuple,
       NFTDiscountUpdatedEvent.OutputObject
@@ -3208,18 +2323,14 @@ export interface Core extends BaseContract {
       NFTDiscountUpdatedEvent.OutputObject
     >;
 
-    "NewOffer(address,address,uint256,address,uint256,uint256,uint256,uint256[],uint256)": TypedContractEvent<
+    'NewOffer(address,address,uint256,address,uint256,uint256,uint256,uint256[],uint256)': TypedContractEvent<
       NewOfferEvent.InputTuple,
       NewOfferEvent.OutputTuple,
       NewOfferEvent.OutputObject
     >;
-    NewOffer: TypedContractEvent<
-      NewOfferEvent.InputTuple,
-      NewOfferEvent.OutputTuple,
-      NewOfferEvent.OutputObject
-    >;
+    NewOffer: TypedContractEvent<NewOfferEvent.InputTuple, NewOfferEvent.OutputTuple, NewOfferEvent.OutputObject>;
 
-    "OfferAccepted(uint256,address,uint256)": TypedContractEvent<
+    'OfferAccepted(uint256,address,uint256)': TypedContractEvent<
       OfferAcceptedEvent.InputTuple,
       OfferAcceptedEvent.OutputTuple,
       OfferAcceptedEvent.OutputObject
@@ -3230,7 +2341,7 @@ export interface Core extends BaseContract {
       OfferAcceptedEvent.OutputObject
     >;
 
-    "OfferCancelled(uint256,address)": TypedContractEvent<
+    'OfferCancelled(uint256,address)': TypedContractEvent<
       OfferCancelledEvent.InputTuple,
       OfferCancelledEvent.OutputTuple,
       OfferCancelledEvent.OutputObject
@@ -3241,7 +2352,7 @@ export interface Core extends BaseContract {
       OfferCancelledEvent.OutputObject
     >;
 
-    "OfferExecuted(uint256,address)": TypedContractEvent<
+    'OfferExecuted(uint256,address)': TypedContractEvent<
       OfferExecutedEvent.InputTuple,
       OfferExecutedEvent.OutputTuple,
       OfferExecutedEvent.OutputObject
@@ -3252,7 +2363,7 @@ export interface Core extends BaseContract {
       OfferExecutedEvent.OutputObject
     >;
 
-    "OfferUnaccepted(uint256,address)": TypedContractEvent<
+    'OfferUnaccepted(uint256,address)': TypedContractEvent<
       OfferUnacceptedEvent.InputTuple,
       OfferUnacceptedEvent.OutputTuple,
       OfferUnacceptedEvent.OutputObject
@@ -3263,7 +2374,7 @@ export interface Core extends BaseContract {
       OfferUnacceptedEvent.OutputObject
     >;
 
-    "OfferUpdated(uint256,address,uint256,uint256,uint256[],uint256)": TypedContractEvent<
+    'OfferUpdated(uint256,address,uint256,uint256,uint256[],uint256)': TypedContractEvent<
       OfferUpdatedEvent.InputTuple,
       OfferUpdatedEvent.OutputTuple,
       OfferUpdatedEvent.OutputObject
@@ -3274,7 +2385,7 @@ export interface Core extends BaseContract {
       OfferUpdatedEvent.OutputObject
     >;
 
-    "OrderCancelled(uint256,address,bool)": TypedContractEvent<
+    'OrderCancelled(uint256,address,bool)': TypedContractEvent<
       OrderCancelledEvent.InputTuple,
       OrderCancelledEvent.OutputTuple,
       OrderCancelledEvent.OutputObject
@@ -3285,7 +2396,7 @@ export interface Core extends BaseContract {
       OrderCancelledEvent.OutputObject
     >;
 
-    "OwnershipTransferred(address,address)": TypedContractEvent<
+    'OwnershipTransferred(address,address)': TypedContractEvent<
       OwnershipTransferredEvent.InputTuple,
       OwnershipTransferredEvent.OutputTuple,
       OwnershipTransferredEvent.OutputObject
@@ -3296,7 +2407,7 @@ export interface Core extends BaseContract {
       OwnershipTransferredEvent.OutputObject
     >;
 
-    "ProtocolFeeSplitUpdated(uint256,uint256,uint256)": TypedContractEvent<
+    'ProtocolFeeSplitUpdated(uint256,uint256,uint256)': TypedContractEvent<
       ProtocolFeeSplitUpdatedEvent.InputTuple,
       ProtocolFeeSplitUpdatedEvent.OutputTuple,
       ProtocolFeeSplitUpdatedEvent.OutputObject
@@ -3307,7 +2418,7 @@ export interface Core extends BaseContract {
       ProtocolFeeSplitUpdatedEvent.OutputObject
     >;
 
-    "ProtocolFeeUpdated(uint256,uint256,uint256,uint256,uint256,uint256)": TypedContractEvent<
+    'ProtocolFeeUpdated(uint256,uint256,uint256,uint256,uint256,uint256)': TypedContractEvent<
       ProtocolFeeUpdatedEvent.InputTuple,
       ProtocolFeeUpdatedEvent.OutputTuple,
       ProtocolFeeUpdatedEvent.OutputObject
@@ -3318,29 +2429,21 @@ export interface Core extends BaseContract {
       ProtocolFeeUpdatedEvent.OutputObject
     >;
 
-    "Swap(address,address,address,address,address,uint256[6],bool,uint256[],uint256[])": TypedContractEvent<
+    'Swap(address,address,address,address,address,uint256[6],bool,uint256[],uint256[])': TypedContractEvent<
       SwapEvent.InputTuple,
       SwapEvent.OutputTuple,
       SwapEvent.OutputObject
     >;
-    Swap: TypedContractEvent<
-      SwapEvent.InputTuple,
-      SwapEvent.OutputTuple,
-      SwapEvent.OutputObject
-    >;
+    Swap: TypedContractEvent<SwapEvent.InputTuple, SwapEvent.OutputTuple, SwapEvent.OutputObject>;
 
-    "SwapOrder(address,address,address,address,uint256[7],uint256[],uint256[])": TypedContractEvent<
+    'SwapOrder(address,address,address,address,uint256[7],uint256[],uint256[])': TypedContractEvent<
       SwapOrderEvent.InputTuple,
       SwapOrderEvent.OutputTuple,
       SwapOrderEvent.OutputObject
     >;
-    SwapOrder: TypedContractEvent<
-      SwapOrderEvent.InputTuple,
-      SwapOrderEvent.OutputTuple,
-      SwapOrderEvent.OutputObject
-    >;
+    SwapOrder: TypedContractEvent<SwapOrderEvent.InputTuple, SwapOrderEvent.OutputTuple, SwapOrderEvent.OutputObject>;
 
-    "SwapOrderPaid(uint256,address,uint256)": TypedContractEvent<
+    'SwapOrderPaid(uint256,address,uint256)': TypedContractEvent<
       SwapOrderPaidEvent.InputTuple,
       SwapOrderPaidEvent.OutputTuple,
       SwapOrderPaidEvent.OutputObject
@@ -3351,7 +2454,7 @@ export interface Core extends BaseContract {
       SwapOrderPaidEvent.OutputObject
     >;
 
-    "TogglePause(address,address,uint256,bool)": TypedContractEvent<
+    'TogglePause(address,address,uint256,bool)': TypedContractEvent<
       TogglePauseEvent.InputTuple,
       TogglePauseEvent.OutputTuple,
       TogglePauseEvent.OutputObject
@@ -3362,7 +2465,7 @@ export interface Core extends BaseContract {
       TogglePauseEvent.OutputObject
     >;
 
-    "TransferInventorBalance(address,address,uint256)": TypedContractEvent<
+    'TransferInventorBalance(address,address,uint256)': TypedContractEvent<
       TransferInventorBalanceEvent.InputTuple,
       TransferInventorBalanceEvent.OutputTuple,
       TransferInventorBalanceEvent.OutputObject
@@ -3373,7 +2476,7 @@ export interface Core extends BaseContract {
       TransferInventorBalanceEvent.OutputObject
     >;
 
-    "TransferOperatorBalance(address,address,uint256)": TypedContractEvent<
+    'TransferOperatorBalance(address,address,uint256)': TypedContractEvent<
       TransferOperatorBalanceEvent.InputTuple,
       TransferOperatorBalanceEvent.OutputTuple,
       TransferOperatorBalanceEvent.OutputObject
@@ -3384,7 +2487,7 @@ export interface Core extends BaseContract {
       TransferOperatorBalanceEvent.OutputObject
     >;
 
-    "TransferredToFeePool(address,uint256,address,uint256)": TypedContractEvent<
+    'TransferredToFeePool(address,uint256,address,uint256)': TypedContractEvent<
       TransferredToFeePoolEvent.InputTuple,
       TransferredToFeePoolEvent.OutputTuple,
       TransferredToFeePoolEvent.OutputObject
@@ -3395,7 +2498,7 @@ export interface Core extends BaseContract {
       TransferredToFeePoolEvent.OutputObject
     >;
 
-    "UpdatedAMMInfo(address,address,uint256)": TypedContractEvent<
+    'UpdatedAMMInfo(address,address,uint256)': TypedContractEvent<
       UpdatedAMMInfoEvent.InputTuple,
       UpdatedAMMInfoEvent.OutputTuple,
       UpdatedAMMInfoEvent.OutputObject
@@ -3406,7 +2509,7 @@ export interface Core extends BaseContract {
       UpdatedAMMInfoEvent.OutputObject
     >;
 
-    "UpdatedAMMPoolInfo(address,address,uint256)": TypedContractEvent<
+    'UpdatedAMMPoolInfo(address,address,uint256)': TypedContractEvent<
       UpdatedAMMPoolInfoEvent.InputTuple,
       UpdatedAMMPoolInfoEvent.OutputTuple,
       UpdatedAMMPoolInfoEvent.OutputObject
@@ -3417,7 +2520,7 @@ export interface Core extends BaseContract {
       UpdatedAMMPoolInfoEvent.OutputObject
     >;
 
-    "UpdatedAssetRegistry(address)": TypedContractEvent<
+    'UpdatedAssetRegistry(address)': TypedContractEvent<
       UpdatedAssetRegistryEvent.InputTuple,
       UpdatedAssetRegistryEvent.OutputTuple,
       UpdatedAssetRegistryEvent.OutputObject
@@ -3428,7 +2531,7 @@ export interface Core extends BaseContract {
       UpdatedAssetRegistryEvent.OutputObject
     >;
 
-    "UpdatedBadge(address)": TypedContractEvent<
+    'UpdatedBadge(address)': TypedContractEvent<
       UpdatedBadgeEvent.InputTuple,
       UpdatedBadgeEvent.OutputTuple,
       UpdatedBadgeEvent.OutputObject
@@ -3439,7 +2542,7 @@ export interface Core extends BaseContract {
       UpdatedBadgeEvent.OutputObject
     >;
 
-    "UpdatedDisputeManager(address)": TypedContractEvent<
+    'UpdatedDisputeManager(address)': TypedContractEvent<
       UpdatedDisputeManagerEvent.InputTuple,
       UpdatedDisputeManagerEvent.OutputTuple,
       UpdatedDisputeManagerEvent.OutputObject
@@ -3450,7 +2553,7 @@ export interface Core extends BaseContract {
       UpdatedDisputeManagerEvent.OutputObject
     >;
 
-    "UpdatedFeePool(address)": TypedContractEvent<
+    'UpdatedFeePool(address)': TypedContractEvent<
       UpdatedFeePoolEvent.InputTuple,
       UpdatedFeePoolEvent.OutputTuple,
       UpdatedFeePoolEvent.OutputObject
@@ -3461,7 +2564,7 @@ export interface Core extends BaseContract {
       UpdatedFeePoolEvent.OutputObject
     >;
 
-    "UpdatedFeePoolConfig(uint256)": TypedContractEvent<
+    'UpdatedFeePoolConfig(uint256)': TypedContractEvent<
       UpdatedFeePoolConfigEvent.InputTuple,
       UpdatedFeePoolConfigEvent.OutputTuple,
       UpdatedFeePoolConfigEvent.OutputObject
@@ -3472,7 +2575,7 @@ export interface Core extends BaseContract {
       UpdatedFeePoolConfigEvent.OutputObject
     >;
 
-    "UpdatedFeePurse(address)": TypedContractEvent<
+    'UpdatedFeePurse(address)': TypedContractEvent<
       UpdatedFeePurseEvent.InputTuple,
       UpdatedFeePurseEvent.OutputTuple,
       UpdatedFeePurseEvent.OutputObject
@@ -3483,7 +2586,7 @@ export interface Core extends BaseContract {
       UpdatedFeePurseEvent.OutputObject
     >;
 
-    "UpdatedFungibleLiquidity(address,address,address,bool,bool,uint256,uint256,uint256,uint256[],uint256[],uint256,uint256,uint256)": TypedContractEvent<
+    'UpdatedFungibleLiquidity(address,address,address,bool,bool,uint256,uint256,uint256,uint256[],uint256[],uint256,uint256,uint256)': TypedContractEvent<
       UpdatedFungibleLiquidityEvent.InputTuple,
       UpdatedFungibleLiquidityEvent.OutputTuple,
       UpdatedFungibleLiquidityEvent.OutputObject
@@ -3494,7 +2597,7 @@ export interface Core extends BaseContract {
       UpdatedFungibleLiquidityEvent.OutputObject
     >;
 
-    "UpdatedInventor(address)": TypedContractEvent<
+    'UpdatedInventor(address)': TypedContractEvent<
       UpdatedInventorEvent.InputTuple,
       UpdatedInventorEvent.OutputTuple,
       UpdatedInventorEvent.OutputObject
@@ -3505,7 +2608,7 @@ export interface Core extends BaseContract {
       UpdatedInventorEvent.OutputObject
     >;
 
-    "UpdatedLiquidityManager(address,address,address,address)": TypedContractEvent<
+    'UpdatedLiquidityManager(address,address,address,address)': TypedContractEvent<
       UpdatedLiquidityManagerEvent.InputTuple,
       UpdatedLiquidityManagerEvent.OutputTuple,
       UpdatedLiquidityManagerEvent.OutputObject
@@ -3516,7 +2619,7 @@ export interface Core extends BaseContract {
       UpdatedLiquidityManagerEvent.OutputObject
     >;
 
-    "UpdatedLiquiditySwapBadges(address,address,uint256,string[2][])": TypedContractEvent<
+    'UpdatedLiquiditySwapBadges(address,address,uint256,string[2][])': TypedContractEvent<
       UpdatedLiquiditySwapBadgesEvent.InputTuple,
       UpdatedLiquiditySwapBadgesEvent.OutputTuple,
       UpdatedLiquiditySwapBadgesEvent.OutputObject
@@ -3527,7 +2630,7 @@ export interface Core extends BaseContract {
       UpdatedLiquiditySwapBadgesEvent.OutputObject
     >;
 
-    "UpdatedMarketCore(address)": TypedContractEvent<
+    'UpdatedMarketCore(address)': TypedContractEvent<
       UpdatedMarketCoreEvent.InputTuple,
       UpdatedMarketCoreEvent.OutputTuple,
       UpdatedMarketCoreEvent.OutputObject
@@ -3538,7 +2641,7 @@ export interface Core extends BaseContract {
       UpdatedMarketCoreEvent.OutputObject
     >;
 
-    "UpdatedMaxOpenDisputes(uint256)": TypedContractEvent<
+    'UpdatedMaxOpenDisputes(uint256)': TypedContractEvent<
       UpdatedMaxOpenDisputesEvent.InputTuple,
       UpdatedMaxOpenDisputesEvent.OutputTuple,
       UpdatedMaxOpenDisputesEvent.OutputObject
@@ -3549,7 +2652,7 @@ export interface Core extends BaseContract {
       UpdatedMaxOpenDisputesEvent.OutputObject
     >;
 
-    "UpdatedMaxOpenOrders(uint256)": TypedContractEvent<
+    'UpdatedMaxOpenOrders(uint256)': TypedContractEvent<
       UpdatedMaxOpenOrdersEvent.InputTuple,
       UpdatedMaxOpenOrdersEvent.OutputTuple,
       UpdatedMaxOpenOrdersEvent.OutputObject
@@ -3560,7 +2663,7 @@ export interface Core extends BaseContract {
       UpdatedMaxOpenOrdersEvent.OutputObject
     >;
 
-    "UpdatedMinTimeToPay(uint256)": TypedContractEvent<
+    'UpdatedMinTimeToPay(uint256)': TypedContractEvent<
       UpdatedMinTimeToPayEvent.InputTuple,
       UpdatedMinTimeToPayEvent.OutputTuple,
       UpdatedMinTimeToPayEvent.OutputObject
@@ -3571,7 +2674,7 @@ export interface Core extends BaseContract {
       UpdatedMinTimeToPayEvent.OutputObject
     >;
 
-    "UpdatedMinerRegistry(address)": TypedContractEvent<
+    'UpdatedMinerRegistry(address)': TypedContractEvent<
       UpdatedMinerRegistryEvent.InputTuple,
       UpdatedMinerRegistryEvent.OutputTuple,
       UpdatedMinerRegistryEvent.OutputObject
@@ -3582,7 +2685,7 @@ export interface Core extends BaseContract {
       UpdatedMinerRegistryEvent.OutputObject
     >;
 
-    "UpdatedNFT(address)": TypedContractEvent<
+    'UpdatedNFT(address)': TypedContractEvent<
       UpdatedNFTEvent.InputTuple,
       UpdatedNFTEvent.OutputTuple,
       UpdatedNFTEvent.OutputObject
@@ -3593,7 +2696,7 @@ export interface Core extends BaseContract {
       UpdatedNFTEvent.OutputObject
     >;
 
-    "UpdatedNonFungibleLiquidity(address,address,address,bool,bool,uint256,uint256[],uint256,uint256[],uint256[],uint256)": TypedContractEvent<
+    'UpdatedNonFungibleLiquidity(address,address,address,bool,bool,uint256,uint256[],uint256,uint256[],uint256[],uint256)': TypedContractEvent<
       UpdatedNonFungibleLiquidityEvent.InputTuple,
       UpdatedNonFungibleLiquidityEvent.OutputTuple,
       UpdatedNonFungibleLiquidityEvent.OutputObject
@@ -3604,7 +2707,7 @@ export interface Core extends BaseContract {
       UpdatedNonFungibleLiquidityEvent.OutputObject
     >;
 
-    "UpdatedOperator(address)": TypedContractEvent<
+    'UpdatedOperator(address)': TypedContractEvent<
       UpdatedOperatorEvent.InputTuple,
       UpdatedOperatorEvent.OutputTuple,
       UpdatedOperatorEvent.OutputObject
@@ -3615,7 +2718,7 @@ export interface Core extends BaseContract {
       UpdatedOperatorEvent.OutputObject
     >;
 
-    "UpdatedOrderGraceDur(uint256)": TypedContractEvent<
+    'UpdatedOrderGraceDur(uint256)': TypedContractEvent<
       UpdatedOrderGraceDurEvent.InputTuple,
       UpdatedOrderGraceDurEvent.OutputTuple,
       UpdatedOrderGraceDurEvent.OutputObject
@@ -3626,7 +2729,7 @@ export interface Core extends BaseContract {
       UpdatedOrderGraceDurEvent.OutputObject
     >;
 
-    "UpdatedPrice(address,address,address,uint256,uint256)": TypedContractEvent<
+    'UpdatedPrice(address,address,address,uint256,uint256)': TypedContractEvent<
       UpdatedPriceEvent.InputTuple,
       UpdatedPriceEvent.OutputTuple,
       UpdatedPriceEvent.OutputObject

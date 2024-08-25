@@ -43,14 +43,14 @@ export class LiquidityController {
 
     const { baseDecimals, quoteDecimals } = market;
 
-    const fillInfo = await Liquidity.fill(market, p.side, p.amount);
+    const fillRes = await Liquidity.fill(market, p.side, p.amount);
 
     let totalQtyFilledAfterFees = toDec(0);
     let totalProtoFee = toDec(0);
     let totalMktFee = toDec(0);
     let protoFeePct = toDec(0);
     let mktFeePct = toDec(0);
-    for (const liq of fillInfo.liquidities) {
+    for (const liq of fillRes.liquidities) {
       const fees = await this.feeCalcSrv.calculateFee({
         network: q.net,
         marketAddress: p.mid,
@@ -83,14 +83,14 @@ export class LiquidityController {
       totalQtyFilledAfterFees = totalQtyFilledAfterFees.add(liq.quantityFilledAfterFees);
     }
 
-    fillInfo.totalQuantityFilledAfterFees = totalQtyFilledAfterFees.toFixed();
-    fillInfo.totalProtoFee = totalProtoFee.toFixed();
-    fillInfo.totalMktFee = totalMktFee.toFixed();
-    fillInfo.totalFees = toDec(fillInfo.totalProtoFee).add(fillInfo.totalMktFee).toFixed();
-    fillInfo.protoFeePct = protoFeePct.toNumber();
-    fillInfo.mktFeePct = mktFeePct.toNumber();
+    fillRes.totalQuantityFilledAfterFees = totalQtyFilledAfterFees.toFixed();
+    fillRes.totalProtoFee = totalProtoFee.toFixed();
+    fillRes.totalMktFee = totalMktFee.toFixed();
+    fillRes.totalFees = toDec(fillRes.totalProtoFee).add(fillRes.totalMktFee).toFixed();
+    fillRes.protoFeePct = protoFeePct.toNumber();
+    fillRes.mktFeePct = mktFeePct.toNumber();
 
-    return ok().data(fillInfo).build();
+    return ok().data(fillRes).build();
   }
 
   /**

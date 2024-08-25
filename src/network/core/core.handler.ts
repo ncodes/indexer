@@ -200,8 +200,6 @@ export class CoreHandler extends Handler {
         price: bigint,
         wantOrIds: bigint[],
         wantAndIds: bigint[],
-        minSwap: bigint,
-        maxSwap: bigint,
         timeToPay: bigint,
         event: ContractCallEvent,
         txn: Transaction,
@@ -217,8 +215,6 @@ export class CoreHandler extends Handler {
           price,
           wantOrIds,
           wantAndIds,
-          minSwap,
-          maxSwap,
           timeToPay,
           event,
           txn,
@@ -1170,8 +1166,6 @@ export class CoreHandler extends Handler {
    * @param price The latest price
    * @param wantOrIds A list of OR IDs wanted
    * @param wantAndIds A list of AND IDs wanted
-   * @param minSwap The minimum amount of swap
-   * @param maxSwap The maximum amount of swap
    * @param timeToPay The number of seconds within which payment must be received
    * @param _event The event object
    * @param txn The transaction object
@@ -1187,8 +1181,6 @@ export class CoreHandler extends Handler {
     price: bigint,
     wantOrIds: bigint[],
     wantAndIds: bigint[],
-    minSwap: bigint,
-    maxSwap: bigint,
     timeToPay: bigint,
     _event: ContractCallEvent,
     txn?: Transaction,
@@ -1233,8 +1225,6 @@ export class CoreHandler extends Handler {
           price: price.toString(),
           wantAndIds: wantAndIds.map((id) => toNumber(id)),
           wantOrIds: wantOrIds.map((id) => toNumber(id)),
-          minSwap: minSwap.toString(),
-          maxSwap: maxSwap.toString(),
           timeToPay: toNumber(timeToPay),
         },
         txn,
@@ -1254,8 +1244,6 @@ export class CoreHandler extends Handler {
           action: Events.LiquidityAdd,
           amount: liq.amount,
           price: liq.price,
-          minSwap: liq.minSwap,
-          maxSwap: liq.maxSwap,
           target: liq.target,
           timeToPay: liq.timeToPay,
           paused: liq.paused,
@@ -1291,20 +1279,6 @@ export class CoreHandler extends Handler {
       if (liq.price !== price.toString()) {
         liqUpdates.price = price.toString();
         await Event.create({ ...common, price: liqUpdates.price, action: Events.LiquidityPriceUpdate }, txn);
-      }
-
-      if (liq.minSwap !== minSwap.toString() || liq.maxSwap !== maxSwap.toString()) {
-        liqUpdates.minSwap = liq.minSwap !== minSwap.toString() ? minSwap.toString() : undefined;
-        liqUpdates.maxSwap = liq.maxSwap !== maxSwap.toString() ? maxSwap.toString() : undefined;
-        await Event.create(
-          {
-            ...common,
-            minSwap: liqUpdates.minSwap || liq.minSwap,
-            maxSwap: liqUpdates.maxSwap || liq.maxSwap,
-            action: Events.LiquiditySwapLimitUpdate,
-          },
-          txn,
-        );
       }
 
       if (liq.timeToPay !== toNumber(timeToPay)) {

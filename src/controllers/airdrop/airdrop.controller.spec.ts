@@ -965,7 +965,7 @@ describe('AirdropController', () => {
         .expect({
           error: {
             message: 'amount is required',
-            param: 'name',
+            param: 'amount',
             type: 'invalid_request_error',
           },
         });

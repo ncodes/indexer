@@ -139,52 +139,6 @@ describe('Liquidity', () => {
       expect(res[0].id).toEqual(liq2.id);
     });
 
-    it('should return correct result when `amount` is set', async () => {
-      const liq = await Liquidity.create({
-        network: net,
-        marketAddress,
-        amount: '1',
-        minSwap: '9',
-        updatedAt: moment().subtract(1, 'd').toISOString(),
-      });
-      const liq2 = await Liquidity.create({
-        network: net,
-        marketAddress,
-        amount: '1',
-        minSwap: '10',
-        updatedAt: moment().subtract(2, 'd').toISOString(),
-      });
-      const liq3 = await Liquidity.create({
-        network: net,
-        marketAddress,
-        amount: '1',
-        minSwap: '11',
-        updatedAt: moment().subtract(3, 'd').toISOString(),
-      });
-      let res = await Liquidity.search({
-        network: net,
-        amount: '10',
-      });
-      expect(res).toHaveLength(2);
-      expect(res[0].id).toEqual(liq.id);
-      expect(res[1].id).toEqual(liq2.id);
-
-      res = await Liquidity.search({
-        network: net,
-        amount: '<9',
-      });
-      expect(res).toHaveLength(1);
-      expect(res[0].id).toEqual(liq.id);
-
-      res = await Liquidity.search({
-        network: net,
-        amount: '>10',
-      });
-      expect(res).toHaveLength(2);
-      expect(res[0].id).toEqual(liq2.id);
-      expect(res[1].id).toEqual(liq3.id);
-    });
-
     it('should return correct result when `price` is set', async () => {
       const liq = await Liquidity.create({
         network: net,

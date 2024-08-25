@@ -68,10 +68,6 @@ export default class Liquidity extends BaseModel {
   amountSwapped: string = undefined;
   // The price of the liquidity
   price: string = undefined;
-  // The minimum swap amount
-  minSwap: string = undefined;
-  // The maximum swap amount
-  maxSwap: string = undefined;
   // The specific address allowed to swap the liquidity
   target: string = undefined;
   // The NFT IDs that make up the liquidity
@@ -129,8 +125,6 @@ export default class Liquidity extends BaseModel {
   priceChange: number;
   priceUsd: number;
   amountUsd: number;
-  minSwapUsd: number;
-  maxSwapUsd: number;
   online: boolean;
   lastTimeOnline: string;
   amountFilled: string;
@@ -341,19 +335,22 @@ export default class Liquidity extends BaseModel {
    * @param txn Optional transaction object
    */
   static async fill(market: Market, side: 'base' | 'quote', amount: string, txn?: Transaction): Promise<FillResult> {
-    const { quoteDecimals, baseDecimals } = market;
+    const { address, network, quoteDecimals, baseDecimals } = market;
 
     if (market.isFungible()) {
       if (side === 'quote') {
         const q = this.query(txn)
-          .with('sample', (builder) => {
+          .with('q1', (builder) => {
             builder
               .select(
                 'id',
+                'network',
+                'marketAddress',
                 'provider',
                 'lid',
                 'amount',
                 'price',
+                'paused',
                 raw('price * amount / power(10,??) AS cost', quoteDecimals),
                 raw(`SUM(amount * price / power(10,??)) OVER (ORDER BY price,amount DESC) AS cumulative_cost`, [
                   quoteDecimals,
@@ -361,8 +358,12 @@ export default class Liquidity extends BaseModel {
               )
               .from(Liquidity.tableName);
           })
-          .from('sample')
+          .from('q1')
           .select('*')
+          .where('network', network)
+          .where('marketAddress', 'ilike', address)
+          .where('amount', '>', 0)
+          .where('paused', false)
           .where('cumulative_cost', '<=', amount)
           .orWhereRaw('cumulative_cost - ?? < ?', ['cost', amount])
           .orderBy('price', 'asc');
@@ -371,22 +372,24 @@ export default class Liquidity extends BaseModel {
 
         let totalFilled = toDec(0);
         let amountFilled = toDec(0);
-        for (const f of liquidities as (Liquidity & { cost: string; cumulative_cost: string })[]) {
+        for (const liq of liquidities as (Liquidity & { cost: string; cumulative_cost: string })[]) {
           const unfilled = toDec(amount).sub(totalFilled);
-          if (toDec(f.cost).lte(unfilled)) {
-            f.amountFilled = f.cost.toString();
-            totalFilled = totalFilled.add(f.cost);
-            f.quantityFilled = toDec(f.amountFilled).div(toDec(f.price)).mul(pow10(baseDecimals)).toFixed();
-            amountFilled = amountFilled.add(f.quantityFilled);
+          if (toDec(liq.cost).lte(unfilled)) {
+            liq.amountFilled = liq.cost.toString();
+            totalFilled = totalFilled.add(liq.cost);
+            liq.quantityFilled = toDec(liq.amountFilled).div(toDec(liq.price)).mul(pow10(baseDecimals)).toFixed();
+            amountFilled = amountFilled.add(liq.quantityFilled);
           } else {
-            f.amountFilled = unfilled.toFixed();
-            totalFilled = totalFilled.add(f.amountFilled);
-            f.quantityFilled = toDec(f.amountFilled).div(toDec(f.price)).mul(pow10(baseDecimals)).toFixed();
-            amountFilled = amountFilled.add(f.quantityFilled);
+            liq.amountFilled = unfilled.toFixed();
+            totalFilled = totalFilled.add(liq.amountFilled);
+            liq.quantityFilled = toDec(liq.amountFilled).div(toDec(liq.price)).mul(pow10(baseDecimals)).toFixed();
+            amountFilled = amountFilled.add(liq.quantityFilled);
           }
 
-          delete f.cumulative_cost;
-          delete f.cost;
+          delete liq.cumulative_cost;
+          delete liq.cost;
+          delete liq.paused;
+          delete liq.marketAddress;
         }
 
         return {
@@ -401,12 +404,15 @@ export default class Liquidity extends BaseModel {
 
       if (side === 'base') {
         const q = this.query(txn)
-          .with('sample', (builder) => {
+          .with('q1', (builder) => {
             builder
               .select(
                 'id',
+                'network',
+                'marketAddress',
                 'provider',
                 'lid',
+                'paused',
                 'amount',
                 'price',
                 raw('price * amount / power(10,??) AS cost', quoteDecimals),
@@ -414,8 +420,12 @@ export default class Liquidity extends BaseModel {
               )
               .from(Liquidity.tableName);
           })
-          .from('sample')
+          .from('q1')
           .select('*')
+          .where('network', network)
+          .where('marketAddress', 'ilike', address)
+          .where('amount', '>', 0)
+          .where('paused', false)
           .where('cumulative_amount', '<=', amount)
           .orWhereRaw('cumulative_amount - ?? < ?', ['amount', amount])
           .orderBy('price', 'asc');
@@ -481,6 +491,7 @@ export default class Liquidity extends BaseModel {
    * @param select Select specific fields (optional)
    * @param hidden Filter by hidden status (optional)
    * @param txn Optional transaction object
+   * @deprecated
    */
   static search({
     network,
@@ -611,12 +622,6 @@ export default class Liquidity extends BaseModel {
 
     if (maxOpenOrders) {
       q = q.where('s.openOrders', '<', maxOpenOrders);
-    }
-
-    if (amount) {
-      const operator = amount.startsWith('>') ? '>=' : '<=';
-      const amountValue = amount.replace('>', '').replace('<', '');
-      q = q.where('s.minSwap', operator, amountValue);
     }
 
     if (price) {

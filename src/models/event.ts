@@ -22,7 +22,6 @@ export enum Events {
   LiquidityManagerUpdate = 'liq_manager_update',
   LiquidityTargetUpdate = 'liq_target_update',
   LiquidityPriceUpdate = 'liq_price_update',
-  LiquiditySwapLimitUpdate = 'liq_swap_limit_update',
   LiquidityTimeToPayUpdate = 'liq_time_to_pay_update',
   SwapPaid = 'swap_paid',
   SwapReleased = 'swap_released',
@@ -72,10 +71,6 @@ export default class Event extends BaseModel {
   provider: string = undefined;
   // The liquidity ID
   lid: number;
-  // The minimum swap amount
-  minSwap: string = undefined;
-  // The maximum swap amount
-  maxSwap: string = undefined;
   // The specific address allowed to swap the liquidity
   target: string = undefined;
   // The time required for taker to make payment

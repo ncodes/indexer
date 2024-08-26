@@ -340,6 +340,7 @@ export default class Liquidity extends BaseModel {
     if (market.isFungible()) {
       if (side === 'quote') {
         const q = this.query(txn)
+          .debug()
           .with('q1', (builder) => {
             builder
               .select(
@@ -356,14 +357,14 @@ export default class Liquidity extends BaseModel {
                   quoteDecimals,
                 ]),
               )
-              .from(Liquidity.tableName);
+              .from(Liquidity.tableName)
+              .where('network', network)
+              .where('marketAddress', 'ilike', address)
+              .where('amount', '>', 0)
+              .where('paused', false);
           })
           .from('q1')
           .select('*')
-          .where('network', network)
-          .where('marketAddress', 'ilike', address)
-          .where('amount', '>', 0)
-          .where('paused', false)
           .where('cumulative_cost', '<=', amount)
           .orWhereRaw('cumulative_cost - ?? < ?', ['cost', amount])
           .orderBy('price', 'asc');
@@ -418,14 +419,14 @@ export default class Liquidity extends BaseModel {
                 raw('price * amount / power(10,??) AS cost', quoteDecimals),
                 raw(`SUM(amount) OVER (ORDER BY price,amount DESC) AS cumulative_amount`),
               )
-              .from(Liquidity.tableName);
+              .from(Liquidity.tableName)
+              .where('network', network)
+              .where('marketAddress', 'ilike', address)
+              .where('amount', '>', 0)
+              .where('paused', false);
           })
           .from('q1')
           .select('*')
-          .where('network', network)
-          .where('marketAddress', 'ilike', address)
-          .where('amount', '>', 0)
-          .where('paused', false)
           .where('cumulative_amount', '<=', amount)
           .orWhereRaw('cumulative_amount - ?? < ?', ['amount', amount])
           .orderBy('price', 'asc');

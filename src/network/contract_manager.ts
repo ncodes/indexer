@@ -1,28 +1,6 @@
 import { Abi, AbiTypes, ChainNames, getChainByName, getChainNames } from '@jointlabs/meta';
 import { Logger } from '@nestjs/common';
-import { Contract, FetchRequest, JsonRpcProvider, Provider } from 'ethers';
-import * as assetRegABI from '../../abi/AssetRegistry.json';
-import * as badgeMgrABI from '../../abi/BadgeManager.json';
-import * as coreABI from '../../abi/Core.json';
-import * as disputeManagerABI from '../../abi/DisputeManager.json';
-import * as erc20TokenABI from '../../abi/ERC20.json';
-import * as marketCoreABI from '../../abi/MarketCore.json';
-import * as mediatorManagerABI from '../../abi/MediatorManager.json';
-import * as minerRegABI from '../../abi/MinerRegistry.json';
-import * as nftABI from '../../abi/NFT.json';
-import * as p2pTokenABI from '../../abi/Token.json';
-import {
-  AssetRegistry,
-  BadgeManager,
-  Core,
-  DisputeManager,
-  Energon,
-  MarketCore,
-  MediatorManager,
-  MinerRegistry,
-  NFT,
-  Token,
-} from '../../typechain';
+import { Contract, ContractRunner, FetchRequest, Interface, InterfaceAbi, JsonRpcProvider, Provider } from 'ethers';
 
 export class ContractManager {
   logger = new Logger(ContractManager.name);
@@ -40,6 +18,10 @@ export class ContractManager {
     }
   }
 
+  getContract<C>(target: string, abi: Interface | InterfaceAbi, runner?: ContractRunner | null | undefined): C {
+    return new Contract(target, abi, runner) as unknown as C;
+  }
+
   /**
    * Initialize a chain's contract and provider
    * @param chain The chain name
@@ -48,8 +30,9 @@ export class ContractManager {
    */
   private initChain(chain: ChainNames, infuraUASecret: string) {
     if (this.contracts[chain]) return;
+    const targetChain = getChainByName(chain);
 
-    const rpcUrl = getChainByName(chain).rpcUrl;
+    const rpcUrl = targetChain.rpcUrl;
     if (!rpcUrl) {
       this.logger.debug('initChain: rpcUrl is not defined...skipping chain', JSON.stringify({ chain }));
       return;
@@ -61,70 +44,85 @@ export class ContractManager {
     this.providers[chain] = provider;
     this.contracts[chain] = {};
 
-    const p2pTokenAddr = getChainByName(chain).contracts['token'].address;
-    if (p2pTokenAddr) {
-      this.contracts[chain].p2pToken = new Contract(p2pTokenAddr, p2pTokenABI, provider) as unknown as Token;
-    }
+    const p2pTokenAddr = targetChain.contracts['token'].address;
+    if (p2pTokenAddr)
+      this.contracts[chain].p2pToken = this.getContract<AbiTypes.Token>(p2pTokenAddr, Abi.NativeToken, provider);
 
-    const marketCoreAddr = getChainByName(chain).contracts['marketCore'].address;
+    const marketCoreAddr = targetChain.contracts['marketCore'].address;
     if (marketCoreAddr)
-      this.contracts[chain].marketCore = new Contract(marketCoreAddr, marketCoreABI, provider) as unknown as MarketCore;
+      this.contracts[chain].marketCore = this.getContract<AbiTypes.MarketCore>(
+        marketCoreAddr,
+        Abi.MarketCore,
+        provider,
+      );
 
-    const coreAddr = getChainByName(chain).contracts['core'].address;
-    if (coreAddr) this.contracts[chain].core = new Contract(coreAddr, coreABI, provider) as unknown as Core;
+    const coreAddr = targetChain.contracts['core'].address;
+    if (coreAddr) this.contracts[chain].core = this.getContract<AbiTypes.Core>(coreAddr, Abi.Core, provider);
 
-    const mediatorMgr = getChainByName(chain).contracts['mediatorManager'].address;
+    const mediatorMgr = targetChain.contracts['mediatorManager'].address;
     if (mediatorMgr)
-      this.contracts[chain].mediatorMgr = new Contract(
+      this.contracts[chain].mediatorMgr = this.getContract<AbiTypes.MediatorManager>(
         mediatorMgr,
-        mediatorManagerABI,
+        Abi.MediatorManager,
         provider,
-      ) as unknown as MediatorManager;
+      );
 
-    const disputeMgrAddr = getChainByName(chain).contracts['disputeManager'].address;
+    const disputeMgrAddr = targetChain.contracts['disputeManager'].address;
     if (disputeMgrAddr)
-      this.contracts[chain].disputeMgr = new Contract(
+      this.contracts[chain].disputeMgr = this.getContract<AbiTypes.DisputeManager>(
         disputeMgrAddr,
-        disputeManagerABI,
+        Abi.DisputeManager,
         provider,
-      ) as unknown as DisputeManager;
+      );
 
-    const badgeMgrAddr = getChainByName(chain).contracts['badgeManager'].address;
+    const badgeMgrAddr = targetChain.contracts['badgeManager'].address;
     if (badgeMgrAddr)
-      this.contracts[chain].badgeMgr = new Contract(badgeMgrAddr, badgeMgrABI, provider) as unknown as BadgeManager;
+      this.contracts[chain].badgeMgr = this.getContract<AbiTypes.BadgeManager>(
+        badgeMgrAddr,
+        Abi.BadgeManager,
+        provider,
+      );
 
-    const assetRegAddr = getChainByName(chain).contracts['assetRegistry'].address;
+    const assetRegAddr = targetChain.contracts['assetRegistry'].address;
     if (assetRegAddr)
-      this.contracts[chain].assetRegistry = new Contract(
+      this.contracts[chain].assetRegistry = this.getContract<AbiTypes.AssetRegistry>(
         assetRegAddr,
-        assetRegABI,
+        Abi.AssetRegistry,
         provider,
-      ) as unknown as AssetRegistry;
+      );
 
-    const minerRegAddr = getChainByName(chain).contracts['minerRegistry'].address;
+    const minerRegAddr = targetChain.contracts['minerRegistry'].address;
     if (minerRegAddr)
-      this.contracts[chain].minerRegistry = new Contract(
+      this.contracts[chain].minerRegistry = this.getContract<AbiTypes.MinerRegistry>(
         minerRegAddr,
-        minerRegABI,
+        Abi.MinerRegistry,
         provider,
-      ) as unknown as MinerRegistry;
+      );
 
-    const energonAddr = getChainByName(chain).contracts['energon'].address;
+    const providerRegAddr = targetChain.contracts['providerRegistry'].address;
+    if (providerRegAddr)
+      this.contracts[chain].providerRegistry = this.getContract<AbiTypes.ProviderRegistry>(
+        providerRegAddr,
+        Abi.ProviderRegistry,
+        provider,
+      );
+
+    const energonAddr = targetChain.contracts['energon'].address;
     if (energonAddr)
-      this.contracts[chain].energon = new Contract(energonAddr, erc20TokenABI, provider) as unknown as Energon;
+      this.contracts[chain].energon = this.getContract<AbiTypes.Energon>(energonAddr, Abi.Energon, provider);
 
-    const nftAddress = getChainByName(chain).contracts['nft'].address;
-    if (nftAddress) this.contracts[chain].nft = new Contract(nftAddress, nftABI, provider) as unknown as NFT;
+    const nftAddress = targetChain.contracts['nft'].address;
+    if (nftAddress) this.contracts[chain].nft = this.getContract<AbiTypes.NFT>(nftAddress, Abi.NFT, provider);
 
-    const uniswapV2Router = getChainByName(chain).contracts['uniswapV2Router']?.address;
+    const uniswapV2Router = targetChain.contracts['uniswapV2Router']?.address;
     if (uniswapV2Router)
-      this.contracts[chain].uniswapV2Router = new Contract(
+      this.contracts[chain].uniswapV2Router = this.getContract<AbiTypes.NFT>(
         uniswapV2Router,
         Abi.UniswapV2Router,
         provider,
       ) as unknown as AbiTypes.UniswapV2Router;
 
-    const uniswapV2Router2 = getChainByName(chain).contracts['uniswapV2Router2']?.address;
+    const uniswapV2Router2 = targetChain.contracts['uniswapV2Router2']?.address;
     if (uniswapV2Router2)
       this.contracts[chain].uniswapV2Router2 = new Contract(
         uniswapV2Router2,
@@ -132,7 +130,7 @@ export class ContractManager {
         provider,
       ) as unknown as AbiTypes.UniswapV2Router2;
 
-    const uniswapV3Router = getChainByName(chain).contracts['uniswapV3Router']?.address;
+    const uniswapV3Router = targetChain.contracts['uniswapV3Router']?.address;
     if (uniswapV3Router)
       this.contracts[chain].uniswapV3Router = new Contract(
         uniswapV3Router,
@@ -140,7 +138,7 @@ export class ContractManager {
         provider,
       ) as unknown as AbiTypes.UniswapV3Router;
 
-    const uniswapV3Router2 = getChainByName(chain).contracts['uniswapV3Router02']?.address;
+    const uniswapV3Router2 = targetChain.contracts['uniswapV3Router02']?.address;
     if (uniswapV3Router2)
       this.contracts[chain].uniswapV3Router2 = new Contract(
         uniswapV3Router2,
@@ -148,7 +146,7 @@ export class ContractManager {
         provider,
       ) as unknown as AbiTypes.UniswapV3Router2;
 
-    const uniswapV3RouterUniversal = getChainByName(chain).contracts['uniswapV3UniversalRouter']?.address;
+    const uniswapV3RouterUniversal = targetChain.contracts['uniswapV3UniversalRouter']?.address;
     if (uniswapV3RouterUniversal)
       this.contracts[chain].uniswapV3RouterUniversal = new Contract(
         uniswapV3RouterUniversal,

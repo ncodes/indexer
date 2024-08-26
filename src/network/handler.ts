@@ -2,8 +2,8 @@ import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BaseContract, Contract, InterfaceAbi, Provider, Signer } from 'ethers';
 import { EventEmitter2 } from 'eventemitter2';
-import * as erc20ABI from '../../abi/ERC20.json';
 import Meta from '../models/meta';
+import { Abi } from '@jointlabs/meta';
 
 /**
  * Handler handles incoming contract events.
@@ -18,12 +18,7 @@ export abstract class Handler extends EventEmitter2 {
    * @param network The network name
    * @param contract The contract to be handled
    */
-  protected constructor(
-    public name: string,
-    public cfg: ConfigService,
-    public network: string,
-    private contract: BaseContract,
-  ) {
+  protected constructor(public name: string, public cfg: ConfigService, public network: string, private contract: any) {
     super();
   }
 
@@ -39,7 +34,7 @@ export abstract class Handler extends EventEmitter2 {
    * Get contract
    */
   getContract() {
-    return this.contract;
+    return this.contract as BaseContract;
   }
 
   /**
@@ -63,7 +58,7 @@ export abstract class Handler extends EventEmitter2 {
    * @param token The token address
    */
   public async getTokenDecimals(provider: Provider, token: string): Promise<number> {
-    const base = this.newContract(token, erc20ABI, provider);
+    const base = this.newContract(token, Abi.ERC20, provider);
     return base.decimals();
   }
 }

@@ -1,9 +1,7 @@
-import { ChainNames, findTokenInLocalhost, findTokenInSynthetic, getChainByName } from '@jointlabs/meta';
+import { Abi, ChainNames, findTokenInLocalhost, findTokenInSynthetic, getChainByName } from '@jointlabs/meta';
 import { Logger } from '@nestjs/common';
 import { Provider } from 'ethers';
 import { Transaction } from 'objection';
-import * as erc20ABI from '../../../abi/ERC20.json';
-import * as erc721ABI from '../../../abi/ERC721.json';
 import { isDev } from '../../common/common';
 import { NotificationService } from '../../jobs/notifications/NotificationService';
 import { NotificationID } from '../../jobs/notifications/common';
@@ -262,25 +260,25 @@ export class MarketCoreHandler extends Handler {
       }
 
       if (Market.isERC20(baseType)) {
-        const baseToken = this.newContract(baseAsset, erc20ABI, this.provider);
+        const baseToken = this.newContract(baseAsset, Abi.ERC20, this.provider);
         baseSymbol = (await baseToken.symbol()).toUpperCase();
         baseDecimals = await baseToken.decimals();
       }
 
       if (Market.isERC20(quoteType)) {
-        const quoteToken = this.newContract(quoteAsset, erc20ABI, this.provider);
+        const quoteToken = this.newContract(quoteAsset, Abi.ERC20, this.provider);
         quoteSymbol = (await quoteToken.symbol()).toUpperCase();
         quoteDecimals = await quoteToken.decimals();
       }
 
       if (Market.isERC721(baseType)) {
-        const baseToken = this.newContract(baseAsset, erc721ABI, this.provider);
+        const baseToken = this.newContract(baseAsset, Abi.ERC721, this.provider);
         baseSymbol = (await baseToken.symbol()).toUpperCase();
         baseDecimals = 0;
       }
 
       if (Market.isERC721(quoteType)) {
-        const quoteToken = this.newContract(quoteAsset, erc721ABI, this.provider);
+        const quoteToken = this.newContract(quoteAsset, Abi.ERC721, this.provider);
         quoteSymbol = (await quoteToken.symbol()).toUpperCase();
         quoteDecimals = 0;
       }
@@ -303,7 +301,7 @@ export class MarketCoreHandler extends Handler {
 
       if (!base && Market.isERC20(baseType)) {
         try {
-          const baseToken = this.newContract(baseAsset, erc20ABI, this.provider);
+          const baseToken = this.newContract(baseAsset, Abi.ERC20, this.provider);
           baseSymbol = (await baseToken.symbol()).toUpperCase();
           baseDecimals = await baseToken.decimals();
         } catch (error) {
@@ -318,7 +316,7 @@ export class MarketCoreHandler extends Handler {
 
       if (!quote && Market.isERC20(quoteType)) {
         try {
-          const quoteToken = this.newContract(quoteAsset, erc20ABI, this.provider);
+          const quoteToken = this.newContract(quoteAsset, Abi.ERC20, this.provider);
           quoteSymbol = (await quoteToken.symbol()).toUpperCase();
           quoteDecimals = await quoteToken.decimals();
         } catch (error) {

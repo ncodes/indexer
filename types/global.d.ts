@@ -18,21 +18,6 @@ import Session from '../src/models/session';
 import Swap from '../src/models/swap';
 import Ticket from '../src/models/ticket';
 import User from '../src/models/user';
-import {
-  AssetRegistry,
-  BadgeManager,
-  Core,
-  DisputeManager,
-  Energon,
-  FeePool,
-  LPPool,
-  MarketCore,
-  MediatorManager,
-  MinerRegistry,
-  NFT,
-  Token,
-  TokenPool,
-} from '../typechain';
 import { AbiTypes } from '@jointlabs/meta';
 
 declare global {
@@ -57,19 +42,20 @@ declare global {
   }
 
   interface JointContracts {
-    p2pToken?: Token;
-    marketCore?: MarketCore;
-    core?: Core;
-    mediatorMgr?: MediatorManager;
-    disputeMgr?: DisputeManager;
-    badgeMgr?: BadgeManager;
-    tokenPool?: TokenPool;
-    lpPool?: LPPool;
-    feePool?: FeePool;
-    assetRegistry?: AssetRegistry;
-    minerRegistry?: MinerRegistry;
-    energon?: Energon;
-    nft?: NFT;
+    p2pToken?: AbiTypes.Token;
+    marketCore?: AbiTypes.MarketCore;
+    core?: AbiTypes.Core;
+    mediatorMgr?: AbiTypes.MediatorManager;
+    disputeMgr?: AbiTypes.DisputeManager;
+    badgeMgr?: AbiTypes.BadgeManager;
+    tokenPool?: AbiTypes.TokenPool;
+    lpPool?: AbiTypes.LPPool;
+    feePool?: AbiTypes.FeePool;
+    assetRegistry?: AbiTypes.AssetRegistry;
+    minerRegistry?: AbiTypes.MinerRegistry;
+    providerRegistry?: AbiTypes.ProviderRegistry;
+    energon?: AbiTypes.Energon;
+    nft?: AbiTypes.NFT;
     uniswapV2Router?: AbiTypes.UniswapV2Router;
     uniswapV2Router2?: AbiTypes.UniswapV2Router2;
     uniswapV3Router?: AbiTypes.UniswapV3Router;

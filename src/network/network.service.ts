@@ -1,9 +1,7 @@
-import { ChainNames } from '@jointlabs/meta';
+import { Abi, AbiTypes, ChainNames } from '@jointlabs/meta';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BaseContract, Contract, Provider } from 'ethers';
-import * as erc20TokenABI from '../../abi/ERC20.json';
-import { ERC20 } from '../../typechain';
 import { isProd, isTest } from '../common/common';
 import { PointService } from '../controllers/points/point.service';
 import { NotificationService } from '../jobs/notifications/NotificationService';
@@ -24,6 +22,7 @@ import { getNetworkParams } from './params';
 import Processor from './processor';
 import { Watcher } from './watcher';
 import { UniswapRouter } from './dexuser/uniswap_router.handler';
+import { ProviderRegistryHandler } from './providerregistry/provider_registry.handler';
 
 @Injectable()
 export default class NetworkService {
@@ -92,8 +91,8 @@ export default class NetworkService {
    * @param chain The chain name
    * @param address The contract address
    */
-  getERC20Contract(chain: ChainNames, address: string): ERC20 {
-    return new Contract(address, erc20TokenABI, this.contractMgr.providers[chain]) as unknown as ERC20;
+  getERC20Contract(chain: ChainNames, address: string): AbiTypes.ERC20 {
+    return new Contract(address, Abi.ERC20, this.contractMgr.providers[chain]) as unknown as AbiTypes.ERC20;
   }
 
   /**
@@ -155,6 +154,7 @@ export default class NetworkService {
       ),
       new BadgeManagerHandler(this, provider, network, this.contractMgr.contracts[network]),
       new AssetRegistryHandler(provider, network, this.contractMgr.contracts[network]),
+      new ProviderRegistryHandler(provider, network, this.contractMgr.contracts[network]),
       new MinerRegistryHandler(provider, network, this.contractMgr.contracts[network]),
     ];
 

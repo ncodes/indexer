@@ -6,6 +6,7 @@ import { randStr, toDec } from '../common/common';
 import { BaseModel } from './base';
 import Market, { AssetType } from './market';
 import { pow10 } from '../network/common';
+import ProviderRegistry from './provider_registry';
 
 /**
  * Derive a liquidity address
@@ -133,8 +134,12 @@ export default class Liquidity extends BaseModel {
   mktCreatorFee: string;
   quantityFilledAfterFees: string;
 
+  /** Not Persisted */
+  providerIndex: number;
+
   /** Relations */
   market: Market;
+  providerRegistry: ProviderRegistry;
 
   constructor(init?: Partial<Liquidity>) {
     super();
@@ -183,6 +188,14 @@ export default class Liquidity extends BaseModel {
         join: {
           from: ['liquidities.network', 'liquidities.marketAddress'],
           to: ['markets.network', 'markets.address'],
+        },
+      },
+      providerRegistry: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: ProviderRegistry,
+        join: {
+          from: ['liquidities.network', 'liquidities.provider'],
+          to: ['provider_registry.network', 'provider_registry.address'],
         },
       },
     };
@@ -340,7 +353,6 @@ export default class Liquidity extends BaseModel {
     if (market.isFungible()) {
       if (side === 'quote') {
         const q = this.query(txn)
-          .debug()
           .with('q1', (builder) => {
             builder
               .select(
@@ -367,6 +379,7 @@ export default class Liquidity extends BaseModel {
           .select('*')
           .where('cumulative_cost', '<=', amount)
           .orWhereRaw('cumulative_cost - ?? < ?', ['cost', amount])
+          .withGraphFetched('providerRegistry')
           .orderBy('price', 'asc');
 
         const liquidities = await q.execute();
@@ -387,6 +400,8 @@ export default class Liquidity extends BaseModel {
             amountFilled = amountFilled.add(liq.quantityFilled);
           }
 
+          liq.providerIndex = liq.providerRegistry.index;
+          delete liq.providerRegistry;
           delete liq.cumulative_cost;
           delete liq.cost;
           delete liq.paused;
@@ -429,28 +444,31 @@ export default class Liquidity extends BaseModel {
           .select('*')
           .where('cumulative_amount', '<=', amount)
           .orWhereRaw('cumulative_amount - ?? < ?', ['amount', amount])
+          .withGraphFetched('providerRegistry')
           .orderBy('price', 'asc');
 
         const liquidities = await q.execute();
 
         let totalFilled = toDec(0);
         let amountFilled = toDec(0);
-        for (const f of liquidities as (Liquidity & { cost: string; cumulative_amount: string })[]) {
+        for (const liq of liquidities as (Liquidity & { cost: string; cumulative_amount: string })[]) {
           const unfilled = toDec(amount).sub(totalFilled);
-          if (toDec(f.amount).lte(unfilled)) {
-            f.amountFilled = f.amount.toString();
-            totalFilled = totalFilled.add(f.amount);
-            f.quantityFilled = toDec(f.amountFilled).mul(toDec(f.price)).div(pow10(quoteDecimals)).toFixed();
-            amountFilled = amountFilled.add(f.quantityFilled);
+          if (toDec(liq.amount).lte(unfilled)) {
+            liq.amountFilled = liq.amount.toString();
+            totalFilled = totalFilled.add(liq.amount);
+            liq.quantityFilled = toDec(liq.amountFilled).mul(toDec(liq.price)).div(pow10(quoteDecimals)).toFixed();
+            amountFilled = amountFilled.add(liq.quantityFilled);
           } else {
-            f.amountFilled = unfilled.toFixed();
-            totalFilled = totalFilled.add(f.amountFilled);
-            f.quantityFilled = toDec(f.amountFilled).mul(toDec(f.price)).div(pow10(quoteDecimals)).toFixed();
-            amountFilled = amountFilled.add(f.quantityFilled);
+            liq.amountFilled = unfilled.toFixed();
+            totalFilled = totalFilled.add(liq.amountFilled);
+            liq.quantityFilled = toDec(liq.amountFilled).mul(toDec(liq.price)).div(pow10(quoteDecimals)).toFixed();
+            amountFilled = amountFilled.add(liq.quantityFilled);
           }
 
-          delete f.cumulative_amount;
-          delete f.cost;
+          liq.providerIndex = liq.providerRegistry.index;
+          delete liq.providerRegistry;
+          delete liq.cumulative_amount;
+          delete liq.cost;
         }
 
         return {

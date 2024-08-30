@@ -1870,13 +1870,6 @@ describe('CoreHandler', () => {
     });
   });
 
-  describe('.onNFTDiscountUpdated', function () {
-    it('should save correct meta value', async () => {
-      await expect(handler.onNFTDiscountUpdated(toBigInt(1), {} as any)).resolves.toBeUndefined();
-      expect(await Meta.getContractParam(net, 'nftDiscountBP')).toEqual('1');
-    });
-  });
-
   describe('.onNewOffer', function () {
     it('should create new offer in database', async () => {
       const market = await Market.create({

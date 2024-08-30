@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import Market from '../models/market';
 import AssetRegistry from '../models/asset_registry';
-import Meta, { FeeName, MetaKeys } from '../models/meta';
-import NFTOwner from '../models/nft_owner';
+import Meta, { FeeName } from '../models/meta';
 import { toDec } from '../common/common';
 import { pow10 } from '../network/common';
 
@@ -13,25 +12,19 @@ export class FeeCalculatorService {
    * @param options
    * @param options.network The network name
    * @param options.marketAddress The market address
-   * @param options.provider The provider address
-   * @param options.taker The taker address
    * @param options.orderAmount The order amount
    * @param options.orderPrice The order price
    */
   async calculateFee({
     network,
     marketAddress,
-    provider,
-    taker,
     orderAmount,
     orderPrice,
   }: {
     network: string;
     marketAddress: string;
-    provider: string;
-    taker: string;
-    orderAmount: string;
-    orderPrice: string;
+    orderAmount?: string;
+    orderPrice?: string;
   }) {
     const market = await Market.getMarket(network, marketAddress);
     if (!market) return Promise.reject(new Error('market not found'));
@@ -56,11 +49,7 @@ export class FeeCalculatorService {
     const { instantSwapFeeBp, stableSwapFeeBp, syntheticSwapFeeBp, instantNFTSwapFeeBp } = await this.getFeeInfo(
       network,
     );
-    const nftDiscountOn = await this.isNftDiscountEnabled(network);
-    const senderHasNFT = await this.hasNFT(taker);
-    const providerHasNFT = await this.hasNFT(provider);
-    const nftDiscountBp = await this.getNftDiscountBp(network);
-    let denom = 10000;
+    const denom = 10000;
 
     // ERC20/ERC20, ERC20/NATIVE, NATIVE/ERC20, NATIVE/NATIVE fee calculation.
     if (
@@ -73,12 +62,6 @@ export class FeeCalculatorService {
       const isMarketStable = await this.isMarketStable(network, market);
       feeInfo.feeBp = isMarketStable ? stableSwapFeeBp : feeBp;
       feeInfo.mktFeeBp = market.commission;
-
-      if (nftDiscountOn && senderHasNFT) {
-        feeInfo.feeBp = feeInfo.feeBp * 10 ** 2 - (nftDiscountBp * feeInfo.feeBp * 10 ** 2) / denom;
-        feeInfo.mktFeeBp = feeInfo.mktFeeBp * 10 ** 2 - (nftDiscountBp * feeInfo.mktFeeBp * 10 ** 2) / denom;
-        denom = 1000000;
-      }
 
       feeInfo.mktCreatorFee = toDec(orderAmount).mul(feeInfo.mktFeeBp).div(denom).toFixed();
       feeInfo.protoFee = toDec(orderAmount).mul(feeInfo.feeBp).div(denom).toFixed();
@@ -102,12 +85,6 @@ export class FeeCalculatorService {
       const { feeBp } = await this.getAssetFeeInfo(network, asset, syntheticSwapFeeBp);
       feeInfo.feeBp = feeBp;
 
-      if (nftDiscountOn && (await this.hasNFT(Market.isSynth(quoteType) ? taker : provider))) {
-        feeInfo.feeBp = feeInfo.feeBp * 10 ** 2 - (nftDiscountBp * feeInfo.feeBp * 10 ** 2) / denom;
-        feeInfo.mktFeeBp = feeInfo.mktFeeBp * 10 ** 2 - (nftDiscountBp * feeInfo.mktFeeBp * 10 ** 2) / denom;
-        denom = 1000000;
-      }
-
       feeInfo.amtToCharge = Market.isSynth(baseType) ? feeInfo.cost : orderAmount;
 
       feeInfo.mktCreatorFee = toDec(feeInfo.amtToCharge).mul(feeInfo.mktFeeBp).div(denom).toFixed();
@@ -127,12 +104,6 @@ export class FeeCalculatorService {
       const { feeBp } = await this.getAssetFeeInfo(network, base, instantNFTSwapFeeBp);
       feeInfo.feeBp = feeBp;
       feeInfo.mktFeeBp = market.commission;
-
-      if (nftDiscountOn && senderHasNFT) {
-        feeInfo.feeBp = feeInfo.feeBp * 10 ** 2 - (nftDiscountBp * feeInfo.feeBp * 10 ** 2) / denom;
-        feeInfo.mktFeeBp = feeInfo.mktFeeBp * 10 ** 2 - (nftDiscountBp * feeInfo.mktFeeBp * 10 ** 2) / denom;
-        denom = 1000000;
-      }
 
       feeInfo.mktCreatorFee = toDec(orderAmount).mul(feeInfo.mktFeeBp).div(denom).toFixed();
       feeInfo.protoFee = toDec(orderAmount).mul(feeInfo.feeBp).div(denom).toFixed();
@@ -156,12 +127,6 @@ export class FeeCalculatorService {
       const { feeBp } = await this.getAssetFeeInfo(network, base, instantNFTSwapFeeBp);
       feeInfo.feeBp = feeBp;
       feeInfo.mktFeeBp = market.commission;
-
-      if (nftDiscountOn && providerHasNFT) {
-        feeInfo.feeBp = feeInfo.feeBp * 10 ** 2 - (nftDiscountBp * feeInfo.feeBp * 10 ** 2) / denom;
-        feeInfo.mktFeeBp = feeInfo.mktFeeBp * 10 ** 2 - (nftDiscountBp * feeInfo.mktFeeBp * 10 ** 2) / denom;
-        denom = 1000000;
-      }
 
       feeInfo.mktCreatorFee = toDec(orderPrice).mul(feeInfo.mktFeeBp).div(denom).toFixed();
       feeInfo.protoFee = toDec(orderPrice).mul(feeInfo.feeBp).div(denom).toFixed();
@@ -227,20 +192,5 @@ export class FeeCalculatorService {
       syntheticSwapFeeBp: parseInt(syntheticSwapFeeBp.value),
       instantNFTSwapFeeBp: parseInt(instantNFTSwapFeeBp.value),
     };
-  }
-
-  async hasNFT(address: string) {
-    const nft = await NFTOwner.findByAddress(address);
-    return nft.length > 0;
-  }
-
-  async isNftDiscountEnabled(network: string) {
-    const cp = await Meta.getJSON<ContractsParams>(Meta.makeNetKey(network, MetaKeys.ContractsParams));
-    return cp.nftAddress != undefined;
-  }
-
-  async getNftDiscountBp(network: string) {
-    const cp = await Meta.getJSON<ContractsParams>(Meta.makeNetKey(network, MetaKeys.ContractsParams));
-    return cp.nftDiscountBP || 0;
   }
 }

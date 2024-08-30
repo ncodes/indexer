@@ -43,8 +43,14 @@ export class LiquidityController {
 
     const { baseDecimals, quoteDecimals } = market;
 
-    const fillRes = await Liquidity.fill(market, p.side, p.amount);
+    // Do a dummy fee calculation to get the protocol and market creator fees percentages
+    const fees = await this.feeCalcSrv.calculateFee({ network: q.net, marketAddress: p.mid });
+    const totalFeesPct = toDec(fees.feeBp).add(fees.mktFeeBp).div(100);
 
+    // Fetch liquidities from the market that can fill the requested amount
+    const fillRes = await Liquidity.fill(market, p.side, p.amount, totalFeesPct.toNumber());
+
+    // Calculate actual fees for each liquidity
     let totalQtyFilledAfterFees = toDec(0);
     let totalProtoFee = toDec(0);
     let totalMktFee = toDec(0);
@@ -54,8 +60,6 @@ export class LiquidityController {
       const fees = await this.feeCalcSrv.calculateFee({
         network: q.net,
         marketAddress: p.mid,
-        provider: liq.provider,
-        taker: q.taker,
         orderAmount: liq.amountFilled,
         orderPrice: liq.price,
       });

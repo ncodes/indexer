@@ -209,8 +209,6 @@ export class MiscController {
   async computeFee(
     @Query('net') network: string,
     @Query('mid') marketAddress: string,
-    @Query('provider') provider: string,
-    @Query('taker') taker: string,
     @Query('orderAmount') orderAmount: string,
     @Query('orderPrice') orderPrice: string,
   ) {
@@ -218,8 +216,6 @@ export class MiscController {
       .calculateFee({
         network,
         marketAddress,
-        provider,
-        taker,
         orderAmount,
         orderPrice,
       })

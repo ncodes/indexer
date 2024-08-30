@@ -21,7 +21,6 @@ import { MetadataService } from '../../services/metadata/metadata.service';
 import { ContractCallEvent, getBlockTime, isZero, pow10, toBigInt, toNumber } from '../common';
 import { Handler } from '../handler';
 import NetworkService from '../network.service';
-import ProviderRegistry from '../../models/provider_registry';
 
 export class CoreHandler extends Handler {
   logger = new Logger(CoreHandler.name);
@@ -273,10 +272,6 @@ export class CoreHandler extends Handler {
       },
     );
 
-    this.on('NFTDiscountUpdated', async (discountBp: bigint, event: ContractCallEvent, txn?: Transaction) => {
-      return this.onNFTDiscountUpdated(discountBp, event, txn);
-    });
-
     this.on(
       'NewOffer',
       async (
@@ -377,10 +372,6 @@ export class CoreHandler extends Handler {
 
     this.on('UpdatedMaxOpenDisputes', async (value: bigint, event: ContractCallEvent, txn?: Transaction) => {
       return this.onParameterUpdate('maxOpenDisputes', value.toString(), event, txn);
-    });
-
-    this.on('UpdatedNFT', async (address: string, event: ContractCallEvent, txn?: Transaction) => {
-      return this.onParameterUpdate('nftAddress', address, event, txn);
     });
   }
 
@@ -677,11 +668,11 @@ export class CoreHandler extends Handler {
       await this.netSrv.pointSrv.grantOnSwap(market, swap as Swap, txn, event);
 
       // Send notification
-      void this.notifSrv.notify(NotificationID.NewInstantSwap, this.network, provider, <InstantSwapNotificationData>{
-        market,
-        swap,
-        liq,
-      });
+      // void this.notifSrv.notify(NotificationID.NewInstantSwap, this.network, provider, <InstantSwapNotificationData>{
+      //   market,
+      //   swap,
+      //   liq,
+      // });
     } else {
       orderId = orderId - BigInt(1);
       const now = moment();
@@ -1515,16 +1506,6 @@ export class CoreHandler extends Handler {
     await Meta.update(Meta.makeNetKey(this.network, ProtocolFeeBeneficiary.Inventor), inventor.toString(), txn);
     await Meta.update(Meta.makeNetKey(this.network, ProtocolFeeBeneficiary.Shared), shared.toString(), txn);
     await Meta.update(Meta.makeNetKey(this.network, ProtocolFeeBeneficiary.Operator), operator.toString(), txn);
-  }
-
-  /**
-   * NFT Discount basis point was updated
-   * @param discountBp The discount basis point
-   * @param event The event object
-   * @param txn The transaction object
-   */
-  async onNFTDiscountUpdated(discountBp: bigint, event: ContractCallEvent, txn?: Transaction) {
-    await this.onParameterUpdate('nftDiscountBP', discountBp.toString(), event, txn);
   }
 
   /**

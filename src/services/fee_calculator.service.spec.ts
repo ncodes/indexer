@@ -4,7 +4,6 @@ import Meta, { FeeName, MetaKeys } from '../models/meta';
 import { FeeCalculatorService } from './fee_calculator.service';
 import Market, { AssetType } from '../models/market';
 import { powOf } from '../network/common';
-import NFTOwner from '../models/nft_owner';
 import AssetRegistry from '../models/asset_registry';
 
 describe('FeeCalculatorService', () => {
@@ -41,13 +40,7 @@ describe('FeeCalculatorService', () => {
 
     srv = new FeeCalculatorService();
 
-    await Meta.create(
-      Meta.makeNetKey(net, MetaKeys.ContractsParams),
-      JSON.stringify({
-        nftAddress: '0xNFT',
-        nftDiscountBP: 2500,
-      }),
-    );
+    await Meta.create(Meta.makeNetKey(net, MetaKeys.ContractsParams), JSON.stringify({}));
 
     await Meta.create(Meta.makeNetKey(net, FeeName.InstantSwapFeeBp), '12');
     await Meta.create(Meta.makeNetKey(net, FeeName.SynthSwapFeeBp), '14');
@@ -102,24 +95,6 @@ describe('FeeCalculatorService', () => {
             mktCreatorFee: '500000000000000000',
             feeBp: 14,
             mktFeeBp: 1000,
-          });
-        });
-      });
-
-      describe('swapper owns an NFT', () => {
-        it('should calculate fees correctly', async () => {
-          await Meta.update(Meta.makeNetKey(net, FeeName.InstantSwapFeeBp), '14');
-          await Meta.updateContractsParams(net, undefined, (params) => (params['nftDiscountBP'] = 1000));
-          await NFTOwner.create({ address: taker, tokenId: 1 });
-          await Market.updateById(market.id, { commission: 1000 });
-          const amount = powOf(5, 18).toString();
-          await expect(
-            srv.calculateFee({ ...defaultParams, taker, marketAddress, orderAmount: amount }),
-          ).resolves.toEqual({
-            protoFee: '6300000000000000',
-            mktCreatorFee: '450000000000000000',
-            feeBp: 1260,
-            mktFeeBp: 90000,
           });
         });
       });
@@ -188,25 +163,6 @@ describe('FeeCalculatorService', () => {
           mktFeeBp: 1000,
         });
       });
-
-      describe('swapper owns an NFT', () => {
-        it('should calculate fees correctly', async () => {
-          await Meta.update(Meta.makeNetKey(net, FeeName.SynthSwapFeeBp), '14');
-          await Meta.updateContractsParams(net, undefined, (params) => (params['nftDiscountBP'] = 1000));
-          await NFTOwner.create({ address: taker, tokenId: 1 });
-          await Market.updateById(market.id, { commission: 1000 });
-          const amount = powOf(5, 18).toString();
-          const orderPrice = powOf(10, 18).toString();
-          await expect(
-            srv.calculateFee({ ...defaultParams, marketAddress, taker, orderAmount: amount, orderPrice }),
-          ).resolves.toEqual({
-            protoFee: '6300000000000000',
-            mktCreatorFee: '450000000000000000',
-            feeBp: 1260,
-            mktFeeBp: 90000,
-          });
-        });
-      });
     });
 
     describe('SYNTH/ERC20', () => {
@@ -272,24 +228,6 @@ describe('FeeCalculatorService', () => {
           mktFeeBp: 1000,
         });
       });
-
-      describe('swapper owns an NFT', () => {
-        it('should calculate fees correctly', async () => {
-          await Meta.update(Meta.makeNetKey(net, FeeName.InstantNFTSwapFeeBp), '14');
-          await Meta.updateContractsParams(net, undefined, (params) => (params['nftDiscountBP'] = 5000));
-          await NFTOwner.create({ address: taker, tokenId: 1 });
-          await Market.updateById(market.id, { commission: 1000 });
-          const amount = powOf(100, 18).toString();
-          await expect(
-            srv.calculateFee({ ...defaultParams, marketAddress, taker, orderAmount: amount }),
-          ).resolves.toEqual({
-            protoFee: '70000000000000000',
-            mktCreatorFee: '5000000000000000000',
-            feeBp: 700,
-            mktFeeBp: 50000,
-          });
-        });
-      });
     });
 
     describe('NFT/ERC20', () => {
@@ -321,25 +259,6 @@ describe('FeeCalculatorService', () => {
           mktCreatorFee: '1000000000000000000',
           feeBp: 14,
           mktFeeBp: 1000,
-        });
-      });
-
-      describe('provider owns an NFT', () => {
-        it('should calculate fees correctly', async () => {
-          await Meta.update(Meta.makeNetKey(net, FeeName.InstantNFTSwapFeeBp), '14');
-          await Meta.updateContractsParams(net, undefined, (params) => (params['nftDiscountBP'] = 5000));
-          await NFTOwner.create({ address: provider, tokenId: 1 });
-          await Market.updateById(market.id, { commission: 1000 });
-          const price = powOf(10, 18).toString();
-
-          await expect(
-            srv.calculateFee({ ...defaultParams, marketAddress, provider, taker, orderPrice: price }),
-          ).resolves.toEqual({
-            protoFee: '7000000000000000',
-            mktCreatorFee: '500000000000000000',
-            feeBp: 700,
-            mktFeeBp: 50000,
-          });
         });
       });
     });

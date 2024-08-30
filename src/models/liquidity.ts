@@ -23,6 +23,7 @@ export function makeLiqAddress(marketAddress: string, provider: string, lid: num
 }
 
 export interface FillResult {
+  marketAddress: string;
   side: string;
   liquidities: Liquidity[];
   totalAmountFilled: string;
@@ -345,9 +346,16 @@ export default class Liquidity extends BaseModel {
    * @param market The target market
    * @param side The side of the market to fill (base or quote)
    * @param amount The amount to fill (base or quote amount)
+   * @param totalFeePct The total fees percentage that will be applied to the amount
    * @param txn Optional transaction object
    */
-  static async fill(market: Market, side: 'base' | 'quote', amount: string, txn?: Transaction): Promise<FillResult> {
+  static async fill(
+    market: Market,
+    side: 'base' | 'quote',
+    amount: string,
+    totalFeePct: number,
+    txn?: Transaction,
+  ): Promise<FillResult> {
     const { address, network, quoteDecimals, baseDecimals } = market;
 
     if (market.isFungible()) {
@@ -410,6 +418,7 @@ export default class Liquidity extends BaseModel {
 
         return {
           liquidities,
+          marketAddress: market.address,
           totalAmountFilled: totalFilled.toFixed(),
           amount,
           filled: totalFilled.gte(amount),
@@ -419,6 +428,13 @@ export default class Liquidity extends BaseModel {
       }
 
       if (side === 'base') {
+        // Since the fees will be collected from the base amount, we need to
+        // account for the fees when calculating the amount to fill such that
+        // the total amount filled is equal to the amount parameter after fee deduction.
+        amount = toDec(amount)
+          .div(toDec(1).sub(toDec(totalFeePct).div(100)))
+          .toFixed();
+
         const q = this.query(txn)
           .with('q1', (builder) => {
             builder
@@ -459,7 +475,7 @@ export default class Liquidity extends BaseModel {
             liq.quantityFilled = toDec(liq.amountFilled).mul(toDec(liq.price)).div(pow10(quoteDecimals)).toFixed();
             amountFilled = amountFilled.add(liq.quantityFilled);
           } else {
-            liq.amountFilled = unfilled.toFixed();
+            liq.amountFilled = unfilled.toFixed(0);
             totalFilled = totalFilled.add(liq.amountFilled);
             liq.quantityFilled = toDec(liq.amountFilled).mul(toDec(liq.price)).div(pow10(quoteDecimals)).toFixed();
             amountFilled = amountFilled.add(liq.quantityFilled);
@@ -473,6 +489,7 @@ export default class Liquidity extends BaseModel {
 
         return {
           liquidities,
+          marketAddress: market.address,
           totalAmountFilled: totalFilled.toFixed(),
           amount,
           filled: totalFilled.gte(amount),

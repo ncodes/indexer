@@ -214,6 +214,7 @@ export class MarketsController {
     @Param('quote') quote: string,
     @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO,
   ) {
+    console.log('hello', base, quote);
     const market = await Market.getMarketByBaseAndQuote(
       q.net,
       base,

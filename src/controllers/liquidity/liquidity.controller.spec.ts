@@ -28,6 +28,7 @@ import SwapService from '../swaps/swap.service';
 import { LiquidityController } from './liquidity.controller';
 import { LiquidityService } from './liquidity.service';
 import { FeeCalculatorService } from '../../services/fee_calculator.service';
+import ProviderRegistry from '../../models/provider_registry';
 
 const mockCfgGet = jest.fn();
 const mockGetContractParam = jest.fn();
@@ -363,6 +364,13 @@ describe('LiquidityController', () => {
         quoteType: AssetType.ERC721,
       });
 
+      jest.spyOn(app.get(FeeCalculatorService), 'calculateFee').mockResolvedValue({
+        protoFee: '0',
+        mktCreatorFee: '0',
+        feeBp: 0,
+        mktFeeBp: 0,
+      });
+
       await request(app.getHttpServer())
         .get(`/v1/liquidities/${marketAddress}/100/quote/fill`)
         .query({ net })
@@ -384,7 +392,14 @@ describe('LiquidityController', () => {
           quoteDecimals: 18,
         });
 
+        await ProviderRegistry.create({
+          network: net,
+          address: '0xProvider',
+          index: 1,
+        });
+
         const liq0 = await Liquidity.create({
+          network: net,
           marketAddress,
           lid: 0,
           provider: '0xProvider',
@@ -393,6 +408,7 @@ describe('LiquidityController', () => {
         });
 
         const liq1 = await Liquidity.create({
+          network: net,
           marketAddress,
           lid: 1,
           provider: '0xProvider',
@@ -401,6 +417,7 @@ describe('LiquidityController', () => {
         });
 
         const liq2 = await Liquidity.create({
+          network: net,
           marketAddress,
           lid: 2,
           provider: '0xProvider',
@@ -517,7 +534,14 @@ describe('LiquidityController', () => {
           quoteDecimals: 18,
         });
 
+        await ProviderRegistry.create({
+          network: net,
+          address: '0xProvider',
+          index: 1,
+        });
+
         const liq0 = await Liquidity.create({
+          network: net,
           marketAddress,
           lid: 0,
           provider: '0xProvider',
@@ -526,6 +550,7 @@ describe('LiquidityController', () => {
         });
 
         const liq1 = await Liquidity.create({
+          network: net,
           marketAddress,
           lid: 1,
           provider: '0xProvider',
@@ -534,6 +559,7 @@ describe('LiquidityController', () => {
         });
 
         const liq2 = await Liquidity.create({
+          network: net,
           marketAddress,
           lid: 2,
           provider: '0xProvider',
@@ -639,6 +665,85 @@ describe('LiquidityController', () => {
             expect(res.body.data.filled).toBeFalsy();
             expect(res.body.data.amount).toEqual(amount);
           });
+      });
+
+      describe('with non-zero protocol and market fees', () => {
+        it('should return 200 when market is fungible', async () => {
+          await Market.create({
+            network: net,
+            address: marketAddress,
+            baseType: AssetType.ERC20,
+            quoteType: AssetType.NATIVE,
+            baseDecimals: 18,
+            quoteDecimals: 18,
+          });
+
+          await ProviderRegistry.create({
+            network: net,
+            address: '0xProvider',
+            index: 1,
+          });
+
+          const liq0 = await Liquidity.create({
+            network: net,
+            marketAddress,
+            lid: 0,
+            provider: '0xProvider',
+            amount: powOf(50, 18).toString(),
+            price: powOf(2, 18).toString(),
+          });
+
+          const liq1 = await Liquidity.create({
+            network: net,
+            marketAddress,
+            lid: 1,
+            provider: '0xProvider',
+            amount: powOf(50, 18).toString(),
+            price: powOf(1, 18).toString(),
+          });
+
+          const liq2 = await Liquidity.create({
+            network: net,
+            marketAddress,
+            lid: 2,
+            provider: '0xProvider',
+            amount: powOf(50, 18).toString(),
+            price: powOf(3, 18).toString(),
+          });
+
+          jest.spyOn(app.get(FeeCalculatorService), 'calculateFee').mockResolvedValue({
+            protoFee: '100000000000000000',
+            mktCreatorFee: '100000000000000000',
+            feeBp: 100,
+            mktFeeBp: 100,
+          });
+
+          const amount = powOf(100, 18).toString();
+          await request(app.getHttpServer())
+            .get(`/v1/liquidities/${marketAddress}/${amount}/base/fill`)
+            .query({ net })
+            .expect(200)
+            .expect((res) => {
+              expect(res.body.data.liquidities).toHaveLength(3);
+              expect(res.body.data.liquidities[0].id).toEqual(liq1.id);
+              expect(res.body.data.liquidities[0].quantityFilled).toEqual(powOf(50, 18).toString());
+              expect(res.body.data.liquidities[0].amountFilled).toEqual(powOf(50, 18).toString());
+              expect(res.body.data.liquidities[0].quantityFilledAfterFees).toEqual(powOf(50, 18).toString());
+              expect(res.body.data.liquidities[1].id).toEqual(liq0.id);
+              expect(res.body.data.liquidities[1].amountFilled).toEqual(powOf(50, 18).toString());
+              expect(res.body.data.liquidities[1].quantityFilled).toEqual(powOf(100, 18).toString());
+              expect(res.body.data.liquidities[1].quantityFilledAfterFees).toEqual(powOf(100, 18).toString());
+              expect(res.body.data.liquidities[2].id).toEqual(liq2.id);
+              expect(res.body.data.liquidities[2].amountFilled).toEqual('2040816326530612240');
+              expect(res.body.data.liquidities[2].quantityFilled).toEqual('6122448979591836720');
+              expect(res.body.data.liquidities[2].quantityFilledAfterFees).toEqual('6122448979591836720');
+              expect(res.body.data.totalAmountFilled).toEqual('102040816326530612240');
+              expect(res.body.data.totalQuantityFilled).toEqual('156122448979591836720');
+              expect(res.body.data.filled).toBeTruthy();
+              expect(res.body.data.amount).toEqual(powOf(100, 18).toString());
+              expect(res.body.data.side).toEqual('base');
+            });
+        });
       });
     });
   });

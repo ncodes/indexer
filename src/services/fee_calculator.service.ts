@@ -63,8 +63,8 @@ export class FeeCalculatorService {
       feeInfo.feeBp = isMarketStable ? stableSwapFeeBp : feeBp;
       feeInfo.mktFeeBp = market.commission;
 
-      feeInfo.mktCreatorFee = toDec(orderAmount).mul(feeInfo.mktFeeBp).div(denom).toFixed();
-      feeInfo.protoFee = toDec(orderAmount).mul(feeInfo.feeBp).div(denom).toFixed();
+      feeInfo.mktCreatorFee = toDec(orderAmount).mul(feeInfo.mktFeeBp).div(denom).toFixed(0);
+      feeInfo.protoFee = toDec(orderAmount).mul(feeInfo.feeBp).div(denom).toFixed(0);
       feeInfo.totalFees = toDec(feeInfo.mktCreatorFee).add(feeInfo.protoFee).toFixed();
 
       return {

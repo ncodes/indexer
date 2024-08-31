@@ -41,8 +41,6 @@ export class LiquidityController {
     const market = await Market.getMarket(q.net, p.mid);
     if (!market) throw404('market not found');
 
-    const { baseDecimals, quoteDecimals } = market;
-
     // Do a dummy fee calculation to get the protocol and market creator fees percentages
     const fees = await this.feeCalcSrv.calculateFee({ network: q.net, marketAddress: p.mid });
     const totalFeesPct = toDec(fees.feeBp).add(fees.mktFeeBp).div(100);
@@ -77,19 +75,15 @@ export class LiquidityController {
       }
 
       if (p.side === 'base') {
-        const totalFeePct = protoFeePct.add(mktFeePct).div(100);
-        const amtHD = toHD(p.amount, baseDecimals);
-        const priceHD = toHD(liq.price, quoteDecimals);
-        const newQuantity = toDec(amtHD).div(toDec(1).sub(totalFeePct)).mul(priceHD);
-        liq.quantityFilledAfterFees = toLD(newQuantity.toFixed(), quoteDecimals).toFixed();
+        liq.quantityFilledAfterFees = liq.quantityFilled;
       }
 
       totalQtyFilledAfterFees = totalQtyFilledAfterFees.add(liq.quantityFilledAfterFees);
     }
 
     fillRes.totalQuantityFilledAfterFees = totalQtyFilledAfterFees.toFixed();
-    fillRes.totalProtoFee = totalProtoFee.toFixed();
-    fillRes.totalMktFee = totalMktFee.toFixed();
+    fillRes.totalProtoFee = totalProtoFee.toFixed(0);
+    fillRes.totalMktFee = totalMktFee.toFixed(0);
     fillRes.totalFees = toDec(fillRes.totalProtoFee).add(fillRes.totalMktFee).toFixed();
     fillRes.protoFeePct = protoFeePct.toNumber();
     fillRes.mktFeePct = mktFeePct.toNumber();

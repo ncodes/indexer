@@ -360,7 +360,7 @@ export default class Liquidity extends BaseModel {
 
     if (market.isFungible()) {
       if (side === 'quote') {
-        const q = this.query(txn)
+        const liquidities = await this.query(txn)
           .with('q1', (builder) => {
             builder
               .select(
@@ -390,22 +390,22 @@ export default class Liquidity extends BaseModel {
           .withGraphFetched('providerRegistry')
           .orderBy('price', 'asc');
 
-        const liquidities = await q.execute();
-
         let totalFilled = toDec(0);
         let amountFilled = toDec(0);
+        let unfilled = toDec(amount);
         for (const liq of liquidities as (Liquidity & { cost: string; cumulative_cost: string })[]) {
-          const unfilled = toDec(amount).sub(totalFilled);
           if (toDec(liq.cost).lte(unfilled)) {
             liq.amountFilled = liq.cost.toString();
-            totalFilled = totalFilled.add(liq.cost);
             liq.quantityFilled = toDec(liq.amountFilled).div(toDec(liq.price)).mul(pow10(baseDecimals)).toFixed();
+            totalFilled = totalFilled.add(liq.cost);
             amountFilled = amountFilled.add(liq.quantityFilled);
+            unfilled = unfilled.sub(liq.cost);
           } else {
             liq.amountFilled = unfilled.toFixed();
-            totalFilled = totalFilled.add(liq.amountFilled);
             liq.quantityFilled = toDec(liq.amountFilled).div(toDec(liq.price)).mul(pow10(baseDecimals)).toFixed();
+            totalFilled = totalFilled.add(liq.amountFilled);
             amountFilled = amountFilled.add(liq.quantityFilled);
+            unfilled = unfilled.sub(unfilled);
           }
 
           liq.providerIndex = liq.providerRegistry.index;
@@ -431,11 +431,12 @@ export default class Liquidity extends BaseModel {
         // Since the fees will be collected from the base amount, we need to
         // account for the fees when calculating the amount to fill such that
         // the total amount filled is equal to the amount parameter after fee deduction.
+        const origAmount = amount;
         amount = toDec(amount)
           .div(toDec(1).sub(toDec(totalFeePct).div(100)))
-          .toFixed();
+          .toFixed(0);
 
-        const q = this.query(txn)
+        const liquidities = await this.query(txn)
           .with('q1', (builder) => {
             builder
               .select(
@@ -463,22 +464,22 @@ export default class Liquidity extends BaseModel {
           .withGraphFetched('providerRegistry')
           .orderBy('price', 'asc');
 
-        const liquidities = await q.execute();
-
         let totalFilled = toDec(0);
         let amountFilled = toDec(0);
+        let unfilled = toDec(amount);
         for (const liq of liquidities as (Liquidity & { cost: string; cumulative_amount: string })[]) {
-          const unfilled = toDec(amount).sub(totalFilled);
           if (toDec(liq.amount).lte(unfilled)) {
             liq.amountFilled = liq.amount.toString();
-            totalFilled = totalFilled.add(liq.amount);
             liq.quantityFilled = toDec(liq.amountFilled).mul(toDec(liq.price)).div(pow10(quoteDecimals)).toFixed();
             amountFilled = amountFilled.add(liq.quantityFilled);
+            totalFilled = totalFilled.add(liq.amountFilled);
+            unfilled = unfilled.sub(liq.amount);
           } else {
             liq.amountFilled = unfilled.toFixed(0);
-            totalFilled = totalFilled.add(liq.amountFilled);
             liq.quantityFilled = toDec(liq.amountFilled).mul(toDec(liq.price)).div(pow10(quoteDecimals)).toFixed();
             amountFilled = amountFilled.add(liq.quantityFilled);
+            totalFilled = totalFilled.add(liq.amountFilled);
+            unfilled = unfilled.sub(unfilled);
           }
 
           liq.providerIndex = liq.providerRegistry.index;
@@ -491,7 +492,7 @@ export default class Liquidity extends BaseModel {
           liquidities,
           marketAddress: market.address,
           totalAmountFilled: totalFilled.toFixed(),
-          amount,
+          amount: origAmount,
           filled: totalFilled.gte(amount),
           totalQuantityFilled: amountFilled.toFixed(),
           side,

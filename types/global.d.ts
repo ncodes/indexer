@@ -1,3 +1,4 @@
+import { AbiTypes } from '@jointlabs/meta';
 import {
   ChainLinkParams,
   CoreParams,
@@ -7,6 +8,7 @@ import {
   MinerRegistryParams,
   OthersParams,
 } from '@jointlabs/meta/src/types';
+import { PayRouterParams } from '@jointlabs/meta/src/types/contract';
 import { BigNumber } from 'ethers';
 import { NotificationID } from '../src/jobs/notifications/common';
 import Convo from '../src/models/convo';
@@ -18,7 +20,6 @@ import Session from '../src/models/session';
 import Swap from '../src/models/swap';
 import Ticket from '../src/models/ticket';
 import User from '../src/models/user';
-import { AbiTypes } from '@jointlabs/meta';
 
 declare global {
   namespace Express {
@@ -54,6 +55,7 @@ declare global {
     assetRegistry?: AbiTypes.AssetRegistry;
     minerRegistry?: AbiTypes.MinerRegistry;
     providerRegistry?: AbiTypes.ProviderRegistry;
+    payRouter?: AbiTypes.PayRouter;
     energon?: AbiTypes.Energon;
     nft?: AbiTypes.NFT;
     uniswapV2Router?: AbiTypes.UniswapV2Router;
@@ -164,6 +166,7 @@ declare global {
     DisputeManagerParams &
     MinerRegistryParams &
     ChainLinkParams &
+    PayRouterParams &
     OthersParams;
 
   export interface InstantSwapNotificationData {

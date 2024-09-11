@@ -13,16 +13,17 @@ import { AssetRegistryHandler } from './assetregistry/asset_registry.handler';
 import { BadgeManagerHandler } from './badge/badge_manager.handler';
 import { ContractManager } from './contract_manager';
 import { CoreHandler } from './core/core.handler';
+import { UniswapRouter } from './dexuser/uniswap_router.handler';
 import { DisputeManagerHandler } from './disputemanager/dispute_manager.handler';
 import { MarketCoreHandler } from './marketcore/market_core.handler';
 import { MediatorManagerHandler } from './mediatormanager/mediator_manager.handler';
 import { MinerRegistryHandler } from './miner_registry/miner_registry.handler';
 import { NFTHandler } from './nft/nft.handler';
 import { getNetworkParams } from './params';
+import { PayRouterHandler } from './payrouter/pay_router.handler';
 import Processor from './processor';
-import { Watcher } from './watcher';
-import { UniswapRouter } from './dexuser/uniswap_router.handler';
 import { ProviderRegistryHandler } from './providerregistry/provider_registry.handler';
+import { Watcher } from './watcher';
 
 @Injectable()
 export default class NetworkService {
@@ -156,6 +157,7 @@ export default class NetworkService {
       new AssetRegistryHandler(provider, network, this.contractMgr.contracts[network]),
       new ProviderRegistryHandler(provider, network, this.contractMgr.contracts[network]),
       new MinerRegistryHandler(provider, network, this.contractMgr.contracts[network]),
+      new PayRouterHandler(provider, network, this.contractMgr.contracts[network]),
     ];
 
     // Create event processor

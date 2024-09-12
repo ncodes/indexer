@@ -244,6 +244,10 @@ export default class Market extends BaseModel {
     );
   }
 
+  involvesSynth() {
+    return Market.isSynth(this.baseType) || Market.isSynth(this.quoteType);
+  }
+
   /**
    * Check if an asset pair type represents an instant market
    * @param baseType The base asset type

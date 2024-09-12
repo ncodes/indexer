@@ -3,9 +3,9 @@ import * as _ from 'lodash';
 import * as moment from 'moment';
 import Objection, { Model, Transaction, raw } from 'objection';
 import { randStr, toDec } from '../common/common';
+import { pow10 } from '../network/common';
 import { BaseModel } from './base';
 import Market, { AssetType } from './market';
-import { pow10 } from '../network/common';
 import ProviderRegistry from './provider_registry';
 
 /**
@@ -23,18 +23,46 @@ export function makeLiqAddress(marketAddress: string, provider: string, lid: num
 }
 
 export interface FillResult {
+  // The market address
   marketAddress: string;
+
+  // The side of the market to fill (base or quote).
+  // If side is base, the requester wants liquidities that can fill a specific amount of base tokens.
+  // If side is quote, the requester wants liquidities that can fill a specific cost denominated in the quote tokens.
   side: string;
+
+  // The list of liquidities that filled the request
   liquidities: Liquidity[];
+
+  // The total amount of the requested amount filled
   totalAmountFilled: string;
+
+  // The requested amount
   amount: string;
+
+  // Indicates if the requested amount was fully filled
   filled: boolean;
+
+  // The total opposing asset filled. If the side is base, this is the quote asset.
+  // If the side is quote, this is the base asset.
   totalQuantityFilled: string;
+
+  // The total quantity of the requested amount filled after adding or deducting fees.
   totalQuantityFilledAfterFees?: string;
+
+  // The total fees to be paid
   totalFees?: string;
+
+  // The total protocol fees to be paid
   totalProtoFee?: string;
+
+  // The total market fees to be paid
   totalMktFee?: string;
+
+  // The protocol fee percentage
   protoFeePct?: number;
+
+  // The market fee percentage
   mktFeePct?: number;
 }
 
@@ -357,10 +385,11 @@ export default class Liquidity extends BaseModel {
     txn?: Transaction,
   ): Promise<FillResult> {
     const { address, network, quoteDecimals, baseDecimals } = market;
+    const isSynthMkt = market.involvesSynth();
 
     if (market.isFungible()) {
       if (side === 'quote') {
-        const liquidities = await this.query(txn)
+        let liquidities = await this.query(txn)
           .with('q1', (builder) => {
             builder
               .select(
@@ -385,27 +414,34 @@ export default class Liquidity extends BaseModel {
           })
           .from('q1')
           .select('*')
-          .where('cumulative_cost', '<=', amount)
-          .orWhereRaw('cumulative_cost - ?? < ?', ['cost', amount])
+          .where((q) => {
+            !isSynthMkt
+              ? q.where('cumulative_cost', '<=', amount).orWhereRaw('cumulative_cost - ?? < ?', ['cost', amount])
+              : q.where('cost', '>=', amount);
+          })
           .withGraphFetched('providerRegistry')
           .orderBy('price', 'asc');
 
         let totalFilled = toDec(0);
         let amountFilled = toDec(0);
         let unfilled = toDec(amount);
+        let i = 0;
         for (const liq of liquidities as (Liquidity & { cost: string; cumulative_cost: string })[]) {
-          if (toDec(liq.cost).lte(unfilled)) {
-            liq.amountFilled = liq.cost.toString();
-            liq.quantityFilled = toDec(liq.amountFilled).div(toDec(liq.price)).mul(pow10(baseDecimals)).toFixed();
-            totalFilled = totalFilled.add(liq.cost);
-            amountFilled = amountFilled.add(liq.quantityFilled);
-            unfilled = unfilled.sub(liq.cost);
-          } else {
-            liq.amountFilled = unfilled.toFixed();
-            liq.quantityFilled = toDec(liq.amountFilled).div(toDec(liq.price)).mul(pow10(baseDecimals)).toFixed();
+          const liqCost = toDec(liq.cost);
+          liq.amountFilled = liqCost.lte(unfilled) ? toDec(liq.cost).toFixed() : unfilled.toFixed();
+          liq.quantityFilled = toDec(liq.amountFilled).div(toDec(liq.price)).mul(pow10(baseDecimals)).toFixed(0);
+
+          // For non-synth markets, all liquidities cumulatively fill the target amount.
+          // But for synth markets, each liquidity can fill the amount. The caller is
+          // expected to consume them individually. As such, we cannot add up the amounts
+          // filled, instead we use the first liquidity's amount filled and quantity filled.
+          if (!isSynthMkt) {
             totalFilled = totalFilled.add(liq.amountFilled);
             amountFilled = amountFilled.add(liq.quantityFilled);
-            unfilled = unfilled.sub(unfilled);
+            unfilled = unfilled.sub(liq.amountFilled);
+          } else if (i === 0) {
+            totalFilled = toDec(liq.amountFilled);
+            amountFilled = toDec(liq.quantityFilled);
           }
 
           liq.providerIndex = liq.providerRegistry.index;
@@ -414,6 +450,7 @@ export default class Liquidity extends BaseModel {
           delete liq.cost;
           delete liq.paused;
           delete liq.marketAddress;
+          i++;
         }
 
         return {
@@ -459,33 +496,43 @@ export default class Liquidity extends BaseModel {
           })
           .from('q1')
           .select('*')
-          .where('cumulative_amount', '<=', amount)
-          .orWhereRaw('cumulative_amount - ?? < ?', ['amount', amount])
+          .where((q) => {
+            !isSynthMkt
+              ? q.where('cumulative_amount', '<=', amount).orWhereRaw('cumulative_amount - ?? < ?', ['amount', amount])
+              : q.where('amount', '>=', amount);
+          })
           .withGraphFetched('providerRegistry')
           .orderBy('price', 'asc');
 
         let totalFilled = toDec(0);
         let amountFilled = toDec(0);
         let unfilled = toDec(amount);
+        let i = 0;
         for (const liq of liquidities as (Liquidity & { cost: string; cumulative_amount: string })[]) {
-          if (toDec(liq.amount).lte(unfilled)) {
-            liq.amountFilled = liq.amount.toString();
-            liq.quantityFilled = toDec(liq.amountFilled).mul(toDec(liq.price)).div(pow10(quoteDecimals)).toFixed();
+          const liquidityAmount = toDec(liq.amount);
+          const isFullyFilled = liquidityAmount.lte(unfilled);
+
+          liq.amountFilled = isFullyFilled ? liq.amount : unfilled.toFixed(0);
+          liq.quantityFilled = toDec(liq.amountFilled).mul(toDec(liq.price)).div(pow10(quoteDecimals)).toFixed(0);
+
+          // For non-synth markets, all liquidities cumulatively fill the target amount.
+          // But for synth markets, each liquidity can fill the amount. The caller is
+          // expected to consume them individually. As such, we cannot add up the amounts
+          // filled, instead we use the first liquidity's amount filled and quantity filled.
+          if (!isSynthMkt) {
             amountFilled = amountFilled.add(liq.quantityFilled);
             totalFilled = totalFilled.add(liq.amountFilled);
-            unfilled = unfilled.sub(liq.amount);
-          } else {
-            liq.amountFilled = unfilled.toFixed(0);
-            liq.quantityFilled = toDec(liq.amountFilled).mul(toDec(liq.price)).div(pow10(quoteDecimals)).toFixed();
-            amountFilled = amountFilled.add(liq.quantityFilled);
-            totalFilled = totalFilled.add(liq.amountFilled);
-            unfilled = unfilled.sub(unfilled);
+            unfilled = isFullyFilled ? unfilled.sub(liquidityAmount) : toDec(0);
+          } else if (i === 0) {
+            amountFilled = toDec(liq.quantityFilled);
+            totalFilled = toDec(liq.amountFilled);
           }
 
           liq.providerIndex = liq.providerRegistry.index;
           delete liq.providerRegistry;
           delete liq.cumulative_amount;
           delete liq.cost;
+          i++;
         }
 
         return {

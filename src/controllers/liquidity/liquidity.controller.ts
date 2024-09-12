@@ -1,18 +1,17 @@
 import { Body, Controller, Get, Param, Post, Query, ValidationPipe } from '@nestjs/common';
+import { isEqualStr, toDec } from '../../common/common';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ok, throw400, throw404 } from '../../common/responses/responses';
 import { ConfigService } from '../../config/config.service';
 import Event, { EventActionClass } from '../../models/event';
 import Liquidity from '../../models/liquidity';
 import Market from '../../models/market';
+import { FeeCalculatorService } from '../../services/fee_calculator.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { MarketService } from '../markets/market.service';
 import SwapService from '../swaps/swap.service';
 import { LiquidityService } from './liquidity.service';
 import { FillParamDTO, FillQueryDTO, GetParamDTO, GetQueryDTO, ListQueryDTO } from './query.dto';
-import { isEqualStr, toDec } from '../../common/common';
-import { FeeCalculatorService } from '../../services/fee_calculator.service';
-import { toHD, toLD } from '../../network/common';
 
 @Controller('v1/liquidities')
 export class LiquidityController {
@@ -54,31 +53,38 @@ export class LiquidityController {
     let totalMktFee = toDec(0);
     let protoFeePct = toDec(0);
     let mktFeePct = toDec(0);
+    let i = 0;
+
     for (const liq of fillRes.liquidities) {
-      const fees = await this.feeCalcSrv.calculateFee({
+      const { protoFee, mktCreatorFee, feeBp, mktFeeBp } = await this.feeCalcSrv.calculateFee({
         network: q.net,
         marketAddress: p.mid,
         orderAmount: liq.amountFilled,
         orderPrice: liq.price,
       });
 
-      const { protoFee, mktCreatorFee, feeBp, mktFeeBp } = fees;
       liq.protoFee = protoFee;
       liq.mktCreatorFee = mktCreatorFee;
-      totalProtoFee = totalProtoFee.add(toDec(protoFee));
-      totalMktFee = totalMktFee.add(toDec(mktCreatorFee));
-      protoFeePct = toDec(feeBp).div(100);
-      mktFeePct = toDec(mktFeeBp).div(100);
 
-      if (p.side === 'quote') {
-        liq.quantityFilledAfterFees = toDec(liq.quantityFilled).sub(toDec(protoFee).add(mktCreatorFee)).toFixed();
+      // For non-synth markets, all liquidities contribute to the total fees
+      // but for synth markets only the first liquidity fee is important as only
+      // one liquidity is used to fill the order. In this case, the first liquidity
+      // is the one that will be consumed first, so we return fee information for it.
+      if (!market.involvesSynth() || i === 0) {
+        protoFeePct = toDec(feeBp).div(100);
+        mktFeePct = toDec(mktFeeBp).div(100);
+        totalProtoFee = totalProtoFee.add(toDec(protoFee));
+        totalMktFee = totalMktFee.add(toDec(mktCreatorFee));
+
+        liq.quantityFilledAfterFees =
+          p.side === 'quote'
+            ? toDec(liq.quantityFilled).sub(toDec(protoFee).add(mktCreatorFee)).toFixed()
+            : liq.quantityFilled;
+
+        totalQtyFilledAfterFees = totalQtyFilledAfterFees.add(liq.quantityFilledAfterFees);
       }
 
-      if (p.side === 'base') {
-        liq.quantityFilledAfterFees = liq.quantityFilled;
-      }
-
-      totalQtyFilledAfterFees = totalQtyFilledAfterFees.add(liq.quantityFilledAfterFees);
+      i++;
     }
 
     fillRes.totalQuantityFilledAfterFees = totalQtyFilledAfterFees.toFixed();

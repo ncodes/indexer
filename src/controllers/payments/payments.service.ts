@@ -16,6 +16,7 @@ export class PaymentsService {
    * @param granteeAddr The address to grant the badge to
    * @param metaKey The meta key to set
    * @param metaValue The meta value to set
+   * @deprecated Remove when before mainnet launch
    */
   async getPaymentMethodGrantSignature(
     network: string,

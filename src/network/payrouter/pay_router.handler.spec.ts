@@ -152,7 +152,7 @@ describe.only('PayRouterHandler', () => {
     it('should delete a route requester record', async () => {
       const route = await PayRouterRoute.create({ network: net, routeId: 1 });
       const requester = await PayRouterRequester.create({ network: net, address: user });
-      const routeRequester = await PayRouterRouteRequester.create({
+      await PayRouterRouteRequester.create({
         network: net,
         routeId: route.id,
         requesterId: requester.id,
@@ -165,7 +165,7 @@ describe.only('PayRouterHandler', () => {
 
   describe('.onDepositedBond', function () {
     it('should update the bond amount', async () => {
-      const route = await PayRouterRoute.create({ network: net, routeId: 1 });
+      await PayRouterRoute.create({ network: net, routeId: 1 });
       await expect(handler.onDepositedBond(user, BigInt(1), BigInt(100), {} as any)).resolves.toBeUndefined();
       let res = await PayRouterRoute.findByNetworkAndRouteId(net, 1);
       expect(res).toBeDefined();
@@ -184,7 +184,7 @@ describe.only('PayRouterHandler', () => {
       await expect(
         handler.onWithdrawnBond(user, BigInt(route.routeId), BigInt(50), {} as any),
       ).resolves.toBeUndefined();
-      let res = await PayRouterRoute.findByNetworkAndRouteId(net, 1);
+      const res = await PayRouterRoute.findByNetworkAndRouteId(net, 1);
       expect(res).toBeDefined();
       expect(res.bond).toEqual('50');
     });

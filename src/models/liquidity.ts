@@ -389,7 +389,7 @@ export default class Liquidity extends BaseModel {
 
     if (market.isFungible()) {
       if (side === 'quote') {
-        let liquidities = await this.query(txn)
+        const liquidities = await this.query(txn)
           .with('q1', (builder) => {
             builder
               .select(
@@ -412,15 +412,27 @@ export default class Liquidity extends BaseModel {
               .where('amount', '>', 0)
               .where('paused', false);
           })
-          .from('q1')
-          .select('*')
-          .where((q) => {
-            !isSynthMkt
-              ? q.where('cumulative_cost', '<=', amount).orWhereRaw('cumulative_cost - ?? < ?', ['cost', amount])
-              : q.where('cost', '>=', amount);
+          .with('q2', (builder) => {
+            builder
+              .from('q1')
+              .select('*')
+              .where((q) => {
+                !isSynthMkt
+                  ? q.where('cumulative_cost', '<=', amount).orWhereRaw('cumulative_cost - ?? < ?', ['cost', amount])
+                  : q.where('cost', '>=', amount);
+              });
+
+            // For synth market, we need to ensure that we take the lowest priced
+            // distinct liquidity from a provider. We cannot allow duplicate providers.
+            if (isSynthMkt) {
+              builder.distinctOn('provider').orderBy('provider').orderBy('price', 'asc');
+            }
           })
+          .from('q2')
+          .select('*')
           .withGraphFetched('providerRegistry')
-          .orderBy('price', 'asc');
+          .orderBy('price', 'asc')
+          .orderBy('amount', 'desc');
 
         let totalFilled = toDec(0);
         let amountFilled = toDec(0);
@@ -494,15 +506,29 @@ export default class Liquidity extends BaseModel {
               .where('amount', '>', 0)
               .where('paused', false);
           })
-          .from('q1')
-          .select('*')
-          .where((q) => {
-            !isSynthMkt
-              ? q.where('cumulative_amount', '<=', amount).orWhereRaw('cumulative_amount - ?? < ?', ['amount', amount])
-              : q.where('amount', '>=', amount);
+          .with('q2', (builder) => {
+            builder
+              .from('q1')
+              .select('*')
+              .where((q) => {
+                !isSynthMkt
+                  ? q
+                      .where('cumulative_amount', '<=', amount)
+                      .orWhereRaw('cumulative_amount - ?? < ?', ['amount', amount])
+                  : q.where('amount', '>=', amount);
+              });
+
+            // For synth market, we need to ensure that we take the lowest priced
+            // distinct liquidity from a provider. We cannot allow duplicate providers.
+            if (isSynthMkt) {
+              builder.distinctOn('provider').orderBy('provider').orderBy('price', 'asc');
+            }
           })
+          .from('q2')
+          .select('*')
           .withGraphFetched('providerRegistry')
-          .orderBy('price', 'asc');
+          .orderBy('price', 'asc')
+          .orderBy('amount', 'desc');
 
         let totalFilled = toDec(0);
         let amountFilled = toDec(0);

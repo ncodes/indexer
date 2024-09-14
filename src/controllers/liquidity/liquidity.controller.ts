@@ -65,6 +65,10 @@ export class LiquidityController {
 
       liq.protoFee = protoFee;
       liq.mktCreatorFee = mktCreatorFee;
+      liq.quantityFilledAfterFees =
+        p.side === 'quote'
+          ? toDec(liq.quantityFilled).sub(toDec(protoFee).add(mktCreatorFee)).toFixed()
+          : liq.quantityFilled;
 
       // For non-synth markets, all liquidities contribute to the total fees
       // but for synth markets only the first liquidity fee is important as only
@@ -75,12 +79,6 @@ export class LiquidityController {
         mktFeePct = toDec(mktFeeBp).div(100);
         totalProtoFee = totalProtoFee.add(toDec(protoFee));
         totalMktFee = totalMktFee.add(toDec(mktCreatorFee));
-
-        liq.quantityFilledAfterFees =
-          p.side === 'quote'
-            ? toDec(liq.quantityFilled).sub(toDec(protoFee).add(mktCreatorFee)).toFixed()
-            : liq.quantityFilled;
-
         totalQtyFilledAfterFees = totalQtyFilledAfterFees.add(liq.quantityFilledAfterFees);
       }
 

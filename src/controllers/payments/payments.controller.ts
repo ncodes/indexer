@@ -13,6 +13,7 @@ export class PaymentsController {
    * Get payment methods badges on a network
    * @param q The query parameter
    * @param q.net The network name
+   * @deprecated Remove when before mainnet launch
    */
   @Get('methods')
   async getPaymentMethods(@Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO) {
@@ -21,6 +22,13 @@ export class PaymentsController {
       .build();
   }
 
+  /**
+   * Get payment method grant signature
+   * @param q The query parameter
+   * @param q.net The network name
+   * @param q.badge The payment method badge
+   * @deprecated Remove when before mainnet launch
+   */
   @Get('methods/grant-signature')
   async getGrantSignature(@Query(new ValidationPipe(ValPipeOpt)) q: GetGrantSigDTO) {
     return ok()

@@ -6,6 +6,7 @@ import { randStr, toDec } from '../common/common';
 import { pow10 } from '../network/common';
 import { BaseModel } from './base';
 import Market, { AssetType } from './market';
+import PaymentMethod from './payment_method';
 import ProviderRegistry from './provider_registry';
 
 /**
@@ -141,11 +142,14 @@ export default class Liquidity extends BaseModel {
   // The average number of seconds within which swaps are marked as released
   avgReleaseDur: number;
   // The list of payment methods badges associated
+  // @deprecated
   paymentMethods: string[];
   // Indicate if messaging is enabled
   messagingEnabled: boolean;
   // The time messaging enablement status was last updated
   messagingEnabledUpdatedAt: string;
+  // The payment method ID
+  paymentMethodId: string;
   // Whether the liquidity is hidden
   hidden: boolean;
 
@@ -169,6 +173,7 @@ export default class Liquidity extends BaseModel {
   /** Relations */
   market: Market;
   providerRegistry: ProviderRegistry;
+  paymentMethod: PaymentMethod;
 
   constructor(init?: Partial<Liquidity>) {
     super();
@@ -225,6 +230,14 @@ export default class Liquidity extends BaseModel {
         join: {
           from: ['liquidities.network', 'liquidities.provider'],
           to: ['provider_registry.network', 'provider_registry.address'],
+        },
+      },
+      paymentMethod: {
+        relation: Model.HasOneRelation,
+        modelClass: PaymentMethod,
+        join: {
+          from: ['liquidities.paymentMethodId'],
+          to: ['payment_methods.id'],
         },
       },
     };
@@ -385,7 +398,7 @@ export default class Liquidity extends BaseModel {
     txn?: Transaction,
   ): Promise<FillResult> {
     const { address, network, quoteDecimals, baseDecimals } = market;
-    const isSynthMkt = market.involvesSynth();
+    const isInteractive = market.isInteractive();
 
     if (market.isFungible()) {
       if (side === 'quote') {
@@ -401,6 +414,7 @@ export default class Liquidity extends BaseModel {
                 'amount',
                 'price',
                 'paused',
+                'paymentMethodId',
                 raw('price * amount / power(10,??) AS cost', quoteDecimals),
                 raw(`SUM(amount * price / power(10,??)) OVER (ORDER BY price,amount DESC) AS cumulative_cost`, [
                   quoteDecimals,
@@ -410,27 +424,32 @@ export default class Liquidity extends BaseModel {
               .where('network', network)
               .where('marketAddress', 'ilike', address)
               .where('amount', '>', 0)
-              .where('paused', false);
+              .where('paused', false)
+              .where((q) => {
+                if (isInteractive && !Market.isSynth(market.baseType)) {
+                  q.whereNotNull('paymentMethodId');
+                }
+              });
           })
           .with('q2', (builder) => {
             builder
               .from('q1')
               .select('*')
               .where((q) => {
-                !isSynthMkt
+                !isInteractive
                   ? q.where('cumulative_cost', '<=', amount).orWhereRaw('cumulative_cost - ?? < ?', ['cost', amount])
                   : q.where('cost', '>=', amount);
               });
 
-            // For synth market, we need to ensure that we take the lowest priced
+            // For interactive market, we need to ensure that we take the lowest priced
             // distinct liquidity from a provider. We cannot allow duplicate providers.
-            if (isSynthMkt) {
+            if (isInteractive) {
               builder.distinctOn('provider').orderBy('provider').orderBy('price', 'asc');
             }
           })
           .from('q2')
           .select('*')
-          .withGraphFetched('providerRegistry')
+          .withGraphFetched('[providerRegistry,paymentMethod]')
           .orderBy('price', 'asc')
           .orderBy('amount', 'desc');
 
@@ -444,10 +463,10 @@ export default class Liquidity extends BaseModel {
           liq.quantityFilled = toDec(liq.amountFilled).div(toDec(liq.price)).mul(pow10(baseDecimals)).toFixed(0);
 
           // For non-synth markets, all liquidities cumulatively fill the target amount.
-          // But for synth markets, each liquidity can fill the amount. The caller is
+          // But for interactive markets, each liquidity can fill the amount. The caller is
           // expected to consume them individually. As such, we cannot add up the amounts
           // filled, instead we use the first liquidity's amount filled and quantity filled.
-          if (!isSynthMkt) {
+          if (!isInteractive) {
             totalFilled = totalFilled.add(liq.amountFilled);
             amountFilled = amountFilled.add(liq.quantityFilled);
             unfilled = unfilled.sub(liq.amountFilled);
@@ -497,6 +516,7 @@ export default class Liquidity extends BaseModel {
                 'paused',
                 'amount',
                 'price',
+                'paymentMethodId',
                 raw('price * amount / power(10,??) AS cost', quoteDecimals),
                 raw(`SUM(amount) OVER (ORDER BY price,amount DESC) AS cumulative_amount`),
               )
@@ -504,29 +524,34 @@ export default class Liquidity extends BaseModel {
               .where('network', network)
               .where('marketAddress', 'ilike', address)
               .where('amount', '>', 0)
-              .where('paused', false);
+              .where('paused', false)
+              .where((q) => {
+                if (isInteractive && !Market.isSynth(market.baseType)) {
+                  q.whereNotNull('paymentMethodId');
+                }
+              });
           })
           .with('q2', (builder) => {
             builder
               .from('q1')
               .select('*')
               .where((q) => {
-                !isSynthMkt
+                !isInteractive
                   ? q
                       .where('cumulative_amount', '<=', amount)
                       .orWhereRaw('cumulative_amount - ?? < ?', ['amount', amount])
                   : q.where('amount', '>=', amount);
               });
 
-            // For synth market, we need to ensure that we take the lowest priced
+            // For interactive market, we need to ensure that we take the lowest priced
             // distinct liquidity from a provider. We cannot allow duplicate providers.
-            if (isSynthMkt) {
+            if (isInteractive) {
               builder.distinctOn('provider').orderBy('provider').orderBy('price', 'asc');
             }
           })
           .from('q2')
           .select('*')
-          .withGraphFetched('providerRegistry')
+          .withGraphFetched('[providerRegistry,paymentMethod]')
           .orderBy('price', 'asc')
           .orderBy('amount', 'desc');
 
@@ -542,10 +567,10 @@ export default class Liquidity extends BaseModel {
           liq.quantityFilled = toDec(liq.amountFilled).mul(toDec(liq.price)).div(pow10(quoteDecimals)).toFixed(0);
 
           // For non-synth markets, all liquidities cumulatively fill the target amount.
-          // But for synth markets, each liquidity can fill the amount. The caller is
+          // But for interactive markets, each liquidity can fill the amount. The caller is
           // expected to consume them individually. As such, we cannot add up the amounts
           // filled, instead we use the first liquidity's amount filled and quantity filled.
-          if (!isSynthMkt) {
+          if (!isInteractive) {
             amountFilled = amountFilled.add(liq.quantityFilled);
             totalFilled = totalFilled.add(liq.amountFilled);
             unfilled = isFullyFilled ? unfilled.sub(liquidityAmount) : toDec(0);

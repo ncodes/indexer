@@ -181,3 +181,8 @@ export class ListQueryDTO {
   @IsOptional()
   public select?: string[];
 }
+
+export class UpdateLiquidityDTO {
+  @IsNotEmpty({ message: makeValidatorMsg('payment method ID is required', 'pmId') })
+  public pmId: string;
+}

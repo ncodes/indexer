@@ -244,7 +244,7 @@ export default class Market extends BaseModel {
     );
   }
 
-  involvesSynth() {
+  isInteractive() {
     return Market.isSynth(this.baseType) || Market.isSynth(this.quoteType);
   }
 

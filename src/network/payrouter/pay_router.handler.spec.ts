@@ -19,6 +19,7 @@ describe.only('PayRouterHandler', () => {
   const db = DBService.getForTest();
   const net = 'ethereum';
   const user = '0xUser';
+  const user2 = '0xUser2';
   let handler: PayRouterHandler;
   const contracts = {};
   const cfg = {};
@@ -111,6 +112,31 @@ describe.only('PayRouterHandler', () => {
       expect(org.creator).toEqual(user);
       expect(org.name).toEqual('Org1');
       expect(org.orgId).toEqual(1);
+    });
+
+    describe('matching org with same name exists', () => {
+      it('should not create a new organization', async () => {
+        await expect(handler.onOrgCreated(user, 'Org1', BigInt(1), {} as any)).resolves.toBeUndefined();
+        let org = await PayRouterOrg.findByNetworkAndOrgId(net, 1);
+        expect(org).toBeDefined();
+        expect(org.creator).toEqual(user);
+        expect(org.name).toEqual('Org1');
+        expect(org.orgId).toEqual(1);
+
+        await expect(handler.onOrgCreated(user, 'Org1', BigInt(2), {} as any)).resolves.toBeUndefined();
+        org = await PayRouterOrg.findByNetworkAndOrgId(net, 2);
+        expect(org).not.toBeDefined();
+
+        // case insensitive
+        await expect(handler.onOrgCreated(user, 'oRg1', BigInt(2), {} as any)).resolves.toBeUndefined();
+        org = await PayRouterOrg.findByNetworkAndOrgId(net, 2);
+        expect(org).not.toBeDefined();
+
+        // same name different creator
+        await expect(handler.onOrgCreated(user2, 'oRg1', BigInt(2), {} as any)).resolves.toBeUndefined();
+        org = await PayRouterOrg.findByNetworkAndOrgId(net, 2);
+        expect(org).toBeDefined();
+      });
     });
   });
 

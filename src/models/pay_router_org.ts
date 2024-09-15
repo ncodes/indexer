@@ -76,6 +76,17 @@ export default class PayRouterOrg extends BaseModel {
   }
 
   /**
+   * Find a record by network, creator and name
+   * @param network The network
+   * @param creator The creator
+   * @param name The name
+   * @param txn Optional transaction object
+   */
+  static findByNetworkAndCreatorAndName(network: string, creator: string, name: string, txn?: Transaction) {
+    return this.query(txn).whereNotDeleted().where({ network, creator }).where('name', 'ilike', name).first();
+  }
+
+  /**
    * Update a record by ID
    * @param id The record id
    * @param data The data
@@ -83,5 +94,24 @@ export default class PayRouterOrg extends BaseModel {
    */
   static updateById(id: string, data: Partial<PayRouterOrg>, txn?: Transaction) {
     return this.query(txn).whereNotDeleted().patchAndFetchById(id, data);
+  }
+
+  /**
+   * Delete a record by network and orgId
+   * @param network The network
+   * @param orgId The organization ID
+   * @param txn Optional transaction object
+   */
+  static deleteByNetworkAndOrgId(network: string, orgId: number, txn?: Transaction) {
+    return this.query(txn).whereNotDeleted().where({ network, orgId }).delete();
+  }
+
+  /**
+   * Find all records by network
+   * @param network The network
+   * @param txn Optional transaction object
+   */
+  static findAllByNetwork(network: string, txn?: Transaction) {
+    return this.query(txn).whereNotDeleted().where({ network });
   }
 }

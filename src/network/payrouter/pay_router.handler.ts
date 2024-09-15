@@ -407,6 +407,8 @@ export class PayRouterHandler extends Handler {
    * @param txn The transaction object
    */
   async onOrgCreated(creator: string, name: string, orgId: bigint, event: ContractCallEvent, txn?: Transaction) {
+    const existing = await PayRouterOrg.findByNetworkAndCreatorAndName(this.network, creator, name, txn);
+    if (existing) return;
     await PayRouterOrg.create({ network: this.network, creator, name, orgId: Number(orgId) }, txn);
   }
 

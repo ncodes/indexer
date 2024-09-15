@@ -105,5 +105,8 @@ export default () => ({
       paymentMethod: process.env.PAYMENT_METHOD_BADGE,
       region: process.env.REGION_BADGE,
     },
+    payRouter: {
+      orgCreatorAddress: process.env.PAY_ROUTER_ORG_CREATOR_ADDRESS,
+    },
   },
 });

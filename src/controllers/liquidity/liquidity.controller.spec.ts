@@ -14,6 +14,7 @@ import Liquidity from '../../models/liquidity';
 import Market, { AssetType } from '../../models/market';
 import Meta, { MetaKeys } from '../../models/meta';
 import Offer from '../../models/offer';
+import PaymentMethod from '../../models/payment_method';
 import ProviderRegistry from '../../models/provider_registry';
 import Swap from '../../models/swap';
 import User from '../../models/user';
@@ -741,6 +742,12 @@ describe('LiquidityController', () => {
     });
 
     describe('off-chain market', () => {
+      let payMethod: PaymentMethod;
+
+      beforeEach(async () => {
+        payMethod = await PaymentMethod.create({});
+      });
+
       describe('side = quote', () => {
         it('should return 200 when market is fungible', async () => {
           await Market.create({
@@ -763,6 +770,7 @@ describe('LiquidityController', () => {
             provider: '0xProvider',
             amount: powOf(50, 18).toString(),
             price: powOf(2, 18).toString(),
+            paymentMethodId: payMethod.id,
           });
 
           const liq1 = await Liquidity.create({
@@ -772,6 +780,7 @@ describe('LiquidityController', () => {
             provider: '0xProvider2',
             amount: powOf(50, 18).toString(),
             price: powOf(1, 18).toString(),
+            paymentMethodId: payMethod.id,
           });
 
           const liq2 = await Liquidity.create({
@@ -781,6 +790,7 @@ describe('LiquidityController', () => {
             provider: '0xProvider3',
             amount: powOf(50, 18).toString(),
             price: powOf(3, 18).toString(),
+            paymentMethodId: payMethod.id,
           });
 
           jest.spyOn(app.get(FeeCalculatorService), 'calculateFee').mockResolvedValue({
@@ -859,6 +869,7 @@ describe('LiquidityController', () => {
             provider: '0xProvider',
             amount: powOf(50, 18).toString(),
             price: powOf(2, 18).toString(),
+            paymentMethodId: payMethod.id,
           });
 
           const liq1 = await Liquidity.create({
@@ -868,6 +879,7 @@ describe('LiquidityController', () => {
             provider: '0xProvider',
             amount: powOf(50, 18).toString(),
             price: powOf(1, 18).toString(),
+            paymentMethodId: payMethod.id,
           });
 
           const liq2 = await Liquidity.create({
@@ -877,6 +889,7 @@ describe('LiquidityController', () => {
             provider: '0xProvider3',
             amount: powOf(50, 18).toString(),
             price: powOf(3, 18).toString(),
+            paymentMethodId: payMethod.id,
           });
 
           jest.spyOn(app.get(FeeCalculatorService), 'calculateFee').mockResolvedValue({
@@ -921,6 +934,7 @@ describe('LiquidityController', () => {
             provider: '0xProvider',
             amount: powOf(50, 18).toString(),
             price: powOf(2, 18).toString(),
+            paymentMethodId: payMethod.id,
           });
 
           const liq1 = await Liquidity.create({
@@ -930,6 +944,7 @@ describe('LiquidityController', () => {
             provider: '0xProvider2',
             amount: powOf(50, 18).toString(),
             price: powOf(1, 18).toString(),
+            paymentMethodId: payMethod.id,
           });
 
           const liq2 = await Liquidity.create({
@@ -939,6 +954,7 @@ describe('LiquidityController', () => {
             provider: '0xProvider3',
             amount: powOf(70, 18).toString(),
             price: powOf(1, 18).toString(),
+            paymentMethodId: payMethod.id,
           });
 
           jest.spyOn(app.get(FeeCalculatorService), 'calculateFee').mockResolvedValue({
@@ -1030,6 +1046,7 @@ describe('LiquidityController', () => {
           provider: '0xProvider',
           amount: powOf(50, 18).toString(),
           price: powOf(2, 18).toString(),
+          paymentMethodId: payMethod.id,
         });
 
         const liq1 = await Liquidity.create({
@@ -1039,6 +1056,7 @@ describe('LiquidityController', () => {
           provider: '0xProvider',
           amount: powOf(50, 18).toString(),
           price: powOf(1, 18).toString(),
+          paymentMethodId: payMethod.id,
         });
 
         const liq2 = await Liquidity.create({
@@ -1048,6 +1066,7 @@ describe('LiquidityController', () => {
           provider: '0xProvider3',
           amount: powOf(70, 18).toString(),
           price: powOf(1, 18).toString(),
+          paymentMethodId: payMethod.id,
         });
 
         jest.spyOn(app.get(FeeCalculatorService), 'calculateFee').mockResolvedValue({
@@ -1067,6 +1086,68 @@ describe('LiquidityController', () => {
             expect(res.body.data.liquidities[0].id).toEqual(liq2.id);
             expect(res.body.data.liquidities[1].id).toEqual(liq1.id);
           });
+      });
+
+      describe('when liquidity has no payment method', () => {
+        it('should not return liquidity with a payment method assigned', async () => {
+          await Market.create({
+            network: net,
+            address: marketAddress,
+            baseType: AssetType.ERC20,
+            quoteType: AssetType.SYNTH,
+            baseDecimals: 18,
+            quoteDecimals: 18,
+          });
+
+          await ProviderRegistry.create({ network: net, address: '0xProvider', index: 1 });
+          await ProviderRegistry.create({ network: net, address: '0xProvider2', index: 2 });
+          await ProviderRegistry.create({ network: net, address: '0xProvider3', index: 3 });
+
+          const liq0 = await Liquidity.create({
+            network: net,
+            marketAddress,
+            lid: 0,
+            provider: '0xProvider',
+            amount: powOf(50, 18).toString(),
+            price: powOf(2, 18).toString(),
+            paymentMethodId: payMethod.id,
+          });
+
+          await Liquidity.create({
+            network: net,
+            marketAddress,
+            lid: 1,
+            provider: '0xProvider',
+            amount: powOf(50, 18).toString(),
+            price: powOf(1, 18).toString(),
+          });
+
+          await Liquidity.create({
+            network: net,
+            marketAddress,
+            lid: 2,
+            provider: '0xProvider3',
+            amount: powOf(70, 18).toString(),
+            price: powOf(1, 18).toString(),
+          });
+
+          jest.spyOn(app.get(FeeCalculatorService), 'calculateFee').mockResolvedValue({
+            protoFee: '0',
+            mktCreatorFee: '0',
+            feeBp: 0,
+            mktFeeBp: 0,
+          });
+
+          const amount = powOf(10, 18).toString();
+          await request(app.getHttpServer())
+            .get(`/v1/liquidities/${marketAddress}/${amount}/base/fill`)
+            .query({ net })
+            .expect(200)
+            .expect((res) => {
+              expect(res.body.data.liquidities).toHaveLength(1);
+              expect(res.body.data.liquidities[0].id).toEqual(liq0.id);
+            });
+        });
       });
     });
   });

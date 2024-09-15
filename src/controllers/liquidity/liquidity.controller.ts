@@ -1,17 +1,21 @@
-import { Body, Controller, Get, Param, Post, Query, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query, Req, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Request } from 'express';
 import { isEqualStr, toDec } from '../../common/common';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
-import { ok, throw400, throw404 } from '../../common/responses/responses';
+import { ok, throw400, throw401, throw404 } from '../../common/responses/responses';
 import { ConfigService } from '../../config/config.service';
+import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
+import { HasKeyGuard } from '../../guards/has_token.guard';
 import Event, { EventActionClass } from '../../models/event';
 import Liquidity from '../../models/liquidity';
 import Market from '../../models/market';
+import PaymentMethod from '../../models/payment_method';
 import { FeeCalculatorService } from '../../services/fee_calculator.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { MarketService } from '../markets/market.service';
 import SwapService from '../swaps/swap.service';
+import { FillParamDTO, FillQueryDTO, GetParamDTO, GetQueryDTO, ListQueryDTO, UpdateLiquidityDTO } from './dto';
 import { LiquidityService } from './liquidity.service';
-import { FillParamDTO, FillQueryDTO, GetParamDTO, GetQueryDTO, ListQueryDTO } from './query.dto';
 
 @Controller('v1/liquidities')
 export class LiquidityController {
@@ -32,7 +36,7 @@ export class LiquidityController {
    * @param q The query object
    * @param [q.net] The network name
    */
-  @Get(':mid/:amount/:side/fill')
+  @Get('/:mid/:amount/:side/fill')
   async fill(
     @Param(new ValidationPipe(ValPipeOpt)) p: FillParamDTO,
     @Query(new ValidationPipe(ValPipeOpt)) q: FillQueryDTO,
@@ -74,7 +78,7 @@ export class LiquidityController {
       // but for synth markets only the first liquidity fee is important as only
       // one liquidity is used to fill the order. In this case, the first liquidity
       // is the one that will be consumed first, so we return fee information for it.
-      if (!market.involvesSynth() || i === 0) {
+      if (!market.isInteractive() || i === 0) {
         protoFeePct = toDec(feeBp).div(100);
         mktFeePct = toDec(mktFeeBp).div(100);
         totalProtoFee = totalProtoFee.add(toDec(protoFee));
@@ -277,5 +281,31 @@ export class LiquidityController {
   @Post()
   async listPost(@Body(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
     return this.list(q);
+  }
+
+  /**
+   * Update the payment method ID for a liquidity
+   * @param marketAddress The market address
+   * @param provider The provider address
+   * @param liquidityId The liquidity ID
+   */
+  @UseGuards(BeAuthenticatedGuard)
+  @UseGuards(HasKeyGuard)
+  @Put('/:id/payment-method')
+  async updatePaymentMethodId(
+    @Req() req: Request,
+    @Param('id') liqId: string,
+    @Body(new ValidationPipe(ValPipeOpt)) body: UpdateLiquidityDTO,
+  ) {
+    let liquidity = await Liquidity.getById(liqId);
+    if (!liquidity) return throw404('liquidity not found');
+
+    if (liquidity.provider != req.user.address) throw401('not permitted to update this liquidity');
+
+    const pm = await PaymentMethod.getById(body.pmId);
+    if (!pm) return throw404('payment method not found');
+
+    liquidity = await Liquidity.updateById(liqId, { paymentMethodId: body.pmId });
+    return ok().data(liquidity).build();
   }
 }

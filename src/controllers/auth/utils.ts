@@ -57,7 +57,7 @@ export async function makeSession(
  * @returns
  */
 export function parseWalletSignature(msg: string, sig: string, ignoreEmail = false): SignatureData {
-  const rawMsg = Buffer.from(msg, 'hex');
+  const rawMsg = Buffer.from(msg.substring(2), 'hex');
   const hashMsg = hashMessage(rawMsg.toString('utf-8'));
   const digest = getBytes(hashMsg);
   const recoveredAddress = recoverAddress(digest, sig);
@@ -104,5 +104,3 @@ export function verifyOAuthStateToken(token: string, jwtSecret: string): Promise
     resolve(valid);
   });
 }
-
-

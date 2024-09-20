@@ -1,6 +1,7 @@
 import Objection, { Transaction } from 'objection';
 import { randStr } from '../common/common';
 import { BaseModel } from './base';
+import PayRouterOrg from './pay_router_org';
 
 /**
  * PaymentMethod contains information about a payment method
@@ -18,6 +19,9 @@ export default class PaymentMethod extends BaseModel {
   swiftCode: string = undefined;
   additionalInfo: string = undefined;
 
+  // Relations
+  org: PayRouterOrg = undefined;
+
   constructor(init?: Partial<PaymentMethod>) {
     super();
     Object.assign(this, init);
@@ -28,7 +32,16 @@ export default class PaymentMethod extends BaseModel {
   }
 
   static get relationMappings() {
-    return {};
+    return {
+      org: {
+        relation: BaseModel.BelongsToOneRelation,
+        modelClass: PayRouterOrg,
+        join: {
+          from: 'payment_methods.orgId',
+          to: 'pay_router_orgs.id',
+        },
+      },
+    };
   }
 
   $beforeInsert() {
@@ -75,10 +88,11 @@ export default class PaymentMethod extends BaseModel {
   /**
    * Find a record by ID
    * @param id The record id
+   * @param relations The relations to fetch
    * @param txn Optional transaction object
    */
-  static getById(id: string, txn?: Transaction) {
-    return this.query(txn).whereNotDeleted().findById(id);
+  static getById(id: string, relations = '', txn?: Transaction) {
+    return this.query(txn).whereNotDeleted().findById(id).withGraphFetched(relations);
   }
 
   /**

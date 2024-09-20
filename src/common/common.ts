@@ -4,11 +4,11 @@ import * as dayjs from 'dayjs';
 import * as utc from 'dayjs/plugin/utc';
 import Decimal from 'decimal.js';
 import { BigNumberish, ethers } from 'ethers';
+import { Request } from 'express';
 import * as moment from 'moment';
 import * as notifier from 'node-notifier';
 import { uid } from 'uid';
 import * as util from 'util';
-import { pow10 } from '../network/common';
 
 dayjs.extend(utc);
 
@@ -149,4 +149,9 @@ export function logIf(log: string, address: string) {
   if (address.toLowerCase() == logTarget.toLowerCase()) {
     console.log(log);
   }
+}
+
+export function getCfIpCountry(req: Request, devValue: string) {
+  const defaultCountry = isLocal() ? devValue : '';
+  return (req.headers['cf-ipcountry'] as string) || defaultCountry;
 }

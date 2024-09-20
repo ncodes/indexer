@@ -39,7 +39,7 @@ export class AddPaymentMethodDTO {
   public net: string;
 
   @IsIn([1, 2], { message: makeValidatorMsg('type is unknown', 'type') })
-  @IsNotEmpty({ message: makeValidatorMsg('type is required', 'type') })
+  @IsOptional()
   public type: number;
 
   @IsNotEmpty({ message: makeValidatorMsg('method name is required', 'name') })

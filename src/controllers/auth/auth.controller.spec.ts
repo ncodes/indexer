@@ -20,12 +20,12 @@ import { JointLinkService } from '../../services/joint_link.service';
 import { RedisService } from '../../services/redis/redis.service';
 import AirdropService from '../airdrop/airdrop.service';
 import { RefereeBonus } from '../airdrop/constants';
+import TapService from '../airdrop/tap.service';
 import ConvosService from '../convos/convos.service';
 import { UserService } from '../users/user.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { makeSession } from './utils';
-import TapService from '../airdrop/tap.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -88,6 +88,7 @@ describe('AuthController', () => {
     cfgObj = {
       'auth.jwtSecret': 'secret_secret',
       'app.discord.jointGuildId': '123',
+      'app.defaultCountry': 'US',
     };
     mockCfgGet.mockReset().mockImplementation((args) => {
       return cfgObj[args];
@@ -232,6 +233,30 @@ describe('AuthController', () => {
         });
     });
 
+    it('should return 400 when timezone is not valid', async () => {
+      const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
+      const wallet = new ethers.Wallet(privateKey);
+      const msg = Buffer.from(makeMsg(wallet.address, 'person@gmail.com', moment().toISOString()));
+      const sig = await wallet.signMessage(msg.toString());
+
+      await request(app.getHttpServer())
+        .post(`/v1/auth`)
+        .send({
+          sig,
+          msg: msg.toString('hex'),
+          timezone: 'America/XYZ',
+          locale: 'en_UK',
+        })
+        .expect(400)
+        .expect({
+          error: {
+            param: 'timezone',
+            type: 'invalid_request_error',
+            message: 'timezone is not valid',
+          },
+        });
+    });
+
     it('should return status=201, create new user, set refer code, set OTP secret, send OTP message and create no session', async () => {
       const privateKey = '0x0123456789012345678901234567890123456789012345678901234567890123';
       const wallet = new ethers.Wallet(privateKey);
@@ -246,6 +271,7 @@ describe('AuthController', () => {
         .send({
           sig,
           msg: msg.toString('hex'),
+          timezone: 'America/New_York',
         })
         .expect(201)
         .expect(async (res) => {
@@ -263,6 +289,9 @@ describe('AuthController', () => {
           expect(data.user.address.toLowerCase()).toEqual(wallet.address.toLowerCase());
           expect(data.user.email).toBeUndefined();
           expect(data.user.emailUnverified).toEqual('person@gmail.com');
+          expect(data.user.country).toEqual('US');
+          expect(data.user.timezone).toEqual('America/New_York');
+          expect(data.user.locale).toEqual('en_US');
           expect(data.user.otpSecret).toBeDefined();
 
           const user = await User.getById(res.body.data.user.id);
@@ -292,6 +321,7 @@ describe('AuthController', () => {
           .send({
             sig,
             msg: msg.toString('hex'),
+            timezone: 'America/New_York',
           })
           .expect(201)
           .expect(async (res) => {
@@ -303,6 +333,9 @@ describe('AuthController', () => {
             user = await User.getById(user.id);
             expect(user.otpSecret).toBeDefined();
             expect(user.emailUnverified).toEqual('person@gmail.com');
+            expect(user.timezone).toEqual('America/New_York');
+            expect(user.locale).toEqual('en_US');
+            expect(user.country).toEqual('US');
 
             const session = await Session.getBySignature(sha1(sig));
             expect(session).not.toBeDefined();

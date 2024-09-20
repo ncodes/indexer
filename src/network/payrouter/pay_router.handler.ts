@@ -100,10 +100,11 @@ export class PayRouterHandler extends Handler {
         routeIds: bigint[],
         bonds: bigint[],
         sourceAmt: bigint,
+        valueLockDur: bigint,
         event: ContractCallEvent,
         txn?: Transaction,
       ) => {
-        return this.onRequestCreated(creator, requestId, routeIds, bonds, sourceAmt, event, txn);
+        return this.onRequestCreated(creator, requestId, routeIds, bonds, sourceAmt, valueLockDur, event, txn);
       },
     );
 
@@ -305,6 +306,7 @@ export class PayRouterHandler extends Handler {
     routeIds: bigint[],
     bonds: bigint[],
     sourceAmt: bigint,
+    valueLockDur: bigint,
     _event: ContractCallEvent,
     txn?: Transaction,
   ) {
@@ -318,7 +320,7 @@ export class PayRouterHandler extends Handler {
         creator,
         requestId: Number(requestId),
         requesterFeeBp: requester.feeBp,
-        valueLockDuration: requester.valueLockDur,
+        valueLockDuration: Number(valueLockDur),
         protocolFeeBp: protocolFeeBp ?? 0,
         sourceAmt: sourceAmt.toString(),
       },

@@ -1,5 +1,5 @@
 /* tslint:disable:max-classes-per-file */
-import { IsNotEmpty, IsOptional } from 'class-validator';
+import { IsLocale, IsNotEmpty, IsOptional, IsTimeZone } from 'class-validator';
 import { makeValidatorMsg } from '../../common/validations/validation';
 
 /**
@@ -18,6 +18,10 @@ export class AuthDTO {
 
   @IsOptional()
   refCode: string;
+
+  @IsTimeZone({ message: makeValidatorMsg('timezone is not valid', 'timezone') })
+  @IsOptional()
+  timezone: string;
 }
 
 /**

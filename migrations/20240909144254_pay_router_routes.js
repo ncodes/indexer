@@ -15,6 +15,8 @@ exports.up = function (knex) {
       table.string('sourceToken');
       table.integer('destOrgId');
       table.decimal('bond', null).defaultTo(0);
+      table.float('fee').defaultTo(0);
+      table.string('paymentMethodId');
       table.timestamp('createdAt');
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');

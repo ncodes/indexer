@@ -1,6 +1,19 @@
-import { PaymentMethodType } from '@jointlabs/meta';
-import { Body, Controller, Get, Param, Post, Query, Req, Res, UseGuards, ValidationPipe } from '@nestjs/common';
+import { getPaymentMethod, PaymentMethodType } from '@jointlabs/meta';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  Param,
+  Post,
+  Query,
+  Req,
+  Res,
+  UseGuards,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { validate } from 'class-validator';
 import { Request, Response } from 'express';
 import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
 import { ok, throw400 } from '../../common/responses/responses';
@@ -29,6 +42,18 @@ export class PaymentsController {
   ) {
     const user = req.user;
 
+    const pmMeta = getPaymentMethod(body.name);
+    if (!pmMeta) throw400('payment method is unsupported');
+
+    if (!body.type) {
+      body.type = pmMeta.type;
+      const errors = await validate(body);
+      if (errors.length > 0 && errors[0].constraints) {
+        const err = JSON.parse(errors[0].constraints[Object.keys(errors[0].constraints)[0]]);
+        throw new HttpException(err.response, err.status);
+      }
+    }
+
     // Get the org associated with the payment method name
     const orgCreator = this.configSrv.get('app.payRouter.orgCreatorAddress');
     const org = await PayRouterOrg.findByNetworkAndCreatorAndName(body.net, orgCreator, body.name);
@@ -40,12 +65,12 @@ export class PaymentsController {
     const data: Partial<PaymentMethod> = {
       orgId: org.id,
       network: body.net,
-      type: body.type,
+      type: pmMeta.type,
       additionalInfo: body.additionalInfo,
       userId: user.id,
     };
 
-    if (body.type == PaymentMethodType.Bank) {
+    if (data.type == PaymentMethodType.Bank) {
       data.name = body.name;
       data.bankAccountNumber = body.bankAccountNumber;
       data.bankAccountName = body.bankAccountName;
@@ -53,7 +78,7 @@ export class PaymentsController {
       data.swiftCode = body.swiftCode;
     }
 
-    if (body.type == PaymentMethodType.Wallet) {
+    if (data.type == PaymentMethodType.Wallet) {
       data.name = body.name;
       data.accountId = body.accountId;
     }

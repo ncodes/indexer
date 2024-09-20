@@ -1,11 +1,12 @@
 import { Body, Controller, Delete, Get, Post, Put, Query, Req, UseGuards, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { isEmail } from 'class-validator';
+import * as clm from 'country-locale-map';
 import { Request } from 'express';
 import { transaction } from 'objection';
 import { authenticator, totp } from 'otplib';
 import CacheService from '../../cacher/cache.service';
-import { sha1 } from '../../common/common';
+import { getCfIpCountry, sha1 } from '../../common/common';
 import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
 import { ErrBadSignature, ErrorMessages, ErrorTypes, ok, throw400, throw404 } from '../../common/responses/responses';
 import { Roles } from '../../common/roles';
@@ -43,6 +44,7 @@ export class AuthController {
    */
   @Post('')
   async auth(
+    @Req() req: Request,
     @Body(new ValidationPipe(CommonValidationPipeOpt))
     body: AuthDTO,
   ) {
@@ -52,7 +54,6 @@ export class AuthController {
     let sigData: SignatureData;
     try {
       sigData = parseWalletSignature(body.msg, body.sig);
-      console.log('sigData', sigData);
     } catch (error) {
       throw ErrBadSignature;
     }
@@ -70,6 +71,7 @@ export class AuthController {
       user = await User.getByAddress(sigData.address);
       notifSettings = user ? user.notificationSettings : defaultNotificationSettings;
       isUserNew = !user;
+      const countryCode = getCfIpCountry(req, this.cfgSrv.get('app.defaultCountry'));
 
       // Create user if not found, Set email as unverified.
       // If user was found and email is different, update email as unverified.
@@ -80,6 +82,9 @@ export class AuthController {
             emailUnverified: sigData.email,
             role: Roles.User,
             otpSecret: authenticator.generateSecret(),
+            country: countryCode,
+            locale: countryCode && clm.getLocaleByAlpha2(countryCode),
+            timezone: body.timezone,
           },
           this.cacheSrv.cacheUser.bind(this.cacheSrv),
         );
@@ -89,6 +94,9 @@ export class AuthController {
           {
             otpSecret: user.otpSecret ?? authenticator.generateSecret(),
             emailUnverified: user.email !== sigData.email ? sigData.email : null,
+            country: user.country ?? countryCode,
+            locale: user.country ? user.locale : clm.getLocaleByAlpha2(countryCode),
+            timezone: body.timezone,
           },
           this.cacheSrv.cacheUser.bind(this.cacheSrv),
         );

@@ -3,11 +3,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from 'nestjs-throttler-storage-redis';
+import { CacheModule } from './cacher/cache.module';
 import { RequestLoggerMiddleware } from './common/loggers/request_logger';
 import { JsonBodyMiddleware } from './common/middlewares/body.middleware';
 import AppConfig from './config/app.config';
 import AuthConfig from './config/auth.config';
 import KnexConfig from './config/knex.config';
+import { AdminModule } from './controllers/admin/admin.module';
 import { AirdropModule } from './controllers/airdrop/airdrop.module';
 import { AssetsModule } from './controllers/assets/assets.module';
 import { AuthModule } from './controllers/auth/auth.module';
@@ -15,6 +17,7 @@ import { BadgesModule } from './controllers/badges/badges.module';
 import { ConvosModule } from './controllers/convos/convos.module';
 import { DisputesModule } from './controllers/disputes/disputes.module';
 import { FilesModule } from './controllers/files/files.module';
+import { HealthModule } from './controllers/health/health.module';
 import { LiquidityModule } from './controllers/liquidity/liquidity.module';
 import { MarketsModule } from './controllers/markets/markets.module';
 import { MiscModule } from './controllers/misc/misc.module';
@@ -23,8 +26,10 @@ import { OffersModule } from './controllers/offers/offers.module';
 import { PaymentsModule } from './controllers/payments/payments.module';
 import { PointModule } from './controllers/points/point.module';
 import { ReferralModule } from './controllers/referrals/referral.module';
+import { RoutesModule } from './controllers/routes/routes.module';
 import { SwapsModule } from './controllers/swaps/swaps.module';
 import { TasksModule } from './controllers/tasks/tasks.module';
+import { TGBotModule } from './controllers/tgbot/tgbot.module';
 import { TicketsModule } from './controllers/tickets/tickets.module';
 import { TimelinesModule } from './controllers/timelines/timelines.module';
 import { UsersModule } from './controllers/users/users.module';
@@ -33,10 +38,6 @@ import { InstructionsModule } from './instructions/instructions.module';
 import { JobsModule } from './jobs/jobs.module';
 import { NetworkModule } from './network/network.module';
 import { RedisModule } from './services/redis/redis.module';
-import { CacheModule } from './cacher/cache.module';
-import { TGBotModule } from './controllers/tgbot/tgbot.module';
-import { HealthModule } from './controllers/health/health.module';
-import { AdminModule } from './controllers/admin/admin.module';
 
 /**
  * Get a list of modules to be loaded.
@@ -72,6 +73,7 @@ function getModules() {
     AirdropModule,
     CacheModule,
     AdminModule,
+    RoutesModule,
   ];
 
   if (['1', 'true'].includes(process.env.ENABLE_TGBOT_SERVICE)) {

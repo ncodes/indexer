@@ -228,6 +228,7 @@ describe.only('PayRouterHandler', () => {
           [BigInt(1), BigInt(2)],
           [BigInt(10), BigInt(11)],
           BigInt(100),
+          BigInt(3600),
           {} as any,
         ),
       ).resolves.toBeUndefined();
@@ -237,7 +238,7 @@ describe.only('PayRouterHandler', () => {
       expect(request.creator).toEqual(user);
       expect(request.requestId).toEqual(1);
       expect(request.requesterFeeBp).toEqual(0);
-      expect(request.valueLockDuration).toEqual(0);
+      expect(request.valueLockDuration).toEqual(3600);
       expect(request.protocolFeeBp).toEqual(1000);
       expect(request.sourceAmt).toEqual('100');
 
@@ -268,6 +269,7 @@ describe.only('PayRouterHandler', () => {
             [BigInt(1), BigInt(2)],
             [BigInt(10), BigInt(11)],
             BigInt(100),
+            BigInt(3600),
             {} as any,
           ),
         ).resolves.toBeUndefined();
@@ -275,7 +277,7 @@ describe.only('PayRouterHandler', () => {
         const res = await PayRouterRequest.findByNetworkAndRequestId(net, 1);
         expect(res).toBeDefined();
         expect(res.creator).toEqual(user);
-        expect(res.valueLockDuration).toEqual(requester.valueLockDur);
+        expect(res.valueLockDuration).toEqual(3600);
         expect(res.protocolFeeBp).toEqual(requester.feeBp);
       });
     });

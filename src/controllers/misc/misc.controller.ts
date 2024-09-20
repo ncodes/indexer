@@ -3,15 +3,16 @@ import { Controller, Get, Logger, Param, Query, Req } from '@nestjs/common';
 import { Client } from '@xmtp/xmtp-js';
 import { Wallet } from 'ethers';
 import { Request } from 'express';
+import { Model } from 'objection';
+import { getCfIpCountry, toDec } from '../../common/common';
 import { ok, throw400, throw404 } from '../../common/responses/responses';
 import { ConfigService } from '../../config/config.service';
 import AssetRegistry from '../../models/asset_registry';
 import Meta, { FeeName } from '../../models/meta';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
+import { FeeCalculatorService } from '../../services/fee_calculator.service';
 import { ErrTokenNotFound, MetadataService } from '../../services/metadata/metadata.service';
 import { PointMap } from '../points/data/points';
-import { Model } from 'objection';
-import { FeeCalculatorService } from '../../services/fee_calculator.service';
 
 @Controller('v1/misc')
 export class MiscController {
@@ -89,6 +90,39 @@ export class MiscController {
       }
       throw404(msg);
     }
+  }
+
+  /**
+   * Convert synthetic (USD, NGN etc) asset to crypto rate
+   * @param network The network name where the token exist on
+   * @param to The token contract address
+   * @param synth The symbol of the synthetic asset
+   * @returns
+   */
+  @Get('/conv-synth-crypto/:network/:synth/:to')
+  async convertSynthToCrypto(
+    @Param('network') network: string,
+    @Param('synth') synth: string,
+    @Param('to') to: string,
+  ) {
+    // sythn to USD
+    const rate = await this.exRateSvr.get(synth);
+    if (!rate) throw400('synth symbol not supported');
+
+    // token to USD
+    const tokenInfo = await this.metadataSrv.getTokenInfo(network, to);
+    if (!tokenInfo) throw400('token not supported');
+
+    // convert to USD
+    const tokenRate = tokenInfo.price;
+
+    return ok()
+      .data({
+        synthUsd: rate.toFixed(),
+        tokenUsd: tokenRate.toFixed(),
+        value: rate.div(toDec(tokenRate)).toFixed(),
+      })
+      .build();
   }
 
   /**
@@ -184,7 +218,9 @@ export class MiscController {
 
   @Get('req-country-code')
   async getRequestCountryCode(@Req() req: Request) {
-    return ok().data({ code: req.headers['cf-ipcountry'] }).build();
+    return ok()
+      .data({ code: getCfIpCountry(req, this.cfgSrv.get('app.defaultCountry')) })
+      .build();
   }
 
   @Get('point/:name')

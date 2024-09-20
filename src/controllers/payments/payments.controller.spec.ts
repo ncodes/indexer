@@ -112,41 +112,25 @@ describe('PaymentsController', () => {
         });
     });
 
-    it('should return 400 when type is not provided', async () => {
+    it('should return 400 when payment method name is unknown', async () => {
+      await request(app.getHttpServer())
+        .post(`/v1/payments/methods`)
+        .set('Authorization', 'bearer ' + token)
+        .send({ net, name: 'unknown' })
+        .expect(400)
+        .expect({
+          error: {
+            type: 'invalid_request_error',
+            message: 'payment method is unsupported',
+          },
+        });
+    });
+
+    it('should return 400 when payment method name is not provided', async () => {
       await request(app.getHttpServer())
         .post(`/v1/payments/methods`)
         .set('Authorization', 'bearer ' + token)
         .send({ net })
-        .expect(400)
-        .expect({
-          error: {
-            message: 'type is required',
-            param: 'type',
-            type: 'invalid_request_error',
-          },
-        });
-    });
-
-    it('should return 400 when type is unknown', async () => {
-      await request(app.getHttpServer())
-        .post(`/v1/payments/methods`)
-        .set('Authorization', 'bearer ' + token)
-        .send({ net, type: 4 })
-        .expect(400)
-        .expect({
-          error: {
-            message: 'type is unknown',
-            param: 'type',
-            type: 'invalid_request_error',
-          },
-        });
-    });
-
-    it('should return 400 when type is 1 (bank) and payment method name is not provided', async () => {
-      await request(app.getHttpServer())
-        .post(`/v1/payments/methods`)
-        .set('Authorization', 'bearer ' + token)
-        .send({ net, type: 1 })
         .expect(400)
         .expect({
           error: {
@@ -157,11 +141,11 @@ describe('PaymentsController', () => {
         });
     });
 
-    it('should return 400 when bank account name is not provided', async () => {
+    it('should return 400 when method is type 1 and bank account name is not provided', async () => {
       await request(app.getHttpServer())
         .post(`/v1/payments/methods`)
         .set('Authorization', 'bearer ' + token)
-        .send({ net, type: 1, name: 'Bank A' })
+        .send({ net, name: 'Chase Bank' })
         .expect(400)
         .expect({
           error: {
@@ -172,11 +156,11 @@ describe('PaymentsController', () => {
         });
     });
 
-    it('should return 400 when bank account number is not provided', async () => {
+    it('should return 400 when method is type 1 and bank account number is not provided', async () => {
       await request(app.getHttpServer())
         .post(`/v1/payments/methods`)
         .set('Authorization', 'bearer ' + token)
-        .send({ net, type: 1, name: 'Bank A', bankAccountName: 'John Doe' })
+        .send({ net, name: 'Chase Bank', bankAccountName: 'John Doe' })
         .expect(400)
         .expect({
           error: {
@@ -187,26 +171,11 @@ describe('PaymentsController', () => {
         });
     });
 
-    it('should return 400 when type=2 (wallet) and method name is not provided', async () => {
+    it('should return 400 when method is type 2 (wallet) and account ID is not provided', async () => {
       await request(app.getHttpServer())
         .post(`/v1/payments/methods`)
         .set('Authorization', 'bearer ' + token)
-        .send({ net, type: 2 })
-        .expect(400)
-        .expect({
-          error: {
-            message: 'method name is required',
-            param: 'name',
-            type: 'invalid_request_error',
-          },
-        });
-    });
-
-    it('should return 400 when type=2 and account ID is not provided', async () => {
-      await request(app.getHttpServer())
-        .post(`/v1/payments/methods`)
-        .set('Authorization', 'bearer ' + token)
-        .send({ net, type: 2, name: 'Wallet A' })
+        .send({ net, name: 'Alipay' })
         .expect(400)
         .expect({
           error: {
@@ -217,11 +186,11 @@ describe('PaymentsController', () => {
         });
     });
 
-    it('should return 400 when payment method is unsupported', async () => {
+    it('should return 400 when payment method is unsupported by the operator', async () => {
       await request(app.getHttpServer())
         .post(`/v1/payments/methods`)
         .set('Authorization', 'bearer ' + token)
-        .send({ net, type: 1, name: 'Bank A', bankAccountName: 'John Doe', bankAccountNumber: '1234567890' })
+        .send({ net, name: 'Chase Bank', bankAccountName: 'John Doe', bankAccountNumber: '1234567890' })
         .expect(400)
         .expect({
           error: {
@@ -232,35 +201,35 @@ describe('PaymentsController', () => {
     });
 
     it('should return 201 on correct parameters', async () => {
-      await PayRouterOrg.create({ orgId: 1, network: net, name: 'Bank A', creator: '0xCreatorAddress' });
+      await PayRouterOrg.create({ orgId: 1, network: net, name: 'Chase Bank', creator: '0xCreatorAddress' });
       await request(app.getHttpServer())
         .post(`/v1/payments/methods`)
         .set('Authorization', 'bearer ' + token)
-        .send({ net, type: 1, name: 'Bank A', bankAccountName: 'John Doe', bankAccountNumber: '1234567890' })
+        .send({ net, name: 'Chase Bank', bankAccountName: 'John Doe', bankAccountNumber: '1234567890' })
         .expect(201)
         .expect((res) => {
           const body = res.body.data as PaymentMethod;
           expect(body.id).toBeDefined();
           expect(body.network).toBe(net);
           expect(body.type).toBe(1);
-          expect(body.name).toBe('Bank A');
+          expect(body.name).toBe('Chase Bank');
           expect(body.bankAccountName).toBe('John Doe');
           expect(body.bankAccountNumber).toBe('1234567890');
         });
     });
 
-    it('should return 400 when user already created the payment method', async () => {
-      await PayRouterOrg.create({ orgId: 1, network: net, name: 'Bank A', creator: '0xCreatorAddress' });
+    it('should return 400 when user already added the exact payment method', async () => {
+      await PayRouterOrg.create({ orgId: 1, network: net, name: 'Chase Bank', creator: '0xCreatorAddress' });
       await request(app.getHttpServer())
         .post(`/v1/payments/methods`)
         .set('Authorization', 'bearer ' + token)
-        .send({ net, type: 1, name: 'Bank A', bankAccountName: 'John Doe', bankAccountNumber: '1234567890' })
+        .send({ net, name: 'Chase Bank', bankAccountName: 'John Doe', bankAccountNumber: '1234567890' })
         .expect(201);
 
       await request(app.getHttpServer())
         .post(`/v1/payments/methods`)
         .set('Authorization', 'bearer ' + token)
-        .send({ net, type: 1, name: 'Bank A', bankAccountName: 'John Doe', bankAccountNumber: '1234567890' })
+        .send({ net, name: 'Chase Bank', bankAccountName: 'John Doe', bankAccountNumber: '1234567890' })
         .expect(400)
         .expect({
           error: {

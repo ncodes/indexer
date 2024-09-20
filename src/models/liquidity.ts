@@ -449,7 +449,13 @@ export default class Liquidity extends BaseModel {
           })
           .from('q2')
           .select('*')
-          .withGraphFetched('[providerRegistry,paymentMethod]')
+          .withGraphFetched('[providerRegistry,paymentMethod.org]')
+          .modifyGraph('paymentMethod', (b) => {
+            return b.select(['id', 'type', 'name']);
+          })
+          .modifyGraph('paymentMethod.org', (b) => {
+            return b.select(['id', 'orgId']);
+          })
           .orderBy('price', 'asc')
           .orderBy('amount', 'desc');
 
@@ -551,7 +557,13 @@ export default class Liquidity extends BaseModel {
           })
           .from('q2')
           .select('*')
-          .withGraphFetched('[providerRegistry,paymentMethod]')
+          .withGraphFetched('[providerRegistry,paymentMethod.org]')
+          .modifyGraph('paymentMethod', (b) => {
+            return b.select(['id', 'type', 'name']);
+          })
+          .modifyGraph('paymentMethod.org', (b) => {
+            return b.select(['id', 'orgId']);
+          })
           .orderBy('price', 'asc')
           .orderBy('amount', 'desc');
 

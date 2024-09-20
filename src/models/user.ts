@@ -1,8 +1,8 @@
+import * as moment from 'moment';
 import Objection, { Model, Transaction } from 'objection';
 import { randStr } from '../common/common';
 import { BaseModel } from './base';
 import NotificationSetting from './notification_setting';
-import * as moment from 'moment';
 
 /**
  * User represents a user model
@@ -14,6 +14,7 @@ export default class User extends BaseModel {
   locale: string;
   timezone: string;
   role: string;
+  country: string;
   deviceTokenEmail: string;
   otpSecret: string;
   referrer: string;

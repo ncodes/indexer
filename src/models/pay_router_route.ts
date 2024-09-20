@@ -1,6 +1,8 @@
 import Objection, { Transaction } from 'objection';
 import { randStr } from '../common/common';
 import { BaseModel } from './base';
+import PayRouterOrg from './pay_router_org';
+import PaymentMethod from './payment_method';
 
 export enum SourceType {
   Token = 0,
@@ -20,6 +22,13 @@ export default class PayRouterRoute extends BaseModel {
   sourceToken: string = undefined;
   destOrgId: number = undefined;
   bond: string = undefined;
+  paymentMethodId: string = undefined;
+  fee: number;
+
+  // Relations
+  sourceOrg: PayRouterOrg = undefined;
+  destOrg: PayRouterOrg = undefined;
+  paymentMethod: PaymentMethod = undefined;
 
   constructor(init?: Partial<PayRouterRoute>) {
     super();
@@ -31,7 +40,32 @@ export default class PayRouterRoute extends BaseModel {
   }
 
   static get relationMappings() {
-    return {};
+    return {
+      sourceOrg: {
+        relation: BaseModel.BelongsToOneRelation,
+        modelClass: PayRouterOrg,
+        join: {
+          from: 'pay_router_routes.sourceOrgId',
+          to: 'pay_router_orgs.orgId',
+        },
+      },
+      destOrg: {
+        relation: BaseModel.BelongsToOneRelation,
+        modelClass: PayRouterOrg,
+        join: {
+          from: 'pay_router_routes.destOrgId',
+          to: 'pay_router_orgs.orgId',
+        },
+      },
+      paymentMethod: {
+        relation: BaseModel.HasOneRelation,
+        modelClass: PaymentMethod,
+        join: {
+          from: 'pay_router_routes.paymentMethodId',
+          to: 'payment_methods.id',
+        },
+      },
+    };
   }
 
   $beforeInsert() {
@@ -76,6 +110,17 @@ export default class PayRouterRoute extends BaseModel {
   }
 
   /**
+   * Find a record by ID and owner
+   * @param id The record id
+   * @param owner The owner address
+   * @param txn Optional transaction object
+   * @returns
+   */
+  static getByIdAndOwner(id: string, owner: string, txn?: Transaction) {
+    return this.query(txn).whereNotDeleted().where({ id }).where('owner', 'ilike', owner).first();
+  }
+
+  /**
    * Find records by network and owner
    * @param network The network
    * @param owner The owner address
@@ -103,5 +148,39 @@ export default class PayRouterRoute extends BaseModel {
    */
   static updateById(id: string, data: Partial<PayRouterRoute>, txn?: Transaction) {
     return this.query(txn).whereNotDeleted().patchAndFetchById(id, data);
+  }
+
+  /**
+   * Find records by destination organization ID
+   * @param network The network (optional)
+   * @param destOrgId The destination organization ID
+   * @param txn Optional transaction object
+   * @returns
+   */
+  static findByNetworkAndDestination(
+    network: string = undefined,
+    destOrgId: number,
+    minBond: string = undefined,
+    select: string[] = [],
+    pmSelect: string[] = [],
+    txn?: Transaction,
+  ) {
+    let q = this.query(txn);
+    if (select.length > 0) {
+      q = q.select(select);
+    }
+
+    return q
+      .whereNotDeleted()
+      .whereNotNull('paymentMethodId')
+      .where((q) => {
+        if (network) q.where({ network });
+        if (minBond) q.where('bond', '>=', minBond);
+      })
+      .where({ destOrgId })
+      .withGraphFetched('[sourceOrg,destOrg,paymentMethod]')
+      .modifyGraph('paymentMethod', (q) => {
+        if (pmSelect.length > 0) q.select(pmSelect);
+      });
   }
 }

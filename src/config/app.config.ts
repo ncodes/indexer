@@ -4,6 +4,7 @@ export default () => ({
     xmtpEnv: process.env.XMTP_ENV,
     url: process.env.URL,
     appUrl: process.env.APP_URL,
+    defaultCountry: process.env.DEFAULT_COUNTRY,
     throttle_ttl: process.env.THROTTLE_TTL,
     throttle_limit: process.env.THROTTLE_LIMIT,
     rootAdminUser: process.env.ROOT_ADMIN_USER,

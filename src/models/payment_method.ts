@@ -110,9 +110,17 @@ export default class PaymentMethod extends BaseModel {
    * @param network The network
    * @param orgId The org ID
    * @param userId The user ID
+   * @param bankAccountNumber The bank account number (optional)
+   * @param accountId The account ID (optional)
    */
-  static findByNetworkAndOrgIdAndUserId(network: string, orgId: string, userId: string) {
-    return this.query().where({ network, orgId, userId }).first();
+  static findExact(network: string, orgId: string, userId: string, bankAccountNumber?: string, accountId?: string) {
+    return this.query()
+      .where({ network, orgId, userId })
+      .where((b) => {
+        if (bankAccountNumber) b.where({ bankAccountNumber });
+        if (accountId) b.where({ accountId });
+      })
+      .first();
   }
 
   /**

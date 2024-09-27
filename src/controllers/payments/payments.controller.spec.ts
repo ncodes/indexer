@@ -175,7 +175,7 @@ describe('PaymentsController', () => {
       await request(app.getHttpServer())
         .post(`/v1/payments/methods`)
         .set('Authorization', 'bearer ' + token)
-        .send({ net, name: 'Alipay' })
+        .send({ net, name: 'Alipay (CN)' })
         .expect(400)
         .expect({
           error: {
@@ -207,7 +207,7 @@ describe('PaymentsController', () => {
         .set('Authorization', 'bearer ' + token)
         .send({ net, name: 'Chase Bank', bankAccountName: 'John Doe', bankAccountNumber: '1234567890' })
         .expect(201)
-        .expect((res) => {
+        .expect(async (res) => {
           const body = res.body.data as PaymentMethod;
           expect(body.id).toBeDefined();
           expect(body.network).toBe(net);
@@ -215,6 +215,23 @@ describe('PaymentsController', () => {
           expect(body.name).toBe('Chase Bank');
           expect(body.bankAccountName).toBe('John Doe');
           expect(body.bankAccountNumber).toBe('1234567890');
+
+          // Set the new payment method as the default payment method if no default is set
+          const user = await User.getById(u.id);
+          expect(user.defaultPaymentMethodId).toBe(body.id);
+        });
+
+      // Should not set the new payment method as the default payment method if a default is already set
+      await request(app.getHttpServer())
+        .post(`/v1/payments/methods`)
+        .set('Authorization', 'bearer ' + token)
+        .send({ net, name: 'Chase Bank', bankAccountName: 'John Doe', bankAccountNumber: '0234567890' })
+        .expect(201)
+        .expect(async (res) => {
+          const body = res.body.data as PaymentMethod;
+          expect(body.id).toBeDefined();
+          const user = await User.getById(u.id);
+          expect(user.defaultPaymentMethodId).not.toBe(body.id);
         });
     });
 

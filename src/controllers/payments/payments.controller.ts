@@ -21,6 +21,7 @@ import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import PayRouterOrg from '../../models/pay_router_org';
 import PaymentMethod from '../../models/payment_method';
+import User from '../../models/user';
 import { AddPaymentMethodDTO } from './query.dto';
 
 @Controller('v1/payments')
@@ -59,7 +60,13 @@ export class PaymentsController {
     const org = await PayRouterOrg.findByNetworkAndCreatorAndName(body.net, orgCreator, body.name);
     if (!org) throw400('payment method is unsupported');
 
-    const existingPm = await PaymentMethod.findByNetworkAndOrgIdAndUserId(body.net, org.id, user.id);
+    if (body.type == 1) {
+      delete body.accountId;
+    } else {
+      delete body.bankAccountNumber;
+    }
+
+    const existingPm = await PaymentMethod.findExact(body.net, org.id, user.id, body.bankAccountNumber, body.accountId);
     if (existingPm) throw400('payment method already exists');
 
     const data: Partial<PaymentMethod> = {
@@ -83,9 +90,14 @@ export class PaymentsController {
       data.accountId = body.accountId;
     }
 
-    return ok()
-      .data(await PaymentMethod.create(data))
-      .build();
+    const pm = await PaymentMethod.create(data);
+
+    // Set the new payment method as the default payment method if no default is set
+    if (!user.defaultPaymentMethodId) {
+      await User.updateById(user.id, { defaultPaymentMethodId: pm.id });
+    }
+
+    return ok().data(pm).build();
   }
 
   /**
@@ -110,7 +122,7 @@ export class PaymentsController {
 
       // Check whether the user already has the payment method on the new network.
       // If so, skip it
-      const existingPm = await PaymentMethod.findByNetworkAndOrgIdAndUserId(to, org.id, user.id);
+      const existingPm = await PaymentMethod.findExact(to, org.id, user.id, method.bankAccountNumber, method.accountId);
       if (existingPm) continue;
 
       await PaymentMethod.create({

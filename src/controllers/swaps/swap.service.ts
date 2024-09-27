@@ -1,3 +1,4 @@
+import { getCurrency } from '@jointlabs/meta';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as _ from 'lodash';
@@ -5,14 +6,20 @@ import { getContractsAddress, toDec } from '../../common/common';
 import Dispute from '../../models/dispute';
 import Draft from '../../models/draft';
 import Market from '../../models/market';
+import PayRouterRoute from '../../models/pay_router_route';
 import Swap from '../../models/swap';
 import User from '../../models/user';
 import { isZero } from '../../network/common';
+import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 
 @Injectable()
 export default class SwapService {
-  constructor(private metadataSrv: MetadataService, private cfgSrv: ConfigService) {}
+  constructor(
+    private metadataSrv: MetadataService,
+    private cfgSrv: ConfigService,
+    private exrSrv: ExchangeRateService,
+  ) {}
 
   /**
    * Extend swap with peripheral and derived data
@@ -52,6 +59,39 @@ export default class SwapService {
         swap.feeSymbol = feeInfo.symbol;
         swap.feeUsd = await this.metadataSrv.tryToUsd(network, swap.fee, feeInfo.address);
       }
+
+      if (swap.payRouterRequest) {
+        swap.payRouterRequest.routes = [];
+
+        const routeIds = swap.payRouterRequest.routeIds;
+        for (const routeId of routeIds) {
+          const route = await PayRouterRoute.findByNetworkAndRouteId(network, routeId, 'paymentMethod');
+          if (route) swap.payRouterRequest.routes.push(route);
+        }
+      }
+
+      // Get the exchange rates for the payment methods involved in the swap
+      const rates: Record<string, number> = {};
+      if (swap.providerPaymentMethod) {
+        const currency = getCurrency(swap.providerPaymentMethod.name);
+        const rate = await this.exrSrv.get(currency);
+        rates[currency] = rate.toNumber();
+      }
+      if (swap.takerPaymentMethod) {
+        const currency = getCurrency(swap.takerPaymentMethod.name);
+        const rate = await this.exrSrv.get(currency);
+        rates[currency] = rate.toNumber();
+      }
+      if (swap.payRouterRequest) {
+        for (const route of swap.payRouterRequest.routes) {
+          if (route.paymentMethod) {
+            const currency = getCurrency(route.paymentMethod.name);
+            const rate = await this.exrSrv.get(currency);
+            rates[currency] = rate.toNumber();
+          }
+        }
+      }
+      swap.rates = rates;
     } catch (e) {
       return Promise.reject(e);
     }

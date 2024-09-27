@@ -465,6 +465,7 @@ export class CoreHandler extends Handler {
     let amount = numTypeInfo[2];
 
     let market = await Market.getMarket(this.network, marketAddress, undefined, undefined, true, txn);
+
     const liq = await Liquidity.getLiquidity(
       this.network,
       marketAddress,
@@ -477,6 +478,9 @@ export class CoreHandler extends Handler {
 
     // If base or quote is NFT, use the whole amount of the liquidity
     amount = Market.isNFT(market.baseType) || Market.isNFT(market.quoteType) ? toBigInt(liq.amount) : amount;
+
+    const providerUser = await User.getByAddress(provider, txn);
+    const swapperUser = await User.getByAddress(swapper, txn);
 
     // Create swap
     let swap: Partial<Swap> = {
@@ -497,6 +501,9 @@ export class CoreHandler extends Handler {
       takerIds: idsFromTaker.map((id) => toNumber(id)),
       operator: toNumber(operator),
       txHash: event.transactionHash,
+      providerPaymentMethodId: market.isInteractive() ? liq.paymentMethodId : undefined,
+      takerPaymentMethodId: market.isInteractive() ? swapperUser.defaultPaymentMethodId : undefined,
+
       cancelAt: moment
         .unix(await getBlockTime(event))
         .add(toNumber(cancelDuration), 'seconds')

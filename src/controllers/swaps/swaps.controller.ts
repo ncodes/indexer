@@ -1,6 +1,9 @@
-import { Controller, Get, Param, ParseIntPipe, Query, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Query, Req, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Request } from 'express';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ErrorTypes, ok, throw404 } from '../../common/responses/responses';
+import { MayHaveKeyGuard } from '../../guards/may_have_token.guard';
+import { MayBeAuthenticatedGuard } from '../../guards/maybe_authenticated.guard';
 import Event, { EventActionClass } from '../../models/event';
 import Swap from '../../models/swap';
 import { LiquidityService } from '../liquidity/liquidity.service';
@@ -40,13 +43,35 @@ export class SwapsController {
    * @param [q.orderId] The order ID
    * @param [q.select] Select fields to return
    */
+  @UseGuards(MayBeAuthenticatedGuard)
+  @UseGuards(MayHaveKeyGuard)
   @Get(':orderId')
-  async get(@Param('orderId', ParseIntPipe) orderId: number, @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO) {
-    const swap = await Swap.get(q.net, orderId, q.select, '[market,liquidity,disputes.[draftees,reveals,commits]]');
+  async get(
+    @Req() req: Request,
+    @Param('orderId', ParseIntPipe) orderId: number,
+    @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO,
+  ) {
+    const swap = await Swap.get(
+      q.net,
+      orderId,
+      q.select,
+      '[providerPaymentMethod,takerPaymentMethod,market,liquidity,disputes.[draftees,reveals,commits],payRouterRequest.[routePayments]]',
+    );
     if (!swap) throw404('swap not found');
+
     await this.swapSrv.extendSwap(swap, q.select);
     await this.marketSrv.extendMarket(swap.market, q.select);
     await this.liqSrv.extendLiquidity(swap.liquidity, q.select);
+
+    // Only allow payment methods to be seen by the counterparties of the swap
+    if (!req.user || (!Swap.isSwapCounterparty(swap, req.user.address) && !Swap.isRouter(swap, req.user.address))) {
+      delete swap.providerPaymentMethod;
+      delete swap.takerPaymentMethod;
+      swap.payRouterRequest.routes.forEach((route) => {
+        delete route.paymentMethod;
+      });
+    }
+
     return ok().data(swap).build<Swap>();
   }
 

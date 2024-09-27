@@ -148,7 +148,7 @@ export default class Liquidity extends BaseModel {
   messagingEnabled: boolean;
   // The time messaging enablement status was last updated
   messagingEnabledUpdatedAt: string;
-  // The payment method ID
+  // The payment method ID where to receive or send payment from.
   paymentMethodId: string;
   // Whether the liquidity is hidden
   hidden: boolean;

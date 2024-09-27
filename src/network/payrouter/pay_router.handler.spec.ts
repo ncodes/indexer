@@ -15,7 +15,7 @@ const MockNetworkService = jest.fn().mockImplementation(() => {
   return {};
 });
 
-describe.only('PayRouterHandler', () => {
+describe('PayRouterHandler', () => {
   const db = DBService.getForTest();
   const net = 'ethereum';
   const user = '0xUser';
@@ -218,8 +218,8 @@ describe.only('PayRouterHandler', () => {
 
   describe('.onRequestCreated', function () {
     it('should create a new request', async () => {
-      await PayRouterRoute.create({ network: net, routeId: 1, bond: '100' });
-      await PayRouterRoute.create({ network: net, routeId: 2, bond: '100' });
+      await PayRouterRoute.create({ network: net, routeId: 1, bond: '100', fee: 1, paymentMethodId: 'pm_1' });
+      await PayRouterRoute.create({ network: net, routeId: 2, bond: '100', fee: 1.5, paymentMethodId: 'pm_2' });
 
       await expect(
         handler.onRequestCreated(
@@ -241,6 +241,9 @@ describe.only('PayRouterHandler', () => {
       expect(request.valueLockDuration).toEqual(3600);
       expect(request.protocolFeeBp).toEqual(1000);
       expect(request.sourceAmt).toEqual('100');
+      expect(request.routeIds).toEqual([1, 2]);
+      expect(request.routeFees).toEqual([1, 1.5]);
+      expect(request.routePaymentMethodIds).toEqual(['pm_1', 'pm_2']);
 
       const route1 = await PayRouterRoute.findByNetworkAndRouteId(net, 1);
       expect(route1.bond).toEqual('90');

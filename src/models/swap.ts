@@ -6,6 +6,8 @@ import { BaseModel } from './base';
 import Dispute from './dispute';
 import Liquidity from './liquidity';
 import Market from './market';
+import PayRouterRequest from './pay_router_request';
+import PaymentMethod from './payment_method';
 
 export enum SearchStatus {
   Unpaid = 'unpaid',
@@ -86,6 +88,10 @@ export default class Swap extends BaseModel {
   finalizedAt?: string = undefined;
   // The timestamp when the swap was marked as paid
   paidAt?: string = undefined;
+  // The payment method used in the swap by the provider
+  providerPaymentMethodId: string = undefined;
+  // The payment method used in the swap by the taker
+  takerPaymentMethodId: string = undefined;
 
   /** Not persisted */
   priceUsd?: number = undefined;
@@ -95,11 +101,15 @@ export default class Swap extends BaseModel {
   fee?: string = undefined;
   feeUsd?: number = undefined;
   feeSymbol?: string = undefined;
+  rates?: Record<string, number> = undefined;
 
   /** Relations */
   market: Market;
   liquidity: Liquidity;
   disputes: Dispute[];
+  payRouterRequest: PayRouterRequest;
+  providerPaymentMethod: PaymentMethod;
+  takerPaymentMethod: PaymentMethod;
 
   constructor(init?: Partial<Swap>) {
     super();
@@ -135,6 +145,30 @@ export default class Swap extends BaseModel {
           to: ['disputes.network', 'disputes.orderId'],
         },
       },
+      payRouterRequest: {
+        relation: Model.HasOneRelation,
+        modelClass: PayRouterRequest,
+        join: {
+          from: ['swaps.network', 'swaps.orderId'],
+          to: ['pay_router_requests.network', 'pay_router_requests.orderId'],
+        },
+      },
+      providerPaymentMethod: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: PaymentMethod,
+        join: {
+          from: ['swaps.providerPaymentMethodId'],
+          to: ['payment_methods.id'],
+        },
+      },
+      takerPaymentMethod: {
+        relation: Model.BelongsToOneRelation,
+        modelClass: PaymentMethod,
+        join: {
+          from: ['swaps.takerPaymentMethodId'],
+          to: ['payment_methods.id'],
+        },
+      },
     };
   }
 
@@ -159,11 +193,14 @@ export default class Swap extends BaseModel {
   getPayer() {
     let payer: string;
     const { baseType, quoteType } = this.market;
-    if (Market.isERC20(baseType) && Market.isSynth(quoteType)) {
+    if ((Market.isERC20(baseType) || Market.isNative(baseType)) && Market.isSynth(quoteType)) {
       payer = this.taker;
     } else if (Market.isSynth(baseType) && Market.isSynth(quoteType)) {
       payer = this.taker;
-    } else if (Market.isSynth(baseType) && (Market.isERC20(quoteType) || Market.isNFT(quoteType))) {
+    } else if (
+      Market.isSynth(baseType) &&
+      (Market.isERC20(quoteType) || Market.isNFT(quoteType) || Market.isNative(quoteType))
+    ) {
       payer = this.provider;
     } else if (Market.isNFT(baseType) && Market.isSynth(quoteType)) {
       payer = this.taker;
@@ -190,6 +227,17 @@ export default class Swap extends BaseModel {
    */
   static isSwapCounterparty(swap: Swap, address: string) {
     return isEqualStr(swap.provider, address) || isEqualStr(swap.taker, address);
+  }
+
+  /**
+   * Checks if the address is a swap route.
+   * @param swap The swap object
+   * @param address The address to check
+   * @returns
+   */
+  static isRouter(swap: Swap, address: string) {
+    if (!swap.payRouterRequest) return false;
+    return swap.payRouterRequest.routes.some((route) => isEqualStr(route.owner, address));
   }
 
   /**

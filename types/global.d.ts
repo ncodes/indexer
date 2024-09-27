@@ -56,6 +56,7 @@ declare global {
     minerRegistry?: AbiTypes.MinerRegistry;
     providerRegistry?: AbiTypes.ProviderRegistry;
     payRouter?: AbiTypes.PayRouter;
+    marketManager?: AbiTypes.MarketManager;
     energon?: AbiTypes.Energon;
     nft?: AbiTypes.NFT;
     uniswapV2Router?: AbiTypes.UniswapV2Router;

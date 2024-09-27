@@ -16,6 +16,7 @@ import { CoreHandler } from './core/core.handler';
 import { UniswapRouter } from './dexuser/uniswap_router.handler';
 import { DisputeManagerHandler } from './disputemanager/dispute_manager.handler';
 import { MarketCoreHandler } from './marketcore/market_core.handler';
+import { MarketManagerHandler } from './marketmanager/market_manager.handler';
 import { MediatorManagerHandler } from './mediatormanager/mediator_manager.handler';
 import { MinerRegistryHandler } from './miner_registry/miner_registry.handler';
 import { NFTHandler } from './nft/nft.handler';
@@ -140,24 +141,18 @@ export default class NetworkService {
 
     // Initialize handlers
     const provider = this.contractMgr.providers[network];
+    const { contracts } = this.contractMgr;
     const handlers = [
-      new MarketCoreHandler(this, this.notifSrv, provider, network, this.contractMgr.contracts[network]),
-      new MediatorManagerHandler(this, this.notifSrv, provider, network, this.contractMgr.contracts[network]),
-      new DisputeManagerHandler(this, this.notifSrv, provider, network, this.contractMgr.contracts[network]),
-      new CoreHandler(
-        this,
-        this.notifSrv,
-        this.metadataSrv,
-        this.exrSrv,
-        provider,
-        network,
-        this.contractMgr.contracts[network],
-      ),
-      new BadgeManagerHandler(this, provider, network, this.contractMgr.contracts[network]),
-      new AssetRegistryHandler(provider, network, this.contractMgr.contracts[network]),
-      new ProviderRegistryHandler(provider, network, this.contractMgr.contracts[network]),
-      new MinerRegistryHandler(provider, network, this.contractMgr.contracts[network]),
-      new PayRouterHandler(provider, network, this.contractMgr.contracts[network]),
+      new MarketCoreHandler(this, this.notifSrv, provider, network, contracts[network]),
+      new MediatorManagerHandler(this, this.notifSrv, provider, network, contracts[network]),
+      new DisputeManagerHandler(this, this.notifSrv, provider, network, contracts[network]),
+      new CoreHandler(this, this.notifSrv, this.metadataSrv, this.exrSrv, provider, network, contracts[network]),
+      new BadgeManagerHandler(this, provider, network, contracts[network]),
+      new AssetRegistryHandler(provider, network, contracts[network]),
+      new ProviderRegistryHandler(provider, network, contracts[network]),
+      new MinerRegistryHandler(provider, network, contracts[network]),
+      new PayRouterHandler(provider, network, contracts[network]),
+      new MarketManagerHandler(provider, network, contracts[network]),
     ];
 
     // Create event processor
@@ -178,36 +173,17 @@ export default class NetworkService {
     await this.loadInitialContractParams(network);
 
     const provider = this.contractMgr.providers[network];
+    const { contracts } = this.contractMgr;
     const handlers = [
+      new UniswapRouter(this, provider, network, contracts[network].uniswapV2Router as unknown as BaseContract),
+      new UniswapRouter(this, provider, network, contracts[network].uniswapV2Router2 as unknown as BaseContract),
+      new UniswapRouter(this, provider, network, contracts[network].uniswapV3Router as unknown as BaseContract),
+      new UniswapRouter(this, provider, network, contracts[network].uniswapV3Router2 as unknown as BaseContract),
       new UniswapRouter(
         this,
         provider,
         network,
-        this.contractMgr.contracts[network].uniswapV2Router as unknown as BaseContract,
-      ),
-      new UniswapRouter(
-        this,
-        provider,
-        network,
-        this.contractMgr.contracts[network].uniswapV2Router2 as unknown as BaseContract,
-      ),
-      new UniswapRouter(
-        this,
-        provider,
-        network,
-        this.contractMgr.contracts[network].uniswapV3Router as unknown as BaseContract,
-      ),
-      new UniswapRouter(
-        this,
-        provider,
-        network,
-        this.contractMgr.contracts[network].uniswapV3Router2 as unknown as BaseContract,
-      ),
-      new UniswapRouter(
-        this,
-        provider,
-        network,
-        this.contractMgr.contracts[network].uniswapV3RouterUniversal as unknown as BaseContract,
+        contracts[network].uniswapV3RouterUniversal as unknown as BaseContract,
       ),
     ];
 

@@ -1,9 +1,23 @@
-import { Body, Controller, Delete, Get, Param, Post, Query, Req, Res, UseGuards, ValidationPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  Req,
+  Res,
+  UseGuards,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { isEthereumAddress } from 'class-validator';
 import { isAddress } from 'ethers';
 import express from 'express';
 import { transaction } from 'objection';
-import { isEqualStr, logIf, toDec } from '../../common/common';
+import { isEqualStr, toDec } from '../../common/common';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ErrorMessages, ok, throw401, throw404 } from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
@@ -13,6 +27,7 @@ import { MayBeAuthenticatedGuard } from '../../guards/maybe_authenticated.guard'
 import NFTOwner from '../../models/nft_owner';
 import Offer from '../../models/offer';
 import OnlineStatus from '../../models/online_status';
+import PaymentMethod from '../../models/payment_method';
 import Swap from '../../models/swap';
 import User from '../../models/user';
 import NetworkService from '../../network/network.service';
@@ -20,7 +35,6 @@ import { getTokenEnergonAlloc } from '../points/point.service';
 import * as galxePoints from './data/glaxe.json';
 import { GetQueryDTO, LogOnlineStatusDTO, RegisterDeviceDTO } from './dto';
 import { UserService } from './user.service';
-import { isEthereumAddress } from 'class-validator';
 
 @Controller('v1/users')
 export class UsersController {
@@ -74,6 +88,22 @@ export class UsersController {
     if (!req.user) user.desensitize();
 
     return ok().data(user).build<User>();
+  }
+
+  /**
+   * Update the default payment method of a user
+   * @param req The request object
+   * @param paymentMethodId The ID of the payment method to set as default
+   * @returns
+   */
+  @UseGuards(BeAuthenticatedGuard)
+  @UseGuards(HasKeyGuard)
+  @Put('/payment-method/:paymentMethodId')
+  async updateDefaultPaymentMethod(@Req() req: express.Request, @Param('paymentMethodId') paymentMethodId: string) {
+    const pm = await PaymentMethod.getById(paymentMethodId);
+    if (!pm) throw404('Payment method not found', undefined, 'paymentMethodId');
+    await User.updateById(req.user.id, { defaultPaymentMethodId: pm.id });
+    return ok().data({ ok: true }).build();
   }
 
   /**

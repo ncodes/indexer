@@ -3,6 +3,7 @@ import Objection, { Model, Transaction } from 'objection';
 import { randStr } from '../common/common';
 import { BaseModel } from './base';
 import NotificationSetting from './notification_setting';
+import PaymentMethod from './payment_method';
 
 /**
  * User represents a user model
@@ -17,6 +18,7 @@ export default class User extends BaseModel {
   country: string;
   deviceTokenEmail: string;
   otpSecret: string;
+  defaultPaymentMethodId: string;
   referrer: string;
   refCode: string;
   messagingEnabled: boolean;
@@ -51,10 +53,13 @@ export default class User extends BaseModel {
   volume: string;
   volumeUsd: number;
   lastActiveAt: string;
-  notificationSettings: Partial<NotificationSetting>;
   nft: { count?: number; totalAlloc?: number; claimed?: boolean };
   earlyDiscordMemberAlloc: string;
   earlyDiscordMemberClaimed: boolean;
+
+  // Relations
+  notificationSettings: Partial<NotificationSetting>;
+  paymentMethod: Partial<PaymentMethod>;
 
   constructor(init?: Partial<User>) {
     super();
@@ -98,6 +103,14 @@ export default class User extends BaseModel {
           to: 'notification_settings.userId',
         },
       },
+      paymentMethod: {
+        relation: Model.HasOneRelation,
+        modelClass: PaymentMethod,
+        join: {
+          from: 'users.defaultPaymentMethodId',
+          to: 'payment_methods.id',
+        },
+      },
     };
   }
 
@@ -118,7 +131,7 @@ export default class User extends BaseModel {
    * @
    * @param relations
    */
-  static getById(id: string, relations = 'notificationSettings') {
+  static getById(id: string, relations = '[notificationSettings,paymentMethod]') {
     return this.query().whereNotDeleted().withGraphFetched(relations).findById(id);
   }
 
@@ -158,7 +171,7 @@ export default class User extends BaseModel {
     return this.query(txn)
       .where('address', 'ILIKE', address)
       .whereNotDeleted()
-      .withGraphFetched('notificationSettings')
+      .withGraphFetched('[notificationSettings,paymentMethod]')
       .first();
   }
 

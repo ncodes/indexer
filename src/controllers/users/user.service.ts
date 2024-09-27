@@ -2,23 +2,22 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { transaction } from 'objection';
 import CacheService from '../../cacher/cache.service';
+import { isEqualStr, isLocal, randStr, toDec } from '../../common/common';
 import Allocation from '../../models/allocations';
 import BadgeGrant from '../../models/badge_grant';
 import NFTOwner from '../../models/nft_owner';
 import { defaultNotificationSettings } from '../../models/notification_setting';
+import PaymentMethod from '../../models/payment_method';
 import Point from '../../models/point';
 import Swap from '../../models/swap';
-import Tap from '../../models/tap';
 import User from '../../models/user';
 import { JointLinkService } from '../../services/joint_link.service';
 import AirdropService from '../airdrop/airdrop.service';
 import { RefereeBonus } from '../airdrop/constants';
+import TapService from '../airdrop/tap.service';
 import ConvosService from '../convos/convos.service';
 import { NFTAllocations } from '../points/data/nft_allocation';
 import { DeviceType } from './dto';
-import TapService from '../airdrop/tap.service';
-import { isEqualStr, isLocal, randStr, toDec } from '../../common/common';
-import TPS from '../../models/tps';
 
 @Injectable()
 export class UserService {
@@ -41,6 +40,8 @@ export class UserService {
    */
   async extendUser(user: User, network?: string) {
     try {
+      user.paymentMethod = await PaymentMethod.getById(user.defaultPaymentMethodId);
+
       const totalSwaps = await Swap.countByStatus({
         network,
         marketAddress: undefined,

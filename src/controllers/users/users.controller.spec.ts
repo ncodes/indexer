@@ -2,6 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
+import CacheService from '../../cacher/cache.service';
 import { randStr } from '../../common/common';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import { NoopLogger } from '../../common/loggers/noop_logger';
@@ -10,19 +11,19 @@ import { DBService } from '../../db/db.service';
 import Dispute from '../../models/dispute';
 import Draft from '../../models/draft';
 import Offer from '../../models/offer';
+import PaymentMethod from '../../models/payment_method';
 import Swap from '../../models/swap';
 import User from '../../models/user';
 import NetworkService from '../../network/network.service';
 import { JointLinkService } from '../../services/joint_link.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
+import { RedisService } from '../../services/redis/redis.service';
 import AirdropService from '../airdrop/airdrop.service';
+import TapService from '../airdrop/tap.service';
 import { makeSession } from '../auth/utils';
 import ConvosService from '../convos/convos.service';
 import { UserService } from './user.service';
 import { UsersController } from './users.controller';
-import CacheService from '../../cacher/cache.service';
-import TapService from '../airdrop/tap.service';
-import { RedisService } from '../../services/redis/redis.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -238,6 +239,41 @@ describe('UsersController', () => {
             expect(mockExtendUser).toBeCalledTimes(1);
           });
       });
+    });
+  });
+
+  describe('.updateDefaultPaymentMethod', () => {
+    it('should return 401 when authorization header is missing', async () => {
+      await request(app.getHttpServer())
+        .put(`/v1/users/payment-method/123`)
+        .expect(401)
+        .expect({
+          error: {
+            type: 'authentication_error',
+            message: 'authorization header is required',
+          },
+        });
+    });
+
+    it('should return 404 when payment method is unknown', async () => {
+      await request(app.getHttpServer())
+        .put(`/v1/users/payment-method/123`)
+        .set('Authorization', 'bearer ' + token)
+        .expect(404)
+        .expect({
+          error: { param: 'paymentMethodId', message: 'Payment method not found' },
+        });
+    });
+
+    it('should return 200 when payment method is set', async () => {
+      const pm = await PaymentMethod.create({});
+      await User.updateById(u.id, { address, email: '0x@email.com', defaultPaymentMethodId: 'pm_xyz' });
+      await request(app.getHttpServer())
+        .put(`/v1/users/payment-method/${pm.id}`)
+        .set('Authorization', 'bearer ' + token)
+        .expect(200);
+      const user = await User.getById(u.id);
+      expect(user.defaultPaymentMethodId).toEqual(pm.id);
     });
   });
 

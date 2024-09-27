@@ -136,8 +136,8 @@ export default class PayRouterRoute extends BaseModel {
    * @param routeId The route ID
    * @param txn Optional transaction object
    */
-  static findByNetworkAndRouteId(network: string, routeId: number, txn?: Transaction) {
-    return this.query(txn).whereNotDeleted().where({ network, routeId }).first();
+  static findByNetworkAndRouteId(network: string, routeId: number, relations = '', txn?: Transaction) {
+    return this.query(txn).whereNotDeleted().where({ network, routeId }).first().withGraphFetched(relations);
   }
 
   /**

@@ -8,11 +8,11 @@ import { NotificationID } from '../../jobs/notifications/common';
 import Liquidity from '../../models/liquidity';
 import Market from '../../models/market';
 import LiquidityProvider from '../../models/market_provider';
+import Meta from '../../models/meta';
 import PermittedTrader from '../../models/permitted_trader';
 import { ContractCallEvent, toNumber } from '../common';
 import { Handler } from '../handler';
 import NetworkService from '../network.service';
-import Meta from '../../models/meta';
 
 export class MarketCoreHandler extends Handler {
   public logger = new Logger(MarketCoreHandler.name);

@@ -111,6 +111,14 @@ export class ContractManager {
     if (payRouterAddr)
       this.contracts[chain].payRouter = this.getContract<AbiTypes.PayRouter>(payRouterAddr, Abi.PayRouter, provider);
 
+    const marketMgrAddr = targetChain.contracts['marketManager'].address;
+    if (marketMgrAddr)
+      this.contracts[chain].marketManager = this.getContract<AbiTypes.MarketManager>(
+        marketMgrAddr,
+        Abi.MarketManager,
+        provider,
+      );
+
     const energonAddr = targetChain.contracts['energon'].address;
     if (energonAddr)
       this.contracts[chain].energon = this.getContract<AbiTypes.Energon>(energonAddr, Abi.Energon, provider);

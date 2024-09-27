@@ -222,6 +222,14 @@ export default class Market extends BaseModel {
     return Market.isERC20(assetType) || Market.isNFT(assetType) || Market.isNative(assetType);
   }
 
+  isBase(assetType: AssetType) {
+    return this.baseType == assetType;
+  }
+
+  isQuote(assetType: AssetType) {
+    return this.quoteType == assetType;
+  }
+
   isInstant() {
     const { baseType, quoteType } = this;
     return Market.isInstant(baseType, quoteType);

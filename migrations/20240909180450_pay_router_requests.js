@@ -10,6 +10,10 @@ exports.up = function (knex) {
       table.string('network');
       table.string('creator');
       table.integer('requestId');
+      table.integer('orderId');
+      table.jsonb('routeIds').defaultTo('[]');
+      table.jsonb('routeFees').defaultTo('[]');
+      table.jsonb('routePaymentMethodIds').defaultTo('[]');
       table.integer('requesterFeeBp').defaultTo(0);
       table.integer('protocolFeeBp').defaultTo(0);
       table.integer('valueLockDuration').defaultTo(0);

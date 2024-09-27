@@ -204,7 +204,7 @@ export class PayRouterHandler extends Handler {
     txn?: Transaction,
   ) {
     const request = await PayRouterRequest.findByNetworkAndRequestId(this.network, Number(requestId), txn);
-    const route = await PayRouterRoute.findByNetworkAndRouteId(this.network, Number(routeId), txn);
+    const route = await PayRouterRoute.findByNetworkAndRouteId(this.network, Number(routeId), '', txn);
     await PayRouterBondTransfer.create(
       { network: this.network, requestId: request.id, routeId: route.id, beneficiary, amount: amount.toString() },
       txn,
@@ -242,7 +242,7 @@ export class PayRouterHandler extends Handler {
    * @param txn The transaction object
    */
   async onBondReturned(owner: string, routeId: bigint, amount: bigint, event: ContractCallEvent, txn?: Transaction) {
-    const route = await PayRouterRoute.findByNetworkAndRouteId(this.network, Number(routeId), txn);
+    const route = await PayRouterRoute.findByNetworkAndRouteId(this.network, Number(routeId), '', txn);
     await PayRouterRoute.updateById(route.id, { bond: toDec(route.bond).add(toDec(amount)).toFixed() }, txn);
   }
 
@@ -252,7 +252,7 @@ export class PayRouterHandler extends Handler {
    * @param requestId The request ID
    * @param routeId The route ID
    * @param bond The bond
-   * @param event The event object
+   * @param _event The event object
    * @param txn The transaction object
    */
   async onRequestPaid(
@@ -260,11 +260,11 @@ export class PayRouterHandler extends Handler {
     requestId: bigint,
     routeId: bigint,
     bond: bigint,
-    event: ContractCallEvent,
+    _event: ContractCallEvent,
     txn?: Transaction,
   ) {
     const request = await PayRouterRequest.findByNetworkAndRequestId(this.network, Number(requestId), txn);
-    const route = await PayRouterRoute.findByNetworkAndRouteId(this.network, Number(routeId), txn);
+    const route = await PayRouterRoute.findByNetworkAndRouteId(this.network, Number(routeId), '', txn);
     const existing = await PayRouterRequestPayment.findByNetworkRequestIdAndRouteId(
       this.network,
       request.id,
@@ -273,7 +273,13 @@ export class PayRouterHandler extends Handler {
     );
     if (!existing) {
       await PayRouterRequestPayment.create(
-        { network: this.network, payer, requestId: request.id, routeId: route.id, bond: bond.toString() },
+        {
+          network: this.network,
+          payer,
+          requestId: request.id,
+          routeId: route.id,
+          bond: bond.toString(),
+        },
         txn,
       );
     }
@@ -313,6 +319,17 @@ export class PayRouterHandler extends Handler {
     let requester = await PayRouterRequester.findByNetworkAndAddress(this.network, creator, txn);
     if (!requester) requester = await PayRouterRequester.create({ network: this.network, address: creator }, txn);
 
+    let i = 0;
+    const routeFees = [];
+    const routePaymentMethodIds = [];
+    for (const routeId of routeIds) {
+      const route = await PayRouterRoute.findByNetworkAndRouteId(this.network, Number(routeId), '', txn);
+      await PayRouterRoute.updateById(route.id, { bond: toDec(route.bond).sub(toDec(bonds[i])).toFixed() }, txn);
+      routeFees.push(route.fee);
+      routePaymentMethodIds.push(route.paymentMethodId);
+      i++;
+    }
+
     const protocolFeeBp = await Meta.getContractParam(this.network, 'payRouterProtocolFeeBp', txn);
     await PayRouterRequest.create(
       {
@@ -323,16 +340,12 @@ export class PayRouterHandler extends Handler {
         valueLockDuration: Number(valueLockDur),
         protocolFeeBp: protocolFeeBp ?? 0,
         sourceAmt: sourceAmt.toString(),
+        routeIds: routeIds.map((id) => Number(id)),
+        routeFees,
+        routePaymentMethodIds,
       },
       txn,
     );
-
-    let i = 0;
-    for (const routeId of routeIds) {
-      const route = await PayRouterRoute.findByNetworkAndRouteId(this.network, Number(routeId), txn);
-      await PayRouterRoute.updateById(route.id, { bond: toDec(route.bond).sub(toDec(bonds[i])).toFixed() }, txn);
-      i++;
-    }
   }
 
   /**
@@ -350,7 +363,7 @@ export class PayRouterHandler extends Handler {
     event: ContractCallEvent,
     txn?: Transaction,
   ) {
-    const route = await PayRouterRoute.findByNetworkAndRouteId(this.network, Number(routeId), txn);
+    const route = await PayRouterRoute.findByNetworkAndRouteId(this.network, Number(routeId), '', txn);
     await PayRouterRoute.updateById(route.id, { bond: toDec(route.bond).sub(toDec(amount)).toFixed() }, txn);
   }
 
@@ -369,7 +382,7 @@ export class PayRouterHandler extends Handler {
     _event: ContractCallEvent,
     txn?: Transaction,
   ) {
-    const route = await PayRouterRoute.findByNetworkAndRouteId(this.network, Number(routeId), txn);
+    const route = await PayRouterRoute.findByNetworkAndRouteId(this.network, Number(routeId), '', txn);
     await PayRouterRoute.updateById(route.id, { bond: toDec(route.bond).add(toDec(amount)).toFixed() }, txn);
   }
 
@@ -381,7 +394,7 @@ export class PayRouterHandler extends Handler {
    * @param txn The transaction object
    */
   async onUnapprovedRequester(routeId: bigint, requester: string, event: ContractCallEvent, txn?: Transaction) {
-    const route = await PayRouterRoute.findByNetworkAndRouteId(this.network, Number(routeId), txn);
+    const route = await PayRouterRoute.findByNetworkAndRouteId(this.network, Number(routeId), '', txn);
     const req = await PayRouterRequester.findByNetworkAndAddress(this.network, requester, txn);
     await PayRouterRouteRequester.deleteByNetworkAndRouteIdAndRequesterId(this.network, route.id, req.id, txn);
   }
@@ -394,7 +407,7 @@ export class PayRouterHandler extends Handler {
    * @param txn The transaction object
    */
   async onApprovedRequester(routeId: bigint, requester: string, event: ContractCallEvent, txn?: Transaction) {
-    const route = await PayRouterRoute.findByNetworkAndRouteId(this.network, Number(routeId), txn);
+    const route = await PayRouterRoute.findByNetworkAndRouteId(this.network, Number(routeId), '', txn);
     let req = await PayRouterRequester.findByNetworkAndAddress(this.network, requester, txn);
     if (!req) req = await PayRouterRequester.create({ network: this.network, address: requester }, txn);
     await PayRouterRouteRequester.create({ network: this.network, routeId: route.id, requesterId: req.id }, txn);

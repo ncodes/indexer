@@ -1,6 +1,9 @@
 import Objection, { Transaction } from 'objection';
 import { randStr } from '../common/common';
 import { BaseModel } from './base';
+import PayRouterRequestPayment from './pay_router_request_payment';
+import PayRouterRoute from './pay_router_route';
+import PaymentMethod from './payment_method';
 
 /**
  * PayRouterRequest contains information about a pay router request
@@ -13,9 +16,17 @@ export default class PayRouterRequest extends BaseModel {
   protocolFeeBp: number = undefined;
   valueLockDuration: number = undefined;
   sourceAmt: string = undefined;
-  orgSourcePaid: boolean = false;
-  closed: boolean = false;
-  cancelled: boolean = false;
+  orgSourcePaid: boolean = undefined;
+  closed: boolean = undefined;
+  cancelled: boolean = undefined;
+  orderId: number = undefined;
+  routeIds: number[] = undefined;
+  routeFees: string[] = undefined;
+  routePaymentMethodIds: string[] = undefined;
+
+  // Relations
+  routes: PayRouterRoute[] = undefined;
+  routePayments: PayRouterRequestPayment[] = undefined;
 
   constructor(init?: Partial<PayRouterRequest>) {
     super();
@@ -27,12 +38,24 @@ export default class PayRouterRequest extends BaseModel {
   }
 
   static get relationMappings() {
-    return {};
+    return {
+      routePayments: {
+        relation: BaseModel.HasManyRelation,
+        modelClass: PayRouterRequestPayment,
+        join: {
+          from: 'pay_router_requests.id',
+          to: 'pay_router_request_payments.requestId',
+        },
+      },
+    };
   }
 
   $beforeInsert() {
     super.$beforeInsert();
     this.id = 'pr_request_' + randStr(24);
+    this.routeIds = JSON.stringify(this.routeIds) as any;
+    this.routeFees = JSON.stringify(this.routeFees) as any;
+    this.routePaymentMethodIds = JSON.stringify(this.routePaymentMethodIds) as any;
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {

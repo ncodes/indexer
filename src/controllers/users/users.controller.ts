@@ -85,7 +85,9 @@ export class UsersController {
 
     await this.userSrv.extendUser(user, q.net);
 
-    if (!req.user) user.desensitize();
+    if (!req.user) {
+      user = user.desensitize();
+    }
 
     return ok().data(user).build<User>();
   }

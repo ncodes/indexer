@@ -425,11 +425,7 @@ export default class Liquidity extends BaseModel {
               .where('marketAddress', 'ilike', address)
               .where('amount', '>', 0)
               .where('paused', false)
-              .where((q) => {
-                if (isInteractive && !Market.isSynth(market.baseType)) {
-                  q.whereNotNull('paymentMethodId');
-                }
-              });
+              .whereNotNull('paymentMethodId');
           })
           .with('q2', (builder) => {
             builder
@@ -531,11 +527,7 @@ export default class Liquidity extends BaseModel {
               .where('marketAddress', 'ilike', address)
               .where('amount', '>', 0)
               .where('paused', false)
-              .where((q) => {
-                if (isInteractive && !Market.isSynth(market.baseType)) {
-                  q.whereNotNull('paymentMethodId');
-                }
-              });
+              .whereNotNull('paymentMethodId');
           })
           .with('q2', (builder) => {
             builder

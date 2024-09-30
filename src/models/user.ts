@@ -85,8 +85,9 @@ export default class User extends BaseModel {
   }
 
   desensitize() {
-    delete this.email;
-    return this;
+    return {
+      address: this.address,
+    } as User;
   }
 
   static get tableName() {

@@ -1,6 +1,6 @@
 import { getChainNames } from '@jointlabs/meta';
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsEthereumAddress, IsIn, IsNotEmpty, IsOptional, ValidateIf } from 'class-validator';
+import { IsBoolean, IsEthereumAddress, IsIn, IsNotEmpty, IsOptional, MaxLength, ValidateIf } from 'class-validator';
 import { toBoolean } from 'underscore.string';
 import { makeValidatorMsg } from '../../common/validations/validation';
 
@@ -65,6 +65,11 @@ export class AddPaymentMethodDTO {
   @IsOptional()
   public swiftCode: string;
 
+  @MaxLength(64, { message: makeValidatorMsg('additional info is too long', 'additionalInfo') })
   @IsOptional()
   public additionalInfo: string;
+
+  @Transform(({ value }) => toBoolean(value))
+  @IsOptional()
+  public useAsDefault: boolean;
 }

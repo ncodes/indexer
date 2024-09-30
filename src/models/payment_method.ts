@@ -19,6 +19,9 @@ export default class PaymentMethod extends BaseModel {
   swiftCode: string = undefined;
   additionalInfo: string = undefined;
 
+  // Not persisted
+  isDefault: boolean = undefined;
+
   // Relations
   org: PayRouterOrg = undefined;
 
@@ -82,7 +85,8 @@ export default class PaymentMethod extends BaseModel {
       .where((q) => {
         if (network) q.where({ network });
       })
-      .whereNotDeleted();
+      .whereNotDeleted()
+      .orderBy('createdAt', 'desc');
   }
 
   /**
@@ -93,6 +97,10 @@ export default class PaymentMethod extends BaseModel {
    */
   static getById(id: string, relations = '', txn?: Transaction) {
     return this.query(txn).whereNotDeleted().findById(id).withGraphFetched(relations);
+  }
+
+  static getByIdAndUserId(id: string, userId: string, relations = '', txn?: Transaction) {
+    return this.query(txn).whereNotDeleted().where({ id, userId }).withGraphFetched(relations).first();
   }
 
   /**
@@ -138,5 +146,9 @@ export default class PaymentMethod extends BaseModel {
       })
       .distinctOn(['name'])
       .select('*');
+  }
+
+  static deleteByIdAndUserId(id: string, userId: string) {
+    return this.query().whereNotDeleted().where({ id, userId }).delete();
   }
 }

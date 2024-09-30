@@ -2,6 +2,7 @@ import { getPaymentMethod, PaymentMethodType } from '@jointlabs/meta';
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpException,
   Param,
@@ -16,7 +17,7 @@ import { ConfigService } from '@nestjs/config';
 import { validate } from 'class-validator';
 import { Request, Response } from 'express';
 import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
-import { ok, throw400 } from '../../common/responses/responses';
+import { ok, throw400, throw404 } from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import PayRouterOrg from '../../models/pay_router_org';
@@ -93,11 +94,33 @@ export class PaymentsController {
     const pm = await PaymentMethod.create(data);
 
     // Set the new payment method as the default payment method if no default is set
-    if (!user.defaultPaymentMethodId) {
+    if (!user.defaultPaymentMethodId || body.useAsDefault) {
       await User.updateById(user.id, { defaultPaymentMethodId: pm.id });
     }
 
     return ok().data(pm).build();
+  }
+
+  /**
+   * Delete a payment method
+   * @param req The request object
+   * @param id The payment method id
+   * @returns
+   */
+  @UseGuards(BeAuthenticatedGuard)
+  @UseGuards(HasKeyGuard)
+  @Delete('methods/:id')
+  async delete(@Req() req: Request, @Param('id') id: string) {
+    const user = req.user;
+    const pm = await PaymentMethod.getByIdAndUserId(id, user.id);
+    if (!pm) throw404('payment method not found');
+    const deleted = await PaymentMethod.deleteByIdAndUserId(id, user.id);
+
+    if (deleted && user.defaultPaymentMethodId == id) {
+      await User.updateById(user.id, { defaultPaymentMethodId: null });
+    }
+
+    return ok().data({ deleted: !!deleted }).build();
   }
 
   /**
@@ -149,6 +172,10 @@ export class PaymentsController {
   async list(@Req() req: Request, @Query('net') net: string) {
     const user = req.user;
     const methods = await PaymentMethod.findByUserIdAndNetwork(user.id, net);
+    methods.forEach((pm) => {
+      pm.isDefault = pm.id == user.defaultPaymentMethodId;
+    });
+
     return ok().data(methods).build();
   }
 }

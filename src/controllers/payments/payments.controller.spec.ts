@@ -200,12 +200,40 @@ describe('PaymentsController', () => {
         });
     });
 
+    it('should return 400 when additional info is too long', async () => {
+      await PayRouterOrg.create({ orgId: 1, network: net, name: 'Chase Bank', creator: '0xCreatorAddress' });
+      await request(app.getHttpServer())
+        .post(`/v1/payments/methods`)
+        .set('Authorization', 'bearer ' + token)
+        .send({
+          net,
+          name: 'Chase Bank',
+          bankAccountName: 'John Doe',
+          bankAccountNumber: '1234567890',
+          additionalInfo: 'a'.repeat(65),
+        })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'additional info is too long',
+            param: 'additionalInfo',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
     it('should return 201 on correct parameters', async () => {
       await PayRouterOrg.create({ orgId: 1, network: net, name: 'Chase Bank', creator: '0xCreatorAddress' });
       await request(app.getHttpServer())
         .post(`/v1/payments/methods`)
         .set('Authorization', 'bearer ' + token)
-        .send({ net, name: 'Chase Bank', bankAccountName: 'John Doe', bankAccountNumber: '1234567890' })
+        .send({
+          net,
+          name: 'Chase Bank',
+          bankAccountName: 'John Doe',
+          bankAccountNumber: '1234567890',
+          additionalInfo: 'do this and that',
+        })
         .expect(201)
         .expect(async (res) => {
           const body = res.body.data as PaymentMethod;
@@ -215,6 +243,7 @@ describe('PaymentsController', () => {
           expect(body.name).toBe('Chase Bank');
           expect(body.bankAccountName).toBe('John Doe');
           expect(body.bankAccountNumber).toBe('1234567890');
+          expect(body.additionalInfo).toBe('do this and that');
 
           // Set the new payment method as the default payment method if no default is set
           const user = await User.getById(u.id);
@@ -232,6 +261,25 @@ describe('PaymentsController', () => {
           expect(body.id).toBeDefined();
           const user = await User.getById(u.id);
           expect(user.defaultPaymentMethodId).not.toBe(body.id);
+        });
+
+      // Should set the new payment method as the default payment method if useAsDefault is true
+      await request(app.getHttpServer())
+        .post(`/v1/payments/methods`)
+        .set('Authorization', 'bearer ' + token)
+        .send({
+          net,
+          name: 'Chase Bank',
+          bankAccountName: 'John Doe',
+          bankAccountNumber: '0234567891',
+          useAsDefault: true,
+        })
+        .expect(201)
+        .expect(async (res) => {
+          const body = res.body.data as PaymentMethod;
+          expect(body.id).toBeDefined();
+          const user = await User.getById(u.id);
+          expect(user.defaultPaymentMethodId).toBe(body.id);
         });
     });
 
@@ -254,6 +302,49 @@ describe('PaymentsController', () => {
             type: 'invalid_request_error',
           },
         });
+    });
+  });
+
+  describe('.delete', () => {
+    it('should return 401 when token is not provided', async () => {
+      await request(app.getHttpServer())
+        .delete(`/v1/payments/methods/1`)
+        .expect(401)
+        .expect({
+          error: {
+            type: 'authentication_error',
+            message: 'authorization header is required',
+          },
+        });
+    });
+
+    it('should return 404 when payment method was not found', async () => {
+      await request(app.getHttpServer())
+        .delete(`/v1/payments/methods/abc`)
+        .set('Authorization', 'bearer ' + token)
+        .expect(404)
+        .expect({
+          error: { message: 'payment method not found' },
+        });
+    });
+
+    it('should return 200 when payment method was deleted', async () => {
+      const pm = await PaymentMethod.create({ name: 'Bank A', network: net, userId: u.id });
+      await User.updateById(u.id, { defaultPaymentMethodId: pm.id });
+
+      await request(app.getHttpServer())
+        .delete(`/v1/payments/methods/${pm.id}`)
+        .set('Authorization', 'bearer ' + token)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data.deleted).toBe(true);
+        });
+
+      const user = await User.getById(u.id);
+      expect(user.defaultPaymentMethodId).toBeNull();
+
+      const pmExists = await PaymentMethod.getById(pm.id);
+      expect(pmExists).toBeUndefined();
     });
   });
 

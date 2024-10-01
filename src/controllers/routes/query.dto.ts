@@ -25,3 +25,9 @@ export class UpdateFeeDTO {
   @IsNotEmpty({ message: makeValidatorMsg('fee is required', 'fee') })
   public fee: number;
 }
+
+export class GetRoutesParamsDTO {
+  public region: string;
+
+  public destOrgId: string;
+}

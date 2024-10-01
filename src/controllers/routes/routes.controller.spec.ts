@@ -314,6 +314,40 @@ describe('RoutesController', () => {
           });
       });
     });
+
+    describe('use org string ID instead of number', () => {
+      it('should accept org string ID', async () => {
+        const r1 = await PayRouterRoute.create({
+          network: net,
+          sourceOrgId: 4,
+          destOrgId: 3,
+          bond: '4',
+          paymentMethodId: 'pm_1',
+        });
+        const r2 = await PayRouterRoute.create({
+          network: net,
+          sourceOrgId: 4,
+          destOrgId: 3,
+          bond: '5',
+          paymentMethodId: 'pm_2',
+        });
+        await request(app.getHttpServer())
+          .get(`/v1/routes/NG/${r1.destOrgId}`)
+          .query({ net })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data.length).toBe(2);
+          });
+
+        await request(app.getHttpServer())
+          .get(`/v1/routes/NG/${r2.destOrgId}`)
+          .query({ net })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data.length).toBe(2);
+          });
+      });
+    });
   });
 
   describe('.updatePaymentMethod', () => {

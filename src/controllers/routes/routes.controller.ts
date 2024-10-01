@@ -1,23 +1,23 @@
 import { getPaymentMethod } from '@jointlabs/meta';
 import { Body, Controller, Get, Param, Put, Query, Req, UseGuards, ValidationPipe } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { isNumberString } from 'class-validator';
 import { Request } from 'express';
 import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
 import { ok, throw400, throw404 } from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
+import PayRouterOrg from '../../models/pay_router_org';
 import PayRouterRoute from '../../models/pay_router_route';
 import PaymentMethod from '../../models/payment_method';
-import { GetQueryDTO, UpdateFeeDTO, UpdatePaymentMethodDTO } from './query.dto';
+import { GetQueryDTO, GetRoutesParamsDTO, UpdateFeeDTO, UpdatePaymentMethodDTO } from './query.dto';
 
 @Controller('v1/routes')
 export class RoutesController {
-  constructor(private cfgSrv: ConfigService) {}
-
   /**
    * Get routes for a given network, region, and destination organization ID.
    * @param region - The region to get routes for.
-   * @param destOrgId - The destination organization ID
+   * @param destOrgId - The destination organization ID. This is the numeric ID as found in @jointlabs/meta. It
+   * can also access the string ID of an indexed org in the database and will resolve to the intended numeric org ID.
    * @param q - The query object
    * @returns
    */
@@ -25,16 +25,35 @@ export class RoutesController {
   async getRoutes(
     @Req() req: Request,
     @Query(new ValidationPipe(CommonValidationPipeOpt)) q: GetQueryDTO,
-    @Param('region') region: string,
-    @Param('destOrgId') destOrgId: string,
+    @Param(new ValidationPipe(CommonValidationPipeOpt)) params: GetRoutesParamsDTO,
   ) {
+    let destOrgId = 0;
+
+    // If the destination org ID is not a number, we assume it's a string ID
+    // and attempt to resolve it by looking up the org ID in the database
+    // and using the numeric ID for the rest of the query. Otherwise, we use the numeric ID.
+    if (!isNumberString(params.destOrgId)) {
+      const destOrg = await PayRouterOrg.getById(params.destOrgId);
+      if (!destOrg) throw404('Destination organization not found');
+      destOrgId = destOrg.orgId;
+    } else {
+      destOrgId = parseInt(params.destOrgId);
+    }
+
+    // If the region is not provided, we use the region from the request headers
+    // provided by Cloudflare.
+    let region = params.region;
     region = region == '-' ? (req.headers['cf-ipcountry'] as string) : region;
+
+    // If the max depth is not provided, we use a default of 5.
+    // This will limit the number of connecting routes to 5.
     const maxDepth = Math.min(q.maxDepth || 5, 5);
 
+    // Select the fields we need from the routes and payment methods.
+    // Query for routes that match the network, destination org ID, and minimum bond.
     const select = ['id', 'sourceOrgId', 'destOrgId', 'bond', 'owner', 'fee', 'routeId'];
     const pmSelect = ['id', 'name', 'type', 'accountId'];
-    const _destOrgId = parseInt(destOrgId);
-    const routes = await PayRouterRoute.findByNetworkAndDestination(q.net, _destOrgId, q.minBond, select, pmSelect);
+    const routes = await PayRouterRoute.findByNetworkAndDestination(q.net, destOrgId, q.minBond, select, pmSelect);
 
     const findPaths = async (
       routes: PayRouterRoute[],
@@ -72,7 +91,7 @@ export class RoutesController {
     // Get eligible routes.
     // Remove routes greater than max depth.
     // Sort by shortest path.
-    let selectedRoutes = await findPaths(routes, _destOrgId);
+    let selectedRoutes = await findPaths(routes, destOrgId);
     selectedRoutes = selectedRoutes.filter((path) => path.length <= maxDepth);
     selectedRoutes.sort((a, b) => a.length - b.length);
 

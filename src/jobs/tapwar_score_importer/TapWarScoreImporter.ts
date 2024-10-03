@@ -31,7 +31,7 @@ export default class TapWarScoreImporter extends Base {
       this.logger.log(`Importing tap scores for ${users.length} users`);
 
       for (const user of users) {
-        const tapCount = await this.tapSrv.getTapCount(user.address);
+        const tapCount = await this.tapSrv.getTapCount(user.id);
         await User.updateById(user.id, { tapScore: tapCount });
       }
     } catch (e) {

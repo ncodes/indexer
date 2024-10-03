@@ -3,8 +3,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import * as moment from 'moment';
 import Market from '../../models/market';
-import { Base } from '../base';
 import { MetadataService } from '../../services/metadata/metadata.service';
+import { Base } from '../base';
 
 /**
  * MarketMetaManager manages market meta data
@@ -30,16 +30,14 @@ export default class MarketMetaManager extends Base {
     try {
       // Find markets to update meta
       const timeAgo = moment().utc().subtract(60, 's');
+
+      // TODO: Do not fetch markets with logo and decimals already set
       const markets = await Market.findMarketsToUpdateMeta(timeAgo.toISOString(), 1000);
 
       this.logger.log(`Found ${markets.length} markets to update meta`);
 
       for (let i = 0; i < markets.length; i++) {
-        await Promise.all([
-          await this.getLogoUrls(markets[i]),
-          await this.getDecimals(markets[i]),
-          await this.updatePrices(markets[i]),
-        ])
+        await Promise.all([await this.getLogoUrls(markets[i]), await this.getDecimals(markets[i])])
           .then(() => {
             this.logger.log(`Successfully fetched all meta for market ${markets[i].id}`);
           })
@@ -52,8 +50,6 @@ export default class MarketMetaManager extends Base {
               quoteLogo: markets[i].quoteLogo,
               baseDecimals: markets[i].baseDecimals,
               quoteDecimals: markets[i].quoteDecimals,
-              basePriceUsd: markets[i].basePriceUsd,
-              quotePriceUsd: markets[i].quotePriceUsd,
               lastMetaUpdatedAt: moment().utc().toISOString(),
             });
             this.logger.log(`Updated meta for market ${markets[i].id}`);
@@ -114,22 +110,6 @@ export default class MarketMetaManager extends Base {
       } catch (error) {
         this.logger.error('failed to fetch quote token decimals for market ' + market.quoteAddress, error);
       }
-    }
-  }
-
-  async updatePrices(market: Market) {
-    try {
-      const baseInfo = await this.metadataSrv.getTokenInfo(market.network, market.baseAddress);
-      market.basePriceUsd = baseInfo.price.toString();
-    } catch (error) {
-      this.logger.error('failed to fetch base token price for market ' + market.baseAddress, error);
-    }
-
-    try {
-      const quoteInfo = await this.metadataSrv.getTokenInfo(market.network, market.quoteAddress);
-      market.quotePriceUsd = quoteInfo.price.toString();
-    } catch (error) {
-      this.logger.error('failed to fetch quote token price for market ' + market.quoteAddress, error);
     }
   }
 }

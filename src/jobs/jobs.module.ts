@@ -2,7 +2,10 @@ import { BullModule } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService as NestConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import CacheService from '../cacher/cache.service';
 import { ConfigService } from '../config/config.service';
+import TapService from '../controllers/airdrop/tap.service';
+import { TGBotModule } from '../controllers/tgbot/tgbot.module';
 import { NetworkModule } from '../network/network.module';
 import { ExchangeRateServiceModule } from '../services/exchange_rate.service';
 import { MetadataService } from '../services/metadata/metadata.service';
@@ -17,10 +20,8 @@ import MarketMetaManager from './market_meta_manager/MarketMetaManager';
 import MentionedTweetFinder from './mentioned_tweet_finder/MentionedTweetFinder';
 import { NotificationModule } from './notifications/NotificationModule';
 import ProviderMessagingStatusUpdate from './provider_messaging_status_update/ProviderMessagingStatusUpdate';
-import TapService from '../controllers/airdrop/tap.service';
-import CacheService from '../cacher/cache.service';
 import TapReminder from './tap_reminer/TapReminder';
-import { TGBotModule } from '../controllers/tgbot/tgbot.module';
+import TapWarScoreImporter from './tapwar_score_importer/TapWarScoreImporter';
 
 const providers: any[] = [];
 const imports = [
@@ -64,6 +65,11 @@ if (['1', 'true'].includes(process.env.ENABLE_PROVIDER_MSG_STATUS_UPDATE)) {
 if (['1', 'true'].includes(process.env.ENABLE_TAP_REMINDER)) {
   imports.push(TGBotModule);
   providers.push(CacheService, RedisService, TapReminder);
+}
+
+if (['1', 'true'].includes(process.env.ENABLE_TAPWAR_SCORE_IMPORTER)) {
+  imports.push(TGBotModule);
+  providers.push(CacheService, RedisService, TapWarScoreImporter);
 }
 
 @Module({

@@ -68,8 +68,7 @@ if (['1', 'true'].includes(process.env.ENABLE_TAP_REMINDER)) {
 }
 
 if (['1', 'true'].includes(process.env.ENABLE_TAPWAR_SCORE_IMPORTER)) {
-  imports.push(TGBotModule);
-  providers.push(CacheService, RedisService, TapWarScoreImporter);
+  providers.push(CacheService, RedisService, TapService, TapWarScoreImporter);
 }
 
 @Module({

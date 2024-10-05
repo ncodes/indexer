@@ -4,6 +4,7 @@ import * as _ from 'lodash';
 import * as moment from 'moment';
 import { Transaction } from 'objection';
 import { includesStr, isEqualStr, toDec } from '../../common/common';
+import SwapService from '../../controllers/swaps/swap.service';
 import { NotificationService } from '../../jobs/notifications/NotificationService';
 import { NotificationID } from '../../jobs/notifications/common';
 import Dispute from '../../models/dispute';
@@ -30,6 +31,7 @@ export class CoreHandler extends Handler {
     private notifSrv: NotificationService,
     private metadataSrv: MetadataService,
     private exrSrv: ExchangeRateService,
+    private swapSrv: SwapService,
     private provider: Provider,
     public network: string,
     private contracts: JointContracts,
@@ -479,7 +481,6 @@ export class CoreHandler extends Handler {
     // If base or quote is NFT, use the whole amount of the liquidity
     amount = Market.isNFT(market.baseType) || Market.isNFT(market.quoteType) ? toBigInt(liq.amount) : amount;
 
-    const providerUser = await User.getByAddress(provider, txn);
     const swapperUser = await User.getByAddress(swapper, txn);
 
     // Create swap
@@ -503,7 +504,6 @@ export class CoreHandler extends Handler {
       txHash: event.transactionHash,
       providerPaymentMethodId: market.isInteractive() ? liq.paymentMethodId : undefined,
       takerPaymentMethodId: market.isInteractive() ? swapperUser.defaultPaymentMethodId : undefined,
-
       cancelAt: moment
         .unix(await getBlockTime(event))
         .add(toNumber(cancelDuration), 'seconds')
@@ -899,6 +899,13 @@ export class CoreHandler extends Handler {
   ) {
     let swap = await Swap.get(this.network, toNumber(orderId), undefined, undefined, txn);
 
+    // Compute the actual dispute delay duration.
+    // For non-managed market, the dispute delay duration is the one in the event.
+    // For managed market, it is the one returned by the `getDisputeDelayDur` function
+    const actualDisputeDelayDur = !swap.market.manager
+      ? toNumber(disputeDelayDur)
+      : await this.swapSrv.getDisputeDelayDur(swap);
+
     // Update the order
     swap = await Swap.updateById(
       swap.id,
@@ -908,7 +915,7 @@ export class CoreHandler extends Handler {
         paidAt: moment().toISOString(),
         disputeFrom: moment
           .unix(await getBlockTime(event))
-          .add(toNumber(disputeDelayDur), 'seconds')
+          .add(toNumber(actualDisputeDelayDur), 'seconds')
           .toISOString(),
       },
       txn,

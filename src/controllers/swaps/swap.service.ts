@@ -6,6 +6,7 @@ import { getContractsAddress, toDec } from '../../common/common';
 import Dispute from '../../models/dispute';
 import Draft from '../../models/draft';
 import Market from '../../models/market';
+import Meta, { MetaKeys } from '../../models/meta';
 import PayRouterRoute from '../../models/pay_router_route';
 import Swap from '../../models/swap';
 import User from '../../models/user';
@@ -165,5 +166,20 @@ export default class SwapService {
     }
 
     return Promise.resolve(_.uniq(participantsId));
+  }
+
+  /**
+   * Get the dispute delay duration for a swap.
+   * Tries to see if there is a market-level dispute delay duration set,
+   * otherwise returns the indexer's default value or a hardcoded default value.
+   * @param swap The swap object
+   * @returns The dispute delay duration in seconds
+   */
+  async getDisputeDelayDur(swap: Swap): Promise<number> {
+    const { market, network } = swap;
+    const metaKey = Meta.makeNetKey(network, MetaKeys.DisputeDelayDur);
+    const values = (await Meta.getJSON(metaKey)) || {};
+    const marketDisputeDelayDur = values[market.address];
+    return marketDisputeDelayDur || parseInt(this.cfgSrv.get('app.defaultDisputeDelayDur') || '300');
   }
 }

@@ -5,6 +5,7 @@ export default () => ({
     url: process.env.URL,
     appUrl: process.env.APP_URL,
     defaultCountry: process.env.DEFAULT_COUNTRY,
+    defaultDisputeDelayDur: process.env.DEFAULT_DISPUTE_DELAY_DUR,
     throttle_ttl: process.env.THROTTLE_TTL,
     throttle_limit: process.env.THROTTLE_LIMIT,
     rootAdminUser: process.env.ROOT_ADMIN_USER,

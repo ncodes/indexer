@@ -65,6 +65,13 @@ const MockNetworkService = jest.fn().mockImplementation(() => {
   };
 });
 
+const mockGetDisputeDelayDur = jest.fn();
+const MockSwapService = jest.fn().mockImplementation(() => {
+  return {
+    getDisputeDelayDur: mockGetDisputeDelayDur,
+  };
+});
+
 describe('CoreHandler', () => {
   const taker = '0xTaker';
   const provider = Wallet.createRandom().address;
@@ -101,6 +108,7 @@ describe('CoreHandler', () => {
       new MockNotifierService(),
       new MockMetadataService(),
       new MockExchangeRateService(),
+      new MockSwapService(),
       null,
       net,
       contracts,
@@ -1809,6 +1817,52 @@ describe('CoreHandler', () => {
       expect(mockNotify).toHaveBeenCalledWith(NotificationID.SwapOrderPaid, net, provider, {
         swap,
         market,
+      });
+    });
+
+    describe('market is managed', () => {
+      it('should get dispute delay duration from the swap service instead of the one passed in the event', async () => {
+        const market = await Market.create({
+          network: net,
+          address: marketAddress,
+          manager: '0xManager',
+          base: 'BASE',
+          quote: 'QUOTE',
+          baseType: AssetType.ERC20,
+          quoteType: AssetType.SYNTH,
+        });
+
+        const liq = await Liquidity.create({
+          network: net,
+          marketAddress,
+          provider,
+          lid: 0,
+        });
+
+        const orderId = toBigInt(1);
+        const amount = powOf(10, 18);
+        await Swap.create({
+          network: net,
+          marketAddress,
+          orderId: toNumber(orderId),
+          lid: liq.lid,
+          amount: amount.toString(),
+          provider,
+          taker,
+        });
+
+        mockGetDisputeDelayDur.mockResolvedValue(1000);
+
+        const disputeDelayDur = 300;
+        const payer = taker;
+        const now = moment();
+        await handler.onSwapOrderPaid(orderId, payer, toBigInt(disputeDelayDur), {
+          getBlock: jest.fn().mockResolvedValue({ timestamp: now.unix() }),
+        } as any);
+
+        const swap = await Swap.find({ marketAddress: market.address });
+        expect(swap).toBeDefined();
+        expect(moment(swap.disputeFrom).diff(now, 's')).toBeGreaterThanOrEqual(999);
       });
     });
   });

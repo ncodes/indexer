@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { BaseContract, Contract, Provider } from 'ethers';
 import { isProd, isTest } from '../common/common';
 import { PointService } from '../controllers/points/point.service';
+import SwapService from '../controllers/swaps/swap.service';
 import { NotificationService } from '../jobs/notifications/NotificationService';
 import Meta, { MetaKeys } from '../models/meta';
 import { ExchangeRateService } from '../services/exchange_rate.service';
@@ -40,6 +41,7 @@ export default class NetworkService {
     private metadataSrv: MetadataService,
     private exrSrv: ExchangeRateService,
     public pointSrv: PointService,
+    private swapSrv: SwapService,
   ) {
     if (isTest()) return;
 
@@ -146,7 +148,16 @@ export default class NetworkService {
       new MarketCoreHandler(this, this.notifSrv, provider, network, contracts[network]),
       new MediatorManagerHandler(this, this.notifSrv, provider, network, contracts[network]),
       new DisputeManagerHandler(this, this.notifSrv, provider, network, contracts[network]),
-      new CoreHandler(this, this.notifSrv, this.metadataSrv, this.exrSrv, provider, network, contracts[network]),
+      new CoreHandler(
+        this,
+        this.notifSrv,
+        this.metadataSrv,
+        this.exrSrv,
+        this.swapSrv,
+        provider,
+        network,
+        contracts[network],
+      ),
       new BadgeManagerHandler(this, provider, network, contracts[network]),
       new AssetRegistryHandler(provider, network, contracts[network]),
       new ProviderRegistryHandler(provider, network, contracts[network]),

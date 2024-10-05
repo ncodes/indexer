@@ -19,6 +19,7 @@ export enum ProtocolFeeBeneficiary {
 export enum MetaKeys {
   ContractsParams = 'contractsParams',
   MediatorPool = 'mediatorPool',
+  DisputeDelayDur = 'disputeDelayDur',
 }
 
 /**
@@ -129,6 +130,22 @@ export default class Meta extends BaseModel {
   /**
    * Update contracts parameters metadata of a network
    * @param network The network name
+   * @param updFn The update function
+   * @param txn The transaction object
+   */
+  static async updateJSON(network: string, key: string, updFn: (obj: any) => void, txn?: Transaction) {
+    const metaKey = Meta.makeNetKey(network, key);
+    let existing = await Meta.get(metaKey, txn);
+    if (!existing) existing = await Meta.create(metaKey, JSON.stringify({}), txn);
+    if (!existing.value) existing.value = '{}';
+    const obj = JSON.parse(existing.value);
+    if (updFn) updFn(obj);
+    await Meta.update(metaKey, JSON.stringify(obj), txn);
+  }
+
+  /**
+   * Update contracts parameters metadata of a network
+   * @param network The network name
    * @param txn The transaction object
    * @param updFn The update function
    */
@@ -137,13 +154,7 @@ export default class Meta extends BaseModel {
     txn: Transaction,
     updFn: (params: { ContractParamKey: string }) => void,
   ) {
-    const key = Meta.makeNetKey(network, MetaKeys.ContractsParams);
-    let existing = await Meta.get(key, txn);
-    if (!existing) existing = await Meta.create(key, JSON.stringify({}), txn);
-    if (!existing.value) existing.value = '{}';
-    const obj = JSON.parse(existing.value);
-    if (updFn) updFn(obj);
-    await Meta.update(key, JSON.stringify(obj), txn);
+    return this.updateJSON(network, MetaKeys.ContractsParams, updFn, txn);
   }
 
   /**

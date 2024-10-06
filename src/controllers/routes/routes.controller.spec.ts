@@ -3,13 +3,15 @@ import { INestApplication } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
-import { randStr } from '../../common/common';
+import { randomEthAddr, randStr } from '../../common/common';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { Roles } from '../../common/roles';
 import { DBService } from '../../db/db.service';
 import PayRouterOrg from '../../models/pay_router_org';
+import PayRouterRequester from '../../models/pay_router_requester';
 import PayRouterRoute from '../../models/pay_router_route';
+import PayRouterRouteRequester from '../../models/pay_router_route_requester';
 import PaymentMethod from '../../models/payment_method';
 import User from '../../models/user';
 import { makeSession } from '../auth/utils';
@@ -95,6 +97,20 @@ describe('RoutesController', () => {
       (getPaymentMethod as jest.Mock).mockImplementation((name: string) => {
         return paymentMethods.find((pm) => pm.name === name);
       });
+    });
+
+    it('should return 400 when network is not provided', async () => {
+      await request(app.getHttpServer())
+        .get(`/v1/routes/NG/3`)
+        .query({})
+        .expect(400)
+        .expect({
+          error: {
+            message: 'network is required',
+            param: 'net',
+            type: 'invalid_request_error',
+          },
+        });
     });
 
     it('should return 400 when network is unknown', async () => {
@@ -345,6 +361,70 @@ describe('RoutesController', () => {
           .expect(200)
           .expect((res) => {
             expect(res.body.data.length).toBe(2);
+          });
+      });
+    });
+
+    describe('include requester filter', () => {
+      it('should return error if requester is not a valid ETH address', async () => {
+        await request(app.getHttpServer())
+          .get(`/v1/routes/NG/3`)
+          .query({ net, requester: '0x123' })
+          .expect(400)
+          .expect({
+            error: {
+              message: 'requester must be a valid Ethereum address',
+              param: 'requester',
+              type: 'invalid_request_error',
+            },
+          });
+      });
+
+      it('should return error if requester does not exist', async () => {
+        const ethAddr = randomEthAddr();
+        await request(app.getHttpServer())
+          .get(`/v1/routes/NG/3`)
+          .query({ net, requester: ethAddr })
+          .expect(404)
+          .expect({
+            error: {
+              message: 'requester not found',
+            },
+          });
+      });
+
+      it('should not return routes that have not approved the requester', async () => {
+        const requester = await PayRouterRequester.create({ network: net, address: randomEthAddr() });
+        await PayRouterRoute.create({ network: net, sourceOrgId: 4, destOrgId: 3, paymentMethodId: 'pm_1' });
+        await PayRouterRoute.create({ network: net, sourceOrgId: 1, destOrgId: 3, paymentMethodId: 'pm_2' });
+        await PayRouterRoute.create({ network: net, sourceOrgId: 4, destOrgId: 1, paymentMethodId: 'pm_3' });
+        await request(app.getHttpServer())
+          .get(`/v1/routes/NG/3`)
+          .query({ net, requester: requester.address })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data.length).toBe(0);
+          });
+      });
+
+      it('should return routes that have approved the requester', async () => {
+        const requester = await PayRouterRequester.create({ network: net, address: randomEthAddr() });
+
+        const r1 = await PayRouterRoute.create({ network: net, sourceOrgId: 4, destOrgId: 3, paymentMethodId: 'pm_1' });
+        const r2 = await PayRouterRoute.create({ network: net, sourceOrgId: 6, destOrgId: 3, paymentMethodId: 'pm_2' });
+        await PayRouterRoute.create({ network: net, sourceOrgId: 4, destOrgId: 1, paymentMethodId: 'pm_3' });
+
+        await PayRouterRouteRequester.create({ network: net, routeId: r1.id, requesterId: requester.id });
+        await PayRouterRouteRequester.create({ network: net, routeId: r2.id, requesterId: requester.id });
+
+        await request(app.getHttpServer())
+          .get(`/v1/routes/NG/3`)
+          .query({ net, requester: requester.address })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.data.length).toBe(2);
+            expect(res.body.data[0][0].id).toBe(r1.id);
+            expect(res.body.data[1][0].id).toBe(r2.id);
           });
       });
     });

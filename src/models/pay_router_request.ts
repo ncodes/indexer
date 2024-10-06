@@ -3,7 +3,6 @@ import { randStr } from '../common/common';
 import { BaseModel } from './base';
 import PayRouterRequestPayment from './pay_router_request_payment';
 import PayRouterRoute from './pay_router_route';
-import PaymentMethod from './payment_method';
 
 /**
  * PayRouterRequest contains information about a pay router request

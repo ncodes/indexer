@@ -1,11 +1,11 @@
 import { getChainNames } from '@jointlabs/meta';
-import { IsIn, IsNotEmpty, IsNumberString, IsOptional, Max } from 'class-validator';
+import { IsEthereumAddress, IsIn, IsNotEmpty, IsNumberString, IsOptional, Max } from 'class-validator';
 import { makeValidatorMsg } from '../../common/validations/validation';
 
 export class GetQueryDTO {
   @IsIn(getChainNames(), { message: makeValidatorMsg('network is unknown', 'net') })
-  @IsOptional()
-  public net?: string;
+  @IsNotEmpty({ message: makeValidatorMsg('network is required', 'net') })
+  public net: string;
 
   @IsNumberString({ no_symbols: true }, { message: makeValidatorMsg('minimum bond must be a number', 'minBond') })
   @IsOptional()
@@ -13,6 +13,10 @@ export class GetQueryDTO {
 
   @IsOptional()
   public maxDepth?: number;
+
+  @IsEthereumAddress({ message: makeValidatorMsg('requester must be a valid Ethereum address', 'requester') })
+  @IsOptional()
+  public requester?: string;
 }
 
 export class UpdatePaymentMethodDTO {

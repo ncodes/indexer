@@ -7,6 +7,7 @@ import { ok, throw400, throw404 } from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import PayRouterOrg from '../../models/pay_router_org';
+import PayRouterRequester from '../../models/pay_router_requester';
 import PayRouterRoute from '../../models/pay_router_route';
 import PaymentMethod from '../../models/payment_method';
 import { GetQueryDTO, GetRoutesParamsDTO, UpdateFeeDTO, UpdatePaymentMethodDTO } from './query.dto';
@@ -27,11 +28,15 @@ export class RoutesController {
     @Query(new ValidationPipe(CommonValidationPipeOpt)) q: GetQueryDTO,
     @Param(new ValidationPipe(CommonValidationPipeOpt)) params: GetRoutesParamsDTO,
   ) {
-    let destOrgId = 0;
+    // Find the requester if provided. If the requester exists, we'll only
+    // return routes that have approved the requester.
+    const requester = q.requester ? await PayRouterRequester.findByNetworkAndAddress(q.net, q.requester) : undefined;
+    if (q.requester && !requester) throw404('requester not found');
 
     // If the destination org ID is not a number, we assume it's a string ID
     // and attempt to resolve it by looking up the org ID in the database
     // and using the numeric ID for the rest of the query. Otherwise, we use the numeric ID.
+    let destOrgId = 0;
     if (!isNumberString(params.destOrgId)) {
       const destOrg = await PayRouterOrg.getById(params.destOrgId);
       if (!destOrg) throw404('Destination organization not found');
@@ -40,8 +45,8 @@ export class RoutesController {
       destOrgId = parseInt(params.destOrgId);
     }
 
-    // If the region is not provided, we use the region from the request headers
-    // provided by Cloudflare.
+    // If the region is not provided, we use the region from the
+    // request headers provided by Cloudflare.
     let region = params.region;
     region = region == '-' ? (req.headers['cf-ipcountry'] as string) : region;
 
@@ -53,7 +58,14 @@ export class RoutesController {
     // Query for routes that match the network, destination org ID, and minimum bond.
     const select = ['id', 'sourceOrgId', 'destOrgId', 'bond', 'owner', 'fee', 'routeId'];
     const pmSelect = ['id', 'name', 'type', 'accountId'];
-    const routes = await PayRouterRoute.findByNetworkAndDestination(q.net, destOrgId, q.minBond, select, pmSelect);
+    const routes = await PayRouterRoute.findByNetworkAndDestination(
+      q.net,
+      destOrgId,
+      q.minBond,
+      requester?.id,
+      select,
+      pmSelect,
+    );
 
     const findPaths = async (
       routes: PayRouterRoute[],
@@ -78,7 +90,13 @@ export class RoutesController {
           selectedRoutes.push([route, ...currentPath]);
         } else {
           paths.push(route);
-          const routes = await PayRouterRoute.findByNetworkAndDestination(q.net, route.sourceOrgId, q.minBond, select);
+          const routes = await PayRouterRoute.findByNetworkAndDestination(
+            q.net,
+            route.sourceOrgId,
+            q.minBond,
+            requester?.id,
+            select,
+          );
           const newPaths = await findPaths(routes, route.sourceOrgId, [...paths, ...currentPath], new Set(visited));
           selectedRoutes.push(...newPaths);
           paths = [];

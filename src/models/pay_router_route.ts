@@ -151,9 +151,10 @@ export default class PayRouterRoute extends BaseModel {
   }
 
   /**
-   * Find records by destination organization ID
+   * Find routes by destination organization ID
    * @param network The network (optional)
    * @param destOrgId The destination organization ID
+   * @param requesterId Filter by routes that have approved the given requester ID (optional)
    * @param txn Optional transaction object
    * @returns
    */
@@ -161,26 +162,45 @@ export default class PayRouterRoute extends BaseModel {
     network: string = undefined,
     destOrgId: number,
     minBond: string = undefined,
+    requesterId: string = undefined,
     select: string[] = [],
     pmSelect: string[] = [],
     txn?: Transaction,
   ) {
-    let q = this.query(txn);
-    if (select.length > 0) {
-      q = q.select(select);
+    // Ensure paymentMethodId is part of the selection
+    // because we must filtering by it.
+    select.push('paymentMethodId');
+
+    let q = this.query(txn).select(select.length > 0 ? select : ['*']);
+
+    // If requesterId is provided, we need to filter the routes
+    // that have approved the given requester ID.
+    if (requesterId) {
+      q = q.from((sub) => {
+        sub
+          .select('pay_router_routes.*')
+          .from('pay_router_routes')
+          .innerJoin('pay_router_routes_requesters', (q) => {
+            return q
+              .on(`pay_router_routes.id`, `pay_router_routes_requesters.routeId`)
+              .andOnVal('pay_router_routes_requesters.requesterId', '=', requesterId);
+          })
+          .whereNotDeleted()
+          .as('s');
+      });
     }
 
-    return q
-      .whereNotDeleted()
+    q.where((q) => {
+      if (network) q.where({ network });
+      if (minBond) q.where('bond', '>=', minBond);
+    })
       .whereNotNull('paymentMethodId')
-      .where((q) => {
-        if (network) q.where({ network });
-        if (minBond) q.where('bond', '>=', minBond);
-      })
       .where({ destOrgId })
       .withGraphFetched('[sourceOrg,destOrg,paymentMethod]')
       .modifyGraph('paymentMethod', (q) => {
         if (pmSelect.length > 0) q.select(pmSelect);
       });
+
+    return q;
   }
 }

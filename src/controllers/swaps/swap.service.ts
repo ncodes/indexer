@@ -62,13 +62,7 @@ export default class SwapService {
       }
 
       if (swap.payRouterRequest) {
-        swap.payRouterRequest.routes = [];
-
-        const routeIds = swap.payRouterRequest.routeIds;
-        for (const routeId of routeIds) {
-          const route = await PayRouterRoute.findByNetworkAndRouteId(network, routeId, 'paymentMethod');
-          if (route) swap.payRouterRequest.routes.push(route);
-        }
+        SwapService.loadPayRouterRequest(swap);
       }
 
       // Get the exchange rates for the payment methods involved in the swap
@@ -95,6 +89,22 @@ export default class SwapService {
       swap.rates = rates;
     } catch (e) {
       return Promise.reject(e);
+    }
+  }
+
+  /**
+   * Load the pay router request into the swap object
+   * @param swap The swap object
+   */
+  static async loadPayRouterRequest(swap: Swap) {
+    if (swap.payRouterRequest) {
+      const { network, payRouterRequest } = swap;
+      payRouterRequest.routes = [];
+      const routeIds = payRouterRequest.routeIds;
+      for (const routeId of routeIds) {
+        const route = await PayRouterRoute.findByNetworkAndRouteId(network, routeId, 'paymentMethod');
+        if (route) payRouterRequest.routes.push(route);
+      }
     }
   }
 

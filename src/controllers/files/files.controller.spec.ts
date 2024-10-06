@@ -241,7 +241,7 @@ describe('FilesController', () => {
         });
     });
 
-    it('should return 401 when authenticated user is neither a swap counterparty or active dispute draftee', async () => {
+    it('should return 401 when authenticated user is neither a swap counterparty, active dispute draftee, nor a router', async () => {
       cfgObj['app.fileUpload.allowedImageTypes'] = 'image/jpeg';
       cfgObj['app.fileUpload.maxImageSize'] = '11534336';
       await Swap.create({ network: net, orderId: 1 });

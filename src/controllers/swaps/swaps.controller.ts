@@ -51,12 +51,9 @@ export class SwapsController {
     @Param('orderId', ParseIntPipe) orderId: number,
     @Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO,
   ) {
-    const swap = await Swap.get(
-      q.net,
-      orderId,
-      q.select,
-      '[providerPaymentMethod,takerPaymentMethod,market,liquidity,disputes.[draftees,reveals,commits],payRouterRequest.[routePayments]]',
-    );
+    const relations =
+      '[providerPaymentMethod,takerPaymentMethod,market,liquidity,disputes.[draftees,reveals,commits],payRouterRequest.[routePayments],appeal.[creator]]';
+    const swap = await Swap.get(q.net, orderId, q.select, relations);
     if (!swap) throw404('swap not found');
 
     await this.swapSrv.extendSwap(swap, q.select);

@@ -8,6 +8,7 @@ import { ok, throw400, throw401 } from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import Swap from '../../models/swap';
+import SwapService from '../swaps/swap.service';
 import { FilesService } from './files.service';
 
 @Controller('v1/files')
@@ -70,17 +71,22 @@ export class FilesController {
     }
 
     // Get swap
-    const swap = await Swap.get(network, parseInt(orderId), undefined, '[disputes.[draftees]]');
+    const swap = await Swap.get(network, parseInt(orderId), undefined, '[disputes.[draftees],payRouterRequest]');
     if (!swap) throw400('swap not found');
+
+    await SwapService.loadPayRouterRequest(swap);
 
     // Make sure user is part of the swap or dispute
     const user = req.user;
-    if (!Swap.isSwapCounterparty(swap, user.address) && !Swap.isSwapDraftee(swap, user.address, true))
+    if (
+      !Swap.isSwapCounterparty(swap, user.address) &&
+      !Swap.isSwapDraftee(swap, user.address, true) &&
+      !Swap.isRouter(swap, user.address)
+    )
       throw401('you are not allowed to upload files for this swap');
 
-    // Upload file
-    const hash = await this.fileSrv.upload(file, swap, user);
-
-    return ok().data({ hash }).build<string>();
+    return ok()
+      .data({ hash: await this.fileSrv.upload(file, swap, user, 'appeal') })
+      .build<string>();
   }
 }

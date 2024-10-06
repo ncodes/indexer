@@ -83,6 +83,8 @@ export default () => ({
     },
     pinata: {
       key: process.env.PINATA_JWT_KEY,
+      gateway: process.env.PINATA_GATEWAY,
+      groupId: process.env.PINATA_GROUP_ID,
     },
     ipfs: {
       gateway: process.env.IPFS_GATEWAY,

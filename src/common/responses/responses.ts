@@ -184,6 +184,17 @@ export function throw404(msg: string, type?: string, param?: string) {
 }
 
 /**
+ * Throw 403 HTTPException
+ * @param msg The error message
+ * @param type The type of error
+ * @param param The target param/field name causing the error
+ * @constructor
+ */
+export function throw403(msg: string, type?: string, param?: string) {
+  throw error().status(HttpStatus.FORBIDDEN).param(param).type(type).msg(msg).build();
+}
+
+/**
  * Build 400 HTTPException
  * @param msg The error message
  * @param type The type of error

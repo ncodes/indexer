@@ -2,6 +2,7 @@ import * as _ from 'lodash';
 import * as moment from 'moment';
 import Objection, { Model, Transaction, raw } from 'objection';
 import { isEqualStr, randStr, toDec } from '../common/common';
+import Appeal from './appeal';
 import { BaseModel } from './base';
 import Dispute from './dispute';
 import Liquidity from './liquidity';
@@ -169,6 +170,14 @@ export default class Swap extends BaseModel {
           to: ['payment_methods.id'],
         },
       },
+      appeal: {
+        relation: Model.HasOneRelation,
+        modelClass: Appeal,
+        join: {
+          from: ['swaps.network', 'swaps.id'],
+          to: ['appeals.network', 'appeals.orderId'],
+        },
+      },
     };
   }
 
@@ -292,10 +301,16 @@ export default class Swap extends BaseModel {
   /**
    * find a record by swap ID
    * @param id the swap ID
+   * @param relations The relations to be fetched (optional)
    * @param txn Optional transaction object
    */
-  static getById(id: string, txn?: Transaction) {
-    return this.query(txn).where({ id }).withGraphFetched('market').whereNotDeleted().first();
+  static getById(id: string, relations = '', txn?: Transaction) {
+    return this.query(txn)
+      .where({ id })
+      .withGraphFetched('market')
+      .whereNotDeleted()
+      .withGraphFetched(relations)
+      .first();
   }
 
   static makeSelectList(select = []) {
@@ -335,6 +350,12 @@ export default class Swap extends BaseModel {
     if (relations && relations.indexOf('disputes') > -1) {
       q = q.modifyGraph('disputes', (builder) => {
         return builder.orderBy('createdAt', 'DESC');
+      });
+    }
+
+    if (relations && relations.indexOf('appeal') > -1) {
+      q = q.modifyGraph('appeal.creator', (builder) => {
+        return builder.select('id', 'address');
       });
     }
 

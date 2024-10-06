@@ -11,6 +11,7 @@ import AuthConfig from './config/auth.config';
 import KnexConfig from './config/knex.config';
 import { AdminModule } from './controllers/admin/admin.module';
 import { AirdropModule } from './controllers/airdrop/airdrop.module';
+import { AppealsModule } from './controllers/appeals/appeals.module';
 import { AssetsModule } from './controllers/assets/assets.module';
 import { AuthModule } from './controllers/auth/auth.module';
 import { BadgesModule } from './controllers/badges/badges.module';
@@ -74,6 +75,7 @@ function getModules() {
     CacheModule,
     AdminModule,
     RoutesModule,
+    AppealsModule,
   ];
 
   if (['1', 'true'].includes(process.env.ENABLE_TGBOT_SERVICE)) {

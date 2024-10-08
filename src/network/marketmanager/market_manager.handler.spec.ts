@@ -1,6 +1,7 @@
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { DBService } from '../../db/db.service';
 import Meta, { MetaKeys } from '../../models/meta';
+import MarketManagerDelegate from '../../models/pay_router_delegate';
 import PayRouterRequest from '../../models/pay_router_request';
 import { MarketManagerHandler } from './market_manager.handler';
 
@@ -51,6 +52,23 @@ describe('MarketManagerHandler', () => {
 
       const updatedRequest = await PayRouterRequest.getById(request.id);
       expect(updatedRequest.orderId).toEqual(100);
+    });
+  });
+
+  describe('.onUpdatedDelegate', () => {
+    it('should create a new delegate record', async () => {
+      const delegate = '0x1234567890123456789012345678901234567890';
+      await handler.onUpdatedDelegate(delegate, true, {} as any);
+      const createdDelegate = await MarketManagerDelegate.findByNetworkAndAddress(net, delegate);
+      expect(createdDelegate).not.toBeUndefined();
+    });
+
+    it('should delete a delegate record', async () => {
+      const delegate = '0x1234567890123456789012345678901234567890';
+      await MarketManagerDelegate.create({ network: net, address: delegate });
+      await handler.onUpdatedDelegate(delegate, false, {} as any);
+      const deletedDelegate = await MarketManagerDelegate.findByNetworkAndAddress(net, delegate);
+      expect(deletedDelegate).toBeUndefined();
     });
   });
 });

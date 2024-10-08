@@ -62,7 +62,7 @@ export default class SwapService {
       }
 
       if (swap.payRouterRequest) {
-        SwapService.loadPayRouterRequest(swap);
+        await SwapService.loadPayRouterRequest(swap);
       }
 
       // Get the exchange rates for the payment methods involved in the swap

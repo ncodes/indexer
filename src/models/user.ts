@@ -57,6 +57,7 @@ export default class User extends BaseModel {
   nft: { count?: number; totalAlloc?: number; claimed?: boolean };
   earlyDiscordMemberAlloc: string;
   earlyDiscordMemberClaimed: boolean;
+  isDelegate: boolean;
 
   // Relations
   notificationSettings: Partial<NotificationSetting>;

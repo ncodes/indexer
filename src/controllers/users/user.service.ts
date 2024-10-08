@@ -7,6 +7,7 @@ import Allocation from '../../models/allocations';
 import BadgeGrant from '../../models/badge_grant';
 import NFTOwner from '../../models/nft_owner';
 import { defaultNotificationSettings } from '../../models/notification_setting';
+import MarketManagerDelegate from '../../models/pay_router_delegate';
 import PaymentMethod from '../../models/payment_method';
 import Point from '../../models/point';
 import Swap from '../../models/swap';
@@ -97,9 +98,7 @@ export class UserService {
         }
       }
 
-      if (!user.notificationSettings) {
-        user.notificationSettings = defaultNotificationSettings;
-      }
+      user.notificationSettings = user.notificationSettings || defaultNotificationSettings;
 
       user.totalUnclaimedAlloc = await Allocation.getTotalUnclaimed(user.address, user.id);
 
@@ -122,6 +121,8 @@ export class UserService {
       // Early Discord member allocation information
       user.earlyDiscordMemberAlloc = user.isEarlyDiscordMember ? this.cfgSrv.get('app.discord.earlyMemberAlloc') : '0';
       user.earlyDiscordMemberClaimed = !!(await Allocation.getByName(`early_member:${user.address}`));
+
+      if (network) user.isDelegate = !!(await MarketManagerDelegate.findByNetworkAndAddress(network, user.address));
     } catch (e) {
       return Promise.reject(e);
     }

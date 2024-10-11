@@ -45,12 +45,21 @@ export class AppealsController {
     // Check if the order is already released
     if (order.released) throw400('order already released', undefined, 'orderId');
 
+    const fileUrls: string[] = [];
+    for (const file of body.files ?? []) {
+      const exists = await this.fileSrv.cidExists(file);
+      if (!exists) throw400(`file not found: ${file}`, undefined, 'files');
+      fileUrls.push(await this.fileSrv.getSignedUrl(file));
+    }
+
     // Create the appeal
     const appeal = await Appeal.create({
       ...body,
       network: net,
       creatorId: req.user.id,
       orderId: order.id,
+      files: body.files,
+      fileUrls,
     });
 
     return ok().data(appeal).build();
@@ -109,9 +118,7 @@ export class AppealsController {
     for (const file of body.files) {
       const exists = await this.fileSrv.cidExists(file);
       if (!exists) throw400(`file not found: ${file}`, undefined, 'files');
-
-      const url = await this.fileSrv.getSignedUrl(file);
-      fileUrls.push(url);
+      fileUrls.push(await this.fileSrv.getSignedUrl(file));
     }
 
     const appeal = await Appeal.getById(id, 'order');

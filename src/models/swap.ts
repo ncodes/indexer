@@ -111,6 +111,7 @@ export default class Swap extends BaseModel {
   payRouterRequest: PayRouterRequest;
   providerPaymentMethod: PaymentMethod;
   takerPaymentMethod: PaymentMethod;
+  appeal: Appeal;
 
   constructor(init?: Partial<Swap>) {
     super();

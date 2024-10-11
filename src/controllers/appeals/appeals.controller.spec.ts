@@ -3,7 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as moment from 'moment';
 import * as request from 'supertest';
-import { randStr } from '../../common/common';
+import { delay, randStr } from '../../common/common';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { Roles } from '../../common/roles';
@@ -39,7 +39,7 @@ const FilesServiceMock = jest.fn().mockImplementation(() => {
   return { cidExists: mockCidExists, getSignedUrl: mockGetSignedUrl };
 });
 
-describe('DisputesController', () => {
+describe('AppealsController', () => {
   let app: INestApplication;
   const db = DBService.getForTest();
   let cfgObj = {};
@@ -61,6 +61,8 @@ describe('DisputesController', () => {
     jest.clearAllMocks();
     mockCfgGet.mockReset();
     mockGetMarketCore.mockReset();
+    mockCidExists.mockReset();
+    mockGetSignedUrl.mockReset();
 
     cfgObj = { 'auth.jwtSecret': 'secret_secret' };
     mockCfgGet.mockReset().mockImplementation((args) => {
@@ -160,11 +162,56 @@ describe('DisputesController', () => {
         });
     });
 
-    it('should return 400 when network is not supported', async () => {
+    it('should return 400 when issue is too long', async () => {
+      await request(app.getHttpServer())
+        .post(`/v1/appeals/unknown`)
+        .set('Authorization', 'bearer ' + token)
+        .send({ orderId: 0, issue: 'a'.repeat(251) })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'issue is too long',
+            param: 'issue',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 400 when description was not provided', async () => {
       await request(app.getHttpServer())
         .post(`/v1/appeals/unknown`)
         .set('Authorization', 'bearer ' + token)
         .send({ orderId: 0, issue: 'issue' })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'description is required',
+            param: 'description',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 400 when description is too long', async () => {
+      await request(app.getHttpServer())
+        .post(`/v1/appeals/unknown`)
+        .set('Authorization', 'bearer ' + token)
+        .send({ orderId: 0, issue: 'issue', description: 'a'.repeat(501) })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'description is too long',
+            param: 'description',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 400 when network is not supported', async () => {
+      await request(app.getHttpServer())
+        .post(`/v1/appeals/unknown`)
+        .set('Authorization', 'bearer ' + token)
+        .send({ orderId: 0, issue: 'issue', description: 'description' })
         .expect(400)
         .expect({
           error: {
@@ -178,7 +225,7 @@ describe('DisputesController', () => {
       await request(app.getHttpServer())
         .post(`/v1/appeals/localhost`)
         .set('Authorization', 'bearer ' + token)
-        .send({ orderId: 0, issue: 'issue' })
+        .send({ orderId: 0, issue: 'issue', description: 'description' })
         .expect(404)
         .expect({
           error: {
@@ -193,7 +240,7 @@ describe('DisputesController', () => {
       await request(app.getHttpServer())
         .post(`/v1/appeals/${net}`)
         .set('Authorization', 'bearer ' + token)
-        .send({ orderId: order.orderId, issue: 'issue' })
+        .send({ orderId: order.orderId, issue: 'issue', description: 'description' })
         .expect(400)
         .expect({
           error: {
@@ -204,12 +251,49 @@ describe('DisputesController', () => {
         });
     });
 
+    it('should return 400 when a file does not existing', async () => {
+      const order = await Swap.create({ network: net, orderId: 0, paid: true });
+      mockCidExists.mockImplementation(() => false);
+      await request(app.getHttpServer())
+        .post(`/v1/appeals/${net}`)
+        .set('Authorization', 'bearer ' + token)
+        .send({ orderId: order.orderId, issue: 'issue', description: 'description', files: ['file_123'] })
+        .expect(400)
+        .expect({
+          error: {
+            message: 'file not found: file_123',
+            param: 'files',
+            type: 'invalid_request_error',
+          },
+        });
+    });
+
+    it('should return 201 and save the file urls file is ok', async () => {
+      const order = await Swap.create({ network: net, orderId: 0, paid: true });
+      mockCidExists.mockImplementation(() => true);
+      mockGetSignedUrl.mockImplementation(() => 'https://file.com/file_123');
+      await request(app.getHttpServer())
+        .post(`/v1/appeals/${net}`)
+        .set('Authorization', 'bearer ' + token)
+        .send({ orderId: order.orderId, issue: 'issue', description: 'description', files: ['file_123'] })
+        .expect(201)
+        .expect((res) => {
+          const body = res.body.data;
+          expect(body.object).toBe('appeal');
+          expect(body.orderId).toBe(order.id);
+          expect(body.issue).toBe('issue');
+          expect(body.description).toBe('description');
+          expect(body.files).toEqual(['file_123']);
+          expect(body.fileUrls).toEqual(['https://file.com/file_123']);
+        });
+    });
+
     it('should return 201 when appeal was created', async () => {
       const order = await Swap.create({ network: net, orderId: 0, paid: true });
       await request(app.getHttpServer())
         .post(`/v1/appeals/${net}`)
         .set('Authorization', 'bearer ' + token)
-        .send({ orderId: order.orderId, issue: 'issue' })
+        .send({ orderId: order.orderId, issue: 'issue', description: 'description' })
         .expect(201)
         .expect((res) => {
           const body = res.body.data;
@@ -225,7 +309,7 @@ describe('DisputesController', () => {
       await request(app.getHttpServer())
         .post(`/v1/appeals/${net}`)
         .set('Authorization', 'bearer ' + token)
-        .send({ orderId: order.orderId, issue: 'issue' })
+        .send({ orderId: order.orderId, issue: 'issue', description: 'description' })
         .expect(400)
         .expect({
           error: {
@@ -246,7 +330,7 @@ describe('DisputesController', () => {
       await request(app.getHttpServer())
         .post(`/v1/appeals/${net}`)
         .set('Authorization', 'bearer ' + token)
-        .send({ orderId: order.orderId, issue: 'issue' })
+        .send({ orderId: order.orderId, issue: 'issue', description: 'description' })
         .expect(400)
         .expect({
           error: {
@@ -268,7 +352,7 @@ describe('DisputesController', () => {
       await request(app.getHttpServer())
         .post(`/v1/appeals/${net}`)
         .set('Authorization', 'bearer ' + token)
-        .send({ orderId: order.orderId, issue: 'issue' })
+        .send({ orderId: order.orderId, issue: 'issue', description: 'description' })
         .expect(400)
         .expect({
           error: {
@@ -615,14 +699,22 @@ describe('DisputesController', () => {
       const order = await Swap.create({ network: net, orderId: 0, paid: true, provider: u.address });
       const appeal = await Appeal.create({ network: net, orderId: order.id, issue: 'issue' });
 
-      await AppealMessage.create({ appealId: appeal.id, orderId: appeal.orderId, creatorId: u.id, text: 'message1' });
+      await AppealMessage.create({
+        appealId: appeal.id,
+        orderId: appeal.orderId,
+        creatorId: u.id,
+        text: 'message1',
+      });
+      await delay(1);
       await AppealMessage.create({
         appealId: appeal.id,
         orderId: appeal.orderId,
         creatorId: 'user_xyz',
         text: 'message2',
       });
+      await delay(1);
       await AppealMessage.create({ appealId: appeal.id, orderId: appeal.orderId, creatorId: u.id, text: 'message3' });
+      await delay(1);
 
       await request(app.getHttpServer())
         .get(`/v1/appeals/${appeal.id}/messages`)
@@ -642,12 +734,14 @@ describe('DisputesController', () => {
       const appeal = await Appeal.create({ network: net, orderId: order.id, issue: 'issue' });
 
       await AppealMessage.create({ appealId: appeal.id, orderId: appeal.orderId, creatorId: u.id, text: 'message1' });
+      await delay(1);
       await AppealMessage.create({
         appealId: appeal.id,
         orderId: appeal.orderId,
         creatorId: 'user_xyz',
         text: 'message2',
       });
+      await delay(1);
       await AppealMessage.create({ appealId: appeal.id, orderId: appeal.orderId, creatorId: u.id, text: 'message3' });
 
       await request(app.getHttpServer())
@@ -667,6 +761,7 @@ describe('DisputesController', () => {
       const appeal = await Appeal.create({ network: net, orderId: order.id, issue: 'issue' });
 
       await AppealMessage.create({ appealId: appeal.id, orderId: appeal.orderId, creatorId: u.id, text: 'message1' });
+      await delay(1);
       await AppealMessage.create({ appealId: appeal.id, orderId: appeal.orderId, creatorId: u.id, text: 'message2' });
 
       await request(app.getHttpServer())

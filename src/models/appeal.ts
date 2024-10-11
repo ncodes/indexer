@@ -17,8 +17,14 @@ export default class Appeal extends BaseModel {
   creatorId: string = undefined;
   // The issue description
   issue: string = undefined;
+  // The description
+  description: string = undefined;
   // Indicates whether the appeal is closed
   closed: boolean = undefined;
+  // The initial files CIDs
+  files: string[] = undefined;
+  // The file URLs signed links
+  fileUrls: string[] = undefined;
 
   // Relations
   order: Swap = undefined;
@@ -32,6 +38,14 @@ export default class Appeal extends BaseModel {
   $beforeInsert() {
     super.$beforeInsert();
     this.id = 'appeal_' + randStr(24);
+    this.files = this.files ? (JSON.stringify(this.files) as any) : this.files;
+    this.fileUrls = this.fileUrls ? (JSON.stringify(this.fileUrls) as any) : this.fileUrls;
+  }
+
+  $beforeUpdate() {
+    super.$beforeUpdate();
+    this.files = this.files ? (JSON.stringify(this.files) as any) : this.files;
+    this.fileUrls = this.fileUrls ? (JSON.stringify(this.fileUrls) as any) : this.fileUrls;
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {

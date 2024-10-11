@@ -11,6 +11,13 @@ export class CreateDTO {
   @MaxLength(250, { message: makeValidatorMsg('issue is too long', 'issue') })
   @IsNotEmpty({ message: makeValidatorMsg('issue is required', 'issue') })
   public issue: string;
+
+  @MaxLength(500, { message: makeValidatorMsg('description is too long', 'description') })
+  @IsNotEmpty({ message: makeValidatorMsg('description is required', 'description') })
+  public description: string;
+
+  @IsOptional()
+  public files: string[];
 }
 
 export class CreateMessageDTO {

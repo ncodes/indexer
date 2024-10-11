@@ -11,6 +11,9 @@ exports.up = function (knex) {
       table.string('orderId');
       table.string('creatorId');
       table.text('issue');
+      table.text('description');
+      table.jsonb('files').defaultTo('[]');
+      table.jsonb('fileUrls').defaultTo('[]');
       table.boolean('closed').defaultTo(false);
       table.timestamp('createdAt');
       table.timestamp('updatedAt');

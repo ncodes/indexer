@@ -64,6 +64,7 @@ export class SwapsController {
     if (!req.user || (!Swap.isSwapCounterparty(swap, req.user.address) && !Swap.isRouter(swap, req.user.address))) {
       delete swap.providerPaymentMethod;
       delete swap.takerPaymentMethod;
+      delete swap.appeal;
       (swap.payRouterRequest?.routes || []).forEach((route) => {
         delete route.paymentMethod;
       });

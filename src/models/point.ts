@@ -22,6 +22,7 @@ export enum PointAction {
   Quest = 'quest',
   QuestVote = 'quest_vote',
   TweetSearch = 'tweet_search_point',
+  Tap = 'tap_score',
 }
 
 /**

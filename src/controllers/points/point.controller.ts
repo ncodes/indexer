@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Logger, Param, Post, Query, UseGuards, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { recoverMessageAddress } from 'viem';
 import { isEqualStr, toDec } from '../../common/common';
@@ -7,6 +7,7 @@ import { ErrorTypes, ok, throw400 } from '../../common/responses/responses';
 import { IsRootAdmin } from '../../guards/is_basic_admin';
 import NFTOwner from '../../models/nft_owner';
 import Point, { PointAction } from '../../models/point';
+import User from '../../models/user';
 import { isZero, pow10 } from '../../network/common';
 import NetworkService from '../../network/network.service';
 import * as galxePoints from '../users/data/glaxe.json';
@@ -18,6 +19,8 @@ import { PointService, getTokenEnergonAlloc } from './point.service';
  */
 @Controller('v1/points')
 export class PointController {
+  private logger = new Logger(PointController.name);
+
   constructor(private pointSrv: PointService, private netSrv: NetworkService, private cfgSrv: ConfigService) {}
 
   /**
@@ -180,12 +183,14 @@ export class PointController {
     }[];
 
     for (const point of points) {
-      const pointName = `galxe:trialnet:${point['Wallet Address']}`;
+      const pointName = `activity:galxe:trialnet:${point['Wallet Address']}`;
       const existingPoint = await Point.getByName(pointName);
       if (existingPoint) continue;
 
       const pointPerGalxe = parseFloat(this.cfgSrv.get('app.pointsPerGalxe'));
       point.Point = point.Point * pointPerGalxe;
+
+      if (point?.Point <= 0) continue;
 
       await Point.create({
         network: 'galxe',
@@ -194,6 +199,37 @@ export class PointController {
         point: point?.Point.toString() || '0',
         action: PointAction.CSV,
       });
+
+      this.logger.log(`Granted ${point?.Point} points to ${point['Wallet Address']}`);
+    }
+
+    return ok().data({ ok: true }).build();
+  }
+
+  @UseGuards(IsRootAdmin)
+  @Post('/taps-to-points')
+  async createPointFromTaps() {
+    const users = await User.findAll();
+
+    for (const user of users) {
+      const pointName = `activity:tapwar:${user.address}`;
+      const existingPoint = await Point.getByName(pointName);
+      if (existingPoint) continue;
+
+      const pointsPerTap = parseFloat(this.cfgSrv.get('app.tapoff.pointsPerTap'));
+      const pointsToGrant = toDec(user.tapScore).div(pointsPerTap);
+
+      if (pointsToGrant.lte(0)) continue;
+
+      await Point.create({
+        network: '-',
+        name: pointName,
+        address: user.address,
+        point: pointsToGrant.toFixed(0),
+        action: PointAction.Tap,
+      });
+
+      this.logger.log(`Granted ${pointsToGrant} points to ${user.address}`);
     }
 
     return ok().data({ ok: true }).build();

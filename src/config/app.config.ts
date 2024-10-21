@@ -59,6 +59,7 @@ export default () => ({
       bondProvider: process.env.TAPOFF_BOND_PROVIDER,
       minBondStake: process.env.TAPOFF_BOND_MIN_BOND_STAKE,
       battleManagerCron: process.env.BATTLE_MANAGER_CRON,
+      pointsPerTap: process.env.TAPS_PER_POINT,
     },
     tgbot: {
       enableService: process.env.ENABLE_TGBOT_SERVICE,

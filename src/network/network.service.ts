@@ -15,6 +15,7 @@ import { AssetRegistryHandler } from './assetregistry/asset_registry.handler';
 import { BadgeManagerHandler } from './badge/badge_manager.handler';
 import { ContractManager } from './contract_manager';
 import { CoreHandler } from './core/core.handler';
+import { UniswapRouter } from './dexuser/uniswap_router.handler';
 import { DisputeManagerHandler } from './disputemanager/dispute_manager.handler';
 import { MarketCoreHandler } from './marketcore/market_core.handler';
 import { MediatorManagerHandler } from './mediatormanager/mediator_manager.handler';
@@ -23,7 +24,6 @@ import { NFTHandler } from './nft/nft.handler';
 import { getNetworkParams } from './params';
 import Processor from './processor';
 import { Watcher } from './watcher';
-import { UniswapRouter } from './dexuser/uniswap_router.handler';
 
 @Injectable()
 export default class NetworkService {
@@ -56,10 +56,20 @@ export default class NetworkService {
     if (isProd()) {
       await this.startWatcher('sepolia', 'sepolia');
       await this.startWatcher('arbitrum', 'arbitrum', 20);
-      await this.startNFTWatcher('NFT_WATCHER', 'ethereum');
+      // await this.startNFTWatcher('NFT_WATCHER', 'ethereum');
     } else {
       void this.startWatcher('localhost', 'localhost', 1);
-      void this.startNFTWatcher('NFT_WATCHER', 'localhost');
+      // void this.startNFTWatcher('NFT_WATCHER', 'localhost');
+      // await this.startDexWatcher('DEX_WATCHER_ETH', 'ethereum');
+      // await this.startDexWatcher('DEX_WATCHER_ETH_2', 'ethereum');
+      // await this.startDexWatcher('DEX_WATCHER_ETH_3', 'ethereum');
+      // await this.startDexWatcher('DEX_WATCHER_ETH_4', 'ethereum');
+      // await this.startDexWatcher('DEX_WATCHER_ETH_5', 'ethereum');
+      // await this.startDexWatcher('DEX_WATCHER_ETH_6', 'ethereum');
+      // await this.startDexWatcher('DEX_WATCHER_ETH_7', 'ethereum');
+      // await this.startDexWatcher('DEX_WATCHER_ETH_8', 'ethereum');
+      // await this.startDexWatcher('DEX_WATCHER_ETH_9', 'ethereum');
+      // await this.startDexWatcher('DEX_WATCHER_ETH_10', 'ethereum');
     }
     this.restartWatcherSync();
   }
@@ -197,7 +207,7 @@ export default class NetworkService {
       await watcher.add(...handlers);
       this.watchers.push(watcher);
     } else {
-      this.logger.log('DEX watcher is disabled');
+      this.logger.log(`DEX watcher (${name}) is disabled`);
     }
   }
 
@@ -246,9 +256,10 @@ export default class NetworkService {
     }
 
     if (disabledWatcher) {
-      const forcedEnabledWatcher = this.cfgSrv.get('app.enabledOnlyWatcher');
+      const forcedEnabledWatcher = this.cfgSrv.get('app.enabledOnlyWatcher') as string;
       if (forcedEnabledWatcher && name) {
-        disabledWatcher = !(name.toLowerCase() == forcedEnabledWatcher.toLowerCase());
+        const names = forcedEnabledWatcher.split(',').map((v: string) => v.trim().toLowerCase());
+        disabledWatcher = !names.includes(name.toLowerCase());
       }
     }
 

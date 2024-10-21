@@ -1,10 +1,10 @@
-import { Body, Controller, Get, Param, Query, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as _ from 'lodash';
 import { recoverMessageAddress } from 'viem';
 import { isEqualStr, toDec } from '../../common/common';
 import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
 import { ErrorTypes, ok, throw400 } from '../../common/responses/responses';
+import { IsRootAdmin } from '../../guards/is_basic_admin';
 import NFTOwner from '../../models/nft_owner';
 import Point, { PointAction } from '../../models/point';
 import { isZero, pow10 } from '../../network/common';
@@ -166,35 +166,12 @@ export class PointController {
   }
 
   /**
-   * Converts NFT ownership to points.
-   * @param body The request body
-   * @param body.signer The signer address
-   * @param body.beneficiary The beneficiary address
-   * @param body.sig The signature
+   * Converts Galxe points to Joint points.
    * @returns
    */
-  // @Post('/from-galxe')
-  async createPointFromGalxe(@Body(new ValidationPipe(CommonValidationPipeOpt)) body: CreatePointFromEnergonBalance) {
-    try {
-      const address = await recoverMessageAddress({
-        message: `beneficiary: ${body.beneficiary}`,
-        signature: body.sig as `0x${string}`,
-      });
-
-      if (!isEqualStr(address, body.signer)) {
-        throw400('invalid signature', ErrorTypes.InvalidRequest);
-      }
-    } catch (error) {
-      throw400('invalid signature', ErrorTypes.InvalidRequest);
-    }
-
-    // Check if the point has already been granted
-    const pointName = `galxe:${body.signer}`;
-    const existingPoint = await Point.getByName(pointName);
-    if (existingPoint) {
-      throw400('points already granted', ErrorTypes.InvalidRequest);
-    }
-
+  @UseGuards(IsRootAdmin)
+  @Post('/galxe-to-points')
+  async createPointFromGalxe() {
     const points = galxePoints as unknown as {
       ['Wallet Address']: string;
       ['Address Type']: string;
@@ -202,24 +179,22 @@ export class PointController {
       Ranking: 1;
     }[];
 
-    // Find by address
-    let point = points.find((p) => p['Wallet Address'].toLowerCase() === body.signer.toLocaleLowerCase());
-    if (!point) {
-      return ok().data({ ok: false }).build();
+    for (const point of points) {
+      const pointName = `galxe:trialnet:${point['Wallet Address']}`;
+      const existingPoint = await Point.getByName(pointName);
+      if (existingPoint) continue;
+
+      const pointPerGalxe = parseFloat(this.cfgSrv.get('app.pointsPerGalxe'));
+      point.Point = point.Point * pointPerGalxe;
+
+      await Point.create({
+        network: 'galxe',
+        name: pointName,
+        address: point['Wallet Address'],
+        point: point?.Point.toString() || '0',
+        action: PointAction.CSV,
+      });
     }
-
-    point = _.clone(point);
-
-    const pointPerGalxe = parseFloat(this.cfgSrv.get('app.pointsPerGalxe'));
-    point.Point = point.Point * pointPerGalxe;
-
-    await Point.create({
-      network: 'galxe',
-      name: pointName,
-      address: body.beneficiary,
-      point: point?.Point.toString() || '0',
-      action: PointAction.CSV,
-    });
 
     return ok().data({ ok: true }).build();
   }

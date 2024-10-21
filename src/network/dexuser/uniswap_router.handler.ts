@@ -1,10 +1,9 @@
 import { BaseContract, Provider } from 'ethers';
 import { Transaction } from 'objection';
-import NFTOwner from '../../models/nft_owner';
+import UniUser from '../../models/uni_user';
 import { ContractCallEvent } from '../common';
 import { Handler } from '../handler';
 import NetworkService from '../network.service';
-import UniUser from '../../models/uni_user';
 
 export class UniswapRouter extends Handler {
   constructor(
@@ -53,6 +52,8 @@ export class UniswapRouter extends Handler {
     const existing = await UniUser.getByAddress(to);
     if (!existing) {
       await UniUser.create({ address: to }, txn);
+    } else {
+      console.log('User already exists', to);
     }
   }
 }

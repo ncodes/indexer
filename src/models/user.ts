@@ -38,6 +38,7 @@ export default class User extends BaseModel {
   telegramLastAuthAt: string;
   telegramBotChatId: number;
   tapScore: string;
+  tapToPointConvAt: string;
 
   // Not persisted
   totalUnclaimedAlloc: string;
@@ -217,6 +218,10 @@ export default class User extends BaseModel {
 
   static findAll() {
     return this.query().whereNotDeleted();
+  }
+
+  static findTapUnconverted(limit: number) {
+    return this.query().where('tapScore', '>', 0).whereNull('tapToPointConvAt').whereNotDeleted().limit(limit);
   }
 
   /**

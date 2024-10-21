@@ -7,7 +7,6 @@ import { ErrorTypes, ok, throw400 } from '../../common/responses/responses';
 import { IsRootAdmin } from '../../guards/is_basic_admin';
 import NFTOwner from '../../models/nft_owner';
 import Point, { PointAction } from '../../models/point';
-import User from '../../models/user';
 import { isZero, pow10 } from '../../network/common';
 import NetworkService from '../../network/network.service';
 import * as galxePoints from '../users/data/glaxe.json';
@@ -201,35 +200,6 @@ export class PointController {
       });
 
       this.logger.log(`Granted ${point?.Point} points to ${point['Wallet Address']}`);
-    }
-
-    return ok().data({ ok: true }).build();
-  }
-
-  @UseGuards(IsRootAdmin)
-  @Post('/taps-to-points')
-  async createPointFromTaps() {
-    const users = await User.findAll();
-
-    for (const user of users) {
-      const pointName = `activity:tapwar:${user.address}`;
-      const existingPoint = await Point.getByName(pointName);
-      if (existingPoint) continue;
-
-      const pointsPerTap = parseFloat(this.cfgSrv.get('app.tapoff.pointsPerTap'));
-      const pointsToGrant = toDec(user.tapScore).div(pointsPerTap);
-
-      if (pointsToGrant.lte(0)) continue;
-
-      await Point.create({
-        network: '-',
-        name: pointName,
-        address: user.address,
-        point: pointsToGrant.toFixed(0),
-        action: PointAction.Tap,
-      });
-
-      this.logger.log(`Granted ${pointsToGrant} points to ${user.address}`);
     }
 
     return ok().data({ ok: true }).build();

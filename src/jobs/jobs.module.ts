@@ -15,6 +15,7 @@ import ExchangeRateFetcher from './exchange_rate_cacher/ExchangeRateFetcher';
 import MarketMetaManager from './market_meta_manager/MarketMetaManager';
 import { NotificationModule } from './notifications/NotificationModule';
 import ProviderMessagingStatusUpdate from './provider_messaging_status_update/ProviderMessagingStatusUpdate';
+import TapToPointConverter from './tap_to_point_converter/TapToPointConverter';
 
 const providers: any[] = [];
 const imports = [
@@ -45,6 +46,10 @@ if (['1', 'true'].includes(process.env.ENABLE_MARKET_META_MANAGER)) {
 
 if (['1', 'true'].includes(process.env.ENABLE_PROVIDER_MSG_STATUS_UPDATE)) {
   providers.push(ProviderMessagingStatusUpdate);
+}
+
+if (['1', 'true'].includes(process.env.ENABLE_TAP_TO_POINT_CONVERTER)) {
+  providers.push(TapToPointConverter);
 }
 
 @Module({

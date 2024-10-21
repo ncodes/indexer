@@ -2,6 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
+import CacheService from '../../cacher/cache.service';
 import { randStr } from '../../common/common';
 import { AllExceptionsFilter } from '../../common/interceptors/exception_filter';
 import { NoopLogger } from '../../common/loggers/noop_logger';
@@ -10,19 +11,19 @@ import { DBService } from '../../db/db.service';
 import Dispute from '../../models/dispute';
 import Draft from '../../models/draft';
 import Offer from '../../models/offer';
+import Point from '../../models/point';
 import Swap from '../../models/swap';
 import User from '../../models/user';
 import NetworkService from '../../network/network.service';
 import { JointLinkService } from '../../services/joint_link.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
+import { RedisService } from '../../services/redis/redis.service';
 import AirdropService from '../airdrop/airdrop.service';
+import TapService from '../airdrop/tap.service';
 import { makeSession } from '../auth/utils';
 import ConvosService from '../convos/convos.service';
 import { UserService } from './user.service';
 import { UsersController } from './users.controller';
-import CacheService from '../../cacher/cache.service';
-import TapService from '../airdrop/tap.service';
-import { RedisService } from '../../services/redis/redis.service';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {
@@ -495,6 +496,47 @@ describe('UsersController', () => {
             data: { ok: false },
           });
       });
+    });
+  });
+
+  describe('.transferScores', () => {
+    it('should return 401 when authorization header is missing', async () => {
+      await request(app.getHttpServer()).post(`/v1/users/transfer-scores/${u.address}`).expect(401);
+    });
+
+    it('should return 404 when target user not found', async () => {
+      await request(app.getHttpServer())
+        .post(`/v1/users/transfer-scores/${address2}`)
+        .set('Authorization', 'bearer ' + token)
+        .expect(404)
+        .expect({
+          error: { message: 'target user not found' },
+        });
+    });
+
+    it('should return 200 on success', async () => {
+      await User.create({ address: address2, tapScore: '1' });
+      await User.updateById(u.id, { tapScore: '1' });
+      await Point.create({ address: u.address, point: '1' });
+      await Point.create({ address: u.address, point: '1' });
+
+      await request(app.getHttpServer())
+        .post(`/v1/users/transfer-scores/${address2}`)
+        .set('Authorization', 'bearer ' + token)
+        .expect(201)
+        .expect({ data: { ok: true } });
+
+      const user = await User.getByAddress(u.address);
+      expect(user.tapScore).toEqual('0');
+
+      const userPoints = await Point.getTotalPointsByAddress(u.address);
+      expect(userPoints).toEqual('0');
+
+      const targetUser = await User.getByAddress(address2);
+      expect(targetUser.tapScore).toEqual('2');
+
+      const targetPoints = await Point.getTotalPointsByAddress(address2);
+      expect(targetPoints).toEqual('2');
     });
   });
 });

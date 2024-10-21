@@ -21,7 +21,7 @@ export const AppName = () => process.env.APP_NAME;
  * Convert a number or string to Decimal
  * @param val The value to convert
  */
-export const toDec = (val: BigNumberish | Decimal) => new Decimal(val.toString());
+export const toDec = (val: BigNumberish | Decimal) => new Decimal(val?.toString() || '0');
 
 /**
  * Check if current environment is 'development'

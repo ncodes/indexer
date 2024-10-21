@@ -340,4 +340,9 @@ export default class User extends BaseModel {
   static findByNullTapScore(limit: number) {
     return this.query().whereNull('tapScore').limit(limit);
   }
+
+  static async transferTapScore(source: string, target: string, score: string, txn?: Transaction) {
+    await this.query(txn).where('address', 'ilike', source).whereNotDeleted().patch({ tapScore: '0' });
+    return this.query(txn).where('address', 'ilike', target).whereNotDeleted().patch({ tapScore: score });
+  }
 }

@@ -269,6 +269,17 @@ export default class Point extends BaseModel {
   }
 
   /**
+   * Transfer points to a new address
+   * @param source The source address
+   * @param target The target address
+   * @param txn Optional transaction object
+   * @returns
+   */
+  static transferToAddress(source: string, target: string, txn?: Transaction) {
+    return this.query(txn).where('address', 'ilike', source).whereNotDeleted().patch({ address: target });
+  }
+
+  /**
    * Get the rank of an address
    * @param address The address
    * @param txn Optional transaction object

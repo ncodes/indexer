@@ -12,11 +12,14 @@ import {
 import Decimal from 'decimal.js';
 import * as moment from 'moment';
 import { Server, Socket } from 'socket.io';
+import CacheService from '../../cacher/cache.service';
+import { isLocal, toDec } from '../../common/common';
+import { Roles } from '../../common/roles';
 import { checkToken } from '../../guards/be_authenticated.guard';
 import Swap from '../../models/swap';
 import Tap from '../../models/tap';
+import TPS from '../../models/tps';
 import User from '../../models/user';
-import { isLocal, toDec } from '../../common/common';
 import {
   FollowQuestBonus,
   InstantCoolWindow,
@@ -34,9 +37,6 @@ import {
   TapSpendType,
 } from './constants';
 import TapService from './tap.service';
-import CacheService from '../../cacher/cache.service';
-import TPS from '../../models/tps';
-import { Roles } from '../../common/roles';
 
 @WebSocketGateway({ namespace: '/v1/taps', pingTimeout: 30000 })
 export default class TapGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -126,7 +126,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    * @param socket The socket object
    * @param token The access token
    */
-  @SubscribeMessage('auth')
+  // @SubscribeMessage('auth')
   async handleAuth(@ConnectedSocket() socket: Socket, @MessageBody('token') token: string) {
     void this._handleAuth(socket, token);
     return { success: true };
@@ -137,7 +137,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    * @param socket The socket object
    * @returns
    */
-  @SubscribeMessage('tap')
+  // @SubscribeMessage('tap')
   async handleTap(@ConnectedSocket() socket: Socket) {
     const now = moment();
 

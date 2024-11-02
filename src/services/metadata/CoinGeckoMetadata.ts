@@ -1,5 +1,5 @@
 // tslint:disable-next-line:max-classes-per-file
-import { getChainID } from '@jointlabs/chains-info';
+import { getChainID } from '@jointlabs/meta';
 import axios from 'axios';
 import { CoinGeckoConfig } from '../../network/common';
 import { MetadataSource } from './metadata.service';

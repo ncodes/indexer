@@ -11,6 +11,7 @@ import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import { MayHaveKeyGuard } from '../../guards/may_have_token.guard';
 import { MayBeAuthenticatedGuard } from '../../guards/maybe_authenticated.guard';
+import MerkleTree from '../../models/merkle_tree';
 import NFTOwner from '../../models/nft_owner';
 import Offer from '../../models/offer';
 import OnlineStatus from '../../models/online_status';
@@ -240,5 +241,11 @@ export class UsersController {
     return ok()
       .data({ points: point?.Point ?? 0, actualPoints: earned })
       .build();
+  }
+
+  @Get('/claims/:address')
+  async getClaims(@Param('address') address: string) {
+    const claims = await MerkleTree.findByAddress(address);
+    return ok().data(claims).build();
   }
 }

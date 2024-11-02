@@ -1,15 +1,9 @@
-import {
-  ChainNames,
-  TokenLists,
-  contractsParams,
-  getChainByName,
-  getTokenInfo,
-  isValidChain,
-} from '@jointlabs/chains-info';
+import { ChainNames, TokenLists, contractsParams, getChainByName, getTokenInfo, isValidChain } from '@jointlabs/meta';
 import { Controller, Get, Param, Query, Req } from '@nestjs/common';
 import { Client } from '@xmtp/xmtp-js';
 import { Wallet } from 'ethers';
 import { Request } from 'express';
+import { Model } from 'objection';
 import { ok, throw400, throw404 } from '../../common/responses/responses';
 import { ConfigService } from '../../config/config.service';
 import AssetRegistry from '../../models/asset_registry';
@@ -17,7 +11,6 @@ import Meta, { FeeName } from '../../models/meta';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { ErrTokenNotFound, MetadataService } from '../../services/metadata/metadata.service';
 import { PointMap } from '../points/data/points';
-import { Model } from 'objection';
 
 @Controller('v1/misc')
 export class MiscController {

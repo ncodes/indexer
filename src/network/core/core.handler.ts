@@ -1543,10 +1543,9 @@ export class CoreHandler extends Handler {
    * @param discountBp The discount basis point
    * @param event The event object
    * @param txn The transaction object
+   * @deprecated
    */
-  async onNFTDiscountUpdated(discountBp: bigint, event: ContractCallEvent, txn?: Transaction) {
-    await this.onParameterUpdate('nftDiscountBP', discountBp.toString(), event, txn);
-  }
+  async onNFTDiscountUpdated(discountBp: bigint, event: ContractCallEvent, txn?: Transaction) {}
 
   /**
    * New offer was created

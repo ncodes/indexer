@@ -7,9 +7,14 @@ import Point, { PointAction } from '../../models/point';
 import User from '../../models/user';
 import { Base } from '../base';
 
+/**
+ * TapsToPointsJob is responsible for converting users' taps to points.
+ * Each tap will be converted to points based on the pointsPerTap config.
+ * It should be run before the PointsToMerkleJob.
+ */
 @Injectable()
-export default class TapToPointConverter extends Base {
-  private logger = new Logger(TapToPointConverter.name);
+export default class TapsToPointsJob extends Base {
+  private logger = new Logger(TapsToPointsJob.name);
 
   constructor(private cfgSrv: ConfigService) {
     super();
@@ -28,29 +33,29 @@ export default class TapToPointConverter extends Base {
     try {
       const users = await User.findTapUnconverted(100);
 
-      this.logger.log(`Processing tap converstion for ${users.length} users`);
+      this.logger.log(`Processing tap conversion for ${users.length} users`);
 
       for (const user of users) {
         const pointName = `activity:tapwar:${user.address}`;
         const existingPoint = await Point.getByName(pointName);
-        if (existingPoint) continue;
+        if (!existingPoint) {
+          const pointsPerTap = parseFloat(this.cfgSrv.get('app.tapoff.pointsPerTap'));
+          const pointsToGrant = toDec(user.tapScore).div(pointsPerTap);
 
-        const pointsPerTap = parseFloat(this.cfgSrv.get('app.tapoff.pointsPerTap'));
-        const pointsToGrant = toDec(user.tapScore).div(pointsPerTap);
+          if (pointsToGrant.lte(0)) continue;
 
-        if (pointsToGrant.lte(0)) continue;
+          await Point.create({
+            network: '-',
+            name: pointName,
+            address: user.address,
+            point: pointsToGrant.toFixed(0),
+            action: PointAction.Tap,
+          });
 
-        await Point.create({
-          network: '-',
-          name: pointName,
-          address: user.address,
-          point: pointsToGrant.toFixed(0),
-          action: PointAction.Tap,
-        });
+          this.logger.log(`Granted ${pointsToGrant} points to ${user.address}`);
+        }
 
         await User.updateById(user.id, { tapToPointConvAt: moment().toISOString() });
-
-        this.logger.log(`Granted ${pointsToGrant} points to ${user.address}`);
       }
     } catch (e) {
       this.logger.error(e.message);

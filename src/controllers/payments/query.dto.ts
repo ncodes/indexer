@@ -1,4 +1,4 @@
-import { getChainNames } from '@jointlabs/chains-info';
+import { getChainNames } from '@jointlabs/meta';
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsEthereumAddress, IsIn, IsNotEmpty, IsOptional } from 'class-validator';
 import { toBoolean } from 'underscore.string';

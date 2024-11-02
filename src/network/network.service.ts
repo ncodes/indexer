@@ -1,7 +1,7 @@
-import { ChainNames } from '@jointlabs/chains-info';
+import { ChainNames } from '@jointlabs/meta';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Contract, Provider } from 'ethers';
+import { BaseContract, Contract, Provider } from 'ethers';
 import * as erc20TokenABI from '../../abi/ERC20.json';
 import { ERC20 } from '../../typechain';
 import { isProd, isTest } from '../common/common';
@@ -13,6 +13,7 @@ import { MetadataService } from '../services/metadata/metadata.service';
 import { RedisService } from '../services/redis/redis.service';
 import { AssetRegistryHandler } from './assetregistry/asset_registry.handler';
 import { BadgeManagerHandler } from './badge/badge_manager.handler';
+import { BondCurveTokenHandler } from './bond_curve_token_handler/bond_curve_token.handler';
 import { ContractManager } from './contract_manager';
 import { CoreHandler } from './core/core.handler';
 import { UniswapRouter } from './dexuser/uniswap_router.handler';
@@ -170,6 +171,7 @@ export default class NetworkService {
       new BadgeManagerHandler(this, provider, network, this.contractMgr.contracts[network]),
       new AssetRegistryHandler(provider, network, this.contractMgr.contracts[network]),
       new MinerRegistryHandler(provider, network, this.contractMgr.contracts[network]),
+      new BondCurveTokenHandler(provider, network, this.contractMgr.contracts[network]),
     ];
 
     // Create event processor
@@ -191,11 +193,36 @@ export default class NetworkService {
 
     const provider = this.contractMgr.providers[network];
     const handlers = [
-      new UniswapRouter(this, provider, network, this.contractMgr.contracts[network].uniswapV2Router),
-      new UniswapRouter(this, provider, network, this.contractMgr.contracts[network].uniswapV2Router2),
-      new UniswapRouter(this, provider, network, this.contractMgr.contracts[network].uniswapV3Router),
-      new UniswapRouter(this, provider, network, this.contractMgr.contracts[network].uniswapV3Router2),
-      new UniswapRouter(this, provider, network, this.contractMgr.contracts[network].uniswapV3RouterUniversal),
+      new UniswapRouter(
+        this,
+        provider,
+        network,
+        this.contractMgr.contracts[network].uniswapV2Router as unknown as BaseContract,
+      ),
+      new UniswapRouter(
+        this,
+        provider,
+        network,
+        this.contractMgr.contracts[network].uniswapV2Router2 as unknown as BaseContract,
+      ),
+      new UniswapRouter(
+        this,
+        provider,
+        network,
+        this.contractMgr.contracts[network].uniswapV3Router as unknown as BaseContract,
+      ),
+      new UniswapRouter(
+        this,
+        provider,
+        network,
+        this.contractMgr.contracts[network].uniswapV3Router2 as unknown as BaseContract,
+      ),
+      new UniswapRouter(
+        this,
+        provider,
+        network,
+        this.contractMgr.contracts[network].uniswapV3RouterUniversal as unknown as BaseContract,
+      ),
     ];
 
     const processor = new Processor(network);

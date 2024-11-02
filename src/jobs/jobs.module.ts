@@ -8,6 +8,11 @@ import { ExchangeRateServiceModule } from '../services/exchange_rate.service';
 import { MetadataService } from '../services/metadata/metadata.service';
 import { TwitterService } from '../services/twitter.service';
 import { RedisService } from './../services/redis/redis.service';
+import { default as KOLToMerkleJob, default as TJoinToMerkleJob } from './allocators/KOLToMerkleJob';
+import MerkleJob from './allocators/MerkleJob';
+import PointsToMerkleJob from './allocators/PointsToMerkleJob';
+import TapsToPointsJob from './allocators/TapsToPointsJob';
+import UniUsersToMerkleJob from './allocators/UniUsersToMerkleJob';
 import OnCommitPeriodEnd from './dispute_notifications/on_commit_period_end/onCommitPeriodEnd';
 import OnEvidencePeriodEnd from './dispute_notifications/on_evidence_period_end/onEvidencePeriodEnd';
 import OnRevealPeriodEnd from './dispute_notifications/on_reveal_period_end/onRevealPeriodEnd';
@@ -15,7 +20,6 @@ import ExchangeRateFetcher from './exchange_rate_cacher/ExchangeRateFetcher';
 import MarketMetaManager from './market_meta_manager/MarketMetaManager';
 import { NotificationModule } from './notifications/NotificationModule';
 import ProviderMessagingStatusUpdate from './provider_messaging_status_update/ProviderMessagingStatusUpdate';
-import TapToPointConverter from './tap_to_point_converter/TapToPointConverter';
 
 const providers: any[] = [];
 const imports = [
@@ -48,8 +52,28 @@ if (['1', 'true'].includes(process.env.ENABLE_PROVIDER_MSG_STATUS_UPDATE)) {
   providers.push(ProviderMessagingStatusUpdate);
 }
 
-if (['1', 'true'].includes(process.env.ENABLE_TAP_TO_POINT_CONVERTER)) {
-  providers.push(TapToPointConverter);
+if (['1', 'true'].includes(process.env.ENABLE_TAPS_TO_POINTS_JOB)) {
+  providers.push(TapsToPointsJob);
+}
+
+if (['1', 'true'].includes(process.env.ENABLE_POINTS_TO_MERKLE_JOB)) {
+  providers.push(PointsToMerkleJob);
+}
+
+if (['1', 'true'].includes(process.env.ENABLE_TJOIN_TO_MERKLE_JOB)) {
+  providers.push(TJoinToMerkleJob);
+}
+
+if (['1', 'true'].includes(process.env.ENABLE_KOL_TO_MERKLE_JOB)) {
+  providers.push(KOLToMerkleJob);
+}
+
+if (['1', 'true'].includes(process.env.ENABLE_MERKLE_JOB)) {
+  providers.push(MerkleJob);
+}
+
+if (['1', 'true'].includes(process.env.ENABLE_UNI_USERS_TO_MERKLE_JOB)) {
+  providers.push(UniUsersToMerkleJob);
 }
 
 @Module({

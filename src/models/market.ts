@@ -1,4 +1,4 @@
-import { ChainNames } from '@jointlabs/chains-info';
+import { ChainNames } from '@jointlabs/meta';
 import * as _ from 'lodash';
 import Objection, { QueryBuilderType, raw, Transaction } from 'objection';
 import { randStr } from '../common/common';

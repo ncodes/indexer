@@ -1,4 +1,4 @@
-import { isValidChain } from '@jointlabs/chains-info';
+import { isValidChain } from '@jointlabs/meta';
 import { Controller, Param, ParseFilePipe, Post, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { FileInterceptor } from '@nestjs/platform-express';

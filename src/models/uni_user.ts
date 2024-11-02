@@ -86,4 +86,8 @@ export default class UniUser extends BaseModel {
       this.query(txn).whereNotDeleted().patchAndFetchById(id, udp).execute().then(resolve).catch(reject);
     });
   }
+
+  static findAll() {
+    return this.query().whereNotDeleted();
+  }
 }

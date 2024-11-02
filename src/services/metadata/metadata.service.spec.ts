@@ -35,10 +35,10 @@ const MockConfigService = jest.fn().mockImplementation(() => {
 var mockFindTokenInSynthetic: jest.Mock<any, any, any>;
 // eslint-disable-next-line no-var
 var mockFindTokenInLocalhost: jest.Mock<any, any, any>;
-jest.mock('@jointlabs/chains-info', () => {
+jest.mock('@jointlabs/meta', () => {
   mockFindTokenInSynthetic = jest.fn();
   mockFindTokenInLocalhost = jest.fn();
-  const orig = jest.requireActual('@jointlabs/chains-info');
+  const orig = jest.requireActual('@jointlabs/meta');
   return {
     ...orig,
     findTokenInSynthetic: mockFindTokenInSynthetic,

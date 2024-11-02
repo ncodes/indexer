@@ -1,4 +1,4 @@
-import { getChainNames } from '@jointlabs/chains-info';
+import { getChainNames } from '@jointlabs/meta';
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsEnum, IsIn, IsISO8601, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { toNumber } from 'lodash';

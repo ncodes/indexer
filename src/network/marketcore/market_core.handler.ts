@@ -1,4 +1,4 @@
-import { ChainNames, findTokenInLocalhost, findTokenInSynthetic } from '@jointlabs/chains-info';
+import { ChainNames, findTokenInLocalhost, findTokenInSynthetic } from '@jointlabs/meta';
 import { Logger } from '@nestjs/common';
 import { Provider } from 'ethers';
 import { Transaction } from 'objection';

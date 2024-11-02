@@ -1,8 +1,9 @@
-import { Abi, AbiTypes, ChainNames, getChainByName, getChainNames } from '@jointlabs/chains-info';
+import { Abi, AbiTypes, ChainNames, getChainByName, getChainNames } from '@jointlabs/meta';
 import { Logger } from '@nestjs/common';
 import { Contract, FetchRequest, JsonRpcProvider, Provider } from 'ethers';
 import * as assetRegABI from '../../abi/AssetRegistry.json';
 import * as badgeMgrABI from '../../abi/BadgeManager.json';
+import * as bondingCurveTokenABI from '../../abi/BondCurveToken.json';
 import * as coreABI from '../../abi/Core.json';
 import * as disputeManagerABI from '../../abi/DisputeManager.json';
 import * as erc20TokenABI from '../../abi/ERC20.json';
@@ -10,7 +11,6 @@ import * as marketCoreABI from '../../abi/MarketCore.json';
 import * as mediatorManagerABI from '../../abi/MediatorManager.json';
 import * as minerRegABI from '../../abi/MinerRegistry.json';
 import * as nftABI from '../../abi/NFT.json';
-import * as p2pTokenABI from '../../abi/Token.json';
 import {
   AssetRegistry,
   BadgeManager,
@@ -61,9 +61,13 @@ export class ContractManager {
     this.providers[chain] = provider;
     this.contracts[chain] = {};
 
-    const p2pTokenAddr = getChainByName(chain).contracts['token'].address;
-    if (p2pTokenAddr) {
-      this.contracts[chain].p2pToken = new Contract(p2pTokenAddr, p2pTokenABI, provider) as unknown as Token;
+    const nativeTokenAddr = getChainByName(chain).contracts['token'].address;
+    if (nativeTokenAddr) {
+      this.contracts[chain].nativeToken = new Contract(
+        nativeTokenAddr,
+        bondingCurveTokenABI,
+        provider,
+      ) as unknown as Token;
     }
 
     const marketCoreAddr = getChainByName(chain).contracts['marketCore'].address;

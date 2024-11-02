@@ -1,4 +1,4 @@
-import { ChainNames } from '@jointlabs/chains-info';
+import { ChainNames } from '@jointlabs/meta';
 import Decimal from 'decimal.js';
 import { BigNumberish, Block, TransactionResponse, Wallet } from 'ethers';
 import * as moment from 'moment/moment';

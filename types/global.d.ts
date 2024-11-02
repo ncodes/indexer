@@ -1,3 +1,4 @@
+import { AbiTypes } from '@jointlabs/meta';
 import {
   ChainLinkParams,
   CoreParams,
@@ -6,7 +7,7 @@ import {
   MediatorManagerParams,
   MinerRegistryParams,
   OthersParams,
-} from '@jointlabs/chains-info/src/types';
+} from '@jointlabs/meta/src/types';
 import { BigNumber } from 'ethers';
 import { NotificationID } from '../src/jobs/notifications/common';
 import Convo from '../src/models/convo';
@@ -23,8 +24,8 @@ import {
   BadgeManager,
   Core,
   DisputeManager,
-  Energon,
   FeePool,
+  FreeToken,
   LPPool,
   MarketCore,
   MediatorManager,
@@ -33,7 +34,6 @@ import {
   Token,
   TokenPool,
 } from '../typechain';
-import { AbiTypes } from '@jointlabs/chains-info';
 
 declare global {
   namespace Express {
@@ -57,7 +57,7 @@ declare global {
   }
 
   interface JointContracts {
-    p2pToken?: Token;
+    nativeToken?: Token;
     marketCore?: MarketCore;
     core?: Core;
     mediatorMgr?: MediatorManager;

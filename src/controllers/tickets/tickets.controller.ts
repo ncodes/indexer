@@ -118,7 +118,7 @@ export class TicketsController {
     const ticketSupply = await mediatorMgr.ticketSupply();
     const ticketSold = await mediatorMgr.ticketSold();
 
-    const p2pAddress = this.netSrv.getContracts(q.net).p2pToken.target as string;
+    const p2pAddress = this.netSrv.getContracts(q.net).nativeToken.target as string;
 
     const ownerInfo: { totalBonds?: string; totalBondsUsd?: number; total?: string } = {};
     if (q.owner) {

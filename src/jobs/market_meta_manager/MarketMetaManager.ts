@@ -1,10 +1,10 @@
-import { getTokenInfo } from '@jointlabs/chains-info';
+import { getTokenInfo } from '@jointlabs/meta';
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import * as moment from 'moment';
 import Market from '../../models/market';
-import { Base } from '../base';
 import { MetadataService } from '../../services/metadata/metadata.service';
+import { Base } from '../base';
 
 /**
  * MarketMetaManager manages market meta data

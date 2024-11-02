@@ -1,4 +1,4 @@
-import { paymentMethods } from '@jointlabs/chains-info';
+import { PaymentMethods } from '@jointlabs/meta';
 import { Controller, Get, Query, ValidationPipe } from '@nestjs/common';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ok } from '../../common/responses/responses';
@@ -17,7 +17,7 @@ export class PaymentsController {
   @Get('methods')
   async getPaymentMethods(@Query(new ValidationPipe(ValPipeOpt)) q: GetQueryDTO) {
     return ok()
-      .data(paymentMethods[q.net] || [])
+      .data(PaymentMethods[q.net] || [])
       .build();
   }
 

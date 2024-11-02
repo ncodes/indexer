@@ -5,7 +5,8 @@
 exports.up = function (knex) {
   return Promise.all([
     knex.schema.table('users', (table) => {
-      table.timestamp('tapToPointConvAt').nullable();
+      table.timestamp('tapToPointConvAt');
+      table.string('addedMerkleEntryAt');
     }),
   ]);
 };
@@ -18,6 +19,7 @@ exports.down = function (knex) {
   return Promise.all([
     knex.schema.table('users', (table) => {
       table.dropColumn('tapToPointConvAt');
+      table.dropColumn('addedMerkleEntryAt');
     }),
   ]);
 };

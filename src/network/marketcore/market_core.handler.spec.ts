@@ -1,4 +1,4 @@
-import { ChainNames } from '@jointlabs/chains-info';
+import { ChainNames } from '@jointlabs/meta';
 import * as moment from 'moment';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { DBService } from '../../db/db.service';
@@ -12,9 +12,9 @@ import { MarketCoreHandler } from './market_core.handler';
 
 // eslint-disable-next-line no-var
 var mockFindTokenInSynthetic: jest.Mock<any, any, any>;
-jest.mock('@jointlabs/chains-info', () => {
+jest.mock('@jointlabs/meta', () => {
   mockFindTokenInSynthetic = jest.fn();
-  const orig = jest.requireActual('@jointlabs/chains-info');
+  const orig = jest.requireActual('@jointlabs/meta');
   return {
     ...orig,
     findTokenInSynthetic: mockFindTokenInSynthetic,

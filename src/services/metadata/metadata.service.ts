@@ -1,4 +1,4 @@
-import { ChainNames, findTokenInLocalhost, findTokenInSynthetic, isValidChain } from '@jointlabs/chains-info';
+import { ChainNames, findTokenInLocalhost, findTokenInSynthetic, isValidChain } from '@jointlabs/meta';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';

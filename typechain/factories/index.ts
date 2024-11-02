@@ -9,6 +9,7 @@ export { ERC20__factory } from "./ERC20__factory";
 export { ERC721__factory } from "./ERC721__factory";
 export { Energon__factory } from "./Energon__factory";
 export { FeePool__factory } from "./FeePool__factory";
+export { FreeToken__factory } from "./FreeToken__factory";
 export { LPPool__factory } from "./LPPool__factory";
 export { MarketCore__factory } from "./MarketCore__factory";
 export { MediatorManager__factory } from "./MediatorManager__factory";

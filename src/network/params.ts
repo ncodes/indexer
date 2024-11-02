@@ -1,4 +1,4 @@
-import { ChainNames, getContractsParams } from '@jointlabs/chains-info';
+import { ChainNames, getContractsParams } from '@jointlabs/meta';
 
 export function getNetworkParams(network: ChainNames): ContractsParams {
   return {
@@ -7,7 +7,6 @@ export function getNetworkParams(network: ChainNames): ContractsParams {
     maxOpenOrders: getContractsParams(network).core.maxOpenOrders,
     maxOpenDisputes: getContractsParams(network).core.maxOpenDisputes,
     transferToFeePoolInterval: getContractsParams(network).core.transferToFeePoolInterval,
-    nftDiscountBP: getContractsParams(network).core.nftDiscountBP,
     defaultDisputeDelayDur: getContractsParams(network).marketCore.defaultDisputeDelayDur,
     baseTicketPrice: getContractsParams(network).mediatorManager.baseTicketPrice,
     ticketWindowDur: getContractsParams(network).mediatorManager.ticketWindowDur,

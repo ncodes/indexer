@@ -82,6 +82,7 @@ export class Watcher {
   }
 
   parsedLogToCallEvent(parsed: LogDescription, log: Log, contractAddress?: string) {
+    if (!parsed) return;
     return {
       event: parsed.name,
       args: parsed.args,

@@ -236,13 +236,13 @@ export class Watcher {
   addToPendingBlocks(block: number) {
     this.pendingBlocks.push(block);
     this.pendingBlocks.sort();
-    this.logger.log('Pending Blocks', this.pendingBlocks);
+    this.logInfo('Pending Blocks', this.pendingBlocks);
   }
 
   addToPriorityPendingBlocks(block: number) {
     this.priorityPendingBlocks.push(block);
     this.priorityPendingBlocks.sort();
-    this.logger.log('Priority Pending Blocks', this.priorityPendingBlocks);
+    this.logInfo('Priority Pending Blocks', this.priorityPendingBlocks);
   }
 
   watchBlock() {

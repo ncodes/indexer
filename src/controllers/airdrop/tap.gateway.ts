@@ -126,7 +126,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    * @param socket The socket object
    * @param token The access token
    */
-  // @SubscribeMessage('auth')
+  @SubscribeMessage('auth')
   async handleAuth(@ConnectedSocket() socket: Socket, @MessageBody('token') token: string) {
     void this._handleAuth(socket, token);
     return { success: true };
@@ -137,8 +137,9 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    * @param socket The socket object
    * @returns
    */
-  // @SubscribeMessage('tap')
+  @SubscribeMessage('tap')
   async handleTap(@ConnectedSocket() socket: Socket) {
+    return { success: false, message: 'Not implemented' };
     const now = moment();
 
     const userId = await this.tapSrv.getClientUserId(socket.id);

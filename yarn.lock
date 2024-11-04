@@ -1173,10 +1173,10 @@
     "@types/yargs" "^17.0.8"
     chalk "^4.0.0"
 
-"@jointlabs/meta@^0.0.5":
-  version "0.0.5"
-  resolved "https://registry.yarnpkg.com/@jointlabs/meta/-/meta-0.0.5.tgz#7585a8eaf52f935ba8c8800e7845a1ddbff3857b"
-  integrity sha512-eKUXewl0Wl72il15qdLwqHO46PR7ge35xFK4AuxFVqYHLepW4XXj5jjc2C8pRjtFGmyl8GHGF+r3pHY7Pgme4w==
+"@jointlabs/meta@^0.0.6":
+  version "0.0.6"
+  resolved "https://registry.yarnpkg.com/@jointlabs/meta/-/meta-0.0.6.tgz#13a5fa5b791a40d85cf15ec80721764861fa5704"
+  integrity sha512-I+k2J2wjYGd99TNCMk2EGN1Xu8Kx+T6jSmS/cbDEo6GAIeiGIMnZmdrWy9bXJh62R/Evjgqg+PhXnyZhovGxWg==
   dependencies:
     "@typechain/ethers-v6" "^0.5.1"
     lodash "^4.17.21"

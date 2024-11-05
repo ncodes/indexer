@@ -11,7 +11,7 @@ import { Base } from '../base';
 @Injectable()
 export default class UniUsersToMerkleJob extends Base {
   private logger = new Logger(UniUsersToMerkleJob.name);
-  amountPerUser = '100';
+  amountPerUser = '3000000000000000000000';
   namePrefix = 'uni_user';
   claimId = 0;
 

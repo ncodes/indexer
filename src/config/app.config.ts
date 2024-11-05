@@ -26,8 +26,6 @@ export default () => ({
     pointPerReply: process.env.POINT_PER_TWEET_REPLY,
     pointsPerRetweet: process.env.POINT_PER_TWEET_RETWEET,
     pointPerReference: process.env.POINT_PER_TWEET_REFERENCE,
-    tokenPerPoint: process.env.TOKEN_PER_POINT,
-    maxPointsForTokenAlloc: process.env.MAX_POINTS_FOR_TOKEN_ALLOC,
     ignoreNetworkPoint: process.env.IGNORE_NETWORK_POINT,
     redenominationRate: process.env.REDENOMINATION_RATE,
     redenominationLimit: process.env.REDENOMINATION_LIMIT,
@@ -61,7 +59,6 @@ export default () => ({
       bondProvider: process.env.TAPOFF_BOND_PROVIDER,
       minBondStake: process.env.TAPOFF_BOND_MIN_BOND_STAKE,
       battleManagerCron: process.env.BATTLE_MANAGER_CRON,
-      pointsPerTap: process.env.TAPS_PER_POINT,
     },
     tgbot: {
       enableService: process.env.ENABLE_TGBOT_SERVICE,

@@ -6,6 +6,7 @@ import { toDec } from '../../common/common';
 import MerkleTree from '../../models/merkle_tree';
 import Point from '../../models/point';
 import User from '../../models/user';
+import { pow10 } from '../../network/common';
 import { Base } from '../base';
 
 /**
@@ -16,6 +17,8 @@ import { Base } from '../base';
 export default class PointsToMerkleJob extends Base {
   private logger = new Logger(PointsToMerkleJob.name);
   claimId = 0;
+  maxPointsForTokenAlloc = 50_000_000;
+  tokenPerPoint = 0.01;
 
   constructor(private cfgSrv: ConfigService) {
     super();
@@ -41,12 +44,12 @@ export default class PointsToMerkleJob extends Base {
         if (totalPoints > 0) {
           const existingMerkleEntry = await MerkleTree.findByAddressAndClaimId(user.address, this.claimId);
           if (!existingMerkleEntry) {
-            totalPoints = Math.min(totalPoints, parseInt(this.cfgSrv.get('app.maxPointsForTokenAlloc')));
-            const tokenAlloc = toDec(this.cfgSrv.get('app.tokenPerPoint')).mul(totalPoints);
+            totalPoints = Math.min(totalPoints, this.maxPointsForTokenAlloc);
+            const tokenAlloc = toDec(this.tokenPerPoint).mul(totalPoints);
             await MerkleTree.create({
               address: user.address,
               claimId: this.claimId,
-              amount: tokenAlloc.toFixed(0),
+              amount: tokenAlloc.mul(pow10(18)).toFixed(0),
             });
           }
         }

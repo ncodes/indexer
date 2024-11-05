@@ -15,6 +15,7 @@ import { Base } from '../base';
 @Injectable()
 export default class TapsToPointsJob extends Base {
   private logger = new Logger(TapsToPointsJob.name);
+  pointsPerTap = 1;
 
   constructor(private cfgSrv: ConfigService) {
     super();
@@ -39,8 +40,7 @@ export default class TapsToPointsJob extends Base {
         const pointName = `activity:tapwar:${user.address}`;
         const existingPoint = await Point.getByName(pointName);
         if (!existingPoint) {
-          const pointsPerTap = parseFloat(this.cfgSrv.get('app.tapoff.pointsPerTap'));
-          const pointsToGrant = toDec(user.tapScore).div(pointsPerTap);
+          const pointsToGrant = toDec(user.tapScore).div(this.pointsPerTap);
 
           if (pointsToGrant.lte(0)) continue;
 

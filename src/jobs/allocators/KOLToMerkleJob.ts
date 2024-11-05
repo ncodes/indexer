@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import { toDec } from '../../common/common';
 import MerkleTree from '../../models/merkle_tree';
+import { pow10 } from '../../network/common';
 import { Base } from '../base';
 import * as Data from './kol_to_merkle.json';
 
@@ -14,7 +15,7 @@ import * as Data from './kol_to_merkle.json';
 export default class KOLToMerkleJob extends Base {
   private logger = new Logger(KOLToMerkleJob.name);
   pricePerTJOIN = 0.01;
-  tokenPerTJOIN = 20;
+  tokenPerTJOIN = 1;
   namePrefix = 'kol';
   claimId = 2;
 
@@ -25,7 +26,7 @@ export default class KOLToMerkleJob extends Base {
 
   @Cron('*/10 * * * * *')
   schedule() {
-    this.process().catch((e) => this.logger.error(e.message || 'failed to get exchange rate'));
+    this.process().catch((e) => this.logger.error(e.message));
   }
 
   async process() {
@@ -38,11 +39,11 @@ export default class KOLToMerkleJob extends Base {
         const name = `${this.namePrefix}:${entry.address}`;
         const existingMerkleEntry = await MerkleTree.findByName(name);
         if (!existingMerkleEntry) {
-          const amount = toDec(entry.amount).div(this.pricePerTJOIN).mul(this.tokenPerTJOIN);
+          const amount = toDec(entry.amountUsd).div(this.pricePerTJOIN).mul(this.tokenPerTJOIN);
           await MerkleTree.create({
             name,
             address: entry.address,
-            amount: amount.toFixed(0),
+            amount: amount.mul(pow10(18)).toFixed(0),
             claimId: this.claimId,
           });
         }

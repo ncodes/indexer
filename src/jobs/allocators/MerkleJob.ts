@@ -16,10 +16,6 @@ const MERKLE_TREE_KEY = 'merkle_tree_root';
 @Injectable()
 export default class MerkleJob extends Base {
   private logger = new Logger(MerkleJob.name);
-  pricePerTJOIN = 0.01;
-  tokenPerTJOIN = 20;
-  namePrefix = 'kol';
-  claimId = 2;
 
   constructor(private cfgSrv: ConfigService) {
     super();
@@ -54,7 +50,6 @@ export default class MerkleJob extends Base {
 
       // Create the merkle tree
       const tree = StandardMerkleTree.of(treeValues, ['address', 'uint', 'uint256']);
-      console.log('Tree root', tree.root);
 
       // Create the proofs and save them
       let count = 0;

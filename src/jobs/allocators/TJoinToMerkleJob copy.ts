@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
-import { toDec } from '../../common/common';
 import MerkleTree from '../../models/merkle_tree';
 import { Base } from '../base';
 import * as Data from './tjoin_holders_to_merkle.json';
@@ -13,8 +12,6 @@ import * as Data from './tjoin_holders_to_merkle.json';
 @Injectable()
 export default class TJoinToMerkleJob extends Base {
   private logger = new Logger(TJoinToMerkleJob.name);
-  pricePerTJOIN = 0.001;
-  tokenPerTJOIN = 20;
   namePrefix = 'tjoin_buyer';
   claimId = 1;
 
@@ -38,11 +35,10 @@ export default class TJoinToMerkleJob extends Base {
         const name = `${this.namePrefix}:${entry.address}`;
         const existingMerkleEntry = await MerkleTree.findByName(name);
         if (!existingMerkleEntry) {
-          const amount = toDec(entry.amount).div(this.pricePerTJOIN).mul(this.tokenPerTJOIN);
           await MerkleTree.create({
             name,
             address: entry.address,
-            amount: amount.toFixed(0),
+            amount: entry.amountOfJoin,
             claimId: this.claimId,
           });
         }

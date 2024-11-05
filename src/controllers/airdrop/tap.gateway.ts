@@ -84,14 +84,14 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
     const authErrMsg = 'auth error: not permitted to perform this action';
     const authErr = new Error(authErrMsg);
     if (!token || token == 'null') {
-      console.log('No token');
+      console.log('DEBUG: No token');
       client.disconnect(true);
       this.logger.error(authErr);
     } else {
       try {
         const session = await checkToken(this.cfgSrv, token);
         if (!session) {
-          console.log('No session');
+          console.log('DEBUG: No session');
           client.disconnect(true);
           this.logger.error(authErr);
           return;
@@ -103,7 +103,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
         const userId = session.userId;
         const hasClaimedOldPoints = await this.tapSrv.hasClaimedOldPoints(userId);
         if (!hasClaimedOldPoints) {
-          console.log('Claiming old points');
+          console.log('DEBUG: Claiming old points');
           const curBattleId = await this.tapSrv.getCurrentBattle();
           const userBattleSide = await this.tapSrv.getUserBattleSide(userId, curBattleId);
           const oldPoints = await Tap.getTapCount(userId);
@@ -118,7 +118,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
           });
         }
       } catch (error) {
-        console.log('Error in auth', error);
+        console.log('DEBUG: Error in auth', error);
         client.disconnect(true);
         this.logger.error(authErr);
       }

@@ -111,6 +111,7 @@ export class UsersController {
   @UseGuards(HasKeyGuard)
   @Post('/transfer-scores/:target')
   async transferScores(@Req() req: express.Request, @Param('target') target: string) {
+    return ok().data({ ok: true }).build();
     const user = req.user;
     user.points = parseInt(await Point.getTotalPointsByAddress(user.address));
 

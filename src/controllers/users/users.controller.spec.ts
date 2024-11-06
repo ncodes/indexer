@@ -514,9 +514,33 @@ describe('UsersController', () => {
         });
     });
 
+    it('should return error when transferring to self', async () => {
+      await User.updateById(u.id, { tapScore: '1' });
+
+      await request(app.getHttpServer())
+        .post(`/v1/users/transfer-scores/${address}`)
+        .set('Authorization', 'bearer ' + token)
+        .expect(400)
+        .expect({
+          error: { type: 'invalid_request_error', message: 'cannot transfer to self' },
+        });
+    });
+
+    it('should return error when user does not have telegram bot chat id', async () => {
+      await User.create({ address: address2, tapScore: '1' });
+      await User.updateById(u.id, { telegramBotChatId: null });
+      await request(app.getHttpServer())
+        .post(`/v1/users/transfer-scores/${address2}`)
+        .set('Authorization', 'bearer ' + token)
+        .expect(400)
+        .expect({
+          error: { type: 'invalid_request_error', message: 'Only telegram virtual accounts can transfer tap scores' },
+        });
+    });
+
     it('should return 200 on success', async () => {
       await User.create({ address: address2, tapScore: '1' });
-      await User.updateById(u.id, { tapScore: '1' });
+      await User.updateById(u.id, { tapScore: '1', telegramBotChatId: 123 });
       await Point.create({ address: u.address, point: '1' });
       await Point.create({ address: u.address, point: '1' });
 

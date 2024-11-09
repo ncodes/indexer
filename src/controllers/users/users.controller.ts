@@ -11,12 +11,12 @@ import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import { MayHaveKeyGuard } from '../../guards/may_have_token.guard';
 import { MayBeAuthenticatedGuard } from '../../guards/maybe_authenticated.guard';
-import MerkleTree from '../../models/merkle_tree';
 import NFTOwner from '../../models/nft_owner';
 import Offer from '../../models/offer';
 import OnlineStatus from '../../models/online_status';
 import Point from '../../models/point';
 import Swap from '../../models/swap';
+import TokenClaim from '../../models/token_claim';
 import User from '../../models/user';
 import NetworkService from '../../network/network.service';
 import { getTokenEnergonAlloc } from '../points/point.service';
@@ -255,7 +255,7 @@ export class UsersController {
 
   @Get('/claims/:address')
   async getClaims(@Param('address') address: string) {
-    const claims = await MerkleTree.findByAddress(address);
+    const claims = await TokenClaim.findByAddress(address);
     return ok().data(claims).build();
   }
 }

@@ -8,12 +8,10 @@ import { ExchangeRateServiceModule } from '../services/exchange_rate.service';
 import { MetadataService } from '../services/metadata/metadata.service';
 import { TwitterService } from '../services/twitter.service';
 import { RedisService } from './../services/redis/redis.service';
-import KOLToMerkleJob from './allocators/KOLToMerkleJob';
-import MerkleJob from './allocators/MerkleJob';
-import PointsToMerkleJob from './allocators/PointsToMerkleJob';
+import KOLClaimJob from './allocators/KOLClaimJob';
+import PointsClaimJob from './allocators/PointsClaimJob';
 import TapsToPointsJob from './allocators/TapsToPointsJob';
-import TJoinToMerkleJob from './allocators/TJoinToMerkleJob copy';
-import UniUsersToMerkleJob from './allocators/UniUsersToMerkleJob';
+import TJoinClaimJob from './allocators/TJoinClaimJob';
 import OnCommitPeriodEnd from './dispute_notifications/on_commit_period_end/onCommitPeriodEnd';
 import OnEvidencePeriodEnd from './dispute_notifications/on_evidence_period_end/onEvidencePeriodEnd';
 import OnRevealPeriodEnd from './dispute_notifications/on_reveal_period_end/onRevealPeriodEnd';
@@ -57,24 +55,16 @@ if (['1', 'true'].includes(process.env.ENABLE_TAPS_TO_POINTS_JOB)) {
   providers.push(TapsToPointsJob);
 }
 
-if (['1', 'true'].includes(process.env.ENABLE_POINTS_TO_MERKLE_JOB)) {
-  providers.push(PointsToMerkleJob);
+if (['1', 'true'].includes(process.env.ENABLE_POINTS_CLAIM_JOB)) {
+  providers.push(PointsClaimJob);
 }
 
-if (['1', 'true'].includes(process.env.ENABLE_TJOIN_TO_MERKLE_JOB)) {
-  providers.push(TJoinToMerkleJob);
+if (['1', 'true'].includes(process.env.ENABLE_TJOIN_CLAIM_JOB)) {
+  providers.push(TJoinClaimJob);
 }
 
-if (['1', 'true'].includes(process.env.ENABLE_KOL_TO_MERKLE_JOB)) {
-  providers.push(KOLToMerkleJob);
-}
-
-if (['1', 'true'].includes(process.env.ENABLE_MERKLE_JOB)) {
-  providers.push(MerkleJob);
-}
-
-if (['1', 'true'].includes(process.env.ENABLE_UNI_USERS_TO_MERKLE_JOB)) {
-  providers.push(UniUsersToMerkleJob);
+if (['1', 'true'].includes(process.env.ENABLE_KOL_CLAIM_JOB)) {
+  providers.push(KOLClaimJob);
 }
 
 @Module({

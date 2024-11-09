@@ -9,6 +9,8 @@ export default () => ({
     rootAdminUser: process.env.ROOT_ADMIN_USER,
     rootAdminPass: process.env.ROOT_ADMIN_PASS,
     off: process.env.OFF,
+    claimSigner: process.env.CLAIM_SIGNER,
+    claimResetMinSpend: process.env.CLAIM_RESET_MIN_SPEND,
     disableNotifications: process.env.DISABLE_NOTIFICATIONS,
     disableWatcher: process.env.DISABLE_WATCHER,
     disabledWatchers: process.env.DISABLED_WATCHERS,

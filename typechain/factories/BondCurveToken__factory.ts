@@ -3,7 +3,10 @@
 /* eslint-disable */
 
 import { Contract, Interface, type ContractRunner } from "ethers";
-import type { FreeToken, FreeTokenInterface } from "../FreeToken";
+import type {
+  BondCurveToken,
+  BondCurveTokenInterface,
+} from "../BondCurveToken";
 
 const _abi = [
   {
@@ -63,6 +66,19 @@ const _abi = [
       },
     ],
     name: "AllowClaim",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "bool",
+        name: "allowSell",
+        type: "bool",
+      },
+    ],
+    name: "AllowSell",
     type: "event",
   },
   {
@@ -364,6 +380,19 @@ const _abi = [
   },
   {
     inputs: [],
+    name: "allowSell",
+    outputs: [
+      {
+        internalType: "bool",
+        name: "",
+        type: "bool",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "allowTrade",
     outputs: [
       {
@@ -482,7 +511,13 @@ const _abi = [
     type: "function",
   },
   {
-    inputs: [],
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "maxPrice",
+        type: "uint256",
+      },
+    ],
     name: "buy",
     outputs: [],
     stateMutability: "payable",
@@ -800,6 +835,11 @@ const _abi = [
         name: "amount",
         type: "uint256",
       },
+      {
+        internalType: "uint256",
+        name: "minPrice",
+        type: "uint256",
+      },
     ],
     name: "sell",
     outputs: [],
@@ -872,6 +912,13 @@ const _abi = [
   {
     inputs: [],
     name: "toggleAllowClaim",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "toggleAllowSell",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -1045,12 +1092,15 @@ const _abi = [
   },
 ] as const;
 
-export class FreeToken__factory {
+export class BondCurveToken__factory {
   static readonly abi = _abi;
-  static createInterface(): FreeTokenInterface {
-    return new Interface(_abi) as FreeTokenInterface;
+  static createInterface(): BondCurveTokenInterface {
+    return new Interface(_abi) as BondCurveTokenInterface;
   }
-  static connect(address: string, runner?: ContractRunner | null): FreeToken {
-    return new Contract(address, _abi, runner) as unknown as FreeToken;
+  static connect(
+    address: string,
+    runner?: ContractRunner | null
+  ): BondCurveToken {
+    return new Contract(address, _abi, runner) as unknown as BondCurveToken;
   }
 }

@@ -3,22 +3,24 @@ import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import * as moment from 'moment';
 import { toDec } from '../../common/common';
-import MerkleTree from '../../models/merkle_tree';
+import { getClaimSig } from '../../common/crypto';
 import Point from '../../models/point';
+import TokenClaim from '../../models/token_claim';
 import User from '../../models/user';
 import { pow10 } from '../../network/common';
 import { Base } from '../base';
 
 /**
- * PointsToMerkleJob is responsible for creating the merkle tree entries for users' points.
- * Each user will get their total points converted to allocations and saved in the merkle tree table.
+ * PointsClaimJob is responsible for creating claim entries point holders.
  */
 @Injectable()
-export default class PointsToMerkleJob extends Base {
-  private logger = new Logger(PointsToMerkleJob.name);
-  claimId = 0;
+export default class PointsClaimJob extends Base {
+  private logger = new Logger(PointsClaimJob.name);
+  claimId = 1;
   maxPointsForTokenAlloc = 50_000_000;
   tokenPerPoint = 0.01;
+  namePrefix = 'point';
+  minPoints = 100;
 
   constructor(private cfgSrv: ConfigService) {
     super();
@@ -37,19 +39,32 @@ export default class PointsToMerkleJob extends Base {
     try {
       const users = await User.findNotAddedToMerkleTree(100);
 
-      this.logger.log(`Processing ${users.length} users for airdrop merkle tree`);
+      this.logger.log(`Processing ${users.length} users point for claim entry creation`);
 
       for (const user of users) {
         let totalPoints = parseInt(await Point.getTotalPointsByAddress(user.address)) || 0;
-        if (totalPoints > 0) {
-          const existingMerkleEntry = await MerkleTree.findByAddressAndClaimId(user.address, this.claimId);
-          if (!existingMerkleEntry) {
+        if (totalPoints >= this.minPoints) {
+          const name = `${this.namePrefix}:${user.address}`;
+          const existingClaim = await TokenClaim.findByName(name);
+          if (!existingClaim) {
             totalPoints = Math.min(totalPoints, this.maxPointsForTokenAlloc);
             const tokenAlloc = toDec(this.tokenPerPoint).mul(totalPoints);
-            await MerkleTree.create({
+            const tokenAllocLd = tokenAlloc.mul(pow10(18)).toFixed(0);
+
+            const signature = await getClaimSig(
+              this.cfgSrv.get('app.claimSigner'),
+              user.address,
+              tokenAllocLd,
+              this.claimId,
+              0,
+            );
+
+            await TokenClaim.create({
+              name,
               address: user.address,
+              amount: tokenAllocLd,
               claimId: this.claimId,
-              amount: tokenAlloc.mul(pow10(18)).toFixed(0),
+              signature,
             });
           }
         }

@@ -3,23 +3,24 @@ import { randStr } from '../common/common';
 import { BaseModel } from './base';
 
 /**
- * MerkleTree represents the airdrop merkle tree
+ * TokenClaims represents the airdrop claims
  */
-export default class MerkleTree extends BaseModel {
+export default class TokenClaim extends BaseModel {
   name: string = undefined;
   address: string = undefined;
   amount: string = undefined;
+  nonce: number = undefined;
   claimId: number = undefined;
   claimedAt: string = undefined;
-  proof: string = undefined;
+  signature: string = undefined;
 
-  constructor(init?: Partial<MerkleTree>) {
+  constructor(init?: Partial<TokenClaim>) {
     super();
     Object.assign(this, init);
   }
 
   static get tableName() {
-    return 'merkle_tree';
+    return 'token_claims';
   }
 
   static get relationMappings() {
@@ -28,12 +29,12 @@ export default class MerkleTree extends BaseModel {
 
   $beforeInsert() {
     super.$beforeInsert();
-    this.id = 'merkle_tree_' + randStr(24);
+    this.id = 'token_claim_' + randStr(24);
   }
 
   $formatJson(json: Objection.Pojo): Objection.Pojo {
-    const object = json as MerkleTree;
-    object.object = 'merkle_tree';
+    const object = json as TokenClaim;
+    object.object = 'token_claims';
     delete object.deletedAt;
     return object;
   }
@@ -43,7 +44,7 @@ export default class MerkleTree extends BaseModel {
    * @param data The issuer data
    * @param txn The transaction object
    */
-  static create(data: Partial<MerkleTree>, txn?: Transaction) {
+  static create(data: Partial<TokenClaim>, txn?: Transaction) {
     return this.query(txn).insertAndFetch(data);
   }
 
@@ -52,7 +53,7 @@ export default class MerkleTree extends BaseModel {
    * @param q the query parameter
    * @param txn Optional transaction object
    */
-  static find(q: Partial<MerkleTree>, txn?: Transaction): Promise<MerkleTree> {
+  static find(q: Partial<TokenClaim>, txn?: Transaction): Promise<TokenClaim> {
     return new Promise((resolve, reject) => {
       this.query(txn).where(q).whereNotDeleted().first().then(resolve).catch(reject);
     });
@@ -73,7 +74,7 @@ export default class MerkleTree extends BaseModel {
    * @param udp the fields to be updated
    * @param txn Optional transaction object
    */
-  static updateById(id: string, udp: Partial<MerkleTree>, txn?: Transaction): Promise<MerkleTree> {
+  static updateById(id: string, udp: Partial<TokenClaim>, txn?: Transaction): Promise<TokenClaim> {
     return new Promise((resolve, reject) => {
       this.query(txn).whereNotDeleted().patchAndFetchById(id, udp).execute().then(resolve).catch(reject);
     });
@@ -81,6 +82,15 @@ export default class MerkleTree extends BaseModel {
 
   static findByAddressAndClaimId(address: string, claimId: number) {
     return this.query().where('address', 'ILIKE', address).where('claimId', '=', claimId).whereNotDeleted().first();
+  }
+
+  static findByAddressAndClaimIdAndNonce(address: string, claimId: number, nonce: number) {
+    return this.query()
+      .where('address', 'ILIKE', address)
+      .where('claimId', '=', claimId)
+      .where('nonce', '=', nonce)
+      .whereNotDeleted()
+      .first();
   }
 
   static findByName(name: string) {

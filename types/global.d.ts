@@ -25,7 +25,6 @@ import {
   Core,
   DisputeManager,
   FeePool,
-  FreeToken,
   LPPool,
   MarketCore,
   MediatorManager,
@@ -70,6 +69,7 @@ declare global {
     minerRegistry?: MinerRegistry;
     energon?: Energon;
     nft?: NFT;
+    bondCurveDistro?: AbiTypes.BondCurveDistro;
     uniswapV2Router?: AbiTypes.UniswapV2Router;
     uniswapV2Router2?: AbiTypes.UniswapV2Router2;
     uniswapV3Router?: AbiTypes.UniswapV3Router;

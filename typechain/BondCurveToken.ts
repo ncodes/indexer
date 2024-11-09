@@ -23,10 +23,11 @@ import type {
   TypedContractMethod,
 } from "./common";
 
-export interface FreeTokenInterface extends Interface {
+export interface BondCurveTokenInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "allowClaim"
+      | "allowSell"
       | "allowTrade"
       | "allowWithdraw"
       | "allowance"
@@ -60,6 +61,7 @@ export interface FreeTokenInterface extends Interface {
       | "setMinBuyForReset"
       | "symbol"
       | "toggleAllowClaim"
+      | "toggleAllowSell"
       | "toggleAllowTrade"
       | "toggleAllowWithdraw"
       | "totalSupply"
@@ -76,6 +78,7 @@ export interface FreeTokenInterface extends Interface {
   getEvent(
     nameOrSignatureOrTopic:
       | "AllowClaim"
+      | "AllowSell"
       | "AllowTrade"
       | "AllowWithdraw"
       | "Approval"
@@ -96,6 +99,7 @@ export interface FreeTokenInterface extends Interface {
     functionFragment: "allowClaim",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "allowSell", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "allowTrade",
     values?: undefined
@@ -124,7 +128,7 @@ export interface FreeTokenInterface extends Interface {
     functionFragment: "bondingCurveEthBal",
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "buy", values?: undefined): string;
+  encodeFunctionData(functionFragment: "buy", values: [BigNumberish]): string;
   encodeFunctionData(
     functionFragment: "buyPrice",
     values: [BigNumberish]
@@ -177,7 +181,10 @@ export interface FreeTokenInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "root", values?: undefined): string;
-  encodeFunctionData(functionFragment: "sell", values: [BigNumberish]): string;
+  encodeFunctionData(
+    functionFragment: "sell",
+    values: [BigNumberish, BigNumberish]
+  ): string;
   encodeFunctionData(
     functionFragment: "sellPrice",
     values: [BigNumberish, BigNumberish]
@@ -193,6 +200,10 @@ export interface FreeTokenInterface extends Interface {
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "toggleAllowClaim",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "toggleAllowSell",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -241,6 +252,7 @@ export interface FreeTokenInterface extends Interface {
   ): string;
 
   decodeFunctionResult(functionFragment: "allowClaim", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "allowSell", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "allowTrade", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "allowWithdraw",
@@ -317,6 +329,10 @@ export interface FreeTokenInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "toggleAllowSell",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "toggleAllowTrade",
     data: BytesLike
   ): Result;
@@ -361,6 +377,18 @@ export namespace AllowClaimEvent {
   export type OutputTuple = [allowClaim: boolean];
   export interface OutputObject {
     allowClaim: boolean;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace AllowSellEvent {
+  export type InputTuple = [allowSell: boolean];
+  export type OutputTuple = [allowSell: boolean];
+  export interface OutputObject {
+    allowSell: boolean;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -585,11 +613,11 @@ export namespace WithdrawnTokenEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export interface FreeToken extends BaseContract {
-  connect(runner?: ContractRunner | null): FreeToken;
+export interface BondCurveToken extends BaseContract {
+  connect(runner?: ContractRunner | null): BondCurveToken;
   waitForDeployment(): Promise<this>;
 
-  interface: FreeTokenInterface;
+  interface: BondCurveTokenInterface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -630,6 +658,8 @@ export interface FreeToken extends BaseContract {
 
   allowClaim: TypedContractMethod<[], [boolean], "view">;
 
+  allowSell: TypedContractMethod<[], [boolean], "view">;
+
   allowTrade: TypedContractMethod<[], [boolean], "view">;
 
   allowWithdraw: TypedContractMethod<[], [boolean], "view">;
@@ -652,7 +682,7 @@ export interface FreeToken extends BaseContract {
 
   bondingCurveEthBal: TypedContractMethod<[], [bigint], "view">;
 
-  buy: TypedContractMethod<[], [void], "payable">;
+  buy: TypedContractMethod<[maxPrice: BigNumberish], [void], "payable">;
 
   buyPrice: TypedContractMethod<[supply: BigNumberish], [bigint], "view">;
 
@@ -718,7 +748,11 @@ export interface FreeToken extends BaseContract {
 
   root: TypedContractMethod<[], [string], "view">;
 
-  sell: TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
+  sell: TypedContractMethod<
+    [amount: BigNumberish, minPrice: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
   sellPrice: TypedContractMethod<
     [supply: BigNumberish, amountToSell: BigNumberish],
@@ -741,6 +775,8 @@ export interface FreeToken extends BaseContract {
   symbol: TypedContractMethod<[], [string], "view">;
 
   toggleAllowClaim: TypedContractMethod<[], [void], "nonpayable">;
+
+  toggleAllowSell: TypedContractMethod<[], [void], "nonpayable">;
 
   toggleAllowTrade: TypedContractMethod<[], [void], "nonpayable">;
 
@@ -800,6 +836,9 @@ export interface FreeToken extends BaseContract {
     nameOrSignature: "allowClaim"
   ): TypedContractMethod<[], [boolean], "view">;
   getFunction(
+    nameOrSignature: "allowSell"
+  ): TypedContractMethod<[], [boolean], "view">;
+  getFunction(
     nameOrSignature: "allowTrade"
   ): TypedContractMethod<[], [boolean], "view">;
   getFunction(
@@ -830,7 +869,7 @@ export interface FreeToken extends BaseContract {
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "buy"
-  ): TypedContractMethod<[], [void], "payable">;
+  ): TypedContractMethod<[maxPrice: BigNumberish], [void], "payable">;
   getFunction(
     nameOrSignature: "buyPrice"
   ): TypedContractMethod<[supply: BigNumberish], [bigint], "view">;
@@ -914,7 +953,11 @@ export interface FreeToken extends BaseContract {
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "sell"
-  ): TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
+  ): TypedContractMethod<
+    [amount: BigNumberish, minPrice: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "sellPrice"
   ): TypedContractMethod<
@@ -933,6 +976,9 @@ export interface FreeToken extends BaseContract {
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "toggleAllowClaim"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "toggleAllowSell"
   ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "toggleAllowTrade"
@@ -986,6 +1032,13 @@ export interface FreeToken extends BaseContract {
     AllowClaimEvent.InputTuple,
     AllowClaimEvent.OutputTuple,
     AllowClaimEvent.OutputObject
+  >;
+  getEvent(
+    key: "AllowSell"
+  ): TypedContractEvent<
+    AllowSellEvent.InputTuple,
+    AllowSellEvent.OutputTuple,
+    AllowSellEvent.OutputObject
   >;
   getEvent(
     key: "AllowTrade"
@@ -1096,6 +1149,17 @@ export interface FreeToken extends BaseContract {
       AllowClaimEvent.InputTuple,
       AllowClaimEvent.OutputTuple,
       AllowClaimEvent.OutputObject
+    >;
+
+    "AllowSell(bool)": TypedContractEvent<
+      AllowSellEvent.InputTuple,
+      AllowSellEvent.OutputTuple,
+      AllowSellEvent.OutputObject
+    >;
+    AllowSell: TypedContractEvent<
+      AllowSellEvent.InputTuple,
+      AllowSellEvent.OutputTuple,
+      AllowSellEvent.OutputObject
     >;
 
     "AllowTrade(bool)": TypedContractEvent<

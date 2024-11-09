@@ -1,18 +1,18 @@
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { DBService } from '../../db/db.service';
 import BondingCurveTx from '../../models/bonding_curve_tx';
-import MerkleTree from '../../models/merkle_tree';
 import Meta, { MetaKeys } from '../../models/meta';
-import { BondCurveTokenHandler } from './bond_curve_token.handler';
+import TokenClaim from '../../models/token_claim';
+import { BondCurveDistroHandler } from './bond_curve_distro.handler';
 
 const MockNetworkService = jest.fn().mockImplementation(() => {
   return {};
 });
 
-describe('BondCurveTokenHandler', () => {
+describe('BondCurveDistroHandler', () => {
   const db = DBService.getForTest();
   const net = 'ethereum';
-  let handler: BondCurveTokenHandler;
+  let handler: BondCurveDistroHandler;
   const contracts = {};
   const cfg = {};
 
@@ -26,7 +26,7 @@ describe('BondCurveTokenHandler', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    handler = new BondCurveTokenHandler(new MockNetworkService(), net, contracts);
+    handler = new BondCurveDistroHandler(new MockNetworkService(), net, contracts);
     handler.logger = new NoopLogger() as any;
     handler.getParam = (param) => {
       return cfg[param];
@@ -37,7 +37,7 @@ describe('BondCurveTokenHandler', () => {
 
   describe('.onBuy', () => {
     it('should create a bonding curve tx and reset buyer claim with id 0', async () => {
-      await MerkleTree.create({
+      await TokenClaim.create({
         address: '0x123',
         claimId: 0,
         claimedAt: new Date().toISOString(),
@@ -56,7 +56,7 @@ describe('BondCurveTokenHandler', () => {
       expect(tx.output).toBe(outAmt.toString());
       expect(tx.fee).toBe(fee.toString());
 
-      const existingClaim = await MerkleTree.findByAddressAndClaimId(buyer, 0);
+      const existingClaim = await TokenClaim.findByAddressAndClaimId(buyer, 0);
       expect(existingClaim).not.toBeNull();
       expect(existingClaim.claimedAt).toBeNull();
     });

@@ -1,15 +1,23 @@
-import { Provider } from 'ethers';
+import { BaseContract, Provider, toNumber } from 'ethers';
 import * as moment from 'moment';
 import { Transaction } from 'objection';
+import { toDec } from '../../common/common';
+import { getClaimSig } from '../../common/crypto';
 import BondingCurveTx from '../../models/bonding_curve_tx';
 import BondingCurveWithdraw from '../../models/bonding_curve_withdraw';
-import MerkleTree from '../../models/merkle_tree';
-import { ContractCallEvent, toNumber } from '../common';
+import TokenClaim from '../../models/token_claim';
+import { ContractCallEvent } from '../common';
 import { Handler } from '../handler';
+import NetworkService from '../network.service';
 
-export class BondCurveTokenHandler extends Handler {
-  constructor(private provider: Provider, public network: string, private contracts: JointContracts) {
-    super(BondCurveTokenHandler.name, null, network, contracts.nativeToken);
+export class BondCurveDistroHandler extends Handler {
+  constructor(
+    private netSrv: NetworkService,
+    private provider: Provider,
+    public network: string,
+    private contracts: JointContracts,
+  ) {
+    super(BondCurveDistroHandler.name, netSrv.cfgSrv, network, contracts.bondCurveDistro as unknown as BaseContract);
   }
 
   /**
@@ -18,8 +26,15 @@ export class BondCurveTokenHandler extends Handler {
   listen() {
     this.on(
       'Claimed',
-      async (address: string, claimId: bigint, allocation: bigint, event: ContractCallEvent, txn?: Transaction) => {
-        return this.onClaimed(address, claimId, allocation, event, txn);
+      async (
+        address: string,
+        claimId: bigint,
+        nonce: bigint,
+        allocation: bigint,
+        event: ContractCallEvent,
+        txn?: Transaction,
+      ) => {
+        return this.onClaimed(address, claimId, nonce, allocation, event, txn);
       },
     );
 
@@ -60,13 +75,21 @@ export class BondCurveTokenHandler extends Handler {
    * Airdrop was claimed
    * @param address The address of the miner
    * @param claimId The claim id
-   * @param allocation The allocation
-   * @param event The event object
+   * @param nonce The unique nonce
+   * @param _allocation The allocation
+   * @param _event The event object
    * @param txn The transaction object
    */
-  async onClaimed(address: string, claimId: bigint, allocation: bigint, _event: ContractCallEvent, txn?: Transaction) {
-    const claim = await MerkleTree.findByAddressAndClaimId(address, toNumber(claimId));
-    if (claim) await MerkleTree.updateById(claim.id, { claimedAt: moment().toISOString() }, txn);
+  async onClaimed(
+    address: string,
+    claimId: bigint,
+    nonce: bigint,
+    _allocation: bigint,
+    _event: ContractCallEvent,
+    txn?: Transaction,
+  ) {
+    const claim = await TokenClaim.findByAddressAndClaimIdAndNonce(address, toNumber(claimId), toNumber(nonce));
+    if (claim) await TokenClaim.updateById(claim.id, { claimedAt: moment().toISOString() }, txn);
   }
 
   /**
@@ -90,8 +113,23 @@ export class BondCurveTokenHandler extends Handler {
       txn,
     );
 
-    const claimZero = await MerkleTree.findByAddressAndClaimId(buyer, 0);
-    if (claimZero) await MerkleTree.updateById(claimZero.id, { claimedAt: null }, txn);
+    const claim = await TokenClaim.findByAddressAndClaimId(buyer, 0);
+    const resetMinSpend = toDec(this.cfg.get('app.claimResetMinSpend'));
+    if (claim && !!claim.claimedAt && resetMinSpend.lte(inAmt.toString())) {
+      const newNonce = claim.nonce + 1;
+      const newSig = await getClaimSig(this.cfg.get('app.claimSigner'), buyer, claim.amount, 0, newNonce);
+      await TokenClaim.updateById(
+        claim.id,
+        {
+          claimedAt: null,
+          nonce: newNonce,
+          signature: newSig,
+        },
+        txn,
+      );
+    } else {
+      console.log('No claim reset');
+    }
   }
 
   /**

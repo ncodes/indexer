@@ -15,7 +15,7 @@ import { Base } from '../base';
 @Injectable()
 export default class TapsToPointsJob extends Base {
   private logger = new Logger(TapsToPointsJob.name);
-  pointsPerTap = 1;
+  pointsPerTap = 2;
 
   constructor(private cfgSrv: ConfigService) {
     super();

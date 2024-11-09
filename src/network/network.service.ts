@@ -13,7 +13,7 @@ import { MetadataService } from '../services/metadata/metadata.service';
 import { RedisService } from '../services/redis/redis.service';
 import { AssetRegistryHandler } from './assetregistry/asset_registry.handler';
 import { BadgeManagerHandler } from './badge/badge_manager.handler';
-import { BondCurveTokenHandler } from './bond_curve_token_handler/bond_curve_token.handler';
+import { BondCurveDistroHandler } from './bond_curve_distro_handler/bond_curve_distro.handler';
 import { ContractManager } from './contract_manager';
 import { CoreHandler } from './core/core.handler';
 import { UniswapRouter } from './dexuser/uniswap_router.handler';
@@ -172,7 +172,7 @@ export default class NetworkService {
       new BadgeManagerHandler(this, provider, network, this.contractMgr.contracts[network]),
       new AssetRegistryHandler(provider, network, this.contractMgr.contracts[network]),
       new MinerRegistryHandler(provider, network, this.contractMgr.contracts[network]),
-      new BondCurveTokenHandler(provider, network, this.contractMgr.contracts[network]),
+      new BondCurveDistroHandler(this, provider, network, this.contractMgr.contracts[network]),
     ];
 
     // Create event processor

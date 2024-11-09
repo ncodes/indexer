@@ -1,22 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
-import { toDec } from '../../common/common';
-import MerkleTree from '../../models/merkle_tree';
-import { pow10 } from '../../network/common';
+import { getClaimSig } from '../../common/crypto';
+import TokenClaim from '../../models/token_claim';
 import { Base } from '../base';
-import * as Data from './kol_to_merkle.json';
+import * as Data from './tjoin_holders.json';
 
 /**
- * KOLToMerkleJob is responsible for creating the merkle tree entries for the KOL airdrop.
- * Update kol_to_merkle.json to add new entries.
+ * TJoinClaimJob is responsible for creating claim entries for the TJOIN holders.
+ * Update tjoin_holders.json to add new entries.
  */
 @Injectable()
-export default class KOLToMerkleJob extends Base {
-  private logger = new Logger(KOLToMerkleJob.name);
-  pricePerTJOIN = 0.01;
-  tokenPerTJOIN = 1;
-  namePrefix = 'kol';
+export default class TJoinClaimJob extends Base {
+  private logger = new Logger(TJoinClaimJob.name);
+  namePrefix = 'tjoin_buyer';
   claimId = 2;
 
   constructor(private cfgSrv: ConfigService) {
@@ -34,17 +31,26 @@ export default class KOLToMerkleJob extends Base {
     this.setProcessing(true);
 
     try {
-      this.logger.log(`Processing KOL to merkle for ${Data.length} users`);
+      this.logger.log(`Processing TJOIN to claim entry for ${Data.length} users`);
       for (const entry of Data) {
         const name = `${this.namePrefix}:${entry.address}`;
-        const existingMerkleEntry = await MerkleTree.findByName(name);
+        const existingMerkleEntry = await TokenClaim.findByName(name);
+
         if (!existingMerkleEntry) {
-          const amount = toDec(entry.amountUsd).div(this.pricePerTJOIN).mul(this.tokenPerTJOIN);
-          await MerkleTree.create({
+          const signature = await getClaimSig(
+            this.cfgSrv.get('app.claimSigner'),
+            entry.address,
+            entry.amountOfJoin,
+            this.claimId,
+            0,
+          );
+
+          await TokenClaim.create({
             name,
             address: entry.address,
-            amount: amount.mul(pow10(18)).toFixed(0),
+            amount: entry.amountOfJoin,
             claimId: this.claimId,
+            signature,
           });
         }
       }

@@ -120,6 +120,14 @@ export class ContractManager {
     const nftAddress = getChainByName(chain).contracts['nft'].address;
     if (nftAddress) this.contracts[chain].nft = new Contract(nftAddress, nftABI, provider) as unknown as NFT;
 
+    const bondCurveDistroAddr = getChainByName(chain).contracts['bondCurveDistro']?.address;
+    if (bondCurveDistroAddr)
+      this.contracts[chain].bondCurveDistro = new Contract(
+        bondCurveDistroAddr,
+        Abi.BondCurveDistro,
+        provider,
+      ) as unknown as AbiTypes.BondCurveDistro;
+
     const uniswapV2Router = getChainByName(chain).contracts['uniswapV2Router']?.address;
     if (uniswapV2Router)
       this.contracts[chain].uniswapV2Router = new Contract(

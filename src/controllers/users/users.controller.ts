@@ -12,6 +12,7 @@ import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import { MayHaveKeyGuard } from '../../guards/may_have_token.guard';
 import { MayBeAuthenticatedGuard } from '../../guards/maybe_authenticated.guard';
+import ClaimCheckLog from '../../models/claim_check_log';
 import NFTOwner from '../../models/nft_owner';
 import Offer from '../../models/offer';
 import OnlineStatus from '../../models/online_status';
@@ -128,7 +129,11 @@ export class UsersController {
 
     let found = false;
     for (const chain of chains) {
-      found = await this.etherscanSrv.check({ ...chain, userAddress });
+      const checkLog = await ClaimCheckLog.findByChainAndAddress(chain.id, userAddress);
+      if (!checkLog) {
+        found = await this.etherscanSrv.check({ ...chain, userAddress });
+        await ClaimCheckLog.create({ chainId: chain.id, address: userAddress });
+      }
     }
 
     if (!found) {

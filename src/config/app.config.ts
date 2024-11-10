@@ -36,6 +36,9 @@ export default () => ({
     maxSwapVideoSize: process.env.MAX_SWAP_VIDEO_SIZE,
     maxSwapDocSize: process.env.MAX_SWAP_DOC_SIZE,
     infuraUASecret: process.env.INFURA_UA_SECRET,
+    etherscan: {
+      apiKey: process.env.ETHERSCAN_API_KEY,
+    },
     fileUpload: {
       maxImageSize: process.env.FILE_UPLOAD_MAX_IMAGE_SIZE,
       maxVideoSize: process.env.FILE_UPLOAD_MAX_VIDEO_SIZE,

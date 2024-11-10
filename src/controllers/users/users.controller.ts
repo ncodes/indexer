@@ -5,6 +5,7 @@ import { isAddress } from 'ethers';
 import express from 'express';
 import { transaction } from 'objection';
 import { isEqualStr, toDec } from '../../common/common';
+import { getClaimSig } from '../../common/crypto';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ErrorMessages, ok, throw400, throw401, throw404 } from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
@@ -19,6 +20,7 @@ import Swap from '../../models/swap';
 import TokenClaim from '../../models/token_claim';
 import User from '../../models/user';
 import NetworkService from '../../network/network.service';
+import EtherScanService from '../../services/etherscan.service';
 import { getTokenEnergonAlloc } from '../points/point.service';
 import * as galxePoints from './data/glaxe.json';
 import { GetQueryDTO, LogOnlineStatusDTO, RegisterDeviceDTO } from './dto';
@@ -26,7 +28,126 @@ import { UserService } from './user.service';
 
 @Controller('v1/users')
 export class UsersController {
-  constructor(private userSrv: UserService, private netSrv: NetworkService, private cfgSrv: ConfigService) {}
+  constructor(
+    private userSrv: UserService,
+    private netSrv: NetworkService,
+    private cfgSrv: ConfigService,
+    private etherscanSrv: EtherScanService,
+  ) {}
+
+  @Post('/check-dex-claim/:address')
+  async checkAndRegisterDexClaim(@Param('address') address: string) {
+    const userAddress = address;
+    const name = `dex_user:${userAddress}`;
+
+    const existingClaim = await TokenClaim.findByName(name);
+    if (existingClaim) return ok().data(existingClaim).build();
+
+    const chains = [
+      {
+        name: 'ethereum',
+        id: 1,
+        startBlock: 18_908_895,
+        endBlock: 21_153_765,
+        routers: [
+          '0xf164fC0Ec4E93095b804a4795bBe1e041497b92a',
+          '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
+          '0xE592427A0AEce92De3Edee1F18E0157C05861564',
+          '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
+          '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD',
+        ],
+      },
+      {
+        name: 'base',
+        id: 8453,
+        startBlock: 8_638_927,
+        endBlock: 22_224_720,
+        routers: [
+          '0x2626664c2603336E57B271c5C0b26F421741e481',
+          '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD',
+          '0xeC8B0F7Ffe3ae75d7FfAb09429e3675bb63503e4',
+          '0x4752ba5dbc23f44d87826276bf6fd6b1c372ad24',
+        ],
+      },
+      {
+        name: 'arbitrum',
+        id: 42161,
+        startBlock: 165_788_861,
+        endBlock: 272_995_037,
+        routers: [
+          '0x4C60051384bd2d3C01bfc845Cf5F4b44bcbE9de5',
+          '0xeC8B0F7Ffe3ae75d7FfAb09429e3675bb63503e4',
+          '0x5E325eDA8064b456f4781070C0738d849c824258',
+          '0xE592427A0AEce92De3Edee1F18E0157C05861564',
+          '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
+          '0x4752ba5dbc23f44d87826276bf6fd6b1c372ad24',
+        ],
+      },
+      {
+        name: 'optimism',
+        id: 10,
+        startBlock: 114_234_212,
+        endBlock: 127_820_341,
+        routers: [
+          '0xb555edF5dcF85f42cEeF1f3630a52A108E55A654',
+          '0xeC8B0F7Ffe3ae75d7FfAb09429e3675bb63503e4',
+          '0xCb1355ff08Ab38bBCE60111F1bb2B784bE25D7e8',
+          '0xE592427A0AEce92De3Edee1F18E0157C05861564',
+          '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
+          '0x4A7b5Da61326A6379179b40d00F57E5bbDC962c2',
+        ],
+      },
+      {
+        name: 'bsc',
+        id: 56,
+        startBlock: 34_848_730,
+        endBlock: 43_886_575,
+        routers: [
+          '0x5Dc88340E1c5c6366864Ee415d6034cadd1A9897',
+          '0xeC8B0F7Ffe3ae75d7FfAb09429e3675bb63503e4',
+          '0x4Dae2f939ACf50408e13d58534Ff8c2776d45265',
+          '0xB971eF87ede563556b2ED4b1C0b0019111Dd85d2',
+          '0x4752ba5dbc23f44d87826276bf6fd6b1c372ad24',
+        ],
+      },
+      {
+        name: 'polygon',
+        id: 137,
+        startBlock: 51_796_222,
+        endBlock: 64_113_826,
+        routers: [
+          '0x4C60051384bd2d3C01bfc845Cf5F4b44bcbE9de5',
+          '0x643770E279d5D0733F21d6DC03A8efbABf3255B4',
+          '0xec7BE89e9d109e7e3Fec59c222CF297125FEFda2',
+          '0xE592427A0AEce92De3Edee1F18E0157C05861564',
+          '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
+          '0xedf6066a2b290C185783862C7F4776A2C8077AD1',
+        ],
+      },
+    ];
+
+    let found = false;
+    for (const chain of chains) {
+      found = await this.etherscanSrv.check({ ...chain, userAddress });
+    }
+
+    if (!found) {
+      return throw404('not eligible');
+    }
+
+    const claimId = 0;
+    const amount = '3000000000000000000000';
+    const signature = await getClaimSig(this.cfgSrv.get('app.claimSigner'), userAddress, amount, claimId, 0);
+    const claim = await TokenClaim.create({
+      name,
+      address: userAddress,
+      amount,
+      claimId,
+      signature,
+    });
+
+    return ok().data(claim).build();
+  }
 
   /**
    * Get a user by address or user ID. Sensitive user fields are removed

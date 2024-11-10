@@ -36,6 +36,7 @@ export default class TokenClaim extends BaseModel {
     const object = json as TokenClaim;
     object.object = 'token_claims';
     delete object.deletedAt;
+    delete object.sn;
     return object;
   }
 

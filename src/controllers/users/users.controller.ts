@@ -133,6 +133,7 @@ export class UsersController {
       if (!checkLog) {
         found = await this.etherscanSrv.check({ ...chain, userAddress });
         await ClaimCheckLog.create({ chainId: chain.id, address: userAddress });
+        if (found) break;
       }
     }
 

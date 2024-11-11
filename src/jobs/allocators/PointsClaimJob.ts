@@ -17,10 +17,10 @@ import { Base } from '../base';
 export default class PointsClaimJob extends Base {
   private logger = new Logger(PointsClaimJob.name);
   claimId = 1;
-  maxPointsForTokenAlloc = 50_000_000;
-  tokenPerPoint = 0.01;
+  maxPointsForTokenAlloc = 5_000_000;
+  tokenPerPoint = 0.1;
   namePrefix = 'point';
-  minPoints = 100;
+  minPoints = 10_000;
 
   constructor(private cfgSrv: ConfigService) {
     super();

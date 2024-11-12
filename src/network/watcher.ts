@@ -132,6 +132,7 @@ export class Watcher {
       address:
         this.topics.length == 0
           ? this.handlers
+              .filter((h) => !!h.getContract())
               .map((h) => h.getContract().target)
               .filter((addr) => {
                 return !isEqualStr(ZeroAddress, addr as string);

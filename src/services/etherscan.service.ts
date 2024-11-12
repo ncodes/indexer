@@ -77,6 +77,7 @@ export default class EtherScanService {
         for (const tx of txlist.result) {
           if (routers.includes(tx.to.toLowerCase())) {
             foundTx = true;
+            this.logger.log(`found on chain ${id}, txn: ${tx.hash}`);
             break;
           }
         }

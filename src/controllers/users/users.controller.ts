@@ -62,7 +62,7 @@ export class UsersController {
         name: 'base',
         id: 8453,
         startBlock: 8_638_927,
-        endBlock: 22_224_720,
+        endBlock: 22_360_640,
         routers: [
           '0x2626664c2603336E57B271c5C0b26F421741e481',
           '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD',
@@ -104,11 +104,11 @@ export class UsersController {
         startBlock: 34_848_730,
         endBlock: 43_958_888,
         routers: [
-          // '0x5Dc88340E1c5c6366864Ee415d6034cadd1A9897',
-          // '0xeC8B0F7Ffe3ae75d7FfAb09429e3675bb63503e4',
-          // '0x4Dae2f939ACf50408e13d58534Ff8c2776d45265',
-          // '0xB971eF87ede563556b2ED4b1C0b0019111Dd85d2',
-          // '0x4752ba5dbc23f44d87826276bf6fd6b1c372ad24',
+          '0x5Dc88340E1c5c6366864Ee415d6034cadd1A9897',
+          '0xeC8B0F7Ffe3ae75d7FfAb09429e3675bb63503e4',
+          '0x4Dae2f939ACf50408e13d58534Ff8c2776d45265',
+          '0xB971eF87ede563556b2ED4b1C0b0019111Dd85d2',
+          '0x4752ba5dbc23f44d87826276bf6fd6b1c372ad24',
           // PancakeSwap Routers
           '0x10ED43C718714eb63d5aA57B78B54704E256024E',
           '0x1A0A18AC4BECDDbd6389559687d1A73d8927E416',

@@ -102,7 +102,7 @@ export class UsersController {
         name: 'bsc',
         id: 56,
         startBlock: 34_848_730,
-        endBlock: 43_929_463,
+        endBlock: 43_958_666,
         routers: [
           '0x5Dc88340E1c5c6366864Ee415d6034cadd1A9897',
           '0xeC8B0F7Ffe3ae75d7FfAb09429e3675bb63503e4',

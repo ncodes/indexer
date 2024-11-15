@@ -43,6 +43,7 @@ export default class TJoinClaimJob extends Base {
             entry.amountOfJoin,
             this.claimId,
             0,
+            8453,
           );
 
           await TokenClaim.create({

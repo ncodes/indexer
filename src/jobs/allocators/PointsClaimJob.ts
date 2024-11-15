@@ -57,6 +57,7 @@ export default class PointsClaimJob extends Base {
               tokenAllocLd,
               this.claimId,
               0,
+              8453,
             );
 
             await TokenClaim.create({

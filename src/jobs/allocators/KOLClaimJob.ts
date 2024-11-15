@@ -49,6 +49,7 @@ export default class KOLClaimJob extends Base {
             amtLd,
             this.claimId,
             0,
+            8453,
           );
 
           await TokenClaim.create({

@@ -148,7 +148,7 @@ export class UsersController {
 
     const claimId = 0;
     const amount = '3000000000000000000000';
-    const signature = await getClaimSig(this.cfgSrv.get('app.claimSigner'), userAddress, amount, claimId, 0);
+    const signature = await getClaimSig(this.cfgSrv.get('app.claimSigner'), userAddress, amount, claimId, 8453);
     const claim = await TokenClaim.create({
       name,
       address: userAddress,

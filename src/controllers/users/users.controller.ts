@@ -4,7 +4,7 @@ import { isEthereumAddress } from 'class-validator';
 import { isAddress } from 'ethers';
 import express from 'express';
 import { transaction } from 'objection';
-import { isEqualStr, toDec } from '../../common/common';
+import { isEqualStr, isProd, toDec } from '../../common/common';
 import { getClaimSig } from '../../common/crypto';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ErrorMessages, ok, throw400, throw401, throw404 } from '../../common/responses/responses';
@@ -148,7 +148,14 @@ export class UsersController {
 
     const claimId = 0;
     const amount = '3000000000000000000000';
-    const signature = await getClaimSig(this.cfgSrv.get('app.claimSigner'), userAddress, amount, claimId, 0, 8453);
+    const signature = await getClaimSig(
+      this.cfgSrv.get('app.claimSigner'),
+      userAddress,
+      amount,
+      claimId,
+      0,
+      isProd() ? 8453 : 31337,
+    );
     const claim = await TokenClaim.create({
       name,
       address: userAddress,

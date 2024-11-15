@@ -1,7 +1,7 @@
 import { BaseContract, Provider, toNumber } from 'ethers';
 import * as moment from 'moment';
 import { Transaction } from 'objection';
-import { toDec } from '../../common/common';
+import { isProd, toDec } from '../../common/common';
 import { getClaimSig } from '../../common/crypto';
 import BondingCurveTx from '../../models/bonding_curve_tx';
 import BondingCurveWithdraw from '../../models/bonding_curve_withdraw';
@@ -117,7 +117,14 @@ export class BondCurveDistroHandler extends Handler {
     const resetMinSpend = toDec(this.cfg.get('app.claimResetMinSpend'));
     if (claim && !!claim.claimedAt && resetMinSpend.lte(inAmt.toString())) {
       const newNonce = claim.nonce + 1;
-      const newSig = await getClaimSig(this.cfg.get('app.claimSigner'), buyer, claim.amount, 0, newNonce, 8453);
+      const newSig = await getClaimSig(
+        this.cfg.get('app.claimSigner'),
+        buyer,
+        claim.amount,
+        0,
+        newNonce,
+        isProd() ? 8453 : 31337,
+      );
       await TokenClaim.updateById(
         claim.id,
         {

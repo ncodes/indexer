@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import * as moment from 'moment';
-import { toDec } from '../../common/common';
+import { isProd, toDec } from '../../common/common';
 import { getClaimSig } from '../../common/crypto';
 import Point from '../../models/point';
 import TokenClaim from '../../models/token_claim';
@@ -57,7 +57,7 @@ export default class PointsClaimJob extends Base {
               tokenAllocLd,
               this.claimId,
               0,
-              8453,
+              isProd() ? 8453 : 31337,
             );
 
             await TokenClaim.create({

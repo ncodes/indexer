@@ -359,7 +359,7 @@ export default class TapGateway implements OnGatewayConnection, OnGatewayDisconn
    * @param socket The socket object
    * @returns
    */
-  @SubscribeMessage('info')
+  // @SubscribeMessage('info')
   async handleInfo(@ConnectedSocket() socket: Socket) {
     const userId = await this.tapSrv.getClientUserId(socket.id);
     if (!userId) {

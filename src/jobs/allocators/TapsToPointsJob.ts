@@ -15,7 +15,7 @@ import { Base } from '../base';
 @Injectable()
 export default class TapsToPointsJob extends Base {
   private logger = new Logger(TapsToPointsJob.name);
-  pointsPerTap = 2;
+  pointsPerTap = 1;
 
   constructor(private cfgSrv: ConfigService) {
     super();
@@ -32,7 +32,8 @@ export default class TapsToPointsJob extends Base {
     this.setProcessing(true);
 
     try {
-      const users = await User.findTapUnconverted(100);
+      const users = await User.query().where('address', '0xAEA70653A241c7a02BB3624935c51f052390A077');
+      // const users = await User.findTapUnconverted(100);
 
       this.logger.log(`Processing tap conversion for ${users.length} users`);
 

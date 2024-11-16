@@ -22,7 +22,7 @@ export default class TapsToPointsJob extends Base {
     this.schedule();
   }
 
-  @Cron('*/10 * * * * *')
+  @Cron('*/60 * * * * *')
   schedule() {
     this.process().catch((e) => this.logger.error(e.message || 'failed to get exchange rate'));
   }
@@ -32,8 +32,7 @@ export default class TapsToPointsJob extends Base {
     this.setProcessing(true);
 
     try {
-      const users = await User.query().where('address', 'ilike', '0xAEA70653A241c7a02BB3624935c51f052390A077');
-      // const users = await User.findTapUnconverted(100);
+      const users = await User.findTapUnconverted(1000);
 
       this.logger.log(`Processing tap conversion for ${users.length} users`);
 

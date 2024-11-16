@@ -133,11 +133,11 @@ export class UserService {
   async registerDevice(user: User, token = '') {
     if (!token) token = randStr(32);
 
-    if (!user.deviceTokenEmail) {
-      await this.chatNotifSrv.registerInstallation(user.id, 'email', token);
-      await User.updateById(user.id, { deviceTokenEmail: token }, this.cacheSrv.cacheUser.bind(this.cacheSrv));
-      user.deviceTokenEmail = token;
-    }
+    // if (!user.deviceTokenEmail) {
+    // await this.chatNotifSrv.registerInstallation(user.id, 'email', token);
+    // await User.updateById(user.id, { deviceTokenEmail: token }, this.cacheSrv.cacheUser.bind(this.cacheSrv));
+    // user.deviceTokenEmail = token;
+    // }
 
     return token;
   }

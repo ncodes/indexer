@@ -15,8 +15,8 @@ import * as Data from './kols.json';
 @Injectable()
 export default class KOLClaimJob extends Base {
   private logger = new Logger(KOLClaimJob.name);
-  pricePerTJOIN = 0.01;
-  tokenPerTJOIN = 3;
+  pricePerTJOIN = 0.005;
+  tokenPerTJOIN = 1;
   namePrefix = 'kol';
   claimId = 3;
 

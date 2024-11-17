@@ -37,7 +37,7 @@ export default class PointsClaimJob extends Base {
     this.setProcessing(true);
 
     try {
-      const users = await User.findNotAddedToMerkleTree(100);
+      const users = await User.findNotAddedToMerkleTree(1000);
 
       this.logger.log(`Processing ${users.length} users point for claim entry creation`);
 

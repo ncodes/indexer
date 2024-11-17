@@ -67,6 +67,8 @@ export default class PointsClaimJob extends Base {
               claimId: this.claimId,
               signature,
             });
+
+            this.logger.log(`Created claim entry for ${user.address} with ${tokenAlloc.toString()} tokens`);
           }
         }
 

@@ -99,7 +99,7 @@ export default class TokenClaim extends BaseModel {
   }
 
   static findByAddress(address: string) {
-    return this.query().where('address', address).whereNotDeleted().orderBy('claimId', 'asc');
+    return this.query().where('address', 'ilike', address).whereNotDeleted().orderBy('claimId', 'asc');
   }
 
   static findAll() {

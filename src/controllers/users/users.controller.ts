@@ -419,7 +419,7 @@ export class UsersController {
   async activateClaims(@Req() req: express.Request) {
     const user = req.user;
     if (!user.claimActivatedAt) {
-      await User.updateById(user.id, { claimActivatedAt: moment().add(5, 'minutes').toISOString() });
+      await User.updateById(user.id, { claimActivatedAt: moment().add(2, 'minutes').toISOString() });
     }
     return ok().data({ ok: true }).build();
   }

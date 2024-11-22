@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
-import { isProd } from '../../common/common';
+import { isProd, toDec } from '../../common/common';
 import { getClaimSig } from '../../common/crypto';
 import TokenClaim from '../../models/token_claim';
 import { Base } from '../base';
@@ -16,6 +16,7 @@ export default class TJoinClaimJob extends Base {
   private logger = new Logger(TJoinClaimJob.name);
   namePrefix = 'tjoin_buyer';
   claimId = 2;
+  bonus = 3000;
 
   constructor(private cfgSrv: ConfigService) {
     super();
@@ -50,7 +51,7 @@ export default class TJoinClaimJob extends Base {
           await TokenClaim.create({
             name,
             address: entry.address,
-            amount: entry.amountOfJoin,
+            amount: toDec(entry.amountOfJoin).add(this.bonus).toFixed(),
             claimId: this.claimId,
             signature,
           });

@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { isEthereumAddress } from 'class-validator';
 import { isAddress } from 'ethers';
 import express from 'express';
+import * as moment from 'moment';
 import { transaction } from 'objection';
 import { isEqualStr, isProd, toDec } from '../../common/common';
 import { getClaimSig } from '../../common/crypto';
@@ -392,9 +393,34 @@ export class UsersController {
       .build();
   }
 
+  @UseGuards(BeAuthenticatedGuard)
+  @UseGuards(HasKeyGuard)
   @Get('/claims/:address')
   async getClaims(@Param('address') address: string) {
-    const claims = await TokenClaim.findByAddress(address);
+    const user = await User.getByAddress(address);
+
+    // Get claims
+    let claims = await TokenClaim.findByAddress(address);
+
+    // Remove signature from claims if user has not passed the activation period
+    if (!user || !user.claimActivatedAt || moment(user.claimActivatedAt).isAfter(moment())) {
+      claims = claims.map((c) => {
+        delete c.signature;
+        return c;
+      });
+    }
+
     return ok().data(claims).build();
+  }
+
+  @UseGuards(BeAuthenticatedGuard)
+  @UseGuards(HasKeyGuard)
+  @Post('/activate-claims')
+  async activateClaims(@Req() req: express.Request) {
+    const user = req.user;
+    if (!user.claimActivatedAt) {
+      await User.updateById(user.id, { claimActivatedAt: moment().add(5, 'minutes').toISOString() });
+    }
+    return ok().data({ ok: true }).build();
   }
 }

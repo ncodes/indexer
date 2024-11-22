@@ -40,6 +40,7 @@ export default class User extends BaseModel {
   tapScore: string;
   tapToPointConvAt: string;
   addedMerkleEntryAt: string;
+  claimActivatedAt: string;
 
   // Not persisted
   totalUnclaimedAlloc: string;

@@ -21,12 +21,17 @@ import Point from '../../models/point';
 import Swap from '../../models/swap';
 import TokenClaim from '../../models/token_claim';
 import User from '../../models/user';
+import { pow10 } from '../../network/common';
 import NetworkService from '../../network/network.service';
 import EtherScanService from '../../services/etherscan.service';
 import { getTokenEnergonAlloc } from '../points/point.service';
 import * as galxePoints from './data/glaxe.json';
 import { GetQueryDTO, LogOnlineStatusDTO, RegisterDeviceDTO } from './dto';
 import { UserService } from './user.service';
+
+function randomInt(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min + 1) + min);
+}
 
 @Controller('v1/users')
 export class UsersController {
@@ -148,7 +153,7 @@ export class UsersController {
     }
 
     const claimId = 0;
-    const amount = '3000000000000000000000';
+    const amount = toDec(randomInt(3000, 4000)).mul(pow10(18)).toFixed(0);
     const signature = await getClaimSig(
       this.cfgSrv.get('app.claimSigner'),
       userAddress,

@@ -16,7 +16,6 @@ export default class TJoinClaimJob extends Base {
   private logger = new Logger(TJoinClaimJob.name);
   namePrefix = 'tjoin_buyer';
   claimId = 2;
-  bonus = 3000;
 
   constructor(private cfgSrv: ConfigService) {
     super();
@@ -51,7 +50,7 @@ export default class TJoinClaimJob extends Base {
           await TokenClaim.create({
             name,
             address: entry.address,
-            amount: toDec(entry.amountOfJoin).add(this.bonus).toFixed(),
+            amount: toDec(entry.amountOfJoin).toFixed(),
             claimId: this.claimId,
             signature,
           });

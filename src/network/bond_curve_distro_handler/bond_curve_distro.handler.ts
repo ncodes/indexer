@@ -134,8 +134,6 @@ export class BondCurveDistroHandler extends Handler {
         },
         txn,
       );
-    } else {
-      console.log('No claim reset');
     }
   }
 

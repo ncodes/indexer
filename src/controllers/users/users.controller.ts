@@ -153,7 +153,7 @@ export class UsersController {
     }
 
     const claimId = 0;
-    const amount = toDec(randomInt(3000, 4000)).mul(pow10(18)).toFixed(0);
+    const amount = toDec(10_000).mul(pow10(18)).toFixed(0);
     const signature = await getClaimSig(
       this.cfgSrv.get('app.claimSigner'),
       userAddress,

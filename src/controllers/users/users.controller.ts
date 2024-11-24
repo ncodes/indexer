@@ -29,10 +29,6 @@ import * as galxePoints from './data/glaxe.json';
 import { GetQueryDTO, LogOnlineStatusDTO, RegisterDeviceDTO } from './dto';
 import { UserService } from './user.service';
 
-function randomInt(min: number, max: number) {
-  return Math.floor(Math.random() * (max - min + 1) + min);
-}
-
 @Controller('v1/users')
 export class UsersController {
   constructor(
@@ -41,6 +37,14 @@ export class UsersController {
     private cfgSrv: ConfigService,
     private etherscanSrv: EtherScanService,
   ) {}
+
+  computeAlloc() {
+    let claimStartTimeStr = this.cfgSrv.get('app.claimStartTime');
+    if (!claimStartTimeStr) claimStartTimeStr = moment().unix().toString();
+    const claimStartTime = moment.unix(parseInt(claimStartTimeStr));
+    const numWeeks = moment().diff(claimStartTime, 'weeks');
+    return Math.max(10_000 - 1000 * numWeeks, 5_000);
+  }
 
   @Post('/check-dex-claim/:address')
   async checkAndRegisterDexClaim(@Param('address') address: string) {
@@ -55,7 +59,7 @@ export class UsersController {
         name: 'ethereum',
         id: 1,
         startBlock: 18_908_895,
-        endBlock: 21_153_765,
+        endBlock: 21_246_710,
         routers: [
           '0xf164fC0Ec4E93095b804a4795bBe1e041497b92a',
           '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
@@ -68,7 +72,7 @@ export class UsersController {
         name: 'base',
         id: 8453,
         startBlock: 8_638_927,
-        endBlock: 22_360_640,
+        endBlock: 22_765_326,
         routers: [
           '0x2626664c2603336E57B271c5C0b26F421741e481',
           '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD',
@@ -80,7 +84,7 @@ export class UsersController {
         name: 'arbitrum',
         id: 42161,
         startBlock: 165_788_861,
-        endBlock: 272_995_037,
+        endBlock: 277_293_998,
         routers: [
           '0x4C60051384bd2d3C01bfc845Cf5F4b44bcbE9de5',
           '0xeC8B0F7Ffe3ae75d7FfAb09429e3675bb63503e4',
@@ -94,7 +98,7 @@ export class UsersController {
         name: 'optimism',
         id: 10,
         startBlock: 114_234_212,
-        endBlock: 127_820_341,
+        endBlock: 128_360_611,
         routers: [
           '0xb555edF5dcF85f42cEeF1f3630a52A108E55A654',
           '0xeC8B0F7Ffe3ae75d7FfAb09429e3675bb63503e4',
@@ -108,7 +112,7 @@ export class UsersController {
         name: 'bsc',
         id: 56,
         startBlock: 34_848_730,
-        endBlock: 43_958_888,
+        endBlock: 44_246_411,
         routers: [
           '0x5Dc88340E1c5c6366864Ee415d6034cadd1A9897',
           '0xeC8B0F7Ffe3ae75d7FfAb09429e3675bb63503e4',
@@ -126,7 +130,7 @@ export class UsersController {
         name: 'polygon',
         id: 137,
         startBlock: 51_796_222,
-        endBlock: 64_113_826,
+        endBlock: 64_613_840,
         routers: [
           '0x4C60051384bd2d3C01bfc845Cf5F4b44bcbE9de5',
           '0x643770E279d5D0733F21d6DC03A8efbABf3255B4',
@@ -153,7 +157,8 @@ export class UsersController {
     }
 
     const claimId = 0;
-    const amount = toDec(10_000).mul(pow10(18)).toFixed(0);
+    const alloc = this.computeAlloc();
+    const amount = toDec(alloc).mul(pow10(18)).toFixed(0);
     const signature = await getClaimSig(
       this.cfgSrv.get('app.claimSigner'),
       userAddress,

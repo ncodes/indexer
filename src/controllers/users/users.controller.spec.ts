@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
+import * as moment from 'moment';
 import * as request from 'supertest';
 import CacheService from '../../cacher/cache.service';
 import { randStr } from '../../common/common';
@@ -15,6 +16,7 @@ import Point from '../../models/point';
 import Swap from '../../models/swap';
 import User from '../../models/user';
 import NetworkService from '../../network/network.service';
+import EtherScanService from '../../services/etherscan.service';
 import { JointLinkService } from '../../services/joint_link.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { RedisService } from '../../services/redis/redis.service';
@@ -91,6 +93,7 @@ describe('UsersController', () => {
         RedisService,
         CacheService,
         TapService,
+        EtherScanService,
       ],
     })
       .overrideProvider(ConfigService)
@@ -101,6 +104,8 @@ describe('UsersController', () => {
       .useValue(new NetworkServiceMock())
       .overrideProvider(RedisService)
       .useValue(new RedisServiceMock())
+      .overrideProvider(EtherScanService)
+      .useValue(new (jest.fn())())
       .compile();
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());
@@ -561,6 +566,34 @@ describe('UsersController', () => {
 
       const targetPoints = await Point.getTotalPointsByAddress(address2);
       expect(targetPoints).toEqual('2');
+    });
+  });
+
+  describe('.computeAlloc', () => {
+    it('should return correct allocation', () => {
+      cfgObj['app.claimStartTime'] = moment().subtract(2, 'week').unix();
+      let alloc = app.get(UsersController).computeAlloc();
+      expect(alloc).toEqual(8_000);
+
+      cfgObj['app.claimStartTime'] = moment().subtract(5, 'week').unix();
+      alloc = app.get(UsersController).computeAlloc();
+      expect(alloc).toEqual(5_000);
+
+      cfgObj['app.claimStartTime'] = moment().subtract(6, 'week').unix();
+      alloc = app.get(UsersController).computeAlloc();
+      expect(alloc).toEqual(5_000);
+
+      cfgObj['app.claimStartTime'] = moment().subtract(7, 'week').unix();
+      alloc = app.get(UsersController).computeAlloc();
+      expect(alloc).toEqual(5_000);
+
+      cfgObj['app.claimStartTime'] = null;
+      alloc = app.get(UsersController).computeAlloc();
+      expect(alloc).toEqual(10_000);
+
+      delete cfgObj['app.claimStartTime'];
+      alloc = app.get(UsersController).computeAlloc();
+      expect(alloc).toEqual(10_000);
     });
   });
 });

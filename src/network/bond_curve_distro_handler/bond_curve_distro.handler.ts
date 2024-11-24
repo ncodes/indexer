@@ -115,6 +115,7 @@ export class BondCurveDistroHandler extends Handler {
 
     const claim = await TokenClaim.findByAddressAndClaimId(buyer, 0);
     const resetMinSpend = toDec(this.cfg.get('app.claimResetMinSpend'));
+    console.log('onBuy', claim, resetMinSpend, inAmt);
     if (claim && !!claim.claimedAt && resetMinSpend.lte(inAmt.toString())) {
       const newNonce = claim.nonce + 1;
       const newSig = await getClaimSig(

@@ -7,6 +7,7 @@ import TokenClaim from '../../models/token_claim';
 import { pow10 } from '../../network/common';
 import { Base } from '../base';
 import * as Data from './kols.json';
+import { AllocatorName } from './common';
 
 /**
  * KOLClaimJob is responsible for creating the claims entries for project KOLs.
@@ -17,7 +18,7 @@ export default class KOLClaimJob extends Base {
   private logger = new Logger(KOLClaimJob.name);
   pricePerTJOIN = 0.005;
   tokenPerTJOIN = 1;
-  namePrefix = 'kol';
+  namePrefix = AllocatorName.KOL;
   claimId = 3;
 
   constructor(private cfgSrv: ConfigService) {

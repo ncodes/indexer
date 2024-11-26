@@ -223,6 +223,27 @@ export class UsersController {
 
     await this.userSrv.extendUser(user, q.net);
 
+    // Check if the user has performed a swap
+    if (!user.hasSwapped) {
+      const claimStartTime = this.cfgSrv.get('app.claimStartTime');
+      let swapCount = await Swap.countByAddress(user.address, moment.unix(parseInt(claimStartTime)).toISOString());
+      let hasSwapped = false;
+      if (swapCount > 0) hasSwapped = true;
+
+      if (!hasSwapped) {
+        swapCount = await Swap.countByAddress(
+          user.address,
+          undefined,
+          'base',
+          this.cfgSrv.get('app.swapMarket'),
+          this.cfgSrv.get('app.swapProvider'),
+        );
+        if (swapCount > 0) hasSwapped = true;
+      }
+
+      if (hasSwapped) user = await User.updateById(user.id, { hasSwapped: true });
+    }
+
     if (!req.user) user.desensitize();
 
     return ok().data(user).build<User>();
@@ -413,7 +434,7 @@ export class UsersController {
     let claims = await TokenClaim.findByAddress(address);
 
     // Remove signature from claims if user has not passed the activation period
-    if (!user || !user.claimActivatedAt || moment(user.claimActivatedAt).isAfter(moment())) {
+    if (!user || !user.claimActivatedAt || moment(user.claimActivatedAt).isAfter(moment()) || !user.hasSwapped) {
       claims = claims.map((c) => {
         delete c.signature;
         return c;
@@ -429,7 +450,7 @@ export class UsersController {
   async activateClaims(@Req() req: express.Request) {
     const user = req.user;
     if (!user.claimActivatedAt) {
-      await User.updateById(user.id, { claimActivatedAt: moment().add(2, 'minutes').toISOString() });
+      await User.updateById(user.id, { claimActivatedAt: moment().add(1, 'minutes').toISOString() });
     }
     return ok().data({ ok: true }).build();
   }

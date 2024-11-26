@@ -588,6 +588,15 @@ export class CoreHandler extends Handler {
     const [, lid, , price, offerId, operator] = numTypeInfo;
     let amount = numTypeInfo[2];
 
+    if (
+      this.network === 'base' &&
+      isEqualStr(this.cfg.get('app.swapMarket'), marketAddress) &&
+      isEqualStr(this.cfg.get('app.swapProvider'), provider)
+    ) {
+      await User.updateByAddress(swapper, { hasSwapped: true }, txn);
+      await User.updateByAddress(provider, { hasSwapped: true }, txn);
+    }
+
     if (isZero(orderId)) {
       let market = await Market.getMarket(this.network, marketAddress, undefined, undefined, true, txn);
       let liq = await Liquidity.getLiquidity(

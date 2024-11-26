@@ -617,6 +617,36 @@ export default class Swap extends BaseModel {
     });
   }
 
+  static async countByAddress(
+    address: string,
+    beforeDate?: string,
+    network?: string,
+    marketAddress?: string,
+    provider?: string,
+    txn?: Objection.Transaction,
+  ) {
+    return this.query(txn)
+      .where((q) => {
+        if (network) return q.where('network', network);
+      })
+      .where((q) => {
+        return q.orWhere('taker', 'ilike', address).orWhere('provider', 'ilike', address);
+      })
+      .where((q) => {
+        if (beforeDate) return q.where('createdAt', '<', beforeDate);
+      })
+      .where((q) => {
+        if (marketAddress) return q.where('marketAddress', 'ilike', marketAddress);
+      })
+      .where((q) => {
+        if (provider) return q.where('provider', 'ilike', provider);
+      })
+      .whereNotDeleted()
+      .count('id')
+      .first()
+      .then((res: any) => res.count);
+  }
+
   /**
    * Calculate completion rate
    * @param network The network name

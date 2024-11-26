@@ -2,6 +2,11 @@ import { Body, Controller, Delete, Get, Post, Put, Query, Req, UseGuards, Valida
 import { ConfigService } from '@nestjs/config';
 import { isEmail } from 'class-validator';
 import { Request } from 'express';
+import { transaction } from 'objection';
+import { authenticator, totp } from 'otplib';
+import CacheService from '../../cacher/cache.service';
+import { sha1 } from '../../common/common';
+import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
 import { ErrBadSignature, ErrorMessages, ErrorTypes, ok, throw400, throw404 } from '../../common/responses/responses';
 import { Roles } from '../../common/roles';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
@@ -15,11 +20,6 @@ import { UserService } from '../users/user.service';
 import { AuthService } from './auth.service';
 import { AuthDTO, GetAuthorizerDTO, VerifyEmailDTO } from './dto';
 import { hasSeenSignature, makeSession, parseWalletSignature } from './utils';
-import CacheService from '../../cacher/cache.service';
-import { authenticator, totp } from 'otplib';
-import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
-import { isLocal, sha1 } from '../../common/common';
-import { transaction } from 'objection';
 
 /**
  * AuthController handles all authentication functionalities.
@@ -87,7 +87,7 @@ export class AuthController {
           user.id,
           {
             otpSecret: user.otpSecret ?? authenticator.generateSecret(),
-            emailUnverified: user.email !== sigData.email ? sigData.email : null,
+            emailUnverified: sigData.email ? (sigData.email != user.email ? sigData.email : null) : null,
           },
           this.cacheSrv.cacheUser.bind(this.cacheSrv),
         );
@@ -97,6 +97,7 @@ export class AuthController {
 
     // If email is verified, generate session token,
     // otherwise send an OTP to the unverified email.
+    console.log(user.emailUnverified);
     if (!user.emailUnverified) {
       token = await makeSession(user, body.sig, this.cfgSrv.get('auth.jwtExpMin'), this.cfgSrv.get('auth.jwtSecret'));
     } else {

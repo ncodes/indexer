@@ -5,6 +5,7 @@ import { isProd, toDec } from '../../common/common';
 import { getClaimSig } from '../../common/crypto';
 import TokenClaim from '../../models/token_claim';
 import { Base } from '../base';
+import { AllocatorName } from './common';
 import * as Data from './tjoin_holders.json';
 
 /**
@@ -14,7 +15,7 @@ import * as Data from './tjoin_holders.json';
 @Injectable()
 export default class TJoinClaimJob extends Base {
   private logger = new Logger(TJoinClaimJob.name);
-  namePrefix = 'tjoin_buyer';
+  namePrefix = AllocatorName.TJoinBuyer;
   claimId = 2;
 
   constructor(private cfgSrv: ConfigService) {

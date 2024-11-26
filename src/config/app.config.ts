@@ -12,6 +12,8 @@ export default () => ({
     claimSigner: process.env.CLAIM_SIGNER,
     claimResetMinSpend: process.env.CLAIM_RESET_MIN_SPEND,
     claimStartTime: process.env.CLAIM_START_TIME,
+    swapMarket: process.env.SWAP_MARKET,
+    swapProvider: process.env.SWAP_PROVIDER,
     disableNotifications: process.env.DISABLE_NOTIFICATIONS,
     disableWatcher: process.env.DISABLE_WATCHER,
     disabledWatchers: process.env.DISABLED_WATCHERS,

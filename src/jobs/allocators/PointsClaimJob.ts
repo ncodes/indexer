@@ -9,6 +9,7 @@ import TokenClaim from '../../models/token_claim';
 import User from '../../models/user';
 import { pow10 } from '../../network/common';
 import { Base } from '../base';
+import { AllocatorName } from './common';
 
 /**
  * PointsClaimJob is responsible for creating claim entries point holders.
@@ -19,7 +20,7 @@ export default class PointsClaimJob extends Base {
   claimId = 1;
   maxPointsForTokenAlloc = 5_000_000;
   tokenPerPoint = 0.1;
-  namePrefix = 'point';
+  namePrefix = AllocatorName.Point;
   minPoints = 10_000;
 
   constructor(private cfgSrv: ConfigService) {

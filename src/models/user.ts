@@ -41,6 +41,7 @@ export default class User extends BaseModel {
   tapToPointConvAt: string;
   addedMerkleEntryAt: string;
   claimActivatedAt: string;
+  hasSwapped: boolean;
 
   // Not persisted
   totalUnclaimedAlloc: string;
@@ -58,6 +59,7 @@ export default class User extends BaseModel {
   nft: { count?: number; totalAlloc?: number; claimed?: boolean };
   earlyDiscordMemberAlloc: string;
   earlyDiscordMemberClaimed: boolean;
+  claimNames: string[];
 
   constructor(init?: Partial<User>) {
     super();

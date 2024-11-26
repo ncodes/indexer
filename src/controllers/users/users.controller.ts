@@ -13,6 +13,7 @@ import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import { MayHaveKeyGuard } from '../../guards/may_have_token.guard';
 import { MayBeAuthenticatedGuard } from '../../guards/maybe_authenticated.guard';
+import { AllocatorName } from '../../jobs/allocators/common';
 import ClaimCheckLog from '../../models/claim_check_log';
 import NFTOwner from '../../models/nft_owner';
 import Offer from '../../models/offer';
@@ -434,12 +435,15 @@ export class UsersController {
     let claims = await TokenClaim.findByAddress(address);
 
     // Remove signature from claims if user has not passed the activation period
-    if (!user || !user.claimActivatedAt || moment(user.claimActivatedAt).isAfter(moment()) || !user.hasSwapped) {
-      claims = claims.map((c) => {
+    claims = claims.map((c) => {
+      if (!user || !user.claimActivatedAt || moment(user.claimActivatedAt).isAfter(moment())) {
         delete c.signature;
-        return c;
-      });
-    }
+      }
+      if (!user.hasSwapped && (c.name.startsWith(AllocatorName.DexUser) || c.name.startsWith(AllocatorName.Point))) {
+        delete c.signature;
+      }
+      return c;
+    });
 
     return ok().data(claims).build();
   }

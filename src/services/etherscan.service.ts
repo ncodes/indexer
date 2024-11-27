@@ -61,15 +61,21 @@ export default class EtherScanService {
   }) {
     routers = routers.map((r) => r.toLowerCase());
     let page = 1;
-    const offset = 2000;
+    let offset = 3300;
     let foundTx = false;
     while (true) {
       try {
         const txlist = await this.getTxlist(id, userAddress, startBlock, endBlock, page, offset);
 
         if (txlist.message != 'OK' && !Array.isArray(txlist.result)) {
-          this.logger.error('Error fetching txlist: ', txlist.result);
-          throw new Error('Api Error');
+          if (txlist.message.includes('window is too large')) {
+            offset -= 1000;
+            this.logger.log(`window is too large, reducing offset to ${offset} of page ${page}`);
+            continue;
+          } else {
+            this.logger.error('Error fetching txlist: ', txlist);
+            throw new Error('Api Error');
+          }
         }
 
         if (Array.isArray(txlist.result) && txlist.result.length === 0) break;

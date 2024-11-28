@@ -439,7 +439,7 @@ export class UsersController {
       if (!user || !user.claimActivatedAt || moment(user.claimActivatedAt).isAfter(moment())) {
         delete c.signature;
       }
-      if (!user.hasSwapped && (c.name.startsWith(AllocatorName.DexUser) || c.name.startsWith(AllocatorName.Point))) {
+      if (!user.hasSwapped && c.name.startsWith(AllocatorName.DexUser)) {
         delete c.signature;
       }
       return c;

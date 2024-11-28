@@ -28,7 +28,7 @@ export default class PointsClaimJob extends Base {
     this.schedule();
   }
 
-  @Cron('*/10 * * * * *')
+  @Cron('*/5 * * * *')
   schedule() {
     this.process().catch((e) => this.logger.error(e.message || 'failed to get exchange rate'));
   }

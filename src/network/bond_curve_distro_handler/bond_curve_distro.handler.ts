@@ -6,6 +6,7 @@ import { getClaimSig } from '../../common/crypto';
 import BondingCurveTx from '../../models/bonding_curve_tx';
 import BondingCurveWithdraw from '../../models/bonding_curve_withdraw';
 import TokenClaim from '../../models/token_claim';
+import User from '../../models/user';
 import { ContractCallEvent } from '../common';
 import { Handler } from '../handler';
 import NetworkService from '../network.service';
@@ -112,6 +113,8 @@ export class BondCurveDistroHandler extends Handler {
       },
       txn,
     );
+
+    await User.updateByAddress(buyer, { hasSwapped: true }, txn);
 
     const claim = await TokenClaim.findByAddressAndClaimId(buyer, 0);
     const resetMinSpend = toDec(this.cfg.get('app.claimResetMinSpend'));

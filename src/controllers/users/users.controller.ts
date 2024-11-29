@@ -11,6 +11,7 @@ import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common
 import { ErrorMessages, ok, throw400, throw401, throw404 } from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
+import { IsRootAdmin } from '../../guards/is_basic_admin';
 import { MayHaveKeyGuard } from '../../guards/may_have_token.guard';
 import { MayBeAuthenticatedGuard } from '../../guards/maybe_authenticated.guard';
 import { AllocatorName } from '../../jobs/allocators/common';
@@ -30,6 +31,94 @@ import * as galxePoints from './data/glaxe.json';
 import { GetQueryDTO, LogOnlineStatusDTO, RegisterDeviceDTO } from './dto';
 import { UserService } from './user.service';
 
+const chains = [
+  {
+    name: 'ethereum',
+    id: 1,
+    startBlock: 18_908_895,
+    endBlock: 21_246_710,
+    routers: [
+      '0xf164fC0Ec4E93095b804a4795bBe1e041497b92a',
+      '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
+      '0xE592427A0AEce92De3Edee1F18E0157C05861564',
+      '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
+      '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD',
+    ],
+  },
+  {
+    name: 'base',
+    id: 8453,
+    startBlock: 8_638_927,
+    endBlock: 22_765_326,
+    routers: [
+      '0x2626664c2603336E57B271c5C0b26F421741e481',
+      '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD',
+      '0xeC8B0F7Ffe3ae75d7FfAb09429e3675bb63503e4',
+      '0x4752ba5dbc23f44d87826276bf6fd6b1c372ad24',
+    ],
+  },
+  {
+    name: 'arbitrum',
+    id: 42161,
+    startBlock: 165_788_861,
+    endBlock: 277_293_998,
+    routers: [
+      '0x4C60051384bd2d3C01bfc845Cf5F4b44bcbE9de5',
+      '0xeC8B0F7Ffe3ae75d7FfAb09429e3675bb63503e4',
+      '0x5E325eDA8064b456f4781070C0738d849c824258',
+      '0xE592427A0AEce92De3Edee1F18E0157C05861564',
+      '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
+      '0x4752ba5dbc23f44d87826276bf6fd6b1c372ad24',
+    ],
+  },
+  {
+    name: 'optimism',
+    id: 10,
+    startBlock: 114_234_212,
+    endBlock: 128_360_611,
+    routers: [
+      '0xb555edF5dcF85f42cEeF1f3630a52A108E55A654',
+      '0xeC8B0F7Ffe3ae75d7FfAb09429e3675bb63503e4',
+      '0xCb1355ff08Ab38bBCE60111F1bb2B784bE25D7e8',
+      '0xE592427A0AEce92De3Edee1F18E0157C05861564',
+      '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
+      '0x4A7b5Da61326A6379179b40d00F57E5bbDC962c2',
+    ],
+  },
+  {
+    name: 'bsc',
+    id: 56,
+    startBlock: 34_848_730,
+    endBlock: 44_246_411,
+    routers: [
+      '0x5Dc88340E1c5c6366864Ee415d6034cadd1A9897',
+      '0xeC8B0F7Ffe3ae75d7FfAb09429e3675bb63503e4',
+      '0x4Dae2f939ACf50408e13d58534Ff8c2776d45265',
+      '0xB971eF87ede563556b2ED4b1C0b0019111Dd85d2',
+      '0x4752ba5dbc23f44d87826276bf6fd6b1c372ad24',
+      // PancakeSwap Routers
+      '0x10ED43C718714eb63d5aA57B78B54704E256024E',
+      '0x1A0A18AC4BECDDbd6389559687d1A73d8927E416',
+      '0x1b81D678ffb9C0263b24A97847620C99d213eB14',
+      '0x13f4EA83D0bd40E75C8222255bc855a974568Dd4',
+    ],
+  },
+  {
+    name: 'polygon',
+    id: 137,
+    startBlock: 51_796_222,
+    endBlock: 64_613_840,
+    routers: [
+      '0x4C60051384bd2d3C01bfc845Cf5F4b44bcbE9de5',
+      '0x643770E279d5D0733F21d6DC03A8efbABf3255B4',
+      '0xec7BE89e9d109e7e3Fec59c222CF297125FEFda2',
+      '0xE592427A0AEce92De3Edee1F18E0157C05861564',
+      '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
+      '0xedf6066a2b290C185783862C7F4776A2C8077AD1',
+    ],
+  },
+];
+
 @Controller('v1/users')
 export class UsersController {
   constructor(
@@ -47,6 +136,40 @@ export class UsersController {
     return Math.max(10_000 - 1000 * numWeeks, 5_000);
   }
 
+  @UseGuards(IsRootAdmin)
+  @Get('/check-dex-claim/:address')
+  async checkDexUseOnly(@Param('address') address: string) {
+    const userAddress = address;
+    const name = `dex_user:${userAddress}`;
+
+    const existingClaim = await TokenClaim.findByName(name);
+    if (existingClaim) return ok().data(existingClaim).build();
+
+    let found = false;
+    let txHash = '';
+    let chainName = '';
+    for (const chain of chains) {
+      const checkLog = await ClaimCheckLog.findByChainAndAddress(chain.id, userAddress);
+      if (!checkLog) {
+        const resp = await this.etherscanSrv.check({ ...chain, userAddress });
+        if (resp.foundTx) {
+          found = true;
+          txHash = resp.txHash;
+          chainName = chain.name;
+          break;
+        }
+      }
+    }
+
+    console.log('Found:', chainName, txHash);
+
+    if (!found) {
+      return throw404('not eligible');
+    }
+
+    return ok().data({ eligible: true }).build();
+  }
+
   @Post('/check-dex-claim/:address')
   async checkAndRegisterDexClaim(@Param('address') address: string) {
     const userAddress = address;
@@ -55,101 +178,16 @@ export class UsersController {
     const existingClaim = await TokenClaim.findByName(name);
     if (existingClaim) return ok().data(existingClaim).build();
 
-    const chains = [
-      {
-        name: 'ethereum',
-        id: 1,
-        startBlock: 18_908_895,
-        endBlock: 21_246_710,
-        routers: [
-          '0xf164fC0Ec4E93095b804a4795bBe1e041497b92a',
-          '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
-          '0xE592427A0AEce92De3Edee1F18E0157C05861564',
-          '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
-          '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD',
-        ],
-      },
-      {
-        name: 'base',
-        id: 8453,
-        startBlock: 8_638_927,
-        endBlock: 22_765_326,
-        routers: [
-          '0x2626664c2603336E57B271c5C0b26F421741e481',
-          '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD',
-          '0xeC8B0F7Ffe3ae75d7FfAb09429e3675bb63503e4',
-          '0x4752ba5dbc23f44d87826276bf6fd6b1c372ad24',
-        ],
-      },
-      {
-        name: 'arbitrum',
-        id: 42161,
-        startBlock: 165_788_861,
-        endBlock: 277_293_998,
-        routers: [
-          '0x4C60051384bd2d3C01bfc845Cf5F4b44bcbE9de5',
-          '0xeC8B0F7Ffe3ae75d7FfAb09429e3675bb63503e4',
-          '0x5E325eDA8064b456f4781070C0738d849c824258',
-          '0xE592427A0AEce92De3Edee1F18E0157C05861564',
-          '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
-          '0x4752ba5dbc23f44d87826276bf6fd6b1c372ad24',
-        ],
-      },
-      {
-        name: 'optimism',
-        id: 10,
-        startBlock: 114_234_212,
-        endBlock: 128_360_611,
-        routers: [
-          '0xb555edF5dcF85f42cEeF1f3630a52A108E55A654',
-          '0xeC8B0F7Ffe3ae75d7FfAb09429e3675bb63503e4',
-          '0xCb1355ff08Ab38bBCE60111F1bb2B784bE25D7e8',
-          '0xE592427A0AEce92De3Edee1F18E0157C05861564',
-          '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
-          '0x4A7b5Da61326A6379179b40d00F57E5bbDC962c2',
-        ],
-      },
-      {
-        name: 'bsc',
-        id: 56,
-        startBlock: 34_848_730,
-        endBlock: 44_246_411,
-        routers: [
-          '0x5Dc88340E1c5c6366864Ee415d6034cadd1A9897',
-          '0xeC8B0F7Ffe3ae75d7FfAb09429e3675bb63503e4',
-          '0x4Dae2f939ACf50408e13d58534Ff8c2776d45265',
-          '0xB971eF87ede563556b2ED4b1C0b0019111Dd85d2',
-          '0x4752ba5dbc23f44d87826276bf6fd6b1c372ad24',
-          // PancakeSwap Routers
-          '0x10ED43C718714eb63d5aA57B78B54704E256024E',
-          '0x1A0A18AC4BECDDbd6389559687d1A73d8927E416',
-          '0x1b81D678ffb9C0263b24A97847620C99d213eB14',
-          '0x13f4EA83D0bd40E75C8222255bc855a974568Dd4',
-        ],
-      },
-      {
-        name: 'polygon',
-        id: 137,
-        startBlock: 51_796_222,
-        endBlock: 64_613_840,
-        routers: [
-          '0x4C60051384bd2d3C01bfc845Cf5F4b44bcbE9de5',
-          '0x643770E279d5D0733F21d6DC03A8efbABf3255B4',
-          '0xec7BE89e9d109e7e3Fec59c222CF297125FEFda2',
-          '0xE592427A0AEce92De3Edee1F18E0157C05861564',
-          '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
-          '0xedf6066a2b290C185783862C7F4776A2C8077AD1',
-        ],
-      },
-    ];
-
     let found = false;
     for (const chain of chains) {
       const checkLog = await ClaimCheckLog.findByChainAndAddress(chain.id, userAddress);
       if (!checkLog) {
-        found = await this.etherscanSrv.check({ ...chain, userAddress });
+        const resp = await this.etherscanSrv.check({ ...chain, userAddress });
         await ClaimCheckLog.create({ chainId: chain.id, address: userAddress });
-        if (found) break;
+        if (resp.foundTx) {
+          found = true;
+          break;
+        }
       }
     }
 
@@ -242,7 +280,7 @@ export class UsersController {
         if (swapCount > 0) hasSwapped = true;
       }
 
-      if (hasSwapped) user = await User.updateById(user.id, { hasSwapped: true });
+      // if (hasSwapped) user = await User.updateById(user.id, { hasSwapped: true });
     }
 
     if (!req.user) user.desensitize();

@@ -63,6 +63,7 @@ export default class EtherScanService {
     let page = 1;
     let offset = 3300;
     let foundTx = false;
+    let txHash = '';
     while (true) {
       try {
         const txlist = await this.getTxlist(id, userAddress, startBlock, endBlock, page, offset);
@@ -83,6 +84,7 @@ export default class EtherScanService {
         for (const tx of txlist.result) {
           if (routers.includes(tx.to.toLowerCase())) {
             foundTx = true;
+            txHash = tx.hash;
             this.logger.log(`found on chain ${id}, txn: ${tx.hash}`);
             break;
           }
@@ -97,7 +99,7 @@ export default class EtherScanService {
       }
     }
 
-    return foundTx;
+    return { foundTx, txHash };
   }
 }
 

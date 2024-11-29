@@ -280,7 +280,7 @@ export class UsersController {
         if (swapCount > 0) hasSwapped = true;
       }
 
-      // if (hasSwapped) user = await User.updateById(user.id, { hasSwapped: true });
+      if (hasSwapped) user = await User.updateById(user.id, { hasSwapped: true });
     }
 
     if (!req.user) user.desensitize();

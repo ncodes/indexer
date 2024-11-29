@@ -9,6 +9,7 @@ import { MetadataService } from '../services/metadata/metadata.service';
 import { TwitterService } from '../services/twitter.service';
 import { RedisService } from './../services/redis/redis.service';
 import KOLClaimJob from './allocators/KOLClaimJob';
+import NFTClaimJob from './allocators/NFTClaimJob';
 import PointsClaimJob from './allocators/PointsClaimJob';
 import TapsToPointsJob from './allocators/TapsToPointsJob';
 import TJoinClaimJob from './allocators/TJoinClaimJob';
@@ -65,6 +66,10 @@ if (['1', 'true'].includes(process.env.ENABLE_TJOIN_CLAIM_JOB)) {
 
 if (['1', 'true'].includes(process.env.ENABLE_KOL_CLAIM_JOB)) {
   providers.push(KOLClaimJob);
+}
+
+if (['1', 'true'].includes(process.env.ENABLE_NFT_CLAIM_JOB)) {
+  providers.push(NFTClaimJob);
 }
 
 @Module({

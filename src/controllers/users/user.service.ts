@@ -122,6 +122,8 @@ export class UserService {
         names.push(AllocatorName.DexUser);
       } else if (claim.name.startsWith(AllocatorName.Point)) {
         names.push(AllocatorName.Point);
+      } else if (claim.name.startsWith(AllocatorName.NFT)) {
+        names.push(AllocatorName.NFT);
       }
     }
     return names;

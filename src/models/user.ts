@@ -42,6 +42,7 @@ export default class User extends BaseModel {
   addedMerkleEntryAt: string;
   claimActivatedAt: string;
   hasSwapped: boolean;
+  lateNFTClaimedAt: string;
 
   // Not persisted
   totalUnclaimedAlloc: string;
@@ -357,5 +358,9 @@ export default class User extends BaseModel {
   static async transferTapScore(source: string, target: string, score: string, txn?: Transaction) {
     await this.query(txn).where('address', 'ilike', source).whereNotDeleted().patch({ tapScore: '0' });
     return this.query(txn).where('address', 'ilike', target).whereNotDeleted().patch({ tapScore: score });
+  }
+
+  static findNullLateNFTClaimedAt(limit: number) {
+    return this.query().whereNull('lateNFTClaimedAt').whereNotDeleted().limit(limit);
   }
 }

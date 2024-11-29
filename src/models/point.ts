@@ -268,6 +268,16 @@ export default class Point extends BaseModel {
       });
   }
 
+  static countByAddressAndAction(address: string, action: PointAction, txn?: Transaction) {
+    return this.query(txn)
+      .where('address', 'ilike', address)
+      .where('action', action)
+      .whereNotDeleted()
+      .count('id')
+      .first()
+      .then((res: any) => res.count);
+  }
+
   /**
    * Transfer points to a new address
    * @param source The source address

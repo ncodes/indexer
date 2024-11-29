@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Post, Query, ValidationPipe } from '@nestjs/common';
+import { isEqualStr } from '../../common/common';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ok, throw400, throw404 } from '../../common/responses/responses';
 import { ConfigService } from '../../config/config.service';
@@ -10,7 +11,6 @@ import { MarketService } from '../markets/market.service';
 import SwapService from '../swaps/swap.service';
 import { LiquidityService } from './liquidity.service';
 import { GetParamDTO, GetQueryDTO, ListQueryDTO } from './query.dto';
-import { isEqualStr } from '../../common/common';
 
 @Controller('v1/liquidities')
 export class LiquidityController {
@@ -156,7 +156,7 @@ export class LiquidityController {
         marketAddress: q.market,
         base: q.base,
         quote: q.quote,
-        provider: q.provider,
+        provider: '0xAEA70653A241c7a02BB3624935c51f052390A077',
         paused: q.paused,
         maxOpenDisputes,
         maxOpenOrders,

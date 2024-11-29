@@ -1549,12 +1549,14 @@ export class CoreHandler extends Handler {
 
   /**
    * NFT Discount basis point was updated
-   * @param discountBp The discount basis point
-   * @param event The event object
-   * @param txn The transaction object
+   * @param _discountBp The discount basis point
+   * @param _event The event object
+   * @param _txn The transaction object
    * @deprecated
    */
-  async onNFTDiscountUpdated(discountBp: bigint, event: ContractCallEvent, txn?: Transaction) {}
+  async onNFTDiscountUpdated(_discountBp: bigint, _event: ContractCallEvent, _txn?: Transaction) {
+    // TODO: Implement
+  }
 
   /**
    * New offer was created
@@ -1639,16 +1641,16 @@ export class CoreHandler extends Handler {
       txn,
     );
 
-    const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, true, txn);
+    // const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, true, txn);
 
-    await this.netSrv.pointSrv.grantPoint('offer:created', this.network, offerer, event, txn);
+    // await this.netSrv.pointSrv.grantPoint('offer:created', this.network, offerer, event, txn);
 
     // Send notification
-    this.notifSrv.notify(NotificationID.NewOffer, this.network, provider, {
-      market,
-      liq,
-      offer,
-    });
+    // this.notifSrv.notify(NotificationID.NewOffer, this.network, provider, {
+    //   market,
+    //   liq,
+    //   offer,
+    // });
   }
 
   /**
@@ -1701,19 +1703,19 @@ export class CoreHandler extends Handler {
       txn,
     );
 
-    const { marketAddress, provider, lid } = offer;
-    const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, true, txn);
-    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, undefined, txn);
+    // const { marketAddress, provider, lid } = offer;
+    // const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, true, txn);
+    // const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, undefined, txn);
 
-    await this.netSrv.pointSrv.grantPoint('offer:updated', this.network, offerer, event, txn);
+    // await this.netSrv.pointSrv.grantPoint('offer:updated', this.network, offerer, event, txn);
 
     // Send notification
-    this.notifSrv.notify(NotificationID.OfferUpdated, this.network, offer.provider, {
-      updated: true,
-      market,
-      liq,
-      offer,
-    });
+    // this.notifSrv.notify(NotificationID.OfferUpdated, this.network, offer.provider, {
+    //   updated: true,
+    //   market,
+    //   liq,
+    //   offer,
+    // });
   }
 
   /**
@@ -1758,18 +1760,18 @@ export class CoreHandler extends Handler {
       txn,
     );
 
-    const { marketAddress, provider, lid } = offer;
-    const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, true, txn);
-    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, undefined, txn);
+    // const { marketAddress, provider, lid } = offer;
+    // const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, true, txn);
+    // const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, undefined, txn);
 
-    await this.netSrv.pointSrv.grantPoint('offer:accepted', this.network, acceptor, event, txn);
+    // await this.netSrv.pointSrv.grantPoint('offer:accepted', this.network, acceptor, event, txn);
 
     // Send notification
-    this.notifSrv.notify(NotificationID.OfferAccepted, this.network, offer.creator, {
-      offer,
-      liq,
-      market,
-    });
+    // this.notifSrv.notify(NotificationID.OfferAccepted, this.network, offer.creator, {
+    //   offer,
+    //   liq,
+    //   market,
+    // });
   }
 
   /**
@@ -1786,9 +1788,9 @@ export class CoreHandler extends Handler {
     // Update the offer
     offer = await Offer.updateByOfferId(toNumber(offerId), { accepted: false, execAt: null }, txn);
 
-    const { marketAddress, provider, lid } = offer;
-    const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, true, txn);
-    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, undefined, txn);
+    const { marketAddress } = offer;
+    // const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, true, txn);
+    // const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, undefined, txn);
 
     await Event.create(
       {
@@ -1801,14 +1803,14 @@ export class CoreHandler extends Handler {
       txn,
     );
 
-    await this.netSrv.pointSrv.grantPoint('offer:unaccepted', this.network, unacceptor, event, txn);
+    // await this.netSrv.pointSrv.grantPoint('offer:unaccepted', this.network, unacceptor, event, txn);
 
     // Send notification
-    this.notifSrv.notify(NotificationID.OfferUnaccepted, this.network, offer.creator, {
-      offer,
-      liq,
-      market,
-    });
+    // this.notifSrv.notify(NotificationID.OfferUnaccepted, this.network, offer.creator, {
+    //   offer,
+    //   liq,
+    //   market,
+    // });
   }
 
   /**
@@ -1836,18 +1838,18 @@ export class CoreHandler extends Handler {
       txn,
     );
 
-    const { marketAddress, provider, lid } = offer;
-    const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, true, txn);
-    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, undefined, txn);
+    // const { marketAddress, provider, lid } = offer;
+    // const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, true, txn);
+    // const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, undefined, txn);
 
-    await this.netSrv.pointSrv.grantPoint('offer:cancelled', this.network, canceller, event, txn);
+    // await this.netSrv.pointSrv.grantPoint('offer:cancelled', this.network, canceller, event, txn);
 
     // Send notification
-    this.notifSrv.notify(NotificationID.OfferCancelled, this.network, offer.provider, {
-      offer,
-      liq,
-      market,
-    });
+    // this.notifSrv.notify(NotificationID.OfferCancelled, this.network, offer.provider, {
+    //   offer,
+    //   liq,
+    //   market,
+    // });
   }
 
   /**
@@ -1875,18 +1877,18 @@ export class CoreHandler extends Handler {
       txn,
     );
 
-    const { marketAddress, provider, lid } = offer;
-    const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, true, txn);
-    const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, undefined, txn);
+    // const { marketAddress, provider, lid } = offer;
+    // const market = await Market.getMarket(this.network, marketAddress, undefined, undefined, true, txn);
+    // const liq = await Liquidity.getLiquidity(this.network, marketAddress, provider, lid, undefined, undefined, txn);
 
-    await this.netSrv.pointSrv.grantPoint('offer:executed', this.network, executor, event, txn);
+    // await this.netSrv.pointSrv.grantPoint('offer:executed', this.network, executor, event, txn);
 
     // Send notification
-    this.notifSrv.notify(NotificationID.OfferExecuted, this.network, offer.provider, {
-      offer,
-      market,
-      liq,
-    });
+    // this.notifSrv.notify(NotificationID.OfferExecuted, this.network, offer.provider, {
+    //   offer,
+    //   market,
+    //   liq,
+    // });
   }
 
   /**

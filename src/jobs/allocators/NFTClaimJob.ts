@@ -29,7 +29,7 @@ export default class NFTClaimJob extends Base {
     this.schedule();
   }
 
-  @Cron('*/10 * * * * *')
+  @Cron('*/5 * * * *')
   schedule() {
     this.process().catch((e) => this.logger.error(e.message));
   }

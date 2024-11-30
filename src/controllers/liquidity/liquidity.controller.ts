@@ -156,7 +156,7 @@ export class LiquidityController {
         marketAddress: q.market,
         base: q.base,
         quote: q.quote,
-        provider: '0xAEA70653A241c7a02BB3624935c51f052390A077',
+        provider: this.cfgSrv.get('app.swapProvider'),
         paused: q.paused,
         maxOpenDisputes,
         maxOpenOrders,

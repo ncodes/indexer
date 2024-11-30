@@ -264,7 +264,7 @@ export class UsersController {
 
     // Check if the user has performed a swap
     if (!user.hasSwapped) {
-      const claimStartTime = this.cfgSrv.get('app.claimStartTime');
+      const claimStartTime = '1732935801'; // this.cfgSrv.get('app.claimStartTime');
       let swapCount = await Swap.countByAddress(user.address, moment.unix(parseInt(claimStartTime)).toISOString());
       let hasSwapped = false;
       if (swapCount > 0) hasSwapped = true;

@@ -22,6 +22,7 @@ export default class NFTClaimJob extends Base {
   private logger = new Logger(NFTClaimJob.name);
   namePrefix = AllocatorName.NFT;
   claimId = 4;
+  tokenPerPoint = 0.03;
 
   constructor(private cfgSrv: ConfigService) {
     super();
@@ -54,8 +55,8 @@ export default class NFTClaimJob extends Base {
               totalPoints = toDec(totalPoints).add(point).toFixed();
             }
 
-            const copyTotalPoints = totalPoints;
-            totalPoints = toDec(totalPoints).mul(pow10(18)).toFixed(0);
+            const tokenAlloc = toDec(this.tokenPerPoint).mul(totalPoints);
+            const tokenAllocLd = tokenAlloc.mul(pow10(18)).toFixed(0);
 
             const name = `${this.namePrefix}:${user.address}`;
             const existingMerkleEntry = await TokenClaim.findByName(name);
@@ -64,7 +65,7 @@ export default class NFTClaimJob extends Base {
               const signature = await getClaimSig(
                 this.cfgSrv.get('app.claimSigner'),
                 user.address,
-                totalPoints,
+                tokenAllocLd,
                 this.claimId,
                 0,
                 isProd() ? 8453 : 31337,
@@ -73,12 +74,12 @@ export default class NFTClaimJob extends Base {
               await TokenClaim.create({
                 name,
                 address: user.address,
-                amount: totalPoints,
+                amount: tokenAllocLd,
                 claimId: this.claimId,
                 signature,
               });
 
-              this.logger.log(`Created claim form user ${shortenAddr(user.address)} for ${copyTotalPoints} points`);
+              this.logger.log(`Created claim form user ${shortenAddr(user.address)} for ${tokenAlloc} points`);
             }
           }
         }

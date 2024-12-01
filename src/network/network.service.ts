@@ -57,7 +57,7 @@ export default class NetworkService {
     if (isProd()) {
       await this.startWatcher('sepolia', 'sepolia');
       await this.startWatcher('arbitrum', 'arbitrum', 5);
-      await this.startWatcher('base', 'base', 1);
+      await this.startWatcher('base', 'base', 5);
       // await this.startNFTWatcher('NFT_WATCHER', 'ethereum');
     } else {
       void this.startWatcher('localhost', 'localhost', 1);

@@ -238,102 +238,107 @@ export class MarketCoreHandler extends Handler {
   ) {
     this.logger.log(`NewMarket: processing...`);
 
-    let baseSymbol = '',
-      quoteSymbol = '',
-      baseDecimals: number,
-      quoteDecimals: number;
+    try {
+      let baseSymbol = '',
+        quoteSymbol = '',
+        baseDecimals: number,
+        quoteDecimals: number;
 
-    if (!isDev(true)) {
-      if (Market.isERC20(baseType)) {
-        const baseToken = this.newContract(baseAsset, erc20ABI, this.provider);
-        baseSymbol = (await baseToken.symbol()).toUpperCase();
-        baseDecimals = await baseToken.decimals();
-      }
-
-      if (Market.isERC20(quoteType)) {
-        const quoteToken = this.newContract(quoteAsset, erc20ABI, this.provider);
-        quoteSymbol = (await quoteToken.symbol()).toUpperCase();
-        quoteDecimals = await quoteToken.decimals();
-      }
-
-      if (Market.isERC721(baseType)) {
-        const baseToken = this.newContract(baseAsset, erc721ABI, this.provider);
-        baseSymbol = (await baseToken.symbol()).toUpperCase();
-        baseDecimals = 0;
-      }
-
-      if (Market.isERC721(quoteType)) {
-        const quoteToken = this.newContract(quoteAsset, erc721ABI, this.provider);
-        quoteSymbol = (await quoteToken.symbol()).toUpperCase();
-        quoteDecimals = 0;
-      }
-
-      if (Market.isSynth(baseType)) {
-        const token = findTokenInSynthetic(baseAsset);
-        baseSymbol = token ? token.symbol.toUpperCase() : 'UNKNW';
-        baseDecimals = token ? token.decimals : 18;
-      }
-
-      if (Market.isSynth(quoteType)) {
-        const token = findTokenInSynthetic(quoteAsset);
-        quoteSymbol = token ? token.symbol.toUpperCase() : 'UNKNW';
-        quoteDecimals = token ? token.decimals : 18;
-      }
-    } else {
-      const base = findTokenInLocalhost(baseAsset);
-      baseSymbol = base?.symbol;
-      baseDecimals = base?.decimals;
-
-      if (!base && Market.isERC20(baseType)) {
-        try {
+      if (!isDev(true)) {
+        if (Market.isERC20(baseType)) {
           const baseToken = this.newContract(baseAsset, erc20ABI, this.provider);
           baseSymbol = (await baseToken.symbol()).toUpperCase();
           baseDecimals = await baseToken.decimals();
-        } catch (error) {
-          baseSymbol = 'UNKNW';
-          baseDecimals = 18;
         }
-      }
 
-      const quote = findTokenInLocalhost(quoteAsset);
-      quoteSymbol = quote?.symbol;
-      quoteDecimals = quote?.decimals;
-
-      if (!quote && Market.isERC20(quoteType)) {
-        try {
+        if (Market.isERC20(quoteType)) {
           const quoteToken = this.newContract(quoteAsset, erc20ABI, this.provider);
           quoteSymbol = (await quoteToken.symbol()).toUpperCase();
           quoteDecimals = await quoteToken.decimals();
-        } catch (error) {
-          quoteSymbol = 'UNKNW';
-          quoteDecimals = 18;
+        }
+
+        if (Market.isERC721(baseType)) {
+          const baseToken = this.newContract(baseAsset, erc721ABI, this.provider);
+          baseSymbol = (await baseToken.symbol()).toUpperCase();
+          baseDecimals = 0;
+        }
+
+        if (Market.isERC721(quoteType)) {
+          const quoteToken = this.newContract(quoteAsset, erc721ABI, this.provider);
+          quoteSymbol = (await quoteToken.symbol()).toUpperCase();
+          quoteDecimals = 0;
+        }
+
+        if (Market.isSynth(baseType)) {
+          const token = findTokenInSynthetic(baseAsset);
+          baseSymbol = token ? token.symbol.toUpperCase() : 'UNKNW';
+          baseDecimals = token ? token.decimals : 18;
+        }
+
+        if (Market.isSynth(quoteType)) {
+          const token = findTokenInSynthetic(quoteAsset);
+          quoteSymbol = token ? token.symbol.toUpperCase() : 'UNKNW';
+          quoteDecimals = token ? token.decimals : 18;
+        }
+      } else {
+        const base = findTokenInLocalhost(baseAsset);
+        baseSymbol = base?.symbol;
+        baseDecimals = base?.decimals;
+
+        if (!base && Market.isERC20(baseType)) {
+          try {
+            const baseToken = this.newContract(baseAsset, erc20ABI, this.provider);
+            baseSymbol = (await baseToken.symbol()).toUpperCase();
+            baseDecimals = await baseToken.decimals();
+          } catch (error) {
+            baseSymbol = 'UNKNW';
+            baseDecimals = 18;
+          }
+        }
+
+        const quote = findTokenInLocalhost(quoteAsset);
+        quoteSymbol = quote?.symbol;
+        quoteDecimals = quote?.decimals;
+
+        if (!quote && Market.isERC20(quoteType)) {
+          try {
+            const quoteToken = this.newContract(quoteAsset, erc20ABI, this.provider);
+            quoteSymbol = (await quoteToken.symbol()).toUpperCase();
+            quoteDecimals = await quoteToken.decimals();
+          } catch (error) {
+            quoteSymbol = 'UNKNW';
+            quoteDecimals = 18;
+          }
         }
       }
-    }
 
-    await Market.create(
-      {
-        address: id,
-        creator: owner,
-        base: baseSymbol,
-        baseAddress: baseAsset,
-        baseType: baseType,
-        baseDecimals: baseDecimals,
-        quote: quoteSymbol,
-        quoteAddress: quoteAsset,
-        quoteType: quoteType,
-        quoteDecimals: quoteDecimals,
-        instant: Market.isInstant(baseType, quoteType),
-        pair: `${baseSymbol}${quoteSymbol}`,
-        network: this.network,
-        commission: toNumber(commission),
-        txHash: event.transactionHash,
-        mediatorPoolId: toNumber(mediatorPoolId),
-        permPut: permPut,
-        permSwap: permSwap,
-      },
-      txn,
-    );
+      await Market.create(
+        {
+          address: id,
+          creator: owner,
+          base: baseSymbol,
+          baseAddress: baseAsset,
+          baseType: baseType,
+          baseDecimals: baseDecimals,
+          quote: quoteSymbol,
+          quoteAddress: quoteAsset,
+          quoteType: quoteType,
+          quoteDecimals: quoteDecimals,
+          instant: Market.isInstant(baseType, quoteType),
+          pair: `${baseSymbol}${quoteSymbol}`,
+          network: this.network,
+          commission: toNumber(commission),
+          txHash: event.transactionHash,
+          mediatorPoolId: toNumber(mediatorPoolId),
+          permPut: permPut,
+          permSwap: permSwap,
+        },
+        txn,
+      );
+    } catch (error) {
+      this.logger.error('Error:onNewMarket: ', error.message);
+      throw error;
+    }
   }
 
   /**

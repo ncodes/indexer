@@ -584,6 +584,7 @@ export class CoreHandler extends Handler {
     event: ContractCallEvent,
     txn?: Transaction,
   ) {
+    console.log('IN HERE');
     let [orderId] = numTypeInfo;
     const [, lid, , price, offerId, operator] = numTypeInfo;
     let amount = numTypeInfo[2];

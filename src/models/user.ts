@@ -61,7 +61,7 @@ export default class User extends BaseModel {
   earlyDiscordMemberAlloc: string;
   earlyDiscordMemberClaimed: boolean;
   claimNames: string[];
-
+  liqMktVolume: string;
   constructor(init?: Partial<User>) {
     super();
     Object.assign(this, init);

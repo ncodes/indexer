@@ -5,6 +5,7 @@ import CacheService from '../../cacher/cache.service';
 import { isEqualStr, randStr, toDec } from '../../common/common';
 import { AllocatorName } from '../../jobs/allocators/common';
 import BadgeGrant from '../../models/badge_grant';
+import BondingCurveTx from '../../models/bonding_curve_tx';
 import { defaultNotificationSettings } from '../../models/notification_setting';
 import Point from '../../models/point';
 import Swap from '../../models/swap';
@@ -100,6 +101,8 @@ export class UserService {
       user.points = parseInt(await Point.getTotalPointsByAddress(user.address));
 
       user.claimNames = await this.listEligibleTokenClaims(user.address);
+
+      user.liqMktVolume = await BondingCurveTx.findSumOfOutputsByAddress(user.address);
     } catch (e) {
       return Promise.reject(e);
     }

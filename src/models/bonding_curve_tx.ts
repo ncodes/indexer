@@ -81,4 +81,14 @@ export default class BondingCurveTx extends BaseModel {
   static findByAddress(address: string) {
     return this.query().where('address', address).whereNotDeleted().orderBy('claimId', 'asc');
   }
+
+  static findSumOfOutputsByAddress(address: string) {
+    return this.query()
+      .sum('output')
+      .where('address', 'ilike', address)
+      .whereNotDeleted()
+      .then((res) => {
+        return (res[0] as any).sum;
+      });
+  }
 }

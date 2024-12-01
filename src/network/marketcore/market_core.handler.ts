@@ -336,7 +336,7 @@ export class MarketCoreHandler extends Handler {
         txn,
       );
     } catch (error) {
-      this.logger.error('Error:onNewMarket: ', error.message);
+      console.error('Error->onNewMarket: ', error.message);
       throw error;
     }
   }

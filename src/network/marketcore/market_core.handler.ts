@@ -336,7 +336,12 @@ export class MarketCoreHandler extends Handler {
         txn,
       );
     } catch (error) {
-      console.error('Error->onNewMarket: ', error.message);
+      if (error instanceof Error) {
+        if (error.message.includes('could not decode result data')) {
+          this.logger.warn('Error->onNewMarket: ', error.message);
+          return;
+        }
+      }
       throw error;
     }
   }

@@ -644,9 +644,11 @@ export class CoreHandler extends Handler {
         takerIds: idsFromTaker.map((id) => toNumber(id)),
         txHash: event.transactionHash,
       };
-      const info = await this.computeSwapFees(swap, event.blockNumber);
-      swap = await Swap.create({ ...swap, ...info }, txn);
       console.log('IN HERE', 'F');
+      const info = await this.computeSwapFees(swap, event.blockNumber);
+      console.log('IN HERE', 'F2');
+      swap = await Swap.create({ ...swap, ...info }, txn);
+      console.log('IN HERE', 'F3');
 
       // Update liquidity
       const now = moment().toISOString();

@@ -406,15 +406,22 @@ export class CoreHandler extends Handler {
       'blockTag',
       blockTag,
     );
-    const fees: bigint[] = await core.computeSwapFee(
-      swap.marketAddress,
-      swap.provider,
-      swap.lid,
-      swap.taker,
-      swap.amount,
-      swap.price,
-      { blockTag },
-    );
+
+    let fees: bigint[];
+    try {
+      fees = await core.computeSwapFee(
+        swap.marketAddress,
+        swap.provider,
+        swap.lid,
+        swap.taker,
+        swap.amount,
+        swap.price,
+        { blockTag },
+      );
+    } catch (error) {
+      console.log('Error Computing Swap Fee', error, error.message);
+    }
+
     console.log('Computed Swap Fee', fees);
     return Promise.resolve({
       protocolFee: fees[0].toString(),

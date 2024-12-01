@@ -220,7 +220,11 @@ export class Watcher {
 
         this.logInfo(`Processing pending blocks`, { from: blocks[0] - 1, to: lastBlock });
 
-        await this.fetchAndProcessEvents(blocks[0] - 1, lastBlock);
+        try {
+          await this.fetchAndProcessEvents(blocks[0] - 1, lastBlock);
+        } catch (e) {
+          this.logError('Error:processPendingBlocks:fetchAndProcessEvents: ', e);
+        }
         this.logInfo(`Finished processing blocks`, { from: blocks[0] - 1, to: lastBlock });
 
         if (parseInt(meta.value) < lastBlock) await Meta.update(key, lastBlock.toString());

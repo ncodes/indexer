@@ -394,18 +394,6 @@ export class CoreHandler extends Handler {
     blockTag?: BlockTag,
   ): Promise<{ protocolFee: string; marketCreatorFee: string }> {
     const core = this.contracts.core;
-    console.log(
-      'Computing Swap Fee',
-      core.target,
-      swap.marketAddress,
-      swap.provider,
-      swap.lid,
-      swap.taker,
-      swap.amount,
-      swap.price,
-      'blockTag',
-      blockTag,
-    );
 
     let fees: bigint[];
     try {
@@ -419,10 +407,16 @@ export class CoreHandler extends Handler {
         { blockTag },
       );
     } catch (error) {
-      console.log('Error Computing Swap Fee', error, error.message);
+      if (JSON.stringify(error).includes('missing trie node')) {
+        this.logger.warn('Missing Trie Node', error);
+        return Promise.resolve({
+          protocolFee: '0',
+          marketCreatorFee: '0',
+        });
+      }
+      throw error;
     }
 
-    console.log('Computed Swap Fee', fees);
     return Promise.resolve({
       protocolFee: fees[0].toString(),
       marketCreatorFee: fees[1].toString(),

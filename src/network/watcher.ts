@@ -77,7 +77,7 @@ export class Watcher {
     this.logger.log(`Watcher:${this.name}: ${message}`, JSON.stringify(context));
   }
 
-  private logError(message: any, context?: string) {
+  private logError(message: any, context?: any) {
     this.logger.error(`Watcher:${this.name}: ${message}`, context);
   }
 

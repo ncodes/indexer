@@ -114,8 +114,6 @@ export class BondCurveDistroHandler extends Handler {
       txn,
     );
 
-    await User.updateByAddress(buyer, { hasSwapped: true }, txn);
-
     const claim = await TokenClaim.findByAddressAndClaimId(buyer, 0);
     const resetMinSpend = toDec(this.cfg.get('app.claimResetMinSpend'));
     if (claim && !!claim.claimedAt && resetMinSpend.lte(inAmt.toString())) {
@@ -137,6 +135,7 @@ export class BondCurveDistroHandler extends Handler {
         },
         txn,
       );
+      await User.updateByAddress(buyer, { hasSwapped: true }, txn);
     }
   }
 

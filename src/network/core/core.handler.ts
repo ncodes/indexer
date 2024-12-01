@@ -394,6 +394,18 @@ export class CoreHandler extends Handler {
     blockTag?: BlockTag,
   ): Promise<{ protocolFee: string; marketCreatorFee: string }> {
     const core = this.contracts.core;
+    console.log(
+      'Computing Swap Fee',
+      core.target,
+      swap.marketAddress,
+      swap.provider,
+      swap.lid,
+      swap.taker,
+      swap.amount,
+      swap.price,
+      'blockTag',
+      blockTag,
+    );
     const fees: bigint[] = await core.computeSwapFee(
       swap.marketAddress,
       swap.provider,
@@ -403,6 +415,7 @@ export class CoreHandler extends Handler {
       swap.price,
       { blockTag },
     );
+    console.log('Computed Swap Fee', fees);
     return Promise.resolve({
       protocolFee: fees[0].toString(),
       marketCreatorFee: fees[1].toString(),

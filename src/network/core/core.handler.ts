@@ -584,11 +584,12 @@ export class CoreHandler extends Handler {
     event: ContractCallEvent,
     txn?: Transaction,
   ) {
-    console.log('IN HERE');
+    console.log('IN HERE', 'A');
     let [orderId] = numTypeInfo;
     const [, lid, , price, offerId, operator] = numTypeInfo;
     let amount = numTypeInfo[2];
 
+    console.log('IN HERE', 'B');
     if (
       this.network === 'base' &&
       isEqualStr(this.cfg.get('app.swapMarket'), marketAddress) &&
@@ -597,6 +598,7 @@ export class CoreHandler extends Handler {
       await User.updateByAddress(swapper, { hasSwapped: true }, txn);
       await User.updateByAddress(provider, { hasSwapped: true }, txn);
     }
+    console.log('IN HERE', 'C');
 
     if (isZero(orderId)) {
       let market = await Market.getMarket(this.network, marketAddress, undefined, undefined, true, txn);
@@ -609,6 +611,7 @@ export class CoreHandler extends Handler {
         undefined,
         txn,
       );
+      console.log('IN HERE', 'D');
 
       // If base or quote is NFT, use the whole amount of the liquidity
       amount = Market.isNFT(market.baseType) || Market.isNFT(market.quoteType) ? toBigInt(liq.amount) : amount;
@@ -616,6 +619,7 @@ export class CoreHandler extends Handler {
       // Compute USD value of the swap
       const valueUsd = await this.computeSwapUsdValue(market, amount, price);
 
+      console.log('IN HERE', 'E');
       // Get USD equivalent of the swap value
       let swap: Partial<Swap> = {
         network: this.network,
@@ -642,6 +646,7 @@ export class CoreHandler extends Handler {
       };
       const info = await this.computeSwapFees(swap, event.blockNumber);
       swap = await Swap.create({ ...swap, ...info }, txn);
+      console.log('IN HERE', 'F');
 
       // Update liquidity
       const now = moment().toISOString();
@@ -655,6 +660,7 @@ export class CoreHandler extends Handler {
         },
         txn,
       );
+      console.log('IN HERE', 'G');
 
       // Update market
       market = await Market.updateById(
@@ -681,9 +687,10 @@ export class CoreHandler extends Handler {
         },
         txn,
       );
+      console.log('IN HERE', 'H');
 
       // Grant point to the swapper
-      await this.netSrv.pointSrv.grantOnSwap(market, swap as Swap, txn, event);
+      // await this.netSrv.pointSrv.grantOnSwap(market, swap as Swap, txn, event);
 
       // Send notification
       this.notifSrv.notify(NotificationID.NewInstantSwap, this.network, provider, <InstantSwapNotificationData>{
@@ -692,6 +699,7 @@ export class CoreHandler extends Handler {
         liq,
       });
     } else {
+      console.log('IN HERE', 'I');
       orderId = orderId - BigInt(1);
       const now = moment();
       let swap = await Swap.get(this.network, toNumber(orderId), undefined, undefined, txn);
@@ -700,6 +708,8 @@ export class CoreHandler extends Handler {
 
       // Compute USD value of the swap
       const valueUsd = await this.computeSwapUsdValue(market, toBigInt(swap.amount), price);
+
+      console.log('IN HERE', 'J');
 
       // Update the swap
       swap = await Swap.updateById(
@@ -713,6 +723,8 @@ export class CoreHandler extends Handler {
         },
         txn,
       );
+
+      console.log('IN HERE', 'J');
 
       // Mark the last dispute as `orderReleased` if there is any.
       // Complete all draft tasks of the dispute.
@@ -735,6 +747,8 @@ export class CoreHandler extends Handler {
           );
         }
       }
+
+      console.log('IN HERE', 'K');
 
       // Update liquidity
       let liq = await Liquidity.getLiquidity(
@@ -766,6 +780,7 @@ export class CoreHandler extends Handler {
         },
         txn,
       );
+      console.log('IN HERE', 'L');
 
       // Update market
       newCompletionRate = await Swap.getCompletionRate(this.network, marketAddress, undefined, undefined, txn);
@@ -801,7 +816,7 @@ export class CoreHandler extends Handler {
         txn,
       );
 
-      await this.netSrv.pointSrv.grantOnSwap(market, swap as Swap, txn, event);
+      // await this.netSrv.pointSrv.grantOnSwap(market, swap as Swap, txn, event);
 
       // Send notification
       // Send to either taker or provider if one of them is the finalizer.

@@ -110,6 +110,7 @@ export class LiquidityController {
    */
   @Get()
   async list(@Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
+    console.log(q);
     let maxOpenDisputes = (await this.cfgSrv.getContractParam(q.net, 'maxOpenDisputes')) as number;
     let maxOpenOrders = (await this.cfgSrv.getContractParam(q.net, 'maxOpenOrders')) as number;
     if (q.isProvider && q.provider) {
@@ -150,13 +151,19 @@ export class LiquidityController {
         : undefined;
     }
 
+    // Override provider for DexDrop market
+    let provider = q.provider;
+    if (isEqualStr(q.market, this.cfgSrv.get('app.swapMarket'))) {
+      provider = this.cfgSrv.get('app.swapProvider');
+    }
+
     if (!q.count) {
       let liquidities = await Liquidity.search({
         network: q.net,
         marketAddress: q.market,
         base: q.base,
         quote: q.quote,
-        provider: this.cfgSrv.get('app.swapProvider'),
+        provider: provider,
         paused: q.paused,
         maxOpenDisputes,
         maxOpenOrders,

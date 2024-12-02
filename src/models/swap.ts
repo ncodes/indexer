@@ -203,6 +203,10 @@ export default class Swap extends BaseModel {
     });
   }
 
+  static getByMarketAddress(marketAddress: string, txn?: Transaction) {
+    return this.query(txn).where('marketAddress', 'ilike', marketAddress).whereNotDeleted();
+  }
+
   /**
    * find a record
    * @param q the query parameter

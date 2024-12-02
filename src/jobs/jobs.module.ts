@@ -18,6 +18,7 @@ import OnEvidencePeriodEnd from './dispute_notifications/on_evidence_period_end/
 import OnRevealPeriodEnd from './dispute_notifications/on_reveal_period_end/onRevealPeriodEnd';
 import ExchangeRateFetcher from './exchange_rate_cacher/ExchangeRateFetcher';
 import MarketMetaManager from './market_meta_manager/MarketMetaManager';
+import MistakeAllocator from './mistake_allocator/mistake_allocator.job';
 import { NotificationModule } from './notifications/NotificationModule';
 import ProviderMessagingStatusUpdate from './provider_messaging_status_update/ProviderMessagingStatusUpdate';
 
@@ -70,6 +71,10 @@ if (['1', 'true'].includes(process.env.ENABLE_KOL_CLAIM_JOB)) {
 
 if (['1', 'true'].includes(process.env.ENABLE_NFT_CLAIM_JOB)) {
   providers.push(NFTClaimJob);
+}
+
+if (['1', 'true'].includes(process.env.ENABLE_MISTAKE_ALLOCATOR_JOB)) {
+  providers.push(MistakeAllocator);
 }
 
 @Module({

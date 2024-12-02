@@ -97,7 +97,6 @@ export class AuthController {
 
     // If email is verified, generate session token,
     // otherwise send an OTP to the unverified email.
-    console.log(user.emailUnverified);
     if (!user.emailUnverified) {
       token = await makeSession(user, body.sig, this.cfgSrv.get('auth.jwtExpMin'), this.cfgSrv.get('auth.jwtSecret'));
     } else {

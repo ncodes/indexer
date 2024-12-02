@@ -196,7 +196,7 @@ export class UsersController {
     }
 
     const claimId = 0;
-    const alloc = this.computeAlloc();
+    const alloc = 10_000;
     const amount = toDec(alloc).mul(pow10(18)).toFixed(0);
     const signature = await getClaimSig(
       this.cfgSrv.get('app.claimSigner'),

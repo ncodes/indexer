@@ -65,8 +65,13 @@ export function pow10(decimals: number) {
 }
 
 // powOf returns n * 10^power
-export function powOf(n: BigNumberish, power: number) {
+export function powOf(n: BigNumberish, power = 18) {
   return toBigInt(toDec(n).mul(pow10(power)).toFixed(0));
+}
+
+// powOf returns n * 10^power
+export function powOfStr(n: BigNumberish, power = 18) {
+  return toDec(n).mul(pow10(power)).toFixed(0);
 }
 
 // toFixed returns n with up to places decimal places.

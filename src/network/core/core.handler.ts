@@ -3,7 +3,7 @@ import { BlockTag, Provider, ZeroAddress } from 'ethers';
 import * as _ from 'lodash';
 import * as moment from 'moment';
 import { Transaction } from 'objection';
-import { includesStr, isEqualStr, toDec } from '../../common/common';
+import { includesStr, isEqualStr, isLocal, toDec } from '../../common/common';
 import { NotificationService } from '../../jobs/notifications/NotificationService';
 import { NotificationID } from '../../jobs/notifications/common';
 import Dispute from '../../models/dispute';
@@ -18,7 +18,7 @@ import Swap from '../../models/swap';
 import User from '../../models/user';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
-import { ContractCallEvent, getBlockTime, isZero, pow10, toBigInt, toNumber } from '../common';
+import { ContractCallEvent, getBlockTime, isZero, pow10, powOfStr, toBigInt, toNumber } from '../common';
 import { Handler } from '../handler';
 import NetworkService from '../network.service';
 
@@ -603,12 +603,41 @@ export class CoreHandler extends Handler {
     let amount = numTypeInfo[2];
 
     if (
-      this.network === 'base' &&
-      isEqualStr(this.cfg.get('app.swapMarket'), marketAddress) &&
-      isEqualStr(this.cfg.get('app.swapProvider'), provider)
+      isLocal() ||
+      (this.network === 'base' &&
+        isEqualStr(this.cfg.get('app.swapMarket'), marketAddress) &&
+        isEqualStr(this.cfg.get('app.swapProvider'), provider))
     ) {
-      await User.updateByAddress(swapper, { hasSwapped: true }, txn);
-      await User.updateByAddress(provider, { hasSwapped: true }, txn);
+      const amtDec = toDec(amount);
+      const minSwapathonAmt = toDec(this.cfg.get('app.minSwapathonAmt'));
+      let swapathonReward = 1000;
+
+      if (amtDec.gte(powOfStr(100)) && amtDec.lt(powOfStr(250))) {
+        swapathonReward = 1500;
+      } else if (amtDec.gte(powOfStr(250)) && amtDec.lt(powOfStr(500))) {
+        swapathonReward = 2000;
+      } else if (amtDec.gte(powOfStr(500)) && amtDec.lt(powOfStr(1000))) {
+        swapathonReward = 3000;
+      } else if (amtDec.gte(powOfStr(1000)) && amtDec.lt(powOfStr(2000))) {
+        swapathonReward = 5000;
+      } else if (amtDec.gte(powOfStr(2000))) {
+        swapathonReward = 7000;
+      }
+
+      const multiplier = amtDec.div(minSwapathonAmt);
+      const reward = toDec(swapathonReward).mul(multiplier);
+      console.log(swapathonReward, multiplier, reward);
+      const user = await User.getByAddress(swapper);
+      await User.updateByAddress(
+        swapper,
+        {
+          hasSwapped: true,
+          totalSwapRewards: toDec(user.totalSwapRewards)
+            .add(powOfStr(reward.toFixed(0)))
+            .toFixed(),
+        },
+        txn,
+      );
     }
 
     if (isZero(orderId)) {

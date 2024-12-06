@@ -44,6 +44,7 @@ export default class User extends BaseModel {
   hasSwapped: boolean;
   lateNFTClaimedAt: string;
   chkForWrongSwapMktAt: string;
+  totalSwapRewards: string;
 
   // Not persisted
   totalUnclaimedAlloc: string;

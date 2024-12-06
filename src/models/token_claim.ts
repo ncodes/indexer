@@ -99,10 +99,39 @@ export default class TokenClaim extends BaseModel {
   }
 
   static findByAddress(address: string) {
-    return this.query().where('address', 'ilike', address).whereNotDeleted().orderBy('claimId', 'asc');
+    return this.query()
+      .where('address', 'ilike', address)
+      .whereNotDeleted()
+      .orderBy('claimId', 'asc')
+      .orderBy('createdAt', 'asc');
   }
 
   static findAll() {
     return this.query().whereNotDeleted().orderBy('claimId', 'asc');
+  }
+
+  static async countUnclaimed(address: string, claimId: number) {
+    return this.query()
+      .where('address', 'ILIKE', address)
+      .where('claimId', claimId)
+      .where('claimedAt', null)
+      .whereNotDeleted()
+      .count()
+      .first()
+      .then((res: any) => {
+        return parseInt(res.count);
+      });
+  }
+
+  static async countClaims(address: string, claimId: number) {
+    return this.query()
+      .where('address', 'ILIKE', address)
+      .where('claimId', claimId)
+      .whereNotDeleted()
+      .count()
+      .first()
+      .then((res: any) => {
+        return parseInt(res.count);
+      });
   }
 }

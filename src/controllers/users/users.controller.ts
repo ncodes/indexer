@@ -5,7 +5,7 @@ import { isAddress } from 'ethers';
 import express from 'express';
 import * as moment from 'moment';
 import { transaction } from 'objection';
-import { isEqualStr, isProd, toDec } from '../../common/common';
+import { isEqualStr, isProd, randStr, toDec } from '../../common/common';
 import { getClaimSig } from '../../common/crypto';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ErrorMessages, ok, throw400, throw401, throw404 } from '../../common/responses/responses';
@@ -170,10 +170,45 @@ export class UsersController {
     return ok().data({ eligible: true }).build();
   }
 
+  async createSwapRewardAllocations(address: string) {
+    const user = await User.getByAddress(address);
+    if (!user) return;
+
+    const claimId = 5;
+    const name = `swap:${address}:${randStr(6)}`;
+    const nUnclaimedSwap = await TokenClaim.countUnclaimed(address, claimId);
+    if (nUnclaimedSwap > 0 || user.totalSwapRewards === '0') return;
+
+    const nClaims = await TokenClaim.countClaims(address, claimId);
+    const signature = await getClaimSig(
+      this.cfgSrv.get('app.claimSigner'),
+      address,
+      user.totalSwapRewards,
+      claimId,
+      nClaims,
+      isProd() ? 8453 : 31337,
+    );
+
+    await TokenClaim.create({
+      name,
+      address,
+      amount: user.totalSwapRewards,
+      claimId: claimId,
+      signature,
+      nonce: nClaims,
+    });
+
+    await User.updateById(user.id, { totalSwapRewards: '0' });
+  }
+
+  @UseGuards(BeAuthenticatedGuard)
+  @UseGuards(HasKeyGuard)
   @Post('/check-dex-claim/:address')
   async checkAndRegisterDexClaim(@Param('address') address: string) {
     const userAddress = address;
     const name = `dex_user:${userAddress}`;
+
+    await this.createSwapRewardAllocations(address);
 
     const existingClaim = await TokenClaim.findByName(name);
     if (existingClaim) return ok().data(existingClaim).build();
@@ -487,6 +522,21 @@ export class UsersController {
       }
       return c;
     });
+
+    const countSwapClaims = claims.filter((c) => c.name.startsWith(AllocatorName.Swap)).length;
+    const countClaimedSwapClaims = claims.filter((c) => c.name.startsWith(AllocatorName.Swap) && !!c.claimedAt).length;
+    if (countSwapClaims > 1 && countClaimedSwapClaims != countSwapClaims) {
+      claims = claims.filter((c) => !c.name.startsWith(AllocatorName.Swap) || !c.claimedAt);
+    } else if (countSwapClaims > 1 && countClaimedSwapClaims == countSwapClaims) {
+      let removed = countClaimedSwapClaims;
+      claims = claims.filter((c) => {
+        if (c.name.startsWith(AllocatorName.Swap) && removed > 1) {
+          removed--;
+          return false;
+        }
+        return true;
+      });
+    }
 
     return ok().data(claims).build();
   }

@@ -127,6 +127,8 @@ export class UserService {
         names.push(AllocatorName.Point);
       } else if (claim.name.startsWith(AllocatorName.NFT)) {
         names.push(AllocatorName.NFT);
+      } else if (claim.name.startsWith(AllocatorName.Swap)) {
+        names.push(AllocatorName.Swap);
       }
     }
     return names;

@@ -617,15 +617,15 @@ export class CoreHandler extends Handler {
         const decimals = isLocal() ? 18 : 6;
 
         if (amtDec.gte(powOfStr(100, decimals)) && amtDec.lt(powOfStr(250, decimals))) {
-          swapathonReward = 1500;
+          swapathonReward = 1100;
         } else if (amtDec.gte(powOfStr(250, decimals)) && amtDec.lt(powOfStr(500, decimals))) {
-          swapathonReward = 2000;
+          swapathonReward = 1200;
         } else if (amtDec.gte(powOfStr(500, decimals)) && amtDec.lt(powOfStr(1000, decimals))) {
-          swapathonReward = 3000;
+          swapathonReward = 1300;
         } else if (amtDec.gte(powOfStr(1000, decimals)) && amtDec.lt(powOfStr(2000, decimals))) {
-          swapathonReward = 5000;
+          swapathonReward = 1400;
         } else if (amtDec.gte(powOfStr(2000, decimals))) {
-          swapathonReward = 7000;
+          swapathonReward = 1500;
         }
 
         const multiplier = amtDec.div(minSwapathonAmt);

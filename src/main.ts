@@ -5,6 +5,7 @@ import * as sourceMapSupport from 'source-map-support';
 import * as webpush from 'web-push';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/interceptors/exception_filter';
+import './common/local_assets';
 import { appLogger } from './common/loggers/logger';
 
 dayjs.extend(utc);

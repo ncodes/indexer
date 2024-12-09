@@ -1,7 +1,7 @@
 import { Abi, AbiTypes, ChainNames } from '@jointlabs/meta';
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { BaseContract, Contract, Provider } from 'ethers';
+import { Contract, Provider } from 'ethers';
 import { isProd, isTest } from '../common/common';
 import { PointService } from '../controllers/points/point.service';
 import SwapService from '../controllers/swaps/swap.service';
@@ -14,7 +14,6 @@ import { AssetRegistryHandler } from './assetregistry/asset_registry.handler';
 import { BadgeManagerHandler } from './badge/badge_manager.handler';
 import { ContractManager } from './contract_manager';
 import { CoreHandler } from './core/core.handler';
-import { UniswapRouter } from './dexuser/uniswap_router.handler';
 import { DisputeManagerHandler } from './disputemanager/dispute_manager.handler';
 import { MarketCoreHandler } from './marketcore/market_core.handler';
 import { MarketManagerHandler } from './marketmanager/market_manager.handler';
@@ -56,10 +55,8 @@ export default class NetworkService {
     if (isProd()) {
       await this.startWatcher('sepolia', 'sepolia');
       await this.startWatcher('arbitrum', 'arbitrum', 20);
-      // await this.startNFTWatcher('NFT_WATCHER', 'ethereum');
     } else {
       void this.startWatcher('localhost', 'localhost', 1);
-      // void this.startNFTWatcher('NFT_WATCHER', 'localhost');
     }
     this.restartWatcherSync();
   }
@@ -180,36 +177,6 @@ export default class NetworkService {
     }
   }
 
-  private async startDexWatcher(name: string, network: ChainNames) {
-    await this.loadInitialContractParams(network);
-
-    const provider = this.contractMgr.providers[network];
-    const { contracts } = this.contractMgr;
-    const handlers = [
-      new UniswapRouter(this, provider, network, contracts[network].uniswapV2Router as unknown as BaseContract),
-      new UniswapRouter(this, provider, network, contracts[network].uniswapV2Router2 as unknown as BaseContract),
-      new UniswapRouter(this, provider, network, contracts[network].uniswapV3Router as unknown as BaseContract),
-      new UniswapRouter(this, provider, network, contracts[network].uniswapV3Router2 as unknown as BaseContract),
-      new UniswapRouter(
-        this,
-        provider,
-        network,
-        contracts[network].uniswapV3RouterUniversal as unknown as BaseContract,
-      ),
-    ];
-
-    const processor = new Processor(network);
-    await processor.add(...handlers);
-
-    if (!this.isWatcherDisabled(name)) {
-      const watcher = new Watcher(name, network, provider, processor, 1);
-      watcher.setTopics(['Swap(address,uint256,uint256,uint256,uint256,address)']);
-      await watcher.add(...handlers);
-      this.watchers.push(watcher);
-    } else {
-      this.logger.log('DEX watcher is disabled');
-    }
-  }
 
   /**
    * Connect and watch NFT contracts.

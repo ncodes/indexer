@@ -77,11 +77,12 @@ export class Watcher {
     this.logger.log(`Watcher:${this.name}: ${message}`, JSON.stringify(context));
   }
 
-  private logError(message: any, context?: string) {
+  private logError(message: any, context?: any) {
     this.logger.error(`Watcher:${this.name}: ${message}`, context);
   }
 
   parsedLogToCallEvent(parsed: LogDescription, log: Log, contractAddress?: string) {
+    if (!parsed) return;
     return {
       event: parsed.name,
       args: parsed.args,
@@ -120,64 +121,61 @@ export class Watcher {
    * @returns
    */
   async fetchAndProcessEvents(prevBlock: number, curBlock: number) {
-    this.logInfo(`Fetching events`, { curBlock });
+    try {
+      this.logInfo(`Fetching events`, { curBlock });
 
-    // Query latest logs for all contracts
-    const encodedTopics = this.topics.map((t) => ethers.keccak256(ethers.toUtf8Bytes(t)));
-    const logs = await this.provider.getLogs({
-      fromBlock: prevBlock ? prevBlock : curBlock,
-      toBlock: curBlock,
-      topics: encodedTopics,
-      address:
-        this.topics.length == 0
-          ? this.handlers
-              .map((h) => h.getContract().target)
-              .filter((addr) => {
-                return !isEqualStr(ZeroAddress, addr as string);
-              })
-          : undefined,
-    });
+      // Query latest logs for all contracts
+      const encodedTopics = this.topics.map((t) => ethers.keccak256(ethers.toUtf8Bytes(t)));
+      const logs = await this.provider.getLogs({
+        fromBlock: prevBlock ? prevBlock : curBlock,
+        toBlock: curBlock,
+        topics: encodedTopics,
+        address:
+          this.topics.length == 0
+            ? this.handlers
+                .filter((h) => !!h.getContract())
+                .map((h) => h.getContract().target)
+                .filter((addr) => {
+                  return !isEqualStr(ZeroAddress, addr as string);
+                })
+            : undefined,
+      });
 
-    this.logInfo(`Found ${logs.length} logs`);
+      this.logInfo(`Found ${logs.length} logs`);
 
-    // Extract the events from the logs
-    let events: ContractCallEvent[] = [
-      ...(await Promise.all(
-        logs.map(async (log: Log) => {
-          if (this.topics.length) {
-            const parsed = new Interface([
-              'event Swap(address indexed sender, uint amount0In, uint amount1In, uint amount0Out, uint amount1Out, address indexed to)',
-            ]).parseLog({ data: log.data, topics: log.topics as string[] });
-
-            if (!parsed) return;
-
-            const handler = this.handlers.find((h) => isEqualStr(h.getContract().target as string, parsed.args[0]));
-            if (!handler) return;
-
-            return this.parsedLogToCallEvent(parsed, log, handler.getContract().target as string);
-          } else {
-            const handler = this.handlers.find((h) => isEqualStr(h.getContract().target as string, log.address));
-            return this.getEventFromLog(log, handler.getContract().interface);
-          }
+      // Extract the events from the logs
+      let events: ContractCallEvent[] = [
+        ...logs.map((log: Log) => {
+          const handler = this.handlers.find((h) => isEqualStr(h.getContract().target as string, log.address));
+          return this.getEventFromLog(log, handler.getContract().interface);
         }),
-      )),
-    ];
+      ];
 
-    events = events.filter((e) => !!e);
+      events = events.filter((e) => !!e);
 
-    this.lastActiveTime = Date.now();
+      this.lastActiveTime = Date.now();
 
-    return Promise.all(
-      events.map((e) => {
-        return this.processor.addEvent({
-          event: e,
-          block: e.blockNumber,
-          txIndex: e.transactionIndex,
-          eventIndex: e.logIndex,
-          contract: e.contract ? e.contract : e.address,
-        });
-      }),
-    );
+      return Promise.all(
+        events.map((e) => {
+          return this.processor.addEvent({
+            event: e,
+            block: e.blockNumber,
+            txIndex: e.transactionIndex,
+            eventIndex: e.logIndex,
+            contract: e.contract ? e.contract : e.address,
+          });
+        }),
+      );
+    } catch (e) {
+      if (e instanceof Error) {
+        if (e.message.includes('missing revert data') || e.message.includes('could not decode result data')) {
+          this.logError('Error:fetchAndProcessEvents: ', e);
+          return;
+        }
+      }
+
+      throw e;
+    }
   }
 
   processPendingBlocks() {
@@ -236,13 +234,13 @@ export class Watcher {
   addToPendingBlocks(block: number) {
     this.pendingBlocks.push(block);
     this.pendingBlocks.sort();
-    this.logger.log('Pending Blocks', this.pendingBlocks);
+    this.logInfo('Pending Blocks', this.pendingBlocks);
   }
 
   addToPriorityPendingBlocks(block: number) {
     this.priorityPendingBlocks.push(block);
     this.priorityPendingBlocks.sort();
-    this.logger.log('Priority Pending Blocks', this.priorityPendingBlocks);
+    this.logInfo('Priority Pending Blocks', this.priorityPendingBlocks);
   }
 
   watchBlock() {

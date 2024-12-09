@@ -59,11 +59,6 @@ declare global {
     marketManager?: AbiTypes.MarketManager;
     energon?: AbiTypes.Energon;
     nft?: AbiTypes.NFT;
-    uniswapV2Router?: AbiTypes.UniswapV2Router;
-    uniswapV2Router2?: AbiTypes.UniswapV2Router2;
-    uniswapV3Router?: AbiTypes.UniswapV3Router;
-    uniswapV3Router2?: AbiTypes.UniswapV3Router2;
-    uniswapV3RouterUniversal?: AbiTypes.UniswapV3RouterUniversal;
   }
 
   interface ContractMarket {

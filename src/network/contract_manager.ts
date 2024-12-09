@@ -125,45 +125,5 @@ export class ContractManager {
 
     const nftAddress = targetChain.contracts['nft'].address;
     if (nftAddress) this.contracts[chain].nft = this.getContract<AbiTypes.NFT>(nftAddress, Abi.NFT, provider);
-
-    const uniswapV2Router = targetChain.contracts['uniswapV2Router']?.address;
-    if (uniswapV2Router)
-      this.contracts[chain].uniswapV2Router = this.getContract<AbiTypes.NFT>(
-        uniswapV2Router,
-        Abi.UniswapV2Router,
-        provider,
-      ) as unknown as AbiTypes.UniswapV2Router;
-
-    const uniswapV2Router2 = targetChain.contracts['uniswapV2Router2']?.address;
-    if (uniswapV2Router2)
-      this.contracts[chain].uniswapV2Router2 = new Contract(
-        uniswapV2Router2,
-        Abi.UniswapV2Router2,
-        provider,
-      ) as unknown as AbiTypes.UniswapV2Router2;
-
-    const uniswapV3Router = targetChain.contracts['uniswapV3Router']?.address;
-    if (uniswapV3Router)
-      this.contracts[chain].uniswapV3Router = new Contract(
-        uniswapV3Router,
-        Abi.UniswapV3Router,
-        provider,
-      ) as unknown as AbiTypes.UniswapV3Router;
-
-    const uniswapV3Router2 = targetChain.contracts['uniswapV3Router02']?.address;
-    if (uniswapV3Router2)
-      this.contracts[chain].uniswapV3Router2 = new Contract(
-        uniswapV3Router2,
-        Abi.UniswapV3Router2,
-        provider,
-      ) as unknown as AbiTypes.UniswapV3Router2;
-
-    const uniswapV3RouterUniversal = targetChain.contracts['uniswapV3UniversalRouter']?.address;
-    if (uniswapV3RouterUniversal)
-      this.contracts[chain].uniswapV3RouterUniversal = new Contract(
-        uniswapV3RouterUniversal,
-        Abi.UniswapV3RouterUniversal,
-        provider,
-      ) as unknown as AbiTypes.UniswapV3RouterUniversal;
   }
 }

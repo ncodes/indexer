@@ -26,7 +26,8 @@ export class CoinMarketCapMetadata implements MetadataSource {
     const resp = await axios.get(url);
     const info = _.values(!isSymbol ? resp.data.data : resp.data.data[symbolOrContract.toUpperCase()])[0];
     const price = await this.getPrice(info.id);
-    return Promise.resolve({
+
+    return {
       network: network ? network : info?.platform?.slug,
       name: info.name,
       symbol: info.symbol.toUpperCase(),
@@ -36,6 +37,6 @@ export class CoinMarketCapMetadata implements MetadataSource {
       address: !isSymbol ? symbolOrContract : null,
       decimals: 0,
       isContract: !isSymbol,
-    });
+    };
   }
 }

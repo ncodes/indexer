@@ -114,22 +114,19 @@ export class MetadataService {
     const cached = await this.redisSrv.get(`token_info_${contract}`);
     if (cached) return Promise.resolve(JSON.parse(cached));
 
-    // Check redis cache for bad address match
+    // Check If address as been marked as bad.
+    // If so, throw an error
     const badAddress = await this.redisSrv.get(`bad_address_${contract}`);
-    if (badAddress) return Promise.reject(ErrTokenNotFound);
+    if (badAddress) throw new Error(ErrTokenNotFound);
 
-    // If not found, fetch from external source
-    let info: TokenMetadata;
-    try {
-      info = await this.source.getTokenInfo(symbolOrNetwork, contract);
-      if (!info) return Promise.reject(ErrTokenNotFound);
-    } catch (e) {
-      // Cache the address as a 'bad' address so subsequent requests will not immediately attempt to fetch again.
-      // It could be the address has been de-listed from the source or it never existed.
-      // TODO: Permanently blacklist the address after a certain number of failures over a duration of time.
+    // Fetch from external source
+    const info = await this.source.getTokenInfo(symbolOrNetwork, contract).catch(async (e) => {
+      this.logger.error('source error:', e.stack, MetadataService.name);
       await this.redisSrv.setEx(`bad_address_${contract}`, JSON.stringify({}), 60);
+      const data = e.response?.data;
+      if (data.status.error_message == 'No items found') throw new Error(ErrTokenNotFound);
       throw e;
-    }
+    });
 
     // Ensure the network is valid
     const { network } = info;

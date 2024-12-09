@@ -614,16 +614,17 @@ export class CoreHandler extends Handler {
         const amtDec = toDec(amount);
         const minSwapathonAmt = toDec(this.cfg.get('app.minSwapathonAmt'));
         let swapathonReward = 1000;
+        const decimals = isLocal() ? 18 : 6;
 
-        if (amtDec.gte(powOfStr(100)) && amtDec.lt(powOfStr(250))) {
+        if (amtDec.gte(powOfStr(100, decimals)) && amtDec.lt(powOfStr(250, decimals))) {
           swapathonReward = 1500;
-        } else if (amtDec.gte(powOfStr(250)) && amtDec.lt(powOfStr(500))) {
+        } else if (amtDec.gte(powOfStr(250, decimals)) && amtDec.lt(powOfStr(500, decimals))) {
           swapathonReward = 2000;
-        } else if (amtDec.gte(powOfStr(500)) && amtDec.lt(powOfStr(1000))) {
+        } else if (amtDec.gte(powOfStr(500, decimals)) && amtDec.lt(powOfStr(1000, decimals))) {
           swapathonReward = 3000;
-        } else if (amtDec.gte(powOfStr(1000)) && amtDec.lt(powOfStr(2000))) {
+        } else if (amtDec.gte(powOfStr(1000, decimals)) && amtDec.lt(powOfStr(2000, decimals))) {
           swapathonReward = 5000;
-        } else if (amtDec.gte(powOfStr(2000))) {
+        } else if (amtDec.gte(powOfStr(2000, decimals))) {
           swapathonReward = 7000;
         }
 
@@ -634,7 +635,7 @@ export class CoreHandler extends Handler {
           swapper,
           {
             totalSwapRewards: toDec(user.totalSwapRewards)
-              .add(powOfStr(reward.toFixed(0)))
+              .add(powOfStr(reward.toFixed(0), decimals))
               .toFixed(),
           },
           txn,

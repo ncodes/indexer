@@ -635,7 +635,7 @@ export class CoreHandler extends Handler {
           swapper,
           {
             totalSwapRewards: toDec(user.totalSwapRewards)
-              .add(powOfStr(reward.toFixed(0), decimals))
+              .add(powOfStr(reward.toFixed(0), 18))
               .toFixed(),
           },
           txn,

@@ -24,8 +24,6 @@ export default () => ({
     jntLinkApiUrl: process.env.JNT_LINK_API_URL,
     jntLinkApiKey: process.env.JNT_LINK_API_KEY,
     minSwapathonAmt: process.env.MIN_SWAPATHON_AMT,
-    swapathonReward: process.env.SWAPATHON_REWARD,
-    volumeReward: process.env.VOLUME_REWARD,
     pointsPerEnergon: process.env.POINTS_PER_ENERGON,
     pointsPerGalxe: process.env.POINTS_PER_GALXE,
     maxDailyQuestVerify: process.env.MAX_DAILY_QUEST_VERIFY,

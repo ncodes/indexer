@@ -608,36 +608,38 @@ export class CoreHandler extends Handler {
         isEqualStr(this.cfg.get('app.swapMarket'), marketAddress) &&
         isEqualStr(this.cfg.get('app.swapProvider'), provider))
     ) {
-      const amtDec = toDec(amount);
-      const minSwapathonAmt = toDec(this.cfg.get('app.minSwapathonAmt'));
-      let swapathonReward = 1000;
+      await User.updateByAddress(swapper, { hasSwapped: true }, txn);
 
-      if (amtDec.gte(powOfStr(100)) && amtDec.lt(powOfStr(250))) {
-        swapathonReward = 1500;
-      } else if (amtDec.gte(powOfStr(250)) && amtDec.lt(powOfStr(500))) {
-        swapathonReward = 2000;
-      } else if (amtDec.gte(powOfStr(500)) && amtDec.lt(powOfStr(1000))) {
-        swapathonReward = 3000;
-      } else if (amtDec.gte(powOfStr(1000)) && amtDec.lt(powOfStr(2000))) {
-        swapathonReward = 5000;
-      } else if (amtDec.gte(powOfStr(2000))) {
-        swapathonReward = 7000;
+      if (isLocal() || isEqualStr(swapper, '0xAEA70653A241c7a02BB3624935c51f052390A077')) {
+        const amtDec = toDec(amount);
+        const minSwapathonAmt = toDec(this.cfg.get('app.minSwapathonAmt'));
+        let swapathonReward = 1000;
+
+        if (amtDec.gte(powOfStr(100)) && amtDec.lt(powOfStr(250))) {
+          swapathonReward = 1500;
+        } else if (amtDec.gte(powOfStr(250)) && amtDec.lt(powOfStr(500))) {
+          swapathonReward = 2000;
+        } else if (amtDec.gte(powOfStr(500)) && amtDec.lt(powOfStr(1000))) {
+          swapathonReward = 3000;
+        } else if (amtDec.gte(powOfStr(1000)) && amtDec.lt(powOfStr(2000))) {
+          swapathonReward = 5000;
+        } else if (amtDec.gte(powOfStr(2000))) {
+          swapathonReward = 7000;
+        }
+
+        const multiplier = amtDec.div(minSwapathonAmt);
+        const reward = toDec(swapathonReward).mul(multiplier);
+        const user = await User.getByAddress(swapper);
+        await User.updateByAddress(
+          swapper,
+          {
+            totalSwapRewards: toDec(user.totalSwapRewards)
+              .add(powOfStr(reward.toFixed(0)))
+              .toFixed(),
+          },
+          txn,
+        );
       }
-
-      const multiplier = amtDec.div(minSwapathonAmt);
-      const reward = toDec(swapathonReward).mul(multiplier);
-      console.log(swapathonReward, multiplier, reward);
-      const user = await User.getByAddress(swapper);
-      await User.updateByAddress(
-        swapper,
-        {
-          hasSwapped: true,
-          totalSwapRewards: toDec(user.totalSwapRewards)
-            .add(powOfStr(reward.toFixed(0)))
-            .toFixed(),
-        },
-        txn,
-      );
     }
 
     if (isZero(orderId)) {

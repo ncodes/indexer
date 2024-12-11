@@ -608,39 +608,40 @@ export class CoreHandler extends Handler {
         isEqualStr(this.cfg.get('app.swapMarket'), marketAddress) &&
         isEqualStr(this.cfg.get('app.swapProvider'), provider))
     ) {
-      await User.updateByAddress(swapper, { hasSwapped: true }, txn);
+      // await User.updateByAddress(swapper, { hasSwapped: true }, txn);
 
-      if (isLocal() || isEqualStr(swapper, '0xAEA70653A241c7a02BB3624935c51f052390A077')) {
-        const amtDec = toDec(amount);
-        const minSwapathonAmt = toDec(this.cfg.get('app.minSwapathonAmt'));
-        let swapathonReward = 1000;
-        const decimals = isLocal() ? 18 : 6;
+      // if (isLocal() || isEqualStr(swapper, '0xAEA70653A241c7a02BB3624935c51f052390A077')) {
+      const amtDec = toDec(amount);
+      const minSwapathonAmt = toDec(this.cfg.get('app.minSwapathonAmt'));
+      let swapathonReward = 1000;
+      const decimals = isLocal() ? 18 : 6;
 
-        if (amtDec.gte(powOfStr(100, decimals)) && amtDec.lt(powOfStr(250, decimals))) {
-          swapathonReward = 1100;
-        } else if (amtDec.gte(powOfStr(250, decimals)) && amtDec.lt(powOfStr(500, decimals))) {
-          swapathonReward = 1200;
-        } else if (amtDec.gte(powOfStr(500, decimals)) && amtDec.lt(powOfStr(1000, decimals))) {
-          swapathonReward = 1300;
-        } else if (amtDec.gte(powOfStr(1000, decimals)) && amtDec.lt(powOfStr(2000, decimals))) {
-          swapathonReward = 1400;
-        } else if (amtDec.gte(powOfStr(2000, decimals))) {
-          swapathonReward = 1500;
-        }
-
-        const multiplier = amtDec.div(minSwapathonAmt);
-        const reward = toDec(swapathonReward).mul(multiplier);
-        const user = await User.getByAddress(swapper);
-        await User.updateByAddress(
-          swapper,
-          {
-            totalSwapRewards: toDec(user.totalSwapRewards)
-              .add(powOfStr(reward.toFixed(0), 18))
-              .toFixed(),
-          },
-          txn,
-        );
+      if (amtDec.gte(powOfStr(100, decimals)) && amtDec.lt(powOfStr(250, decimals))) {
+        swapathonReward = 1100;
+      } else if (amtDec.gte(powOfStr(250, decimals)) && amtDec.lt(powOfStr(500, decimals))) {
+        swapathonReward = 1200;
+      } else if (amtDec.gte(powOfStr(500, decimals)) && amtDec.lt(powOfStr(1000, decimals))) {
+        swapathonReward = 1300;
+      } else if (amtDec.gte(powOfStr(1000, decimals)) && amtDec.lt(powOfStr(2000, decimals))) {
+        swapathonReward = 1400;
+      } else if (amtDec.gte(powOfStr(2000, decimals))) {
+        swapathonReward = 1500;
       }
+
+      const multiplier = amtDec.div(minSwapathonAmt);
+      const reward = toDec(swapathonReward).mul(multiplier);
+      const user = await User.getByAddress(swapper);
+      await User.updateByAddress(
+        swapper,
+        {
+          hasSwapped: true,
+          totalSwapRewards: toDec(user.totalSwapRewards)
+            .add(powOfStr(reward.toFixed(0), 18))
+            .toFixed(),
+        },
+        txn,
+      );
+      // }
     }
 
     if (isZero(orderId)) {

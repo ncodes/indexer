@@ -182,7 +182,7 @@
     "tslint-config-prettier": "^1.18.0",
     "typechain": "^8.3.2",
     "typescript": "^5.0.4",
-    "typescript-eslint": "^0.0.1-alpha.0"
+    "typescript-eslint": "^8.19.0"
   },
   "jest": {
     "moduleFileExtensions": [

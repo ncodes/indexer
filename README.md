@@ -4,8 +4,8 @@ The indexer indexes the events emitted by the Joint Protocol's contracts. It wat
 
 ## Pre-requisites
 
-- Node.js v18.18.x
-- Yarn v1.22.19
+- Node.js v18.18.2
+- Yarn v1.22.22
 - Redis
 - Postgres v14
 - Docker (optional)
@@ -24,10 +24,12 @@ The `.env.example` file contains the environment variables that need to be set f
 
 ## Migration
 
-After creating a Postgres database and setting the `DATABASE_URL` environment variable in the `.env` file, run the following command to run the migrations:
+After creating a Postgres database and setting the `DATABASE_URL` or `DATABASE_URL_TEST` (for testing) environment variable in the `.env` file, run the following command to run the migrations:
 
 ```shell
-yarn mig:dev:mig
+yarn mig:dev:up # for development
+yarn mig:test:up # for testing
+yarn mig:prod:up # for production
 ```
 
 This will create the required tables in the database.

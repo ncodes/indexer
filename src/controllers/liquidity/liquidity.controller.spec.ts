@@ -402,6 +402,7 @@ describe('LiquidityController', () => {
             provider: '0xProvider',
             amount: powOf(50, 18).toString(),
             price: powOf(2, 18).toString(),
+            paymentMethodId: '0xPaymentMethodId',
           });
 
           const liq1 = await Liquidity.create({
@@ -411,6 +412,7 @@ describe('LiquidityController', () => {
             provider: '0xProvider2',
             amount: powOf(50, 18).toString(),
             price: powOf(1, 18).toString(),
+            paymentMethodId: '0xPaymentMethodId2',
           });
 
           const liq2 = await Liquidity.create({
@@ -420,6 +422,7 @@ describe('LiquidityController', () => {
             provider: '0xProvider3',
             amount: powOf(50, 18).toString(),
             price: powOf(3, 18).toString(),
+            paymentMethodId: '0xPaymentMethodId3',
           });
 
           jest.spyOn(app.get(FeeCalculatorService), 'calculateFee').mockResolvedValue({
@@ -684,6 +687,7 @@ describe('LiquidityController', () => {
               provider: '0xProvider',
               amount: powOf(50, 18).toString(),
               price: powOf(2, 18).toString(),
+              paymentMethodId: '0xPaymentMethodId',
             });
 
             const liq1 = await Liquidity.create({
@@ -693,6 +697,7 @@ describe('LiquidityController', () => {
               provider: '0xProvider2',
               amount: powOf(50, 18).toString(),
               price: powOf(1, 18).toString(),
+              paymentMethodId: '0xPaymentMethodId2',
             });
 
             const liq2 = await Liquidity.create({
@@ -702,6 +707,7 @@ describe('LiquidityController', () => {
               provider: '0xProvider3',
               amount: powOf(50, 18).toString(),
               price: powOf(3, 18).toString(),
+              paymentMethodId: '0xPaymentMethodId3',
             });
 
             jest.spyOn(app.get(FeeCalculatorService), 'calculateFee').mockResolvedValue({

@@ -41,7 +41,9 @@ export class UserService {
    */
   async extendUser(user: User, network?: string) {
     try {
-      user.paymentMethod = await PaymentMethod.getById(user.defaultPaymentMethodId);
+      if (user.defaultPaymentMethodId) {
+        user.paymentMethod = await PaymentMethod.getById(user.defaultPaymentMethodId);
+      }
 
       const totalSwaps = await Swap.countByStatus({
         network,

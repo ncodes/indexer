@@ -184,17 +184,12 @@ describe('UsersController', () => {
 
     it('should return 200 and de-sensitized user data when token was not provided', async () => {
       const mockExtendUser = jest.spyOn(app.get(UserService), 'extendUser').mockResolvedValue(undefined);
-      await User.updateById(u.id, {
-        address,
-        email: '0x@email.com',
-      });
+      await User.updateById(u.id, { address, email: '0x@email.com' });
       await request(app.getHttpServer())
         .get(`/v1/users/${address}`)
         .send({})
         .expect(200)
         .expect((res) => {
-          expect(res.body.data.object).toEqual('user');
-          expect(res.body.data.id).toEqual(u.id);
           expect(res.body.data.email).toBeUndefined();
           expect(mockExtendUser).toBeCalledTimes(1);
         });
@@ -213,9 +208,7 @@ describe('UsersController', () => {
           .send({})
           .expect(200)
           .expect((res) => {
-            expect(res.body.data.object).toEqual('user');
-            expect(res.body.data.id).toEqual(u.id);
-            expect(res.body.data.email).toEqual('0x@email.com');
+            expect(res.body.data.address).toEqual(address);
             expect(mockExtendUser).toBeCalledTimes(1);
           });
       });

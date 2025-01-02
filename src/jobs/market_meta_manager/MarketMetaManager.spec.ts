@@ -4,6 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NoopLogger } from '../../common/loggers/noop_logger';
 import { DBService } from '../../db/db.service';
 import User from '../../models/user';
+import { MetadataService } from '../../services/metadata/metadata.service';
 import { RedisService } from '../../services/redis/redis.service';
 import MarketMetaManager from './MarketMetaManager';
 
@@ -31,10 +32,12 @@ describe('MarketMetaManager', () => {
     await db.truncateTables();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ConfigService, MarketMetaManager, RedisService],
+      providers: [ConfigService, MarketMetaManager, RedisService, MetadataService],
     })
       .overrideProvider(RedisService)
       .useClass(RedisServiceMock)
+      .overrideProvider(MetadataService)
+      .useValue(new (jest.fn())())
       .compile();
 
     app = module.createNestApplication();
@@ -51,6 +54,8 @@ describe('MarketMetaManager', () => {
   });
 
   describe('.process', () => {
-    // TODO
+    it('should have a test', () => {
+      // TODO
+    });
   });
 });

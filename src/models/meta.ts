@@ -174,4 +174,22 @@ export default class Meta extends BaseModel {
     const obj = JSON.parse(existing.value);
     return obj[param];
   }
+
+  /**
+   * Get the dispute delay duration for a market.
+   * @param network The network name
+   * @param marketAddress The market address
+   * @param defaultDisputeDelayDur The default dispute delay duration in seconds
+   * @returns The dispute delay duration in seconds
+   */
+  static async getDisputeDelayDur(
+    network: string,
+    marketAddress: string,
+    defaultDisputeDelayDur?: string,
+  ): Promise<number> {
+    const metaKey = Meta.makeNetKey(network, MetaKeys.DisputeDelayDur);
+    const values = (await Meta.getJSON(metaKey)) || {};
+    const marketDisputeDelayDur = values[marketAddress];
+    return marketDisputeDelayDur || parseInt(defaultDisputeDelayDur || '300');
+  }
 }

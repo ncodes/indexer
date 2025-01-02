@@ -59,16 +59,16 @@ const MockPointService = jest.fn().mockImplementation(() => {
 });
 
 const mockComputeSwapFees = jest.fn();
+
+const mockGetDisputeDelayDur = jest.fn();
+
+const mockGetCfg = jest.fn();
 const MockNetworkService = jest.fn().mockImplementation(() => {
   return {
     pointSrv: new MockPointService(),
-  };
-});
-
-const mockGetDisputeDelayDur = jest.fn();
-const MockSwapService = jest.fn().mockImplementation(() => {
-  return {
-    getDisputeDelayDur: mockGetDisputeDelayDur,
+    cfgSrv: {
+      get: mockGetCfg,
+    },
   };
 });
 
@@ -89,9 +89,8 @@ describe('CoreHandler', () => {
   const net = 'ethereum';
   let handler: CoreHandler;
   const coreContract = new CoreContract();
-  const contracts = {
-    core: coreContract,
-  };
+  const contracts = { core: coreContract };
+  let cfg: Record<string, string> = {};
 
   afterEach(async () => {
     await db.truncateTables();
@@ -103,12 +102,20 @@ describe('CoreHandler', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+
+    cfg = {
+      'app.defaultDisputeDelayDur': '1000',
+    };
+
+    mockGetCfg.mockImplementation((key: string) => {
+      return cfg[key];
+    });
+
     handler = new CoreHandler(
       new MockNetworkService(),
       new MockNotifierService(),
       new MockMetadataService(),
       new MockExchangeRateService(),
-      new MockSwapService(),
       null,
       net,
       contracts,
@@ -1028,8 +1035,10 @@ describe('CoreHandler', () => {
         address: marketAddress,
         base: BASE,
         baseAddress: baseAddress,
+        baseType: AssetType.ERC20,
         quote: QUOTE,
         quoteAddress: quoteAddress,
+        quoteType: AssetType.SYNTH,
       });
 
       liq = await Liquidity.create({
@@ -1039,11 +1048,15 @@ describe('CoreHandler', () => {
         lid: toNumber(lid),
         amount: liqAmt.toString(),
         totalSwaps: 1,
+        paymentMethodId: '0xLiquidityPaymentMethod',
       });
     });
 
     it('should create swap correctly and send notification to liquidity provider', async () => {
+      const takerUser = await User.create({ address: taker, defaultPaymentMethodId: '0xTakerPaymentMethod' });
+
       mockComputeSwapFees.mockResolvedValue({ protocolFee: 2, marketCreatorFee: 3 });
+
       const cancelDuration = 300;
       const numTypeInfo = [
         toBigInt(2),
@@ -1090,9 +1103,11 @@ describe('CoreHandler', () => {
       expect(swap.operator).toEqual(toNumber(operator));
       expect(swap.protocolFee).toEqual('2');
       expect(swap.marketCreatorFee).toEqual('3');
+      expect(swap.takerPaymentMethodId).toEqual(takerUser.defaultPaymentMethodId);
+      expect(swap.providerPaymentMethodId).toEqual(liq.paymentMethodId);
       expect(moment(swap.cancelAt).diff(moment(), 's')).toBeGreaterThanOrEqual(299);
 
-      const liq = await Liquidity.getLiquidity(net, marketAddress, provider, toNumber(lid));
+      liq = await Liquidity.getLiquidity(net, marketAddress, provider, toNumber(lid));
       expect(liq.openOrders).toEqual(1);
       expect(liq.amount).toEqual(toDec(liqAmt).sub(amount.toString()).toString());
       expect(liq.totalSwaps).toEqual(2);
@@ -1155,6 +1170,8 @@ describe('CoreHandler', () => {
 
     describe('base asset is NFT', function () {
       it('should set swap amount to liquidity amount', async () => {
+        await User.create({ address: taker, defaultPaymentMethodId: '0xTakerPaymentMethod' });
+
         await Market.updateById(market.id, { baseType: AssetType.ERC721 });
         mockComputeSwapFees.mockResolvedValue({ protocolFee: 2, marketCreatorFee: 3 });
         const cancelDuration = 300;

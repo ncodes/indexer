@@ -7,10 +7,10 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 
 # Install git
-RUN apk add git
+RUN apk add git yarn
 
 # Install app dependencies
-RUN npm install --legacy-peer-deps
+RUN yarn
 
 # Bundle app source
 COPY . .

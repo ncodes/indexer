@@ -65,10 +65,12 @@ export class AuthController {
 
     let token: string;
     let user: User;
+    let isUserNew = false;
     let notifSettings: Partial<NotificationSetting>;
     await transaction(User, async (User) => {
       user = await User.getByAddress(sigData.address);
       notifSettings = user ? user.notificationSettings : defaultNotificationSettings;
+      isUserNew = !user;
       const countryCode = getCfIpCountry(req, this.cfgSrv.get('app.defaultCountry'));
 
       // Create user if not found, Set email as unverified.
@@ -112,10 +114,10 @@ export class AuthController {
     }
 
     // Register device for notifications.
-    // await this.userSrv.registerDevice(user);
+    await this.userSrv.registerDevice(user);
 
     // Enable referrer state for the user
-    // await this.userSrv.enableReferrerOps(isUserNew, body.refCode, user);
+    await this.userSrv.enableReferrerOps(isUserNew, body.refCode, user);
 
     return ok().data({ token, user }).build();
   }

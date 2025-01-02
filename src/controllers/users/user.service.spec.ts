@@ -6,6 +6,7 @@ import { DBService } from '../../db/db.service';
 import BadgeGrant from '../../models/badge_grant';
 import Market, { AssetType } from '../../models/market';
 import { defaultNotificationSettings } from '../../models/notification_setting';
+import PaymentMethod from '../../models/payment_method';
 import Swap from '../../models/swap';
 import User from '../../models/user';
 import { JointLinkService } from '../../services/joint_link.service';
@@ -105,6 +106,14 @@ describe('UserService', () => {
         address: marketAddress,
         network: net,
       });
+    });
+
+    it(`should load default payment method`, async () => {
+      const pm = await PaymentMethod.create({ userId: u.id, network: net });
+      u = await User.updateById(u.id, { defaultPaymentMethodId: pm.id });
+      await expect(service.extendUser(u, net)).resolves.toBeUndefined();
+      expect(u.paymentMethod).toBeDefined();
+      expect(u.paymentMethod.id).toEqual(pm.id);
     });
 
     it(`should calculate correct 'totalSwap'`, async () => {

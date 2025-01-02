@@ -4,7 +4,6 @@ import * as _ from 'lodash';
 import * as moment from 'moment';
 import { Transaction } from 'objection';
 import { includesStr, isEqualStr, toDec } from '../../common/common';
-import SwapService from '../../controllers/swaps/swap.service';
 import { NotificationService } from '../../jobs/notifications/NotificationService';
 import { NotificationID } from '../../jobs/notifications/common';
 import Dispute from '../../models/dispute';
@@ -31,7 +30,6 @@ export class CoreHandler extends Handler {
     private notifSrv: NotificationService,
     private metadataSrv: MetadataService,
     private exrSrv: ExchangeRateService,
-    private swapSrv: SwapService,
     private provider: Provider,
     public network: string,
     private contracts: JointContracts,
@@ -904,7 +902,7 @@ export class CoreHandler extends Handler {
     // For managed market, it is the one returned by the `getDisputeDelayDur` function
     const actualDisputeDelayDur = !swap.market.manager
       ? toNumber(disputeDelayDur)
-      : await this.swapSrv.getDisputeDelayDur(swap);
+      : await Meta.getDisputeDelayDur(swap.network, swap.marketAddress, this.cfg.get('app.defaultDisputeDelayDur'));
 
     // Update the order
     swap = await Swap.updateById(

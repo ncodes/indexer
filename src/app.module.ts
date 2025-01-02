@@ -1,8 +1,8 @@
+import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { Logger, MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { ThrottlerStorageRedisService } from 'nestjs-throttler-storage-redis';
 import { CacheModule } from './cacher/cache.module';
 import { RequestLoggerMiddleware } from './common/loggers/request_logger';
 import { JsonBodyMiddleware } from './common/middlewares/body.middleware';

@@ -18,7 +18,6 @@ import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { RedisService } from '../../services/redis/redis.service';
 import { AuthService } from '../auth/auth.service';
-import { PointService } from '../points/point.service';
 import SwapService from '../swaps/swap.service';
 import { AssetsController } from './assets.controller';
 
@@ -74,7 +73,6 @@ describe('AssetsController', () => {
         ExchangeRateService,
         AuthService,
         RedisService,
-        PointService,
         SwapService,
       ],
     })

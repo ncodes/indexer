@@ -10,7 +10,6 @@ import AppConfig from './config/app.config';
 import AuthConfig from './config/auth.config';
 import KnexConfig from './config/knex.config';
 import { AdminModule } from './controllers/admin/admin.module';
-import { AirdropModule } from './controllers/airdrop/airdrop.module';
 import { AppealsModule } from './controllers/appeals/appeals.module';
 import { AssetsModule } from './controllers/assets/assets.module';
 import { AuthModule } from './controllers/auth/auth.module';
@@ -25,12 +24,9 @@ import { MiscModule } from './controllers/misc/misc.module';
 import { NotificationsModule } from './controllers/notifications/notifications.module';
 import { OffersModule } from './controllers/offers/offers.module';
 import { PaymentsModule } from './controllers/payments/payments.module';
-import { PointModule } from './controllers/points/point.module';
-import { ReferralModule } from './controllers/referrals/referral.module';
 import { RoutesModule } from './controllers/routes/routes.module';
 import { SwapsModule } from './controllers/swaps/swaps.module';
 import { TasksModule } from './controllers/tasks/tasks.module';
-import { TGBotModule } from './controllers/tgbot/tgbot.module';
 import { TicketsModule } from './controllers/tickets/tickets.module';
 import { TimelinesModule } from './controllers/timelines/timelines.module';
 import { UsersModule } from './controllers/users/users.module';
@@ -69,18 +65,11 @@ function getModules() {
     InstructionsModule,
     PaymentsModule,
     FilesModule,
-    PointModule,
-    ReferralModule,
-    AirdropModule,
     CacheModule,
     AdminModule,
     RoutesModule,
     AppealsModule,
   ];
-
-  if (['1', 'true'].includes(process.env.ENABLE_TGBOT_SERVICE)) {
-    modules.push(TGBotModule);
-  }
 
   return process.env.OFF != 'true' ? modules : [HealthModule];
 }

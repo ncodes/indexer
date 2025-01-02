@@ -24,18 +24,10 @@ const MockNotifierService = jest.fn().mockImplementation(() => {
   return { notify: mockNotify };
 });
 
-const mockGrantPoint = jest.fn();
-const MockPointService = jest.fn().mockImplementation(() => {
-  return {
-    grantPoint: mockGrantPoint,
-  };
-});
-
 const mockGetContracts = jest.fn();
 const MockNetworkService = jest.fn().mockImplementation(() => {
   return {
     getContracts: mockGetContracts,
-    pointSrv: new MockPointService(),
   };
 });
 
@@ -113,8 +105,6 @@ describe('MediatorManagerHandler', () => {
       expect(ticket.joinBy).toBeDefined();
       expect(ticket.joinBy).toBeDefined();
       expect(ticket.txHash).toEqual('0xTxHash');
-
-      expect(mockGrantPoint).toHaveBeenCalledWith('ticket:purchased', net, owner, evt, undefined);
     });
   });
 
@@ -138,8 +128,6 @@ describe('MediatorManagerHandler', () => {
       expect(ticket.poolId).toBeNull();
       const expectedCancelAt = moment.unix(now + parseInt(await handler.getParam('ticketCancelDur')));
       expect(moment(ticket.cancelAt).unix()).toEqual(expectedCancelAt.unix());
-
-      expect(mockGrantPoint).toHaveBeenCalledWith('ticket:cancelled', net, owner, evt, undefined);
     });
   });
 
@@ -158,8 +146,6 @@ describe('MediatorManagerHandler', () => {
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.drained).toBeTruthy();
       expect(ticket.drainedAt).toBeDefined();
-
-      expect(mockGrantPoint).toHaveBeenCalledWith('ticket:drained', net, owner, evt, undefined);
     });
   });
 
@@ -186,8 +172,6 @@ describe('MediatorManagerHandler', () => {
       ticket = await Ticket.getById(ticket.id);
       expect(ticket.poolId).toEqual(1);
       expect(ticket.joined).toBeTruthy();
-
-      expect(mockGrantPoint).toHaveBeenCalledWith('ticket:joined', net, owner, evt, undefined);
     });
   });
 
@@ -296,9 +280,6 @@ describe('MediatorManagerHandler', () => {
       expect(event.draftee).toEqual(owner);
       expect(event.disputeId).toEqual(draft.disputeIndex);
       expect(event.creator).toEqual(drafter);
-
-      expect(mockGrantPoint).toHaveBeenCalledWith('ticket:drafted', net, owner, evt, undefined);
-      expect(mockGrantPoint).toHaveBeenCalledWith('ticket:drafter', net, drafter, evt, undefined);
 
       expect(mockNotify).toBeCalledTimes(6);
 
@@ -533,9 +514,6 @@ describe('MediatorManagerHandler', () => {
       expect(event.orderId).toEqual(23);
       expect(event.disputeId).toEqual(1);
       expect(event.creator).toEqual(undrafter);
-
-      expect(mockGrantPoint).toHaveBeenCalledWith('ticket:undrafted', net, owner, evt, undefined);
-      expect(mockGrantPoint).toHaveBeenCalledWith('ticket:undrafter', net, undrafter, evt, undefined);
     });
   });
 
@@ -655,8 +633,6 @@ describe('MediatorManagerHandler', () => {
       expect(slash.winSide).toBeTruthy();
       expect(slash.orderId).toBeNull();
 
-      expect(mockGrantPoint).toHaveBeenCalledWith('ticket:slashed', net, owner, evt, undefined);
-
       // expect notification to have been sent
       expect(mockNotify).toHaveBeenCalledWith(NotificationID.TicketSlashed, net, owner, {
         ticket,
@@ -702,8 +678,6 @@ describe('MediatorManagerHandler', () => {
       expect(slash.winSide).toBeFalsy();
       expect(slash.orderId).toBeNull();
       expect(slash.byGov).toBeTruthy();
-
-      expect(mockGrantPoint).toHaveBeenCalledWith('ticket:slashed', net, owner, evt, undefined);
 
       // expect notification to have been sent
       expect(mockNotify).toHaveBeenCalledWith(NotificationID.TicketSlashed, net, owner, {

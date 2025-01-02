@@ -6,10 +6,10 @@ import { NotificationID } from '../../jobs/notifications/common';
 import Liquidity from '../../models/liquidity';
 import Market, { AssetType } from '../../models/market';
 import LiquidityProvider from '../../models/market_provider';
+import Meta, { MetaKeys } from '../../models/meta';
 import PermittedTrader from '../../models/permitted_trader';
 import { toBigInt } from '../common';
 import { MarketCoreHandler } from './market_core.handler';
-import Meta, { MetaKeys } from '../../models/meta';
 
 // eslint-disable-next-line no-var
 var mockFindTokenInSynthetic: jest.Mock<any, any, any>;
@@ -34,17 +34,8 @@ const MockNotifierService = jest.fn().mockImplementation(() => {
   return { notify: mockNotify };
 });
 
-const mockGrantPoint = jest.fn();
-const MockPointService = jest.fn().mockImplementation(() => {
-  return {
-    grantPoint: mockGrantPoint,
-  };
-});
-
 const MockNetworkService = jest.fn().mockImplementation(() => {
-  return {
-    pointSrv: new MockPointService(),
-  };
+  return {};
 });
 
 describe('MarketCoreHandler', () => {
@@ -207,8 +198,6 @@ describe('MarketCoreHandler', () => {
         expect(market.quoteType).toEqual(AssetType.SYNTH);
         expect(market.quoteDecimals).toEqual(10);
         expect(market.pair).toEqual(`${base}${quote}`);
-
-        expect(mockGrantPoint).toHaveBeenCalledWith('market:created', net, creator, evt, undefined);
       });
 
       describe('when SYNTH asset is unknown in the token list', function () {

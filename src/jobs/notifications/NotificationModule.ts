@@ -1,13 +1,14 @@
 import { BullModule } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import Envs from '../../config/contants';
 import { MailerService } from '../../services/mailer/mailer.service';
 import { NoticationConsumer } from './NotificationConsumer';
 import { NotificationService } from './NotificationService';
 
 const providers = [];
 
-if (!['1', 'true'].includes(process.env.DISABLE_NOTIFICATIONS_PROCESSING)) {
+if (!['1', 'true'].includes(Envs.disableNotificationsProcessing)) {
   providers.push(NoticationConsumer);
 }
 

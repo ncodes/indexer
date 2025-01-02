@@ -20,21 +20,8 @@ export default () => ({
     tokenMetadataSource: process.env.TOKEN_METADATA_SOURCE,
     jntLinkApiUrl: process.env.JNT_LINK_API_URL,
     jntLinkApiKey: process.env.JNT_LINK_API_KEY,
-    pointsPerEnergon: process.env.POINTS_PER_ENERGON,
-    pointsPerGalxe: process.env.POINTS_PER_GALXE,
-    maxDailyQuestVerify: process.env.MAX_DAILY_QUEST_VERIFY,
-    pointPerTweet: process.env.POINT_PER_TWEET,
-    pointPerQuote: process.env.POINT_PER_TWEET_QUOTE,
-    pointPerReply: process.env.POINT_PER_TWEET_REPLY,
-    pointsPerRetweet: process.env.POINT_PER_TWEET_RETWEET,
-    pointPerReference: process.env.POINT_PER_TWEET_REFERENCE,
-    ignoreNetworkPoint: process.env.IGNORE_NETWORK_POINT,
-    redenominationRate: process.env.REDENOMINATION_RATE,
-    redenominationLimit: process.env.REDENOMINATION_LIMIT,
     exchangeRateSource: process.env.EXCHANGE_RATE_SOURCE,
-    maxSwapImageSize: process.env.MAX_SWAP_IMAGE_SIZE,
     maxSwapVideoSize: process.env.MAX_SWAP_VIDEO_SIZE,
-    maxSwapDocSize: process.env.MAX_SWAP_DOC_SIZE,
     infuraUASecret: process.env.INFURA_UA_SECRET,
     fileUpload: {
       maxImageSize: process.env.FILE_UPLOAD_MAX_IMAGE_SIZE,
@@ -43,31 +30,6 @@ export default () => ({
       allowedImageTypes: process.env.FILE_UPLOAD_ALLOWED_IMAGE_TYPES,
       allowedVideoTypes: process.env.FILE_UPLOAD_ALLOWED_VIDEO_TYPES,
       allowedDocTypes: process.env.FILE_UPLOAD_ALLOWED_DOC_TYPES,
-    },
-    twitter: {
-      bearerToken: process.env.TWITTER_BEARER_TOKEN,
-      oauthClientId: process.env.TWITTER_OAUTH_CLIENT_ID,
-      oauthClientSecret: process.env.TWITTER_OAUTH_CLIENT_SECRET,
-      apiKey: process.env.TWITTER_API_KEY,
-      apiSecret: process.env.TWITTER_API_SECRET,
-      callbackUrl: process.env.TWITTER_CALLBACK_URL,
-    },
-    tapoff: {
-      multiplierMarket: process.env.TAPOFF_MULTIPLIER_MKT,
-      multiplierProvider: process.env.TAPOFF_MULTIPLIER_PROVIDER,
-      maxApplyPerWindow: process.env.TAPOFF_MULTIPLIER_MAX_APPLY_PER_WINDOW,
-      battleAlloc: process.env.TAPOFF_BATTLE_ALLOC,
-      bondMarket: process.env.TAPOFF_BOND_MKT,
-      bondProvider: process.env.TAPOFF_BOND_PROVIDER,
-      minBondStake: process.env.TAPOFF_BOND_MIN_BOND_STAKE,
-      battleManagerCron: process.env.BATTLE_MANAGER_CRON,
-    },
-    tgbot: {
-      enableService: process.env.ENABLE_TGBOT_SERVICE,
-      token: process.env.TGBOT_TOKEN,
-      tapWarLink: process.env.TGBOT_TAPWAR_LINK,
-      tapReminderInterval: process.env.TAP_REMINDER_INTERVAL,
-      maxTPS: process.env.TAP_MAX_TPS,
     },
     redis: {
       url: process.env.REDIS_URL,
@@ -78,13 +40,9 @@ export default () => ({
     openexchangerates: {
       key: process.env.OPENEXRATES_KEY,
     },
-    fastforex: {
-      key: process.env.FASTFOREX_KEY,
-    },
     pinata: {
       key: process.env.PINATA_JWT_KEY,
       gateway: process.env.PINATA_GATEWAY,
-      groupId: process.env.PINATA_GROUP_ID,
     },
     ipfs: {
       gateway: process.env.IPFS_GATEWAY,
@@ -92,13 +50,6 @@ export default () => ({
     aws: {
       smtpUsername: process.env.AWS_SMTP_USERNAME,
       smtpPassword: process.env.AWS_SMTP_PASSWORD,
-    },
-    discord: {
-      clientId: process.env.DISCORD_CLIENT_ID,
-      clientSecret: process.env.DISCORD_CLIENT_SECRET,
-      redirectUri: process.env.DISCORD_REDIRECT_URI,
-      jointGuildId: process.env.DISCORD_JOINT_GUILD_ID,
-      earlyMemberAlloc: process.env.DISCORD_EARLY_MEMBER_ALLOC,
     },
     badges: {
       merchant: process.env.MERCHANT_BADGE,

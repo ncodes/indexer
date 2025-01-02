@@ -14,25 +14,21 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { isEthereumAddress } from 'class-validator';
-import { isAddress } from 'ethers';
 import express from 'express';
 import { transaction } from 'objection';
-import { isEqualStr, toDec } from '../../common/common';
+import { isEqualStr } from '../../common/common';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ErrorMessages, ok, throw401, throw404 } from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import { MayHaveKeyGuard } from '../../guards/may_have_token.guard';
 import { MayBeAuthenticatedGuard } from '../../guards/maybe_authenticated.guard';
-import NFTOwner from '../../models/nft_owner';
 import Offer from '../../models/offer';
 import OnlineStatus from '../../models/online_status';
 import PaymentMethod from '../../models/payment_method';
 import Swap from '../../models/swap';
 import User from '../../models/user';
 import NetworkService from '../../network/network.service';
-import { getTokenEnergonAlloc } from '../points/point.service';
-import * as galxePoints from './data/glaxe.json';
 import { GetQueryDTO, LogOnlineStatusDTO, RegisterDeviceDTO } from './dto';
 import { UserService } from './user.service';
 
@@ -180,75 +176,5 @@ export class UsersController {
     });
 
     return ok(res).status(201).data({ ok: true }).build();
-  }
-
-  /**
-   * Get the energon balance of an address
-   * @param address The address to check
-   * @returns
-   * TODO: delete after testnet
-   */
-  @Get('/energon-balance/:address')
-  async getEnergonBalance(@Param('address') address: string) {
-    if (isAddress(address) === false) {
-      return ok().data({ balance: '0' }).build();
-    }
-
-    const balance = await this.netSrv.getContracts('ethereum').energon?.balanceOf(address);
-    return ok()
-      .data({ balance: toDec(balance).toFixed() })
-      .build();
-  }
-
-  /**
-   * Get information about the NFTs owned by an address
-   * @param address The address to check
-   * @returns
-   * TODO: delete after testnet
-   */
-  @Get('/nft-info/:address')
-  async getNFTOwned(@Param('address') address: string) {
-    const nfts = await NFTOwner.findByAddress(address);
-
-    let totalPoints = '0';
-    for (const nft of nfts) {
-      const pointPerEng = parseFloat(this.cfgSrv.get('app.pointsPerEnergon'));
-      const point = toDec(pointPerEng).mul(getTokenEnergonAlloc(nft.tokenId));
-      totalPoints = toDec(totalPoints).add(point).toFixed();
-    }
-
-    return ok()
-      .data({
-        count: nfts.length,
-        totalPoints,
-      })
-      .build();
-  }
-
-  /**
-   * Get the galxe points of an address
-   * @param address The address to check
-   */
-  @Get('/galxe-points/:address')
-  async getGalxePoints(@Param('address') address: string) {
-    const points = galxePoints as unknown as {
-      ['Wallet Address']: string;
-      ['Address Type']: string;
-      Point: number;
-      Ranking: 1;
-    }[];
-
-    // Find by address
-    const point = points.find((p) => p['Wallet Address'].toLowerCase() === address.toLowerCase());
-
-    let earned = 0;
-    if (point) {
-      const pointPerGalxe = parseFloat(this.cfgSrv.get('app.pointsPerGalxe'));
-      earned = toDec(point.Point).mul(pointPerGalxe).toNumber();
-    }
-
-    return ok()
-      .data({ points: point?.Point ?? 0, actualPoints: earned })
-      .build();
   }
 }

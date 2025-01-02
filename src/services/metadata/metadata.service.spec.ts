@@ -2,7 +2,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { isLocal, toDec } from '../../common/common';
 import { AuthService } from '../../controllers/auth/auth.service';
-import { PointService } from '../../controllers/points/point.service';
 import { DBService } from '../../db/db.service';
 import { NotificationService } from '../../jobs/notifications/NotificationService';
 import NetworkService from '../../network/network.service';
@@ -83,7 +82,6 @@ if (process.env.TEST_EXTERNAL_API == 'true' || isLocal()) {
           ExchangeRateService,
           RedisService,
           NotificationService,
-          PointService,
           AuthService,
         ],
       })

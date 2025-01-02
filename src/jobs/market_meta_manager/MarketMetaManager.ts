@@ -2,6 +2,7 @@ import { getTokenInfo } from '@jointlabs/meta';
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import * as moment from 'moment';
+import Envs from '../../config/contants';
 import Market from '../../models/market';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { Base } from '../base';
@@ -18,7 +19,7 @@ export default class MarketMetaManager extends Base {
     this.schedule();
   }
 
-  @Cron(process.env.MARKET_MGR_CRON)
+  @Cron(Envs.marketManagerCronTime)
   schedule() {
     this.process().catch((e) => this.logger.error(e.message || 'failed to get exchange rate'));
   }

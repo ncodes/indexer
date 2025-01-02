@@ -12,9 +12,6 @@ import User from '../../models/user';
 import { JointLinkService } from '../../services/joint_link.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { RedisService } from '../../services/redis/redis.service';
-import AirdropService from '../airdrop/airdrop.service';
-import { RefereeBonus } from '../airdrop/constants';
-import TapService from '../airdrop/tap.service';
 import ConvosService from '../convos/convos.service';
 import { MarketService } from '../markets/market.service';
 import { UserService } from './user.service';
@@ -74,13 +71,11 @@ describe('UserService', () => {
       providers: [
         UserService,
         MarketService,
-        AirdropService,
         MetadataService,
         RedisService,
         ConvosService,
         JointLinkService,
         CacheService,
-        TapService,
       ],
     })
       .overrideProvider(MetadataService)
@@ -274,22 +269,12 @@ describe('UserService', () => {
       let u = await User.create({ address: user });
       const referrer = await User.create({ address: '0xReferrer', refCode: '0xReferrerCode' });
 
-      const mockCreateTap = jest.spyOn(module.get(TapService), 'createTap').mockResolvedValue(undefined);
-
       const res = await service.enableReferrerOps(true, '0xReferrerCode', u);
       expect(res).toBeTruthy();
       u = await User.getById(u.id);
       expect(u.referrer).toEqual(referrer.address);
       expect(u.refCode).toHaveLength(5);
       expect(mockCreateLink).toBeCalledWith(u.refCode);
-
-      // Create referee bonus tap for the user
-      expect(mockCreateTap).toBeCalledWith({
-        userId: u.id,
-        bonus: true,
-        bonusName: 'referee_bonus',
-        bonusValue: RefereeBonus.toString(),
-      });
     });
 
     it(`should return true and not set referrer when user is not new`, async () => {

@@ -23,17 +23,8 @@ const MockNotifierService = jest.fn().mockImplementation(() => {
   return { notify: mockNotify };
 });
 
-const mockGrantPoint = jest.fn();
-const MockPointService = jest.fn().mockImplementation(() => {
-  return {
-    grantPoint: mockGrantPoint,
-  };
-});
-
 const MockNetworkService = jest.fn().mockImplementation(() => {
-  return {
-    pointSrv: new MockPointService(),
-  };
+  return {};
 });
 
 describe('DisputeManagerHandler', () => {
@@ -152,8 +143,6 @@ describe('DisputeManagerHandler', () => {
         expect(event.orderId).toEqual(toNumber(orderId));
         expect(event.creator).toEqual(provider);
         expect(event.disputeId).toEqual(toNumber(disputeId));
-
-        expect(mockGrantPoint).toHaveBeenCalledWith('dispute:created', net, provider, evt, undefined);
       });
     });
 
@@ -266,8 +255,6 @@ describe('DisputeManagerHandler', () => {
       expect(event.orderId).toEqual(toNumber(orderId));
       expect(event.creator).toEqual('0xCommitter');
       expect(event.disputeId).toEqual(toNumber(disputeId));
-
-      expect(mockGrantPoint).toHaveBeenCalledWith('dispute:committed', net, '0xCommitter', evt, undefined);
     });
   });
 
@@ -293,8 +280,6 @@ describe('DisputeManagerHandler', () => {
       expect(event.creator).toEqual('0xRevealer');
       expect(event.disputeId).toEqual(toNumber(disputeId));
       expect(event.vote).toEqual('1vote');
-
-      expect(mockGrantPoint).toHaveBeenCalledWith('dispute:revealed', net, '0xRevealer', evt, undefined);
     });
   });
 
@@ -408,8 +393,6 @@ describe('DisputeManagerHandler', () => {
         // expect execute task to be marked complete
         const task = await MineTask.getById(executeTask.id);
         expect(task.completed).toBeTruthy();
-
-        expect(mockGrantPoint).toHaveBeenCalledWith('dispute:executed', net, '0xExecutor', evt, undefined);
       });
     });
 

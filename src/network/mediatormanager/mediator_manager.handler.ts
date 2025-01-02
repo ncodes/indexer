@@ -273,8 +273,6 @@ export class MediatorManagerHandler extends Handler {
       },
       txn,
     );
-
-    await this.netSrv.pointSrv.grantPoint('ticket:purchased', this.network, owner, event, txn);
   }
 
   /**
@@ -297,8 +295,6 @@ export class MediatorManagerHandler extends Handler {
       },
       txn,
     );
-
-    await this.netSrv.pointSrv.grantPoint('ticket:cancelled', this.network, owner, event, txn);
   }
 
   /**
@@ -312,7 +308,6 @@ export class MediatorManagerHandler extends Handler {
   async onTicketDrained(owner: string, id: bigint, _amount: bigint, event: ContractCallEvent, txn?: Transaction) {
     const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, toNumber(id), undefined, txn);
     await Ticket.updateById(ticket.id, { bond: '0', drained: true, drainedAt: moment().toISOString() }, txn);
-    await this.netSrv.pointSrv.grantPoint('ticket:drained', this.network, owner, event, txn);
   }
 
   /**
@@ -326,7 +321,6 @@ export class MediatorManagerHandler extends Handler {
   async onJoinedPool(owner: string, poolId: bigint, ticketId: bigint, event: ContractCallEvent, txn?: Transaction) {
     const ticket = await Ticket.getByNetworkOwnerAndIndex(this.network, owner, toNumber(ticketId), undefined, txn);
     await Ticket.updateById(ticket.id, { poolId: toNumber(poolId), joined: true }, txn);
-    await this.netSrv.pointSrv.grantPoint('ticket:joined', this.network, owner, event, txn);
   }
 
   /**
@@ -437,9 +431,6 @@ export class MediatorManagerHandler extends Handler {
       action: Events.SwapDrafted,
     });
 
-    await this.netSrv.pointSrv.grantPoint('ticket:drafted', this.network, owner, event, txn);
-    await this.netSrv.pointSrv.grantPoint('ticket:drafter', this.network, drafter, event, txn);
-
     // Send notification
     void this.notifSrv.notify(NotificationID.TicketDrafted, this.network, owner, {
       owner,
@@ -498,9 +489,6 @@ export class MediatorManagerHandler extends Handler {
       },
       txn,
     );
-
-    await this.netSrv.pointSrv.grantPoint('ticket:undrafted', this.network, owner, event, txn);
-    await this.netSrv.pointSrv.grantPoint('ticket:undrafter', this.network, undrafter, event, txn);
 
     // Complete an undraft mining task
     await MineTask.completeOneUndraftTask(this.network, ticket.orderId, ticket.disputeId, txn);
@@ -570,8 +558,6 @@ export class MediatorManagerHandler extends Handler {
       txn,
     );
 
-    await this.netSrv.pointSrv.grantPoint('ticket:slashed', this.network, owner, event, txn);
-
     // Send notification
     void this.notifSrv.notify(NotificationID.TicketSlashed, this.network, owner, {
       ticket,
@@ -626,8 +612,6 @@ export class MediatorManagerHandler extends Handler {
       },
       txn,
     );
-
-    await this.netSrv.pointSrv.grantPoint('ticket:slashed', this.network, owner, event, txn);
 
     // Send notification
     void this.notifSrv.notify(NotificationID.TicketSlashed, this.network, owner, {

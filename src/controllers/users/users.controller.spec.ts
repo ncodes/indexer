@@ -18,8 +18,6 @@ import NetworkService from '../../network/network.service';
 import { JointLinkService } from '../../services/joint_link.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { RedisService } from '../../services/redis/redis.service';
-import AirdropService from '../airdrop/airdrop.service';
-import TapService from '../airdrop/tap.service';
 import { makeSession } from '../auth/utils';
 import ConvosService from '../convos/convos.service';
 import { UserService } from './user.service';
@@ -84,13 +82,11 @@ describe('UsersController', () => {
         ConfigService,
         NetworkService,
         UserService,
-        AirdropService,
         MetadataService,
         ConvosService,
         JointLinkService,
         RedisService,
         CacheService,
-        TapService,
       ],
     })
       .overrideProvider(ConfigService)

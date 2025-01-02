@@ -47,17 +47,6 @@ const MockExchangeRateService = jest.fn().mockImplementation(() => {
   };
 });
 
-const mockGrantOnSwap = jest.fn();
-const mockGrantOnLiquidityUpdate = jest.fn();
-const mockGrantPoint = jest.fn();
-const MockPointService = jest.fn().mockImplementation(() => {
-  return {
-    grantOnSwap: mockGrantOnSwap,
-    grantOnLiquidityUpdate: mockGrantOnLiquidityUpdate,
-    grantPoint: mockGrantPoint,
-  };
-});
-
 const mockComputeSwapFees = jest.fn();
 
 const mockGetDisputeDelayDur = jest.fn();
@@ -65,7 +54,6 @@ const mockGetDisputeDelayDur = jest.fn();
 const mockGetCfg = jest.fn();
 const MockNetworkService = jest.fn().mockImplementation(() => {
   return {
-    pointSrv: new MockPointService(),
     cfgSrv: {
       get: mockGetCfg,
     },
@@ -222,8 +210,6 @@ describe('CoreHandler', () => {
       expect(event.target).toEqual(liq.target);
       expect(event.timeToPay).toEqual(liq.timeToPay);
       expect(event.paused).toEqual(liq.paused);
-
-      expect(mockGrantOnLiquidityUpdate).toHaveBeenCalledWith(market, liq, true, provider, amount, undefined);
     });
 
     it('should not update market total liquidity when liquidity has paused=true', async () => {
@@ -351,8 +337,6 @@ describe('CoreHandler', () => {
       expect(eventTimeToPay.provider).toEqual(provider);
       expect(eventTimeToPay.creator).toEqual(provider);
       expect(eventTimeToPay.timeToPay).toEqual(10);
-
-      expect(mockGrantOnLiquidityUpdate).toBeCalled();
     });
 
     it('should update the liquidity if it already exist and deduction=true', async () => {
@@ -1308,8 +1292,6 @@ describe('CoreHandler', () => {
         expect(event.orderId).toEqual(0);
         expect(event.swapId).toEqual(swap.id);
 
-        expect(mockGrantOnSwap).toHaveBeenCalledWith(market, swap, undefined, evt);
-
         // expect(mockNotify).toHaveBeenCalledWith(NotificationID.NewInstantSwap, net, provider, {
         //   market,
         //   swap,
@@ -1492,8 +1474,6 @@ describe('CoreHandler', () => {
         market = await Market.getById(market.id, true);
         swap = await Swap.find({ marketAddress: market.address });
         swap.market = market;
-
-        expect(mockGrantOnSwap).toHaveBeenCalledWith(market, swap, undefined, evt);
 
         expect(mockNotify).toHaveBeenCalledTimes(1);
         expect(mockNotify).toHaveBeenCalledWith(NotificationID.SwapOrderReleased, net, taker, {
@@ -1807,8 +1787,6 @@ describe('CoreHandler', () => {
       expect(event.marketAddress).toEqual(marketAddress);
       expect(event.orderId).toEqual(toNumber(orderId));
       expect(event.creator).toEqual(swap.payer);
-
-      expect(mockGrantPoint).toHaveBeenCalledWith('swap:paid', net, taker, expect.anything(), undefined);
 
       liq = await Liquidity.getById(liq.id);
       expect(liq.avgPaymentDur).toBeGreaterThan(0);

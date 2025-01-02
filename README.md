@@ -6,8 +6,8 @@ The indexer indexes the events emitted by the Joint Protocol's contracts. It wat
 
 - Node.js v18.18.x
 - Yarn v1.22.19
-- Postgres v14
 - Redis
+- Postgres v14
 - Docker (optional)
 
 ## Installation

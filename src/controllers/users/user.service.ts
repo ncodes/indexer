@@ -123,7 +123,6 @@ export class UserService {
       user.earlyDiscordMemberClaimed = !!(await Allocation.getByName(`early_member:${user.address}`));
 
       if (network) user.isDelegate = !!(await MarketManagerDelegate.findByNetworkAndAddress(network, user.address));
-
     } catch (e) {
       return Promise.reject(e);
     }

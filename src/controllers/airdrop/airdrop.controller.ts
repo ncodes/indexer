@@ -16,8 +16,12 @@ import { plainToInstance } from 'class-transformer';
 import { isEthereumAddress, isNegative, validate } from 'class-validator';
 import * as cronParser from 'cron-parser';
 import { Request } from 'express';
-import { Client } from 'twitter-api-sdk';
 import * as moment from 'moment';
+import { transaction } from 'objection';
+import { Client } from 'twitter-api-sdk';
+import CacheService from '../../cacher/cache.service';
+import { isLocal, toDec } from '../../common/common';
+import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
 import { ok, throw400, throw401, throw404 } from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
@@ -30,7 +34,7 @@ import NFTOwner from '../../models/nft_owner';
 import Point, { PointAction } from '../../models/point';
 import Quest from '../../models/quest';
 import Swap from '../../models/swap';
-import Tap from '../../models/tap';
+import TPS from '../../models/tps';
 import TwitterEngagement from '../../models/twitter_engagement';
 import User from '../../models/user';
 import { pow10, powOf } from '../../network/common';
@@ -38,7 +42,6 @@ import DiscordService from '../../services/discord.service';
 import { TwitterService } from '../../services/twitter.service';
 import { NFTAllocations } from '../points/data/nft_allocation';
 import { PointMap } from '../points/data/points';
-import { isLocal, toDec } from '../../common/common';
 import {
   ApplyPresale,
   CreateLuckyCodeDTO,
@@ -48,11 +51,7 @@ import {
   StakeBondDTO,
   VoteQuest,
 } from './dto';
-import { CommonValidationPipeOpt } from '../../common/pipes/common.pipe';
-import { transaction } from 'objection';
-import CacheService from '../../cacher/cache.service';
 import TapService from './tap.service';
-import TPS from '../../models/tps';
 
 function randomInteger(min, max) {
   return Math.floor(Math.random() * (max - min + 1) + min);

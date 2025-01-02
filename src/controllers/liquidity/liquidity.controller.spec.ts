@@ -1039,7 +1039,7 @@ describe('LiquidityController', () => {
         await ProviderRegistry.create({ network: net, address: '0xProvider2', index: 2 });
         await ProviderRegistry.create({ network: net, address: '0xProvider3', index: 3 });
 
-        const liq0 = await Liquidity.create({
+        await Liquidity.create({
           network: net,
           marketAddress,
           lid: 0,

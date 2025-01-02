@@ -641,7 +641,6 @@ export default class Liquidity extends BaseModel {
     paused,
     maxOpenDisputes,
     maxOpenOrders,
-    amount,
     price,
     amountUsd,
     priceUsd,

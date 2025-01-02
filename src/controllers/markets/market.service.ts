@@ -6,7 +6,6 @@ import MarketPrice from '../../models/market_price';
 import Meta from '../../models/meta';
 import Swap from '../../models/swap';
 import { MetadataService } from '../../services/metadata/metadata.service';
-import * as moment from 'moment';
 
 const UnknownTokenLogoURL = 'https://files.joint.exchange/images/unknown.svg';
 @Injectable()

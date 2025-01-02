@@ -1,14 +1,12 @@
 import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import * as moment from 'moment';
+import CacheService from '../../cacher/cache.service';
 import { NoopLogger } from '../../common/loggers/noop_logger';
+import TapService from '../../controllers/airdrop/tap.service';
 import { DBService } from '../../db/db.service';
-import User from '../../models/user';
 import { RedisService } from '../../services/redis/redis.service';
 import TapReminder from './TapReminder';
-import TapService from '../../controllers/airdrop/tap.service';
-import CacheService from '../../cacher/cache.service';
 
 const mockRedisGet = jest.fn();
 const mockRedisSet = jest.fn();
@@ -19,9 +17,7 @@ const RedisServiceMock = jest.fn().mockImplementation(() => {
 describe('TapReminder', () => {
   let app: INestApplication;
   const db = DBService.getForTest();
-  let job: TapReminder;
   const cfg = {};
-  let u: User;
 
   afterEach(async () => {
     await db.truncateTables();
@@ -44,16 +40,11 @@ describe('TapReminder', () => {
 
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());
-    job = app.get<TapReminder>(TapReminder);
     await app.init();
 
     jest.spyOn(app.get(ConfigService), 'get').mockImplementation((param) => {
       return cfg[param];
     });
-  });
-
-  beforeEach(async () => {
-    u = await User.create({ id: 'user1' });
   });
 
   describe('.process', () => {

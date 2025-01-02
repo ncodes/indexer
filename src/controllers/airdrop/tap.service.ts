@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { RedisService } from '../../services/redis/redis.service';
-import CacheService from '../../cacher/cache.service';
-import { randStr, sha1, toDec } from '../../common/common';
 import * as moment from 'moment';
+import CacheService from '../../cacher/cache.service';
+import { randStr, toDec } from '../../common/common';
+import MultiplierSpend from '../../models/multiplier_spend';
 import Tap from '../../models/tap';
 import TapSpend from '../../models/tap_spend';
+import { RedisService } from '../../services/redis/redis.service';
 import { TapSpendType } from './constants';
-import MultiplierSpend from '../../models/multiplier_spend';
 
 @Injectable()
 export default class TapService {

@@ -3,13 +3,11 @@ import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import { transaction } from 'objection';
 import { toDec } from '../../common/common';
+import TapService from '../../controllers/airdrop/tap.service';
 import Allocation from '../../models/allocations';
 import Battle from '../../models/battle';
 import BondSpend from '../../models/bond_spend';
-import Tap from '../../models/tap';
-import { RedisService } from '../../services/redis/redis.service';
 import { Base } from '../base';
-import TapService from '../../controllers/airdrop/tap.service';
 
 /**
  * BattleManager manages daily battle progress and calculations

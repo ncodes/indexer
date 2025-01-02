@@ -65,12 +65,10 @@ export class AuthController {
 
     let token: string;
     let user: User;
-    let isUserNew = false;
     let notifSettings: Partial<NotificationSetting>;
     await transaction(User, async (User) => {
       user = await User.getByAddress(sigData.address);
       notifSettings = user ? user.notificationSettings : defaultNotificationSettings;
-      isUserNew = !user;
       const countryCode = getCfIpCountry(req, this.cfgSrv.get('app.defaultCountry'));
 
       // Create user if not found, Set email as unverified.

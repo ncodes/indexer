@@ -130,12 +130,12 @@ describe('RoutesController', () => {
     it('should return correct routes for destination org 3', async () => {
       const paymentMethodId = 'pm_123';
       const r1 = await PayRouterRoute.create({ network: net, sourceOrgId: 1, destOrgId: 3, paymentMethodId });
-      const r2 = await PayRouterRoute.create({ network: net, sourceOrgId: 2, destOrgId: 4, paymentMethodId });
+      await PayRouterRoute.create({ network: net, sourceOrgId: 2, destOrgId: 4, paymentMethodId });
       const r3 = await PayRouterRoute.create({ network: net, sourceOrgId: 4, destOrgId: 3, paymentMethodId });
       const r4 = await PayRouterRoute.create({ network: net, sourceOrgId: 5, destOrgId: 3, paymentMethodId });
       const r5 = await PayRouterRoute.create({ network: net, sourceOrgId: 6, destOrgId: 5, paymentMethodId });
       const r6 = await PayRouterRoute.create({ network: net, sourceOrgId: 4, destOrgId: 1, paymentMethodId });
-      const r7 = await PayRouterRoute.create({ network: net, sourceOrgId: 3, destOrgId: 1, paymentMethodId });
+      await PayRouterRoute.create({ network: net, sourceOrgId: 3, destOrgId: 1, paymentMethodId });
       const r8 = await PayRouterRoute.create({ network: net, sourceOrgId: 4, destOrgId: 1, paymentMethodId });
       const r9 = await PayRouterRoute.create({ network: net, sourceOrgId: 1, destOrgId: 3, paymentMethodId });
       const r10 = await PayRouterRoute.create({ network: net, sourceOrgId: 2, destOrgId: 1, paymentMethodId });

@@ -10,8 +10,6 @@ const ConfigServiceMock = jest.fn().mockImplementation(() => {
 
 describe('RoutesService', () => {
   let module: TestingModule;
-  let service: RoutesService;
-  const net = 'localhost';
   const db = DBService.getForTest();
   let cfgObj = {};
 
@@ -44,7 +42,7 @@ describe('RoutesService', () => {
       .useValue(new ConfigServiceMock())
       .compile();
 
-    service = module.get<RoutesService>(RoutesService);
+    module.get<RoutesService>(RoutesService);
   });
 
   describe('.', () => {

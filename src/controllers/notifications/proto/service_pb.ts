@@ -3,8 +3,15 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
-import { Message, proto3, protoInt64 } from "@bufbuild/protobuf";
+import type {
+  BinaryReadOptions,
+  FieldList,
+  JsonReadOptions,
+  JsonValue,
+  PartialMessage,
+  PlainMessage,
+} from '@bufbuild/protobuf';
+import { Message, proto3, protoInt64 } from '@bufbuild/protobuf';
 
 /**
  * @generated from message notifications.v1.DeliveryMechanism
@@ -13,25 +20,29 @@ export class DeliveryMechanism extends Message<DeliveryMechanism> {
   /**
    * @generated from oneof notifications.v1.DeliveryMechanism.delivery_mechanism_type
    */
-  deliveryMechanismType: {
-    /**
-     * @generated from field: string apns_device_token = 1;
-     */
-    value: string;
-    case: "apnsDeviceToken";
-  } | {
-    /**
-     * @generated from field: string firebase_device_token = 2;
-     */
-    value: string;
-    case: "firebaseDeviceToken";
-  } | {
-    /**
-     * @generated from field: string email_device_token = 3;
-     */
-    value: string;
-    case: "emailDeviceToken";
-  } | { case: undefined; value?: undefined } = { case: undefined };
+  deliveryMechanismType:
+    | {
+        /**
+         * @generated from field: string apns_device_token = 1;
+         */
+        value: string;
+        case: 'apnsDeviceToken';
+      }
+    | {
+        /**
+         * @generated from field: string firebase_device_token = 2;
+         */
+        value: string;
+        case: 'firebaseDeviceToken';
+      }
+    | {
+        /**
+         * @generated from field: string email_device_token = 3;
+         */
+        value: string;
+        case: 'emailDeviceToken';
+      }
+    | { case: undefined; value?: undefined } = { case: undefined };
 
   constructor(data?: PartialMessage<DeliveryMechanism>) {
     super();
@@ -39,11 +50,29 @@ export class DeliveryMechanism extends Message<DeliveryMechanism> {
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "notifications.v1.DeliveryMechanism";
+  static readonly typeName = 'notifications.v1.DeliveryMechanism';
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "apns_device_token", kind: "scalar", T: 9 /* ScalarType.STRING */, oneof: "delivery_mechanism_type" },
-    { no: 2, name: "firebase_device_token", kind: "scalar", T: 9 /* ScalarType.STRING */, oneof: "delivery_mechanism_type" },
-    { no: 3, name: "email_device_token", kind: "scalar", T: 9 /* ScalarType.STRING */, oneof: "delivery_mechanism_type" },
+    {
+      no: 1,
+      name: 'apns_device_token',
+      kind: 'scalar',
+      T: 9 /* ScalarType.STRING */,
+      oneof: 'delivery_mechanism_type',
+    },
+    {
+      no: 2,
+      name: 'firebase_device_token',
+      kind: 'scalar',
+      T: 9 /* ScalarType.STRING */,
+      oneof: 'delivery_mechanism_type',
+    },
+    {
+      no: 3,
+      name: 'email_device_token',
+      kind: 'scalar',
+      T: 9 /* ScalarType.STRING */,
+      oneof: 'delivery_mechanism_type',
+    },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeliveryMechanism {
@@ -58,7 +87,10 @@ export class DeliveryMechanism extends Message<DeliveryMechanism> {
     return new DeliveryMechanism().fromJsonString(jsonString, options);
   }
 
-  static equals(a: DeliveryMechanism | PlainMessage<DeliveryMechanism> | undefined, b: DeliveryMechanism | PlainMessage<DeliveryMechanism> | undefined): boolean {
+  static equals(
+    a: DeliveryMechanism | PlainMessage<DeliveryMechanism> | undefined,
+    b: DeliveryMechanism | PlainMessage<DeliveryMechanism> | undefined,
+  ): boolean {
     return proto3.util.equals(DeliveryMechanism, a, b);
   }
 }
@@ -70,7 +102,7 @@ export class RegisterInstallationRequest extends Message<RegisterInstallationReq
   /**
    * @generated from field: string installation_id = 1;
    */
-  installationId = "";
+  installationId = '';
 
   /**
    * @generated from field: notifications.v1.DeliveryMechanism delivery_mechanism = 2;
@@ -83,10 +115,10 @@ export class RegisterInstallationRequest extends Message<RegisterInstallationReq
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "notifications.v1.RegisterInstallationRequest";
+  static readonly typeName = 'notifications.v1.RegisterInstallationRequest';
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "installation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "delivery_mechanism", kind: "message", T: DeliveryMechanism },
+    { no: 1, name: 'installation_id', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: 'delivery_mechanism', kind: 'message', T: DeliveryMechanism },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RegisterInstallationRequest {
@@ -101,7 +133,10 @@ export class RegisterInstallationRequest extends Message<RegisterInstallationReq
     return new RegisterInstallationRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(a: RegisterInstallationRequest | PlainMessage<RegisterInstallationRequest> | undefined, b: RegisterInstallationRequest | PlainMessage<RegisterInstallationRequest> | undefined): boolean {
+  static equals(
+    a: RegisterInstallationRequest | PlainMessage<RegisterInstallationRequest> | undefined,
+    b: RegisterInstallationRequest | PlainMessage<RegisterInstallationRequest> | undefined,
+  ): boolean {
     return proto3.util.equals(RegisterInstallationRequest, a, b);
   }
 }
@@ -113,7 +148,7 @@ export class RegisterInstallationResponse extends Message<RegisterInstallationRe
   /**
    * @generated from field: string installation_id = 1;
    */
-  installationId = "";
+  installationId = '';
 
   /**
    * @generated from field: uint64 valid_until = 2;
@@ -126,10 +161,10 @@ export class RegisterInstallationResponse extends Message<RegisterInstallationRe
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "notifications.v1.RegisterInstallationResponse";
+  static readonly typeName = 'notifications.v1.RegisterInstallationResponse';
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "installation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "valid_until", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
+    { no: 1, name: 'installation_id', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: 'valid_until', kind: 'scalar', T: 4 /* ScalarType.UINT64 */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RegisterInstallationResponse {
@@ -144,7 +179,10 @@ export class RegisterInstallationResponse extends Message<RegisterInstallationRe
     return new RegisterInstallationResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(a: RegisterInstallationResponse | PlainMessage<RegisterInstallationResponse> | undefined, b: RegisterInstallationResponse | PlainMessage<RegisterInstallationResponse> | undefined): boolean {
+  static equals(
+    a: RegisterInstallationResponse | PlainMessage<RegisterInstallationResponse> | undefined,
+    b: RegisterInstallationResponse | PlainMessage<RegisterInstallationResponse> | undefined,
+  ): boolean {
     return proto3.util.equals(RegisterInstallationResponse, a, b);
   }
 }
@@ -156,7 +194,7 @@ export class DeleteInstallationRequest extends Message<DeleteInstallationRequest
   /**
    * @generated from field: string installation_id = 1;
    */
-  installationId = "";
+  installationId = '';
 
   constructor(data?: PartialMessage<DeleteInstallationRequest>) {
     super();
@@ -164,9 +202,9 @@ export class DeleteInstallationRequest extends Message<DeleteInstallationRequest
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "notifications.v1.DeleteInstallationRequest";
+  static readonly typeName = 'notifications.v1.DeleteInstallationRequest';
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "installation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 1, name: 'installation_id', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteInstallationRequest {
@@ -181,7 +219,10 @@ export class DeleteInstallationRequest extends Message<DeleteInstallationRequest
     return new DeleteInstallationRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(a: DeleteInstallationRequest | PlainMessage<DeleteInstallationRequest> | undefined, b: DeleteInstallationRequest | PlainMessage<DeleteInstallationRequest> | undefined): boolean {
+  static equals(
+    a: DeleteInstallationRequest | PlainMessage<DeleteInstallationRequest> | undefined,
+    b: DeleteInstallationRequest | PlainMessage<DeleteInstallationRequest> | undefined,
+  ): boolean {
     return proto3.util.equals(DeleteInstallationRequest, a, b);
   }
 }
@@ -193,7 +234,7 @@ export class SubscribeRequest extends Message<SubscribeRequest> {
   /**
    * @generated from field: string installation_id = 1;
    */
-  installationId = "";
+  installationId = '';
 
   /**
    * @generated from field: repeated string topics = 2;
@@ -206,10 +247,10 @@ export class SubscribeRequest extends Message<SubscribeRequest> {
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "notifications.v1.SubscribeRequest";
+  static readonly typeName = 'notifications.v1.SubscribeRequest';
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "installation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "topics", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 1, name: 'installation_id', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: 'topics', kind: 'scalar', T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SubscribeRequest {
@@ -224,7 +265,10 @@ export class SubscribeRequest extends Message<SubscribeRequest> {
     return new SubscribeRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(a: SubscribeRequest | PlainMessage<SubscribeRequest> | undefined, b: SubscribeRequest | PlainMessage<SubscribeRequest> | undefined): boolean {
+  static equals(
+    a: SubscribeRequest | PlainMessage<SubscribeRequest> | undefined,
+    b: SubscribeRequest | PlainMessage<SubscribeRequest> | undefined,
+  ): boolean {
     return proto3.util.equals(SubscribeRequest, a, b);
   }
 }
@@ -236,7 +280,7 @@ export class UnsubscribeRequest extends Message<UnsubscribeRequest> {
   /**
    * @generated from field: string installation_id = 1;
    */
-  installationId = "";
+  installationId = '';
 
   /**
    * @generated from field: repeated string topics = 2;
@@ -249,10 +293,10 @@ export class UnsubscribeRequest extends Message<UnsubscribeRequest> {
   }
 
   static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "notifications.v1.UnsubscribeRequest";
+  static readonly typeName = 'notifications.v1.UnsubscribeRequest';
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "installation_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "topics", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 1, name: 'installation_id', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: 'topics', kind: 'scalar', T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UnsubscribeRequest {
@@ -267,8 +311,10 @@ export class UnsubscribeRequest extends Message<UnsubscribeRequest> {
     return new UnsubscribeRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(a: UnsubscribeRequest | PlainMessage<UnsubscribeRequest> | undefined, b: UnsubscribeRequest | PlainMessage<UnsubscribeRequest> | undefined): boolean {
+  static equals(
+    a: UnsubscribeRequest | PlainMessage<UnsubscribeRequest> | undefined,
+    b: UnsubscribeRequest | PlainMessage<UnsubscribeRequest> | undefined,
+  ): boolean {
     return proto3.util.equals(UnsubscribeRequest, a, b);
   }
 }
-

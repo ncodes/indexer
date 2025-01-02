@@ -177,7 +177,6 @@ export default class NetworkService {
     }
   }
 
-
   /**
    * Connect and watch NFT contracts.
    * @param name The name of the watcher

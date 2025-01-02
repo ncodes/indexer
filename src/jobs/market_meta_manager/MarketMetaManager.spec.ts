@@ -6,11 +6,6 @@ import { DBService } from '../../db/db.service';
 import User from '../../models/user';
 import { RedisService } from '../../services/redis/redis.service';
 import MarketMetaManager from './MarketMetaManager';
-import { MetadataService } from '../../services/metadata/metadata.service';
-import NetworkService from '../../network/network.service';
-import { ExchangeRateService } from '../../services/exchange_rate.service';
-import { NotificationService } from '../notifications/NotificationService';
-import { PointService } from '../../controllers/points/point.service';
 
 const mockRedisGet = jest.fn();
 const mockRedisSet = jest.fn();
@@ -21,9 +16,7 @@ const RedisServiceMock = jest.fn().mockImplementation(() => {
 describe('MarketMetaManager', () => {
   let app: INestApplication;
   const db = DBService.getForTest();
-  let job: MarketMetaManager;
   const cfg = {};
-  let u: User;
 
   afterEach(async () => {
     await db.truncateTables();
@@ -46,7 +39,6 @@ describe('MarketMetaManager', () => {
 
     app = module.createNestApplication();
     app.useLogger(new NoopLogger());
-    job = app.get<MarketMetaManager>(MarketMetaManager);
     await app.init();
 
     jest.spyOn(app.get(ConfigService), 'get').mockImplementation((param) => {
@@ -55,8 +47,10 @@ describe('MarketMetaManager', () => {
   });
 
   beforeEach(async () => {
-    u = await User.create({ id: 'user1' });
+    await User.create({ id: 'user1' });
   });
 
-  describe('.process', () => {});
+  describe('.process', () => {
+    // TODO
+  });
 });

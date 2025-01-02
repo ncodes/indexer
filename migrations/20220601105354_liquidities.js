@@ -43,6 +43,10 @@ exports.up = function (knex) {
       table.float('avgFinalizeDur').defaultTo(0);
       table.float('avgPaymentDur').defaultTo(0);
       table.float('avgReleaseDur').defaultTo(0);
+      table.boolean('messagingEnabled').defaultTo(false);
+      table.timestamp('messagingEnabledUpdatedAt');
+      table.string('paymentMethodId');
+      table.boolean('hidden').defaultTo(false);
       table.timestamp('lastSwapAt');
       table.timestamp('createdAt');
       table.timestamp('updatedAt');

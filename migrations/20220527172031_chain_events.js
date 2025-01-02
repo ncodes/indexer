@@ -8,11 +8,13 @@ exports.up = function (knex) {
       table.integer('blockNumber');
       table.integer('txIndex');
       table.integer('logIndex');
+      table.boolean('removed').defaultTo(false);
+      table.string('txHash').nullable();
       table.timestamp('createdAt');
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');
 
-      table.unique(['network', 'signature', 'blockNumber', 'txIndex', 'logIndex']);
+      table.unique(['network', 'signature', 'blockNumber', 'txIndex', 'logIndex', 'removed']);
     }),
   ]);
 };

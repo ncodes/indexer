@@ -13,6 +13,7 @@ exports.up = function (knex) {
       table.decimal('amount', null).defaultTo(0);
       table.boolean('voted').defaultTo(false);
       table.boolean('winSide').defaultTo(false);
+      table.boolean('byGov').defaultTo(false);
       table.timestamp('createdAt');
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');

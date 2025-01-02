@@ -9,12 +9,21 @@ exports.up = function (knex) {
       table.string('timezone');
       table.string('deviceTokenEmail');
       table.string('role');
+      table.string('otpSecret');
+      table.string('emailUnverified');
+      table.string('refCode').unique();
+      table.string('referrer');
+      table.boolean('messagingEnabled').defaultTo(false);
+      table.string('ipCountry');
+      table.string('country');
+      table.string('defaultPaymentMethodId');
       table.timestamp('createdAt');
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');
 
       table.index(['address'], 'idx_address');
       table.index(['address'], 'idx_email');
+      table.index(['address', 'deletedAt'], 'idx_address_deleted_at');
     }),
   ]);
 };

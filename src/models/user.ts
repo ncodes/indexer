@@ -22,25 +22,7 @@ export default class User extends BaseModel {
   referrer: string;
   refCode: string;
   messagingEnabled: boolean;
-  twitterUserId: string;
-  twitterUsername: string;
-  twitterToken: string;
-  twitterLinkedAt: string;
-  discordId: string;
-  discordToken: string;
-  discordLinkedAt: string;
-  isEarlyDiscordMember: boolean;
-  presale: boolean;
-  presaleCountry: string;
   ipCountry: string;
-  presaleApproved: boolean;
-  curBattleId: string;
-  battleSide: 'droid' | 'bandit';
-  telegramUserId: number;
-  telegramUsername: string;
-  telegramLastAuthAt: string;
-  telegramBotChatId: number;
-  tapScore: string;
 
   // Not persisted
   totalUnclaimedAlloc: string;
@@ -80,9 +62,7 @@ export default class User extends BaseModel {
     user.object = 'user';
     delete user.otpSecret;
     delete user.deviceTokenEmail;
-    delete user.twitterToken;
     delete user.ipCountry;
-    delete user.presaleCountry;
     return user;
   }
 

@@ -30,6 +30,8 @@ exports.up = function (knex) {
       table.decimal('protocolFee', null).defaultTo(0);
       table.decimal('marketCreatorFee', null).defaultTo(0);
       table.string('txHash');
+      table.string('takerPaymentMethodId');
+      table.string('providerPaymentMethodId');
       table.timestamp('disputeFrom');
       table.timestamp('cancelAt');
       table.timestamp('createdAt');
@@ -37,6 +39,13 @@ exports.up = function (knex) {
       table.timestamp('deletedAt');
       table.timestamp('paidAt');
       table.timestamp('finalizedAt');
+
+      table.index(
+        ['network', 'cancelled', 'instant', 'provider', 'taker'],
+        'idx_network_cancelled_instant_provider_taker',
+      );
+      table.index(['network', 'provider', 'cancelled', 'instant'], 'idx_network_provider_cancelled_instant');
+      table.index(['network', 'taker', 'cancelled', 'instant'], 'idx_network_taker_cancelled_instant');
     }),
   ]);
 };

@@ -28,8 +28,10 @@
     "mig:dev:rollback": "knex-migrate rollback --env=development",
     "mig:prod:up": "knex-migrate up --env=production",
     "mig:prod:rollback": "knex-migrate rollback --env=production",
-    "docker:db:start:test": "docker run --name dev-db-test -d --rm -v ${PWD}/volumes/postgres-docker-test:/var/lib/postgresql/data -e POSTGRES_PASSWORD=postgres -p 5433:5432 postgres",
-    "docker:redis:start": "docker run --name=redis -d --rm -v ${PWD}/volumes/redis-docker:/data -p 6380:6379 redis",
+    "docker:db:start": "docker run --name postgres-dev -d -v ${PWD}/volumes/postgres-docker:/var/lib/postgresql/data -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres",
+    "docker:db:test:start": "docker run --name dev-db-test -d --rm -v ${PWD}/volumes/postgres-docker-test:/var/lib/postgresql/data -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=joint_test -p 5433:5432 postgres",
+    "docker:redis:start": "docker run --name=redis-dev -d -v ${PWD}/volumes/redis-docker:/data -p 6380:6379 redis",
+    "docker:chain:start": "docker run --name=chain-dev -d -p 8545:8545 network-latest",
     "docker:build": "docker build -t indexer .",
     "docker:build:no-cache": "docker build --no-cache -t indexer ."
   },

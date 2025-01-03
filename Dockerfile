@@ -18,7 +18,6 @@ RUN apk add git yarn
 
 # Install app dependencies
 RUN yarn
-RUN yarn add wait-on
 
 # Bundle app source
 COPY . .

@@ -28,10 +28,8 @@
     "mig:dev:rollback": "knex-migrate rollback --env=development",
     "mig:prod:up": "knex-migrate up --env=production",
     "mig:prod:rollback": "knex-migrate rollback --env=production",
-    "db:start:dev": "yarn docker:create-devnet && docker run --name dev-db -d --rm --network devnet -v ${PWD}/volumes/postgres-docker:/var/lib/postgresql/data -e POSTGRES_PASSWORD=postgres -p 5433:5432 postgres",
-    "db:start:test": "docker run --name dev-db-test -d --rm -v ${PWD}/volumes/postgres-docker-test:/var/lib/postgresql/data -e POSTGRES_PASSWORD=postgres -p 5433:5432 postgres",
-    "redis:start": "yarn docker:create-devnet && docker run --name=redis -d --network devnet --rm -v ${PWD}/volumes/redis-docker:/data -p 6380:6379 redis",
-    "docker:create-devnet": "docker network create devnet 2> /dev/null || true",
+    "docker:db:start:test": "docker run --name dev-db-test -d --rm -v ${PWD}/volumes/postgres-docker-test:/var/lib/postgresql/data -e POSTGRES_PASSWORD=postgres -p 5433:5432 postgres",
+    "docker:redis:start": "docker run --name=redis -d --rm -v ${PWD}/volumes/redis-docker:/data -p 6380:6379 redis",
     "docker:build": "docker build -t indexer .",
     "docker:build:no-cache": "docker build --no-cache -t indexer ."
   },

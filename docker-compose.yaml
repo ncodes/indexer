@@ -1,0 +1,43 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres
+    container_name: postgres-db-dev
+    restart: always
+    shm_size: 128M
+    ports:
+      - 5433:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=joint
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - ./volumes/postgres-docker:/var/lib/postgresql/data
+  redis:
+    image: redis
+    container_name: redis-dev
+    restart: always
+    ports:
+      - 6380:6379
+    volumes:
+      - ./volumes/redis-docker:/data
+  eth-chain:
+    image: network-latest
+    ports:
+      - 8545:8545
+  indexer:
+    image: indexer
+    container_name: indexer-dev
+    depends_on:
+      - db
+      - redis
+      - eth-chain
+    ports:
+      - 3001:3001
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis
+      - DATABASE_URL=postgres://postgres:postgres@db/joint?sslmode=disable
+      - LOCALHOST_RPC_URL=http://eth-chain:8545

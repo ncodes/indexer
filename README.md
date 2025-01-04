@@ -55,7 +55,7 @@ yarn start:prod
 
 ## Docker
 
-The repository contains a `docker-compose.yaml` file that will start containers for postgres, redis, local chain and the indexer. To start the indexer with Docker, run the following command:
+The repository contains a `docker-compose.yaml` file that will start containers for postgres, redis, local chain and the indexer. To start a complete development environment for the indexer, run the following command:
 
 ```sh
 docker compose up

@@ -53,7 +53,7 @@ yarn build
 yarn start:prod
 ```
 
-## With Docker Compose
+## Docker
 
 The repository contains a `docker-compose.yaml` file that will start containers for postgres, redis, local chain and the indexer. To start the indexer with Docker, run the following command:
 

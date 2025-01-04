@@ -24,6 +24,9 @@ exports.up = function (knex) {
       table.timestamp('createdAt');
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');
+      table.boolean('blocked').defaultTo(false);
+      table.boolean('paused').defaultTo(false);
+      table.timestamp('pauseExpireAt');
     }),
   ]);
 };

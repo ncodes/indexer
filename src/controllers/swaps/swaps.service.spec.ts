@@ -4,7 +4,6 @@ import { DBService } from '../../db/db.service';
 import Dispute from '../../models/dispute';
 import Draft from '../../models/draft';
 import Market, { AssetType } from '../../models/market';
-import Meta, { MetaKeys } from '../../models/meta';
 import Swap from '../../models/swap';
 import User from '../../models/user';
 import { powOf } from '../../network/common';
@@ -377,27 +376,6 @@ describe('SwapsService', () => {
         expect(res[3]).toEqual(user3.id);
         expect(res[4]).toEqual(user4.id);
       });
-    });
-  });
-
-  describe('.getDisputeDelayDur', () => {
-    it('should return hardcoded duration 300 if no default or market-level configurations are set', async () => {
-      const res = await service.getDisputeDelayDur(swap);
-      expect(res).toEqual(300);
-    });
-
-    it('should return the default duration if set', async () => {
-      cfgObj['app.defaultDisputeDelayDur'] = '1000';
-      const res = await service.getDisputeDelayDur(swap);
-      expect(res).toEqual(1000);
-    });
-
-    it('should return the market-level duration if set', async () => {
-      await Meta.updateJSON(net, MetaKeys.DisputeDelayDur, (obj) => {
-        obj[market.address] = 1000;
-      });
-      const res = await service.getDisputeDelayDur(swap);
-      expect(res).toEqual(1000);
     });
   });
 });

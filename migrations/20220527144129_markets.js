@@ -34,9 +34,6 @@ exports.up = function (knex) {
       table.boolean('renounced').defaultTo(false);
       table.boolean('permSwap').defaultTo(false);
       table.integer('disputeDelayDur');
-      table.integer('evidenceDur');
-      table.integer('predictDur');
-      table.decimal('totalLiquidity', null).defaultTo(0);
       table.decimal('lowestPrice', null).defaultTo(0);
       table.float('avgFinalizeDur').defaultTo(0);
       table.float('avgPaymentDur').defaultTo(0);
@@ -46,6 +43,12 @@ exports.up = function (knex) {
       table.jsonb('regions').defaultTo([]);
       table.string('manager');
       table.string('txHash');
+      table.boolean('hidden').defaultTo(false);
+      table.string('baseLogo');
+      table.string('quoteLogo');
+      table.decimal('basePriceUsd', null);
+      table.decimal('quotePriceUsd', null);
+      table.timestamp('lastMetaUpdatedAt');
       table.timestamp('lastSwapAt');
       table.timestamp('createdAt');
       table.timestamp('updatedAt');

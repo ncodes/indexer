@@ -1,5 +1,5 @@
 /* tslint:disable:max-classes-per-file */
-import { IsLocale, IsNotEmpty, IsOptional, IsTimeZone } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsTimeZone } from 'class-validator';
 import { makeValidatorMsg } from '../../common/validations/validation';
 
 /**

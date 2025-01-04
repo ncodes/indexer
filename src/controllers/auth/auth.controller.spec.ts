@@ -18,9 +18,6 @@ import Session from '../../models/session';
 import User from '../../models/user';
 import { JointLinkService } from '../../services/joint_link.service';
 import { RedisService } from '../../services/redis/redis.service';
-import AirdropService from '../airdrop/airdrop.service';
-import { RefereeBonus } from '../airdrop/constants';
-import TapService from '../airdrop/tap.service';
 import ConvosService from '../convos/convos.service';
 import { UserService } from '../users/user.service';
 import { AuthController } from './auth.controller';
@@ -87,7 +84,6 @@ describe('AuthController', () => {
 
     cfgObj = {
       'auth.jwtSecret': 'secret_secret',
-      'app.discord.jointGuildId': '123',
       'app.defaultCountry': 'US',
     };
     mockCfgGet.mockReset().mockImplementation((args) => {
@@ -105,9 +101,7 @@ describe('AuthController', () => {
         NotificationService,
         JointLinkService,
         AuthService,
-        AirdropService,
         CacheService,
-        TapService,
       ],
     })
       .overrideProvider(ConfigService)
@@ -451,8 +445,6 @@ describe('AuthController', () => {
 
         const referrer = await User.create({ address: '0xReferrer', refCode: '12345' });
 
-        const mockCreateTap = jest.spyOn(app.get(TapService), 'createTap').mockResolvedValue(undefined);
-
         await request(app.getHttpServer())
           .post(`/v1/auth`)
           .send({
@@ -466,14 +458,6 @@ describe('AuthController', () => {
             expect(res.body.data.user.referrer).toEqual(referrer.address);
             expect(res.body.data.user.refCode).toHaveLength(5);
             expect(mockCreateLink).toHaveBeenCalledTimes(1);
-
-            // Should create bonus tap for user
-            expect(mockCreateTap).toBeCalledWith({
-              userId: res.body.data.user.id,
-              bonus: true,
-              bonusName: 'referee_bonus',
-              bonusValue: RefereeBonus.toString(),
-            });
           });
       });
 

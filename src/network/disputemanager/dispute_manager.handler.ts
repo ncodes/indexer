@@ -211,8 +211,6 @@ export class DisputeManagerHandler extends Handler {
       txn,
     );
 
-    await this.netSrv.pointSrv.grantPoint('dispute:created', this.network, creator, event, txn);
-
     // Send notification;
     const recipient = isEqualStr(swap.provider, creator) ? swap.taker : swap.provider;
     this.notifSrv.notify(NotificationID.DisputeCreated, this.network, recipient, {
@@ -267,8 +265,6 @@ export class DisputeManagerHandler extends Handler {
       },
       txn,
     );
-
-    await this.netSrv.pointSrv.grantPoint('dispute:committed', this.network, committer, event, txn);
   }
 
   /**
@@ -318,8 +314,6 @@ export class DisputeManagerHandler extends Handler {
       },
       txn,
     );
-
-    await this.netSrv.pointSrv.grantPoint('dispute:revealed', this.network, revealer, event, txn);
   }
 
   /**
@@ -411,8 +405,6 @@ export class DisputeManagerHandler extends Handler {
       },
       txn,
     );
-
-    await this.netSrv.pointSrv.grantPoint('dispute:executed', this.network, executor, event, txn);
 
     // Collate notification recipients
     const recipients: { address: string; drafted?: boolean }[] = [];

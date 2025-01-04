@@ -6,7 +6,6 @@ import { isDev, isEqualStr, isTest, shortenAddr } from '../common/common';
 import ChainEvent from '../models/chain_events';
 import { ContractCallEvent } from './common';
 import { Handler } from './handler';
-import * as console from 'console';
 
 export interface UnprocessedEvent {
   event: ContractCallEvent;

@@ -2,22 +2,15 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { transaction } from 'objection';
 import CacheService from '../../cacher/cache.service';
-import { isEqualStr, isLocal, randStr, toDec } from '../../common/common';
-import Allocation from '../../models/allocations';
+import { isEqualStr, randStr, toDec } from '../../common/common';
 import BadgeGrant from '../../models/badge_grant';
-import NFTOwner from '../../models/nft_owner';
 import { defaultNotificationSettings } from '../../models/notification_setting';
 import MarketManagerDelegate from '../../models/pay_router_delegate';
 import PaymentMethod from '../../models/payment_method';
-import Point from '../../models/point';
 import Swap from '../../models/swap';
 import User from '../../models/user';
 import { JointLinkService } from '../../services/joint_link.service';
-import AirdropService from '../airdrop/airdrop.service';
-import { RefereeBonus } from '../airdrop/constants';
-import TapService from '../airdrop/tap.service';
 import ConvosService from '../convos/convos.service';
-import { NFTAllocations } from '../points/data/nft_allocation';
 import { DeviceType } from './dto';
 
 @Injectable()
@@ -28,9 +21,7 @@ export class UserService {
     private chatNotifSrv: ConvosService,
     private jntLinkSrv: JointLinkService,
     private cfgSrv: ConfigService,
-    private airdropSrv: AirdropService,
     private cacheSrv: CacheService,
-    private tapSrv: TapService,
   ) {}
 
   /**
@@ -41,7 +32,9 @@ export class UserService {
    */
   async extendUser(user: User, network?: string) {
     try {
-      user.paymentMethod = await PaymentMethod.getById(user.defaultPaymentMethodId);
+      if (user.defaultPaymentMethodId) {
+        user.paymentMethod = await PaymentMethod.getById(user.defaultPaymentMethodId);
+      }
 
       const totalSwaps = await Swap.countByStatus({
         network,
@@ -100,30 +93,7 @@ export class UserService {
 
       user.notificationSettings = user.notificationSettings || defaultNotificationSettings;
 
-      user.totalUnclaimedAlloc = await Allocation.getTotalUnclaimed(user.address, user.id);
-
-      // Points allocation information
-      user.points = parseInt(await Point.getTotalPointsByAddress(user.address));
-      // user.rank = await Point.getRankByAddress(user.address);
-      user.pointsAllocs = 0; // TODO: use proper calculation
-      user.pointsAllocsClaimed = !!(await Allocation.getByName(`points:${user.address}`));
-
-      // NFT allocation information
-      const nftsOwned = await NFTOwner.findByAddress(user.address);
-      user.nft = { count: nftsOwned.length, totalAlloc: 0, claimed: false };
-      if (isLocal()) {
-        for (const n of nftsOwned) {
-          user.nft.totalAlloc = (user.nft.totalAlloc ?? 0) + NFTAllocations[n.tokenId.toString()];
-        }
-      }
-      user.nft.claimed = !!(await Allocation.getByName(`droidpd:${user.address}`));
-
-      // Early Discord member allocation information
-      user.earlyDiscordMemberAlloc = user.isEarlyDiscordMember ? this.cfgSrv.get('app.discord.earlyMemberAlloc') : '0';
-      user.earlyDiscordMemberClaimed = !!(await Allocation.getByName(`early_member:${user.address}`));
-
       if (network) user.isDelegate = !!(await MarketManagerDelegate.findByNetworkAndAddress(network, user.address));
-
     } catch (e) {
       return Promise.reject(e);
     }
@@ -201,16 +171,6 @@ export class UserService {
         this.logger.error(`enableReferrer: failed to create joint link`, e);
         throw e;
       });
-
-      // Grant enlisting TAPs to the referred user
-      if (isNewUser && referrer) {
-        await this.tapSrv.createTap({
-          userId: user.id,
-          bonus: true,
-          bonusName: 'referee_bonus',
-          bonusValue: RefereeBonus.toString(),
-        });
-      }
 
       return true;
     });

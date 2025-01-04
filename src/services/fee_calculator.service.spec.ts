@@ -1,14 +1,12 @@
 import { Wallet } from 'ethers';
 import { DBService } from '../db/db.service';
-import Meta, { FeeName, MetaKeys } from '../models/meta';
-import { FeeCalculatorService } from './fee_calculator.service';
-import Market, { AssetType } from '../models/market';
-import { powOf } from '../network/common';
 import AssetRegistry from '../models/asset_registry';
+import Market, { AssetType } from '../models/market';
+import Meta, { FeeName, MetaKeys } from '../models/meta';
+import { powOf } from '../network/common';
+import { FeeCalculatorService } from './fee_calculator.service';
 
 describe('FeeCalculatorService', () => {
-  const taker = '0xTaker';
-  const provider = Wallet.createRandom().address;
   const marketAddress = Wallet.createRandom().address;
   const BASE = 'BASE';
   const QUOTE = 'QUOTE';

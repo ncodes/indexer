@@ -1,23 +1,20 @@
 import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as moment from 'moment';
+import CacheService from '../../cacher/cache.service';
 import { DBService } from '../../db/db.service';
 import BadgeGrant from '../../models/badge_grant';
 import Market, { AssetType } from '../../models/market';
 import { defaultNotificationSettings } from '../../models/notification_setting';
+import PaymentMethod from '../../models/payment_method';
 import Swap from '../../models/swap';
-import Tap from '../../models/tap';
 import User from '../../models/user';
 import { JointLinkService } from '../../services/joint_link.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { RedisService } from '../../services/redis/redis.service';
-import AirdropService from '../airdrop/airdrop.service';
-import { RefereeBonus } from '../airdrop/constants';
 import ConvosService from '../convos/convos.service';
 import { MarketService } from '../markets/market.service';
 import { UserService } from './user.service';
-import CacheService from '../../cacher/cache.service';
-import TapService from '../airdrop/tap.service';
 
 const mockTryToUsd = jest.fn();
 const MetadataServiceMock = jest.fn().mockImplementation(() => {
@@ -74,13 +71,11 @@ describe('UserService', () => {
       providers: [
         UserService,
         MarketService,
-        AirdropService,
         MetadataService,
         RedisService,
         ConvosService,
         JointLinkService,
         CacheService,
-        TapService,
       ],
     })
       .overrideProvider(MetadataService)
@@ -106,6 +101,14 @@ describe('UserService', () => {
         address: marketAddress,
         network: net,
       });
+    });
+
+    it(`should load default payment method`, async () => {
+      const pm = await PaymentMethod.create({ userId: u.id, network: net });
+      u = await User.updateById(u.id, { defaultPaymentMethodId: pm.id });
+      await expect(service.extendUser(u, net)).resolves.toBeUndefined();
+      expect(u.paymentMethod).toBeDefined();
+      expect(u.paymentMethod.id).toEqual(pm.id);
     });
 
     it(`should calculate correct 'totalSwap'`, async () => {
@@ -266,22 +269,12 @@ describe('UserService', () => {
       let u = await User.create({ address: user });
       const referrer = await User.create({ address: '0xReferrer', refCode: '0xReferrerCode' });
 
-      const mockCreateTap = jest.spyOn(module.get(TapService), 'createTap').mockResolvedValue(undefined);
-
       const res = await service.enableReferrerOps(true, '0xReferrerCode', u);
       expect(res).toBeTruthy();
       u = await User.getById(u.id);
       expect(u.referrer).toEqual(referrer.address);
       expect(u.refCode).toHaveLength(5);
       expect(mockCreateLink).toBeCalledWith(u.refCode);
-
-      // Create referee bonus tap for the user
-      expect(mockCreateTap).toBeCalledWith({
-        userId: u.id,
-        bonus: true,
-        bonusName: 'referee_bonus',
-        bonusValue: RefereeBonus.toString(),
-      });
     });
 
     it(`should return true and not set referrer when user is not new`, async () => {

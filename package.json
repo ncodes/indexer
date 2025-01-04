@@ -28,14 +28,12 @@
     "mig:dev:rollback": "knex-migrate rollback --env=development",
     "mig:prod:up": "knex-migrate up --env=production",
     "mig:prod:rollback": "knex-migrate rollback --env=production",
-    "db:start:dev": "yarn docker:create-devnet && docker run --name dev-db -d --rm --network devnet -v ${PWD}/volumes/postgres-docker:/var/lib/postgresql/data -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres",
-    "db:start:test": "docker run --name dev-db-test -d --rm -v ${PWD}/volumes/postgres-docker-test:/var/lib/postgresql/data -e POSTGRES_PASSWORD=postgres -p 5433:5432 postgres",
-    "redis:start": "yarn docker:create-devnet && docker run --name=redis -d --network devnet --rm -v ${PWD}/volumes/redis-docker:/data -p 6379:6379 redis",
-    "docker:create-devnet": "docker network create devnet4 2> /dev/null || true",
+    "docker:db:start": "docker run --name postgres-dev -d -v ${PWD}/volumes/postgres-docker:/var/lib/postgresql/data -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres",
+    "docker:db:test:start": "docker run --name dev-db-test -d --rm -v ${PWD}/volumes/postgres-docker-test:/var/lib/postgresql/data -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=joint_test -p 5433:5432 postgres",
+    "docker:redis:start": "docker run --name=redis-dev -d -v ${PWD}/volumes/redis-docker:/data -p 6380:6379 redis",
+    "docker:chain:start": "docker run --name=chain-dev -d -p 8545:8545 network-latest",
     "docker:build": "docker build -t indexer .",
-    "docker:build:no-cache": "docker build --no-cache -t indexer .",
-    "gcr:build-run": "gcloud builds submit --region=$REGION --config dev/gcloud/build_and_deploy.yaml --substitutions=TAG_NAME='latest',_SERVICE_NAME=$SERVICE_NAME,_REGION=$REGION",
-    "gcr:reset-envs": "gcloud run services update $SERVICE_NAME --region=$REGION --env-vars-file"
+    "docker:build:no-cache": "docker build --no-cache -t indexer ."
   },
   "dependencies": {
     "@bufbuild/connect-web": "^0.13.0",
@@ -47,6 +45,7 @@
     "@grammyjs/menu": "^1.2.1",
     "@jointlabs/meta": "^0.0.18",
     "@ladjs/consolidate": "^1.0.1",
+    "@nest-lab/throttler-storage-redis": "^1.0.0",
     "@nestjs/bull": "^10.0.1",
     "@nestjs/common": "^10.2.8",
     "@nestjs/config": "^3.1.1",
@@ -182,7 +181,7 @@
     "tslint-config-prettier": "^1.18.0",
     "typechain": "^8.3.2",
     "typescript": "^5.0.4",
-    "typescript-eslint": "^0.0.1-alpha.0"
+    "typescript-eslint": "^8.19.0"
   },
   "jest": {
     "moduleFileExtensions": [

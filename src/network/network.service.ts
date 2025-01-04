@@ -3,8 +3,6 @@ import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Contract, Provider } from 'ethers';
 import { isProd, isTest } from '../common/common';
-import { PointService } from '../controllers/points/point.service';
-import SwapService from '../controllers/swaps/swap.service';
 import { NotificationService } from '../jobs/notifications/NotificationService';
 import Meta, { MetaKeys } from '../models/meta';
 import { ExchangeRateService } from '../services/exchange_rate.service';
@@ -19,7 +17,6 @@ import { MarketCoreHandler } from './marketcore/market_core.handler';
 import { MarketManagerHandler } from './marketmanager/market_manager.handler';
 import { MediatorManagerHandler } from './mediatormanager/mediator_manager.handler';
 import { MinerRegistryHandler } from './miner_registry/miner_registry.handler';
-import { NFTHandler } from './nft/nft.handler';
 import { getNetworkParams } from './params';
 import { PayRouterHandler } from './payrouter/pay_router.handler';
 import Processor from './processor';
@@ -39,8 +36,6 @@ export default class NetworkService {
     @Inject(forwardRef(() => MetadataService))
     private metadataSrv: MetadataService,
     private exrSrv: ExchangeRateService,
-    public pointSrv: PointService,
-    private swapSrv: SwapService,
   ) {
     if (isTest()) return;
 
@@ -145,16 +140,7 @@ export default class NetworkService {
       new MarketCoreHandler(this, this.notifSrv, provider, network, contracts[network]),
       new MediatorManagerHandler(this, this.notifSrv, provider, network, contracts[network]),
       new DisputeManagerHandler(this, this.notifSrv, provider, network, contracts[network]),
-      new CoreHandler(
-        this,
-        this.notifSrv,
-        this.metadataSrv,
-        this.exrSrv,
-        this.swapSrv,
-        provider,
-        network,
-        contracts[network],
-      ),
+      new CoreHandler(this, this.notifSrv, this.metadataSrv, this.exrSrv, provider, network, contracts[network]),
       new BadgeManagerHandler(this, provider, network, contracts[network]),
       new AssetRegistryHandler(provider, network, contracts[network]),
       new ProviderRegistryHandler(provider, network, contracts[network]),
@@ -174,34 +160,6 @@ export default class NetworkService {
       this.watchers.push(watcher);
     } else {
       this.logger.log('General Watcher is disabled');
-    }
-  }
-
-
-  /**
-   * Connect and watch NFT contracts.
-   * @param name The name of the watcher
-   * @param network The name of the network
-   */
-  private async startNFTWatcher(name: string, network: ChainNames) {
-    // Load initial contract params
-    await this.loadInitialContractParams(network);
-
-    // Initialize handlers
-    const provider = this.contractMgr.providers[network];
-    const handlers = [new NFTHandler(this, provider, network, this.contractMgr.contracts[network])];
-
-    // Create event processor
-    const processor = new Processor(network);
-    await processor.add(...handlers);
-
-    // Create event watcher
-    if (!this.isWatcherDisabled(name)) {
-      const watcher = new Watcher(name, network, provider, processor, 1);
-      await watcher.add(...handlers);
-      this.watchers.push(watcher);
-    } else {
-      this.logger.log('NFT watcher is disabled');
     }
   }
 

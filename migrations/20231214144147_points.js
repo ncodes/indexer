@@ -15,6 +15,9 @@ exports.up = function (knex) {
       table.string('referrer');
       table.string('referee');
       table.boolean('approved');
+      table.boolean('redenominated').defaultTo(false);
+      table.decimal('oldPoint', null);
+      table.boolean('isTrialnet').defaultTo(false);
       table.timestamp('createdAt');
       table.timestamp('updatedAt');
       table.timestamp('deletedAt');

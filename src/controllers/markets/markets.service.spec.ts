@@ -14,7 +14,7 @@ import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { RedisService } from '../../services/redis/redis.service';
 import { AuthService } from '../auth/auth.service';
-import { PointService } from '../points/point.service';
+import SwapService from '../swaps/swap.service';
 import { MarketService } from './market.service';
 
 const mockCfgGet = jest.fn();
@@ -77,7 +77,7 @@ describe('MarketsService', () => {
         ExchangeRateService,
         RedisService,
         AuthService,
-        PointService,
+        SwapService,
       ],
     })
       .overrideProvider(ConfigService)

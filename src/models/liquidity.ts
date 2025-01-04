@@ -425,7 +425,9 @@ export default class Liquidity extends BaseModel {
               .where('marketAddress', 'ilike', address)
               .where('amount', '>', 0)
               .where('paused', false)
-              .whereNotNull('paymentMethodId');
+              .where((q) => {
+                if (isInteractive) q.whereNotNull('paymentMethodId');
+              });
           })
           .with('q2', (builder) => {
             builder
@@ -527,7 +529,9 @@ export default class Liquidity extends BaseModel {
               .where('marketAddress', 'ilike', address)
               .where('amount', '>', 0)
               .where('paused', false)
-              .whereNotNull('paymentMethodId');
+              .where((q) => {
+                if (isInteractive) q.whereNotNull('paymentMethodId');
+              });
           })
           .with('q2', (builder) => {
             builder
@@ -641,7 +645,6 @@ export default class Liquidity extends BaseModel {
     paused,
     maxOpenDisputes,
     maxOpenOrders,
-    amount,
     price,
     amountUsd,
     priceUsd,

@@ -275,11 +275,12 @@ export class Watcher {
       let meta = await Meta.get(key);
       if (!meta || meta.value == '0') meta = new Meta({ value: this.getLaunchHeight() });
       const curBlock = await this.provider.getBlockNumber();
+
       this.logInfo(`Last synced block: ${meta.value}`, { 'Current Head': curBlock });
 
       // Ensure we are not fully synchronized yet.
       // If we are, stop watching on interval. Instead, watch on new block.
-      if (parseInt(meta.value) == curBlock) {
+      if (curBlock == 0 || parseInt(meta.value) == curBlock) {
         this.logInfo(`Watcher is fully synchronized at block ${curBlock}`);
         this.watchBlock();
         this.isSyncing = false;

@@ -7,6 +7,7 @@ import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/interceptors/exception_filter';
 import './common/local_assets';
 import { appLogger } from './common/loggers/logger';
+import Envs from './config/contants';
 
 dayjs.extend(utc);
 
@@ -25,7 +26,7 @@ async function bootstrap() {
   app.enableCors();
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  webpush.setVapidDetails('mailto:web@joint.cool', process.env.VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
+  webpush.setVapidDetails('mailto:web@joint.cool', Envs.vapidPublicKey, Envs.vapidPrivateKey);
 
   const port = process.env.PORT || 3000;
   appLogger.log(`Starting server @ :${port}`);

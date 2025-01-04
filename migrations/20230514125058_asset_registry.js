@@ -8,7 +8,6 @@ exports.up = function (knex) {
       table.decimal('curRate', null);
       table.integer('feeBp');
       table.decimal('feeFixed', null);
-      table.string('amountPerRewardPoint');
       table.boolean('verified').defaultTo(false);
       table.boolean('stable').defaultTo(false);
       table.boolean('sharable').defaultTo(false);

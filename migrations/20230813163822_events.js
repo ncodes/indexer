@@ -43,6 +43,7 @@ exports.up = function (knex) {
       table.decimal('price', null).defaultTo(0);
       table.decimal('amount', null).defaultTo(0);
       table.integer('offerId').defaultTo(0);
+      table.string('swapId');
 
       // liquidity event fields
       table.string('provider');

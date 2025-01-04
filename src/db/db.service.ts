@@ -4,7 +4,6 @@ import * as Knex from 'knex';
 import * as dbMgr from 'knex-db-manager';
 import { Model } from 'objection';
 import * as knexJSON from '../../knexfile';
-import { isProd } from '../common/common';
 
 @Injectable()
 export class DBService {
@@ -36,16 +35,6 @@ export class DBService {
     this.knex.client.on('connection-error', (e) => {
       console.log('DB CONN ERROR', e);
     });
-
-    if (isProd()) this.knex.migrate.latest();
-
-    // this.knex.on('error', (err) => {
-    //   this.logger.error('DB_ERROR', err);
-    //   if (err.message.includes('ECONNRESET') || err.message.includes('connection reset')) {
-    //     this.logger.log('RECONNECTING TO DB');
-    //     this.getForProd();
-    //   }
-    // });
   }
 
   /**

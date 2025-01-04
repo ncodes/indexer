@@ -12,7 +12,6 @@ import Meta, { FeeName } from '../../models/meta';
 import { ExchangeRateService } from '../../services/exchange_rate.service';
 import { FeeCalculatorService } from '../../services/fee_calculator.service';
 import { ErrTokenNotFound, MetadataService } from '../../services/metadata/metadata.service';
-import { PointMap } from '../points/data/points';
 
 @Controller('v1/misc')
 export class MiscController {
@@ -190,19 +189,6 @@ export class MiscController {
   }
 
   /**
-   * Get points for energon
-   * @returns
-   */
-  @Get('points-per-energon')
-  async getPointsPerEnergon() {
-    return ok()
-      .data({
-        value: parseFloat(this.cfgSrv.get('app.pointsPerEnergon')),
-      })
-      .build();
-  }
-
-  /**
    * Determines if a given address has enabled xmtp chat
    * @param address The address to check
    * @returns
@@ -221,11 +207,6 @@ export class MiscController {
     return ok()
       .data({ code: getCfIpCountry(req, this.cfgSrv.get('app.defaultCountry')) })
       .build();
-  }
-
-  @Get('point/:name')
-  async getPoint(@Param('name') name: string) {
-    return ok().data(PointMap[name]).build();
   }
 
   @Get('/pool-info')

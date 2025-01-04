@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { Response } from 'express';
 import * as _ from 'lodash';
-import { isDev } from '../common';
+import { isDev, isLocal } from '../common';
 
 export class ErrorBuilder {
   private logger = new Logger(ErrorBuilder.name);
@@ -48,7 +48,7 @@ export class ErrorBuilder {
   }
 
   build() {
-    if (isDev()) console.error('Error: ', this._data);
+    if (isLocal() && isDev()) console.error('Error: ', this._data);
     return buildHttpException(this.getObj(), this._status);
   }
 

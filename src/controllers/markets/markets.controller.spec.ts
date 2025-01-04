@@ -21,7 +21,6 @@ import { RedisService } from '../../services/redis/redis.service';
 import { makeSession } from '../auth/utils';
 import { MarketService } from './market.service';
 import { MarketsController } from './markets.controller';
-import Meta, { MetaKeys } from '../../models/meta';
 
 const mockCfgGet = jest.fn();
 const ConfigServiceMock = jest.fn().mockImplementation(() => {

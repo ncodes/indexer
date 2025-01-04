@@ -21,10 +21,7 @@ const NetworkServiceMock = jest.fn().mockImplementation(() => {
 
 describe('PaymentsService', () => {
   let module: TestingModule;
-  let service: PaymentsService;
   let cfgObj = {};
-  const net = 'ethereum';
-  const grantee = '0x34e1dbE20d78C573bC49BBB37b26De744B6D9D15';
   const pkIssuer = '0x1ef7f782225033ac48a22437dfff4c6ad78f28e69a421d0875b9b76c89e6f068';
 
   beforeEach(async () => {
@@ -49,7 +46,7 @@ describe('PaymentsService', () => {
       .useValue(new NetworkServiceMock())
       .compile();
 
-    service = module.get<PaymentsService>(PaymentsService);
+    module.get<PaymentsService>(PaymentsService);
   });
 
   describe('.getPaymentMethodGrantSignature', () => {

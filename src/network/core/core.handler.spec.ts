@@ -47,28 +47,16 @@ const MockExchangeRateService = jest.fn().mockImplementation(() => {
   };
 });
 
-const mockGrantOnSwap = jest.fn();
-const mockGrantOnLiquidityUpdate = jest.fn();
-const mockGrantPoint = jest.fn();
-const MockPointService = jest.fn().mockImplementation(() => {
-  return {
-    grantOnSwap: mockGrantOnSwap,
-    grantOnLiquidityUpdate: mockGrantOnLiquidityUpdate,
-    grantPoint: mockGrantPoint,
-  };
-});
-
 const mockComputeSwapFees = jest.fn();
-const MockNetworkService = jest.fn().mockImplementation(() => {
-  return {
-    pointSrv: new MockPointService(),
-  };
-});
 
 const mockGetDisputeDelayDur = jest.fn();
-const MockSwapService = jest.fn().mockImplementation(() => {
+
+const mockGetCfg = jest.fn();
+const MockNetworkService = jest.fn().mockImplementation(() => {
   return {
-    getDisputeDelayDur: mockGetDisputeDelayDur,
+    cfgSrv: {
+      get: mockGetCfg,
+    },
   };
 });
 
@@ -89,9 +77,8 @@ describe('CoreHandler', () => {
   const net = 'ethereum';
   let handler: CoreHandler;
   const coreContract = new CoreContract();
-  const contracts = {
-    core: coreContract,
-  };
+  const contracts = { core: coreContract };
+  let cfg: Record<string, string> = {};
 
   afterEach(async () => {
     await db.truncateTables();
@@ -103,12 +90,20 @@ describe('CoreHandler', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+
+    cfg = {
+      'app.defaultDisputeDelayDur': '1000',
+    };
+
+    mockGetCfg.mockImplementation((key: string) => {
+      return cfg[key];
+    });
+
     handler = new CoreHandler(
       new MockNetworkService(),
       new MockNotifierService(),
       new MockMetadataService(),
       new MockExchangeRateService(),
-      new MockSwapService(),
       null,
       net,
       contracts,
@@ -215,8 +210,6 @@ describe('CoreHandler', () => {
       expect(event.target).toEqual(liq.target);
       expect(event.timeToPay).toEqual(liq.timeToPay);
       expect(event.paused).toEqual(liq.paused);
-
-      expect(mockGrantOnLiquidityUpdate).toHaveBeenCalledWith(market, liq, true, provider, amount, undefined);
     });
 
     it('should not update market total liquidity when liquidity has paused=true', async () => {
@@ -344,8 +337,6 @@ describe('CoreHandler', () => {
       expect(eventTimeToPay.provider).toEqual(provider);
       expect(eventTimeToPay.creator).toEqual(provider);
       expect(eventTimeToPay.timeToPay).toEqual(10);
-
-      expect(mockGrantOnLiquidityUpdate).toBeCalled();
     });
 
     it('should update the liquidity if it already exist and deduction=true', async () => {
@@ -1028,8 +1019,10 @@ describe('CoreHandler', () => {
         address: marketAddress,
         base: BASE,
         baseAddress: baseAddress,
+        baseType: AssetType.ERC20,
         quote: QUOTE,
         quoteAddress: quoteAddress,
+        quoteType: AssetType.SYNTH,
       });
 
       liq = await Liquidity.create({
@@ -1039,11 +1032,15 @@ describe('CoreHandler', () => {
         lid: toNumber(lid),
         amount: liqAmt.toString(),
         totalSwaps: 1,
+        paymentMethodId: '0xLiquidityPaymentMethod',
       });
     });
 
     it('should create swap correctly and send notification to liquidity provider', async () => {
+      const takerUser = await User.create({ address: taker, defaultPaymentMethodId: '0xTakerPaymentMethod' });
+
       mockComputeSwapFees.mockResolvedValue({ protocolFee: 2, marketCreatorFee: 3 });
+
       const cancelDuration = 300;
       const numTypeInfo = [
         toBigInt(2),
@@ -1090,9 +1087,11 @@ describe('CoreHandler', () => {
       expect(swap.operator).toEqual(toNumber(operator));
       expect(swap.protocolFee).toEqual('2');
       expect(swap.marketCreatorFee).toEqual('3');
+      expect(swap.takerPaymentMethodId).toEqual(takerUser.defaultPaymentMethodId);
+      expect(swap.providerPaymentMethodId).toEqual(liq.paymentMethodId);
       expect(moment(swap.cancelAt).diff(moment(), 's')).toBeGreaterThanOrEqual(299);
 
-      const liq = await Liquidity.getLiquidity(net, marketAddress, provider, toNumber(lid));
+      liq = await Liquidity.getLiquidity(net, marketAddress, provider, toNumber(lid));
       expect(liq.openOrders).toEqual(1);
       expect(liq.amount).toEqual(toDec(liqAmt).sub(amount.toString()).toString());
       expect(liq.totalSwaps).toEqual(2);
@@ -1155,6 +1154,8 @@ describe('CoreHandler', () => {
 
     describe('base asset is NFT', function () {
       it('should set swap amount to liquidity amount', async () => {
+        await User.create({ address: taker, defaultPaymentMethodId: '0xTakerPaymentMethod' });
+
         await Market.updateById(market.id, { baseType: AssetType.ERC721 });
         mockComputeSwapFees.mockResolvedValue({ protocolFee: 2, marketCreatorFee: 3 });
         const cancelDuration = 300;
@@ -1290,8 +1291,6 @@ describe('CoreHandler', () => {
         expect(event.creator).toEqual(taker);
         expect(event.orderId).toEqual(0);
         expect(event.swapId).toEqual(swap.id);
-
-        expect(mockGrantOnSwap).toHaveBeenCalledWith(market, swap, undefined, evt);
 
         // expect(mockNotify).toHaveBeenCalledWith(NotificationID.NewInstantSwap, net, provider, {
         //   market,
@@ -1475,8 +1474,6 @@ describe('CoreHandler', () => {
         market = await Market.getById(market.id, true);
         swap = await Swap.find({ marketAddress: market.address });
         swap.market = market;
-
-        expect(mockGrantOnSwap).toHaveBeenCalledWith(market, swap, undefined, evt);
 
         expect(mockNotify).toHaveBeenCalledTimes(1);
         expect(mockNotify).toHaveBeenCalledWith(NotificationID.SwapOrderReleased, net, taker, {
@@ -1790,8 +1787,6 @@ describe('CoreHandler', () => {
       expect(event.marketAddress).toEqual(marketAddress);
       expect(event.orderId).toEqual(toNumber(orderId));
       expect(event.creator).toEqual(swap.payer);
-
-      expect(mockGrantPoint).toHaveBeenCalledWith('swap:paid', net, taker, expect.anything(), undefined);
 
       liq = await Liquidity.getById(liq.id);
       expect(liq.avgPaymentDur).toBeGreaterThan(0);

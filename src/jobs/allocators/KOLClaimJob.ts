@@ -6,8 +6,8 @@ import { getClaimSig } from '../../common/crypto';
 import TokenClaim from '../../models/token_claim';
 import { pow10 } from '../../network/common';
 import { Base } from '../base';
-import * as Data from './kols.json';
 import { AllocatorName } from './common';
+import * as Data from './kols.json';
 
 /**
  * KOLClaimJob is responsible for creating the claims entries for project KOLs.
@@ -60,6 +60,8 @@ export default class KOLClaimJob extends Base {
             claimId: this.claimId,
             signature,
           });
+
+          this.logger.log(`Created claim for ${name}`);
         }
       }
     } catch (e) {

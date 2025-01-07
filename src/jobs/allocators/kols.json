@@ -456,7 +456,7 @@
     "amountUsd": 2000
   },
   {
-    "address": "0x84402D91292e605292f12257286280E76bC29196",
+    "address": "0xdD060b94e5f4b5f7622051230Ea3705fb88b09FC",
     "amountUsd": 5000
   },
   {
@@ -568,7 +568,7 @@
     "amountUsd": 3000
   },
   {
-    "address": "0x1ed0515f78a2eadbe5462e7cf4d6745399553baf",
+    "address": "0xD6a1c9fBF2e308B2745e86Dc99959ADc9A6E6c46",
     "amountUsd": 3000
   },
   {
@@ -778,5 +778,9 @@
   {
     "address": "0x20ed348736D1412cCEff8b798c41aB55A7DE9f58",
     "amountUsd": 1000
+  },
+  {
+    "address": "0x89844feb086fc2f84614af900e8368c2aa4a2fff",
+    "amountUsd": 5000
   }
 ]

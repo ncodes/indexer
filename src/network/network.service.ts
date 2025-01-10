@@ -61,17 +61,6 @@ export default class NetworkService {
       // await this.startNFTWatcher('NFT_WATCHER', 'ethereum');
     } else {
       void this.startWatcher('localhost', 'localhost', 1);
-      void this.startNFTWatcher('NFT_WATCHER', 'localhost');
-      await this.startDexWatcher('DEX_WATCHER_ETH', 'ethereum');
-      await this.startDexWatcher('DEX_WATCHER_ETH_2', 'ethereum');
-      await this.startDexWatcher('DEX_WATCHER_ETH_3', 'ethereum');
-      await this.startDexWatcher('DEX_WATCHER_ETH_4', 'ethereum');
-      await this.startDexWatcher('DEX_WATCHER_ETH_5', 'ethereum');
-      await this.startDexWatcher('DEX_WATCHER_ETH_6', 'ethereum');
-      await this.startDexWatcher('DEX_WATCHER_ETH_7', 'ethereum');
-      await this.startDexWatcher('DEX_WATCHER_ETH_8', 'ethereum');
-      await this.startDexWatcher('DEX_WATCHER_ETH_9', 'ethereum');
-      await this.startDexWatcher('DEX_WATCHER_ETH_10', 'ethereum');
     }
     this.restartWatcherSync();
   }

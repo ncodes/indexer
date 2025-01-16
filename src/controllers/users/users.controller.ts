@@ -8,7 +8,7 @@ import { transaction } from 'objection';
 import { isEqualStr, isProd, randStr, toDec } from '../../common/common';
 import { getClaimSig } from '../../common/crypto';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
-import { ErrorMessages, ok, throw400, throw401, throw404 } from '../../common/responses/responses';
+import { ErrorMessages, ok, throw401, throw404 } from '../../common/responses/responses';
 import { BeAuthenticatedGuard } from '../../guards/be_authenticated.guard';
 import { HasKeyGuard } from '../../guards/has_token.guard';
 import { IsRootAdmin } from '../../guards/is_basic_admin';
@@ -19,7 +19,6 @@ import ClaimCheckLog from '../../models/claim_check_log';
 import NFTOwner from '../../models/nft_owner';
 import Offer from '../../models/offer';
 import OnlineStatus from '../../models/online_status';
-import Point from '../../models/point';
 import Swap from '../../models/swap';
 import TokenClaim from '../../models/token_claim';
 import User from '../../models/user';
@@ -350,37 +349,6 @@ export class UsersController {
     return ok()
       .data({ success: await this.userSrv.unregisterDevice(req.user, body.type) })
       .build();
-  }
-
-  @UseGuards(BeAuthenticatedGuard)
-  @UseGuards(HasKeyGuard)
-  // @Post('/transfer-scores/:target')
-  async transferScores(@Req() req: express.Request, @Param('target') target: string) {
-    const user = req.user;
-    user.points = parseInt(await Point.getTotalPointsByAddress(user.address));
-
-    const targetUser = await User.getByAddress(target);
-    if (!targetUser) throw404('target user not found');
-
-    if (isEqualStr(user.address, target)) {
-      return throw400('cannot transfer to self');
-    }
-
-    if (!user.telegramBotChatId) {
-      return throw400('Only telegram virtual accounts can transfer tap scores');
-    }
-
-    await transaction(User, async (User) => {
-      if (user.points > 0) {
-        await Point.transferToAddress(user.address, target);
-      }
-
-      if (toDec(user.tapScore).gt(0)) {
-        await User.transferTapScore(user.address, target, toDec(targetUser.tapScore).add(user.tapScore).toFixed());
-      }
-    });
-
-    return ok().data({ ok: true }).build();
   }
 
   /**

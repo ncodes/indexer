@@ -631,16 +631,18 @@ export class CoreHandler extends Handler {
       const multiplier = amtDec.div(minSwapathonAmt);
       const reward = toDec(swapathonReward).mul(multiplier);
       const user = await User.getByAddress(swapper);
-      await User.updateByAddress(
-        swapper,
-        {
-          hasSwapped: true,
-          totalSwapRewards: toDec(user.totalSwapRewards)
-            .add(powOfStr(reward.toFixed(0), 18))
-            .toFixed(),
-        },
-        txn,
-      );
+      if (user) {
+        await User.updateByAddress(
+          swapper,
+          {
+            hasSwapped: true,
+            totalSwapRewards: toDec(user.totalSwapRewards)
+              .add(powOfStr(reward.toFixed(0), 18))
+              .toFixed(),
+          },
+          txn,
+        );
+      }
       // }
     }
 
@@ -923,7 +925,7 @@ export class CoreHandler extends Handler {
       txn,
     );
 
-    await this.netSrv.pointSrv.grantPoint('swap:cancelled', this.network, canceller, event, txn);
+    // await this.netSrv.pointSrv.grantPoint('swap:cancelled', this.network, canceller, event, txn);
 
     // Send notification.
     // Send to either taker or provider if one of them is the canceller.
@@ -1010,7 +1012,7 @@ export class CoreHandler extends Handler {
       txn,
     );
 
-    await this.netSrv.pointSrv.grantPoint('swap:paid', this.network, swap.payer, event, txn);
+    // await this.netSrv.pointSrv.grantPoint('swap:paid', this.network, swap.payer, event, txn);
 
     // Send notification
     const recipient = swap.payer == swap.provider ? swap.taker : swap.provider;
@@ -1487,7 +1489,7 @@ export class CoreHandler extends Handler {
       );
     }
 
-    await this.netSrv.pointSrv.grantPoint('liq:price_updated', this.network, provider, event, txn);
+    // await this.netSrv.pointSrv.grantPoint('liq:price_updated', this.network, provider, event, txn);
   }
 
   /**
@@ -1535,7 +1537,7 @@ export class CoreHandler extends Handler {
       );
     }
 
-    await this.netSrv.pointSrv.grantPoint('liq:paused', this.network, provider, event, txn);
+    // await this.netSrv.pointSrv.grantPoint('liq:paused', this.network, provider, event, txn);
   }
 
   /**

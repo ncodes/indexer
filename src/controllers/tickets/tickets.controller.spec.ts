@@ -32,7 +32,7 @@ const NetworkServiceMock = jest.fn().mockImplementation(() => {
   return {
     getContracts: jest.fn().mockImplementation(() => {
       return {
-        p2pToken: {
+        nativeToken: {
           target: '0xJOIN',
         },
         mediatorMgr: {
@@ -585,7 +585,7 @@ describe('TicketsController', () => {
         });
     });
 
-    it('should return correct values', async () => {
+    it('should return correct values with only network set', async () => {
       await Ticket.create({ network: net, bond: '10', owner: '0xOwner' });
       await Ticket.create({ network: net, bond: '15', owner: '0xOwner2' });
 

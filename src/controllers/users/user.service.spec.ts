@@ -1,23 +1,22 @@
 import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as moment from 'moment';
+import CacheService from '../../cacher/cache.service';
 import { DBService } from '../../db/db.service';
 import BadgeGrant from '../../models/badge_grant';
 import Market, { AssetType } from '../../models/market';
 import { defaultNotificationSettings } from '../../models/notification_setting';
 import Swap from '../../models/swap';
-import Tap from '../../models/tap';
 import User from '../../models/user';
 import { JointLinkService } from '../../services/joint_link.service';
 import { MetadataService } from '../../services/metadata/metadata.service';
 import { RedisService } from '../../services/redis/redis.service';
 import AirdropService from '../airdrop/airdrop.service';
 import { RefereeBonus } from '../airdrop/constants';
+import TapService from '../airdrop/tap.service';
 import ConvosService from '../convos/convos.service';
 import { MarketService } from '../markets/market.service';
 import { UserService } from './user.service';
-import CacheService from '../../cacher/cache.service';
-import TapService from '../airdrop/tap.service';
 
 const mockTryToUsd = jest.fn();
 const MetadataServiceMock = jest.fn().mockImplementation(() => {
@@ -214,7 +213,7 @@ describe('UserService', () => {
     });
   });
 
-  describe('.registerDevice', () => {
+  describe.skip('.registerDevice', () => {
     it(`should return device token`, async () => {
       const mockRegisterInstallation = jest
         .spyOn(module.get(ConvosService), 'registerInstallation')

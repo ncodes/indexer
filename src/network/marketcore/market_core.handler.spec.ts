@@ -177,8 +177,6 @@ describe('MarketCoreHandler', () => {
         expect(market.quoteType).toEqual(AssetType.SYNTH);
         expect(market.quoteDecimals).toEqual(10);
         expect(market.pair).toEqual(`${base}${quote}`);
-
-        expect(mockGrantPoint).toHaveBeenCalledWith('market:created', net, creator, evt, undefined);
       });
 
       describe('when SYNTH asset is unknown in the token list', function () {

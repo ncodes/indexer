@@ -1,8 +1,22 @@
-import { Controller, Get, Param, ParseIntPipe, Query, ValidationPipe } from '@nestjs/common';
+import {
+  All,
+  Controller,
+  Get,
+  HttpStatus,
+  Logger,
+  Param,
+  ParseIntPipe,
+  Query,
+  Res,
+  ValidationPipe,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Response } from 'express';
+import * as moment from 'moment';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ErrorTypes, ok, throw404 } from '../../common/responses/responses';
 import Event, { EventActionClass } from '../../models/event';
-import Swap from '../../models/swap';
+import Swap, { SwapType } from '../../models/swap';
 import { LiquidityService } from '../liquidity/liquidity.service';
 import { MarketService } from '../markets/market.service';
 import { GetParticipantsDTO, GetQueryDTO, ListQueryDTO } from './query.dto';
@@ -10,7 +24,14 @@ import SwapService from './swap.service';
 
 @Controller('v1/swaps')
 export class SwapsController {
-  constructor(private marketSrv: MarketService, private liqSrv: LiquidityService, private swapSrv: SwapService) {}
+  private logger = new Logger(SwapsController.name);
+
+  constructor(
+    private marketSrv: MarketService,
+    private liqSrv: LiquidityService,
+    private swapSrv: SwapService,
+    private cfgSrv: ConfigService,
+  ) {}
 
   // Get swap events
   @Get(':orderId/events')
@@ -69,21 +90,21 @@ export class SwapsController {
    */
   @Get()
   async list(@Query(new ValidationPipe(ValPipeOpt)) q: ListQueryDTO) {
-    const swaps = await Swap.search(
-      q.net,
-      q.marketAddress,
-      q.base,
-      q.quote,
-      q.address,
-      q.fromDate,
-      q.toDate,
-      q.status,
-      q.type,
-      q.limit || 25,
-      q.offset,
-      q.select,
-      '[market,liquidity,disputes.[draftees,reveals,commits]]',
-    );
+    const swaps = await Swap.search({
+      network: q.net,
+      marketAddress: q.marketAddress,
+      base: q.base,
+      quote: q.quote,
+      providerOrTaker: q.address,
+      fromDate: q.fromDate,
+      toDate: q.toDate,
+      status: q.status,
+      type: q.type,
+      limit: q.limit || 25,
+      offset: q.offset,
+      select: q.select,
+      relations: '[market,liquidity,disputes.[draftees,reveals,commits]]',
+    });
 
     for (const swap of swaps) {
       await this.swapSrv.extendSwap(swap, q.select);
@@ -110,5 +131,46 @@ export class SwapsController {
     if (!swap) throw404('swap not found', ErrorTypes.InvalidRequest, 'id');
     const participant = await this.swapSrv.getParticipants(swap, q.includeRedispute);
     return ok().data(participant).build<string[]>();
+  }
+
+  /**
+   * Verify QuestN swap
+   * @param address The address to verify
+   * @param res The response object
+   * @returns
+   */
+  @All('questn/verify')
+  async verifyQuestNSwap(@Query('address') address: string, @Res() res: Response) {
+    let resp: any = {};
+    try {
+      const startTime = moment.unix(this.cfgSrv.get('app.questn.swapStartTime'));
+      const swaps = await Swap.search({
+        network: 'localhost',
+        marketAddress: this.cfgSrv.get('app.swapMarket'),
+        provider: this.cfgSrv.get('app.swapProvider'),
+        fromDate: startTime.toISOString(),
+        type: SwapType.Instant,
+        limit: 1,
+      });
+
+      resp = {
+        data: {
+          result: swaps.length > 0,
+        },
+      };
+    } catch (error) {
+      this.logger.error('Failed to verify QuestN swap', error);
+      resp = {
+        data: {
+          result: false,
+        },
+        error: {
+          code: 500,
+          message: 'Internal server error',
+        },
+      };
+    }
+
+    return res.status(HttpStatus.OK).json(resp);
   }
 }

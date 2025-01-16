@@ -40,6 +40,9 @@ export default () => ({
     maxSwapVideoSize: process.env.MAX_SWAP_VIDEO_SIZE,
     maxSwapDocSize: process.env.MAX_SWAP_DOC_SIZE,
     infuraUASecret: process.env.INFURA_UA_SECRET,
+    questn: {
+      swapStartTime: process.env.QUESTN_SWAP_START_TIME,
+    },
     etherscan: {
       apiKey: process.env.ETHERSCAN_API_KEY,
     },

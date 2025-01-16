@@ -706,22 +706,39 @@ export default class Swap extends BaseModel {
    * @param relations The relations to be fetched (optional)
    * @param txn Optional transaction object
    */
-  static search(
-    network: string,
-    marketAddress: string,
-    base: string,
-    quote: string,
-    providerOrTaker: string,
-    fromDate: string,
-    toDate: string,
-    status: SearchStatus,
-    type: SwapType,
-    limit: number,
-    offset: number,
+  static search({
+    network,
+    marketAddress,
+    base,
+    quote,
+    providerOrTaker,
+    provider,
+    fromDate,
+    toDate,
+    status,
+    type,
+    limit,
+    offset,
     select = [],
-    relations: string = undefined,
-    txn?: Transaction,
-  ) {
+    relations = undefined,
+    txn,
+  }: {
+    network: string;
+    marketAddress?: string;
+    base?: string;
+    quote?: string;
+    providerOrTaker?: string;
+    provider?: string;
+    fromDate?: string;
+    toDate?: string;
+    status?: SearchStatus;
+    type?: SwapType;
+    limit?: number;
+    offset?: number;
+    select?: any[];
+    relations?: string;
+    txn?: Transaction;
+  }) {
     select = this.makeSelectList(select);
     let q = this.query(txn)
       .withGraphFetched(relations)
@@ -735,6 +752,10 @@ export default class Swap extends BaseModel {
       q = q.where((q) => {
         return q.orWhere('provider', 'ILIKE', providerOrTaker).orWhere('taker', 'ILIKE', providerOrTaker);
       });
+    }
+
+    if (provider) {
+      q = q.where('provider', 'ILIKE', provider);
     }
 
     if (base) {

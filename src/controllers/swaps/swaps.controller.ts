@@ -13,6 +13,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import * as moment from 'moment';
+import { isLocal } from '../../common/common';
 import { CommonValidationPipeOpt as ValPipeOpt } from '../../common/pipes/common.pipe';
 import { ErrorTypes, ok, throw404 } from '../../common/responses/responses';
 import Event, { EventActionClass } from '../../models/event';
@@ -145,7 +146,7 @@ export class SwapsController {
     try {
       const startTime = moment.unix(this.cfgSrv.get('app.questn.swapStartTime'));
       const swaps = await Swap.search({
-        network: 'localhost',
+        network: isLocal() ? 'localhost' : 'base',
         marketAddress: this.cfgSrv.get('app.swapMarket'),
         provider: this.cfgSrv.get('app.swapProvider'),
         fromDate: startTime.toISOString(),

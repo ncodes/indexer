@@ -696,6 +696,8 @@ export default class Swap extends BaseModel {
    * @param base The base asset address or symbol (optional)
    * @param quote The quote asset address or symbol (optional)
    * @param providerOrTaker Filter only where address is provider or taker
+   * @param provider The provider address (optional)
+   * @param taker The taker address (optional)
    * @param fromDate The start date to filter by (optional)
    * @param toDate The end date to filter by (optional)
    * @param status The swap status (optional)
@@ -713,6 +715,7 @@ export default class Swap extends BaseModel {
     quote,
     providerOrTaker,
     provider,
+    taker,
     fromDate,
     toDate,
     status,
@@ -729,6 +732,7 @@ export default class Swap extends BaseModel {
     quote?: string;
     providerOrTaker?: string;
     provider?: string;
+    taker?: string;
     fromDate?: string;
     toDate?: string;
     status?: SearchStatus;
@@ -752,6 +756,10 @@ export default class Swap extends BaseModel {
       q = q.where((q) => {
         return q.orWhere('provider', 'ILIKE', providerOrTaker).orWhere('taker', 'ILIKE', providerOrTaker);
       });
+    }
+
+    if (taker) {
+      q = q.where('taker', 'ILIKE', taker);
     }
 
     if (provider) {

@@ -141,7 +141,7 @@ export class SwapsController {
    * @returns
    */
   @All('questn/verify')
-  async verifyQuestNSwap(@Query('address') address: string, @Res() res: Response) {
+  async verifyQuestNSwapOneTime(@Query('address') address: string, @Res() res: Response) {
     let resp: any = {};
     try {
       const startTime = moment.unix(this.cfgSrv.get('app.questn.swapStartTime'));
@@ -150,6 +150,46 @@ export class SwapsController {
         marketAddress: this.cfgSrv.get('app.swapMarket'),
         provider: this.cfgSrv.get('app.swapProvider'),
         fromDate: startTime.toISOString(),
+        type: SwapType.Instant,
+        limit: 1,
+      });
+
+      resp = {
+        data: {
+          result: swaps.length > 0,
+        },
+      };
+    } catch (error) {
+      this.logger.error('Failed to verify QuestN swap', error);
+      resp = {
+        data: {
+          result: false,
+        },
+        error: {
+          code: 500,
+          message: 'Internal server error',
+        },
+      };
+    }
+
+    return res.status(HttpStatus.OK).json(resp);
+  }
+
+  /**
+   * Verify QuestN swap daily
+   * @param address The address to verify
+   * @param res The response object
+   * @returns
+   */
+  @All('questn/verify/daily')
+  async verifyQuestNSwapDaily(@Query('address') address: string, @Res() res: Response) {
+    let resp: any = {};
+    try {
+      const swaps = await Swap.search({
+        network: isLocal() ? 'localhost' : 'base',
+        marketAddress: this.cfgSrv.get('app.swapMarket'),
+        provider: this.cfgSrv.get('app.swapProvider'),
+        fromDate: moment().startOf('day').toISOString(),
         type: SwapType.Instant,
         limit: 1,
       });

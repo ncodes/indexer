@@ -140,7 +140,8 @@ export class SwapsController {
    * @param res The response object
    * @returns
    */
-  @All('questn/verify')
+  // @All('questn/verify')
+  @All('questn/verify/daily')
   async verifyQuestNSwapOneTime(@Query('address') address: string, @Res() res: Response) {
     let resp: any = {};
     try {
@@ -182,7 +183,7 @@ export class SwapsController {
    * @param res The response object
    * @returns
    */
-  @All('questn/verify/daily')
+  // @All('questn/verify/daily')
   async verifyQuestNSwapDaily(@Query('address') address: string, @Res() res: Response) {
     let resp: any = {};
     try {

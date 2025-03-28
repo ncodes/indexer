@@ -1,9 +1,9 @@
+import { Abi } from '@jointlabs/meta';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BaseContract, Contract, InterfaceAbi, Provider, Signer } from 'ethers';
 import { EventEmitter2 } from 'eventemitter2';
 import Meta from '../models/meta';
-import { Abi } from '@jointlabs/meta';
 
 /**
  * Handler handles incoming contract events.
@@ -33,7 +33,7 @@ export abstract class Handler extends EventEmitter2 {
   /**
    * Get contract
    */
-  getContract() {
+  getContract(): BaseContract {
     return this.contract as BaseContract;
   }
 

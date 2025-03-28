@@ -43,7 +43,7 @@
     "@connectrpc/connect-web": "^1.1.2",
     "@discordjs/core": "^0.6.0",
     "@grammyjs/menu": "^1.2.1",
-    "@jointlabs/meta": "^0.0.18",
+    "@jointlabs/meta": "^0.0.22",
     "@ladjs/consolidate": "^1.0.1",
     "@nest-lab/throttler-storage-redis": "^1.0.0",
     "@nestjs/bull": "^10.0.1",

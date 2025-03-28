@@ -148,7 +148,7 @@ export default class NetworkService {
       new MinerRegistryHandler(provider, network, contracts[network]),
       new PayRouterHandler(provider, network, contracts[network]),
       new MarketManagerHandler(provider, network, contracts[network]),
-      new ProxyLPHandler(this, network, contracts[network]),
+      new ProxyLPHandler(provider, network, contracts[network]),
     ];
 
     // Create event processor

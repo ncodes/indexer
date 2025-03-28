@@ -59,6 +59,7 @@ declare global {
     marketManager?: AbiTypes.MarketManager;
     energon?: AbiTypes.Energon;
     nft?: AbiTypes.NFT;
+    proxyLP?: AbiTypes.ProxyLP;
   }
 
   interface ContractMarket {

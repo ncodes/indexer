@@ -119,6 +119,10 @@ export class ContractManager {
         provider,
       );
 
+    const proxyLPAddr = targetChain.contracts['proxyLP'].address;
+    if (proxyLPAddr)
+      this.contracts[chain].proxyLP = this.getContract<AbiTypes.ProxyLP>(proxyLPAddr, Abi.ProxyLP, provider);
+
     const energonAddr = targetChain.contracts['energon'].address;
     if (energonAddr)
       this.contracts[chain].energon = this.getContract<AbiTypes.Energon>(energonAddr, Abi.Energon, provider);

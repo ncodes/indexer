@@ -124,34 +124,29 @@ export class Watcher {
     try {
       this.logInfo(`Fetching events`, { curBlock });
 
-      // Query latest logs for all contracts
-      const encodedTopics = this.topics.map((t) => ethers.keccak256(ethers.toUtf8Bytes(t)));
+      const getHandlerContractAddresses = (handlers: Handler[]) => {
+        return handlers
+          .filter((h) => h.getContract())
+          .map((h) => h.getContract().target)
+          .filter((addr) => !isEqualStr(ZeroAddress, addr as string));
+      };
+
       const logs = await this.provider.getLogs({
-        fromBlock: prevBlock ? prevBlock : curBlock,
+        fromBlock: prevBlock ?? curBlock,
         toBlock: curBlock,
-        topics: encodedTopics,
-        address:
-          this.topics.length == 0
-            ? this.handlers
-                .filter((h) => !!h.getContract())
-                .map((h) => h.getContract().target)
-                .filter((addr) => {
-                  return !isEqualStr(ZeroAddress, addr as string);
-                })
-            : undefined,
+        topics: this.topics.map((t) => ethers.keccak256(ethers.toUtf8Bytes(t))),
+        address: this.topics.length === 0 ? getHandlerContractAddresses(this.handlers) : undefined,
       });
 
       this.logInfo(`Found ${logs.length} logs`);
 
       // Extract the events from the logs
-      let events: ContractCallEvent[] = [
+      const events: ContractCallEvent[] = [
         ...logs.map((log: Log) => {
           const handler = this.handlers.find((h) => isEqualStr(h.getContract().target as string, log.address));
           return this.getEventFromLog(log, handler.getContract().interface);
         }),
-      ];
-
-      events = events.filter((e) => !!e);
+      ].filter((e) => !!e);
 
       this.lastActiveTime = Date.now();
 

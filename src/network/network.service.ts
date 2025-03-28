@@ -22,6 +22,7 @@ import { PayRouterHandler } from './payrouter/pay_router.handler';
 import Processor from './processor';
 import { ProviderRegistryHandler } from './providerregistry/provider_registry.handler';
 import { Watcher } from './watcher';
+import { ProxyLPHandler } from './proxylp/proxy_lp.handler';
 
 @Injectable()
 export default class NetworkService {
@@ -147,6 +148,7 @@ export default class NetworkService {
       new MinerRegistryHandler(provider, network, contracts[network]),
       new PayRouterHandler(provider, network, contracts[network]),
       new MarketManagerHandler(provider, network, contracts[network]),
+      new ProxyLPHandler(provider, network, contracts[network]),
     ];
 
     // Create event processor

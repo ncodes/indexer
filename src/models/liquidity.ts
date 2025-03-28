@@ -152,6 +152,10 @@ export default class Liquidity extends BaseModel {
   paymentMethodId: string;
   // Whether the liquidity is hidden
   hidden: boolean;
+  // The address of ProxyLP contract
+  proxy: string = undefined;
+  // The address of the original provider
+  proxyProvider: string = undefined;
 
   /** Not Persisted */
   totalSwaps24h: string;

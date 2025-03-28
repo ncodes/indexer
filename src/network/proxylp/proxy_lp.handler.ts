@@ -52,7 +52,7 @@ export class ProxyLPHandler extends Handler {
   ) {
     const proxyAddress = _event.address;
 
-    let liq = await Liquidity.getLiquidity(
+    const liq = await Liquidity.getLiquidity(
       this.network,
       marketAddress,
       undefined,
